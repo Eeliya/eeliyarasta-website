@@ -1,0 +1,22 @@
+{
+  "name": "eeliyarasta-website",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Eeliya Rasta: photography, projects and things. A tiny static site builder on Vite + GSAP.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/images.mjs && vite",
+    "images": "node scripts/images.mjs",
+    "build": "node scripts/images.mjs && vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "gsap": "^3.15.0"
+  },
+  "devDependencies": {
+    "sass": "^1.105.1",
+    "sharp": "^0.35.5",
+    "vite": "^8.3.3"
+  }
+}
