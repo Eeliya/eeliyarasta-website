@@ -82,8 +82,10 @@ export function createBridge({ iframe, store, labelFor }) {
       doc.documentElement.classList.toggle('__ed-motion', mode === 'motion');
       // Freeze first: reverting split-text animations re-creates their inner elements,
       // which would drop contenteditable from editable text inside them (page titles, hero name).
-      if (mode === 'text') api.freeze();
-      else api.unfreeze();
+      if (api) {
+        if (mode === 'text') api.freeze();
+        else api.unfreeze();
+      }
       setEditable(mode === 'text');
       hoverEl = null;
       bridge.select(null);
@@ -436,9 +438,10 @@ export function createBridge({ iframe, store, labelFor }) {
   // A full navigation inside the frame to a non-site page (e.g. /edit/ itself): go home.
   iframe.addEventListener('load', () => {
     try {
-      if (iframe.contentWindow.location.pathname.startsWith('/edit')) iframe.src = '/';
+      const cw = iframe.contentWindow;
+      if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = '/';
     } catch {
-      /* cross-origin */
+      /* cross-origin or frame not ready */
     }
   });
 
