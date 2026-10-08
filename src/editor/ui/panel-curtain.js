@@ -48,12 +48,16 @@ const CURTAIN_ROWS = [
 
 /**
  * Drag handles, in time order per row.
- * at(plan) = where the handle sits; value(x, plan0) = field value at x (stable while dragging).
+ * at(plan) = where the handle sits.
+ * edge "left" on a text bar pins the right edge and changes duration (resize, not slide).
+ * edge "right" pins the left edge and changes duration.
+ * value(x, plan0) = field value for right-edge / curtain handles.
  */
 const HANDLES = [
   {
     row: 'c',
     field: 'in/duration',
+    edge: 'right',
     label: 'Curtain in',
     at: (p) => p.curtainIn[1],
     value: (x) => x,
@@ -61,19 +65,24 @@ const HANDLES = [
   {
     row: 'c',
     field: 'outStart',
+    edge: 'left',
     label: 'Curtain out starts',
     at: (p) => p.curtainOut[0],
     value: (x) => x,
   },
   {
     row: 't',
-    field: 'textDelay',
-    label: 'Text in starts',
+    edge: 'left',
+    startField: 'textDelay',
+    durField: 'labelIn/duration',
+    label: 'Text in',
     at: (p) => p.textIn[0],
-    value: (x) => x,
+    span: (p) => p.textIn,
+    minStart: () => 0,
   },
   {
     row: 't',
+    edge: 'right',
     field: 'labelIn/duration',
     label: 'Text in',
     at: (p) => p.textIn[1],
@@ -81,13 +90,17 @@ const HANDLES = [
   },
   {
     row: 't',
-    field: 'textOutStart',
-    label: 'Text out starts',
+    edge: 'left',
+    startField: 'textOutStart',
+    durField: 'labelOut/duration',
+    label: 'Text out',
     at: (p) => p.textOut[0],
-    value: (x) => x,
+    span: (p) => p.textOut,
+    minStart: (p) => p.textIn[1],
   },
   {
     row: 't',
+    edge: 'right',
     field: 'labelOut/duration',
     label: 'Text out',
     at: (p) => p.textOut[1],
@@ -163,7 +176,7 @@ function placeGap(el, from, to, total, trackW, title) {
   el.title = title + ' ' + fmtS(len) + 's';
 }
 
-function curtainTimeline({ planOf, setField, onDrag }) {
+function curtainTimeline({ planOf, setField, setResize, onDrag }) {
   const bars = { c: [], t: [] };
   const handles = [];
   let curtainGap = null;
@@ -210,10 +223,30 @@ function curtainTimeline({ planOf, setField, onDrag }) {
     return null;
   };
   const fieldValue = (def, p) => {
+    if (def.edge === 'left' && def.span) {
+      const [a, b] = def.span(p);
+      return b - a;
+    }
     if (def.field === 'in/duration') return p.curtainIn[1] - p.curtainIn[0];
     if (def.field === 'labelIn/duration') return p.textIn[1] - p.textIn[0];
     if (def.field === 'labelOut/duration') return p.textOut[1] - p.textOut[0];
     return def.at(p);
+  };
+  /** Apply a handle at absolute time x (already stepped). Returns the value shown in the readout. */
+  const applyHandle = (def, x, p0) => {
+    // Text left edge: pin the right edge, change duration (start moves only as resize).
+    if (def.edge === 'left' && def.span) {
+      const end = def.span(p0)[1];
+      const minS = def.minStart(p0);
+      const start = Number(Math.min(end, Math.max(minS, x)).toFixed(2));
+      const dur = Number((end - start).toFixed(2));
+      setResize(def.startField, start, def.durField, dur);
+      return dur;
+    }
+    const raw = def.value(x, p0);
+    const v = clampTo(def.field, raw, p0);
+    setField(def.field, v);
+    return v;
   };
   const beginHandle = (el) => {
     drag.el = el;
@@ -283,18 +316,16 @@ function curtainTimeline({ planOf, setField, onDrag }) {
           if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
           e.preventDefault();
           const p = planOf();
-          const cur = def.at(p);
           const step = e.shiftKey ? 0.1 : 0.01;
-          // For duration handles, nudge the field value, not the absolute edge alone.
-          const fieldCur =
-            def.field === 'labelIn/duration'
-              ? p.textIn[1] - p.textIn[0]
-              : def.field === 'labelOut/duration'
-                ? p.textOut[1] - p.textOut[0]
-                : def.field === 'in/duration'
-                  ? p.curtainIn[1]
-                  : cur;
-          const raw = fieldCur + (e.key === 'ArrowRight' ? 1 : -1) * step;
+          const dir = e.key === 'ArrowRight' ? 1 : -1;
+          // Nudge the edge in time; left text edges resize (pin end), others use field maths.
+          if (def.edge === 'left' && def.span) {
+            const x = Math.round((def.at(p) + dir * step) / step) * step;
+            show(def.label, applyHandle(def, x, p));
+            return;
+          }
+          const fieldCur = fieldValue(def, p);
+          const raw = fieldCur + dir * step;
           const v = clampTo(def.field, Math.round(raw / step) * step, p);
           setField(def.field, v);
           show(def.label, v);
@@ -368,12 +399,9 @@ function curtainTimeline({ planOf, setField, onDrag }) {
         if (Math.abs(dx) < 3) return;
         beginHandle(dx > 0 ? drag.list.at(-1) : drag.list[0]);
       }
-      const x = ((e.clientX - r.left) / r.width) * total;
+      const x = Math.round((((e.clientX - r.left) / r.width) * total) / step) * step;
       const def = drag.el.__def;
-      const raw = Math.round(def.value(x, drag.p0) / step) * step;
-      const v = clampTo(def.field, raw, drag.p0);
-      setField(def.field, v);
-      show(def.label, v);
+      show(def.label, applyHandle(def, x, drag.p0));
     });
     const end = (e) => {
       if (!drag || e.pointerId !== drag.id) return;
@@ -545,6 +573,17 @@ export function pageTransitionGroup(store, bridge) {
     set(CURTAIN + '/' + rel, clamped, 'curtain:' + CURTAIN + '/' + rel);
   };
 
+  /** Resize a text bar from the left: pin end, write start + duration together. */
+  const setResize = (startField, start, durField, dur) => {
+    store.batch(
+      () => {
+        set(CURTAIN + '/' + startField, start, 'curtain:' + CURTAIN + '/' + startField);
+        set(CURTAIN + '/' + durField, dur, 'curtain:' + CURTAIN + '/' + durField);
+      },
+      { source: 'panel' },
+    );
+  };
+
   const isPartialNumber = (raw) => {
     const t = raw.trim();
     return t === '' || t === '-' || t === '.' || t === '-.' || /^-?\d+\.$/.test(t);
@@ -707,6 +746,7 @@ export function pageTransitionGroup(store, bridge) {
   const timeline = curtainTimeline({
     planOf,
     setField: (field, v) => setCurtainField(field, v),
+    setResize,
     onDrag: (on) => (el.__dragging = on),
   });
 
