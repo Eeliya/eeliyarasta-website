@@ -283,6 +283,9 @@ export function createBridge({ iframe, store, labelFor }) {
       if (mode !== 'text' || !el) return;
       bridge.select(el, 'text');
       emit('textFocus', el.dataset.edit);
+      // Focus can scroll the smooth-scroll wrapper behind ScrollSmoother's back (e.g. Tab
+      // to an off-screen field): make sure the field ends up visible.
+      setTimeout(() => bridge.reveal(el), 50);
     });
 
     doc.addEventListener('input', (e) => {
