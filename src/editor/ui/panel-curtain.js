@@ -16,9 +16,9 @@ const SHARED_EASE_PTR = CURTAIN + '/ease';
 
 // Advanced rows. 'pair' = duration + ease. 'hold' is derived (writes textOutStart only).
 const CURTAIN_ROWS = [
-  ['pair', '/in', 'Curtain in'],
+  ['pair', '/in', 'Curtain in (s)'],
   ['/textDelay', 'Text in starts (s)', { hint: 'Absolute start of the text-in bar from t=0.' }],
-  ['pair', '/labelIn', 'Text in'],
+  ['pair', '/labelIn', 'Text in (s)'],
   [
     '/hold',
     'Text stays (s)',
@@ -34,7 +34,7 @@ const CURTAIN_ROWS = [
       hint: 'Absolute start of the text-out bar. The gap before it is how long the text stays.',
     },
   ],
-  ['pair', '/labelOut', 'Text out'],
+  ['pair', '/labelOut', 'Text out (s)'],
   [
     '/outStart',
     'Curtain out starts (s)',
@@ -43,7 +43,7 @@ const CURTAIN_ROWS = [
       hint: 'Absolute time from the start of the transition. The curtain-out bar runs from here to total.',
     },
   ],
-  ['pair', '/out', 'Curtain out'],
+  ['pair', '/out', 'Curtain out (s)'],
 ];
 
 /**
@@ -675,7 +675,7 @@ export function pageTransitionGroup(store, bridge) {
     const dPtr = CURTAIN + dRel;
     const ePtr = CURTAIN + eRel;
     const input = numInput(dPtr, dRel, 'f__num', { min: 0 });
-    input.title = label + ' duration (seconds)';
+    input.title = label;
     const ease = easeField({
       gsap: bridge.api?.gsap,
       value: get(ePtr) || sharedEaseValue(),
@@ -687,12 +687,7 @@ export function pageTransitionGroup(store, bridge) {
       'div',
       { class: ['tf', changed() && 'is-changed'] },
       head(label),
-      h(
-        'div',
-        { class: 'f__pair' },
-        h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')),
-        ease.el,
-      ),
+      h('div', { class: 'f__pair' }, input, ease.el),
     );
     numbers.push({ ptr: dPtr, rel: dRel, input, wrap, changed, min: 0 });
     advEases.push({ ptr: ePtr, rel: eRel, ease, wrap });
