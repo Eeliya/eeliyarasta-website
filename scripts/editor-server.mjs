@@ -4,7 +4,11 @@
  * production build has no editor and no endpoints.
  *
  *   GET  /__editor/content  → all editable content files
- *   POST /__editor/save     → write content files to disk ({ files: { name: json } })
+ *   POST /__editor/save     → write content files to disk ({ files: { name: json } }): a draft
+ *   GET  /__editor/status   → saved-but-unpublished content files (git status vs HEAD) and
+ *                             commits not pushed yet
+ *   POST /__editor/publish  → { message }: git add + commit ONLY the changed content files in
+ *                             one commit, then git push origin <current branch>
  *
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
@@ -12,8 +16,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
+import { diff } from '../src/editor/lib/diff.js';
 
 export const EDITABLE = new Set(editorConfig.files);
 const CONTENT_DIR = editorConfig.contentDir;
@@ -64,6 +70,163 @@ async function readJSON(req) {
   return JSON.parse((await readBody(req)) || '{}');
 }
 
+// ------------------------------------------------------------------ git (Publish)
+
+/** Run git without a shell. Never prompts in the terminal (a missing login fails fast). */
+function git(root, args, { timeout = 30_000 } = {}) {
+  return new Promise((resolve) => {
+    execFile('git', args, {
+      cwd: root,
+      timeout,
+      maxBuffer: 10 * 1024 * 1024,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' },
+    }, (err, stdout, stderr) => {
+      resolve({
+        ok: !err,
+        stdout: String(stdout),
+        stderr: String(stderr),
+        output: `${stdout}${stderr}`.trim() || (err ? err.message : ''),
+        timedOut: !!err?.killed,
+      });
+    });
+  });
+}
+
+/** https://github.com/<owner>/<repo> from the origin URL (falls back to src/editor/config.js). */
+function repoUrlFrom(remote) {
+  const m = /github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/.exec(remote || '');
+  return m ? `https://github.com/${m[1]}/${m[2]}` : `https://github.com/${editorConfig.owner}/${editorConfig.repo}`;
+}
+
+const parseJSON = (text) => {
+  try { return JSON.parse(text); } catch { return undefined; }
+};
+
+/**
+ * Content files that differ from HEAD (the ones Publish would commit), plus branch and
+ * push state. Only the editable files (src/editor/config.js) are ever looked at.
+ */
+export async function contentStatus(root) {
+  const inside = await git(root, ['rev-parse', '--is-inside-work-tree']);
+  if (!inside.ok) return { git: false, error: 'Not a git repository', files: [], ahead: 0 };
+  const [branchR, prefixR, remoteR] = await Promise.all([
+    git(root, ['rev-parse', '--abbrev-ref', 'HEAD']),
+    git(root, ['rev-parse', '--show-prefix']),
+    git(root, ['remote', 'get-url', 'origin']),
+  ]);
+  const branch = branchR.stdout.trim();
+  const prefix = prefixR.stdout.trim();
+  const rel = [...EDITABLE].map((f) => `${CONTENT_DIR}/${f}`);
+
+  const st = await git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', ...rel]);
+  const files = [];
+  for (const entry of st.stdout.split('\0').filter(Boolean)) {
+    const code = entry.slice(0, 2);
+    const repoPath = entry.slice(3);
+    const p = repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : repoPath;
+    const name = p.slice(CONTENT_DIR.length + 1);
+    if (!EDITABLE.has(name) || p !== `${CONTENT_DIR}/${name}`) continue;
+    const status = code === '??' ? 'new' : code.includes('D') ? 'deleted' : code.includes('A') ? 'new' : 'modified';
+    files.push({ name, path: p, status });
+  }
+  await Promise.all(files.map(async (f) => {
+    const [numstat, head] = await Promise.all([
+      git(root, ['diff', '--numstat', 'HEAD', '--', f.path]),
+      git(root, ['show', `HEAD:${prefix}${f.path}`]),
+    ]);
+    const [added, removed] = numstat.stdout.trim().split(/\s+/);
+    const disk = fs.existsSync(path.join(root, f.path)) ? parseJSON(fs.readFileSync(path.join(root, f.path), 'utf8')) : undefined;
+    const before = head.ok ? parseJSON(head.stdout) : undefined;
+    f.added = Number(added) || (f.status === 'new' ? fs.readFileSync(path.join(root, f.path), 'utf8').split('\n').length - 1 : 0);
+    f.removed = Number(removed) || 0;
+    f.changes = before === undefined || disk === undefined ? 1 : Math.max(1, diff(before, disk).length);
+  }));
+  files.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Commits on this branch that origin doesn't have yet (e.g. a publish whose push failed).
+  let upstream = (await git(root, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'])).stdout.trim();
+  if (!upstream && branch !== 'HEAD' && (await git(root, ['rev-parse', '--verify', '-q', `refs/remotes/origin/${branch}`])).ok) upstream = `origin/${branch}`;
+  const ahead = upstream ? Number((await git(root, ['rev-list', '--count', `${upstream}..HEAD`])).stdout.trim()) || 0 : 0;
+  const unpushed = ahead
+    ? (await git(root, ['log', '--format=%h%x09%s', '-n', '20', `${upstream}..HEAD`])).stdout.trim().split('\n').filter(Boolean)
+        .map((line) => ({ hash: line.split('\t')[0], subject: line.split('\t').slice(1).join('\t') }))
+    : [];
+
+  return {
+    git: true,
+    branch,
+    detached: branch === 'HEAD',
+    upstream: upstream || null,
+    ahead,
+    unpushed,
+    remote: remoteR.ok ? remoteR.stdout.trim() : null,
+    repoUrl: repoUrlFrom(remoteR.stdout.trim()),
+    files,
+  };
+}
+
+/** Readable hint for common push failures. */
+function pushHint(output) {
+  if (/could not read Username|Authentication failed|terminal prompts disabled|Permission denied|403|invalid credentials|could not read Password/i.test(output)) {
+    return 'Git on this machine has no working GitHub login. In this repo\'s terminal run `gh auth login` (HTTPS) and `gh auth setup-git`, then click Publish again to push. Your commit is kept locally.';
+  }
+  if (/non-fast-forward|fetch first|rejected/i.test(output)) {
+    return 'GitHub has commits you don\'t have yet. Run `git pull --rebase` in the terminal, then click Publish again to push.';
+  }
+  if (/Could not resolve host|unable to access|timed out/i.test(output)) return 'Could not reach GitHub. Check the connection and try again.';
+  return '';
+}
+
+let publishing = false;
+
+/** Commit every changed content file in one commit and push the branch. */
+export async function publish(root, message) {
+  const s = await contentStatus(root);
+  if (!s.git) return { status: 400, body: { error: s.error } };
+  if (s.detached) return { status: 409, body: { error: 'HEAD is detached: check out a branch before publishing.' } };
+  if (!s.files.length && !s.ahead) return { status: 400, body: { error: 'Nothing to publish: no saved content changes and no unpushed commits.' } };
+
+  let hash = null;
+  let committed = false;
+  const steps = [];
+  if (s.files.length) {
+    const msg = String(message || '').trim();
+    if (!msg) return { status: 400, body: { error: 'A commit message is required.' } };
+    if (msg.length > 5000) return { status: 400, body: { error: 'Commit message is too long.' } };
+    const paths = s.files.map((f) => f.path);
+    const add = await git(root, ['add', '--', ...paths]);
+    steps.push({ cmd: `git add -- ${paths.join(' ')}`, ...add });
+    if (!add.ok) return { status: 500, body: { error: 'git add failed', output: add.output, steps } };
+    // With pathspecs, `git commit` commits ONLY these paths, even if other files are staged.
+    const commit = await git(root, ['commit', '-m', msg, '--', ...paths]);
+    steps.push({ cmd: `git commit -m <message> -- ${paths.join(' ')}`, ...commit });
+    if (!commit.ok) return { status: 500, body: { error: 'git commit failed', output: commit.output, steps } };
+    committed = true;
+  }
+  hash = (await git(root, ['rev-parse', 'HEAD'])).stdout.trim();
+  const url = `${s.repoUrl}/commit/${hash}`;
+  const push = await git(root, ['push', 'origin', s.branch], { timeout: 120_000 });
+  steps.push({ cmd: `git push origin ${s.branch}`, ...push });
+  const files = s.files.map((f) => f.path);
+  if (!push.ok) {
+    return {
+      status: 502,
+      body: {
+        error: push.timedOut ? 'git push timed out' : 'git push failed',
+        output: push.output,
+        hint: pushHint(push.output),
+        committed,
+        hash,
+        short: hash.slice(0, 7),
+        url,
+        branch: s.branch,
+        files,
+      },
+    };
+  }
+  return { status: 200, body: { ok: true, committed, pushed: true, hash, short: hash.slice(0, 7), url, branch: s.branch, files, output: push.output } };
+}
+
 const sendJSON = (res, status, data) => {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -94,6 +257,22 @@ export function editorMiddleware({ root, logger, onWrite = () => {} }) {
         for (const n of names) fs.writeFileSync(path.join(root, CONTENT_DIR, n), formatJSON(files[n]));
         log(`editor saved ${names.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
         return sendJSON(res, 200, { ok: true, written: names });
+      }
+
+      if (route === 'GET /status') return sendJSON(res, 200, await contentStatus(root));
+
+      if (route === 'POST /publish') {
+        const { message } = await readJSON(req);
+        if (publishing) return sendJSON(res, 409, { error: 'A publish is already running.' });
+        publishing = true;
+        try {
+          const { status, body } = await publish(root, message);
+          if (body.ok) log(`editor published ${body.short} to origin/${body.branch}`);
+          else logger.warn(`editor publish: ${body.error}${body.output ? `\n${body.output}` : ''}`, { timestamp: true });
+          return sendJSON(res, status, body);
+        } finally {
+          publishing = false;
+        }
       }
 
       sendJSON(res, 404, { error: 'Unknown editor endpoint' });

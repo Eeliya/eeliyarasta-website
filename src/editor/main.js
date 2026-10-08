@@ -5,11 +5,14 @@
  *   Text    - click text in the preview to edit it (animations paused)
  *   Motion  - click an animated element to edit its preset / timing / trigger
  *
- * Edits only touch in-memory copies of content/*.json (see store.js). Saving writes
- * them to disk through the dev server. The editor only exists under `npm run dev`.
+ * Edits only touch in-memory copies of content/*.json (see store.js).
+ *   Save    - writes the changed files to content/ on disk (a draft: the preview and
+ *             Browse show it, nothing leaves this machine)
+ *   Publish - commits every saved content change in one commit and pushes it
+ * Both go through the dev server (scripts/editor-server.mjs). The editor only exists
+ * under `npm run dev`.
  */
 import './styles/editor.scss';
-import config from './config.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
@@ -22,7 +25,7 @@ import { getRoutes } from '../site/routes.js';
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
-const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false };
+const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false, publishing: false, pub: null };
 
 // ---------------------------------------------------------------- layout
 const app = document.getElementById('editor');
@@ -41,8 +44,9 @@ const undoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Undo ($
 const redoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Redo (${MOD}+Shift+Z)`, onclick: () => store.redo() }, '↷');
 const sourceLine = h('span', { class: 'ed-source' });
 const status = h('div', { class: 'ed-status', role: 'status', 'aria-live': 'polite' });
-const account = h('div', { class: 'ed-account' });
-const saveBtn = h('button', { type: 'button', class: 'btn-primary ed-save', onclick: () => save() }, 'Save');
+const pending = h('div', { class: 'ed-pending' });
+const saveBtn = h('button', { type: 'button', class: 'btn-ghost ed-save', onclick: () => save() }, 'Save');
+const publishBtn = h('button', { type: 'button', class: 'btn-primary ed-publish', onclick: () => publishDialog() }, 'Publish');
 const panel = h('aside', { class: 'ed-panel' },
   h('header', { class: 'ed-head' },
     h('div', { class: 'ed-brand' }, h('span', { class: 'ed-logo' }, 'Editor'), sourceLine),
@@ -50,7 +54,7 @@ const panel = h('aside', { class: 'ed-panel' },
     h('div', { class: 'ed-bar' }, pageSelect, vpBtn, undoBtn, redoBtn),
   ),
   body,
-  h('footer', { class: 'ed-foot' }, status, h('div', { class: 'ed-foot__row' }, account, saveBtn)),
+  h('footer', { class: 'ed-foot' }, pending, status, h('div', { class: 'ed-foot__row' }, saveBtn, publishBtn)),
 );
 const toasts = h('div', { class: 'ed-toasts' });
 clear(app, stage, panel, toasts);
@@ -79,18 +83,55 @@ function countChanges() {
   return store.dirtyFiles().reduce((n, f) => n + store.changes(f).length, 0);
 }
 
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+/** Saved-but-unpublished content changes, from the last /__editor/status. */
+const pubFiles = () => state.pub?.files || [];
+const pubChanges = () => pubFiles().reduce((n, f) => n + (f.changes || 1), 0);
+
 function renderChrome() {
   for (const [m, b] of Object.entries(modeBtns)) b.classList.toggle('is-active', m === state.mode);
   undoBtn.disabled = !store.canUndo();
   redoBtn.disabled = !store.canRedo();
   const n = countChanges();
-  saveBtn.disabled = !n || state.saving;
+  saveBtn.disabled = !n || state.saving || state.publishing;
   saveBtn.textContent = state.saving ? 'Saving…' : `Save${n ? ` · ${n}` : ''}`;
-  saveBtn.title = `Write content/*.json (${MOD}+S)`;
+  saveBtn.title = `Write the changes to content/*.json as a draft (${MOD}+S)`;
+  const files = pubFiles();
+  const ahead = state.pub?.ahead || 0;
+  publishBtn.disabled = state.publishing || (!files.length && !ahead && !n);
+  publishBtn.textContent = state.publishing ? 'Publishing…' : `Publish${files.length ? ` · ${pubChanges()}` : ''}`;
+  publishBtn.title = `Commit all saved content changes in one commit and push to ${state.pub?.branch ? `origin/${state.pub.branch}` : 'GitHub'}`;
   sourceLine.textContent = 'dev · local files';
   sourceLine.dataset.kind = 'dev';
-  clear(account, h('span', { class: 'muted' }, 'Saves write to ', h('code', {}, 'content/')));
+  renderPending();
   document.title = `${n ? '● ' : ''}Editor · Eeliya Rasta`;
+}
+
+/** Footer line: what Publish would send. */
+function renderPending() {
+  const pub = state.pub;
+  const files = pubFiles();
+  const ahead = pub?.ahead || 0;
+  pending.dataset.kind = files.length || ahead ? 'pending' : 'clean';
+  if (!pub) return clear(pending, h('span', { class: 'muted' }, 'Checking for unpublished changes…'));
+  if (pub.error) return clear(pending, h('span', { class: 'muted' }, `Publish unavailable: ${pub.error}`));
+  clear(pending,
+    h('i', { class: 'ed-pending__dot' }),
+    files.length
+      ? h('span', {}, h('b', { class: 'ed-pending__count' }, plural(pubChanges(), 'saved change')), ` not published · ${plural(files.length, 'file')}`)
+      : h('span', { class: 'muted' }, 'Everything saved is published'),
+    ahead ? h('span', { class: 'muted' }, ` · ${plural(ahead, 'commit')} not pushed`) : null,
+  );
+}
+
+async function refreshPublishStatus() {
+  try {
+    state.pub = await source.status();
+  } catch (err) {
+    state.pub = { error: err.message, files: [], ahead: 0 };
+  }
+  renderChrome();
+  if (state.mode === 'browse') renderOverview();
 }
 
 // ---------------------------------------------------------------- bridge + panels
@@ -107,7 +148,8 @@ function renderOverview() {
         h('li', {}, h('b', {}, 'Text'), ' — click any outlined text in the preview and type.'),
         h('li', {}, h('b', {}, 'Motion'), ' — click an animated element to change its preset, timing, ease and scroll trigger. Changes replay live.'),
         h('li', {}, 'Browse navigates like the real site. In the edit modes, hold Alt to click through links.'),
-        h('li', {}, 'Saving writes content/*.json on this machine (commit with git as usual).'),
+        h('li', {}, h('b', {}, 'Save'), ' writes content/*.json on this machine: a draft you can check in Browse. Nothing is pushed.'),
+        h('li', {}, h('b', {}, 'Publish'), ' commits all saved content changes in one commit and pushes them to GitHub.'),
       ),
       h('p', { class: 'kbd-list' },
         h('span', {}, h('kbd', {}, `${MOD}+E`), ' edit mode'),
@@ -129,10 +171,31 @@ function renderOverview() {
       )),
       dirty.length ? h('button', { type: 'button', class: 'link link--danger', onclick: () => confirm('Discard all unsaved changes?') && store.discard() }, 'Discard all changes') : null,
     ),
+    renderUnpublished(),
     h('section', { class: 'grp' },
       h('h4', { class: 'grp__title' }, 'Later'),
       h('p', { class: 'hint' }, 'Swapping and reordering album photos will be added here; for now edit people.json / places.json and media/ by hand.'),
     ),
+  );
+}
+
+function fileLine(f) {
+  return h('li', { class: 'pfile' },
+    h('span', { class: ['pfile__st', `is-${f.status}`] }, f.status === 'new' ? 'A' : f.status === 'deleted' ? 'D' : 'M'),
+    h('code', {}, f.path),
+    h('span', { class: 'muted' }, ` · ${plural(f.changes || 1, 'change')}`),
+    f.added !== undefined ? h('span', { class: 'pfile__stat' }, h('span', { class: 'add' }, `+${f.added}`), ' ', h('span', { class: 'del' }, `−${f.removed}`)) : null,
+  );
+}
+
+function renderUnpublished() {
+  const files = pubFiles();
+  const ahead = state.pub?.ahead || 0;
+  return h('section', { class: 'grp' },
+    h('h4', { class: 'grp__title' }, `Saved, not published${files.length || ahead ? '' : ': none'}`),
+    files.length ? h('ul', { class: 'files' }, files.map(fileLine)) : null,
+    ahead ? h('p', { class: 'hint' }, `${plural(ahead, 'commit')} on ${state.pub.branch} not pushed yet; Publish pushes ${ahead === 1 ? 'it' : 'them'} too.`) : null,
+    files.length || ahead ? h('button', { type: 'button', class: 'link', onclick: () => publishDialog() }, 'Publish…') : null,
   );
 }
 
@@ -206,20 +269,23 @@ async function save() {
   return saveDev();
 }
 
-async function saveDev() {
+async function saveDev({ quiet = false } = {}) {
   const dirty = store.dirtyFiles();
   state.saving = true;
   renderChrome();
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
-    toast(h('span', {}, 'Saved ', dirty.map((f) => h('code', {}, `content/${f}`)).flatMap((c, i) => (i ? [', ', c] : [c]))), { kind: 'ok' });
+    if (!quiet) toast(h('span', {}, 'Saved ', dirty.map((f) => h('code', {}, `content/${f}`)).flatMap((c, i) => (i ? [', ', c] : [c])), ' (draft, not published)'), { kind: 'ok' });
     setStatus(`Saved ${dirty.length} file${dirty.length > 1 ? 's' : ''} · ${new Date().toLocaleTimeString()}`);
+    return true;
   } catch (err) {
     toast(`Save failed: ${err.message}`, { kind: 'error', timeout: 0 });
+    return false;
   } finally {
     state.saving = false;
     renderChrome();
+    refreshPublishStatus();
   }
 }
 
@@ -231,6 +297,139 @@ function modal(title, ...children) {
   document.body.append(wrap);
   wrap.close = close;
   return wrap;
+}
+
+// ---------------------------------------------------------------- publish
+const defaultMessage = (names) =>
+  names.length ? `Content: update ${names.map((n) => n.replace(/\.json$/, '')).join(', ')} (visual editor)` : '';
+
+/**
+ * Publish dialog: lists what will be committed (saved content files, plus unsaved edits
+ * if "save first" is ticked), takes a commit message, then commit + push via the dev server.
+ */
+async function publishDialog() {
+  if (state.publishing || document.querySelector('.modal')) return;
+  await refreshPublishStatus();
+  const pub = state.pub || { files: [], ahead: 0 };
+  if (pub.error) return toast(`Can't publish: ${pub.error}`, { kind: 'error', timeout: 0 });
+  const dirty = store.dirtyFiles();
+  const n = countChanges();
+
+  const saveFirst = h('input', { type: 'checkbox', checked: dirty.length > 0 });
+  const msg = h('textarea', { class: 'tf__input', rows: 3, spellcheck: true });
+  const list = h('ul', { class: 'files' });
+  const result = h('div', { class: 'pub-result', hidden: true });
+  const go = h('button', { type: 'button', class: 'btn-primary' }, 'Publish');
+  const cancel = h('button', { type: 'button', class: 'link', onclick: () => m.close() }, 'Cancel');
+  const msgWrap = h('div', {}, h('label', { class: 'tf__label' }, 'Commit message'), msg);
+
+  const willCommit = () => {
+    const names = new Set(pub.files.map((f) => f.name));
+    if (saveFirst.checked) dirty.forEach((f) => names.add(f));
+    return [...names].sort();
+  };
+  let touched = false;
+  msg.addEventListener('input', () => (touched = true));
+  const renderList = () => {
+    const unsaved = saveFirst.checked ? dirty.filter((f) => !pub.files.some((p) => p.name === f)) : [];
+    clear(list,
+      pub.files.map((f) => {
+        const li = fileLine(f);
+        if (saveFirst.checked && dirty.includes(f.name)) li.append(h('span', { class: 'muted' }, ` + ${plural(store.changes(f.name).length, 'unsaved change')}`));
+        return li;
+      }),
+      unsaved.map((f) => h('li', { class: 'pfile' }, h('span', { class: 'pfile__st is-modified' }, 'M'), h('code', {}, `content/${f}`),
+        h('span', { class: 'muted' }, ` · ${plural(store.changes(f).length, 'change')} · unsaved, saved first`))),
+    );
+    const names = willCommit();
+    list.hidden = !names.length;
+    msgWrap.hidden = !names.length;
+    if (!touched) msg.value = defaultMessage(names);
+    go.disabled = !names.length && !pub.ahead;
+    go.textContent = names.length ? 'Publish' : `Push ${plural(pub.ahead, 'commit')}`;
+  };
+  saveFirst.addEventListener('change', renderList);
+
+  const branch = pub.branch || 'main';
+  const m = modal('Publish to GitHub',
+    h('p', { class: 'hint' }, 'Commits the saved content changes in ', h('b', {}, 'one commit'), ' and runs ', h('code', {}, `git push origin ${branch}`), '. Only files in ', h('code', {}, 'content/'), ' are committed.'),
+    dirty.length ? h('label', { class: 'pub-save' }, saveFirst,
+      h('span', {}, `Save my ${plural(n, 'unsaved edit')} first and include ${n === 1 ? 'it' : 'them'}`)) : null,
+    list,
+    pub.ahead ? h('div', { class: 'pub-ahead' },
+      h('p', { class: 'hint' }, `Also pushes ${plural(pub.ahead, 'earlier commit')} not on ${pub.upstream || `origin/${branch}`} yet:`),
+      h('ul', { class: 'commits' }, (pub.unpushed || []).map((c) => h('li', {}, h('code', {}, c.hash), ' ', c.subject)))) : null,
+    msgWrap,
+    result,
+    h('div', { class: 'modal__actions' }, cancel, go),
+  );
+  renderList();
+  if (!msgWrap.hidden) {
+    msg.focus();
+    msg.select();
+  }
+
+  go.onclick = async () => {
+    const names = willCommit();
+    const message = msg.value.trim();
+    if (names.length && !message) return msg.focus();
+    go.disabled = true;
+    result.hidden = true;
+    state.publishing = true;
+    renderChrome();
+    try {
+      if (saveFirst.checked && store.dirtyFiles().length) {
+        go.textContent = 'Saving…';
+        if (!(await saveDev({ quiet: true }))) throw Object.assign(new Error('Saving the unsaved edits failed, nothing was published.'), { phase: 'save' });
+      }
+      go.textContent = 'Publishing…';
+      const res = await source.publish(message);
+      showPublished(res);
+    } catch (err) {
+      showPublishError(err);
+    } finally {
+      state.publishing = false;
+      await refreshPublishStatus();
+    }
+  };
+
+  function showPublished(res) {
+    clear(result,
+      h('p', { class: 'pub-ok' }, '✓ Published ', h('a', { href: res.url, target: '_blank', rel: 'noopener' }, h('code', {}, res.short), ' ↗'), ` to origin/${res.branch}`),
+      h('p', { class: 'hint' }, h('a', { href: res.url, target: '_blank', rel: 'noopener', class: 'pub-url' }, res.url)),
+      res.files?.length ? h('p', { class: 'hint' }, `Committed: ${res.files.join(', ')}`) : h('p', { class: 'hint' }, 'Pushed the earlier commits; there were no new content changes.'),
+    );
+    result.hidden = false;
+    result.dataset.kind = 'ok';
+    [list, msgWrap, m.querySelector('.pub-save'), m.querySelector('.pub-ahead')].forEach((el) => el && (el.hidden = true));
+    go.hidden = true;
+    cancel.textContent = 'Close';
+    toast(h('span', {}, `Published ${res.short} `, h('a', { href: res.url, target: '_blank', rel: 'noopener' }, 'View commit ↗')), { kind: 'ok', timeout: 0 });
+    setStatus(`Published ${res.short} · ${new Date().toLocaleTimeString()}`);
+  }
+
+  function showPublishError(err) {
+    clear(result,
+      h('p', { class: 'error' }, err.committed ? `Committed locally as ${err.short}, but the push failed.` : err.message),
+      err.committed ? h('p', { class: 'hint' }, `${err.error}. The commit stays on your machine; Publish again to retry the push.`) : null,
+      err.hint ? h('p', { class: 'pub-hint' }, err.hint) : null,
+      err.output ? h('pre', { class: 'pub-out' }, err.output) : null,
+    );
+    result.hidden = false;
+    result.dataset.kind = 'error';
+    if (err.committed) {
+      list.hidden = true;
+      msgWrap.hidden = true;
+      saveFirst.checked = false;
+      m.querySelector('.pub-save')?.setAttribute('hidden', '');
+      go.textContent = 'Retry push';
+      touched = false;
+      pub.files = [];
+      pub.ahead = Math.max(1, pub.ahead || 0);
+    } else go.textContent = 'Try again';
+    go.disabled = false;
+    setStatus(err.committed ? `Commit ${err.short} not pushed` : 'Publish failed');
+  }
 }
 
 // ---------------------------------------------------------------- keyboard
@@ -279,6 +478,8 @@ async function boot() {
   renderPages();
   renderChrome();
   renderBody();
+  refreshPublishStatus();
+  window.addEventListener('focus', () => !state.publishing && refreshPublishStatus());
   bridge.load(new URLSearchParams(location.search).get('path') || '/');
 }
 
