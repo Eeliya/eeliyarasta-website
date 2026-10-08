@@ -1,4 +1,4 @@
-import { html, esc, img, pad, ed, lines, words } from '../helpers.js';
+import { html, esc, img, pad, ed, lines, words, isEnabled, sectionAttrs } from '../helpers.js';
 import { sectionHead, projectList } from './partials.js';
 
 const heroPhoto = (ctx, p, i) => {
@@ -22,8 +22,9 @@ const peopleTiles = (people, perPerson = 4) => {
 export function home(ctx) {
   const { home, people, places, projects, site } = ctx;
   const { hero, sections } = home;
+  const introOn = isEnabled(sections?.intro);
   return html`
-  <section class="hero" data-hero>
+  <section class="hero" data-hero${sectionAttrs('hero', hero.enabled !== false)}>
     <div class="hero__photos" data-anim="hero.photos">
       ${hero.photos.map((p, i) => heroPhoto(ctx, p, i))}
     </div>
@@ -35,11 +36,11 @@ export function home(ctx) {
     </div>
   </section>
 
-  <section class="intro">
+  <section class="intro"${sectionAttrs('intro', introOn)}>
     <p class="intro__text" data-anim="home.intro"${ed('home.json', ['intro'], 'block')}>${lines(home.intro)}</p>
   </section>
 
-  <section class="section section--people">
+  <section class="section section--people"${sectionAttrs('people', isEnabled(sections.people))}>
     ${sectionHead({ key: 'people', index: 1, ...sections.people, href: '/people/' })}
     <div class="tiles" data-anim="home.people.grid">
       ${peopleTiles(people).map(({ person, image, index }) => html`
@@ -50,7 +51,7 @@ export function home(ctx) {
     </div>
   </section>
 
-  <section class="section section--places">
+  <section class="section section--places"${sectionAttrs('places', isEnabled(sections.places))}>
     ${sectionHead({ key: 'places', index: 2, ...sections.places, href: '/places/' })}
     <div class="placecards" data-anim="home.places.grid">
       ${places.map((p, i) => html`
@@ -64,7 +65,7 @@ export function home(ctx) {
     </div>
   </section>
 
-  <section class="section section--projects">
+  <section class="section section--projects"${sectionAttrs('projects', isEnabled(sections.projects))}>
     ${sectionHead({ key: 'projects', index: 3, ...sections.projects, href: '/projects/' })}
     ${projectList(ctx, projects, { id: 'home-projects' })}
   </section>`;

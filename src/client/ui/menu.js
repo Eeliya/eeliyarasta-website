@@ -128,7 +128,16 @@ function setMobile(open, { focusToggle = false } = {}) {
   if (open === mobile.open) return;
   btn.setAttribute('aria-expanded', String(open));
   document.documentElement.classList.toggle('menu-open', open);
-  btn.querySelector('.menu-toggle__label').textContent = open ? 'Close' : 'Menu';
+  const label = btn.querySelector('.menu-toggle__label');
+  const textEl = label?.querySelector('span') || label;
+  if (textEl) {
+    if (open) {
+      label.dataset.closedText = textEl.textContent;
+      textEl.textContent = label.dataset.openLabel || 'Close';
+    } else {
+      textEl.textContent = label.dataset.closedText || 'Menu';
+    }
+  }
   lockScroll(open);
   if (open) {
     mobile.show();

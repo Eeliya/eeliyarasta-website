@@ -72,6 +72,62 @@ const GROUPS = {
   'hover-preview': [['Preview', [n(['x'], 'Position across the list', 100, 1, '%'), n(['glide'], 'Glide between rows', 1.5, 0.01, 's')]]],
 };
 
+const CURTAIN = {
+  hold: '/transitions/page/curtain/hold',
+  inDur: '/transitions/page/curtain/in/duration',
+  inEase: '/transitions/page/curtain/in/ease',
+  outDur: '/transitions/page/curtain/out/duration',
+  outEase: '/transitions/page/curtain/out/ease',
+};
+
+function pageTransitionGroup(store, bridge) {
+  const get = (ptr) => store.get(FILE, ptr);
+  const base = (ptr) => store.getBase(FILE, ptr);
+  const set = (ptr, value, key) => store.set(FILE, ptr, value, { key, source: 'panel' });
+  const row = (ptr, label, { kind = 'number', step = 0.01, min = 0, max = 4 } = {}) => {
+    const value = get(ptr);
+    const changed = JSON.stringify(value) !== JSON.stringify(base(ptr));
+    if (kind === 'ease') {
+      const ease = easeField({
+        gsap: bridge.api?.gsap,
+        value: value || 'expo.inOut',
+        onChange: (v) => set(ptr, v, 'curtain:' + ptr),
+      });
+      return h('div', { class: ['tf', changed && 'is-changed'] },
+        h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' })),
+        ease.el,
+      );
+    }
+    const input = h('input', {
+      class: 'tf__input',
+      type: 'number',
+      step: String(step),
+      min: String(min),
+      max: String(max),
+      value: value ?? '',
+      oninput: (e) => {
+        const n = Number(e.target.value);
+        const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
+        e.target.classList.toggle('is-invalid', !ok);
+        if (ok) set(ptr, n, 'curtain:' + ptr);
+      },
+    });
+    return h('div', { class: ['tf', changed && 'is-changed'] },
+      h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' })),
+      input,
+    );
+  };
+  return h('section', { class: 'grp' },
+    h('h4', { class: 'grp__title' }, 'Page transition'),
+    h('p', { class: 'hint' }, 'Site-wide curtain timing. The label text is edited per page under Content → Page transition.'),
+    row(CURTAIN.hold, 'Hold (seconds)', { max: 3 }),
+    row(CURTAIN.inDur, 'Curtain in (seconds)'),
+    row(CURTAIN.inEase, 'Curtain in ease', { kind: 'ease' }),
+    row(CURTAIN.outDur, 'Curtain out (seconds)'),
+    row(CURTAIN.outEase, 'Curtain out ease', { kind: 'ease' }),
+  );
+}
+
 export function createMotionPanel({ store, bridge, root, toast }) {
   let sel = null; // { el, id, key }
   let scope = 'target';
@@ -152,6 +208,7 @@ export function createMotionPanel({ store, bridge, root, toast }) {
     const items = bridge.animElements();
     const els = cfg().elements || {};
     return h('div', { class: 'mlist' },
+      pageTransitionGroup(store, bridge),
       h('p', { class: 'hint' }, 'Click an animated element in the preview, or pick one below. Hold Alt to click through to links.'),
       items.length ? h('ol', { class: 'mlist__items' }, items.map(({ el, id, key }) => {
         const m = { own: els[key], target: cfg().targets[id] };

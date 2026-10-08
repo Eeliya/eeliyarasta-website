@@ -2,7 +2,7 @@
  * Visual editor (/edit/): the real site in an iframe + a glass side panel.
  *
  *   Browse  - use the site normally; overview of unsaved changes
- *   Text    - click text in the preview to edit it (animations paused)
+ *   Content - click text in the preview to edit it (animations paused)
  *   Motion  - click an animated element to edit its preset / timing / trigger
  *
  * Edits only touch in-memory copies of content/*.json (see store.js).
@@ -18,6 +18,7 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { createTextPanel, labelFor } from './ui/panel-text.js';
 import { createMotionPanel } from './ui/panel-motion.js';
+import { createPageMenu } from './ui/page-menu.js';
 import { h, clear } from './ui/dom.js';
 import { compile } from './lib/pointer.js';
 import { getRoutes } from '../site/routes.js';
@@ -25,7 +26,7 @@ import { getRoutes } from '../site/routes.js';
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
-const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false, publishing: false, pub: null };
+const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false, publishing: false, pub: null, target: { kind: 'page', path: '/', title: 'Home' } };
 
 // ---------------------------------------------------------------- layout
 const app = document.getElementById('editor');
@@ -35,10 +36,17 @@ const stage = h('main', { class: 'ed-stage' }, frameWrap);
 const body = h('div', { class: 'ed-body' });
 const modeBtns = {};
 const modes = h('nav', { class: 'seg ed-modes', 'aria-label': 'Mode' },
-  [['browse', 'Browse'], ['text', 'Text'], ['motion', 'Motion']].map(([m, label]) =>
+  [['browse', 'Browse'], ['text', 'Content'], ['motion', 'Motion']].map(([m, label]) =>
     (modeBtns[m] = h('button', { type: 'button', class: 'seg__btn', dataset: { mode: m }, onclick: () => setMode(m) }, label))),
 );
-const pageSelect = h('select', { class: 'ed-page', 'aria-label': 'Page', onchange: () => bridge.navigate(pageSelect.value) });
+const pageMenu = createPageMenu({
+  onChange: (item) => {
+    state.target = item;
+    if (item.kind === 'page') bridge.navigate(item.path);
+    renderBody(true);
+    renderChrome();
+  },
+});
 const vpBtn = h('button', { type: 'button', class: 'icon-btn', title: 'Toggle mobile viewport', onclick: () => toggleViewport() }, '▭');
 const undoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Undo (${MOD}+Z)`, onclick: () => store.undo() }, '↶');
 const redoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Redo (${MOD}+Shift+Z)`, onclick: () => store.redo() }, '↷');
@@ -51,7 +59,7 @@ const panel = h('aside', { class: 'ed-panel' },
   h('header', { class: 'ed-head' },
     h('div', { class: 'ed-brand' }, h('span', { class: 'ed-logo' }, 'Editor'), sourceLine),
     modes,
-    h('div', { class: 'ed-bar' }, pageSelect, vpBtn, undoBtn, redoBtn),
+    h('div', { class: 'ed-bar' }, pageMenu.el, vpBtn, undoBtn, redoBtn),
   ),
   body,
   h('footer', { class: 'ed-foot' }, pending, status, h('div', { class: 'ed-foot__row' }, saveBtn, publishBtn)),
@@ -76,7 +84,22 @@ function contentForRoutes() {
 function renderPages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
   const routes = getRoutes(contentForRoutes()).filter((r) => r.page !== 'notFound');
-  clear(pageSelect, routes.map((r) => h('option', { value: r.path, selected: r.path === path }, `${r.path}  ${r.title.split('|')[0].trim()}`)));
+  const items = [
+    ...routes.map((r) => ({
+      kind: 'page',
+      path: r.path,
+      title: r.title.split('|')[0].trim(),
+    })),
+    { kind: 'component', id: 'menu', title: 'Menu' },
+    { kind: 'component', id: 'footer', title: 'Footer' },
+  ];
+  const selectedPath = state.target?.kind === 'page' ? state.target.path : path;
+  pageMenu.setItems(items, { path: state.target?.kind === 'component' ? null : selectedPath });
+  if (state.target?.kind === 'component') {
+    pageMenu.setValue(state.target, { silent: true });
+  } else {
+    state.target = items.find((i) => i.kind === 'page' && i.path === path) || items[0];
+  }
 }
 
 function countChanges() {
@@ -136,7 +159,7 @@ async function refreshPublishStatus() {
 
 // ---------------------------------------------------------------- bridge + panels
 const bridge = createBridge({ iframe, store, labelFor: (p) => labelFor(store, p) });
-const textPanel = createTextPanel({ store, bridge, root: body });
+const textPanel = createTextPanel({ store, bridge, root: body, getTarget: () => state.target });
 const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 
 function renderOverview() {
@@ -145,7 +168,7 @@ function renderOverview() {
     h('section', { class: 'grp' },
       h('h4', { class: 'grp__title' }, 'How it works'),
       h('ul', { class: 'help' },
-        h('li', {}, h('b', {}, 'Text'), ' — click any outlined text in the preview and type.'),
+        h('li', {}, h('b', {}, 'Content'), ' — click any outlined text in the preview and type.'),
         h('li', {}, h('b', {}, 'Motion'), ' — click an animated element to change its preset, timing, ease and scroll trigger. Changes replay live.'),
         h('li', {}, 'Browse navigates like the real site. In the edit modes, hold Alt to click through links.'),
         h('li', {}, h('b', {}, 'Save'), ' writes content/*.json on this machine: a draft you can check in Browse. Nothing is pushed.'),
@@ -228,6 +251,10 @@ bridge.on('navigate', (path) => {
   const url = new URL(location.href);
   url.searchParams.set('path', path);
   history.replaceState(null, '', url);
+  // Keep Menu/Footer selection; only sync target when browsing pages.
+  if (state.target?.kind !== 'component') {
+    state.target = { kind: 'page', path, title: path === '/' ? 'Home' : path };
+  }
   renderPages();
   if (state.mode === 'motion') motionPanel.select(null);
   else renderBody();

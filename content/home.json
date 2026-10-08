@@ -31,8 +31,26 @@
         "my": 6,
         "mw": 30
       },
-      { "src": "places/kasteel-de-haar/02.jpg", "link": "/places/kasteel-de-haar/", "label": "Kasteel de Haar", "x": 63, "y": 7, "w": 16, "depth": 0.5, "layer": "back" },
-      { "src": "people/noor-vermeer/06.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 85, "y": 18, "w": 11, "depth": 0.9, "layer": "back" },
+      {
+        "src": "places/kasteel-de-haar/02.jpg",
+        "link": "/places/kasteel-de-haar/",
+        "label": "Kasteel de Haar",
+        "x": 63,
+        "y": 7,
+        "w": 16,
+        "depth": 0.5,
+        "layer": "back"
+      },
+      {
+        "src": "people/noor-vermeer/06.jpg",
+        "link": "/people/noor-vermeer/",
+        "label": "Noor Vermeer",
+        "x": 85,
+        "y": 18,
+        "w": 11,
+        "depth": 0.9,
+        "layer": "back"
+      },
       {
         "src": "people/daan-okafor/05.jpg",
         "link": "/people/daan-okafor/",
@@ -59,7 +77,16 @@
         "my": 58,
         "mw": 30
       },
-      { "src": "places/concrete-studies/05.jpg", "link": "/places/concrete-studies/", "label": "Concrete Studies", "x": 47, "y": 66, "w": 9, "depth": 0.45, "layer": "back" },
+      {
+        "src": "places/concrete-studies/05.jpg",
+        "link": "/places/concrete-studies/",
+        "label": "Concrete Studies",
+        "x": 47,
+        "y": 66,
+        "w": 9,
+        "depth": 0.45,
+        "layer": "back"
+      },
       {
         "src": "people/daan-okafor/01.jpg",
         "link": "/people/daan-okafor/",
@@ -73,14 +100,42 @@
         "my": 70,
         "mw": 26
       },
-      { "src": "people/noor-vermeer/01.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 86, "y": 64, "w": 10, "depth": 0.6, "layer": "back" }
-    ]
+      {
+        "src": "people/noor-vermeer/01.jpg",
+        "link": "/people/noor-vermeer/",
+        "label": "Noor Vermeer",
+        "x": 86,
+        "y": 64,
+        "w": 10,
+        "depth": 0.6,
+        "layer": "back"
+      }
+    ],
+    "enabled": true
   },
   "intro": "I photograph people: portraits and editorial stories around the Netherlands, made with one small camera and whatever light the day gives me. When I'm not shooting, I build websites and small DIY things.",
   "sections": {
-    "people": { "label": "People", "title": "Models I've worked with", "cta": "All people" },
-    "places": { "label": "Places", "title": "Buildings, streets & castles", "cta": "All places" },
-    "projects": { "label": "Projects", "title": "Things I build", "cta": "All projects" }
+    "people": {
+      "label": "People",
+      "title": "Models I've worked with",
+      "cta": "All people",
+      "enabled": true
+    },
+    "places": {
+      "label": "Places",
+      "title": "Buildings, streets & castles",
+      "cta": "All places",
+      "enabled": true
+    },
+    "projects": {
+      "label": "Projects",
+      "title": "Things I build",
+      "cta": "All projects",
+      "enabled": true
+    },
+    "intro": {
+      "enabled": true
+    }
   },
   "curtain": "Eeliya Rasta"
 }

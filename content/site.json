@@ -12,9 +12,21 @@
   "emailIsPlaceholder": true,
   "accent": "#cfc8b8",
   "social": [
-    { "label": "Instagram", "handle": "@eeliya.rasta", "url": "https://www.instagram.com/eeliya.rasta/" },
-    { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
-    { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
+    {
+      "label": "Instagram",
+      "handle": "@eeliya.rasta",
+      "url": "https://www.instagram.com/eeliya.rasta/"
+    },
+    {
+      "label": "YouTube",
+      "handle": "@eeliyarasta",
+      "url": "https://www.youtube.com/@eeliyarasta"
+    },
+    {
+      "label": "GitHub",
+      "handle": "Eeliya",
+      "url": "https://github.com/Eeliya"
+    }
   ],
   "about": {
     "headline": "I photograph people, the way they are when they forget the camera.",
@@ -32,10 +44,22 @@
       "Want to shoot together, or have a project in mind? Send me a message."
     ],
     "facts": [
-      { "label": "Based in", "value": "Netherlands" },
-      { "label": "Camera", "value": "Fujifilm X100V" },
-      { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
-      { "label": "Builds", "value": "Websites, Dev tools, DIY" }
+      {
+        "label": "Based in",
+        "value": "Netherlands"
+      },
+      {
+        "label": "Camera",
+        "value": "Fujifilm X100V"
+      },
+      {
+        "label": "Shoots",
+        "value": "Portrait, Editorial, Fashion, Architecture"
+      },
+      {
+        "label": "Builds",
+        "value": "Websites, Dev tools, DIY"
+      }
     ]
   },
   "pages": {
@@ -63,8 +87,68 @@
       "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
       "curtain": "Projects"
     },
-    "about": { "crumb": "About", "curtain": "About" },
-    "notFound": { "crumb": "Error 404", "title": "Lost frame", "intro": "This page doesn't exist (yet).", "cta": "Back home", "curtain": "Not found" }
+    "about": {
+      "crumb": "About",
+      "curtain": "About"
+    },
+    "notFound": {
+      "crumb": "Error 404",
+      "title": "Lost frame",
+      "intro": "This page doesn't exist (yet).",
+      "cta": "Back home",
+      "curtain": "Not found"
+    }
   },
-  "footer": { "label": "Say hello", "cta": "Let's make\nsomething." }
+  "footer": {
+    "label": "Say hello",
+    "cta": "Let's make\nsomething.",
+    "columns": {
+      "social": {
+        "title": "Social"
+      },
+      "index": {
+        "title": "Index",
+        "links": [
+          {
+            "label": "Home",
+            "href": "/"
+          },
+          {
+            "label": "People",
+            "href": "/people/"
+          },
+          {
+            "label": "Places",
+            "href": "/places/"
+          },
+          {
+            "label": "Projects",
+            "href": "/projects/"
+          },
+          {
+            "label": "About",
+            "href": "/about/"
+          }
+        ]
+      },
+      "contact": {
+        "title": "Contact"
+      },
+      "time": {
+        "title": "Local time"
+      }
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "photography": "Photography",
+    "people": "People",
+    "places": "Places",
+    "projects": "Projects",
+    "about": "About",
+    "allPhotography": "All photography",
+    "allProjects": "All projects",
+    "menu": "Menu",
+    "close": "Close"
+  }
 }
