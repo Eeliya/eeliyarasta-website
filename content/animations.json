@@ -126,8 +126,8 @@
       "view": { "duration": 0.9, "ease": "expo.inOut" }
     },
     "menu": {
-      "open": { "duration": 0.6, "ease": "expo.out", "stagger": 0.04 },
-      "close": { "duration": 0.35, "ease": "power2.in" }
+      "open": { "duration": 0.45, "ease": "expo.out", "y": 12 },
+      "close": { "duration": 0.3 }
     }
   }
 }

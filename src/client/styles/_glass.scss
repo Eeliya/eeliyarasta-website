@@ -7,6 +7,9 @@
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
+  // Fade hook for GSAP (ui/menu.js): fading this ::before, which owns the backdrop-filter,
+  // keeps the blur alive; fading the glass element itself would switch it off in Chrome.
+  opacity: var(--glass-alpha, 1);
   // Flat translucent fill (faintly tinted by the album accent) + blur.
   background: var(--glass-fill);
   -webkit-backdrop-filter: blur(22px) saturate(180%);

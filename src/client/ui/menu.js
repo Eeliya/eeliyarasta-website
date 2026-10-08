@@ -3,62 +3,135 @@
  *  - desktop: glass dropdowns under "Photography" and "Projects"
  *  - mobile:  full-screen glass menu behind the "Menu" button
  * Esc, outside click and route changes close them.
+ *
+ * Animation (GSAP): one timeline per panel. The panel fades in and slides down by `y`
+ * as a whole (no per-item stagger); closing plays the same timeline in reverse, so
+ * clicking again mid-animation just turns it around smoothly. Timing lives in
+ * content/animations.json -> transitions.menu ({ open: { duration, ease, y }, close: { duration } });
+ * the close ease is the mirror of the open ease. Reduced motion: a short opacity fade only.
+ *
+ * Glass blur: in Chrome, opacity < 1 on an element makes it a "backdrop root", which
+ * switches off the backdrop-filter of the glass ::before inside it until the fade ends
+ * (the blur "pops in"). So the panel itself is never faded: its glass surface fades via
+ * --glass-alpha (opacity of the ::before, which owns the backdrop-filter, see _glass.scss),
+ * its content fades via its children, and it moves with a transform (not a backdrop root).
  */
 import { gsap, reducedMotion } from '../lib/env.js';
 import { transitions } from '../anim/engine.js';
 import { lockScroll } from '../smooth.js';
 
-let openDropdown = null;
-let mobileOpen = false;
-const t = () => transitions.menu;
+const DEFAULTS = { open: { duration: 0.45, ease: 'expo.out', y: 12 }, close: { duration: 0.3 } };
+const timing = () => {
+  const m = transitions.menu || {};
+  return { open: { ...DEFAULTS.open, ...m.open }, close: { ...DEFAULTS.close, ...m.close } };
+};
+
+/**
+ * Interrupt-safe show/hide of one panel.
+ *  el     - element toggled with `hidden`
+ *  panel  - the glass element that slides and fades (often el itself)
+ *  dim    - optional overlay whose background fades in (mobile menu)
+ *  yScale - multiplier for the configured y offset
+ */
+function createReveal({ el, panel, dim = null, yScale = 1 }) {
+  let tl = null;
+  let isOpen = false;
+  const finish = () => {
+    el.hidden = true;
+  };
+
+  function build() {
+    const { open } = timing();
+    const reduce = reducedMotion();
+    const vars = reduce
+      ? { duration: Math.min(0.2, open.duration), ease: 'none' }
+      : { duration: open.duration, ease: open.ease };
+    tl?.kill();
+    tl = gsap.timeline({ paused: true, onReverseComplete: finish });
+    if (!reduce) tl.fromTo(panel, { y: -(Number(open.y) || 0) * yScale }, { y: 0, ...vars }, 0);
+    tl.fromTo(panel, { '--glass-alpha': 0 }, { '--glass-alpha': 1, ...vars }, 0);
+    tl.fromTo([...panel.children], { opacity: 0 }, { opacity: 1, ...vars }, 0);
+    if (dim) tl.fromTo(dim, { backgroundColor: 'rgba(0, 0, 0, 0)' }, { backgroundColor: 'rgba(0, 0, 0, 0.35)', ...vars }, 0);
+  }
+
+  return {
+    el,
+    get open() {
+      return isOpen;
+    },
+    show() {
+      if (isOpen) return;
+      isOpen = true;
+      el.hidden = false;
+      // Fully closed: rebuild, so edited timing and reduced-motion changes apply.
+      if (!tl || tl.progress() === 0) build();
+      tl.timeScale(1).play();
+    },
+    hide(instant = false) {
+      if (!isOpen) return;
+      isOpen = false;
+      const { close } = timing();
+      const duration = reducedMotion() ? Math.min(0.2, close.duration) : close.duration;
+      if (!tl || instant || !duration || tl.progress() === 0) {
+        tl?.pause(0);
+        finish();
+        return;
+      }
+      // Reverse from wherever it is now, at the speed that makes a full close take `duration`.
+      tl.timeScale(tl.duration() / duration).reverse();
+    },
+  };
+}
+
+// ---------------------------------------------------------------- desktop dropdowns
+const dropdowns = new Map(); // toggle -> reveal
+let openToggle = null;
+
+function dropdownFor(toggle) {
+  if (!dropdowns.has(toggle)) {
+    const panel = document.getElementById(toggle.getAttribute('aria-controls'));
+    dropdowns.set(toggle, createReveal({ el: panel, panel }));
+  }
+  return dropdowns.get(toggle);
+}
 
 function showDropdown(toggle) {
-  const panel = document.getElementById(toggle.getAttribute('aria-controls'));
-  if (openDropdown && openDropdown.toggle !== toggle) hideDropdown(true);
+  // Switching between dropdowns: the other one goes away at once (they share one spot).
+  if (openToggle && openToggle !== toggle) hideDropdown({ instant: true });
+  openToggle = toggle;
   toggle.setAttribute('aria-expanded', 'true');
-  panel.hidden = false;
-  openDropdown = { toggle, panel };
-  if (reducedMotion()) return;
-  gsap.killTweensOf([panel, ...panel.querySelectorAll('li, .dropdown__head, .dropdown__all')]);
-  gsap.fromTo(panel, { autoAlpha: 0, y: -10, scale: 0.97 }, { autoAlpha: 1, y: 0, scale: 1, duration: t().open.duration, ease: t().open.ease });
-  gsap.fromTo(panel.querySelectorAll('li, .dropdown__head, .dropdown__all'), { autoAlpha: 0, y: 10 }, {
-    autoAlpha: 1, y: 0, duration: t().open.duration, ease: t().open.ease, stagger: t().open.stagger, delay: 0.05,
-  });
+  dropdownFor(toggle).show();
 }
 
-function hideDropdown(instant = false) {
-  if (!openDropdown) return;
-  const { toggle, panel } = openDropdown;
-  openDropdown = null;
+function hideDropdown({ instant = false, focusToggle = false } = {}) {
+  if (!openToggle) return;
+  const toggle = openToggle;
+  openToggle = null;
   toggle.setAttribute('aria-expanded', 'false');
-  if (instant || reducedMotion()) {
-    gsap.killTweensOf(panel);
-    panel.hidden = true;
-    return;
-  }
-  gsap.to(panel, { autoAlpha: 0, y: -6, duration: t().close.duration, ease: t().close.ease, onComplete: () => (panel.hidden = true) });
+  const reveal = dropdownFor(toggle);
+  // Don't leave keyboard focus inside a panel that is being hidden.
+  if (focusToggle || reveal.el.contains(document.activeElement)) toggle.focus();
+  reveal.hide(instant);
 }
 
-function setMobile(open) {
+// ---------------------------------------------------------------- mobile menu
+let mobile = null;
+
+function setMobile(open, { focusToggle = false } = {}) {
   const menu = document.querySelector('[data-mobile-menu]');
   const btn = document.querySelector('[data-menu-toggle]');
-  if (!menu || open === mobileOpen) return;
-  mobileOpen = open;
+  if (!menu || !btn) return;
+  mobile ||= createReveal({ el: menu, panel: menu.querySelector('.mmenu__panel'), dim: menu, yScale: 2 });
+  if (open === mobile.open) return;
   btn.setAttribute('aria-expanded', String(open));
   document.documentElement.classList.toggle('menu-open', open);
-  const label = btn.querySelector('.menu-toggle__label');
-  label.textContent = open ? 'Close' : 'Menu';
+  btn.querySelector('.menu-toggle__label').textContent = open ? 'Close' : 'Menu';
   lockScroll(open);
-  const items = menu.querySelectorAll('[data-mm-item]');
   if (open) {
-    menu.hidden = false;
-    if (reducedMotion()) return;
-    gsap.fromTo(menu, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 });
-    gsap.fromTo(menu.querySelector('.mmenu__panel'), { clipPath: 'inset(0% 0% 100% 0% round 28px)' }, { clipPath: 'inset(0% 0% 0% 0% round 28px)', duration: 0.8, ease: 'expo.out', clearProps: 'clipPath' }); // clip-path would break the glass blur
-    gsap.fromTo(items, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: t().open.duration * 1.4, ease: t().open.ease, stagger: t().open.stagger * 1.5, delay: 0.1 });
+    mobile.show();
   } else {
-    if (reducedMotion()) return void (menu.hidden = true);
-    gsap.to(menu, { autoAlpha: 0, duration: t().close.duration, ease: t().close.ease, onComplete: () => (menu.hidden = true) });
+    if (focusToggle || menu.contains(document.activeElement)) btn.focus();
+    mobile.hide();
   }
 }
 
@@ -71,22 +144,20 @@ export function initMenu() {
   document.querySelectorAll('[data-dropdown-toggle]').forEach((toggle) => {
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (openDropdown?.toggle === toggle) hideDropdown();
+      if (openToggle === toggle) hideDropdown();
       else showDropdown(toggle);
     });
   });
-  document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => setMobile(!mobileOpen));
+  document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => setMobile(!mobile?.open));
   document.addEventListener('click', (e) => {
-    if (openDropdown && !openDropdown.panel.contains(e.target)) hideDropdown();
+    if (openToggle && !dropdownFor(openToggle).el.contains(e.target)) hideDropdown();
+    // Mobile: a click on the dimmed area around the panel closes the menu.
+    if (mobile?.open && e.target.matches?.('[data-mobile-menu]')) setMobile(false);
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (openDropdown) {
-      const { toggle } = openDropdown;
-      hideDropdown();
-      toggle.focus();
-    }
-    if (mobileOpen) setMobile(false);
+    if (openToggle) hideDropdown({ focusToggle: true });
+    if (mobile?.open) setMobile(false, { focusToggle: true });
   });
   window.matchMedia('(min-width: 900px)').addEventListener('change', (m) => m.matches && setMobile(false));
 }
