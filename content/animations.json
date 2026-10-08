@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". A target picks a preset and may override any of its values. The future visual editor will read and write only this file.",
+  "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". spec = defaults <- presets[preset] <- targets[id] <- elements[key]. Edit by hand or with the visual editor at /edit/.",
   "defaults": { "duration": 1.1, "ease": "expo.out", "delay": 0, "stagger": 0, "trigger": "scroll", "start": "top 85%" },
   "presets": {
     "fade-up": {
@@ -101,6 +101,8 @@
     "footer.cta": { "preset": "split-lines", "start": "top 90%" },
     "footer.cols": { "preset": "stagger-up", "start": "top 95%" }
   },
+  "_elementsComment": "Per-element overrides keyed by \"<page path>|<target id>|<n>\" (n = nth element with that target on the page). Any value, including \"preset\", can be overridden. Written by the visual editor (/edit/).",
+  "elements": {},
   "interactions": {
     "cursor": { "follow": 0.18 },
     "cardCycle": { "interval": 0.75 },

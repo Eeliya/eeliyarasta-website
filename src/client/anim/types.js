@@ -4,6 +4,7 @@
  * Add a new effect by adding a function here and a preset in animations.json.
  */
 import { gsap, ScrollTrigger, SplitText, finePointer } from '../lib/env.js';
+import { flags } from './flags.js';
 
 const tweenVars = (spec, extra = {}) => ({
   duration: spec.duration,
@@ -13,8 +14,24 @@ const tweenVars = (spec, extra = {}) => ({
   ...extra,
 });
 
-const scrollVars = (spec, trigger) =>
-  spec.trigger === 'scroll' ? { scrollTrigger: { trigger, start: spec.start, once: true } } : {};
+/**
+ * trigger "load": play immediately. trigger "scroll": play once when `start` is reached,
+ * or, with `scrub` (true or seconds of lag), tie progress to scrolling from `start` to `end`.
+ * In the editor preview, one-shot reveals reset when scrolled back above `start` so they
+ * can be watched again.
+ */
+const scrollVars = (spec, trigger) => {
+  if (spec.trigger !== 'scroll') return {};
+  if (spec.scrub) {
+    const scrub = spec.scrub === true ? true : Number(spec.scrub) || true;
+    return { scrollTrigger: { trigger, start: spec.start, end: spec.end || 'top 40%', scrub } };
+  }
+  return {
+    scrollTrigger: flags.preview
+      ? { trigger, start: spec.start, toggleActions: 'play none none reset' }
+      : { trigger, start: spec.start, once: true },
+  };
+};
 
 /** from → to tween, optionally on children, played on load or when scrolled into view. */
 function reveal(el, spec, { reduce }) {

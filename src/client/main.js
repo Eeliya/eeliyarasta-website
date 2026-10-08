@@ -3,10 +3,11 @@
  * smooth scroll, cursor, menu, router, and per-page mounting (animations + modules).
  */
 import './styles/main.scss';
-import { ScrollTrigger } from './lib/env.js';
-import { mount as mountAnimations, config as animationConfig, resolve as resolveAnimation } from './anim/engine.js';
-import { initSmooth } from './smooth.js';
-import { initRouter } from './router.js';
+import { gsap, ScrollTrigger } from './lib/env.js';
+import { mount as mountAnimations, config as animationConfig, resolve as resolveAnimation, setConfig, pageKey } from './anim/engine.js';
+import { flags } from './anim/flags.js';
+import { initSmooth, getSmoother } from './smooth.js';
+import { initRouter, navigate } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
 import { initCursor, resetCursor } from './ui/cursor.js';
 import { initClock, updateClocks } from './ui/clock.js';
@@ -16,7 +17,10 @@ import { projects } from './modules/projects.js';
 import { cards, toTop, imageFade } from './modules/misc.js';
 
 const pageModules = [imageFade, album, projects, cards, toTop];
+// Editor hooks (see window.__site below); empty on the public site.
+const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;
+let frozen = false;
 
 /** Move [data-portal] elements (fixed UI) out of the smooth-scroll content. */
 function movePortals(view) {
@@ -25,22 +29,30 @@ function movePortals(view) {
   return portal;
 }
 
+const noop = { revert() {} };
+const startAnimations = (view, portal) => (frozen ? noop : mountAnimations(view, { extraRoots: [portal] }));
+
 function mount(view, { first = false } = {}) {
   const portal = movePortals(view);
+  hooks.beforeMount.forEach((fn) => fn(view));
   applyAccent(view.dataset.accent, { instant: first });
   updateActiveNav(location.pathname);
   updateClocks();
   document.documentElement.dataset.page = view.dataset.page;
-  const anim = mountAnimations(view, { extraRoots: [portal] });
+  const anim = startAnimations(view, portal);
   const cleanups = pageModules.map((m) => m(view)).filter(Boolean);
   current = {
+    view,
+    portal,
+    anim,
     revert() {
       cleanups.forEach((fn) => fn());
-      anim.revert();
+      this.anim.revert();
       portal.replaceChildren();
     },
   };
   requestAnimationFrame(() => ScrollTrigger.refresh());
+  hooks.afterMount.forEach((fn) => fn(view));
   window.dispatchEvent(new Event('router:navigated'));
 }
 
@@ -50,7 +62,83 @@ function unmount() {
   resetCursor();
 }
 
+/** Revert and re-run only the animations of the current page (modules stay mounted). */
+function remountAnimations() {
+  if (!current) return;
+  current.anim.revert();
+  current.anim = startAnimations(current.view, current.portal);
+  ScrollTrigger.refresh();
+}
+
+/**
+ * Small API for the visual editor (src/editor), which loads the site in a
+ * same-origin iframe. No editor code ships in this bundle.
+ */
+const api = {
+  gsap,
+  ScrollTrigger,
+  animations: animationConfig,
+  resolve: resolveAnimation,
+  pageKey,
+  hooks,
+  navigate,
+  getSmoother,
+  view: () => current?.view || null,
+  /** Replace the animation config (in place) with an edited copy. */
+  setAnimations: (next) => setConfig(next),
+  remount: remountAnimations,
+  /** Stop all animations and show the page in its final, static state (for text editing). */
+  freeze() {
+    frozen = true;
+    remountAnimations();
+  },
+  unfreeze() {
+    frozen = false;
+    remountAnimations();
+  },
+  scrollTo(target, { smooth = true, position = 'center center' } = {}) {
+    const s = getSmoother();
+    if (s) return s.scrollTo(target, smooth, position);
+    if (typeof target === 'number') window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
+    else target?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'center' });
+  },
+  scrollTop(y) {
+    const s = getSmoother();
+    if (y === undefined) return s ? s.scrollTop() : window.scrollY;
+    if (s) s.scrollTop(y);
+    else window.scrollTo(0, y);
+  },
+  /** Scroll positions where `el` enters (top hits viewport bottom) and leaves (bottom hits top). */
+  scrollRange(el) {
+    const st = ScrollTrigger.create({ trigger: el, start: 'top bottom', end: 'bottom top' });
+    const range = { start: st.start, end: st.end, max: ScrollTrigger.maxScroll(window) };
+    st.kill();
+    return range;
+  },
+};
+window.__site = api;
+
+function connectEditor() {
+  try {
+    const host = window.parent !== window ? window.parent.__siteEditor : null;
+    if (!host) return;
+    flags.preview = true;
+    host.connect(api, window);
+  } catch {
+    /* not inside the editor (or cross-origin parent) */
+  }
+}
+
+// Ctrl/Cmd + Shift + E on the live site opens this page in the editor.
+window.addEventListener('keydown', (e) => {
+  if (window.parent === window && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+    e.preventDefault();
+    location.href = `/edit/?path=${encodeURIComponent(location.pathname)}`;
+  }
+});
+
 async function start() {
+  connectEditor();
   initSmooth();
   initMenu();
   initCursor();
@@ -63,14 +151,3 @@ async function start() {
 }
 
 start();
-
-// Expose the animation config for the future visual editor / debugging.
-window.__site = {
-  animations: animationConfig,
-  resolve: resolveAnimation,
-  remount() {
-    const view = document.querySelector('[data-router-view]');
-    unmount();
-    mount(view);
-  },
-};
