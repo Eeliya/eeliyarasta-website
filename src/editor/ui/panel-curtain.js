@@ -735,7 +735,19 @@ export function pageTransitionGroup(store, bridge) {
   const advanced = h(
     'details',
     { class: 'ptg__advanced' },
-    h('summary', {}, 'Advanced'),
+    h(
+      'summary',
+      {},
+      h('i', {
+        class: 'fa-solid fa-chevron-right ptg__caret ptg__caret--closed',
+        'aria-hidden': 'true',
+      }),
+      h('i', {
+        class: 'fa-solid fa-chevron-down ptg__caret ptg__caret--open',
+        'aria-hidden': 'true',
+      }),
+      'Advanced',
+    ),
     h('div', { class: 'ptg__advanced-body' }, ...advancedBody),
   );
 

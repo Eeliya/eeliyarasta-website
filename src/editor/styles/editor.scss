@@ -1482,24 +1482,26 @@ select {
     &::-webkit-details-marker {
       display: none;
     }
-    &::before {
-      // Font Awesome Free solid: fa-chevron-right / fa-chevron-down (editor-only webfont).
-      font-family: 'Font Awesome 7 Free';
-      font-weight: 900;
-      font-style: normal;
-      content: '\f054';
-      display: inline-block;
+    // Real FA icons in the summary markup (not CSS content — needs fontawesome.css).
+    .ptg__caret {
       width: 1em;
       margin-right: 0.35em;
       color: var(--faint);
-      -webkit-font-smoothing: antialiased;
+      font-size: 0.95em;
+      vertical-align: -0.05em;
+    }
+    .ptg__caret--open {
+      display: none;
     }
   }
   &[open] > summary {
     margin-bottom: 6px;
     color: var(--fg);
-    &::before {
-      content: '\f078';
+    .ptg__caret--closed {
+      display: none;
+    }
+    .ptg__caret--open {
+      display: inline-block;
     }
   }
 }

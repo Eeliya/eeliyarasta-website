@@ -13,6 +13,7 @@
  * under `npm run dev`.
  */
 import './styles/editor.scss';
+import '@fortawesome/fontawesome-free/css/fontawesome.css';
 import '@fortawesome/fontawesome-free/css/solid.css';
 import { createStore } from './store.js';
 import * as source from './source.js';
