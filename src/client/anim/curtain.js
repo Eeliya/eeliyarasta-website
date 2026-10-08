@@ -7,8 +7,8 @@
  *   in            { duration, ease }  curtain comes in (closes)
  *   textDelay     absolute start of text-in (from t=0)
  *   labelIn       { duration, ease }  text comes in
- *   holdStart     absolute start of text-stays (missing => textDelay + labelIn.duration)
- *   hold          length of the stays segment
+ *   holdStart     start of the stays gap (= textDelay + labelIn.duration; not independent)
+ *   hold          how long the text stays (gap between text-in end and text-out start)
  *   textOutStart  absolute start of text-out (missing => holdStart + hold)
  *   labelOut      { duration, ease }  text leaves
  *   outStart      absolute start of curtain-out (missing => textGone + afterText;
@@ -59,13 +59,16 @@ export function normalizeCurtain(raw) {
   });
 
   const textDelay = Math.max(0, num(c.textDelay, inn.duration));
-  const hold = Math.max(0, num(c.hold, D.hold));
-  let holdStart = num(c.holdStart, NaN);
-  if (!Number.isFinite(holdStart)) holdStart = textDelay + labelIn.duration;
-  holdStart = Math.max(0, holdStart);
+  // Stays is the gap between text-in and text-out — holdStart is always the text-in end.
+  const holdStart = textDelay + labelIn.duration;
   let textOutStart = num(c.textOutStart, NaN);
-  if (!Number.isFinite(textOutStart)) textOutStart = holdStart + hold;
-  textOutStart = Math.max(0, textOutStart);
+  let hold = Math.max(0, num(c.hold, D.hold));
+  if (Number.isFinite(textOutStart)) {
+    textOutStart = Math.max(0, textOutStart);
+    hold = Math.max(0, textOutStart - holdStart);
+  } else {
+    textOutStart = Math.max(0, holdStart + hold);
+  }
   const textGone = textOutStart + labelOut.duration;
 
   const afterLegacy = num(c.afterText, D.afterText);
@@ -93,7 +96,7 @@ export function normalizeCurtain(raw) {
 
 /**
  * When everything happens, in seconds from the moment the curtain starts coming in.
- * Text-in, text-stays, text-out, and curtain-out each use their own absolute start.
+ * Text-in and text-out use absolute starts; the gap between them is the stays (hold).
  */
 export function curtainPlan(cc, hasText = true) {
   const closed = cc.in.duration;

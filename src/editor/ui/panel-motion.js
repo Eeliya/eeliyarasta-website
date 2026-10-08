@@ -281,21 +281,19 @@ const CURTAIN_ROWS = [
   ['/textDelay', 'Text in starts (s)', { hint: 'Absolute start of the text-in bar from t=0.' }],
   ['pair', '/labelIn', 'Text in'],
   [
-    '/holdStart',
-    'Text stays starts (s)',
-    { min: 0, hint: 'Absolute start of the stays bar. Independent of text-in.' },
-  ],
-  [
     '/hold',
     'Text stays (s)',
     {
-      hint: 'Length of the stays bar. On pages without curtain text, the closed curtain stays this long.',
+      hint: 'Gap between text-in and text-out on the timeline. Drag either facing edge, or set it here. On pages without curtain text, the closed curtain stays this long.',
     },
   ],
   [
     '/textOutStart',
     'Text out starts (s)',
-    { min: 0, hint: 'Absolute start of the text-out bar. Independent of the other text bars.' },
+    {
+      min: 0,
+      hint: 'Absolute start of the text-out bar. The gap before it is how long the text stays.',
+    },
   ],
   ['pair', '/labelOut', 'Text out'],
   [
@@ -348,23 +346,6 @@ const HANDLES = [
     at: (p, cc) => p.textIn + cc.labelIn.duration,
     value: (x, p) => x - p.textIn,
   },
-  // Text stays: left = start, right = duration (not the next bar's left edge)
-  {
-    row: 't',
-    ptr: '/holdStart',
-    label: 'Text stays starts',
-    min: 0,
-    at: (p) => p.textHold,
-    value: (x) => x,
-  },
-  {
-    row: 't',
-    ptr: '/hold',
-    label: 'Text stays',
-    min: 0,
-    at: (p, cc) => p.textHold + cc.hold,
-    value: (x, p) => x - p.textHold,
-  },
   // Text out: left = textOutStart on THIS bar, right = duration
   {
     row: 't',
@@ -384,14 +365,13 @@ const HANDLES = [
   },
 ];
 
-/** Body-drag targets: each text segment has its own absolute start. */
+/** Body-drag targets: text-in and text-out only (the gap between them is hold). */
 const TEXT_SEGS = [
   { startPtr: '/textDelay', durKey: 'labelIn', label: 'Text in' },
-  { startPtr: '/holdStart', durKey: 'hold', label: 'Text stays' },
   { startPtr: '/textOutStart', durKey: 'labelOut', label: 'Text out' },
 ];
-const segDuration = (cc, key) => (key === 'hold' ? cc.hold : cc[key].duration);
-const segStart = (p, i) => (i === 0 ? p.textIn : i === 1 ? p.textHold : p.textOut);
+const segDuration = (cc, key) => cc[key].duration;
+const segStart = (p, i) => (i === 0 ? p.textIn : p.textOut);
 const fmtS = (v) => String(Math.round(v * 100) / 100);
 const digRel = (obj, rel) =>
   rel
@@ -410,10 +390,8 @@ function maxForPtr(ptr, cc, total) {
   const li = cc.labelIn.duration;
   const lo = cc.labelOut.duration;
   const td = cc.textDelay;
-  const hs = cc.holdStart;
-  const hold = cc.hold;
   const tos = cc.textOutStart;
-  // Each text segment is independent; clamp start/duration inside 0..total.
+  // Text-in / text-out clamp inside 0..total; hold is the gap (capped so text-out still fits).
   switch (ptr) {
     case '/in/duration':
       return t;
@@ -423,10 +401,8 @@ function maxForPtr(ptr, cc, total) {
       return Math.max(0, t - li);
     case '/labelIn/duration':
       return Math.max(0, t - td);
-    case '/holdStart':
-      return Math.max(0, t - hold);
     case '/hold':
-      return Math.max(0, t - hs);
+      return Math.max(0, t - lo - (td + li));
     case '/textOutStart':
       return Math.max(0, t - lo);
     case '/labelOut/duration':
@@ -506,13 +482,18 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
 
   function track(row, name) {
     const barsEl = h('div', { class: 'ptl__bars' });
-    for (let i = 0; i < 3; i++) {
+    const nBars = row === 't' ? TEXT_SEGS.length : 3;
+    for (let i = 0; i < nBars; i++) {
       const len = h('span', { class: 'ptl__len', 'aria-hidden': 'true' });
       const seg = row === 't' ? TEXT_SEGS[i] : null;
       const bar = h(
         'i',
         {
-          class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'],
+          class: [
+            'ptl__bar',
+            row === 'c' && (i === 1 ? 'is-hold' : 'is-move'),
+            row === 't' && 'is-move is-text',
+          ],
           ...(seg
             ? {
                 tabindex: '0',
@@ -690,16 +671,13 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's',
       Math.max(0, outEnd - p.outAt),
     );
-    // Each text segment uses its own absolute start (clipped to the total window).
+    // Text row: in + out only. The empty gap between them is hold (no middle bar).
     const tIn0 = Math.min(total, p.textIn);
     const tIn1 = Math.min(total, p.textIn + cc.labelIn.duration);
-    const tHold0 = Math.min(total, p.textHold);
-    const tHold1 = Math.min(total, p.textHold + cc.hold);
     const tOut0 = Math.min(total, p.textOut);
     const tOut1 = Math.min(total, p.textGone);
     place(bars.t[0], tIn0, tIn1, 'Text in @ ' + fmtS(p.textIn) + 's', cc.labelIn.duration);
-    place(bars.t[1], tHold0, tHold1, 'Stays @ ' + fmtS(p.textHold) + 's', cc.hold);
-    place(bars.t[2], tOut0, tOut1, 'Text out @ ' + fmtS(p.textOut) + 's', cc.labelOut.duration);
+    place(bars.t[1], tOut0, tOut1, 'Text out @ ' + fmtS(p.textOut) + 's', cc.labelOut.duration);
     for (const hd of handles) hd.style.left = pct(Math.min(total, Math.max(0, hd.__def.at(p, cc))));
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {
@@ -738,14 +716,12 @@ function pageTransitionGroup(store, bridge) {
       h('i', { class: 'dot', title: 'Changed' }),
     );
   const OUT_START_PTR = CURTAIN + '/outStart';
-  const HOLD_START_PTR = CURTAIN + '/holdStart';
   const TEXT_OUT_START_PTR = CURTAIN + '/textOutStart';
 
   // Session window when /total is not yet stored; only the total field writes /total.
   let sessionTotal = null;
   // Freeze derived absolute starts once so missing values are not re-chained from siblings.
   let sessionOutStart = null;
-  let sessionHoldStart = null;
   let sessionTextOutStart = null;
   const readNum = (ptr) => {
     const v = get(ptr);
@@ -755,7 +731,6 @@ function pageTransitionGroup(store, bridge) {
     const stored = readNum(ptr);
     if (stored != null) {
       if (sessionKey === 'out') sessionOutStart = stored;
-      else if (sessionKey === 'hold') sessionHoldStart = stored;
       else sessionTextOutStart = stored;
       return stored;
     }
@@ -763,22 +738,16 @@ function pageTransitionGroup(store, bridge) {
       if (sessionOutStart == null) sessionOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
       return sessionOutStart;
     }
-    if (sessionKey === 'hold') {
-      if (sessionHoldStart == null) sessionHoldStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
-      return sessionHoldStart;
-    }
     if (sessionTextOutStart == null)
       sessionTextOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
     return sessionTextOutStart;
   };
   const lockedOutStart = () => lockStart(OUT_START_PTR, 'out', (n) => n.outStart);
-  const lockedHoldStart = () => lockStart(HOLD_START_PTR, 'hold', (n) => n.holdStart);
   const lockedTextOutStart = () => lockStart(TEXT_OUT_START_PTR, 'textOut', (n) => n.textOutStart);
   const effective = () => {
     const raw = get(CURTAIN) ?? true;
     const o = raw === true ? {} : { ...raw };
     o.outStart = lockedOutStart();
-    o.holdStart = lockedHoldStart();
     o.textOutStart = lockedTextOutStart();
     return normalizeCurtain(o);
   };
@@ -809,6 +778,13 @@ function pageTransitionGroup(store, bridge) {
     pinOutDuration(t);
     return t;
   };
+  const gapHold = (cc) =>
+    Math.max(0, Number((cc.textOutStart - (cc.textDelay + cc.labelIn.duration)).toFixed(2)));
+  const syncHoldFromGap = () => {
+    const hold = gapHold(effective());
+    if (readNum(CURTAIN + '/hold') !== hold)
+      set(CURTAIN + '/hold', hold, 'curtain:' + CURTAIN + '/hold');
+  };
   const setCurtainField = (rel, v) => {
     const ptr = rel.startsWith('/') ? rel : '/' + rel;
     if (ptr === '/out/duration') {
@@ -817,23 +793,34 @@ function pageTransitionGroup(store, bridge) {
       return;
     }
     // Persist absolute starts before sibling edits so missing values are not re-chained.
-    const persistIfMissing = (ptr, lockFn) => {
-      if (readNum(ptr) == null) set(ptr, lockFn(), 'curtain:' + ptr);
+    const persistIfMissing = (fullPtr, lockFn) => {
+      if (readNum(fullPtr) == null) set(fullPtr, lockFn(), 'curtain:' + fullPtr);
     };
     if (ptr !== '/outStart') persistIfMissing(OUT_START_PTR, lockedOutStart);
-    if (ptr !== '/holdStart') persistIfMissing(HOLD_START_PTR, lockedHoldStart);
-    if (ptr !== '/textOutStart') persistIfMissing(TEXT_OUT_START_PTR, lockedTextOutStart);
+    if (ptr !== '/textOutStart' && ptr !== '/hold')
+      persistIfMissing(TEXT_OUT_START_PTR, lockedTextOutStart);
     const cc = effective();
     const total = getTotal();
-    const def =
-      HANDLES.find((d) => d.ptr === ptr) ||
-      (ptr === '/holdStart' || ptr === '/textOutStart' ? { min: 0 } : null);
+    // Advanced "Text stays": write hold and move text-out so the gap matches.
+    if (ptr === '/hold') {
+      const hold = clampField('/hold', v, 0, cc, total);
+      const textInEnd = cc.textDelay + cc.labelIn.duration;
+      const tos = clampField('/textOutStart', textInEnd + hold, 0, cc, total);
+      sessionTextOutStart = tos;
+      set(CURTAIN + '/hold', hold, 'curtain:' + CURTAIN + '/hold');
+      set(TEXT_OUT_START_PTR, tos, 'curtain:' + TEXT_OUT_START_PTR);
+      pinOutDuration(getTotal());
+      return;
+    }
+    const def = HANDLES.find((d) => d.ptr === ptr) || (ptr === '/textOutStart' ? { min: 0 } : null);
     const min = def ? def.min : 0;
     const clamped = clampField(ptr, v, min, cc, total);
     if (ptr === '/outStart') sessionOutStart = clamped;
-    if (ptr === '/holdStart') sessionHoldStart = clamped;
     if (ptr === '/textOutStart') sessionTextOutStart = clamped;
     set(CURTAIN + ptr, clamped, 'curtain:' + CURTAIN + ptr);
+    // Facing edges / body-drags change the gap — keep /hold in sync.
+    if (ptr === '/textDelay' || ptr === '/labelIn/duration' || ptr === '/textOutStart')
+      syncHoldFromGap();
     // Keep the leave bar pinned to the current total window (from locked outStart, not text).
     pinOutDuration(getTotal());
   };
@@ -1096,7 +1083,7 @@ function pageTransitionGroup(store, bridge) {
       let v = get(r.ptr);
       if (r.rel === '/out/duration') v = wantOut;
       else if (r.rel === '/outStart' && v == null) v = eff.outStart;
-      else if (r.rel === '/holdStart' && v == null) v = eff.holdStart;
+      else if (r.rel === '/hold') v = eff.hold;
       else if (r.rel === '/textOutStart' && v == null) v = eff.textOutStart;
       if (r.input !== document.activeElement) {
         const shown = v == null || v === '' ? '' : fmtS(Number(v));
@@ -1107,7 +1094,6 @@ function pageTransitionGroup(store, bridge) {
   };
   // Initialise session total / absolute starts and pin once.
   lockedOutStart();
-  lockedHoldStart();
   lockedTextOutStart();
   getTotal();
   pinOutDuration(getTotal());
