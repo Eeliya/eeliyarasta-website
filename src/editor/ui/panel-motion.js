@@ -78,21 +78,15 @@ const CURTAIN = '/transitions/page/curtain';
 const TOTAL_PTR = CURTAIN + '/total';
 const TOTAL_MAX = 12;
 const EASE_PTRS = ['/in/ease', '/labelIn/ease', '/labelOut/ease', '/out/ease'];
-const EASE_LABELS = [
-  ['/in/ease', 'Curtain in'],
-  ['/labelIn/ease', 'Text in'],
-  ['/labelOut/ease', 'Text out'],
-  ['/out/ease', 'Curtain out'],
-];
-// Page transition duration rows (ease lives under the timeline / Advanced easing).
+// Individual curtain fields live under Advanced. 'pair' = duration + ease on one row.
 const CURTAIN_ROWS = [
-  ['/in/duration', 'Curtain in'],
+  ['pair', '/in', 'Curtain in'],
   ['/textDelay', 'Text starts after curtain (s)', { hint: 'Counted from when the curtain starts coming in. 0 = with the curtain. Same as "Curtain in" = once it is closed.' }],
-  ['/labelIn/duration', 'Text in'],
+  ['pair', '/labelIn', 'Text in'],
   ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
-  ['/labelOut/duration', 'Text out'],
+  ['pair', '/labelOut', 'Text out'],
   ['/afterText', 'Curtain leaves after text (s)', { min: -2, hint: 'Counted from when the text is fully gone. 0 = right away. Negative = the curtain starts leaving while the text is still going.' }],
-  ['/out/duration', 'Curtain out'],
+  ['pair', '/out', 'Curtain out'],
 ];
 /**
  * Drag handles on the timeline, in time order per row. at(p, cc) = where the handle sits (s);
@@ -367,34 +361,66 @@ function pageTransitionGroup(store, bridge) {
     pinOutDuration(getTotal());
   };
 
-  const numInput = (ptr, rel, cls, { step = 0.01, min = 0, max = TOTAL_MAX } = {}) => h('input', {
-    class: cls,
-    type: 'number',
-    step: String(step),
-    min: String(min),
-    max: String(max),
-    value: get(ptr) ?? '',
-    placeholder: fmtS(digRel(effective(), rel) ?? 0),
-    dataset: { ptr },
-    oninput: (e) => {
-      const n = Number(e.target.value);
-      const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
-      e.target.classList.toggle('is-invalid', !ok);
-      if (!ok) return;
-      if (ptr === TOTAL_PTR) {
-        const t = setTotal(n);
-        e.target.value = String(t);
-        return;
-      }
-      const relPtr = ptr.slice(CURTAIN.length);
-      setCurtainField(relPtr, n);
-      // Reflect clamp in the field.
-      const shown = relPtr === '/out/duration'
-        ? Math.max(0, getTotal() - leaveStart(effective()))
-        : get(ptr);
-      if (shown != null && Number(e.target.value) !== shown) e.target.value = String(shown);
-    },
-  });
+  // Text inputs so ".", "0.", "1." can be typed; commit when the value parses, finalize on blur.
+  const isPartialNumber = (raw) => {
+    const t = raw.trim();
+    return t === '' || t === '-' || t === '.' || t === '-.' || /^-?\d+\.$/.test(t);
+  };
+  const applyNumber = (ptr, n) => {
+    if (ptr === TOTAL_PTR) return setTotal(n);
+    const relPtr = ptr.slice(CURTAIN.length);
+    setCurtainField(relPtr, n);
+    if (relPtr === '/out/duration') return Math.max(0, getTotal() - leaveStart(effective()));
+    if (ptr === TOTAL_PTR) return getTotal();
+    return get(ptr);
+  };
+  const numInput = (ptr, rel, cls, { step = 0.01, min = 0, max = TOTAL_MAX } = {}) => {
+    const input = h('input', {
+      class: cls,
+      type: 'text',
+      inputmode: 'decimal',
+      autocomplete: 'off',
+      spellcheck: false,
+      value: get(ptr) ?? '',
+      placeholder: fmtS(digRel(effective(), rel) ?? 0),
+      dataset: { ptr, min: String(min), max: String(max), step: String(step) },
+      oninput: (e) => {
+        const raw = e.target.value;
+        if (isPartialNumber(raw)) {
+          e.target.classList.remove('is-invalid');
+          return;
+        }
+        const n = Number(raw.trim());
+        const ok = raw.trim() !== '' && Number.isFinite(n) && n >= min && n <= max;
+        e.target.classList.toggle('is-invalid', !ok);
+        if (!ok) return;
+        // Commit to the store; leave the typed string alone while focused.
+        applyNumber(ptr, n);
+      },
+      onblur: (e) => {
+        const raw = e.target.value.trim();
+        if (raw === '' || isPartialNumber(raw)) {
+          // Restore the effective / stored value.
+          let v;
+          if (ptr === TOTAL_PTR) v = getTotal();
+          else if (ptr.slice(CURTAIN.length) === '/out/duration') v = Math.max(0, getTotal() - leaveStart(effective()));
+          else v = get(ptr) ?? digRel(effective(), rel) ?? 0;
+          e.target.value = String(v);
+          e.target.classList.remove('is-invalid');
+          return;
+        }
+        const n = Number(raw);
+        if (!Number.isFinite(n)) {
+          e.target.classList.add('is-invalid');
+          return;
+        }
+        const shown = applyNumber(ptr, n);
+        e.target.value = String(shown ?? n);
+        e.target.classList.remove('is-invalid');
+      },
+    });
+    return input;
+  };
 
   const single = (rel, label, { min = 0, hint } = {}) => {
     const ptr = CURTAIN + rel;
@@ -402,6 +428,31 @@ function pageTransitionGroup(store, bridge) {
     const changed = () => isChanged(ptr);
     const wrap = h('div', { class: ['tf', changed() && 'is-changed'] }, head(label), input, hint ? h('p', { class: 'hint small tf__hint' }, hint) : null);
     numbers.push({ ptr, rel, input, wrap, changed, min });
+    return wrap;
+  };
+
+  // Duration + ease on one row (Advanced).
+  const advEases = [];
+  const pair = (seg, label) => {
+    const dRel = seg + '/duration';
+    const eRel = seg + '/ease';
+    const dPtr = CURTAIN + dRel;
+    const ePtr = CURTAIN + eRel;
+    const input = numInput(dPtr, dRel, 'f__num', { min: 0 });
+    input.title = label + ' duration (seconds)';
+    const ease = easeField({
+      gsap: bridge.api?.gsap,
+      value: get(ePtr) || digRel(effective(), eRel) || 'expo.inOut',
+      compact: true,
+      onChange: (v) => set(ePtr, v, 'curtain:' + ePtr),
+    });
+    const changed = () => isChanged(dPtr) || isChanged(ePtr);
+    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] },
+      head(label),
+      h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')), ease.el),
+    );
+    numbers.push({ ptr: dPtr, rel: dRel, input, wrap, changed, min: 0 });
+    advEases.push({ ptr: ePtr, rel: eRel, ease });
     return wrap;
   };
 
@@ -442,6 +493,7 @@ function pageTransitionGroup(store, bridge) {
     gsap: bridge.api?.gsap,
     value: easeState().value,
     mixed: easeState().mixed,
+    compact: true,
     onChange: (v) => {
       for (const rel of EASE_PTRS) set(CURTAIN + rel, v, 'curtain:' + CURTAIN + rel);
     },
@@ -452,20 +504,12 @@ function pageTransitionGroup(store, bridge) {
     h('p', { class: 'hint small tf__hint' }, 'Applies to curtain in, text in, text out, and curtain out.'),
   );
 
-  const advEases = EASE_LABELS.map(([rel, label]) => {
-    const ptr = CURTAIN + rel;
-    const ease = easeField({
-      gsap: bridge.api?.gsap,
-      value: get(ptr) || digRel(effective(), rel) || 'expo.inOut',
-      compact: true,
-      onChange: (v) => set(ptr, v, 'curtain:' + ptr),
-    });
-    const wrap = h('div', { class: 'tf ptg__adv-ease' }, head(label), ease.el);
-    return { ptr, rel, ease, wrap };
-  });
+  const advancedBody = CURTAIN_ROWS.map((row) => (
+    row[0] === 'pair' ? pair(row[1], row[2]) : single(row[0], row[1], row[2] || {})
+  ));
   const advanced = h('details', { class: 'ptg__advanced' },
-    h('summary', {}, 'Advanced easing'),
-    h('div', { class: 'ptg__advanced-body' }, ...advEases.map((r) => r.wrap)),
+    h('summary', {}, 'Advanced'),
+    h('div', { class: 'ptg__advanced-body' }, ...advancedBody),
   );
 
   const replay = h('button', {
@@ -483,7 +527,6 @@ function pageTransitionGroup(store, bridge) {
     h('div', { class: 'ptl-box' }, timeline.el),
     globalEaseWrap,
     advanced,
-    CURTAIN_ROWS.map(([rel, label, opts]) => single(rel, label, opts || {})),
   );
 
   // Refresh in place (while typing in a field or dragging the timeline) without re-rendering.

@@ -395,7 +395,23 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
   }
 }
 .ptg__advanced-body { display: grid; gap: 10px; }
-.ptg__adv-ease .ease { margin-top: 4px; }
+/* Page-transition ease toggles match the duration number input height (36px). */
+.ptg {
+  .tf__input, .f__num {
+    box-sizing: border-box; height: 36px; line-height: 1.25;
+  }
+  .ease__toggle {
+    box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 10px;
+    border-radius: 8px; gap: 8px;
+  }
+  .ease__big {
+    width: 52px; display: flex; align-items: center;
+    svg { width: 52px; height: 20px; display: block; }
+  }
+  .ease--compact .ease__toggle { padding: 0 8px; }
+  .ease--compact .ease__big { width: 48px; svg { width: 48px; height: 18px; } }
+  .f__pair { align-items: center; }
+}
 .ease.is-mixed .ease__name { color: var(--muted); font-style: italic; }
 .ease.is-mixed .curve__line { stroke-dasharray: 4 3; opacity: 0.55; }
 
