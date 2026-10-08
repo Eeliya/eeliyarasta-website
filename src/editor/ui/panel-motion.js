@@ -21,41 +21,166 @@ const merge = (...objs) => {
   const out = {};
   for (const o of objs) {
     if (!o) continue;
-    for (const [k, v] of Object.entries(o)) out[k] = isObj(v) && isObj(out[k]) ? merge(out[k], v) : v;
+    for (const [k, v] of Object.entries(o))
+      out[k] = isObj(v) && isObj(out[k]) ? merge(out[k], v) : v;
   }
   return out;
 };
-const dig = (obj, path) => path.reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+const dig = (obj, path) =>
+  path.reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
 
-const START = ['top bottom', 'top 95%', 'top 90%', 'top 85%', 'top 75%', 'top center', 'center center'];
+const START = [
+  'top bottom',
+  'top 95%',
+  'top 90%',
+  'top 85%',
+  'top 75%',
+  'top center',
+  'center center',
+];
 const END = ['bottom top', 'bottom center', 'bottom 60%', 'top 40%', 'center center', 'top top'];
 
 const F = {
-  duration: { path: ['duration'], label: 'Duration', kind: 'number', max: 4, step: 0.05, unit: 's' },
+  duration: {
+    path: ['duration'],
+    label: 'Duration',
+    kind: 'number',
+    max: 4,
+    step: 0.05,
+    unit: 's',
+  },
   delay: { path: ['delay'], label: 'Delay', kind: 'number', max: 3, step: 0.05, unit: 's' },
-  stagger: { path: ['stagger'], label: 'Stagger', kind: 'number', max: 0.4, step: 0.005, unit: 's', hint: 'Delay between children / letters / lines' },
+  stagger: {
+    path: ['stagger'],
+    label: 'Stagger',
+    kind: 'number',
+    max: 0.4,
+    step: 0.005,
+    unit: 's',
+    hint: 'Delay between children / letters / lines',
+  },
   ease: { path: ['ease'], label: 'Ease', kind: 'ease' },
-  timing: { kind: 'pair', label: 'Duration / ease', paths: [['duration'], ['ease']], max: 4, step: 0.05, unit: 's' },
-  trigger: { path: ['trigger'], label: 'Plays', kind: 'segment', options: [['load', 'On load'], ['scroll', 'On scroll']] },
-  start: { path: ['start'], label: 'Scroll start', kind: 'text', suggestions: START, when: (s) => s.trigger === 'scroll', hint: '"<element edge> <viewport edge>", e.g. "top 85%"' },
-  scrub: { path: ['scrub'], label: 'Scrub', kind: 'segment', options: [[false, 'Off'], [true, 'On'], [1, 'Smooth']], when: (s) => s.trigger === 'scroll', hint: 'Tie progress to the scroll position' },
-  end: { path: ['end'], label: 'Scroll end', kind: 'text', suggestions: END, when: (s) => s.trigger === 'scroll' && s.scrub },
-  split: { path: ['split'], label: 'Split into', kind: 'segment', options: [['chars', 'Chars'], ['words', 'Words'], ['lines', 'Lines']] },
-  mask: { path: ['mask'], label: 'Mask', kind: 'segment', options: [[false, 'None'], ['chars', 'Chars'], ['words', 'Words'], ['lines', 'Lines']] },
+  timing: {
+    kind: 'pair',
+    label: 'Duration / ease',
+    paths: [['duration'], ['ease']],
+    max: 4,
+    step: 0.05,
+    unit: 's',
+  },
+  trigger: {
+    path: ['trigger'],
+    label: 'Plays',
+    kind: 'segment',
+    options: [
+      ['load', 'On load'],
+      ['scroll', 'On scroll'],
+    ],
+  },
+  start: {
+    path: ['start'],
+    label: 'Scroll start',
+    kind: 'text',
+    suggestions: START,
+    when: (s) => s.trigger === 'scroll',
+    hint: '"<element edge> <viewport edge>", e.g. "top 85%"',
+  },
+  scrub: {
+    path: ['scrub'],
+    label: 'Scrub',
+    kind: 'segment',
+    options: [
+      [false, 'Off'],
+      [true, 'On'],
+      [1, 'Smooth'],
+    ],
+    when: (s) => s.trigger === 'scroll',
+    hint: 'Tie progress to the scroll position',
+  },
+  end: {
+    path: ['end'],
+    label: 'Scroll end',
+    kind: 'text',
+    suggestions: END,
+    when: (s) => s.trigger === 'scroll' && s.scrub,
+  },
+  split: {
+    path: ['split'],
+    label: 'Split into',
+    kind: 'segment',
+    options: [
+      ['chars', 'Chars'],
+      ['words', 'Words'],
+      ['lines', 'Lines'],
+    ],
+  },
+  mask: {
+    path: ['mask'],
+    label: 'Mask',
+    kind: 'segment',
+    options: [
+      [false, 'None'],
+      ['chars', 'Chars'],
+      ['words', 'Words'],
+      ['lines', 'Lines'],
+    ],
+  },
 };
-const n = (path, label, max, step, unit = '', min = 0) => ({ path, label, kind: 'number', min, max, step, unit });
+const n = (path, label, max, step, unit = '', min = 0) => ({
+  path,
+  label,
+  kind: 'number',
+  min,
+  max,
+  step,
+  unit,
+});
 
 const PROPS = {
   y: { label: 'Distance Y', min: -200, max: 200, step: 1, unit: 'px', neutral: 0, init: 40 },
   x: { label: 'Distance X', min: -200, max: 200, step: 1, unit: 'px', neutral: 0, init: 40 },
-  yPercent: { label: 'Distance Y %', min: -150, max: 150, step: 1, unit: '%', neutral: 0, init: 100 },
-  xPercent: { label: 'Distance X %', min: -150, max: 150, step: 1, unit: '%', neutral: 0, init: 100 },
+  yPercent: {
+    label: 'Distance Y %',
+    min: -150,
+    max: 150,
+    step: 1,
+    unit: '%',
+    neutral: 0,
+    init: 100,
+  },
+  xPercent: {
+    label: 'Distance X %',
+    min: -150,
+    max: 150,
+    step: 1,
+    unit: '%',
+    neutral: 0,
+    init: 100,
+  },
   scale: { label: 'Scale', min: 0, max: 2, step: 0.01, neutral: 1, init: 0.9 },
   rotate: { label: 'Rotation', min: -45, max: 45, step: 0.5, unit: '°', neutral: 0, init: 6 },
   autoAlpha: { label: 'Opacity', min: 0, max: 1, step: 0.01, neutral: 1, init: 0 },
   opacity: { label: 'Opacity (raw)', min: 0, max: 1, step: 0.01, neutral: 1, init: 0 },
-  clipPath: { label: 'Clip path', text: true, neutral: 'inset(0% 0% 0% 0%)', init: 'inset(100% 0% 0% 0%)', suggestions: ['inset(100% 0% 0% 0%)', 'inset(0% 0% 100% 0%)', 'inset(0% 100% 0% 0%)', 'inset(30% 0% 0% 0%)', 'inset(0% 0% 0% 0%)'] },
-  filter: { label: 'Filter', text: true, neutral: 'blur(0px)', init: 'blur(12px)', suggestions: ['blur(12px)', 'blur(0px)'] },
+  clipPath: {
+    label: 'Clip path',
+    text: true,
+    neutral: 'inset(0% 0% 0% 0%)',
+    init: 'inset(100% 0% 0% 0%)',
+    suggestions: [
+      'inset(100% 0% 0% 0%)',
+      'inset(0% 0% 100% 0%)',
+      'inset(0% 100% 0% 0%)',
+      'inset(30% 0% 0% 0%)',
+      'inset(0% 0% 0% 0%)',
+    ],
+  },
+  filter: {
+    label: 'Filter',
+    text: true,
+    neutral: 'blur(0px)',
+    init: 'blur(12px)',
+    suggestions: ['blur(12px)', 'blur(0px)'],
+  },
 };
 
 const TIMING = ['Timing', [F.timing, F.delay, F.stagger]];
@@ -63,15 +188,85 @@ const TRIGGER = ['Trigger', [F.trigger, F.start, F.scrub, F.end]];
 const GROUPS = {
   reveal: [TIMING, TRIGGER, 'from', 'to'],
   split: [['Split', [F.split, F.mask]], TIMING, TRIGGER, 'from', 'to'],
-  'scrub-words': [['Scroll', [n(['fromOpacity'], 'Dim words opacity', 1, 0.01), { ...F.start, when: null }, { ...F.end, when: null }]]],
-  parallax: [['Parallax', [n(['speed'], 'Speed', 40, 1, '%'), { ...F.scrub, options: [[true, 'On'], [0.5, 'Smooth .5'], [1.5, 'Smooth 1.5']], when: null }]]],
+  'scrub-words': [
+    [
+      'Scroll',
+      [
+        n(['fromOpacity'], 'Dim words opacity', 1, 0.01),
+        { ...F.start, when: null },
+        { ...F.end, when: null },
+      ],
+    ],
+  ],
+  parallax: [
+    [
+      'Parallax',
+      [
+        n(['speed'], 'Speed', 40, 1, '%'),
+        {
+          ...F.scrub,
+          options: [
+            [true, 'On'],
+            [0.5, 'Smooth .5'],
+            [1.5, 'Smooth 1.5'],
+          ],
+          when: null,
+        },
+      ],
+    ],
+  ],
   scatter: [
-    ['Intro burst', [{ kind: 'pair', label: 'Duration / ease', paths: [['intro', 'duration'], ['intro', 'ease']], max: 4, step: 0.05, unit: 's' }, n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'), n(['intro', 'delay'], 'Delay', 2, 0.05, 's'), n(['intro', 'fromScale'], 'From scale', 1.5, 0.01)]],
-    ['Drift', [n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'), n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'), n(['drift', 'minDuration'], 'Min duration', 20, 0.5, 's'), n(['drift', 'maxDuration'], 'Max duration', 20, 0.5, 's')]],
+    [
+      'Intro burst',
+      [
+        {
+          kind: 'pair',
+          label: 'Duration / ease',
+          paths: [
+            ['intro', 'duration'],
+            ['intro', 'ease'],
+          ],
+          max: 4,
+          step: 0.05,
+          unit: 's',
+        },
+        n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'),
+        n(['intro', 'delay'], 'Delay', 2, 0.05, 's'),
+        n(['intro', 'fromScale'], 'From scale', 1.5, 0.01),
+      ],
+    ],
+    [
+      'Drift',
+      [
+        n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'),
+        n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'),
+        n(['drift', 'minDuration'], 'Min duration', 20, 0.5, 's'),
+        n(['drift', 'maxDuration'], 'Max duration', 20, 0.5, 's'),
+      ],
+    ],
     ['Scroll', [n(['scroll', 'distance'], 'Fly-off distance', 150, 1, '%vh')]],
   ],
-  'hero-title': [TIMING, 'from', 'to', ['On scroll', [n(['scroll', 'scale'], 'End scale', 1.5, 0.01), n(['scroll', 'autoAlpha'], 'End opacity', 1, 0.01)]]],
-  'hover-preview': [['Preview', [n(['x'], 'Position across the list', 100, 1, '%'), n(['glide'], 'Glide between rows', 1.5, 0.01, 's')]]],
+  'hero-title': [
+    TIMING,
+    'from',
+    'to',
+    [
+      'On scroll',
+      [
+        n(['scroll', 'scale'], 'End scale', 1.5, 0.01),
+        n(['scroll', 'autoAlpha'], 'End opacity', 1, 0.01),
+      ],
+    ],
+  ],
+  'hover-preview': [
+    [
+      'Preview',
+      [
+        n(['x'], 'Position across the list', 100, 1, '%'),
+        n(['glide'], 'Glide between rows', 1.5, 0.01, 's'),
+      ],
+    ],
+  ],
 };
 
 const CURTAIN = '/transitions/page/curtain';
@@ -85,11 +280,32 @@ const CURTAIN_ROWS = [
   ['pair', '/in', 'Curtain in'],
   ['/textDelay', 'Text in starts (s)', { hint: 'Absolute start of the text-in bar from t=0.' }],
   ['pair', '/labelIn', 'Text in'],
-  ['/holdStart', 'Text stays starts (s)', { min: 0, hint: 'Absolute start of the stays bar. Independent of text-in.' }],
-  ['/hold', 'Text stays (s)', { hint: 'Length of the stays bar. On pages without curtain text, the closed curtain stays this long.' }],
-  ['/textOutStart', 'Text out starts (s)', { min: 0, hint: 'Absolute start of the text-out bar. Independent of the other text bars.' }],
+  [
+    '/holdStart',
+    'Text stays starts (s)',
+    { min: 0, hint: 'Absolute start of the stays bar. Independent of text-in.' },
+  ],
+  [
+    '/hold',
+    'Text stays (s)',
+    {
+      hint: 'Length of the stays bar. On pages without curtain text, the closed curtain stays this long.',
+    },
+  ],
+  [
+    '/textOutStart',
+    'Text out starts (s)',
+    { min: 0, hint: 'Absolute start of the text-out bar. Independent of the other text bars.' },
+  ],
   ['pair', '/labelOut', 'Text out'],
-  ['/outStart', 'Curtain out starts (s)', { min: 0, hint: 'Absolute time from the start of the transition. Independent of the text. The curtain-out bar runs from here to total.' }],
+  [
+    '/outStart',
+    'Curtain out starts (s)',
+    {
+      min: 0,
+      hint: 'Absolute time from the start of the transition. Independent of the text. The curtain-out bar runs from here to total.',
+    },
+  ],
   ['pair', '/out', 'Curtain out'],
 ];
 /**
@@ -99,12 +315,54 @@ const CURTAIN_ROWS = [
  * The curtain-out end is pinned to total duration — no handle there.
  */
 const HANDLES = [
-  { row: 'c', ptr: '/in/duration', label: 'Curtain in', min: 0, at: (p) => p.closed, value: (x) => x },
-  { row: 'c', ptr: '/outStart', label: 'Curtain out starts', min: 0, at: (p) => p.outAt, value: (x) => x },
-  { row: 't', ptr: '/textDelay', label: 'Text in starts', min: 0, at: (p) => p.textIn, value: (x) => x },
-  { row: 't', ptr: '/labelIn/duration', label: 'Text in', min: 0, at: (p, cc) => p.textIn + cc.labelIn.duration, value: (x, p) => x - p.textIn },
-  { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p, cc) => p.textHold + cc.hold, value: (x, p) => x - p.textHold },
-  { row: 't', ptr: '/labelOut/duration', label: 'Text out', min: 0, at: (p) => p.textGone, value: (x, p) => x - p.textOut },
+  {
+    row: 'c',
+    ptr: '/in/duration',
+    label: 'Curtain in',
+    min: 0,
+    at: (p) => p.closed,
+    value: (x) => x,
+  },
+  {
+    row: 'c',
+    ptr: '/outStart',
+    label: 'Curtain out starts',
+    min: 0,
+    at: (p) => p.outAt,
+    value: (x) => x,
+  },
+  {
+    row: 't',
+    ptr: '/textDelay',
+    label: 'Text in starts',
+    min: 0,
+    at: (p) => p.textIn,
+    value: (x) => x,
+  },
+  {
+    row: 't',
+    ptr: '/labelIn/duration',
+    label: 'Text in',
+    min: 0,
+    at: (p, cc) => p.textIn + cc.labelIn.duration,
+    value: (x, p) => x - p.textIn,
+  },
+  {
+    row: 't',
+    ptr: '/hold',
+    label: 'Text stays',
+    min: 0,
+    at: (p, cc) => p.textHold + cc.hold,
+    value: (x, p) => x - p.textHold,
+  },
+  {
+    row: 't',
+    ptr: '/labelOut/duration',
+    label: 'Text out',
+    min: 0,
+    at: (p) => p.textGone,
+    value: (x, p) => x - p.textOut,
+  },
 ];
 
 /** Body-drag targets: each text segment has its own absolute start. */
@@ -116,7 +374,11 @@ const TEXT_SEGS = [
 const segDuration = (cc, key) => (key === 'hold' ? cc.hold : cc[key].duration);
 const segStart = (p, i) => (i === 0 ? p.textIn : i === 1 ? p.textHold : p.textOut);
 const fmtS = (v) => String(Math.round(v * 100) / 100);
-const digRel = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+const digRel = (obj, rel) =>
+  rel
+    .split('/')
+    .filter(Boolean)
+    .reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
 const IDLE = 'Drag the bar ends to change the timing. Shift = 0.1s steps.';
 
 /** End of the curtain-out bar (and the derived total when /total is unset). */
@@ -183,7 +445,8 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const r = track.getBoundingClientRect();
     const px = clientX - r.left;
     const tol = pointerType === 'touch' ? 16 : 8;
-    const hits = handles.filter((el) => el.__def.row === row)
+    const hits = handles
+      .filter((el) => el.__def.row === row)
       .map((el) => ({ el, d: Math.abs((el.__def.at(p, cc) / total) * r.width - px) }))
       .filter((c) => c.d <= tol);
     if (!hits.length) return null;
@@ -227,15 +490,21 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     for (let i = 0; i < 3; i++) {
       const len = h('span', { class: 'ptl__len', 'aria-hidden': 'true' });
       const seg = row === 't' ? TEXT_SEGS[i] : null;
-      const bar = h('i', {
-        class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'],
-        ...(seg ? {
-          tabindex: '0',
-          role: 'slider',
-          title: 'Drag to move this segment (arrow keys to nudge)',
-          'aria-label': 'Move ' + seg.label,
-        } : {}),
-      }, len);
+      const bar = h(
+        'i',
+        {
+          class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'],
+          ...(seg
+            ? {
+                tabindex: '0',
+                role: 'slider',
+                title: 'Drag to move this segment (arrow keys to nudge)',
+                'aria-label': 'Move ' + seg.label,
+              }
+            : {}),
+        },
+        len,
+      );
       bar.__len = len;
       bar.__seg = i;
       if (seg) {
@@ -260,7 +529,11 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const el = h('div', { class: 'ptl__track' }, h('div', { class: 'ptl__grid' }), barsEl);
     for (const def of HANDLES.filter((d) => d.row === row)) {
       const hd = h('button', {
-        type: 'button', class: 'ptl__handle', title: def.label + ' (drag, or arrow keys)', 'aria-label': def.label, dataset: { ptr: CURTAIN + def.ptr },
+        type: 'button',
+        class: 'ptl__handle',
+        title: def.label + ' (drag, or arrow keys)',
+        'aria-label': def.label,
+        dataset: { ptr: CURTAIN + def.ptr },
         onkeydown: (e) => {
           if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
           e.preventDefault();
@@ -284,7 +557,16 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       if (hit) {
         e.preventDefault();
         el.setPointerCapture(e.pointerId);
-        drag = { kind: 'handle', id: e.pointerId, track: el, x0: e.clientX, list: hit.list, el: null, p0: hit.p, cc0: hit.cc };
+        drag = {
+          kind: 'handle',
+          id: e.pointerId,
+          track: el,
+          x0: e.clientX,
+          list: hit.list,
+          el: null,
+          p0: hit.p,
+          cc0: hit.cc,
+        };
         root.classList.add('is-dragging');
         onDrag(true);
         if (hit.list.length === 1) beginHandle(hit.list[0]);
@@ -296,9 +578,16 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       e.preventDefault();
       el.setPointerCapture(e.pointerId);
       drag = {
-        kind: 'move', id: e.pointerId, track: el, x0: e.clientX,
-        start0: body.start, dur: body.dur, startPtr: body.def.startPtr,
-        label: body.def.label, p0: body.p, cc0: body.cc,
+        kind: 'move',
+        id: e.pointerId,
+        track: el,
+        x0: e.clientX,
+        start0: body.start,
+        dur: body.dur,
+        startPtr: body.def.startPtr,
+        label: body.def.label,
+        p0: body.p,
+        cc0: body.cc,
       };
       root.classList.add('is-dragging', 'is-moving');
       onDrag(true);
@@ -375,7 +664,13 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const outEnd = total;
     place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's', cc.in.duration);
     place(bars.c[1], p.closed, p.outAt, 'Closed', Math.max(0, p.outAt - p.closed));
-    place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's', Math.max(0, outEnd - p.outAt));
+    place(
+      bars.c[2],
+      p.outAt,
+      outEnd,
+      'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's',
+      Math.max(0, outEnd - p.outAt),
+    );
     // Each text segment uses its own absolute start (clipped to the total window).
     const tIn0 = Math.min(total, p.textIn);
     const tIn1 = Math.min(total, p.textIn + cc.labelIn.duration);
@@ -392,14 +687,21 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       axisFor = total;
       const every = total <= 3 ? 0.5 : total <= 6 ? 1 : 2;
       const marks = [];
-      for (let t = 0; t <= total + 1e-6; t += every) marks.push(h('span', { style: { left: pct(t) } }, fmtS(t) + 's'));
+      for (let t = 0; t <= total + 1e-6; t += every)
+        marks.push(h('span', { style: { left: pct(t) } }, fmtS(t) + 's'));
       clear(axis, marks);
     }
   }
   layout();
   // Second pass once the track has a real width so in-bar labels can measure.
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => layout());
-  return { el: root, layout, get dragging() { return !!drag; } };
+  return {
+    el: root,
+    layout,
+    get dragging() {
+      return !!drag;
+    },
+  };
 }
 
 function pageTransitionGroup(store, bridge) {
@@ -408,7 +710,14 @@ function pageTransitionGroup(store, bridge) {
   const set = (ptr, value, key) => store.set(FILE, ptr, value, { key, source: 'panel' });
   const isChanged = (ptr) => JSON.stringify(get(ptr)) !== JSON.stringify(base(ptr));
   const numbers = [];
-  const head = (label) => h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
+  const head = (label) =>
+    h(
+      'label',
+      { class: 'tf__label' },
+      h('span', { class: 'tf__file' }, 'animations'),
+      label,
+      h('i', { class: 'dot', title: 'Changed' }),
+    );
   const OUT_START_PTR = CURTAIN + '/outStart';
   const HOLD_START_PTR = CURTAIN + '/holdStart';
   const TEXT_OUT_START_PTR = CURTAIN + '/textOutStart';
@@ -439,7 +748,8 @@ function pageTransitionGroup(store, bridge) {
       if (sessionHoldStart == null) sessionHoldStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
       return sessionHoldStart;
     }
-    if (sessionTextOutStart == null) sessionTextOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
+    if (sessionTextOutStart == null)
+      sessionTextOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
     return sessionTextOutStart;
   };
   const lockedOutStart = () => lockStart(OUT_START_PTR, 'out', (n) => n.outStart);
@@ -460,14 +770,16 @@ function pageTransitionGroup(store, bridge) {
   const getTotal = () => {
     const stored = readStoredTotal();
     if (stored != null) return stored;
-    if (sessionTotal == null) sessionTotal = Math.max(leaveStart(effective()), curtainOutEnd(effective()));
+    if (sessionTotal == null)
+      sessionTotal = Math.max(leaveStart(effective()), curtainOutEnd(effective()));
     return sessionTotal;
   };
   const pinOutDuration = (total) => {
     const cc = effective();
     const outAt = leaveStart(cc);
     const od = Math.max(0, Number((total - outAt).toFixed(2)));
-    if (cc.out.duration !== od) set(CURTAIN + '/out/duration', od, 'curtain:' + CURTAIN + '/out/duration');
+    if (cc.out.duration !== od)
+      set(CURTAIN + '/out/duration', od, 'curtain:' + CURTAIN + '/out/duration');
   };
   const setTotal = (raw, { storeTotal = true } = {}) => {
     const cc = effective();
@@ -494,7 +806,9 @@ function pageTransitionGroup(store, bridge) {
     if (ptr !== '/textOutStart') persistIfMissing(TEXT_OUT_START_PTR, lockedTextOutStart);
     const cc = effective();
     const total = getTotal();
-    const def = HANDLES.find((d) => d.ptr === ptr) || (ptr === '/holdStart' || ptr === '/textOutStart' ? { min: 0 } : null);
+    const def =
+      HANDLES.find((d) => d.ptr === ptr) ||
+      (ptr === '/holdStart' || ptr === '/textOutStart' ? { min: 0 } : null);
     const min = def ? def.min : 0;
     const clamped = clampField(ptr, v, min, cc, total);
     if (ptr === '/outStart') sessionOutStart = clamped;
@@ -547,7 +861,8 @@ function pageTransitionGroup(store, bridge) {
           // Restore the effective / stored value.
           let v;
           if (ptr === TOTAL_PTR) v = getTotal();
-          else if (ptr.slice(CURTAIN.length) === '/out/duration') v = Math.max(0, getTotal() - leaveStart(effective()));
+          else if (ptr.slice(CURTAIN.length) === '/out/duration')
+            v = Math.max(0, getTotal() - leaveStart(effective()));
           else v = get(ptr) ?? digRel(effective(), rel) ?? 0;
           e.target.value = String(v);
           e.target.classList.remove('is-invalid');
@@ -570,33 +885,48 @@ function pageTransitionGroup(store, bridge) {
     const ptr = CURTAIN + rel;
     const input = numInput(ptr, rel, 'tf__input', { min });
     const changed = () => isChanged(ptr);
-    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] }, head(label), input, hint ? h('p', { class: 'hint small tf__hint' }, hint) : null);
+    const wrap = h(
+      'div',
+      { class: ['tf', changed() && 'is-changed'] },
+      head(label),
+      input,
+      hint ? h('p', { class: 'hint small tf__hint' }, hint) : null,
+    );
     numbers.push({ ptr, rel, input, wrap, changed, min });
     return wrap;
   };
 
   // Duration + ease on one row (Advanced).
   const advEases = [];
-  const readMode = () => (get(EASE_MODE_PTR) === 'individual' || effective().easeMode === 'individual' ? 'individual' : 'shared');
+  const readMode = () =>
+    get(EASE_MODE_PTR) === 'individual' || effective().easeMode === 'individual'
+      ? 'individual'
+      : 'shared';
   const sharedEaseValue = () => get(SHARED_EASE_PTR) || effective().ease || 'expo.inOut';
   const setSharedEase = (v) => {
     // Shared mode: one value plays; clear per-step eases so they cannot affect playback.
-    store.batch(() => {
-      set(EASE_MODE_PTR, 'shared', 'curtain:easeMode');
-      set(SHARED_EASE_PTR, v, 'curtain:ease');
-      for (const rel of EASE_PTRS) set(CURTAIN + rel, undefined, 'curtain:' + CURTAIN + rel);
-    }, { source: 'panel' });
+    store.batch(
+      () => {
+        set(EASE_MODE_PTR, 'shared', 'curtain:easeMode');
+        set(SHARED_EASE_PTR, v, 'curtain:ease');
+        for (const rel of EASE_PTRS) set(CURTAIN + rel, undefined, 'curtain:' + CURTAIN + rel);
+      },
+      { source: 'panel' },
+    );
   };
   const setStepEase = (eRel, v) => {
     const shared = sharedEaseValue();
     // Individual mode: seed every step from the current shared ease, then apply this pick.
-    store.batch(() => {
-      set(EASE_MODE_PTR, 'individual', 'curtain:easeMode');
-      if (get(SHARED_EASE_PTR) == null) set(SHARED_EASE_PTR, shared, 'curtain:ease');
-      // Seed every step from the shared ease so untouched steps do not jump.
-      for (const rel of EASE_PTRS) set(CURTAIN + rel, shared, 'curtain:' + CURTAIN + rel);
-      set(CURTAIN + eRel, v, 'curtain:' + CURTAIN + eRel);
-    }, { source: 'panel' });
+    store.batch(
+      () => {
+        set(EASE_MODE_PTR, 'individual', 'curtain:easeMode');
+        if (get(SHARED_EASE_PTR) == null) set(SHARED_EASE_PTR, shared, 'curtain:ease');
+        // Seed every step from the shared ease so untouched steps do not jump.
+        for (const rel of EASE_PTRS) set(CURTAIN + rel, shared, 'curtain:' + CURTAIN + rel);
+        set(CURTAIN + eRel, v, 'curtain:' + CURTAIN + eRel);
+      },
+      { source: 'panel' },
+    );
   };
 
   const pair = (seg, label) => {
@@ -613,9 +943,16 @@ function pageTransitionGroup(store, bridge) {
       onChange: (v) => setStepEase(eRel, v),
     });
     const changed = () => isChanged(dPtr) || isChanged(ePtr);
-    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] },
+    const wrap = h(
+      'div',
+      { class: ['tf', changed() && 'is-changed'] },
       head(label),
-      h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')), ease.el),
+      h(
+        'div',
+        { class: 'f__pair' },
+        h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')),
+        ease.el,
+      ),
     );
     numbers.push({ ptr: dPtr, rel: dRel, input, wrap, changed, min: 0 });
     advEases.push({ ptr: ePtr, rel: eRel, ease, wrap });
@@ -627,10 +964,16 @@ function pageTransitionGroup(store, bridge) {
   totalInput.placeholder = fmtS(getTotal());
   totalInput.value = String(getTotal());
   const totalChanged = () => isChanged(TOTAL_PTR);
-  const totalWrap = h('div', { class: ['tf', totalChanged() && 'is-changed'] },
+  const totalWrap = h(
+    'div',
+    { class: ['tf', totalChanged() && 'is-changed'] },
     head('Total duration (s)'),
     totalInput,
-    h('p', { class: 'hint small tf__hint' }, 'Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will not grow this.'),
+    h(
+      'p',
+      { class: 'hint small tf__hint' },
+      'Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will not grow this.',
+    ),
   );
   numbers.push({
     ptr: TOTAL_PTR,
@@ -657,26 +1000,28 @@ function pageTransitionGroup(store, bridge) {
     compact: true,
     onChange: (v) => setSharedEase(v),
   });
-  const globalEaseWrap = h('div', { class: 'tf ptg__ease' },
-    head('Ease'),
-    globalEase.el,
-    easeHint,
-  );
+  const globalEaseWrap = h('div', { class: 'tf ptg__ease' }, head('Ease'), globalEase.el, easeHint);
 
-  const advancedBody = CURTAIN_ROWS.map((row) => (
-    row[0] === 'pair' ? pair(row[1], row[2]) : single(row[0], row[1], row[2] || {})
-  ));
-  const advanced = h('details', { class: 'ptg__advanced' },
+  const advancedBody = CURTAIN_ROWS.map((row) =>
+    row[0] === 'pair' ? pair(row[1], row[2]) : single(row[0], row[1], row[2] || {}),
+  );
+  const advanced = h(
+    'details',
+    { class: 'ptg__advanced' },
     h('summary', {}, 'Advanced'),
     h('div', { class: 'ptg__advanced-body' }, ...advancedBody),
   );
 
-  const replay = h('button', {
-    type: 'button',
-    class: 'btn-ed',
-    title: 'Play the transition over this page with the values above (no navigation)',
-    onclick: () => bridge.api?.replayCurtain?.(),
-  }, '\u21ba Replay');
+  const replay = h(
+    'button',
+    {
+      type: 'button',
+      class: 'btn-ed',
+      title: 'Play the transition over this page with the values above (no navigation)',
+      onclick: () => bridge.api?.replayCurtain?.(),
+    },
+    '\u21ba Replay',
+  );
 
   const syncEaseUi = () => {
     const mode = readMode();
@@ -688,24 +1033,27 @@ function pageTransitionGroup(store, bridge) {
       : 'One ease for every step. Set a step ease in Advanced to use separate eases.';
     globalEaseWrap.classList.toggle('is-individual', individual);
     for (const r of advEases) {
-      const v = individual ? (get(r.ptr) || shared) : shared;
+      const v = individual ? get(r.ptr) || shared : shared;
       r.ease.update(v);
       r.wrap.classList.toggle('is-ease-inactive', !individual);
       r.ease.el.classList.toggle('is-inactive', !individual);
-      r.ease.el.title = individual ? '' : 'Not in effect — shared ease is active. Pick an ease to switch to per-step.';
+      r.ease.el.title = individual
+        ? ''
+        : 'Not in effect — shared ease is active. Pick an ease to switch to per-step.';
     }
   };
 
-  const el = h('section', { class: 'grp ptg' },
+  const el = h(
+    'section',
+    { class: 'grp ptg' },
     h('h4', { class: 'grp__title' }, 'Page transition'),
-    h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
-    h('div', { class: 'ptg__actions' }, replay),
-    h('div', { class: 'ptg__box' },
-      totalWrap,
-      timeline.el,
-      globalEaseWrap,
-      advanced,
+    h(
+      'p',
+      { class: 'hint' },
+      'Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.',
     ),
+    h('div', { class: 'ptg__actions' }, replay),
+    h('div', { class: 'ptg__box' }, totalWrap, timeline.el, globalEaseWrap, advanced),
   );
 
   // Refresh in place (while typing in a field or dragging the timeline) without re-rendering.
@@ -731,7 +1079,8 @@ function pageTransitionGroup(store, bridge) {
       else if (r.rel === '/outStart' && v == null) v = eff.outStart;
       else if (r.rel === '/holdStart' && v == null) v = eff.holdStart;
       else if (r.rel === '/textOutStart' && v == null) v = eff.textOutStart;
-      if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
+      if (r.input !== document.activeElement && r.input.value !== String(v ?? ''))
+        r.input.value = v ?? '';
     }
     syncEaseUi();
   };
@@ -767,28 +1116,58 @@ export function createMotionPanel({ store, bridge, root, toast }) {
   }
 
   const layerPtr = (m, s = scope) =>
-    s === 'element' ? `/elements${compile([sel.key])}` : s === 'target' ? `/targets${compile([sel.id])}` : `/presets${compile([m.presetName])}`;
+    s === 'element'
+      ? `/elements${compile([sel.key])}`
+      : s === 'target'
+        ? `/targets${compile([sel.id])}`
+        : `/presets${compile([m.presetName])}`;
   const keepFor = (s = scope) => (s === 'element' ? 1 : 2);
-  const sourceOf = (m, path) => ['element', 'target', 'preset', 'defaults'].find((l) => dig(m.layers[l], path) !== undefined) || null;
+  const sourceOf = (m, path) =>
+    ['element', 'target', 'preset', 'defaults'].find((l) => dig(m.layers[l], path) !== undefined) ||
+    null;
 
   function setValue(path, value) {
     const m = model();
-    store.set(FILE, layerPtr(m) + compile(path), value, { key: `anim:${scope}:${sel.key}:${path.join('.')}`, keep: keepFor(), source: 'motion' });
+    store.set(FILE, layerPtr(m) + compile(path), value, {
+      key: `anim:${scope}:${sel.key}:${path.join('.')}`,
+      keep: keepFor(),
+      source: 'motion',
+    });
   }
   function resetValue(path) {
     const m = model();
     store.remove(FILE, layerPtr(m) + compile(path), { keep: keepFor(), source: 'motion' });
   }
-  const meta = (m, path) => ({ source: sourceOf(m, path), canReset: dig(m.layers[scope], path) !== undefined });
+  const meta = (m, path) => ({
+    source: sourceOf(m, path),
+    canReset: dig(m.layers[scope], path) !== undefined,
+  });
 
   /** Duration + ease on one row (one badge / reset for both). */
   function makePair(def) {
     const [dp, ep] = def.paths;
     const f = pairField({
-      label: def.label, hint: def.hint, min: def.min ?? 0, max: def.max, step: def.step, unit: def.unit,
-      ease: easeField({ gsap: bridge.api.gsap, value: 'none', compact: true, onChange: (v) => setValue(ep, v) }),
+      label: def.label,
+      hint: def.hint,
+      min: def.min ?? 0,
+      max: def.max,
+      step: def.step,
+      unit: def.unit,
+      ease: easeField({
+        gsap: bridge.api.gsap,
+        value: 'none',
+        compact: true,
+        onChange: (v) => setValue(ep, v),
+      }),
       onNumber: (v) => setValue(dp, v),
-      onReset: () => store.batch(() => { resetValue(dp); resetValue(ep); }, { source: 'motion' }),
+      onReset: () =>
+        store.batch(
+          () => {
+            resetValue(dp);
+            resetValue(ep);
+          },
+          { source: 'motion' },
+        ),
     });
     updaters.push((m) => f.update([dig(m.spec, dp), dig(m.spec, ep)], [meta(m, dp), meta(m, ep)]));
     return f.el;
@@ -799,10 +1178,24 @@ export function createMotionPanel({ store, bridge, root, toast }) {
     const common = { label: def.label, hint: def.hint, onReset: () => resetValue(def.path) };
     const onChange = (v) => setValue(def.path, v);
     let f;
-    if (def.kind === 'number') f = numberField({ ...common, min: def.min ?? 0, max: def.max, step: def.step, unit: def.unit, onChange });
-    else if (def.kind === 'text') f = textField({ ...common, suggestions: def.suggestions, onChange });
-    else if (def.kind === 'segment') f = segmentField({ ...common, options: def.options, onChange });
-    else if (def.kind === 'ease') f = customField({ ...common, control: easeField({ gsap: bridge.api.gsap, value: 'none', onChange }) });
+    if (def.kind === 'number')
+      f = numberField({
+        ...common,
+        min: def.min ?? 0,
+        max: def.max,
+        step: def.step,
+        unit: def.unit,
+        onChange,
+      });
+    else if (def.kind === 'text')
+      f = textField({ ...common, suggestions: def.suggestions, onChange });
+    else if (def.kind === 'segment')
+      f = segmentField({ ...common, options: def.options, onChange });
+    else if (def.kind === 'ease')
+      f = customField({
+        ...common,
+        control: easeField({ gsap: bridge.api.gsap, value: 'none', onChange }),
+      });
     updaters.push((m) => f.update(dig(m.spec, def.path), meta(m, def.path)));
     return f.el;
   }
@@ -810,49 +1203,103 @@ export function createMotionPanel({ store, bridge, root, toast }) {
   function propsGroup(which, m) {
     const values = m.spec[which] || {};
     const rows = Object.keys(values).map((prop) => {
-      const p = PROPS[prop] || { label: prop, min: -200, max: 200, step: 1, text: typeof values[prop] !== 'number' };
+      const p = PROPS[prop] || {
+        label: prop,
+        min: -200,
+        max: 200,
+        step: 1,
+        text: typeof values[prop] !== 'number',
+      };
       const def = p.text
         ? { path: [which, prop], label: p.label, kind: 'text', suggestions: p.suggestions || [] }
-        : { path: [which, prop], label: p.label, kind: 'number', min: p.min, max: p.max, step: p.step, unit: p.unit };
+        : {
+            path: [which, prop],
+            label: p.label,
+            kind: 'number',
+            min: p.min,
+            max: p.max,
+            step: p.step,
+            unit: p.unit,
+          };
       return makeField(def);
     });
-    const missing = Object.keys(PROPS).filter((k) => !(k in values) && !(k === 'opacity' && 'autoAlpha' in values));
-    const add = h('select', {
-      class: 'f__add',
-      onchange: () => {
-        const prop = add.value;
-        if (!prop) return;
-        const other = which === 'from' ? 'to' : 'from';
-        store.batch(() => {
-          setValue([which, prop], which === 'from' ? PROPS[prop].init : PROPS[prop].neutral);
-          // A from-value needs a matching to-value (and vice versa) or GSAP would only set it.
-          if (dig(m.spec, [other, prop]) === undefined) setValue([other, prop], which === 'from' ? PROPS[prop].neutral : PROPS[prop].init);
-        }, { source: 'motion-structure' });
+    const missing = Object.keys(PROPS).filter(
+      (k) => !(k in values) && !(k === 'opacity' && 'autoAlpha' in values),
+    );
+    const add = h(
+      'select',
+      {
+        class: 'f__add',
+        onchange: () => {
+          const prop = add.value;
+          if (!prop) return;
+          const other = which === 'from' ? 'to' : 'from';
+          store.batch(
+            () => {
+              setValue([which, prop], which === 'from' ? PROPS[prop].init : PROPS[prop].neutral);
+              // A from-value needs a matching to-value (and vice versa) or GSAP would only set it.
+              if (dig(m.spec, [other, prop]) === undefined)
+                setValue([other, prop], which === 'from' ? PROPS[prop].neutral : PROPS[prop].init);
+            },
+            { source: 'motion-structure' },
+          );
+        },
       },
-    }, h('option', { value: '' }, '+ add property'), missing.map((k) => h('option', { value: k }, PROPS[k].label)));
+      h('option', { value: '' }, '+ add property'),
+      missing.map((k) => h('option', { value: k }, PROPS[k].label)),
+    );
     return group(which === 'from' ? 'From (start state)' : 'To (end state)', [...rows, add]);
   }
 
-  const group = (title, children) => h('section', { class: 'grp' }, h('h4', { class: 'grp__title' }, title), children);
+  const group = (title, children) =>
+    h('section', { class: 'grp' }, h('h4', { class: 'grp__title' }, title), children);
 
   function renderList() {
     const items = bridge.animElements();
     const els = cfg().elements || {};
-    return h('div', { class: 'mlist' },
+    return h(
+      'div',
+      { class: 'mlist' },
       pageTransitionGroup(store, bridge),
-      h('p', { class: 'hint' }, 'Click an animated element in the preview, or pick one below. Hold Alt to click through to links.'),
-      items.length ? h('ol', { class: 'mlist__items' }, items.map(({ el, id, key }) => {
-        const m = { own: els[key], target: cfg().targets[id] };
-        const preset = m.own?.preset || m.target?.preset || '?';
-        return h('li', {}, h('button', {
-          type: 'button', class: 'mlist__item',
-          onclick: () => { bridge.reveal(el); bridge.select(el, 'anim'); },
-          onpointerenter: () => bridge.setHover(el),
-          onpointerleave: () => bridge.setHover(null),
-        },
-        h('span', { class: 'mlist__id' }, id, m.own ? h('i', { class: 'dot', title: 'Has element overrides' }) : null),
-        h('span', { class: 'mlist__preset' }, preset)));
-      })) : h('p', { class: 'hint' }, 'No animated elements on this page.'),
+      h(
+        'p',
+        { class: 'hint' },
+        'Click an animated element in the preview, or pick one below. Hold Alt to click through to links.',
+      ),
+      items.length
+        ? h(
+            'ol',
+            { class: 'mlist__items' },
+            items.map(({ el, id, key }) => {
+              const m = { own: els[key], target: cfg().targets[id] };
+              const preset = m.own?.preset || m.target?.preset || '?';
+              return h(
+                'li',
+                {},
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    class: 'mlist__item',
+                    onclick: () => {
+                      bridge.reveal(el);
+                      bridge.select(el, 'anim');
+                    },
+                    onpointerenter: () => bridge.setHover(el),
+                    onpointerleave: () => bridge.setHover(null),
+                  },
+                  h(
+                    'span',
+                    { class: 'mlist__id' },
+                    id,
+                    m.own ? h('i', { class: 'dot', title: 'Has element overrides' }) : null,
+                  ),
+                  h('span', { class: 'mlist__preset' }, preset),
+                ),
+              );
+            }),
+          )
+        : h('p', { class: 'hint' }, 'No animated elements on this page.'),
     );
   }
 
@@ -863,39 +1310,132 @@ export function createMotionPanel({ store, bridge, root, toast }) {
     const usage = Object.values(m.c.targets).filter((t) => t.preset === m.presetName).length;
     const scopes = [
       ['element', 'This element', `Only this element on ${sel.key.split('|')[0]}`],
-      ['target', `All “${sel.id}”`, `Every data-anim="${sel.id}" element on the site (${sameTarget} on this page)`],
-      ['preset', `Preset “${m.presetName}”`, `The preset itself: used by ${usage} target${usage === 1 ? '' : 's'}`],
+      [
+        'target',
+        `All “${sel.id}”`,
+        `Every data-anim="${sel.id}" element on the site (${sameTarget} on this page)`,
+      ],
+      [
+        'preset',
+        `Preset “${m.presetName}”`,
+        `The preset itself: used by ${usage} target${usage === 1 ? '' : 's'}`,
+      ],
     ];
-    const head = h('div', { class: 'msel__head' },
-      h('button', { type: 'button', class: 'link', onclick: () => bridge.select(null) }, '← All animations'),
+    const head = h(
+      'div',
+      { class: 'msel__head' },
+      h(
+        'button',
+        { type: 'button', class: 'link', onclick: () => bridge.select(null) },
+        '← All animations',
+      ),
       h('h3', { class: 'msel__title' }, sel.id),
-      h('code', { class: 'msel__key', title: 'Stable element key used for element overrides' }, sel.key),
+      h(
+        'code',
+        { class: 'msel__key', title: 'Stable element key used for element overrides' },
+        sel.key,
+      ),
     );
-    const actions = h('div', { class: 'msel__actions' },
-      h('button', { type: 'button', class: 'btn-ed', onclick: () => bridge.replay(sel.el) }, '▶ Replay'),
+    const actions = h(
+      'div',
+      { class: 'msel__actions' },
+      h(
+        'button',
+        { type: 'button', class: 'btn-ed', onclick: () => bridge.replay(sel.el) },
+        '▶ Replay',
+      ),
       scrubber(),
     );
-    const scopeSeg = h('div', { class: 'scope' },
-      h('div', { class: 'seg' }, scopes.map(([s, label, title]) =>
-        h('button', { type: 'button', class: ['seg__btn', s === scope && 'is-active'], title, onclick: () => { scope = s; render(true); } }, label))),
+    const scopeSeg = h(
+      'div',
+      { class: 'scope' },
+      h(
+        'div',
+        { class: 'seg' },
+        scopes.map(([s, label, title]) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              class: ['seg__btn', s === scope && 'is-active'],
+              title,
+              onclick: () => {
+                scope = s;
+                render(true);
+              },
+            },
+            label,
+          ),
+        ),
+      ),
       h('p', { class: 'hint' }, 'Edits apply to: ', scopes.find((s) => s[0] === scope)[2], '.'),
     );
-    const presets = Object.entries(m.c.presets).filter(([name, p]) => GENERIC_TYPES.has(p.type) || name === m.presetName);
-    const presetRow = scope === 'preset'
-      ? h('p', { class: 'hint' }, `Type: ${m.type}. Changing values here affects every target that uses “${m.presetName}”.`)
-      : h('div', { class: 'f' },
-        h('div', { class: 'f__top' }, h('label', { class: 'f__label' }, 'Preset'),
-          h('span', { class: 'f__src', dataset: { src: m.own.preset ? 'element' : 'target' } }, m.own.preset ? 'element' : 'target'),
-          scope === 'element' && m.own.preset ? h('button', { type: 'button', class: 'f__reset', title: 'Use the target preset', onclick: () => store.remove(FILE, `${layerPtr(m)}/preset`, { keep: 1, source: 'motion-structure' }) }, '↺') : null),
-        h('select', {
-          class: 'f__select',
-          onchange: (e) => {
-            const name = e.target.value;
-            if (scope === 'element' && name === m.target.preset) store.remove(FILE, `${layerPtr(m)}/preset`, { keep: 1, source: 'motion-structure' });
-            else store.set(FILE, `${layerPtr(m)}/preset`, name, { keep: keepFor(), source: 'motion-structure' });
-          },
-        }, presets.map(([name, p]) => h('option', { value: name, selected: name === m.presetName }, `${name}  (${p.type})`))),
-      );
+    const presets = Object.entries(m.c.presets).filter(
+      ([name, p]) => GENERIC_TYPES.has(p.type) || name === m.presetName,
+    );
+    const presetRow =
+      scope === 'preset'
+        ? h(
+            'p',
+            { class: 'hint' },
+            `Type: ${m.type}. Changing values here affects every target that uses “${m.presetName}”.`,
+          )
+        : h(
+            'div',
+            { class: 'f' },
+            h(
+              'div',
+              { class: 'f__top' },
+              h('label', { class: 'f__label' }, 'Preset'),
+              h(
+                'span',
+                { class: 'f__src', dataset: { src: m.own.preset ? 'element' : 'target' } },
+                m.own.preset ? 'element' : 'target',
+              ),
+              scope === 'element' && m.own.preset
+                ? h(
+                    'button',
+                    {
+                      type: 'button',
+                      class: 'f__reset',
+                      title: 'Use the target preset',
+                      onclick: () =>
+                        store.remove(FILE, `${layerPtr(m)}/preset`, {
+                          keep: 1,
+                          source: 'motion-structure',
+                        }),
+                    },
+                    '↺',
+                  )
+                : null,
+            ),
+            h(
+              'select',
+              {
+                class: 'f__select',
+                onchange: (e) => {
+                  const name = e.target.value;
+                  if (scope === 'element' && name === m.target.preset)
+                    store.remove(FILE, `${layerPtr(m)}/preset`, {
+                      keep: 1,
+                      source: 'motion-structure',
+                    });
+                  else
+                    store.set(FILE, `${layerPtr(m)}/preset`, name, {
+                      keep: keepFor(),
+                      source: 'motion-structure',
+                    });
+                },
+              },
+              presets.map(([name, p]) =>
+                h(
+                  'option',
+                  { value: name, selected: name === m.presetName },
+                  `${name}  (${p.type})`,
+                ),
+              ),
+            ),
+          );
 
     const groups = (GROUPS[m.type] || [TIMING]).map((g) => {
       if (g === 'from' || g === 'to') return m.spec[g] ? propsGroup(g, m) : null;
@@ -903,9 +1443,22 @@ export function createMotionPanel({ store, bridge, root, toast }) {
       const visible = defs.filter((d) => !d.when || d.when(m.spec));
       return visible.length ? group(title, visible.map(makeField)) : null;
     });
-    const resetAll = m.own && Object.keys(m.own).length
-      ? h('button', { type: 'button', class: 'link link--danger', onclick: () => store.remove(FILE, `/elements${compile([sel.key])}`, { keep: 1, source: 'motion-structure' }) }, 'Remove all overrides of this element')
-      : null;
+    const resetAll =
+      m.own && Object.keys(m.own).length
+        ? h(
+            'button',
+            {
+              type: 'button',
+              class: 'link link--danger',
+              onclick: () =>
+                store.remove(FILE, `/elements${compile([sel.key])}`, {
+                  keep: 1,
+                  source: 'motion-structure',
+                }),
+            },
+            'Remove all overrides of this element',
+          )
+        : null;
     signature = sig(m);
     const out = h('div', { class: 'msel' }, head, actions, scopeSeg, presetRow, groups, resetAll);
     updaters.forEach((u) => u(m));
@@ -915,16 +1468,44 @@ export function createMotionPanel({ store, bridge, root, toast }) {
   function scrubber() {
     const label = h('span', { class: 'scrub__val' }, '0%');
     scrubInput = h('input', {
-      type: 'range', min: 0, max: 100, step: 0.5, class: 'scrub__range',
+      type: 'range',
+      min: 0,
+      max: 100,
+      step: 0.5,
+      class: 'scrub__range',
       value: Math.round(bridge.scrubProgress(sel.el) * 100),
-      oninput: (e) => { label.textContent = `${Math.round(e.target.value)}%`; bridge.scrubTo(sel.el, e.target.value / 100); },
+      oninput: (e) => {
+        label.textContent = `${Math.round(e.target.value)}%`;
+        bridge.scrubTo(sel.el, e.target.value / 100);
+      },
     });
     label.textContent = `${Math.round(scrubInput.value)}%`;
-    return h('label', { class: 'scrub', title: 'Scroll the page through this element (0% = entering at the bottom, 100% = leaving at the top)' },
-      h('span', { class: 'scrub__label' }, 'Scroll'), scrubInput, label);
+    return h(
+      'label',
+      {
+        class: 'scrub',
+        title:
+          'Scroll the page through this element (0% = entering at the bottom, 100% = leaving at the top)',
+      },
+      h('span', { class: 'scrub__label' }, 'Scroll'),
+      scrubInput,
+      label,
+    );
   }
 
-  const sig = (m) => JSON.stringify([sel.key, scope, m.presetName, m.type, m.spec.trigger, !!m.spec.scrub, Object.keys(m.spec.from || {}), Object.keys(m.spec.to || {}), !!(m.own && Object.keys(m.own).length), !!m.own.preset]);
+  const sig = (m) =>
+    JSON.stringify([
+      sel.key,
+      scope,
+      m.presetName,
+      m.type,
+      m.spec.trigger,
+      !!m.spec.scrub,
+      Object.keys(m.spec.from || {}),
+      Object.keys(m.spec.to || {}),
+      !!(m.own && Object.keys(m.own).length),
+      !!m.own.preset,
+    ]);
 
   function render(force = false) {
     if (!bridge.api) return clear(root, h('p', { class: 'hint' }, 'Waiting for the preview…'));
@@ -933,7 +1514,11 @@ export function createMotionPanel({ store, bridge, root, toast }) {
       // Typing in a page-transition field or dragging its timeline: update in place (keeps focus and the drag).
       const active = document.activeElement;
       const ptg = root.querySelector('.ptg');
-      if (ptg?.__update && (ptg.__dragging || (active?.matches?.('[data-ptr]') && ptg.contains(active)))) return ptg.__update();
+      if (
+        ptg?.__update &&
+        (ptg.__dragging || (active?.matches?.('[data-ptr]') && ptg.contains(active)))
+      )
+        return ptg.__update();
       const top = root.scrollTop;
       clear(root, renderList());
       root.scrollTop = top;
@@ -959,7 +1544,9 @@ export function createMotionPanel({ store, bridge, root, toast }) {
       render(true);
     },
     refresh: (force) => render(force),
-    get selection() { return sel; },
+    get selection() {
+      return sel;
+    },
     toast,
   };
 }

@@ -1,5 +1,9 @@
 /** Local time in the Netherlands for every [data-clock]. */
-const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' });
+const fmt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Amsterdam',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 export function updateClocks() {
   const now = fmt.format(new Date());

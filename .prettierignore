@@ -1,0 +1,12 @@
+node_modules
+dist
+.generated
+media
+package-lock.json
+bun.lock
+bun.lockb
+yarn.lock
+pnpm-lock.yaml
+.git
+.idea
+content/animations.json

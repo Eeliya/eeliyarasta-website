@@ -4,7 +4,13 @@
  */
 import './styles/main.scss';
 import { gsap, ScrollTrigger } from './lib/env.js';
-import { mount as mountAnimations, config as animationConfig, resolve as resolveAnimation, setConfig, pageKey } from './anim/engine.js';
+import {
+  mount as mountAnimations,
+  config as animationConfig,
+  resolve as resolveAnimation,
+  setConfig,
+  pageKey,
+} from './anim/engine.js';
 import { flags } from './anim/flags.js';
 import { initSmooth, getSmoother } from './smooth.js';
 import { initRouter, navigate, replayCurtain } from './router.js';
@@ -29,7 +35,8 @@ function movePortals(view) {
 }
 
 const noop = { revert() {} };
-const startAnimations = (view, portal) => (frozen ? noop : mountAnimations(view, { extraRoots: [portal] }));
+const startAnimations = (view, portal) =>
+  frozen ? noop : mountAnimations(view, { extraRoots: [portal] });
 
 function mount(view, { first = false } = {}) {
   const portal = movePortals(view);
@@ -102,7 +109,8 @@ function connectEditor() {
     scrollTo(target, { smooth = true, position = 'center center' } = {}) {
       const s = getSmoother();
       if (s) return s.scrollTo(target, smooth, position);
-      if (typeof target === 'number') window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
+      if (typeof target === 'number')
+        window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
       else target?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'center' });
     },
     scrollTop(y) {
@@ -123,7 +131,12 @@ function connectEditor() {
 
   // Ctrl/Cmd + Shift + E opens the current page in the editor.
   window.addEventListener('keydown', (e) => {
-    if (window.parent === window && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+    if (
+      window.parent === window &&
+      (e.metaKey || e.ctrlKey) &&
+      e.shiftKey &&
+      e.key.toLowerCase() === 'e'
+    ) {
       e.preventDefault();
       location.href = `/edit/?path=${encodeURIComponent(location.pathname)}`;
     }

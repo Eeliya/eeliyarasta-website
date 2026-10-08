@@ -19,7 +19,8 @@ export function createStore() {
   let future = [];
   let batchEntry = null;
 
-  const emit = (files, source) => listeners.forEach((fn) => fn({ files: [...new Set(files)], source }));
+  const emit = (files, source) =>
+    listeners.forEach((fn) => fn({ files: [...new Set(files)], source }));
 
   const write = (c, value) => {
     if (value === undefined) remove(current[c.file], c.ptr, { keep: c.keep || 0 });
@@ -28,13 +29,23 @@ export function createStore() {
 
   function commitEntry(entry, { source } = {}) {
     const last = history.at(-1);
-    if (entry.key && last && last.key === entry.key && Date.now() - last.t < 1000 && last.changes.length === 1 && entry.changes.length === 1) {
+    if (
+      entry.key &&
+      last &&
+      last.key === entry.key &&
+      Date.now() - last.t < 1000 &&
+      last.changes.length === 1 &&
+      entry.changes.length === 1
+    ) {
       last.changes[0].after = entry.changes[0].after;
       last.t = Date.now();
     } else history.push(entry);
     if (history.length > 300) history.shift();
     future = [];
-    emit(entry.changes.map((c) => c.file), source);
+    emit(
+      entry.changes.map((c) => c.file),
+      source,
+    );
   }
 
   const store = {
@@ -81,7 +92,10 @@ export function createStore() {
       if (!entry) return false;
       [...entry.changes].reverse().forEach((c) => write(c, c.before));
       future.push(entry);
-      emit(entry.changes.map((c) => c.file), 'undo');
+      emit(
+        entry.changes.map((c) => c.file),
+        'undo',
+      );
       return true;
     },
     redo() {
@@ -89,13 +103,17 @@ export function createStore() {
       if (!entry) return false;
       entry.changes.forEach((c) => write(c, c.after));
       history.push(entry);
-      emit(entry.changes.map((c) => c.file), 'redo');
+      emit(
+        entry.changes.map((c) => c.file),
+        'redo',
+      );
       return true;
     },
     canUndo: () => history.length > 0,
     canRedo: () => future.length > 0,
 
-    dirtyFiles: () => Object.keys(current).filter((f) => formatJSON(current[f]) !== formatJSON(base[f])),
+    dirtyFiles: () =>
+      Object.keys(current).filter((f) => formatJSON(current[f]) !== formatJSON(base[f])),
     /** Leaf changes per file, for the "changes" list. */
     changes: (file) => diff(base[file], current[file]),
     serialize: (file) => formatJSON(current[file]),

@@ -15,7 +15,8 @@ let busy = false;
 let queued = null;
 let hooks = { mount: () => {}, unmount: () => {} };
 
-const normalize = (pathname) => (pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/');
+const normalize = (pathname) =>
+  pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/';
 
 /**
  * Curtain timings from content/animations.json transitions.page.curtain (see anim/curtain.js).
@@ -25,7 +26,8 @@ const curtainCfg = () => normalizeCurtain(transitions.page?.curtain);
 
 /** Label for the curtain: data-curtain on the incoming view, else document title. Empty string = no text. */
 function curtainLabel(incoming, doc) {
-  if (incoming && incoming.hasAttribute('data-curtain')) return incoming.getAttribute('data-curtain') ?? '';
+  if (incoming && incoming.hasAttribute('data-curtain'))
+    return incoming.getAttribute('data-curtain') ?? '';
   return doc.title.split('|')[0].trim();
 }
 
@@ -43,8 +45,18 @@ function getPage(pathname) {
 }
 
 function isRoutable(a, e) {
-  if (!a || (e && (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey))) return null;
-  if ((a.target && a.target !== '_self') || a.hasAttribute('download') || a.hasAttribute('data-no-router')) return null;
+  if (
+    !a ||
+    (e &&
+      (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey))
+  )
+    return null;
+  if (
+    (a.target && a.target !== '_self') ||
+    a.hasAttribute('download') ||
+    a.hasAttribute('data-no-router')
+  )
+    return null;
   const url = new URL(a.href, location.href);
   if (url.origin !== location.origin) return null;
   if (/\.[a-z0-9]+$/i.test(url.pathname) && !url.pathname.endsWith('.html')) return null;
@@ -52,7 +64,8 @@ function isRoutable(a, e) {
 }
 
 /** Resolves once timeline `tl` reaches `pos` (immediately if it already has). */
-const until = (tl, pos) => (pos <= tl.time() + 1e-3 ? Promise.resolve() : new Promise((r) => tl.call(r, null, pos)));
+const until = (tl, pos) =>
+  pos <= tl.time() + 1e-3 ? Promise.resolve() : new Promise((r) => tl.call(r, null, pos));
 
 /**
  * The curtain sequence, on one explicit timeline (times from anim/curtain.js curtainPlan):
@@ -74,8 +87,14 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
   gsap.killTweensOf([panel, l]);
   gsap.set(l, { autoAlpha: 0 });
   const cover = gsap.timeline();
-  if (leaveView) cover.to(leaveView, { ...t.leave.to, duration: t.leave.duration, ease: t.leave.ease }, 0);
-  cover.fromTo(panel, { scaleY: 0, transformOrigin: '50% 100%' }, { scaleY: 1, duration: cc.in.duration, ease: cc.in.ease }, 0);
+  if (leaveView)
+    cover.to(leaveView, { ...t.leave.to, duration: t.leave.duration, ease: t.leave.ease }, 0);
+  cover.fromTo(
+    panel,
+    { scaleY: 0, transformOrigin: '50% 100%' },
+    { scaleY: 1, duration: cc.in.duration, ease: cc.in.ease },
+    0,
+  );
 
   const page = await ready;
   const text = cc.label ? String(page.label ?? '') : '';
@@ -89,17 +108,39 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
   const tl = gsap.timeline();
   l.textContent = text;
   if (text) {
-    tl.fromTo(l, { autoAlpha: 0, yPercent: 40 }, { autoAlpha: 1, yPercent: 0, duration: cc.labelIn.duration, ease: cc.labelIn.ease }, at(p.textIn))
-      .to(l, { autoAlpha: 0, yPercent: -40, duration: cc.labelOut.duration, ease: cc.labelOut.ease }, at(p.textOut));
+    tl.fromTo(
+      l,
+      { autoAlpha: 0, yPercent: 40 },
+      { autoAlpha: 1, yPercent: 0, duration: cc.labelIn.duration, ease: cc.labelIn.ease },
+      at(p.textIn),
+    ).to(
+      l,
+      { autoAlpha: 0, yPercent: -40, duration: cc.labelOut.duration, ease: cc.labelOut.ease },
+      at(p.textOut),
+    );
   }
-  tl.to(panel, { scaleY: 0, transformOrigin: '50% 0%', duration: cc.out.duration, ease: cc.out.ease }, outAt);
+  tl.to(
+    panel,
+    { scaleY: 0, transformOrigin: '50% 0%', duration: cc.out.duration, ease: cc.out.ease },
+    outAt,
+  );
 
   await until(tl, swapAt);
   const view = page.swap?.() || null;
   if (view) {
     gsap.set(view, t.enter.from);
-    tl.fromTo(view, t.enter.from, { autoAlpha: 1, y: 0, duration: t.enter.duration, ease: t.enter.ease, clearProps: 'transform,opacity,visibility' },
-      Math.max(tl.time(), outAt + cc.out.duration - 0.6));
+    tl.fromTo(
+      view,
+      t.enter.from,
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: t.enter.duration,
+        ease: t.enter.ease,
+        clearProps: 'transform,opacity,visibility',
+      },
+      Math.max(tl.time(), outAt + cc.out.duration - 0.6),
+    );
   }
   // Mount the page's animations just before the curtain starts leaving.
   await until(tl, Math.max(swapAt, outAt - 0.2));
@@ -138,7 +179,12 @@ function swapView(oldView, { doc, incoming }, url, push) {
   hooks.prepare?.(view);
   if (push) history.pushState({}, '', url.pathname + url.search + url.hash);
   document.title = doc.title;
-  for (const sel of ['meta[name="description"]', 'link[rel="canonical"]', 'meta[property="og:title"]', 'meta[property="og:url"]']) {
+  for (const sel of [
+    'meta[name="description"]',
+    'link[rel="canonical"]',
+    'meta[property="og:title"]',
+    'meta[property="og:url"]',
+  ]) {
     const next = doc.head.querySelector(sel);
     const cur = document.head.querySelector(sel);
     if (next && cur) cur.replaceWith(next.cloneNode(true));
@@ -169,7 +215,10 @@ export async function navigate(href, { push = true } = {}) {
     if (cc) {
       await runCurtain(cc, {
         leaveView: oldView,
-        ready: ready.then((page) => ({ label: page.label, swap: () => swapView(oldView, page, url, push) })),
+        ready: ready.then((page) => ({
+          label: page.label,
+          swap: () => swapView(oldView, page, url, push),
+        })),
         onMount: mountView,
       });
     } else {
@@ -181,7 +230,13 @@ export async function navigate(href, { push = true } = {}) {
       if (!reduced) gsap.set(view, t.enter.from);
       const tl = reduced
         ? gsap.fromTo(view, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25 })
-        : gsap.fromTo(view, t.enter.from, { autoAlpha: 1, y: 0, duration: t.enter.duration, ease: t.enter.ease, clearProps: 'transform,opacity,visibility' });
+        : gsap.fromTo(view, t.enter.from, {
+            autoAlpha: 1,
+            y: 0,
+            duration: t.enter.duration,
+            ease: t.enter.ease,
+            clearProps: 'transform,opacity,visibility',
+          });
       // Mount animations while the new view fades in.
       await new Promise((r) => setTimeout(r, reduced ? 0 : 450));
       mountView(view);
@@ -224,7 +279,8 @@ export function initRouter(h) {
   // Prefetch on hover / touch start.
   const prefetch = (e) => {
     const url = isRoutable(e.target.closest?.('a[href]'));
-    if (url && normalize(url.pathname) !== normalize(location.pathname)) getPage(url.pathname).catch(() => {});
+    if (url && normalize(url.pathname) !== normalize(location.pathname))
+      getPage(url.pathname).catch(() => {});
   };
   document.addEventListener('pointerover', prefetch, { passive: true });
   document.addEventListener('touchstart', prefetch, { passive: true });

@@ -59,9 +59,9 @@ edit/index.html     ← editor entry (served by `npm run dev` only)
 
 `vite-plugin-static-site.mjs` is the whole builder (~100 lines):
 
-* **dev**: a middleware renders any HTML request from `content/*.json` with `src/site/render.js`
+- **dev**: a middleware renders any HTML request from `content/*.json` with `src/site/render.js`
   (through Vite's SSR loader, so template edits reload instantly). Unknown URLs get the 404 page.
-* **build**: Vite bundles the client from `index.html` (hashed JS/CSS). Then, in `closeBundle`,
+- **build**: Vite bundles the client from `index.html` (hashed JS/CSS). Then, in `closeBundle`,
   every route from `routes.js` is rendered into that shell and written to
   `dist/<route>/index.html`, plus `dist/404.html`, `sitemap.xml` and `robots.txt`.
 
@@ -79,19 +79,19 @@ page load.
 
 ### Content
 
-| file | what |
-| --- | --- |
-| `content/site.json` | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy |
-| `content/home.json` | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
-| `content/people.json` | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits) |
-| `content/places.json` | places, same shape |
-| `content/projects.json` | projects: title, kind, year, description, url, image |
-| `content/animations.json` | **every animation** (see below) |
+| file                      | what                                                                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy                                    |
+| `content/home.json`       | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
+| `content/people.json`     | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                         |
+| `content/places.json`     | places, same shape                                                                                                                                           |
+| `content/projects.json`   | projects: title, kind, year, description, url, image                                                                                                         |
+| `content/animations.json` | **every animation** (see below)                                                                                                                              |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `people.json`, done.
 Routes, menu, dropdowns, grids and sitemap update automatically.
 
-> ⚠️ **Placeholder content.** The two people (*Noor Vermeer*, *Daan Okafor*), the two places and
+> ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and
 > the two DIY projects are placeholders (`"placeholder": true`, shown with a "Placeholder" tag).
 > Their photos are free Unsplash images (Unsplash License); photographer and source URL are
 > recorded per image in the JSON and shown as a credit in the album view. Replace them with
@@ -121,16 +121,31 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
 {
   "defaults": { "duration": 1.1, "ease": "expo.out", "trigger": "scroll", "start": "top 85%" },
   "presets": {
-    "fade-up":   { "type": "reveal", "from": { "autoAlpha": 0, "y": 40 }, "to": { "autoAlpha": 1, "y": 0 } },
-    "split-chars": { "type": "split", "split": "chars", "mask": "chars", "from": { "yPercent": 110 }, "to": { "yPercent": 0 }, "stagger": 0.035 },
-    "scatter-drift": { "type": "scatter", "drift": { "amplitude": 14 }, "scroll": { "distance": 55 } }
+    "fade-up": {
+      "type": "reveal",
+      "from": { "autoAlpha": 0, "y": 40 },
+      "to": { "autoAlpha": 1, "y": 0 },
+    },
+    "split-chars": {
+      "type": "split",
+      "split": "chars",
+      "mask": "chars",
+      "from": { "yPercent": 110 },
+      "to": { "yPercent": 0 },
+      "stagger": 0.035,
+    },
+    "scatter-drift": {
+      "type": "scatter",
+      "drift": { "amplitude": 14 },
+      "scroll": { "distance": 55 },
+    },
   },
   "targets": {
-    "hero.title":  { "preset": "hero-title" },
-    "page.title":  { "preset": "split-chars", "trigger": "load", "delay": 0.1 }
+    "hero.title": { "preset": "hero-title" },
+    "page.title": { "preset": "split-chars", "trigger": "load", "delay": 0.1 },
   },
   "interactions": { "...": "card cycle, album wheel/drag thresholds" },
-  "transitions":  { "...": "page curtain, accent tween, album slide, menu" }
+  "transitions": { "...": "page curtain, accent tween, album slide, menu" },
 }
 ```
 
@@ -160,10 +175,10 @@ back to the page).
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
 dropdown, or click links in Browse mode. There's also a mobile (390 px) preview toggle.
 
-| mode | what it does |
-| --- | --- |
-| **Browse** | Use the site normally. Shows unsaved changes per file, plus *Discard all*. |
-| **Text** | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync. |
+| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                 |
+| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                 |
 | **Motion** | Click an animated element (or pick one from the list). Edit its preset, duration, delay, stagger, ease (picker with curves), trigger (load / scroll), scroll start/end/scrub, from/to properties (distance, scale, rotation, opacity, clip-path…) and type-specific values (hero scatter, parallax speed, word scrub…). Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
 
 In the edit modes, clicks on editable or animated elements select them instead of following
@@ -171,11 +186,11 @@ links. Hold **Alt** to click through.
 
 Every value in Motion can be written at one of three **scopes**:
 
-* **This element**: `animations.json → elements["<path>|<target>|<n>"]`, e.g.
+- **This element**: `animations.json → elements["<path>|<target>|<n>"]`, e.g.
   `"/about/|about.headline|0"`. Only this element on this page. This is how you give one
   element a different preset without touching templates.
-* **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
-* **Preset**: `presets["fade-up"]`. Every target using that preset.
+- **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
+- **Preset**: `presets["fade-up"]`. Every target using that preset.
 
 Badges show where each value comes from (element / target / preset / default), and ↺ resets a
 value at the current scope.
@@ -193,9 +208,9 @@ footer) lives in `site.json → pages / footer` for this reason. The editor only
 
 **Save and Publish**
 
-* **Save** (**Ctrl/⌘+S**) writes the changed files to `content/` on disk. That's a **draft**:
+- **Save** (**Ctrl/⌘+S**) writes the changed files to `content/` on disk. That's a **draft**:
   the preview (and Browse mode) shows it, and nothing leaves your machine.
-* **Publish** commits **all saved content changes in one commit** and pushes it, so you can
+- **Publish** commits **all saved content changes in one commit** and pushes it, so you can
   batch many edits into one publish. The dialog lists the changed files (status, number of
   changes, `+/-` lines) and any earlier commits on the branch that aren't pushed yet, and asks for a
   commit message. If you have unsaved edits it offers to **save them first** and include them.
@@ -204,7 +219,7 @@ footer) lives in `site.json → pages / footer` for this reason. The editor only
   success it links to the commit on GitHub. If the push fails (e.g. git has no GitHub login on
   this machine), the commit stays local, the error output is shown, and **Retry push** pushes it
   later.
-* The panel footer always shows how many **saved changes aren't published** yet (and commits
+- The panel footer always shows how many **saved changes aren't published** yet (and commits
   not pushed).
 
 The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/status`,
@@ -222,16 +237,16 @@ the editor yet. Edit `people.json` / `places.json` and `media/` by hand for now.
 
 ### Design notes
 
-* Black background, off-white type. Display: **Momo Trust Display**; UI/body: **DM Mono**
+- Black background, off-white type. Display: **Momo Trust Display**; UI/body: **DM Mono**
   (Google Fonts, `display=swap` with serif/monospace fallbacks).
-* Glass UI (`.glass`): blur + saturation backdrop filter, a flat translucent fill (faintly
+- Glass UI (`.glass`): blur + saturation backdrop filter, a flat translucent fill (faintly
   tinted by the album accent, no gradient), a thin inner highlight border and a soft shadow. The blur lives on `::before`, so glass nested in glass (nav pill →
   dropdown) still blurs the page behind it.
-* The normal system cursor everywhere (no custom cursor), and nothing follows the mouse: the hero
+- The normal system cursor everywhere (no custom cursor), and nothing follows the mouse: the hero
   photos only drift and react to scrolling, and the project list preview sits next to the hovered row.
-* Navigation opens on **click only** (never hover): Photography (People, Places with names),
+- Navigation opens on **click only** (never hover): Photography (People, Places with names),
   Projects, About, Home. Small screens get a full-screen glass menu.
-* Inspiration: Gregor Collienne and Hannah Miles (home hero), Faint Film (album slider/grid),
+- Inspiration: Gregor Collienne and Hannah Miles (home hero), Faint Film (album slider/grid),
   House of Yellow (a proper website with sections and a big footer).
 
 ## Deploy

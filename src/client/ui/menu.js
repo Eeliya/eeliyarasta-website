@@ -53,7 +53,13 @@ function createReveal({ toggle, el, panel, dim = null, yScale = 1 }) {
     // tl.fromTo(toggle , { ...menuItemDefault.close }, { ...menuItemDefault.open, ...vars }, 0);
     tl.fromTo(panel, { '--glass-alpha': 0 }, { '--glass-alpha': 1, ...vars }, 0);
     tl.fromTo([...panel.children], { opacity: 0 }, { opacity: 1, ...vars }, 0);
-    if (dim) tl.fromTo(dim, { backgroundColor: 'rgba(0, 0, 0, 0)' }, { backgroundColor: 'rgba(0, 0, 0, 0.35)', ...vars }, 0);
+    if (dim)
+      tl.fromTo(
+        dim,
+        { backgroundColor: 'rgba(0, 0, 0, 0)' },
+        { backgroundColor: 'rgba(0, 0, 0, 0.35)', ...vars },
+        0,
+      );
   }
 
   return {
@@ -92,7 +98,7 @@ let openToggle = null;
 function dropdownFor(toggle) {
   if (!dropdowns.has(toggle)) {
     const panel = document.getElementById(toggle.getAttribute('aria-controls'));
-    console.log(toggle)
+    console.log(toggle);
     dropdowns.set(toggle, createReveal({ toggle, el: panel, panel }));
   }
   return dropdowns.get(toggle);
@@ -124,7 +130,12 @@ function setMobile(open, { focusToggle = false } = {}) {
   const menu = document.querySelector('[data-mobile-menu]');
   const btn = document.querySelector('[data-menu-toggle]');
   if (!menu || !btn) return;
-  mobile ||= createReveal({ el: menu, panel: menu.querySelector('.mmenu__panel'), dim: menu, yScale: 2 });
+  mobile ||= createReveal({
+    el: menu,
+    panel: menu.querySelector('.mmenu__panel'),
+    dim: menu,
+    yScale: 2,
+  });
   if (open === mobile.open) return;
   btn.setAttribute('aria-expanded', String(open));
   document.documentElement.classList.toggle('menu-open', open);
@@ -160,7 +171,9 @@ export function initMenu() {
       else showDropdown(toggle);
     });
   });
-  document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => setMobile(!mobile?.open));
+  document
+    .querySelector('[data-menu-toggle]')
+    ?.addEventListener('click', () => setMobile(!mobile?.open));
   document.addEventListener('click', (e) => {
     if (openToggle && !dropdownFor(openToggle).el.contains(e.target)) hideDropdown();
     // Mobile: a click on the dimmed area around the panel closes the menu.
@@ -171,7 +184,9 @@ export function initMenu() {
     if (openToggle) hideDropdown({ focusToggle: true });
     if (mobile?.open) setMobile(false, { focusToggle: true });
   });
-  window.matchMedia('(min-width: 900px)').addEventListener('change', (m) => m.matches && setMobile(false));
+  window
+    .matchMedia('(min-width: 900px)')
+    .addEventListener('change', (m) => m.matches && setMobile(false));
 }
 
 /** Highlight the nav item for the current path. */

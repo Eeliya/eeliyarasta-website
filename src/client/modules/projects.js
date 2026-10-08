@@ -18,11 +18,28 @@ export function projects(view) {
     if (open) {
       body.hidden = false;
       if (reduce) return refresh();
-      gsap.fromTo(body, { height: 0 }, { height: 'auto', duration: 0.8, ease: 'expo.out', onComplete: refresh });
-      gsap.fromTo(body.querySelectorAll('.prow__media, .prow__text > *'), { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'expo.out', stagger: 0.06, delay: 0.1 });
+      gsap.fromTo(
+        body,
+        { height: 0 },
+        { height: 'auto', duration: 0.8, ease: 'expo.out', onComplete: refresh },
+      );
+      gsap.fromTo(
+        body.querySelectorAll('.prow__media, .prow__text > *'),
+        { autoAlpha: 0, y: 24 },
+        { autoAlpha: 1, y: 0, duration: 0.8, ease: 'expo.out', stagger: 0.06, delay: 0.1 },
+      );
     } else {
-      if (reduce) return (body.hidden = true), refresh();
-      gsap.to(body, { height: 0, duration: 0.45, ease: 'power2.inOut', onComplete: () => ((body.hidden = true), gsap.set(body, { clearProps: 'height' }), refresh()) });
+      if (reduce) return ((body.hidden = true), refresh());
+      gsap.to(body, {
+        height: 0,
+        duration: 0.45,
+        ease: 'power2.inOut',
+        onComplete: () => (
+          (body.hidden = true),
+          gsap.set(body, { clearProps: 'height' }),
+          refresh()
+        ),
+      });
     }
   }
 
@@ -34,7 +51,9 @@ export function projects(view) {
   });
 
   const openFromHash = () => {
-    const row = location.hash && view.querySelector(`[data-prow][id="${CSS.escape(location.hash.slice(1))}"]`);
+    const row =
+      location.hash &&
+      view.querySelector(`[data-prow][id="${CSS.escape(location.hash.slice(1))}"]`);
     if (!row) return;
     setOpen(row, true);
     setTimeout(() => scrollToEl(row), 250);

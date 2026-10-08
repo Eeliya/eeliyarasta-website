@@ -1,21 +1,32 @@
 import { html, esc, img, pad, extAttrs, isExternal, ed } from '../helpers.js';
 
-const caret = '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
+const caret =
+  '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
 const arrowNE = '<span class="arrow-ne" aria-hidden="true">↗</span>';
 
 const albumLinks = (ctx, kind, list) =>
-  list.map((a) => html`
-    <li><a class="dd-link" href="/${kind}/${a.slug}/">
-      <span class="dd-link__thumb">${img(ctx, a.images[a.cover || 0].src, { alt: '', sizes: '48px' })}</span>
-      <span class="dd-link__name">${esc(a.name)}</span>
-      <span class="dd-link__count">${pad(a.images.length)}</span>
-    </a></li>`);
+  list.map(
+    (a) =>
+      html` <li>
+        <a class="dd-link" href="/${kind}/${a.slug}/">
+          <span class="dd-link__thumb"
+            >${img(ctx, a.images[a.cover || 0].src, { alt: '', sizes: '48px' })}</span
+          >
+          <span class="dd-link__name">${esc(a.name)}</span>
+          <span class="dd-link__count">${pad(a.images.length)}</span>
+        </a>
+      </li>`,
+  );
 
 const projectLink = (p) => {
-  const href = p.url && isExternal(p.url) && p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
-  return html`<li><a class="dd-link dd-link--text" href="${esc(href)}"${extAttrs(href)}>
-    <span class="dd-link__name">${esc(p.title)}</span><span class="dd-link__count">${esc(p.kind)}${isExternal(href) ? arrowNE : ''}</span>
-  </a></li>`;
+  const href =
+    p.url && isExternal(p.url) && p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
+  return html`<li>
+    <a class="dd-link dd-link--text" href="${esc(href)}" ${extAttrs(href)}>
+      <span class="dd-link__name">${esc(p.title)}</span
+      ><span class="dd-link__count">${esc(p.kind)}${isExternal(href) ? arrowNE : ''}</span>
+    </a>
+  </li>`;
 };
 
 /** Persistent header: logo, glass nav pill with click-to-open dropdowns, local time, mobile menu toggle. */
@@ -89,7 +100,9 @@ export function mobileMenu(ctx) {
           <div class="mmenu__sub mmenu__sub--single">
             <div>${projects.map((p) => {
               const href = p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
-              return html`<a href="${esc(href)}"${extAttrs(href)}>${esc(p.title)}${isExternal(href) ? arrowNE : ''}</a>`;
+              return html`<a href="${esc(href)}" ${extAttrs(href)}
+                >${esc(p.title)}${isExternal(href) ? arrowNE : ''}</a
+              >`;
             })}</div>
           </div>
         </div>

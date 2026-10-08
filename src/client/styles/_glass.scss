@@ -31,19 +31,33 @@
   position: relative;
   isolation: isolate;
   border-radius: 999px;
-  &::before { @include glass-surface; }
+  &::before {
+    @include glass-surface;
+  }
 }
 
 .btn {
-  display: inline-flex; align-items: center; gap: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 20px;
-  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
   transition: transform 0.5s var(--ease-out);
-  span { transition: transform 0.5s var(--ease-out); }
-  &:hover {
-    &::before { background: var(--glass-fill-hover); }
-    span:last-child { transform: translateX(3px); }
+  span {
+    transition: transform 0.5s var(--ease-out);
   }
-  &:active { transform: scale(0.97); }
+  &:hover {
+    &::before {
+      background: var(--glass-fill-hover);
+    }
+    span:last-child {
+      transform: translateX(3px);
+    }
+  }
+  &:active {
+    transform: scale(0.97);
+  }
 }

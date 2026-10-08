@@ -26,7 +26,16 @@ import { getRoutes } from '../site/routes.js';
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
-const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false, publishing: false, pub: null, target: { kind: 'page', path: '/', title: 'Home' } };
+const state = {
+  mode: 'browse',
+  lastEdit: 'text',
+  loaded: null,
+  viewport: 'desktop',
+  saving: false,
+  publishing: false,
+  pub: null,
+  target: { kind: 'page', path: '/', title: 'Home' },
+};
 
 // ---------------------------------------------------------------- layout
 const app = document.getElementById('editor');
@@ -35,9 +44,21 @@ const frameWrap = h('div', { class: 'ed-frame-wrap' }, iframe);
 const stage = h('main', { class: 'ed-stage' }, frameWrap);
 const body = h('div', { class: 'ed-body' });
 const modeBtns = {};
-const modes = h('nav', { class: 'seg ed-modes', 'aria-label': 'Mode' },
-  [['browse', 'Browse'], ['text', 'Content'], ['motion', 'Motion']].map(([m, label]) =>
-    (modeBtns[m] = h('button', { type: 'button', class: 'seg__btn', dataset: { mode: m }, onclick: () => setMode(m) }, label))),
+const modes = h(
+  'nav',
+  { class: 'seg ed-modes', 'aria-label': 'Mode' },
+  [
+    ['browse', 'Browse'],
+    ['text', 'Content'],
+    ['motion', 'Motion'],
+  ].map(
+    ([m, label]) =>
+      (modeBtns[m] = h(
+        'button',
+        { type: 'button', class: 'seg__btn', dataset: { mode: m }, onclick: () => setMode(m) },
+        label,
+      )),
+  ),
 );
 const pageMenu = createPageMenu({
   onChange: (item) => {
@@ -47,29 +68,78 @@ const pageMenu = createPageMenu({
     renderChrome();
   },
 });
-const vpBtn = h('button', { type: 'button', class: 'icon-btn', title: 'Toggle mobile viewport', onclick: () => toggleViewport() }, '▭');
-const undoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Undo (${MOD}+Z)`, onclick: () => store.undo() }, '↶');
-const redoBtn = h('button', { type: 'button', class: 'icon-btn', title: `Redo (${MOD}+Shift+Z)`, onclick: () => store.redo() }, '↷');
+const vpBtn = h(
+  'button',
+  {
+    type: 'button',
+    class: 'icon-btn',
+    title: 'Toggle mobile viewport',
+    onclick: () => toggleViewport(),
+  },
+  '▭',
+);
+const undoBtn = h(
+  'button',
+  { type: 'button', class: 'icon-btn', title: `Undo (${MOD}+Z)`, onclick: () => store.undo() },
+  '↶',
+);
+const redoBtn = h(
+  'button',
+  {
+    type: 'button',
+    class: 'icon-btn',
+    title: `Redo (${MOD}+Shift+Z)`,
+    onclick: () => store.redo(),
+  },
+  '↷',
+);
 const sourceLine = h('span', { class: 'ed-source' });
 const status = h('div', { class: 'ed-status', role: 'status', 'aria-live': 'polite' });
 const pending = h('div', { class: 'ed-pending' });
-const saveBtn = h('button', { type: 'button', class: 'btn-ghost ed-save', onclick: () => save() }, 'Save');
-const publishBtn = h('button', { type: 'button', class: 'btn-primary ed-publish', onclick: () => publishDialog() }, 'Publish');
-const panel = h('aside', { class: 'ed-panel' },
-  h('header', { class: 'ed-head' },
+const saveBtn = h(
+  'button',
+  { type: 'button', class: 'btn-ghost ed-save', onclick: () => save() },
+  'Save',
+);
+const publishBtn = h(
+  'button',
+  { type: 'button', class: 'btn-primary ed-publish', onclick: () => publishDialog() },
+  'Publish',
+);
+const panel = h(
+  'aside',
+  { class: 'ed-panel' },
+  h(
+    'header',
+    { class: 'ed-head' },
     h('div', { class: 'ed-brand' }, h('span', { class: 'ed-logo' }, 'Editor'), sourceLine),
     modes,
     h('div', { class: 'ed-bar' }, pageMenu.el, vpBtn, undoBtn, redoBtn),
   ),
   body,
-  h('footer', { class: 'ed-foot' }, pending, status, h('div', { class: 'ed-foot__row' }, saveBtn, publishBtn)),
+  h(
+    'footer',
+    { class: 'ed-foot' },
+    pending,
+    status,
+    h('div', { class: 'ed-foot__row' }, saveBtn, publishBtn),
+  ),
 );
 const toasts = h('div', { class: 'ed-toasts' });
 clear(app, stage, panel, toasts);
 
 // ---------------------------------------------------------------- helpers
 function toast(content, { kind = 'info', timeout = 5000 } = {}) {
-  const el = h('div', { class: ['toast', `toast--${kind}`] }, content, h('button', { type: 'button', class: 'toast__x', 'aria-label': 'Dismiss', onclick: () => el.remove() }, '×'));
+  const el = h(
+    'div',
+    { class: ['toast', `toast--${kind}`] },
+    content,
+    h(
+      'button',
+      { type: 'button', class: 'toast__x', 'aria-label': 'Dismiss', onclick: () => el.remove() },
+      '×',
+    ),
+  );
   toasts.append(el);
   if (timeout) setTimeout(() => el.remove(), timeout);
   return el;
@@ -78,7 +148,13 @@ const setStatus = (text) => (status.textContent = text);
 
 function contentForRoutes() {
   const c = store.current;
-  return { site: c['site.json'], home: c['home.json'], people: c['people.json'], places: c['places.json'], projects: c['projects.json'] };
+  return {
+    site: c['site.json'],
+    home: c['home.json'],
+    people: c['people.json'],
+    places: c['places.json'],
+    projects: c['projects.json'],
+  };
 }
 
 function renderPages() {
@@ -122,7 +198,9 @@ function renderChrome() {
   const files = pubFiles();
   const ahead = state.pub?.ahead || 0;
   publishBtn.disabled = state.publishing || (!files.length && !ahead && !n);
-  publishBtn.textContent = state.publishing ? 'Publishing…' : `Publish${files.length ? ` · ${pubChanges()}` : ''}`;
+  publishBtn.textContent = state.publishing
+    ? 'Publishing…'
+    : `Publish${files.length ? ` · ${pubChanges()}` : ''}`;
   publishBtn.title = `Commit all saved content changes in one commit and push to ${state.pub?.branch ? `origin/${state.pub.branch}` : 'GitHub'}`;
   sourceLine.textContent = 'dev · local files';
   sourceLine.dataset.kind = 'dev';
@@ -136,12 +214,20 @@ function renderPending() {
   const files = pubFiles();
   const ahead = pub?.ahead || 0;
   pending.dataset.kind = files.length || ahead ? 'pending' : 'clean';
-  if (!pub) return clear(pending, h('span', { class: 'muted' }, 'Checking for unpublished changes…'));
-  if (pub.error) return clear(pending, h('span', { class: 'muted' }, `Publish unavailable: ${pub.error}`));
-  clear(pending,
+  if (!pub)
+    return clear(pending, h('span', { class: 'muted' }, 'Checking for unpublished changes…'));
+  if (pub.error)
+    return clear(pending, h('span', { class: 'muted' }, `Publish unavailable: ${pub.error}`));
+  clear(
+    pending,
     h('i', { class: 'ed-pending__dot' }),
     files.length
-      ? h('span', {}, h('b', { class: 'ed-pending__count' }, plural(pubChanges(), 'saved change')), ` not published · ${plural(files.length, 'file')}`)
+      ? h(
+          'span',
+          {},
+          h('b', { class: 'ed-pending__count' }, plural(pubChanges(), 'saved change')),
+          ` not published · ${plural(files.length, 'file')}`,
+        )
       : h('span', { class: 'muted' }, 'Everything saved is published'),
     ahead ? h('span', { class: 'muted' }, ` · ${plural(ahead, 'commit')} not pushed`) : null,
   );
@@ -164,17 +250,43 @@ const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 
 function renderOverview() {
   const dirty = store.dirtyFiles();
-  clear(body,
-    h('section', { class: 'grp' },
+  clear(
+    body,
+    h(
+      'section',
+      { class: 'grp' },
       h('h4', { class: 'grp__title' }, 'How it works'),
-      h('ul', { class: 'help' },
+      h(
+        'ul',
+        { class: 'help' },
         h('li', {}, h('b', {}, 'Content'), ' — click any outlined text in the preview and type.'),
-        h('li', {}, h('b', {}, 'Motion'), ' — click an animated element to change its preset, timing, ease and scroll trigger. Changes replay live.'),
-        h('li', {}, 'Browse navigates like the real site. In the edit modes, hold Alt to click through links.'),
-        h('li', {}, h('b', {}, 'Save'), ' writes content/*.json on this machine: a draft you can check in Browse. Nothing is pushed.'),
-        h('li', {}, h('b', {}, 'Publish'), ' commits all saved content changes in one commit and pushes them to GitHub.'),
+        h(
+          'li',
+          {},
+          h('b', {}, 'Motion'),
+          ' — click an animated element to change its preset, timing, ease and scroll trigger. Changes replay live.',
+        ),
+        h(
+          'li',
+          {},
+          'Browse navigates like the real site. In the edit modes, hold Alt to click through links.',
+        ),
+        h(
+          'li',
+          {},
+          h('b', {}, 'Save'),
+          ' writes content/*.json on this machine: a draft you can check in Browse. Nothing is pushed.',
+        ),
+        h(
+          'li',
+          {},
+          h('b', {}, 'Publish'),
+          ' commits all saved content changes in one commit and pushes them to GitHub.',
+        ),
       ),
-      h('p', { class: 'kbd-list' },
+      h(
+        'p',
+        { class: 'kbd-list' },
         h('span', {}, h('kbd', {}, `${MOD}+E`), ' edit mode'),
         h('span', {}, h('kbd', {}, `${MOD}+S`), ' save'),
         h('span', {}, h('kbd', {}, `${MOD}+Z`), ' undo'),
@@ -182,43 +294,119 @@ function renderOverview() {
         h('span', {}, h('kbd', {}, `${MOD}+Shift+E`), ' exit to live page'),
       ),
     ),
-    h('section', { class: 'grp' },
+    h(
+      'section',
+      { class: 'grp' },
       h('h4', { class: 'grp__title' }, `Unsaved changes${dirty.length ? '' : ': none'}`),
-      dirty.map((f) => h('details', { class: 'chg', open: true },
-        h('summary', {}, h('code', {}, `content/${f}`), h('span', { class: 'muted' }, ` · ${store.changes(f).length}`)),
-        h('ul', {}, store.changes(f).slice(0, 40).map((op) => {
-          const ptr = compile(op.path);
-          return h('li', {}, h('span', { class: 'chg__path' }, f === 'animations.json' ? op.path.join(' › ') : labelFor(store, { file: f, ptr })),
-            h('span', { class: 'chg__val' }, op.value === undefined ? '(removed)' : JSON.stringify(op.value).slice(0, 80)));
-        })),
-      )),
-      dirty.length ? h('button', { type: 'button', class: 'link link--danger', onclick: () => confirm('Discard all unsaved changes?') && store.discard() }, 'Discard all changes') : null,
+      dirty.map((f) =>
+        h(
+          'details',
+          { class: 'chg', open: true },
+          h(
+            'summary',
+            {},
+            h('code', {}, `content/${f}`),
+            h('span', { class: 'muted' }, ` · ${store.changes(f).length}`),
+          ),
+          h(
+            'ul',
+            {},
+            store
+              .changes(f)
+              .slice(0, 40)
+              .map((op) => {
+                const ptr = compile(op.path);
+                return h(
+                  'li',
+                  {},
+                  h(
+                    'span',
+                    { class: 'chg__path' },
+                    f === 'animations.json'
+                      ? op.path.join(' › ')
+                      : labelFor(store, { file: f, ptr }),
+                  ),
+                  h(
+                    'span',
+                    { class: 'chg__val' },
+                    op.value === undefined ? '(removed)' : JSON.stringify(op.value).slice(0, 80),
+                  ),
+                );
+              }),
+          ),
+        ),
+      ),
+      dirty.length
+        ? h(
+            'button',
+            {
+              type: 'button',
+              class: 'link link--danger',
+              onclick: () => confirm('Discard all unsaved changes?') && store.discard(),
+            },
+            'Discard all changes',
+          )
+        : null,
     ),
     renderUnpublished(),
-    h('section', { class: 'grp' },
+    h(
+      'section',
+      { class: 'grp' },
       h('h4', { class: 'grp__title' }, 'Later'),
-      h('p', { class: 'hint' }, 'Swapping and reordering album photos will be added here; for now edit people.json / places.json and media/ by hand.'),
+      h(
+        'p',
+        { class: 'hint' },
+        'Swapping and reordering album photos will be added here; for now edit people.json / places.json and media/ by hand.',
+      ),
     ),
   );
 }
 
 function fileLine(f) {
-  return h('li', { class: 'pfile' },
-    h('span', { class: ['pfile__st', `is-${f.status}`] }, f.status === 'new' ? 'A' : f.status === 'deleted' ? 'D' : 'M'),
+  return h(
+    'li',
+    { class: 'pfile' },
+    h(
+      'span',
+      { class: ['pfile__st', `is-${f.status}`] },
+      f.status === 'new' ? 'A' : f.status === 'deleted' ? 'D' : 'M',
+    ),
     h('code', {}, f.path),
     h('span', { class: 'muted' }, ` · ${plural(f.changes || 1, 'change')}`),
-    f.added !== undefined ? h('span', { class: 'pfile__stat' }, h('span', { class: 'add' }, `+${f.added}`), ' ', h('span', { class: 'del' }, `−${f.removed}`)) : null,
+    f.added !== undefined
+      ? h(
+          'span',
+          { class: 'pfile__stat' },
+          h('span', { class: 'add' }, `+${f.added}`),
+          ' ',
+          h('span', { class: 'del' }, `−${f.removed}`),
+        )
+      : null,
   );
 }
 
 function renderUnpublished() {
   const files = pubFiles();
   const ahead = state.pub?.ahead || 0;
-  return h('section', { class: 'grp' },
-    h('h4', { class: 'grp__title' }, `Saved, not published${files.length || ahead ? '' : ': none'}`),
+  return h(
+    'section',
+    { class: 'grp' },
+    h(
+      'h4',
+      { class: 'grp__title' },
+      `Saved, not published${files.length || ahead ? '' : ': none'}`,
+    ),
     files.length ? h('ul', { class: 'files' }, files.map(fileLine)) : null,
-    ahead ? h('p', { class: 'hint' }, `${plural(ahead, 'commit')} on ${state.pub.branch} not pushed yet; Publish pushes ${ahead === 1 ? 'it' : 'them'} too.`) : null,
-    files.length || ahead ? h('button', { type: 'button', class: 'link', onclick: () => publishDialog() }, 'Publish…') : null,
+    ahead
+      ? h(
+          'p',
+          { class: 'hint' },
+          `${plural(ahead, 'commit')} on ${state.pub.branch} not pushed yet; Publish pushes ${ahead === 1 ? 'it' : 'them'} too.`,
+        )
+      : null,
+    files.length || ahead
+      ? h('button', { type: 'button', class: 'link', onclick: () => publishDialog() }, 'Publish…')
+      : null,
   );
 }
 
@@ -277,13 +465,17 @@ store.on(({ files, source: src }) => {
   const textChanged = files.some((f) => f !== 'animations.json');
   if (textChanged) {
     const fromPreview = src && src.nodeType === 1;
-    bridge.applyTexts({ skip: fromPreview ? src : null, force: ['undo', 'redo', 'rebase', 'discard'].includes(src) });
+    bridge.applyTexts({
+      skip: fromPreview ? src : null,
+      force: ['undo', 'redo', 'rebase', 'discard'].includes(src),
+    });
   }
   if (files.includes('animations.json')) {
     clearTimeout(animTimer);
     animTimer = setTimeout(() => bridge.updateAnimations(store.current['animations.json']), 180);
   }
-  if (state.mode === 'text') src === 'panel' || (src && src.nodeType === 1) ? textPanel.update() : textPanel.render();
+  if (state.mode === 'text')
+    src === 'panel' || (src && src.nodeType === 1) ? textPanel.update() : textPanel.render();
   else if (state.mode === 'motion') motionPanel.refresh(src !== 'motion');
   else renderOverview();
   if (textChanged && src !== 'panel' && !(src && src.nodeType === 1)) renderPages();
@@ -303,8 +495,20 @@ async function saveDev({ quiet = false } = {}) {
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
-    if (!quiet) toast(h('span', {}, 'Saved ', dirty.map((f) => h('code', {}, `content/${f}`)).flatMap((c, i) => (i ? [', ', c] : [c])), ' (draft, not published)'), { kind: 'ok' });
-    setStatus(`Saved ${dirty.length} file${dirty.length > 1 ? 's' : ''} · ${new Date().toLocaleTimeString()}`);
+    if (!quiet)
+      toast(
+        h(
+          'span',
+          {},
+          'Saved ',
+          dirty.map((f) => h('code', {}, `content/${f}`)).flatMap((c, i) => (i ? [', ', c] : [c])),
+          ' (draft, not published)',
+        ),
+        { kind: 'ok' },
+      );
+    setStatus(
+      `Saved ${dirty.length} file${dirty.length > 1 ? 's' : ''} · ${new Date().toLocaleTimeString()}`,
+    );
     return true;
   } catch (err) {
     toast(`Save failed: ${err.message}`, { kind: 'error', timeout: 0 });
@@ -318,9 +522,16 @@ async function saveDev({ quiet = false } = {}) {
 
 function modal(title, ...children) {
   const close = () => wrap.remove();
-  const wrap = h('div', { class: 'modal', onclick: (e) => e.target === wrap && close() },
-    h('div', { class: 'modal__box', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
-      h('h3', { class: 'modal__title' }, title), ...children));
+  const wrap = h(
+    'div',
+    { class: 'modal', onclick: (e) => e.target === wrap && close() },
+    h(
+      'div',
+      { class: 'modal__box', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+      h('h3', { class: 'modal__title' }, title),
+      ...children,
+    ),
+  );
   document.body.append(wrap);
   wrap.close = close;
   return wrap;
@@ -328,7 +539,9 @@ function modal(title, ...children) {
 
 // ---------------------------------------------------------------- publish
 const defaultMessage = (names) =>
-  names.length ? `Content: update ${names.map((n) => n.replace(/\.json$/, '')).join(', ')} (visual editor)` : '';
+  names.length
+    ? `Content: update ${names.map((n) => n.replace(/\.json$/, '')).join(', ')} (visual editor)`
+    : '';
 
 /**
  * Publish dialog: lists what will be committed (saved content files, plus unsaved edits
@@ -358,15 +571,36 @@ async function publishDialog() {
   let touched = false;
   msg.addEventListener('input', () => (touched = true));
   const renderList = () => {
-    const unsaved = saveFirst.checked ? dirty.filter((f) => !pub.files.some((p) => p.name === f)) : [];
-    clear(list,
+    const unsaved = saveFirst.checked
+      ? dirty.filter((f) => !pub.files.some((p) => p.name === f))
+      : [];
+    clear(
+      list,
       pub.files.map((f) => {
         const li = fileLine(f);
-        if (saveFirst.checked && dirty.includes(f.name)) li.append(h('span', { class: 'muted' }, ` + ${plural(store.changes(f.name).length, 'unsaved change')}`));
+        if (saveFirst.checked && dirty.includes(f.name))
+          li.append(
+            h(
+              'span',
+              { class: 'muted' },
+              ` + ${plural(store.changes(f.name).length, 'unsaved change')}`,
+            ),
+          );
         return li;
       }),
-      unsaved.map((f) => h('li', { class: 'pfile' }, h('span', { class: 'pfile__st is-modified' }, 'M'), h('code', {}, `content/${f}`),
-        h('span', { class: 'muted' }, ` · ${plural(store.changes(f).length, 'change')} · unsaved, saved first`))),
+      unsaved.map((f) =>
+        h(
+          'li',
+          { class: 'pfile' },
+          h('span', { class: 'pfile__st is-modified' }, 'M'),
+          h('code', {}, `content/${f}`),
+          h(
+            'span',
+            { class: 'muted' },
+            ` · ${plural(store.changes(f).length, 'change')} · unsaved, saved first`,
+          ),
+        ),
+      ),
     );
     const names = willCommit();
     list.hidden = !names.length;
@@ -378,14 +612,48 @@ async function publishDialog() {
   saveFirst.addEventListener('change', renderList);
 
   const branch = pub.branch || 'main';
-  const m = modal('Publish to GitHub',
-    h('p', { class: 'hint' }, 'Commits the saved content changes in ', h('b', {}, 'one commit'), ' and runs ', h('code', {}, `git push origin ${branch}`), '. Only files in ', h('code', {}, 'content/'), ' are committed.'),
-    dirty.length ? h('label', { class: 'pub-save' }, saveFirst,
-      h('span', {}, `Save my ${plural(n, 'unsaved edit')} first and include ${n === 1 ? 'it' : 'them'}`)) : null,
+  const m = modal(
+    'Publish to GitHub',
+    h(
+      'p',
+      { class: 'hint' },
+      'Commits the saved content changes in ',
+      h('b', {}, 'one commit'),
+      ' and runs ',
+      h('code', {}, `git push origin ${branch}`),
+      '. Only files in ',
+      h('code', {}, 'content/'),
+      ' are committed.',
+    ),
+    dirty.length
+      ? h(
+          'label',
+          { class: 'pub-save' },
+          saveFirst,
+          h(
+            'span',
+            {},
+            `Save my ${plural(n, 'unsaved edit')} first and include ${n === 1 ? 'it' : 'them'}`,
+          ),
+        )
+      : null,
     list,
-    pub.ahead ? h('div', { class: 'pub-ahead' },
-      h('p', { class: 'hint' }, `Also pushes ${plural(pub.ahead, 'earlier commit')} not on ${pub.upstream || `origin/${branch}`} yet:`),
-      h('ul', { class: 'commits' }, (pub.unpushed || []).map((c) => h('li', {}, h('code', {}, c.hash), ' ', c.subject)))) : null,
+    pub.ahead
+      ? h(
+          'div',
+          { class: 'pub-ahead' },
+          h(
+            'p',
+            { class: 'hint' },
+            `Also pushes ${plural(pub.ahead, 'earlier commit')} not on ${pub.upstream || `origin/${branch}`} yet:`,
+          ),
+          h(
+            'ul',
+            { class: 'commits' },
+            (pub.unpushed || []).map((c) => h('li', {}, h('code', {}, c.hash), ' ', c.subject)),
+          ),
+        )
+      : null,
     msgWrap,
     result,
     h('div', { class: 'modal__actions' }, cancel, go),
@@ -407,7 +675,11 @@ async function publishDialog() {
     try {
       if (saveFirst.checked && store.dirtyFiles().length) {
         go.textContent = 'Saving…';
-        if (!(await saveDev({ quiet: true }))) throw Object.assign(new Error('Saving the unsaved edits failed, nothing was published.'), { phase: 'save' });
+        if (!(await saveDev({ quiet: true })))
+          throw Object.assign(
+            new Error('Saving the unsaved edits failed, nothing was published.'),
+            { phase: 'save' },
+          );
       }
       go.textContent = 'Publishing…';
       const res = await source.publish(message);
@@ -421,24 +693,67 @@ async function publishDialog() {
   };
 
   function showPublished(res) {
-    clear(result,
-      h('p', { class: 'pub-ok' }, '✓ Published ', h('a', { href: res.url, target: '_blank', rel: 'noopener' }, h('code', {}, res.short), ' ↗'), ` to origin/${res.branch}`),
-      h('p', { class: 'hint' }, h('a', { href: res.url, target: '_blank', rel: 'noopener', class: 'pub-url' }, res.url)),
-      res.files?.length ? h('p', { class: 'hint' }, `Committed: ${res.files.join(', ')}`) : h('p', { class: 'hint' }, 'Pushed the earlier commits; there were no new content changes.'),
+    clear(
+      result,
+      h(
+        'p',
+        { class: 'pub-ok' },
+        '✓ Published ',
+        h(
+          'a',
+          { href: res.url, target: '_blank', rel: 'noopener' },
+          h('code', {}, res.short),
+          ' ↗',
+        ),
+        ` to origin/${res.branch}`,
+      ),
+      h(
+        'p',
+        { class: 'hint' },
+        h('a', { href: res.url, target: '_blank', rel: 'noopener', class: 'pub-url' }, res.url),
+      ),
+      res.files?.length
+        ? h('p', { class: 'hint' }, `Committed: ${res.files.join(', ')}`)
+        : h(
+            'p',
+            { class: 'hint' },
+            'Pushed the earlier commits; there were no new content changes.',
+          ),
     );
     result.hidden = false;
     result.dataset.kind = 'ok';
-    [list, msgWrap, m.querySelector('.pub-save'), m.querySelector('.pub-ahead')].forEach((el) => el && (el.hidden = true));
+    [list, msgWrap, m.querySelector('.pub-save'), m.querySelector('.pub-ahead')].forEach(
+      (el) => el && (el.hidden = true),
+    );
     go.hidden = true;
     cancel.textContent = 'Close';
-    toast(h('span', {}, `Published ${res.short} `, h('a', { href: res.url, target: '_blank', rel: 'noopener' }, 'View commit ↗')), { kind: 'ok', timeout: 0 });
+    toast(
+      h(
+        'span',
+        {},
+        `Published ${res.short} `,
+        h('a', { href: res.url, target: '_blank', rel: 'noopener' }, 'View commit ↗'),
+      ),
+      { kind: 'ok', timeout: 0 },
+    );
     setStatus(`Published ${res.short} · ${new Date().toLocaleTimeString()}`);
   }
 
   function showPublishError(err) {
-    clear(result,
-      h('p', { class: 'error' }, err.committed ? `Committed locally as ${err.short}, but the push failed.` : err.message),
-      err.committed ? h('p', { class: 'hint' }, `${err.error}. The commit stays on your machine; Publish again to retry the push.`) : null,
+    clear(
+      result,
+      h(
+        'p',
+        { class: 'error' },
+        err.committed ? `Committed locally as ${err.short}, but the push failed.` : err.message,
+      ),
+      err.committed
+        ? h(
+            'p',
+            { class: 'hint' },
+            `${err.error}. The commit stays on your machine; Publish again to retry the push.`,
+          )
+        : null,
       err.hint ? h('p', { class: 'pub-hint' }, err.hint) : null,
       err.output ? h('pre', { class: 'pub-out' }, err.output) : null,
     );
@@ -463,7 +778,10 @@ async function publishDialog() {
 function onKey(e) {
   const mod = e.metaKey || e.ctrlKey;
   const k = e.key.toLowerCase();
-  const inField = e.target instanceof Element && e.target.matches?.('input, textarea, select') && e.target.ownerDocument === document;
+  const inField =
+    e.target instanceof Element &&
+    e.target.matches?.('input, textarea, select') &&
+    e.target.ownerDocument === document;
   if (mod && k === 's') {
     e.preventDefault();
     save();

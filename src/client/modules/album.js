@@ -37,9 +37,16 @@ export function album(view) {
 
   function updateUI(i) {
     counter.textContent = pad(i + 1);
-    if (!reduce) gsap.fromTo(counter, { yPercent: 60, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.5, ease: 'expo.out' });
+    if (!reduce)
+      gsap.fromTo(
+        counter,
+        { yPercent: 60, autoAlpha: 0 },
+        { yPercent: 0, autoAlpha: 1, duration: 0.5, ease: 'expo.out' },
+      );
     thumbs.forEach((t, k) => t.classList.toggle('is-active', k === i));
-    slides.forEach((s, k) => (k === i ? s.removeAttribute('aria-hidden') : s.setAttribute('aria-hidden', 'true')));
+    slides.forEach((s, k) =>
+      k === i ? s.removeAttribute('aria-hidden') : s.setAttribute('aria-hidden', 'true'),
+    );
     const s = slides[i];
     credit.textContent = s.dataset.credit || '';
     credit.href = s.dataset.creditUrl || '#';
@@ -83,10 +90,19 @@ export function album(view) {
         tl = null;
       },
     });
-    tl.fromTo(to, { clipPath: d > 0 ? 'inset(0% 0% 0% 100%)' : 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)' }, 0)
+    tl.fromTo(
+      to,
+      { clipPath: d > 0 ? 'inset(0% 0% 0% 100%)' : 'inset(0% 100% 0% 0%)' },
+      { clipPath: 'inset(0% 0% 0% 0%)' },
+      0,
+    )
       .fromTo(toImg, { scale: 1.25, xPercent: d * 12 }, { scale: 1, xPercent: 0, x: 0 }, 0)
       .to(fromImg, { xPercent: -d * 14, scale: 0.94 }, 0)
-      .to(from, { autoAlpha: 0, duration: T.slide.duration * 0.6, ease: 'power2.in' }, T.slide.duration * 0.3);
+      .to(
+        from,
+        { autoAlpha: 0, duration: T.slide.duration * 0.6, ease: 'power2.in' },
+        T.slide.duration * 0.3,
+      );
   }
 
   const next = () => go(index + 1, { dir: 1 });
@@ -111,10 +127,22 @@ export function album(view) {
       if (reduce || instant) return gsap.set([stage, bar, grid], { clearProps: 'all' });
       gsap.set(outEls, { clearProps: 'all' });
       if (m === 'grid') {
-        gsap.fromTo(grid.querySelectorAll('.gcell, .album__nextlink'), { autoAlpha: 0, y: 60 }, { autoAlpha: 1, y: 0, duration: T.view.duration, ease: T.view.ease, stagger: 0.04 });
+        gsap.fromTo(
+          grid.querySelectorAll('.gcell, .album__nextlink'),
+          { autoAlpha: 0, y: 60 },
+          { autoAlpha: 1, y: 0, duration: T.view.duration, ease: T.view.ease, stagger: 0.04 },
+        );
       } else {
-        gsap.fromTo(stage, { autoAlpha: 0, scale: 0.96 }, { autoAlpha: 1, scale: 1, duration: T.view.duration, ease: T.view.ease });
-        gsap.fromTo(bar, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: T.view.duration, ease: T.view.ease, delay: 0.1 });
+        gsap.fromTo(
+          stage,
+          { autoAlpha: 0, scale: 0.96 },
+          { autoAlpha: 1, scale: 1, duration: T.view.duration, ease: T.view.ease },
+        );
+        gsap.fromTo(
+          bar,
+          { autoAlpha: 0, y: 30 },
+          { autoAlpha: 1, y: 0, duration: T.view.duration, ease: T.view.ease, delay: 0.1 },
+        );
       }
     };
     if (reduce || instant) return swap();
@@ -124,7 +152,12 @@ export function album(view) {
   function movePill(instant) {
     if (!pill || !toggle) return;
     const btn = toggle.querySelector(`[data-view-btn="${mode}"]`);
-    gsap.to(pill, { x: btn.offsetLeft, width: btn.offsetWidth, duration: instant || reduce ? 0 : 0.6, ease: 'expo.out' });
+    gsap.to(pill, {
+      x: btn.offsetLeft,
+      width: btn.offsetWidth,
+      duration: instant || reduce ? 0 : 0.6,
+      ease: 'expo.out',
+    });
   }
 
   // initial state (deep link: /people/x/#3)
@@ -142,9 +175,11 @@ export function album(view) {
     on(c, 'click', () => {
       go(+c.dataset.goto, { instant: true });
       setMode('slider');
-    })
+    }),
   );
-  toggle?.querySelectorAll('[data-view-btn]').forEach((b) => on(b, 'click', () => setMode(b.dataset.viewBtn)));
+  toggle
+    ?.querySelectorAll('[data-view-btn]')
+    .forEach((b) => on(b, 'click', () => setMode(b.dataset.viewBtn)));
   on(window, 'resize', () => movePill(true));
 
   on(document, 'keydown', (e) => {
@@ -157,18 +192,23 @@ export function album(view) {
   // wheel / trackpad: one step per gesture
   let acc = 0;
   let locked = false;
-  on(stage, 'wheel', (e) => {
-    if (mode !== 'slider') return;
-    e.preventDefault();
-    if (locked) return;
-    acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (Math.abs(acc) > (I.wheelThreshold || 40)) {
-      acc > 0 ? next() : prev();
-      acc = 0;
-      locked = true;
-      setTimeout(() => (locked = false), (I.wheelLock || 0.9) * 1000);
-    }
-  }, { passive: false });
+  on(
+    stage,
+    'wheel',
+    (e) => {
+      if (mode !== 'slider') return;
+      e.preventDefault();
+      if (locked) return;
+      acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(acc) > (I.wheelThreshold || 40)) {
+        acc > 0 ? next() : prev();
+        acc = 0;
+        locked = true;
+        setTimeout(() => (locked = false), (I.wheelLock || 0.9) * 1000);
+      }
+    },
+    { passive: false },
+  );
 
   // drag / swipe
   let startX = null;

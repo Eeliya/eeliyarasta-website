@@ -2,7 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const read = (file, fallback) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback);
+const read = (file, fallback) =>
+  fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback;
 
 export function loadContent(root) {
   const dir = path.join(root, 'content');

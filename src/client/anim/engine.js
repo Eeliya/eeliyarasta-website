@@ -25,7 +25,10 @@ const merge = (...objs) => {
   for (const o of objs) {
     if (!o) continue;
     for (const [k, v] of Object.entries(o)) {
-      out[k] = v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object' ? merge(out[k], v) : v;
+      out[k] =
+        v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object'
+          ? merge(out[k], v)
+          : v;
     }
   }
   return out;
@@ -51,11 +54,19 @@ export function resolve(id, el) {
   }
   let inline = null;
   if (el?.dataset.animOptions) {
-    try { inline = JSON.parse(el.dataset.animOptions); } catch { /* ignore */ }
+    try {
+      inline = JSON.parse(el.dataset.animOptions);
+    } catch {
+      /* ignore */
+    }
   }
   const { preset: _p, ...overrides } = target;
   const { preset: _q, ...ownOverrides } = own;
-  return merge(config.defaults, preset, overrides, ownOverrides, inline, { id, key, preset: presetName });
+  return merge(config.defaults, preset, overrides, ownOverrides, inline, {
+    id,
+    key,
+    preset: presetName,
+  });
 }
 
 /** Stamp every [data-anim] element with its stable key (see header). */

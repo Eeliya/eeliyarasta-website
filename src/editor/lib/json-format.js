@@ -8,9 +8,12 @@
 const isObj = (v) => v !== null && typeof v === 'object';
 const flat = (v) => Object.values(v).every((x) => !isObj(x));
 const oneLine = (v) => {
-  if (Array.isArray(v)) return v.length ? `[ ${v.map((x) => JSON.stringify(x)).join(', ')} ]` : '[]';
+  if (Array.isArray(v))
+    return v.length ? `[ ${v.map((x) => JSON.stringify(x)).join(', ')} ]` : '[]';
   const entries = Object.entries(v).filter(([, x]) => x !== undefined);
-  return entries.length ? `{ ${entries.map(([k, x]) => `${JSON.stringify(k)}: ${JSON.stringify(x)}`).join(', ')} }` : '{}';
+  return entries.length
+    ? `{ ${entries.map(([k, x]) => `${JSON.stringify(k)}: ${JSON.stringify(x)}`).join(', ')} }`
+    : '{}';
 };
 
 function fmt(value, indent, prefixLen, width) {

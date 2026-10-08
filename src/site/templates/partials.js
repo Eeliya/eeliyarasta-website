@@ -15,17 +15,28 @@ export const sectionHead = ({ key, index, label, title, href, cta }) => {
 export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {}) => {
   const at = (field, type) => ed(`${kind}.json`, [index, field], type);
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
-  const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(0, 4);
-  const sizes = landscape ? '(max-width: 760px) 100vw, 50vw' : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
-  return html`
-  <a class="acard ${landscape ? 'acard--landscape' : ''}" href="/${kind}/${album.slug}/" data-anim-item data-card-cycle>
+  const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(
+    0,
+    4,
+  );
+  const sizes = landscape
+    ? '(max-width: 760px) 100vw, 50vw'
+    : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
+  return html` <a
+    class="acard ${landscape ? 'acard--landscape' : ''}"
+    href="/${kind}/${album.slug}/"
+    data-anim-item
+    data-card-cycle
+  >
     <div class="acard__media">
       ${first.map((im, i) => img(ctx, im.src, { alt: i === 0 ? im.alt : '', sizes, cls: i === 0 ? 'is-active' : '' }))}
       <span class="acard__count">${pad(album.images.length)}</span>
     </div>
     <div class="acard__info">
-      <h2 class="acard__name"${at('name')}>${esc(album.name)}</h2>
-      <span class="acard__meta">${meta.map(([f, type], i) => html`${i ? ' · ' : ''}<span${at(f, type)}>${esc(album[f])}</span>`)}</span>
+      <h2 class="acard__name" ${at('name')}>${esc(album.name)}</h2>
+      <span class="acard__meta"
+        >${meta.map(([f, type], i) => html`${i ? ' · ' : ''}<span${at(f, type)}>${esc(album[f])}</span>`)}</span
+      >
       ${album.placeholder ? '<span class="tag">Placeholder</span>' : ''}
     </div>
   </a>`;
@@ -34,9 +45,9 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
 /** Editorial index list of projects with a hover image preview (anchored to the row) + click-to-expand details. */
 export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 } = {}) => {
   const h = `h${headingLevel}`;
-  return html`
-  <div class="plist" data-anim="projects.list" data-project-list="${id}">
-    ${projects.map((p, i) => html`
+  return html` <div class="plist" data-anim="projects.list" data-project-list="${id}">
+      ${projects.map(
+        (p, i) => html`
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">
       <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}">
         <span class="prow__num">${pad(i + 1)}</span>
@@ -55,11 +66,20 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
           </div>
         </div>
       </div>
-    </article>`)}
-  </div>
-  <div class="preview" data-portal data-anim="projects.preview" data-preview-for="${id}" aria-hidden="true">
-    <div class="preview__frame">${projects.map((p) => img(ctx, p.image, { alt: '', sizes: '360px' }))}</div>
-  </div>`;
+    </article>`,
+      )}
+    </div>
+    <div
+      class="preview"
+      data-portal
+      data-anim="projects.preview"
+      data-preview-for="${id}"
+      aria-hidden="true"
+    >
+      <div class="preview__frame">
+        ${projects.map((p) => img(ctx, p.image, { alt: '', sizes: '360px' }))}
+      </div>
+    </div>`;
 };
 
 /** Page heading used by index pages; copy comes from site.json "pages".<key>. */
@@ -70,7 +90,7 @@ export const pageHead = (ctx, key, { count, center = false, after = '' } = {}) =
   <section class="page-head${center ? ' page-head--center' : ''}">
     <span class="label page-head__crumb"${at('crumb')}>${esc(crumb)}</span>
     <h1 class="page-title" data-anim="page.title"><span${at('title')}>${esc(title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
-    ${intro ? html`<p class="page-intro" data-anim="page.intro"${at('intro', 'block')}>${lines(intro)}</p>` : ''}
+    ${intro ? html`<p class="page-intro" data-anim="page.intro" ${at('intro', 'block')}>${lines(intro)}</p>` : ''}
     ${after}
   </section>`;
 };

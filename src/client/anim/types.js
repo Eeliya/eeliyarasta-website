@@ -42,7 +42,11 @@ function reveal(el, spec, { reduce }) {
 }
 
 // Classes let CSS pad masked lines/words so descenders (g, j, y) aren't clipped.
-const splitClasses = { linesClass: 'split-line', wordsClass: 'split-word', charsClass: 'split-char' };
+const splitClasses = {
+  linesClass: 'split-line',
+  wordsClass: 'split-word',
+  charsClass: 'split-char',
+};
 
 /** SplitText into chars / words / lines (masked) and reveal them. Re-splits on resize. */
 function split(el, spec, { reduce, onCleanup }) {
@@ -53,7 +57,12 @@ function split(el, spec, { reduce, onCleanup }) {
     mask: spec.mask,
     ...splitClasses,
     autoSplit: spec.split === 'lines',
-    onSplit: (self) => gsap.fromTo(self[spec.split], spec.from, tweenVars(spec, { ...spec.to, ...scrollVars(spec, el) })),
+    onSplit: (self) =>
+      gsap.fromTo(
+        self[spec.split],
+        spec.from,
+        tweenVars(spec, { ...spec.to, ...scrollVars(spec, el) }),
+      ),
   });
   onCleanup(() => s.revert());
 }
@@ -65,10 +74,16 @@ function scrubWords(el, spec, { reduce, onCleanup }) {
     type: 'words',
     autoSplit: true,
     onSplit: (self) =>
-      gsap.fromTo(self.words, { opacity: spec.fromOpacity }, {
-        opacity: 1, ease: 'none', stagger: 0.1,
-        scrollTrigger: { trigger: el, start: spec.start, end: spec.end, scrub: true },
-      }),
+      gsap.fromTo(
+        self.words,
+        { opacity: spec.fromOpacity },
+        {
+          opacity: 1,
+          ease: 'none',
+          stagger: 0.1,
+          scrollTrigger: { trigger: el, start: spec.start, end: spec.end, scrub: true },
+        },
+      ),
   });
   onCleanup(() => s.revert());
 }
@@ -79,10 +94,20 @@ function parallax(el, spec, { reduce }) {
   const speed = Number(spec.speed) || 10;
   const box = el.parentElement;
   gsap.set(el, { scale: 1 + (speed * 2.2) / 100 });
-  gsap.fromTo(el, { yPercent: -speed }, {
-    yPercent: speed, ease: 'none',
-    scrollTrigger: { trigger: box, start: 'top bottom', end: 'bottom top', scrub: spec.scrub === true ? true : Number(spec.scrub) || true },
-  });
+  gsap.fromTo(
+    el,
+    { yPercent: -speed },
+    {
+      yPercent: speed,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: box,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: spec.scrub === true ? true : Number(spec.scrub) || true,
+      },
+    },
+  );
 }
 
 /**
@@ -108,20 +133,35 @@ function scatter(el, spec, { reduce }) {
     gsap.from(frame, {
       x: (cx - (b.left + b.width / 2)) * 0.75,
       y: (cy - (b.top + b.height / 2)) * 0.75,
-      scale: intro.fromScale, rotation: rnd(-10, 10), autoAlpha: 0,
-      duration: intro.duration, ease: intro.ease, delay: intro.delay + i * intro.stagger,
+      scale: intro.fromScale,
+      rotation: rnd(-10, 10),
+      autoAlpha: 0,
+      duration: intro.duration,
+      ease: intro.ease,
+      delay: intro.delay + i * intro.stagger,
     });
     // 2. endless drift
     gsap.to(item.querySelector('.scatter__drift'), {
-      x: rnd(-drift.amplitude, drift.amplitude), y: rnd(-drift.amplitude, drift.amplitude),
+      x: rnd(-drift.amplitude, drift.amplitude),
+      y: rnd(-drift.amplitude, drift.amplitude),
       rotation: rnd(-drift.rotation, drift.rotation),
-      duration: rnd(drift.minDuration, drift.maxDuration), ease: 'sine.inOut', yoyo: true, repeat: -1,
+      duration: rnd(drift.minDuration, drift.maxDuration),
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
       delay: intro.delay + intro.duration * 0.6,
     });
     // 3. scroll parallax by depth
     gsap.to(item, {
-      y: () => -window.innerHeight * (scroll.distance / 100) * depth, ease: 'none',
-      scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+      y: () => -window.innerHeight * (scroll.distance / 100) * depth,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
     });
   });
 }
@@ -133,9 +173,16 @@ function heroTitle(el, spec, { reduce, onCleanup }) {
   onCleanup(() => s.revert());
   gsap.fromTo(s.chars, spec.from, tweenVars(spec, spec.to));
   const hero = el.closest('[data-hero]') || el;
-  const fromScroll = Object.fromEntries(Object.keys(spec.scroll).map((k) => [k, k === 'autoAlpha' || k === 'opacity' || k === 'scale' ? 1 : 0]));
+  const fromScroll = Object.fromEntries(
+    Object.keys(spec.scroll).map((k) => [
+      k,
+      k === 'autoAlpha' || k === 'opacity' || k === 'scale' ? 1 : 0,
+    ]),
+  );
   gsap.fromTo(el, fromScroll, {
-    ...spec.scroll, ease: 'none', immediateRender: false,
+    ...spec.scroll,
+    ease: 'none',
+    immediateRender: false,
     scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
   });
 }
@@ -157,7 +204,8 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
   const glide = reduce ? 0 : Number(spec.glide) || 0;
   const yTo = gsap.quickTo(el, 'y', { duration: glide, ease: 'power3' });
   const rows = [...list.querySelectorAll('[data-prow]')];
-  let active = -1, visible = false;
+  let active = -1,
+    visible = false;
 
   /** Anchor point for a row: fixed x over the list, vertical centre of the row's head. */
   const anchor = (i) => {
@@ -178,12 +226,25 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
       active = i;
     }
     place(i, !visible);
-    if (!visible) gsap.to(el, { autoAlpha: 1, scale: 1, duration: reduce ? 0 : 0.5, ease: 'expo.out', overwrite: 'auto' });
+    if (!visible)
+      gsap.to(el, {
+        autoAlpha: 1,
+        scale: 1,
+        duration: reduce ? 0 : 0.5,
+        ease: 'expo.out',
+        overwrite: 'auto',
+      });
     visible = true;
   };
   const hide = () => {
     visible = false;
-    gsap.to(el, { autoAlpha: 0, scale: 0.85, duration: reduce ? 0 : 0.35, ease: 'power2.in', overwrite: 'auto' });
+    gsap.to(el, {
+      autoAlpha: 0,
+      scale: 0.85,
+      duration: reduce ? 0 : 0.35,
+      ease: 'power2.in',
+      overwrite: 'auto',
+    });
   };
   const enters = rows.map((row) => {
     const head = row.querySelector('.prow__head');
@@ -200,7 +261,8 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
   // Smooth scrolling moves rows under a still pointer without reliable enter/leave
   // events, so while visible, check each frame which row is under the pointer and
   // keep the preview anchored to it as the list scrolls.
-  let px = 0, py = 0;
+  let px = 0,
+    py = 0;
   const track = (e) => ((px = e.clientX), (py = e.clientY));
   const verify = () => {
     if (!visible) return;

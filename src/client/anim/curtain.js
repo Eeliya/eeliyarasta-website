@@ -33,14 +33,20 @@ export function normalizeCurtain(raw) {
   if (!raw) return null;
   const c = raw === true ? {} : raw;
   const D = CURTAIN_DEFAULTS;
-  const seg = (k) => ({ ...D[k], ...(c[k] || {}), duration: Math.max(0, num(c[k]?.duration, D[k].duration)) });
+  const seg = (k) => ({
+    ...D[k],
+    ...(c[k] || {}),
+    duration: Math.max(0, num(c[k]?.duration, D[k].duration)),
+  });
   const inn = seg('in');
   const labelIn = seg('labelIn');
   const labelOut = seg('labelOut');
   const out = seg('out');
 
   const easeMode = c.easeMode === 'individual' ? 'individual' : 'shared';
-  const stepEases = [c.in?.ease, c.labelIn?.ease, c.labelOut?.ease, c.out?.ease].filter((e) => typeof e === 'string' && e);
+  const stepEases = [c.in?.ease, c.labelIn?.ease, c.labelOut?.ease, c.out?.ease].filter(
+    (e) => typeof e === 'string' && e,
+  );
   let sharedEase = typeof c.ease === 'string' && c.ease ? c.ease : null;
   if (!sharedEase) {
     if (stepEases.length && stepEases.every((e) => e === stepEases[0])) sharedEase = stepEases[0];
@@ -49,7 +55,7 @@ export function normalizeCurtain(raw) {
 
   const step = (segObj, own) => ({
     ...segObj,
-    ease: easeMode === 'shared' ? sharedEase : (typeof own === 'string' && own ? own : sharedEase),
+    ease: easeMode === 'shared' ? sharedEase : typeof own === 'string' && own ? own : sharedEase,
   });
 
   const textDelay = Math.max(0, num(c.textDelay, inn.duration));
@@ -100,5 +106,14 @@ export function curtainPlan(cc, hasText = true) {
   const textOut = Math.max(0, num(cc.textOutStart, textHold + cc.hold));
   const textGone = textOut + cc.labelOut.duration;
   const outEnd = outAt + cc.out.duration;
-  return { closed, textIn, textHold, textOut, textGone, outAt, outEnd, end: Math.max(outEnd, textGone) };
+  return {
+    closed,
+    textIn,
+    textHold,
+    textOut,
+    textGone,
+    outAt,
+    outEnd,
+    end: Math.max(outEnd, textGone),
+  };
 }

@@ -50,11 +50,21 @@ export function createBridge({ iframe, store, labelFor }) {
   let applied = new WeakMap(); // element -> value it currently shows
 
   const bridge = {
-    get api() { return api; },
-    get doc() { return doc; },
-    get mode() { return mode; },
-    get selected() { return selected; },
-    on(name, fn) { handlers[name].push(fn); },
+    get api() {
+      return api;
+    },
+    get doc() {
+      return doc;
+    },
+    get mode() {
+      return mode;
+    },
+    get selected() {
+      return selected;
+    },
+    on(name, fn) {
+      handlers[name].push(fn);
+    },
     path: () => (win ? win.location.pathname : null),
 
     load(path) {
@@ -86,7 +96,13 @@ export function createBridge({ iframe, store, labelFor }) {
       const seen = new Map();
       for (const el of doc.querySelectorAll('[data-edit]')) {
         const edit = el.dataset.edit;
-        if (!seen.has(edit)) seen.set(edit, { edit, ...parseEdit(edit), type: el.dataset.editType || 'text', els: [] });
+        if (!seen.has(edit))
+          seen.set(edit, {
+            edit,
+            ...parseEdit(edit),
+            type: el.dataset.editType || 'text',
+            els: [],
+          });
         seen.get(edit).els.push(el);
       }
       return [...seen.values()];
@@ -95,9 +111,13 @@ export function createBridge({ iframe, store, labelFor }) {
     /** [data-anim] elements on the current page (view + portal). */
     animElements() {
       if (!doc) return [];
-      return [...doc.querySelectorAll('[data-router-view] [data-anim], #portal [data-anim]')].map((el) => ({
-        el, id: el.dataset.anim, key: el.dataset.animKey,
-      }));
+      return [...doc.querySelectorAll('[data-router-view] [data-anim], #portal [data-anim]')].map(
+        (el) => ({
+          el,
+          id: el.dataset.anim,
+          key: el.dataset.animKey,
+        }),
+      );
     },
 
     /**
@@ -123,7 +143,8 @@ export function createBridge({ iframe, store, labelFor }) {
       if (view?.dataset.curtainEdit) {
         const { file, ptr } = parseEdit(view.dataset.curtainEdit);
         const curtainVal = store.get(file, ptr);
-        if (curtainVal !== undefined && curtainVal !== null) view.setAttribute('data-curtain', String(curtainVal));
+        if (curtainVal !== undefined && curtainVal !== null)
+          view.setAttribute('data-curtain', String(curtainVal));
       }
 
       if (!pending.length) return;
@@ -150,7 +171,8 @@ export function createBridge({ iframe, store, labelFor }) {
     updateAnimations(cfg, { replay = true } = {}) {
       if (!api) return;
       api.setAnimations(cfg);
-      if (replay && mode !== 'text') bridge.replay(selected?.kind === 'anim' ? selected.el : null, { scroll: false });
+      if (replay && mode !== 'text')
+        bridge.replay(selected?.kind === 'anim' ? selected.el : null, { scroll: false });
     },
 
     /** Re-run the page's animations, optionally bringing `el` into view first. */
@@ -159,7 +181,8 @@ export function createBridge({ iframe, store, labelFor }) {
       if (el && scroll) {
         const r = el.getBoundingClientRect();
         const vh = win.innerHeight;
-        if (r.bottom < 0 || r.top > vh * 0.8) api.scrollTo(el, { smooth: false, position: 'center center' });
+        if (r.bottom < 0 || r.top > vh * 0.8)
+          api.scrollTo(el, { smooth: false, position: 'center center' });
       }
       requestAnimationFrame(() => requestAnimationFrame(() => api.remount()));
     },
@@ -188,7 +211,8 @@ export function createBridge({ iframe, store, labelFor }) {
     reveal(el) {
       if (!el || !api) return;
       const r = el.getBoundingClientRect();
-      if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true, position: 'center center' });
+      if (r.bottom < 60 || r.top > win.innerHeight - 60)
+        api.scrollTo(el, { smooth: true, position: 'center center' });
     },
     focusEdit(edit) {
       const el = doc?.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
@@ -257,7 +281,8 @@ export function createBridge({ iframe, store, labelFor }) {
     raf = requestAnimationFrame(tick);
   }
 
-  const isShortcut = (e) => ((e.metaKey || e.ctrlKey) && /^[sezy]$/i.test(e.key)) || e.key === 'Escape';
+  const isShortcut = (e) =>
+    ((e.metaKey || e.ctrlKey) && /^[sezy]$/i.test(e.key)) || e.key === 'Escape';
 
   function attachListeners() {
     const style = doc.createElement('style');
@@ -274,27 +299,39 @@ export function createBridge({ iframe, store, labelFor }) {
     boxes = { hover: mk('__ed-box--hover'), sel: mk('__ed-box--sel') };
 
     const probe = doc.createElement('div');
-    try { probe.contentEditable = 'plaintext-only'; } catch { /* unsupported */ }
+    try {
+      probe.contentEditable = 'plaintext-only';
+    } catch {
+      /* unsupported */
+    }
     plaintext = probe.contentEditable === 'plaintext-only';
 
-    doc.addEventListener('pointermove', (e) => {
-      if (mode === 'browse') return;
-      const t = e.target instanceof win.Element ? e.target : null;
-      hoverEl = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]') || null;
-    }, { passive: true });
+    doc.addEventListener(
+      'pointermove',
+      (e) => {
+        if (mode === 'browse') return;
+        const t = e.target instanceof win.Element ? e.target : null;
+        hoverEl = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]') || null;
+      },
+      { passive: true },
+    );
     doc.documentElement.addEventListener('pointerleave', () => (hoverEl = null));
 
     // Clicks: in edit modes, clicks on editable / animated elements select instead of
     // navigating. Hold Alt to click through.
-    win.addEventListener('click', (e) => {
-      if (mode === 'browse' || e.altKey) return;
-      const t = e.target instanceof win.Element ? e.target : null;
-      const hit = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]');
-      if (!hit) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (mode === 'motion') bridge.select(hit, 'anim');
-    }, true);
+    win.addEventListener(
+      'click',
+      (e) => {
+        if (mode === 'browse' || e.altKey) return;
+        const t = e.target instanceof win.Element ? e.target : null;
+        const hit = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]');
+        if (!hit) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (mode === 'motion') bridge.select(hit, 'anim');
+      },
+      true,
+    );
 
     doc.addEventListener('focusin', (e) => {
       const el = e.target.closest?.('[data-edit]');
@@ -335,26 +372,30 @@ export function createBridge({ iframe, store, labelFor }) {
       store.set(file, ptr, value, { key: `text:${el.dataset.edit}`, source: el });
     });
 
-    doc.addEventListener('keydown', (e) => {
-      const el = e.target.closest?.('[contenteditable][data-edit]');
-      if (el) {
-        if (e.key === 'Enter' && el.dataset.editType !== 'block') {
-          e.preventDefault();
-          el.blur();
-          return;
+    doc.addEventListener(
+      'keydown',
+      (e) => {
+        const el = e.target.closest?.('[contenteditable][data-edit]');
+        if (el) {
+          if (e.key === 'Enter' && el.dataset.editType !== 'block') {
+            e.preventDefault();
+            el.blur();
+            return;
+          }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            doc.execCommand('insertLineBreak');
+            return;
+          }
+          if (e.key === 'Escape') {
+            el.blur();
+          }
+          e.stopPropagation(); // keep site shortcuts (album arrows, menu) out of typing
         }
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          doc.execCommand('insertLineBreak');
-          return;
-        }
-        if (e.key === 'Escape') {
-          el.blur();
-        }
-        e.stopPropagation(); // keep site shortcuts (album arrows, menu) out of typing
-      }
-      if (isShortcut(e)) emit('key', e);
-    }, true);
+        if (isShortcut(e)) emit('key', e);
+      },
+      true,
+    );
 
     if (!plaintext) {
       doc.addEventListener('paste', (e) => {
@@ -396,7 +437,9 @@ export function createBridge({ iframe, store, labelFor }) {
   iframe.addEventListener('load', () => {
     try {
       if (iframe.contentWindow.location.pathname.startsWith('/edit')) iframe.src = '/';
-    } catch { /* cross-origin */ }
+    } catch {
+      /* cross-origin */
+    }
   });
 
   bridge.parsePtr = parse;

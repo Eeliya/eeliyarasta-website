@@ -20,7 +20,10 @@ export function labelFor(store, { file, ptr }) {
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-const TITLE_CASE = (s) => String(s || '').replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+const TITLE_CASE = (s) =>
+  String(s || '')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 /**
  * Which collapsible group a field belongs to.
@@ -29,10 +32,20 @@ const TITLE_CASE = (s) => String(s || '').replace(/[-_]/g, ' ').replace(/\b\w/g,
 function groupFor(store, { file, ptr }, page) {
   const parts = parse(ptr);
   if (file === 'home.json') {
-    if (parts[0] === 'hero') return { id: 'hero', title: 'Hero', toggle: { file: 'home.json', ptr: '/hero/enabled' } };
-    if (parts[0] === 'intro') return { id: 'intro', title: 'Intro', toggle: { file: 'home.json', ptr: '/sections/intro/enabled' } };
+    if (parts[0] === 'hero')
+      return { id: 'hero', title: 'Hero', toggle: { file: 'home.json', ptr: '/hero/enabled' } };
+    if (parts[0] === 'intro')
+      return {
+        id: 'intro',
+        title: 'Intro',
+        toggle: { file: 'home.json', ptr: '/sections/intro/enabled' },
+      };
     if (parts[0] === 'sections' && parts[1] && parts[1] !== 'intro') {
-      return { id: parts[1], title: TITLE_CASE(parts[1]), toggle: { file: 'home.json', ptr: `/sections/${parts[1]}/enabled` } };
+      return {
+        id: parts[1],
+        title: TITLE_CASE(parts[1]),
+        toggle: { file: 'home.json', ptr: `/sections/${parts[1]}/enabled` },
+      };
     }
     if (parts[0] === 'curtain') return { id: 'transition', title: 'Page transition' };
   }
@@ -48,7 +61,12 @@ function groupFor(store, { file, ptr }, page) {
     if (page === 'home') {
       const map = { 'people.json': 'people', 'places.json': 'places', 'projects.json': 'projects' };
       const id = map[file];
-      if (id) return { id, title: TITLE_CASE(id), toggle: { file: 'home.json', ptr: `/sections/${id}/enabled` } };
+      if (id)
+        return {
+          id,
+          title: TITLE_CASE(id),
+          toggle: { file: 'home.json', ptr: `/sections/${id}/enabled` },
+        };
     }
     const item = store.current[file]?.[parts[0]];
     const name = item?.name || item?.title || `#${Number(parts[0]) + 1}`;
@@ -62,8 +80,16 @@ function groupFor(store, { file, ptr }, page) {
 function componentFields(id) {
   if (id === 'menu') {
     return [
-      'home', 'photography', 'people', 'places', 'projects', 'about',
-      'allPhotography', 'allProjects', 'menu', 'close',
+      'home',
+      'photography',
+      'people',
+      'places',
+      'projects',
+      'about',
+      'allPhotography',
+      'allProjects',
+      'menu',
+      'close',
     ].map((key) => ({
       edit: `site.json#/nav/${key}`,
       file: 'site.json',
@@ -103,12 +129,28 @@ const HOME_TOGGLES = [
   { id: 'intro', title: 'Intro', toggle: { file: 'home.json', ptr: '/sections/intro/enabled' } },
   { id: 'people', title: 'People', toggle: { file: 'home.json', ptr: '/sections/people/enabled' } },
   { id: 'places', title: 'Places', toggle: { file: 'home.json', ptr: '/sections/places/enabled' } },
-  { id: 'projects', title: 'Projects', toggle: { file: 'home.json', ptr: '/sections/projects/enabled' } },
+  {
+    id: 'projects',
+    title: 'Projects',
+    toggle: { file: 'home.json', ptr: '/sections/projects/enabled' },
+  },
 ];
 
 export function createTextPanel({ store, bridge, root, getTarget }) {
   let inputs = new Map();
-  let openGroups = new Set(['hero', 'intro', 'people', 'places', 'projects', 'transition', 'nav', 'footer', 'page-head', 'about', 'content']);
+  let openGroups = new Set([
+    'hero',
+    'intro',
+    'people',
+    'places',
+    'projects',
+    'transition',
+    'nav',
+    'footer',
+    'page-head',
+    'about',
+    'content',
+  ]);
 
   function parseValue(type, raw) {
     if (type === 'number') {
@@ -147,12 +189,25 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
         if (v !== undefined) store.set(file, ptr, v, { key: `text:${edit}`, source: 'panel' });
       },
     };
-    const input = type === 'block'
-      ? h('textarea', { ...common, rows: Math.min(8, Math.max(2, Math.ceil(String(value ?? '').length / 42))), value: value ?? '' })
-      : h('input', { ...common, type: type === 'number' ? 'number' : 'text', value: value ?? '' });
+    const input =
+      type === 'block'
+        ? h('textarea', {
+            ...common,
+            rows: Math.min(8, Math.max(2, Math.ceil(String(value ?? '').length / 42))),
+            value: value ?? '',
+          })
+        : h('input', {
+            ...common,
+            type: type === 'number' ? 'number' : 'text',
+            value: value ?? '',
+          });
     inputs.set(edit, input);
-    return h('div', { class: ['tf', changed && 'is-changed'], dataset: { edit } },
-      h('label', { class: 'tf__label' },
+    return h(
+      'div',
+      { class: ['tf', changed && 'is-changed'], dataset: { edit } },
+      h(
+        'label',
+        { class: 'tf__label' },
         h('span', { class: 'tf__file' }, file.replace('.json', '')),
         short,
         h('i', { class: 'dot', title: 'Changed' }),
@@ -186,8 +241,12 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       },
     });
     inputs.set(edit, labelInput);
-    return h('div', { class: ['tf', labelChanged && 'is-changed'], dataset: { edit } },
-      h('label', { class: 'tf__label' },
+    return h(
+      'div',
+      { class: ['tf', labelChanged && 'is-changed'], dataset: { edit } },
+      h(
+        'label',
+        { class: 'tf__label' },
         h('span', { class: 'tf__file' }, file.replace('.json', '')),
         'Curtain text',
         h('i', { class: 'dot', title: 'Changed' }),
@@ -209,7 +268,8 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     const { file, ptr } = group.toggle;
     const raw = store.get(file, ptr);
     const on = raw !== false;
-    const changed = JSON.stringify(raw ?? true) !== JSON.stringify(store.getBase(file, ptr) ?? true);
+    const changed =
+      JSON.stringify(raw ?? true) !== JSON.stringify(store.getBase(file, ptr) ?? true);
     const input = h('input', {
       type: 'checkbox',
       class: 'sec__check',
@@ -221,7 +281,12 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
         applySectionVisibility(group.id, enabled);
       },
     });
-    return h('label', { class: ['sec__toggle', changed && 'is-changed'], title: on ? 'Section is visible' : 'Section is hidden on the public page' },
+    return h(
+      'label',
+      {
+        class: ['sec__toggle', changed && 'is-changed'],
+        title: on ? 'Section is visible' : 'Section is hidden on the public page',
+      },
       input,
       h('span', { class: 'sec__switch', 'aria-hidden': 'true' }),
       h('span', { class: 'sec__state' }, on ? 'On' : 'Off'),
@@ -231,28 +296,40 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
   function sectionBlock(group, fields) {
     const open = openGroups.has(group.id);
     const on = group.toggle ? store.get(group.toggle.file, group.toggle.ptr) !== false : true;
-    const head = h('button', {
-      type: 'button',
-      class: 'sec__head',
-      'aria-expanded': String(open),
-      onclick: () => {
-        if (openGroups.has(group.id)) openGroups.delete(group.id);
-        else openGroups.add(group.id);
-        render();
+    const head = h(
+      'button',
+      {
+        type: 'button',
+        class: 'sec__head',
+        'aria-expanded': String(open),
+        onclick: () => {
+          if (openGroups.has(group.id)) openGroups.delete(group.id);
+          else openGroups.add(group.id);
+          render();
+        },
       },
-    },
       h('span', { class: 'sec__caret', 'aria-hidden': 'true' }, open ? '▾' : '▸'),
       h('span', { class: 'sec__title' }, group.title),
       group.toggle ? null : h('span', { class: 'sec__count' }, String(fields.length)),
     );
 
-    const body = h('div', { class: 'sec__body', hidden: !open },
+    const body = h(
+      'div',
+      { class: 'sec__body', hidden: !open },
       fields.length
         ? fields
-        : h('p', { class: 'hint small' }, on ? 'No text fields in this section.' : 'Section is off. Turn it on to show it on the page.'),
+        : h(
+            'p',
+            { class: 'hint small' },
+            on
+              ? 'No text fields in this section.'
+              : 'Section is off. Turn it on to show it on the page.',
+          ),
     );
 
-    return h('section', { class: ['sec', !on && 'is-off'], dataset: { section: group.id } },
+    return h(
+      'section',
+      { class: ['sec', !on && 'is-off'], dataset: { section: group.id } },
       h('div', { class: 'sec__bar' }, head, sectionToggle(group)),
       body,
     );
@@ -270,7 +347,13 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     return (bridge.editFields?.() || []).filter((f) => {
       if (f.file !== 'site.json') return true;
       const top = parse(f.ptr)[0];
-      return top !== 'nav' && top !== 'footer' && top !== 'social' && top !== 'email' && top !== 'location';
+      return (
+        top !== 'nav' &&
+        top !== 'footer' &&
+        top !== 'social' &&
+        top !== 'email' &&
+        top !== 'location'
+      );
     });
   }
 
@@ -317,19 +400,21 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       ...[...groups.entries()].filter(([id]) => !order.includes(id)).map(([, v]) => v),
     ];
 
-    const hint = target.kind === 'component'
-      ? target.id === 'menu'
-        ? 'Editing Menu labels. Changes show in the header and mobile menu of the preview.'
-        : 'Editing Footer copy. Scroll the preview to the bottom to see changes.'
-      : 'Click any outlined text in the preview to edit it in place, or use the fields below. Turn a section Off to hide it on the public page.';
+    const hint =
+      target.kind === 'component'
+        ? target.id === 'menu'
+          ? 'Editing Menu labels. Changes show in the header and mobile menu of the preview.'
+          : 'Editing Footer copy. Scroll the preview to the bottom to see changes.'
+        : 'Click any outlined text in the preview to edit it in place, or use the fields below. Turn a section Off to hide it on the public page.';
 
-    clear(root,
+    clear(
+      root,
       h('p', { class: 'hint' }, hint),
       ordered.length
         ? ordered.map(({ group, fields }) => {
-          const nodes = fields.map((f) => (f.__node ? f.__node : field(f))).filter(Boolean);
-          return sectionBlock(group, nodes);
-        })
+            const nodes = fields.map((f) => (f.__node ? f.__node : field(f))).filter(Boolean);
+            return sectionBlock(group, nodes);
+          })
         : h('p', { class: 'hint' }, 'No editable content here.'),
     );
   }
@@ -338,7 +423,8 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     for (const [edit, input] of inputs) {
       const { file, ptr } = splitEdit(edit);
       const value = store.get(file, ptr);
-      if (document.activeElement !== input && input.value !== String(value ?? '')) input.value = value ?? '';
+      if (document.activeElement !== input && input.value !== String(value ?? ''))
+        input.value = value ?? '';
       const changed = JSON.stringify(value) !== JSON.stringify(store.getBase(file, ptr));
       input.parentElement?.classList.toggle('is-changed', changed);
     }

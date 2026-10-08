@@ -22,7 +22,8 @@ import { editorMiddleware } from './editor-server.mjs';
 
 const RENDER_MODULE = '/src/site/render.js';
 
-const fill = (shell, { head, body }) => shell.replace('<!--ssr-head-->', head).replace('<!--ssr-body-->', body);
+const fill = (shell, { head, body }) =>
+  shell.replace('<!--ssr-head-->', head).replace('<!--ssr-body-->', body);
 
 export default function staticSite() {
   let config;
@@ -40,23 +41,29 @@ export default function staticSite() {
       let quietUntil = 0;
       server.watcher.on('change', (file) => {
         if (Date.now() < quietUntil && /[\\/]content[\\/]/.test(file)) return;
-        if (/[\\/](content|src[\\/]site|\.generated)[\\/]/.test(file)) server.ws.send({ type: 'full-reload' });
+        if (/[\\/](content|src[\\/]site|\.generated)[\\/]/.test(file))
+          server.ws.send({ type: 'full-reload' });
       });
 
       // Editor endpoints (dev only, localhost only).
-      server.middlewares.use('/__editor', editorMiddleware({
-        root,
-        logger: config.logger,
-        onWrite: () => (quietUntil = Date.now() + 2000),
-      }));
+      server.middlewares.use(
+        '/__editor',
+        editorMiddleware({
+          root,
+          logger: config.logger,
+          onWrite: () => (quietUntil = Date.now() + 2000),
+        }),
+      );
 
       server.middlewares.use(async (req, res, next) => {
         if (req.method !== 'GET') return next();
         const url = new URL(req.url, 'http://localhost');
         const accept = req.headers.accept || '';
         const looksLikePage = !path.extname(url.pathname) || url.pathname.endsWith('.html');
-        if (!looksLikePage || (!accept.includes('text/html') && !accept.includes('*/*'))) return next();
-        if (url.pathname.startsWith('/@') || url.pathname.startsWith('/node_modules')) return next();
+        if (!looksLikePage || (!accept.includes('text/html') && !accept.includes('*/*')))
+          return next();
+        if (url.pathname.startsWith('/@') || url.pathname.startsWith('/node_modules'))
+          return next();
         if (url.pathname === '/edit') {
           res.writeHead(302, { Location: '/edit/' + url.search });
           return res.end();
@@ -72,7 +79,10 @@ export default function staticSite() {
           const status = route ? 200 : 404;
           route ||= routes.find((r) => r.page === 'notFound');
           const shell = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-          const html = await server.transformIndexHtml(req.url, fill(shell, renderRoute(route, content)));
+          const html = await server.transformIndexHtml(
+            req.url,
+            fill(shell, renderRoute(route, content)),
+          );
           res.statusCode = status;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
           res.end(html);
@@ -90,7 +100,9 @@ export default function staticSite() {
       const shellFile = path.join(outDir, 'index.html');
       if (!fs.existsSync(shellFile)) return;
       const shell = fs.readFileSync(shellFile, 'utf8');
-      const { getRoutes, renderRoute } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
+      const { getRoutes, renderRoute } = await import(
+        pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`
+      );
       const content = loadContent(root);
       const routes = getRoutes(content);
 
@@ -100,14 +112,24 @@ export default function staticSite() {
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, fill(shell, renderRoute(route, content)));
       }
-      const urls = routes.filter((r) => !r.noindex).map((r) => `  <url><loc>${content.site.url}${r.path}</loc></url>`);
-      fs.writeFileSync(path.join(outDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
-      fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${content.site.url}/sitemap.xml\n`);
+      const urls = routes
+        .filter((r) => !r.noindex)
+        .map((r) => `  <url><loc>${content.site.url}${r.path}</loc></url>`);
+      fs.writeFileSync(
+        path.join(outDir, 'sitemap.xml'),
+        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
+      );
+      fs.writeFileSync(
+        path.join(outDir, 'robots.txt'),
+        `User-agent: *\nAllow: /\nSitemap: ${content.site.url}/sitemap.xml\n`,
+      );
 
       // The editor is dev-only: make sure nothing of it ends up in the build.
       fs.rmSync(path.join(outDir, 'edit'), { recursive: true, force: true });
       fs.rmSync(path.join(outDir, '404'), { recursive: true, force: true });
-      config.logger.info(`\x1b[32m✓\x1b[0m prerendered ${routes.length} routes into ${path.relative(root, outDir)}/`);
+      config.logger.info(
+        `\x1b[32m✓\x1b[0m prerendered ${routes.length} routes into ${path.relative(root, outDir)}/`,
+      );
     },
   };
 }

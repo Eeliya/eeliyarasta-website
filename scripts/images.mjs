@@ -32,9 +32,15 @@ try {
 
 const walk = (dir) =>
   fs.existsSync(dir)
-    ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-        e.isDirectory() ? walk(path.join(dir, e.name)) : EXT.test(e.name) ? [path.join(dir, e.name)] : []
-      )
+    ? fs
+        .readdirSync(dir, { withFileTypes: true })
+        .flatMap((e) =>
+          e.isDirectory()
+            ? walk(path.join(dir, e.name))
+            : EXT.test(e.name)
+              ? [path.join(dir, e.name)]
+              : [],
+        )
     : [];
 
 const prev = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : {};
@@ -48,35 +54,62 @@ let built = 0;
  * images return a grey (templates then fall back to the site accent).
  */
 async function vividColor(file) {
-  const { data, info } = await sharp(file).resize(32, 32, { fit: 'cover' }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(file)
+    .resize(32, 32, { fit: 'cover' })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
   let total = { r: 0, g: 0, b: 0, n: 0 };
   for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    total.r += r; total.g += g; total.b += b; total.n++;
-    const max = Math.max(r, g, b) / 255, min = Math.min(r, g, b) / 255, l = (max + min) / 2, d = max - min;
+    const r = data[i],
+      g = data[i + 1],
+      b = data[i + 2];
+    total.r += r;
+    total.g += g;
+    total.b += b;
+    total.n++;
+    const max = Math.max(r, g, b) / 255,
+      min = Math.min(r, g, b) / 255,
+      l = (max + min) / 2,
+      d = max - min;
     if (d < 0.08) continue;
     const s = d / (1 - Math.abs(2 * l - 1));
-    let h = max === r / 255 ? ((g - b) / 255 / d) % 6 : max === g / 255 ? (b - r) / 255 / d + 2 : (r - g) / 255 / d + 4;
+    let h =
+      max === r / 255
+        ? ((g - b) / 255 / d) % 6
+        : max === g / 255
+          ? (b - r) / 255 / d + 2
+          : (r - g) / 255 / d + 4;
     h = (h * 60 + 360) % 360;
     const w = s * (1 - Math.abs(2 * l - 1));
     const bin = bins[Math.floor(h / 30) % 12];
-    bin.w += w; bin.r += r * w; bin.g += g * w; bin.b += b * w;
+    bin.w += w;
+    bin.r += r * w;
+    bin.g += g * w;
+    bin.b += b * w;
   }
   const best = bins.reduce((a, c) => (c.w > a.w ? c : a));
   if (best.w < 1) return hex({ r: total.r / total.n, g: total.g / total.n, b: total.b / total.n });
   return hex({ r: best.r / best.w, g: best.g / best.w, b: best.b / best.w });
 }
 
-const hex = ({ r, g, b }) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+const hex = ({ r, g, b }) =>
+  '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
 
 for (const file of files) {
   const rel = path.relative(SRC, file).split(path.sep).join('/');
   const base = rel.replace(EXT, '');
   const mtime = fs.statSync(file).mtimeMs;
   const cached = prev[rel];
-  const outputsExist = cached && cached.srcset.every((s) => fs.existsSync(path.join(ROOT, 'public', s.url)));
-  if (cached && cached.mtime === mtime && cached.pipeline === (sharp ? 'sharp' : 'copy') && outputsExist) {
+  const outputsExist =
+    cached && cached.srcset.every((s) => fs.existsSync(path.join(ROOT, 'public', s.url)));
+  if (
+    cached &&
+    cached.mtime === mtime &&
+    cached.pipeline === (sharp ? 'sharp' : 'copy') &&
+    outputsExist
+  ) {
     manifest[rel] = cached;
     continue;
   }
@@ -85,7 +118,16 @@ for (const file of files) {
   if (!sharp) {
     const url = `/media/${rel}`;
     fs.copyFileSync(file, path.join(OUT, rel));
-    manifest[rel] = { mtime, pipeline: 'copy', width: 0, height: 0, src: url, srcset: [{ url, w: 0 }], color: null, lqip: null };
+    manifest[rel] = {
+      mtime,
+      pipeline: 'copy',
+      width: 0,
+      height: 0,
+      src: url,
+      srcset: [{ url, w: 0 }],
+      color: null,
+      lqip: null,
+    };
     continue;
   }
 
@@ -99,7 +141,11 @@ for (const file of files) {
     if (w > width && srcset.length) break;
     const tw = Math.min(w, width);
     const url = `/media/${base}-${tw}.webp`;
-    await sharp(file).rotate().resize({ width: tw }).webp({ quality: QUALITY }).toFile(path.join(ROOT, 'public', url));
+    await sharp(file)
+      .rotate()
+      .resize({ width: tw })
+      .webp({ quality: QUALITY })
+      .toFile(path.join(ROOT, 'public', url));
     srcset.push({ url, w: tw });
   }
   const accent = await vividColor(file);
@@ -119,4 +165,6 @@ for (const file of files) {
 
 fs.mkdirSync(path.dirname(MANIFEST), { recursive: true });
 fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2));
-console.log(`[images] ${files.length} images, ${built} (re)built → public/media, manifest → .generated/media.json`);
+console.log(
+  `[images] ${files.length} images, ${built} (re)built → public/media, manifest → .generated/media.json`,
+);

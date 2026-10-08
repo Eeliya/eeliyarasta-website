@@ -25,11 +25,19 @@ export async function load() {
 }
 
 export const saveDev = (files) =>
-  json('/__editor/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files }) });
+  json('/__editor/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files }),
+  });
 
 /** Saved-but-unpublished content changes (git status of the content files). */
 export const status = () => json('/__editor/status');
 
 /** Commit all changed content files in one commit and push it. */
 export const publish = (message) =>
-  json('/__editor/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
+  json('/__editor/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });

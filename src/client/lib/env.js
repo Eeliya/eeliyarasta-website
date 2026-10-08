@@ -12,5 +12,8 @@ export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
 export const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /** querySelectorAll over the current view AND the #portal layer (fixed UI moved out of the smooth scroller). */
-export const $$ = (view, sel) => [...view.querySelectorAll(sel), ...document.querySelectorAll(`#portal ${sel}`)];
+export const $$ = (view, sel) => [
+  ...view.querySelectorAll(sel),
+  ...document.querySelectorAll(`#portal ${sel}`),
+];
 export const $ = (view, sel) => $$(view, sel)[0] || null;

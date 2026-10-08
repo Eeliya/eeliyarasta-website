@@ -13,9 +13,12 @@ export function diff(a, b, path = []) {
   if (equal(a, b)) return [];
   if (isObj(a) && isObj(b)) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-    return [...keys].flatMap((k) => (k in b ? diff(a[k], b[k], [...path, k]) : [{ path: [...path, k], value: undefined }]));
+    return [...keys].flatMap((k) =>
+      k in b ? diff(a[k], b[k], [...path, k]) : [{ path: [...path, k], value: undefined }],
+    );
   }
-  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) return a.flatMap((x, i) => diff(x, b[i], [...path, i]));
+  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length)
+    return a.flatMap((x, i) => diff(x, b[i], [...path, i]));
   return [{ path, value: clone(b) }];
 }
 
