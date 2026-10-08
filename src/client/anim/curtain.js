@@ -10,8 +10,9 @@
  *   hold       seconds the text stays fully visible
  *              (a page without curtain text keeps the closed curtain this long instead)
  *   labelOut   { duration, ease }  the text leaves
- *   outStart   absolute start of curtain-out (from t=0). Missing => derived once as
- *              textDelay + labelIn + hold + labelOut + afterText
+ *   outStart   absolute start of curtain-out (from t=0). Missing => derived as
+ *              textDelay + labelIn + hold + labelOut + afterText (re-derived each
+ *              normalize call — callers that need a stable value must supply outStart)
  *   afterText  derived as outStart - textGone (compat only; not edited by the timeline)
  *   out        { duration, ease }  the curtain leaves (opens)
  *   label      false hides the text on every page

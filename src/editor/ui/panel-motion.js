@@ -345,7 +345,8 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       const len = Number((dur != null ? dur : w).toFixed(2));
       bar.__len.textContent = fmtS(len) + 's';
       const px = trackW ? (w / total) * trackW : 0;
-      bar.__len.hidden = !(len > 0 && px >= 28);
+      // trackW is 0 on first layout before the box is in the DOM — keep labels visible then.
+      bar.__len.hidden = len <= 0 || (trackW > 0 && px < 28);
     };
     // Leave bar is pinned to total on the right (no end handle).
     const outEnd = total;
@@ -371,6 +372,8 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     }
   }
   layout();
+  // Second pass once the track has a real width so in-bar labels can measure.
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => layout());
   return { el: root, layout, get dragging() { return !!drag; } };
 }
 
@@ -378,13 +381,37 @@ function pageTransitionGroup(store, bridge) {
   const get = (ptr) => store.get(FILE, ptr);
   const base = (ptr) => store.getBase(FILE, ptr);
   const set = (ptr, value, key) => store.set(FILE, ptr, value, { key, source: 'panel' });
-  const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
   const isChanged = (ptr) => JSON.stringify(get(ptr)) !== JSON.stringify(base(ptr));
   const numbers = [];
   const head = (label) => h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
+  const OUT_START_PTR = CURTAIN + '/outStart';
 
   // Session window when /total is not yet stored; only the total field writes /total.
   let sessionTotal = null;
+  // Freeze derived outStart once. normalizeCurtain re-derives from text when outStart is
+  // missing, which made text drags move the curtain — lock it for the editor session / draft.
+  let sessionOutStart = null;
+  const readStoredOutStart = () => {
+    const v = get(OUT_START_PTR);
+    return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  };
+  const lockedOutStart = () => {
+    const stored = readStoredOutStart();
+    if (stored != null) {
+      sessionOutStart = stored;
+      return stored;
+    }
+    if (sessionOutStart == null) {
+      sessionOutStart = normalizeCurtain(get(CURTAIN) ?? true).outStart;
+    }
+    return sessionOutStart;
+  };
+  const effective = () => {
+    const raw = get(CURTAIN) ?? true;
+    const o = raw === true ? {} : { ...raw };
+    o.outStart = lockedOutStart();
+    return normalizeCurtain(o);
+  };
   const readStoredTotal = () => {
     const t = get(TOTAL_PTR);
     return typeof t === 'number' && Number.isFinite(t) ? t : null;
@@ -417,13 +444,19 @@ function pageTransitionGroup(store, bridge) {
       setTotal(leaveStart(effective()) + Math.max(0, v));
       return;
     }
+    // Persist absolute outStart before any other edit so later textDelay changes cannot re-derive it.
+    if (ptr !== '/outStart' && readStoredOutStart() == null) {
+      const lock = lockedOutStart();
+      set(OUT_START_PTR, lock, 'curtain:' + OUT_START_PTR);
+    }
     const cc = effective();
     const total = getTotal();
     const def = HANDLES.find((d) => d.ptr === ptr);
     const min = def ? def.min : 0;
     const clamped = clampField(ptr, v, min, cc, total);
+    if (ptr === '/outStart') sessionOutStart = clamped;
     set(CURTAIN + ptr, clamped, 'curtain:' + CURTAIN + ptr);
-    // Keep the leave bar pinned to the current total window.
+    // Keep the leave bar pinned to the current total window (from locked outStart, not text).
     pinOutDuration(getTotal());
   };
 
@@ -655,7 +688,8 @@ function pageTransitionGroup(store, bridge) {
     }
     syncEaseUi();
   };
-  // Initialise session total and pin once.
+  // Initialise session total / absolute outStart and pin once.
+  lockedOutStart();
   getTotal();
   pinOutDuration(getTotal());
   syncEaseUi();
