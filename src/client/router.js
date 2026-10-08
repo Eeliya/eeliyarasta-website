@@ -60,7 +60,7 @@ const until = (tl, pos) => (pos <= tl.time() + 1e-3 ? Promise.resolve() : new Pr
  *   textDelay        text starts coming in
  *   + labelIn + hold text starts leaving
  *   + labelOut       text is gone
- *   + afterText      curtain starts leaving (never before it is fully closed)
+ *   outStart         curtain starts leaving (never before it is fully closed)
  *
  * `ready` resolves to { label, swap } once the next page is loaded. swap() runs as soon as
  * the curtain is fully closed and returns the new view. If the page arrives after the text

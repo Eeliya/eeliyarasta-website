@@ -5,20 +5,18 @@
  *   easeMode   "shared" | "individual"  (missing = shared)
  *   ease       one ease for every step when easeMode is shared
  *   in         { duration, ease }  the curtain comes in (closes); ease used only in individual mode
- *   textDelay  seconds after the curtain STARTS coming in before the text starts coming in
- *              (0 = text and curtain start together; = in.duration: text waits for the closed curtain)
+ *   textDelay  absolute start of the text block (from t=0)
  *   labelIn    { duration, ease }  the text comes in
  *   hold       seconds the text stays fully visible
  *              (a page without curtain text keeps the closed curtain this long instead)
  *   labelOut   { duration, ease }  the text leaves
- *   afterText  seconds after the text has fully left before the curtain starts leaving
- *              (0 = as soon as the text is gone, negative = overlap)
+ *   outStart   absolute start of curtain-out (from t=0). Missing => derived once as
+ *              textDelay + labelIn + hold + labelOut + afterText
+ *   afterText  derived as outStart - textGone (compat only; not edited by the timeline)
  *   out        { duration, ease }  the curtain leaves (opens)
  *   label      false hides the text on every page
  *
- * Missing values fall back to CURTAIN_DEFAULTS, which reproduce the motion from before
- * textDelay / afterText existed (text after the closed curtain, curtain leaving 0.25s
- * before the text is gone).
+ * Missing values fall back to CURTAIN_DEFAULTS.
  */
 export const CURTAIN_DEFAULTS = {
   in: { duration: 0.7, ease: 'expo.inOut' },
@@ -56,34 +54,45 @@ export function normalizeCurtain(raw) {
     ease: easeMode === 'shared' ? sharedEase : (typeof own === 'string' && own ? own : sharedEase),
   });
 
+  const textDelay = Math.max(0, num(c.textDelay, inn.duration));
+  const hold = Math.max(0, num(c.hold, D.hold));
+  const textGone = textDelay + labelIn.duration + hold + labelOut.duration;
+  const afterLegacy = num(c.afterText, D.afterText);
+  // Absolute curtain-out start. Missing => legacy textGone + afterText.
+  let outStart = num(c.outStart, NaN);
+  if (!Number.isFinite(outStart)) outStart = textGone + afterLegacy;
+  outStart = Math.max(0, outStart);
+  // Compat: keep afterText as the delta from text end (not what the timeline edits).
+  const afterText = outStart - textGone;
+
   return {
     label: c.label !== false,
     easeMode,
     ease: sharedEase,
     in: step(inn, c.in?.ease),
-    textDelay: Math.max(0, num(c.textDelay, inn.duration)),
+    textDelay,
     labelIn: step(labelIn, c.labelIn?.ease),
-    hold: Math.max(0, num(c.hold, D.hold)),
+    hold,
     labelOut: step(labelOut, c.labelOut?.ease),
-    afterText: num(c.afterText, D.afterText),
+    outStart,
+    afterText,
     out: step(out, c.out?.ease),
   };
 }
 
 /**
  * When everything happens, in seconds from the moment the curtain starts coming in.
- * The curtain never starts leaving before it is fully closed (the page swaps then).
+ * Curtain-out uses absolute outStart (never before the curtain is fully closed).
  */
 export function curtainPlan(cc, hasText = true) {
   const closed = cc.in.duration;
+  const outAt = Math.max(closed, Math.max(0, num(cc.outStart, closed)));
   if (!hasText) {
-    const outAt = closed + cc.hold;
     return { closed, outAt, outEnd: outAt + cc.out.duration, end: outAt + cc.out.duration };
   }
   const textIn = cc.textDelay;
   const textOut = textIn + cc.labelIn.duration + cc.hold;
   const textGone = textOut + cc.labelOut.duration;
-  const outAt = Math.max(closed, textGone + cc.afterText);
   const outEnd = outAt + cc.out.duration;
   return { closed, textIn, textOut, textGone, outAt, outEnd, end: Math.max(outEnd, textGone) };
 }

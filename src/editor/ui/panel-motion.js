@@ -87,7 +87,7 @@ const CURTAIN_ROWS = [
   ['pair', '/labelIn', 'Text in'],
   ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
   ['pair', '/labelOut', 'Text out'],
-  ['/afterText', 'Curtain leaves after text (s)', { min: -2, hint: 'Counted from when the text is fully gone. 0 = right away. Negative = the curtain starts leaving while the text is still going.' }],
+  ['/outStart', 'Curtain out starts (s)', { min: 0, hint: 'Absolute time from the start of the transition. Independent of the text block. The curtain-out bar runs from here to total.' }],
   ['pair', '/out', 'Curtain out'],
 ];
 /**
@@ -98,7 +98,7 @@ const CURTAIN_ROWS = [
  */
 const HANDLES = [
   { row: 'c', ptr: '/in/duration', label: 'Curtain in', min: 0, at: (p) => p.closed, value: (x) => x },
-  { row: 'c', ptr: '/afterText', label: 'Curtain leaves after text', min: -2, at: (p) => p.outAt, value: (x, p) => x - p.textGone },
+  { row: 'c', ptr: '/outStart', label: 'Curtain out starts', min: 0, at: (p) => p.outAt, value: (x) => x },
   { row: 't', ptr: '/textDelay', label: 'Text starts after curtain', min: 0, at: (p) => p.textIn, value: (x) => x },
   { row: 't', ptr: '/labelIn/duration', label: 'Text in', min: 0, at: (p, cc) => p.textIn + cc.labelIn.duration, value: (x, p) => x - p.textIn },
   { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p) => p.textOut, value: (x, p, cc) => x - p.textIn - cc.labelIn.duration },
@@ -119,27 +119,20 @@ function maxForPtr(ptr, cc, total) {
   const lo = cc.labelOut.duration;
   const td = cc.textDelay;
   const hold = cc.hold;
-  const after = cc.afterText;
-  // Text block must end by total (textGone <= t). Also leave start
-  // (textGone + afterText) must stay <= t. When afterText is negative the
-  // textGone cap is the tighter one — that was the bug that let text past total.
-  const maxTextDelay = Math.min(t - (li + hold + lo), t - (li + hold + lo + after));
-  const maxLabelIn = Math.min(t - (td + hold + lo), t - (td + hold + lo + after));
-  const maxHold = Math.min(t - (td + li + lo), t - (td + li + lo + after));
-  const maxLabelOut = Math.min(t - (td + li + hold), t - (td + li + hold + after));
+  // Text block must end by total. Curtain-out start is independent (absolute).
   switch (ptr) {
     case '/in/duration':
       return t;
-    case '/afterText':
-      return t - (td + li + hold + lo);
+    case '/outStart':
+      return t;
     case '/textDelay':
-      return maxTextDelay;
+      return t - (li + hold + lo);
     case '/labelIn/duration':
-      return maxLabelIn;
+      return t - (td + hold + lo);
     case '/hold':
-      return maxHold;
+      return t - (td + li + lo);
     case '/labelOut/duration':
-      return maxLabelOut;
+      return t - (td + li + hold);
     case '/out/duration':
       return Math.max(0, t - leaveStart(cc));
     default:
@@ -657,6 +650,7 @@ function pageTransitionGroup(store, bridge) {
       r.input.placeholder = fmtS(digRel(eff, r.rel) ?? 0);
       let v = get(r.ptr);
       if (r.rel === '/out/duration') v = wantOut;
+      else if (r.rel === '/outStart' && v == null) v = eff.outStart;
       if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
     }
     syncEaseUi();
