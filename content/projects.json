@@ -1,0 +1,48 @@
+[
+  {
+    "slug": "grok-observatory",
+    "title": "Grok Observatory",
+    "kind": "Web / Dev tool",
+    "year": 2026,
+    "url": "https://observatory.eeliyarasta.com/",
+    "linkLabel": "observatory.eeliyarasta.com",
+    "image": "projects/grok-observatory.jpg",
+    "description": "Watch an AI coding assistant's edits replay live, file by file. It replays every save in a local browser tab and works with any agent that edits files in a git repo.",
+    "placeholder": false
+  },
+  {
+    "slug": "eeliyarasta-com",
+    "title": "eeliyarasta.com",
+    "kind": "Web / Design",
+    "year": 2026,
+    "url": "https://github.com/Eeliya/eeliyarasta-website",
+    "linkLabel": "Source on GitHub",
+    "image": "people/noor-vermeer/03.jpg",
+    "description": "This site. A tiny static-site builder on Vite and GSAP: content in JSON, templates in plain JavaScript, every animation driven by one config file so it can be curated visually.",
+    "placeholder": false
+  },
+  {
+    "slug": "film-scan-rig",
+    "title": "Film Scan Rig",
+    "kind": "DIY",
+    "year": 2025,
+    "url": "",
+    "linkLabel": "",
+    "image": "projects/film-scanner.jpg",
+    "imageCredit": { "name": "Jakub Żerdzicki", "url": "https://unsplash.com/@jakubzerdzicki", "source": "https://unsplash.com/photos/camera-digitizing-film-negatives-on-a-light-table-B1Mx8T3odhI", "license": "Unsplash License" },
+    "description": "PLACEHOLDER: a light table and copy stand for digitising negatives with a digital camera. Replace with a real DIY project.",
+    "placeholder": true
+  },
+  {
+    "slug": "desk-controller",
+    "title": "Desk Controller",
+    "kind": "DIY / Electronics",
+    "year": 2024,
+    "url": "",
+    "linkLabel": "",
+    "image": "projects/arduino.jpg",
+    "imageCredit": { "name": "Vishnu Mohanan", "url": "https://unsplash.com/@vishnumaiea", "source": "https://unsplash.com/photos/a-close-up-of-a-small-electronic-device-on-a-table-kyDsOF8gsIA", "license": "Unsplash License" },
+    "description": "PLACEHOLDER: a microcontroller box with knobs that drives the lights and shortcuts at my desk. Replace with a real DIY project.",
+    "placeholder": true
+  }
+]

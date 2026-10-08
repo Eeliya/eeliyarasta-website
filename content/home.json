@@ -1,0 +1,24 @@
+{
+  "hero": {
+    "eyebrow": "Portrait & editorial photography",
+    "subline": "Based in the Netherlands. Shot on a Fujifilm X100V. Also builds websites and things.",
+    "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives mouse + scroll parallax. layer: back (behind the name) or front (over it).",
+    "photos": [
+      { "src": "people/noor-vermeer/02.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 7,  "y": 9,  "w": 13, "depth": 0.35, "layer": "back",  "mx": 4,  "my": 10, "mw": 34 },
+      { "src": "people/daan-okafor/02.jpg",  "link": "/people/daan-okafor/",  "label": "Daan Okafor",  "x": 31, "y": 4,  "w": 10, "depth": 0.7,  "layer": "back",  "mx": 62, "my": 6,  "mw": 30 },
+      { "src": "places/kasteel-de-haar/02.jpg", "link": "/places/kasteel-de-haar/", "label": "Kasteel de Haar", "x": 63, "y": 7, "w": 16, "depth": 0.5, "layer": "back" },
+      { "src": "people/noor-vermeer/06.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 85, "y": 18, "w": 11, "depth": 0.9,  "layer": "back" },
+      { "src": "people/daan-okafor/05.jpg",  "link": "/people/daan-okafor/",  "label": "Daan Okafor",  "x": 2,  "y": 58, "w": 12, "depth": 0.8,  "layer": "back",  "mx": 6,  "my": 66, "mw": 28 },
+      { "src": "people/noor-vermeer/04.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 22, "y": 50, "w": 12, "depth": 1.0,  "layer": "front", "mx": 40, "my": 58, "mw": 30 },
+      { "src": "places/concrete-studies/05.jpg", "link": "/places/concrete-studies/", "label": "Concrete Studies", "x": 47, "y": 66, "w": 9, "depth": 0.45, "layer": "back" },
+      { "src": "people/daan-okafor/01.jpg",  "link": "/people/daan-okafor/",  "label": "Daan Okafor",  "x": 66, "y": 52, "w": 12, "depth": 0.85, "layer": "front", "mx": 70, "my": 70, "mw": 26 },
+      { "src": "people/noor-vermeer/01.jpg", "link": "/people/noor-vermeer/", "label": "Noor Vermeer", "x": 86, "y": 64, "w": 10, "depth": 0.6,  "layer": "back" }
+    ]
+  },
+  "intro": "I photograph people: portraits and editorial stories around the Netherlands, made with one small camera and whatever light the day gives me. When I'm not shooting, I build websites and small DIY things.",
+  "sections": {
+    "people": { "label": "People", "title": "Models I've worked with", "cta": "All people" },
+    "places": { "label": "Places", "title": "Buildings, streets & castles", "cta": "All places" },
+    "projects": { "label": "Projects", "title": "Things I build", "cta": "All projects" }
+  }
+}

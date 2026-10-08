@@ -1,0 +1,188 @@
+[
+  {
+    "slug": "kasteel-de-haar",
+    "name": "Kasteel de Haar",
+    "placeholder": true,
+    "note": "PLACEHOLDER album: stock photos from Unsplash (Pourya Gohari). Replace with own photos.",
+    "location": "Haarzuilens, Utrecht",
+    "year": 2025,
+    "summary": "A neo-gothic castle mirrored in its moat. Towers, brick and long reflections on a still autumn morning.",
+    "accent": "",
+    "cover": 1,
+    "images": [
+      {
+        "src": "places/kasteel-de-haar/01.jpg",
+        "alt": "A castle sitting on top of a lake next to a lush green field",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-castle-sitting-on-top-of-a-lake-next-to-a-lush-green-field-31XJd9qI6AQ",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/02.jpg",
+        "alt": "A large castle sitting on top of a lake",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-large-castle-sitting-on-top-of-a-lake-njc355HF28g",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/03.jpg",
+        "alt": "A black and white photo of a clock tower",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-black-and-white-photo-of-a-clock-tower-D123cJ9W-1A",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/04.jpg",
+        "alt": "A large castle sitting next to a tree",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-large-castle-sitting-next-to-a-tree-qOV725yzFj0",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/05.jpg",
+        "alt": "A room with a desk and a chair",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-room-with-a-desk-and-a-chair-tuJ2kEM-CKM",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/06.jpg",
+        "alt": "A large castle with a clock tower on top of it",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-large-castle-with-a-clock-tower-on-top-of-it-0xhaUrBHQgk",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/07.jpg",
+        "alt": "A large castle sitting on top of a lake",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-large-castle-sitting-on-top-of-a-lake-7lr-Ntw_1HA",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/kasteel-de-haar/08.jpg",
+        "alt": "A lake surrounded by lots of trees in a park",
+        "credit": {
+          "name": "Pourya Gohari",
+          "url": "https://unsplash.com/@_pourya_",
+          "source": "https://unsplash.com/photos/a-lake-surrounded-by-lots-of-trees-in-a-park-IU26_pQYGLE",
+          "license": "Unsplash License"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "concrete-studies",
+    "name": "Concrete Studies",
+    "placeholder": true,
+    "note": "PLACEHOLDER album: stock photos from Unsplash (various photographers). Replace with own photos.",
+    "location": "Various cities",
+    "year": 2026,
+    "summary": "Brutalist lines, stairwells and hard shadows. An ongoing series about light falling on concrete.",
+    "accent": "#8fa3b0",
+    "cover": 0,
+    "images": [
+      {
+        "src": "places/concrete-studies/01.jpg",
+        "alt": "Gray concrete monolith",
+        "credit": {
+          "name": "Simone Hutsch",
+          "url": "https://unsplash.com/@heysupersimi",
+          "source": "https://unsplash.com/photos/gray-concrete-monolith-ItvVUpgac0o",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/02.jpg",
+        "alt": "Worms eye view photography of concrete building",
+        "credit": {
+          "name": "Kimon Maritz",
+          "url": "https://unsplash.com/@kimonmaritz",
+          "source": "https://unsplash.com/photos/worms-eye-view-photography-of-concrete-building-mQiZnKwGXW0",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/03.jpg",
+        "alt": "A black and white photo of a tall building",
+        "credit": {
+          "name": "Alexander Psiuk",
+          "url": "https://unsplash.com/@alexdeloy",
+          "source": "https://unsplash.com/photos/a-black-and-white-photo-of-a-tall-building-4frZSdcZaE0",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/04.jpg",
+        "alt": "Landscape photography of gray concrete building",
+        "credit": {
+          "name": "Simone Hutsch",
+          "url": "https://unsplash.com/@heysupersimi",
+          "source": "https://unsplash.com/photos/landscape-photography-of-gray-concrete-building-XK0faa4_mCQ",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/05.jpg",
+        "alt": "Geometric concrete stairs cast shadows in sunlight",
+        "credit": {
+          "name": "Palina Kharlanovich",
+          "url": "https://unsplash.com/@polinamorf",
+          "source": "https://unsplash.com/photos/geometric-concrete-stairs-cast-shadows-in-sunlight-AjKly-ZTuEY",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/06.jpg",
+        "alt": "A black and white photo of a walkway",
+        "credit": {
+          "name": "Marek Pavlík",
+          "url": "https://unsplash.com/@marpicek",
+          "source": "https://unsplash.com/photos/a-black-and-white-photo-of-a-walkway-bWXMh1a9rVw",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/07.jpg",
+        "alt": "Gray concrete building during daytime",
+        "credit": {
+          "name": "Ricardo Gomez Angel",
+          "url": "https://unsplash.com/@rgaleriacom",
+          "source": "https://unsplash.com/photos/gray-concrete-building-during-daytime-9AjwOAIdsII",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "places/concrete-studies/08.jpg",
+        "alt": "Low angle photography of black high rise building",
+        "credit": {
+          "name": "Irina Iriser",
+          "url": "https://unsplash.com/@iriser",
+          "source": "https://unsplash.com/photos/low-angle-photography-of-black-high-rise-building-Vn7LOc5PE-E",
+          "license": "Unsplash License"
+        }
+      }
+    ]
+  }
+]

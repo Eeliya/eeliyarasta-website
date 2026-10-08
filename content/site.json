@@ -1,0 +1,36 @@
+{
+  "name": "Eeliya Rasta",
+  "url": "https://eeliyarasta.com",
+  "lang": "en",
+  "title": "Eeliya Rasta: Photography & Projects",
+  "description": "Eeliya Rasta is a portrait and editorial photographer in the Netherlands, shooting on a Fujifilm X100V, who also builds websites and DIY things.",
+  "tagline": "Portrait & editorial photography",
+  "location": "Netherlands",
+  "timezone": "Europe/Amsterdam",
+  "camera": "Fujifilm X100V",
+  "email": "hello@eeliyarasta.com",
+  "emailIsPlaceholder": true,
+  "accent": "#cfc8b8",
+  "social": [
+    { "label": "Instagram", "handle": "@eeliya.rasta", "url": "https://www.instagram.com/eeliya.rasta/" },
+    { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
+    { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
+  ],
+  "about": {
+    "headline": "I photograph people, the way they are when they forget the camera.",
+    "image": "about/x100v.jpg",
+    "imageCredit": { "name": "Aleksandrs Karevs", "url": "https://unsplash.com/@ohmycamera", "source": "https://unsplash.com/photos/a-camera-sitting-on-top-of-a-wooden-table-YNCYt0BnVFM", "license": "Unsplash License" },
+    "placeholder": true,
+    "paragraphs": [
+      "PLACEHOLDER BIO: I'm Eeliya, a photographer based in the Netherlands. Most of my work is portraits and editorial shoots with models, made with one small camera (a Fujifilm X100V) and whatever light the day gives me.",
+      "Photography is the hobby that took over. During the week I build things: websites, tools for developers and the occasional DIY contraption on my desk. This site is one of them, so it's equal parts portfolio and playground.",
+      "Want to shoot together, or have a project in mind? Send me a message."
+    ],
+    "facts": [
+      { "label": "Based in", "value": "Netherlands" },
+      { "label": "Camera", "value": "Fujifilm X100V" },
+      { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
+      { "label": "Builds", "value": "Websites, Dev tools, DIY" }
+    ]
+  }
+}
