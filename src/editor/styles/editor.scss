@@ -882,6 +882,10 @@ select {
   color: var(--muted);
   width: 12px;
   flex: none;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .sec__title {
   font-size: 10px;
@@ -974,16 +978,8 @@ select {
   transition: box-shadow 0.6s;
   padding: 2px;
 }
-.tf.is-flash {
-  animation: flash 1.2s var(--ease-out);
-}
-@keyframes flash {
-  from {
-    box-shadow: 0 0 0 3px rgb(159 211 255 / 0.5);
-  }
-  to {
-    box-shadow: 0 0 0 3px transparent;
-  }
+.tf.is-selected {
+  box-shadow: 0 0 0 3px rgb(159 211 255 / 0.5);
 }
 .tf__label {
   display: flex;

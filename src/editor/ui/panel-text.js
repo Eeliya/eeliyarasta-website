@@ -138,6 +138,8 @@ const HOME_TOGGLES = [
 
 export function createTextPanel({ store, bridge, root, getTarget }) {
   let inputs = new Map();
+  /** @type {string | null} */
+  let selectedEdit = null;
   let openGroups = new Set([
     'hero',
     'intro',
@@ -308,7 +310,10 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
           render();
         },
       },
-      h('span', { class: 'sec__caret', 'aria-hidden': 'true' }, open ? '▾' : '▸'),
+      h('i', {
+        class: ['fa-solid', open ? 'fa-chevron-down' : 'fa-chevron-right', 'sec__caret'],
+        'aria-hidden': 'true',
+      }),
       h('span', { class: 'sec__title' }, group.title),
       group.toggle ? null : h('span', { class: 'sec__count' }, String(fields.length)),
     );
@@ -417,6 +422,10 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
           })
         : h('p', { class: 'hint' }, 'No editable content here.'),
     );
+    if (selectedEdit) {
+      const input = inputs.get(selectedEdit);
+      input?.closest('.tf')?.classList.add('is-selected');
+    }
   }
 
   function update() {
@@ -452,7 +461,19 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     }
   }
 
+  function setSelectedField(edit) {
+    selectedEdit = edit || null;
+    for (const el of root.querySelectorAll('.tf.is-selected')) el.classList.remove('is-selected');
+    if (!selectedEdit) return;
+    const input = inputs.get(selectedEdit);
+    input?.closest('.tf')?.classList.add('is-selected');
+  }
+
   function focusField(edit) {
+    if (edit == null) {
+      setSelectedField(null);
+      return;
+    }
     const input = inputs.get(edit);
     if (!input) {
       // Expand the group that owns this field, then re-render and try again.
@@ -472,11 +493,8 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       return focusField(edit);
     }
     row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    row.classList.remove('is-flash');
-    void row.offsetWidth;
-    row.classList.add('is-flash');
+    setSelectedField(edit);
   }
-
   return { render, update, focusField };
 }
 

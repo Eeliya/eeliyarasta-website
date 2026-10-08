@@ -455,6 +455,7 @@ bridge.on('navigate', (path) => {
 bridge.on('select', (sel) => {
   if (state.mode === 'motion') motionPanel.select(sel);
   else if (sel?.kind === 'text') textPanel.focusField(sel.el.dataset.edit);
+  else textPanel.focusField(null);
 });
 bridge.on('textFocus', (edit) => textPanel.focusField(edit));
 bridge.on('key', (e) => onKey(e));
