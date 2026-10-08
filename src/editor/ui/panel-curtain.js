@@ -478,13 +478,7 @@ export function pageTransitionGroup(store, bridge) {
   const isChanged = (ptr) => JSON.stringify(get(ptr)) !== JSON.stringify(base(ptr));
   const numbers = [];
   const head = (label) =>
-    h(
-      'label',
-      { class: 'tf__label' },
-      h('span', { class: 'tf__file' }, 'animations'),
-      label,
-      h('i', { class: 'dot', title: 'Changed' }),
-    );
+    h('label', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' }));
 
   const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
   const planOf = () => curtainPlan(effective(), true);
@@ -733,7 +727,7 @@ export function pageTransitionGroup(store, bridge) {
     compact: true,
     onChange: (v) => setSharedEase(v),
   });
-  const globalEaseWrap = h('div', { class: 'tf ptg__ease' }, head('Ease'), globalEase.el, easeHint);
+  const globalEaseWrap = h('div', { class: 'tf ptg__ease' }, globalEase.el, easeHint);
 
   const advancedBody = CURTAIN_ROWS.map((row) =>
     row[0] === 'pair' ? pair(row[1], row[2]) : single(row[0], row[1], row[2] || {}),
