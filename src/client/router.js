@@ -57,9 +57,8 @@ const until = (tl, pos) => (pos <= tl.time() + 1e-3 ? Promise.resolve() : new Pr
 /**
  * The curtain sequence, on one explicit timeline (times from anim/curtain.js curtainPlan):
  *   0                curtain starts coming in (and the old view leaves)
- *   textDelay        text starts coming in
- *   + labelIn + hold text starts leaving
- *   + labelOut       text is gone
+ *   textDelay        text-in starts
+ *   textOutStart     text-out starts (absolute; independent of text-in / stays)
  *   outStart         curtain starts leaving (never before it is fully closed)
  *
  * `ready` resolves to { label, swap } once the next page is loaded. swap() runs as soon as

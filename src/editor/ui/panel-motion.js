@@ -83,11 +83,13 @@ const SHARED_EASE_PTR = CURTAIN + '/ease';
 // Individual curtain fields live under Advanced. 'pair' = duration + ease on one row.
 const CURTAIN_ROWS = [
   ['pair', '/in', 'Curtain in'],
-  ['/textDelay', 'Text starts after curtain (s)', { hint: 'Counted from when the curtain starts coming in. 0 = with the curtain. Same as "Curtain in" = once it is closed.' }],
+  ['/textDelay', 'Text in starts (s)', { hint: 'Absolute start of the text-in bar from t=0.' }],
   ['pair', '/labelIn', 'Text in'],
-  ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
+  ['/holdStart', 'Text stays starts (s)', { min: 0, hint: 'Absolute start of the stays bar. Independent of text-in.' }],
+  ['/hold', 'Text stays (s)', { hint: 'Length of the stays bar. On pages without curtain text, the closed curtain stays this long.' }],
+  ['/textOutStart', 'Text out starts (s)', { min: 0, hint: 'Absolute start of the text-out bar. Independent of the other text bars.' }],
   ['pair', '/labelOut', 'Text out'],
-  ['/outStart', 'Curtain out starts (s)', { min: 0, hint: 'Absolute time from the start of the transition. Independent of the text block. The curtain-out bar runs from here to total.' }],
+  ['/outStart', 'Curtain out starts (s)', { min: 0, hint: 'Absolute time from the start of the transition. Independent of the text. The curtain-out bar runs from here to total.' }],
   ['pair', '/out', 'Curtain out'],
 ];
 /**
@@ -99,11 +101,20 @@ const CURTAIN_ROWS = [
 const HANDLES = [
   { row: 'c', ptr: '/in/duration', label: 'Curtain in', min: 0, at: (p) => p.closed, value: (x) => x },
   { row: 'c', ptr: '/outStart', label: 'Curtain out starts', min: 0, at: (p) => p.outAt, value: (x) => x },
-  { row: 't', ptr: '/textDelay', label: 'Text starts after curtain', min: 0, at: (p) => p.textIn, value: (x) => x },
+  { row: 't', ptr: '/textDelay', label: 'Text in starts', min: 0, at: (p) => p.textIn, value: (x) => x },
   { row: 't', ptr: '/labelIn/duration', label: 'Text in', min: 0, at: (p, cc) => p.textIn + cc.labelIn.duration, value: (x, p) => x - p.textIn },
-  { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p) => p.textOut, value: (x, p, cc) => x - p.textIn - cc.labelIn.duration },
+  { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p, cc) => p.textHold + cc.hold, value: (x, p) => x - p.textHold },
   { row: 't', ptr: '/labelOut/duration', label: 'Text out', min: 0, at: (p) => p.textGone, value: (x, p) => x - p.textOut },
 ];
+
+/** Body-drag targets: each text segment has its own absolute start. */
+const TEXT_SEGS = [
+  { startPtr: '/textDelay', durKey: 'labelIn', label: 'Text in' },
+  { startPtr: '/holdStart', durKey: 'hold', label: 'Text stays' },
+  { startPtr: '/textOutStart', durKey: 'labelOut', label: 'Text out' },
+];
+const segDuration = (cc, key) => (key === 'hold' ? cc.hold : cc[key].duration);
+const segStart = (p, i) => (i === 0 ? p.textIn : i === 1 ? p.textHold : p.textOut);
 const fmtS = (v) => String(Math.round(v * 100) / 100);
 const digRel = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
 const IDLE = 'Drag the bar ends to change the timing. Shift = 0.1s steps.';
@@ -118,21 +129,27 @@ function maxForPtr(ptr, cc, total) {
   const li = cc.labelIn.duration;
   const lo = cc.labelOut.duration;
   const td = cc.textDelay;
+  const hs = cc.holdStart;
   const hold = cc.hold;
-  // Text block must end by total. Curtain-out start is independent (absolute).
+  const tos = cc.textOutStart;
+  // Each text segment is independent; clamp start/duration inside 0..total.
   switch (ptr) {
     case '/in/duration':
       return t;
     case '/outStart':
       return t;
     case '/textDelay':
-      return t - (li + hold + lo);
+      return Math.max(0, t - li);
     case '/labelIn/duration':
-      return t - (td + hold + lo);
+      return Math.max(0, t - td);
+    case '/holdStart':
+      return Math.max(0, t - hold);
     case '/hold':
-      return t - (td + li + lo);
+      return Math.max(0, t - hs);
+    case '/textOutStart':
+      return Math.max(0, t - lo);
     case '/labelOut/duration':
-      return t - (td + li + hold);
+      return Math.max(0, t - tos);
     case '/out/duration':
       return Math.max(0, t - leaveStart(cc));
     default:
@@ -178,13 +195,14 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const p = curtainPlan(cc, true);
     const r = track.getBoundingClientRect();
     const x = ((clientX - r.left) / r.width) * total;
-    const segs = [
-      [p.textIn, p.textIn + cc.labelIn.duration],
-      [p.textIn + cc.labelIn.duration, p.textOut],
-      [p.textOut, p.textGone],
-    ];
-    if (!segs.some(([a, b]) => x >= a - 1e-6 && x <= b + 1e-6 && b - a > 1e-6)) return null;
-    return { p, cc, block: cc.labelIn.duration + cc.hold + cc.labelOut.duration };
+    for (let i = 0; i < TEXT_SEGS.length; i++) {
+      const start = segStart(p, i);
+      const dur = segDuration(cc, TEXT_SEGS[i].durKey);
+      if (dur > 1e-6 && x >= start - 1e-6 && x <= start + dur + 1e-6) {
+        return { p, cc, seg: i, start, dur, def: TEXT_SEGS[i] };
+      }
+    }
+    return null;
   };
   const show = (label, v) => {
     readout.textContent = label + ': ' + fmtS(v) + 's';
@@ -199,8 +217,8 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     el.classList.add('is-active');
     show(el.__def.label, digRel(drag.cc0, el.__def.ptr) ?? 0);
   };
-  const clampTextDelay = (v, block, tmax) => {
-    const hi = Math.max(0, tmax - block);
+  const clampSegStart = (v, dur, tmax) => {
+    const hi = Math.max(0, tmax - dur);
     return Number(Math.min(hi, Math.max(0, v)).toFixed(2));
   };
 
@@ -208,27 +226,31 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const barsEl = h('div', { class: 'ptl__bars' });
     for (let i = 0; i < 3; i++) {
       const len = h('span', { class: 'ptl__len', 'aria-hidden': 'true' });
+      const seg = row === 't' ? TEXT_SEGS[i] : null;
       const bar = h('i', {
         class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'],
-        ...(row === 't' ? {
+        ...(seg ? {
           tabindex: '0',
           role: 'slider',
-          title: 'Drag to move the text block (arrow keys to nudge)',
-          'aria-label': 'Move text block',
+          title: 'Drag to move this segment (arrow keys to nudge)',
+          'aria-label': 'Move ' + seg.label,
         } : {}),
       }, len);
       bar.__len = len;
-      if (row === 't') {
+      bar.__seg = i;
+      if (seg) {
         bar.addEventListener('keydown', (e) => {
           if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
           e.preventDefault();
           const cc = effective();
-          const block = cc.labelIn.duration + cc.hold + cc.labelOut.duration;
+          const p = curtainPlan(cc, true);
+          const dur = segDuration(cc, seg.durKey);
+          const cur = segStart(p, i);
           const step = e.shiftKey ? 0.1 : 0.01;
-          const raw = cc.textDelay + (e.key === 'ArrowRight' ? 1 : -1) * step;
-          const v = clampTextDelay(Math.round(raw / step) * step, block, getTotal());
-          setField('/textDelay', v);
-          show('Text block', v);
+          const raw = cur + (e.key === 'ArrowRight' ? 1 : -1) * step;
+          const v = clampSegStart(Math.round(raw / step) * step, dur, getTotal());
+          setField(seg.startPtr, v);
+          show(seg.label, v);
         });
         bar.addEventListener('blur', () => !drag && idle());
       }
@@ -275,11 +297,12 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       el.setPointerCapture(e.pointerId);
       drag = {
         kind: 'move', id: e.pointerId, track: el, x0: e.clientX,
-        delay0: body.cc.textDelay, block: body.block, p0: body.p, cc0: body.cc,
+        start0: body.start, dur: body.dur, startPtr: body.def.startPtr,
+        label: body.def.label, p0: body.p, cc0: body.cc,
       };
       root.classList.add('is-dragging', 'is-moving');
       onDrag(true);
-      show('Text block', body.cc.textDelay);
+      show(body.def.label, body.start);
     });
     el.addEventListener('pointermove', (e) => {
       if (!drag) {
@@ -293,10 +316,10 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       const step = e.shiftKey ? 0.1 : 0.01;
       if (drag.kind === 'move') {
         const dx = ((e.clientX - drag.x0) / r.width) * total;
-        const raw = Math.round((drag.delay0 + dx) / step) * step;
-        const v = clampTextDelay(raw, drag.block, getTotal());
-        setField('/textDelay', v);
-        show('Text block', v);
+        const raw = Math.round((drag.start0 + dx) / step) * step;
+        const v = clampSegStart(raw, drag.dur, getTotal());
+        setField(drag.startPtr, v);
+        show(drag.label, v);
         return;
       }
       if (!drag.el) {
@@ -353,14 +376,16 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's', cc.in.duration);
     place(bars.c[1], p.closed, p.outAt, 'Closed', Math.max(0, p.outAt - p.closed));
     place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's', Math.max(0, outEnd - p.outAt));
-    // Clip text geometry to the total window (handles + bars never sit past the end).
-    const textIn = Math.min(total, p.textIn);
-    const textMid = Math.min(total, p.textIn + cc.labelIn.duration);
-    const textOut = Math.min(total, p.textOut);
-    const textGone = Math.min(total, p.textGone);
-    place(bars.t[0], textIn, textMid, 'Comes in: ' + fmtS(p.textIn) + 's', cc.labelIn.duration);
-    place(bars.t[1], textMid, textOut, 'Stays', cc.hold);
-    place(bars.t[2], textOut, textGone, 'Leaves, gone at ' + fmtS(Math.min(p.textGone, total)) + 's', cc.labelOut.duration);
+    // Each text segment uses its own absolute start (clipped to the total window).
+    const tIn0 = Math.min(total, p.textIn);
+    const tIn1 = Math.min(total, p.textIn + cc.labelIn.duration);
+    const tHold0 = Math.min(total, p.textHold);
+    const tHold1 = Math.min(total, p.textHold + cc.hold);
+    const tOut0 = Math.min(total, p.textOut);
+    const tOut1 = Math.min(total, p.textGone);
+    place(bars.t[0], tIn0, tIn1, 'Text in @ ' + fmtS(p.textIn) + 's', cc.labelIn.duration);
+    place(bars.t[1], tHold0, tHold1, 'Stays @ ' + fmtS(p.textHold) + 's', cc.hold);
+    place(bars.t[2], tOut0, tOut1, 'Text out @ ' + fmtS(p.textOut) + 's', cc.labelOut.duration);
     for (const hd of handles) hd.style.left = pct(Math.min(total, Math.max(0, hd.__def.at(p, cc))));
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {
@@ -385,31 +410,47 @@ function pageTransitionGroup(store, bridge) {
   const numbers = [];
   const head = (label) => h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
   const OUT_START_PTR = CURTAIN + '/outStart';
+  const HOLD_START_PTR = CURTAIN + '/holdStart';
+  const TEXT_OUT_START_PTR = CURTAIN + '/textOutStart';
 
   // Session window when /total is not yet stored; only the total field writes /total.
   let sessionTotal = null;
-  // Freeze derived outStart once. normalizeCurtain re-derives from text when outStart is
-  // missing, which made text drags move the curtain — lock it for the editor session / draft.
+  // Freeze derived absolute starts once so missing values are not re-chained from siblings.
   let sessionOutStart = null;
-  const readStoredOutStart = () => {
-    const v = get(OUT_START_PTR);
+  let sessionHoldStart = null;
+  let sessionTextOutStart = null;
+  const readNum = (ptr) => {
+    const v = get(ptr);
     return typeof v === 'number' && Number.isFinite(v) ? v : null;
   };
-  const lockedOutStart = () => {
-    const stored = readStoredOutStart();
+  const lockStart = (ptr, sessionKey, pick) => {
+    const stored = readNum(ptr);
     if (stored != null) {
-      sessionOutStart = stored;
+      if (sessionKey === 'out') sessionOutStart = stored;
+      else if (sessionKey === 'hold') sessionHoldStart = stored;
+      else sessionTextOutStart = stored;
       return stored;
     }
-    if (sessionOutStart == null) {
-      sessionOutStart = normalizeCurtain(get(CURTAIN) ?? true).outStart;
+    if (sessionKey === 'out') {
+      if (sessionOutStart == null) sessionOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
+      return sessionOutStart;
     }
-    return sessionOutStart;
+    if (sessionKey === 'hold') {
+      if (sessionHoldStart == null) sessionHoldStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
+      return sessionHoldStart;
+    }
+    if (sessionTextOutStart == null) sessionTextOutStart = pick(normalizeCurtain(get(CURTAIN) ?? true));
+    return sessionTextOutStart;
   };
+  const lockedOutStart = () => lockStart(OUT_START_PTR, 'out', (n) => n.outStart);
+  const lockedHoldStart = () => lockStart(HOLD_START_PTR, 'hold', (n) => n.holdStart);
+  const lockedTextOutStart = () => lockStart(TEXT_OUT_START_PTR, 'textOut', (n) => n.textOutStart);
   const effective = () => {
     const raw = get(CURTAIN) ?? true;
     const o = raw === true ? {} : { ...raw };
     o.outStart = lockedOutStart();
+    o.holdStart = lockedHoldStart();
+    o.textOutStart = lockedTextOutStart();
     return normalizeCurtain(o);
   };
   const readStoredTotal = () => {
@@ -444,17 +485,21 @@ function pageTransitionGroup(store, bridge) {
       setTotal(leaveStart(effective()) + Math.max(0, v));
       return;
     }
-    // Persist absolute outStart before any other edit so later textDelay changes cannot re-derive it.
-    if (ptr !== '/outStart' && readStoredOutStart() == null) {
-      const lock = lockedOutStart();
-      set(OUT_START_PTR, lock, 'curtain:' + OUT_START_PTR);
-    }
+    // Persist absolute starts before sibling edits so missing values are not re-chained.
+    const persistIfMissing = (ptr, lockFn) => {
+      if (readNum(ptr) == null) set(ptr, lockFn(), 'curtain:' + ptr);
+    };
+    if (ptr !== '/outStart') persistIfMissing(OUT_START_PTR, lockedOutStart);
+    if (ptr !== '/holdStart') persistIfMissing(HOLD_START_PTR, lockedHoldStart);
+    if (ptr !== '/textOutStart') persistIfMissing(TEXT_OUT_START_PTR, lockedTextOutStart);
     const cc = effective();
     const total = getTotal();
-    const def = HANDLES.find((d) => d.ptr === ptr);
+    const def = HANDLES.find((d) => d.ptr === ptr) || (ptr === '/holdStart' || ptr === '/textOutStart' ? { min: 0 } : null);
     const min = def ? def.min : 0;
     const clamped = clampField(ptr, v, min, cc, total);
     if (ptr === '/outStart') sessionOutStart = clamped;
+    if (ptr === '/holdStart') sessionHoldStart = clamped;
+    if (ptr === '/textOutStart') sessionTextOutStart = clamped;
     set(CURTAIN + ptr, clamped, 'curtain:' + CURTAIN + ptr);
     // Keep the leave bar pinned to the current total window (from locked outStart, not text).
     pinOutDuration(getTotal());
@@ -684,12 +729,16 @@ function pageTransitionGroup(store, bridge) {
       let v = get(r.ptr);
       if (r.rel === '/out/duration') v = wantOut;
       else if (r.rel === '/outStart' && v == null) v = eff.outStart;
+      else if (r.rel === '/holdStart' && v == null) v = eff.holdStart;
+      else if (r.rel === '/textOutStart' && v == null) v = eff.textOutStart;
       if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
     }
     syncEaseUi();
   };
-  // Initialise session total / absolute outStart and pin once.
+  // Initialise session total / absolute starts and pin once.
   lockedOutStart();
+  lockedHoldStart();
+  lockedTextOutStart();
   getTotal();
   pinOutDuration(getTotal());
   syncEaseUi();
