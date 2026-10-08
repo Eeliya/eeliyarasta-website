@@ -1,0 +1,26 @@
+// Design tokens. --accent is tweened per album by src/client/theme.js.
+:root {
+  --bg: #050505;
+  --bg-2: #0d0d0d;
+  --fg: #f2efe9;
+  --muted: rgb(242 239 233 / 0.55);
+  --faint: rgb(242 239 233 / 0.32);
+  --line: rgb(255 255 255 / 0.1);
+  --accent: #cfc8b8;
+
+  --f-display: 'Momo Trust Display', 'Didot', 'Times New Roman', serif;
+  --f-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --pad: clamp(16px, 2.6vw, 40px);
+  --gap: clamp(12px, 1.4vw, 22px);
+  --header-h: 76px;
+  --radius: 6px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  @media (max-width: 760px) {
+    --header-h: 64px;
+  }
+}
+
+$bp-md: 900px;
+$bp-sm: 760px;
