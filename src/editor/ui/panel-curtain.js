@@ -120,8 +120,6 @@ const digRel = (obj, rel) =>
     .split('/')
     .filter(Boolean)
     .reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
-const IDLE = 'Drag the bar ends to change the timing. Shift = 0.1s steps.';
-
 /**
  * One clamp for every edit path. Returns { min, max } for `field` given a frozen plan.
  * Enter bars cannot pass leave bars; leave end is pinned to total.
@@ -183,18 +181,8 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
   let textGap = null;
   let total = 1;
   let drag = null;
-  const readout = h('div', { class: 'ptl__readout' }, IDLE);
   const axis = h('div', { class: 'ptl__axis' });
   let axisFor = null;
-
-  const show = (label, v) => {
-    readout.textContent = label + ': ' + fmtS(v) + 's';
-    readout.classList.add('is-on');
-  };
-  const idle = () => {
-    readout.textContent = IDLE;
-    readout.classList.remove('is-on');
-  };
   const near = (track, row, clientX, pointerType) => {
     const p = planOf();
     const r = track.getBoundingClientRect();
@@ -232,7 +220,7 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
     if (def.field === 'labelOut/duration') return p.textOut[1] - p.textOut[0];
     return def.at(p);
   };
-  /** Apply a handle at absolute time x (already stepped). Returns the value shown in the readout. */
+  /** Apply a handle at absolute time x (already stepped). */
   const applyHandle = (def, x, p0) => {
     // Text left edge: pin the right edge, change duration (start moves only as resize).
     if (def.edge === 'left' && def.span) {
@@ -251,7 +239,6 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
   const beginHandle = (el) => {
     drag.el = el;
     el.classList.add('is-active');
-    show(el.__def.label, fieldValue(el.__def, drag.p0));
   };
 
   function track(row, name) {
@@ -288,9 +275,7 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
           const raw = a + (e.key === 'ArrowRight' ? 1 : -1) * step;
           const v = clampTo(seg.field, Math.round(raw / step) * step, p);
           setField(seg.field, v);
-          show(seg.label, v);
         });
-        bar.addEventListener('blur', () => !drag && idle());
       }
       bars[row].push(bar);
       barsEl.append(bar);
@@ -321,16 +306,14 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
           // Nudge the edge in time; left text edges resize (pin end), others use field maths.
           if (def.edge === 'left' && def.span) {
             const x = Math.round((def.at(p) + dir * step) / step) * step;
-            show(def.label, applyHandle(def, x, p));
+            applyHandle(def, x, p);
             return;
           }
           const fieldCur = fieldValue(def, p);
           const raw = fieldCur + dir * step;
           const v = clampTo(def.field, Math.round(raw / step) * step, p);
           setField(def.field, v);
-          show(def.label, v);
         },
-        onblur: () => !drag && idle(),
       });
       hd.__def = def;
       handles.push(hd);
@@ -374,7 +357,6 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
       };
       root.classList.add('is-dragging', 'is-moving');
       onDrag(true);
-      show(body.def.label, body.start);
     });
     el.addEventListener('pointermove', (e) => {
       if (!drag) {
@@ -391,7 +373,6 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
         const raw = Math.round((drag.start0 + dx) / step) * step;
         const v = clampTo(drag.field, raw, drag.p0);
         setField(drag.field, v);
-        show(drag.label, v);
         return;
       }
       if (!drag.el) {
@@ -401,7 +382,7 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
       }
       const x = Math.round((((e.clientX - r.left) / r.width) * total) / step) * step;
       const def = drag.el.__def;
-      show(def.label, applyHandle(def, x, drag.p0));
+      applyHandle(def, x, drag.p0);
     });
     const end = (e) => {
       if (!drag || e.pointerId !== drag.id) return;
@@ -409,7 +390,6 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
       drag = null;
       root.classList.remove('is-dragging', 'is-moving');
       onDrag(false);
-      idle();
       layout();
     };
     el.addEventListener('pointerup', end);
@@ -418,7 +398,7 @@ function curtainTimeline({ planOf, setField, setResize, onDrag }) {
     return h('div', { class: 'ptl__row' }, h('span', { class: 'ptl__name' }, name), el);
   }
 
-  const root = h('div', { class: 'ptl' }, track('c', 'Curtain'), track('t', 'Text'), axis, readout);
+  const root = h('div', { class: 'ptl' }, track('c', 'Curtain'), track('t', 'Text'), axis);
 
   function layout() {
     const p = planOf();
