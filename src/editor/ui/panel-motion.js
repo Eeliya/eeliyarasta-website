@@ -391,18 +391,19 @@ function maxForPtr(ptr, cc, total) {
   const lo = cc.labelOut.duration;
   const td = cc.textDelay;
   const tos = cc.textOutStart;
-  // Text-in / text-out clamp inside 0..total; hold is the gap (capped so text-out still fits).
+  // Text: enter must not pass leave (gap/hold >= 0). Do not push the other bar.
+  const textInEnd = td + li;
   switch (ptr) {
     case '/in/duration':
       return t;
     case '/outStart':
       return t;
     case '/textDelay':
-      return Math.max(0, t - li);
+      return Math.max(0, Math.min(t - li, tos - li));
     case '/labelIn/duration':
-      return Math.max(0, t - td);
+      return Math.max(0, Math.min(t - td, tos - td));
     case '/hold':
-      return Math.max(0, t - lo - (td + li));
+      return Math.max(0, t - lo - textInEnd);
     case '/textOutStart':
       return Math.max(0, t - lo);
     case '/labelOut/duration':
@@ -414,9 +415,16 @@ function maxForPtr(ptr, cc, total) {
   }
 }
 
+/** Floor for a field so text-in end never passes text-out start. */
+function minForPtr(ptr, cc, min) {
+  if (ptr === '/textOutStart') return Math.max(min, cc.textDelay + cc.labelIn.duration);
+  return min;
+}
+
 function clampField(ptr, v, min, cc, total) {
-  const hi = maxForPtr(ptr, cc, total);
-  const n = Math.min(hi, Math.max(min, Number(v)));
+  const lo = minForPtr(ptr, cc, min);
+  const hi = Math.max(lo, maxForPtr(ptr, cc, total));
+  const n = Math.min(hi, Math.max(lo, Number(v)));
   return Number(n.toFixed(2));
 }
 
@@ -428,6 +436,7 @@ function clampField(ptr, v, min, cc, total) {
 function curtainTimeline({ effective, getTotal, setField, onDrag }) {
   const bars = { c: [], t: [] };
   const handles = [];
+  let textGap = null; // stay-length label in the gap between text-in and text-out
   let total = 1;
   let drag = null;
   const readout = h('div', { class: 'ptl__readout' }, IDLE);
@@ -475,9 +484,10 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     el.classList.add('is-active');
     show(el.__def.label, digRel(drag.cc0, el.__def.ptr) ?? 0);
   };
-  const clampSegStart = (v, dur, tmax) => {
-    const hi = Math.max(0, tmax - dur);
-    return Number(Math.min(hi, Math.max(0, v)).toFixed(2));
+  const clampSegStart = (v, dur, tmax, { minStart = 0, maxEnd = null } = {}) => {
+    let hi = Math.max(0, tmax - dur);
+    if (maxEnd != null) hi = Math.min(hi, Math.max(0, maxEnd - dur));
+    return Number(Math.min(hi, Math.max(minStart, v)).toFixed(2));
   };
 
   function track(row, name) {
@@ -517,7 +527,10 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
           const cur = segStart(p, i);
           const step = e.shiftKey ? 0.1 : 0.01;
           const raw = cur + (e.key === 'ArrowRight' ? 1 : -1) * step;
-          const v = clampSegStart(Math.round(raw / step) * step, dur, getTotal());
+          const v = clampSegStart(Math.round(raw / step) * step, dur, getTotal(), {
+            minStart: i === 1 ? p.textIn + cc.labelIn.duration : 0,
+            maxEnd: i === 0 ? p.textOut : null,
+          });
           setField(seg.startPtr, v);
           show(seg.label, v);
         });
@@ -525,6 +538,14 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       }
       bars[row].push(bar);
       barsEl.append(bar);
+    }
+    if (row === 't') {
+      const gap = h('span', { class: 'ptl__gap', 'aria-hidden': 'true' });
+      const gapLen = h('span', { class: 'ptl__len' });
+      gap.append(gapLen);
+      gap.__len = gapLen;
+      textGap = gap;
+      barsEl.append(gap);
     }
     const el = h('div', { class: 'ptl__track' }, h('div', { class: 'ptl__grid' }), barsEl);
     for (const def of HANDLES.filter((d) => d.row === row)) {
@@ -606,7 +627,11 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       if (drag.kind === 'move') {
         const dx = ((e.clientX - drag.x0) / r.width) * total;
         const raw = Math.round((drag.start0 + dx) / step) * step;
-        const v = clampSegStart(raw, drag.dur, getTotal());
+        const v = clampSegStart(raw, drag.dur, getTotal(), {
+          minStart:
+            drag.startPtr === '/textOutStart' ? drag.p0.textIn + drag.cc0.labelIn.duration : 0,
+          maxEnd: drag.startPtr === '/textDelay' ? drag.p0.textOut : null,
+        });
         setField(drag.startPtr, v);
         show(drag.label, v);
         return;
@@ -678,6 +703,18 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const tOut1 = Math.min(total, p.textGone);
     place(bars.t[0], tIn0, tIn1, 'Text in @ ' + fmtS(p.textIn) + 's', cc.labelIn.duration);
     place(bars.t[1], tOut0, tOut1, 'Text out @ ' + fmtS(p.textOut) + 's', cc.labelOut.duration);
+    if (textGap) {
+      const g0 = Math.min(total, tIn1);
+      const g1 = Math.min(total, Math.max(tIn1, tOut0));
+      const gw = Math.max(0, g1 - g0);
+      textGap.style.left = pct(g0);
+      textGap.style.width = pct(gw);
+      const hold = Number(gw.toFixed(2));
+      textGap.__len.textContent = fmtS(hold) + 's';
+      const gpx = trackW ? (gw / total) * trackW : 0;
+      textGap.__len.hidden = hold <= 0 || (trackW > 0 && gpx < 28);
+      textGap.title = 'Stays ' + fmtS(hold) + 's';
+    }
     for (const hd of handles) hd.style.left = pct(Math.min(total, Math.max(0, hd.__def.at(p, cc))));
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {

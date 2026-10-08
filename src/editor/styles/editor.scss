@@ -1359,6 +1359,21 @@ select {
 .ptl__bar.is-text.is-move .ptl__len {
   color: rgb(0 0 0 / 0.75);
 }
+// Stay length centered in the empty gap between text-in and text-out.
+.ptl__gap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  .ptl__len {
+    color: rgb(255 255 255 / 0.72);
+  }
+}
 .ptl__bar.is-move {
   background: rgb(255 255 255 / 0.55);
 }
