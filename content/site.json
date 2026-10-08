@@ -19,7 +19,12 @@
   "about": {
     "headline": "I photograph people, the way they are when they forget the camera.",
     "image": "about/x100v.jpg",
-    "imageCredit": { "name": "Aleksandrs Karevs", "url": "https://unsplash.com/@ohmycamera", "source": "https://unsplash.com/photos/a-camera-sitting-on-top-of-a-wooden-table-YNCYt0BnVFM", "license": "Unsplash License" },
+    "imageCredit": {
+      "name": "Aleksandrs Karevs",
+      "url": "https://unsplash.com/@ohmycamera",
+      "source": "https://unsplash.com/photos/a-camera-sitting-on-top-of-a-wooden-table-YNCYt0BnVFM",
+      "license": "Unsplash License"
+    },
     "placeholder": true,
     "paragraphs": [
       "PLACEHOLDER BIO: I'm Eeliya, a photographer based in the Netherlands. Most of my work is portraits and editorial shoots with models, made with one small camera (a Fujifilm X100V) and whatever light the day gives me.",

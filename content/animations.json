@@ -1,15 +1,6 @@
 {
   "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". A target picks a preset and may override any of its values. The future visual editor will read and write only this file.",
-
-  "defaults": {
-    "duration": 1.1,
-    "ease": "expo.out",
-    "delay": 0,
-    "stagger": 0,
-    "trigger": "scroll",
-    "start": "top 85%"
-  },
-
+  "defaults": { "duration": 1.1, "ease": "expo.out", "delay": 0, "stagger": 0, "trigger": "scroll", "start": "top 85%" },
   "presets": {
     "fade-up": {
       "type": "reveal",
@@ -64,17 +55,8 @@
       "duration": 1.1,
       "stagger": 0.08
     },
-    "scrub-words": {
-      "type": "scrub-words",
-      "fromOpacity": 0.14,
-      "start": "top 80%",
-      "end": "bottom 45%"
-    },
-    "parallax": {
-      "type": "parallax",
-      "speed": 12,
-      "scrub": true
-    },
+    "scrub-words": { "type": "scrub-words", "fromOpacity": 0.14, "start": "top 80%", "end": "bottom 45%" },
+    "parallax": { "type": "parallax", "speed": 12, "scrub": true },
     "scatter-drift": {
       "type": "scatter",
       "intro": { "duration": 1.6, "ease": "expo.out", "stagger": 0.07, "delay": 0.15, "fromScale": 0.6 },
@@ -92,18 +74,12 @@
       "delay": 0.25,
       "scroll": { "scale": 0.82, "autoAlpha": 0.15 }
     },
-    "hover-preview": {
-      "type": "hover-preview",
-      "follow": 0.45,
-      "rotate": 6
-    }
+    "hover-preview": { "type": "hover-preview", "follow": 0.45, "rotate": 6 }
   },
-
   "targets": {
     "hero.photos": { "preset": "scatter-drift" },
     "hero.title": { "preset": "hero-title" },
     "hero.meta": { "preset": "fade-up", "trigger": "load", "delay": 1.1, "duration": 1.2 },
-
     "home.intro": { "preset": "scrub-words" },
     "section.label": { "preset": "fade-up", "duration": 0.9 },
     "section.title": { "preset": "split-lines" },
@@ -112,39 +88,41 @@
     "place.card.image": { "preset": "parallax", "speed": 10 },
     "projects.list": { "preset": "stagger-up", "stagger": 0.06 },
     "projects.preview": { "preset": "hover-preview" },
-
     "page.title": { "preset": "split-chars", "trigger": "load", "delay": 0.1 },
     "page.intro": { "preset": "fade-up", "trigger": "load", "delay": 0.45 },
     "album.grid": { "preset": "grid-reveal", "trigger": "load", "delay": 0.3 },
-
     "album.title": { "preset": "split-chars", "trigger": "load", "delay": 0.15, "stagger": 0.03 },
     "album.meta": { "preset": "stagger-up", "trigger": "load", "delay": 0.4, "stagger": 0.05, "duration": 0.9 },
     "album.stage": { "preset": "image-reveal", "trigger": "load", "delay": 0.1 },
     "album.thumbs": { "preset": "stagger-up", "trigger": "load", "delay": 0.6, "stagger": 0.04, "duration": 0.8 },
-
     "about.image": { "preset": "image-reveal", "trigger": "load", "delay": 0.2 },
     "about.headline": { "preset": "split-lines", "trigger": "load", "delay": 0.2 },
     "about.body": { "preset": "stagger-up", "stagger": 0.1 },
-
     "footer.cta": { "preset": "split-lines", "start": "top 90%" },
     "footer.cols": { "preset": "stagger-up", "start": "top 95%" }
   },
-
   "interactions": {
     "cursor": { "follow": 0.18 },
     "cardCycle": { "interval": 0.75 },
     "album": { "wheelThreshold": 40, "wheelLock": 0.9, "dragThreshold": 50 }
   },
-
   "transitions": {
     "page": {
-      "leave": { "to": { "autoAlpha": 0, "y": -40 }, "duration": 0.55, "ease": "power3.in" },
-      "enter": { "from": { "autoAlpha": 0, "y": 60 }, "duration": 1.0, "ease": "expo.out" },
+      "leave": {
+        "to": { "autoAlpha": 0, "y": -40 },
+        "duration": 0.55,
+        "ease": "power3.in"
+      },
+      "enter": {
+        "from": { "autoAlpha": 0, "y": 60 },
+        "duration": 1,
+        "ease": "expo.out"
+      },
       "curtain": true
     },
     "accent": { "duration": 1.2, "ease": "power2.inOut" },
     "album": {
-      "slide": { "duration": 1.0, "ease": "expo.inOut" },
+      "slide": { "duration": 1, "ease": "expo.inOut" },
       "view": { "duration": 0.9, "ease": "expo.inOut" }
     },
     "menu": {
