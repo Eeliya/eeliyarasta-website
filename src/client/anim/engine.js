@@ -94,6 +94,7 @@ export function mount(root, { extraRoots = [] } = {}) {
   assignKeys(els);
   const cleanups = [];
   const onCleanup = (fn) => cleanups.push(fn);
+  const visibility = els.map((el) => [el, el.style.visibility]);
   const ctx = gsap.context(() => {
     for (const el of els) {
       const spec = resolve(el.dataset.anim, el);
@@ -114,6 +115,7 @@ export function mount(root, { extraRoots = [] } = {}) {
     revert() {
       cleanups.splice(0).forEach((fn) => fn());
       ctx.revert();
+      visibility.forEach(([el, v]) => (el.style.visibility = v));
     },
   };
 }
