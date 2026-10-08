@@ -759,7 +759,8 @@ export function pageTransitionGroup(store, bridge) {
       title: 'Play the transition over this page with the values above (no navigation)',
       onclick: () => bridge.api?.replayCurtain?.(),
     },
-    '\u21ba Replay',
+    h('i', { class: 'fa-solid fa-rotate-right', 'aria-hidden': 'true' }),
+    ' Replay',
   );
 
   const syncEaseUi = () => {

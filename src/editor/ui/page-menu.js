@@ -28,7 +28,7 @@ export function createPageMenu({ onChange }) {
     },
     kind,
     label,
-    h('span', { class: 'pm__caret', 'aria-hidden': 'true' }, '▾'),
+    h('i', { class: 'fa-solid fa-chevron-down pm__caret', 'aria-hidden': 'true' }),
   );
 
   const root = h('div', { class: 'pm', dataset: { open: 'false' } }, btn, list);

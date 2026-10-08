@@ -356,6 +356,9 @@ select {
   width: 34px;
   height: 34px;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 999px;
   cursor: pointer;
@@ -415,6 +418,9 @@ select {
   }
 }
 .btn-ed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
   border: 0;
   border-radius: 999px;
   padding: 8px 14px;
@@ -1348,6 +1354,8 @@ select {
   pointer-events: none;
   white-space: nowrap;
   user-select: none;
+  // DM Mono digits sit high in the em box — nudge ink to optical center.
+  transform: translateY(1px);
   &[hidden] {
     display: none;
   }

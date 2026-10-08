@@ -28,6 +28,7 @@ import { getRoutes } from '../site/routes.js';
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
+const faIcon = (name) => h('i', { class: 'fa-solid ' + name, 'aria-hidden': 'true' });
 const state = {
   mode: 'browse',
   lastEdit: 'text',
@@ -70,6 +71,7 @@ const pageMenu = createPageMenu({
     renderChrome();
   },
 });
+const vpIcon = faIcon('fa-desktop');
 const vpBtn = h(
   'button',
   {
@@ -78,12 +80,12 @@ const vpBtn = h(
     title: 'Toggle mobile viewport',
     onclick: () => toggleViewport(),
   },
-  '▭',
+  vpIcon,
 );
 const undoBtn = h(
   'button',
   { type: 'button', class: 'icon-btn', title: `Undo (${MOD}+Z)`, onclick: () => store.undo() },
-  '↶',
+  faIcon('fa-rotate-left'),
 );
 const redoBtn = h(
   'button',
@@ -93,7 +95,7 @@ const redoBtn = h(
     title: `Redo (${MOD}+Shift+Z)`,
     onclick: () => store.redo(),
   },
-  '↷',
+  faIcon('fa-rotate-right'),
 );
 const sourceLine = h('span', { class: 'ed-source' });
 const status = h('div', { class: 'ed-status', role: 'status', 'aria-live': 'polite' });
@@ -430,7 +432,8 @@ function setMode(mode) {
 function toggleViewport() {
   state.viewport = state.viewport === 'desktop' ? 'mobile' : 'desktop';
   stage.classList.toggle('is-mobile', state.viewport === 'mobile');
-  vpBtn.textContent = state.viewport === 'mobile' ? '▯' : '▭';
+  vpIcon.className =
+    'fa-solid ' + (state.viewport === 'mobile' ? 'fa-mobile-screen-button' : 'fa-desktop');
 }
 
 bridge.on('connect', () => {

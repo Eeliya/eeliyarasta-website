@@ -517,7 +517,8 @@ export function createMotionPanel({ store, bridge, root, toast }) {
       h(
         'button',
         { type: 'button', class: 'btn-ed', onclick: () => bridge.replay(sel.el) },
-        '▶ Replay',
+        h('i', { class: 'fa-solid fa-play', 'aria-hidden': 'true' }),
+        ' Replay',
       ),
       scrubber(),
     );
@@ -580,7 +581,7 @@ export function createMotionPanel({ store, bridge, root, toast }) {
                           source: 'motion-structure',
                         }),
                     },
-                    '↺',
+                    h('i', { class: 'fa-solid fa-rotate-left', 'aria-hidden': 'true' }),
                   )
                 : null,
             ),
