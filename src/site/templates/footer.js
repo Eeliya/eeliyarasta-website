@@ -1,4 +1,4 @@
-import { html, esc } from '../helpers.js';
+import { html, esc, ed, lines } from '../helpers.js';
 
 export function footer(ctx) {
   const { site } = ctx;
@@ -6,8 +6,8 @@ export function footer(ctx) {
   return html`
   <footer class="footer">
     <div class="footer__cta">
-      <span class="label">Say hello</span>
-      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta" data-cursor="Write me">Let's make<br>something.</a>
+      <span class="label"${ed('site.json', ['footer', 'label'])}>${esc(site.footer.label)}</span>
+      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta" data-cursor="Write me"${ed('site.json', ['footer', 'cta'], 'block')}>${lines(site.footer.cta)}</a>
     </div>
     <div class="footer__cols" data-anim="footer.cols">
       <div class="footer__col">

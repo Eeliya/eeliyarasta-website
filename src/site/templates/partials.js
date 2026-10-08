@@ -1,15 +1,20 @@
-import { html, esc, img, pad, extAttrs, coverOf } from '../helpers.js';
+import { html, esc, img, pad, extAttrs, coverOf, ed, lines } from '../helpers.js';
 
 /** Section header used on the home page: (01) Label / Title / glass CTA. */
-export const sectionHead = ({ index, label, title, href, cta }) => html`
+export const sectionHead = ({ key, index, label, title, href, cta }) => {
+  const at = (field) => ed('home.json', ['sections', key, field]);
+  return html`
   <header class="section__head">
-    <span class="section__label label" data-anim="section.label">(${pad(index)}) ${esc(label)}</span>
-    <h2 class="section__title" data-anim="section.title">${esc(title)}</h2>
-    ${href ? html`<a class="btn glass section__cta" href="${esc(href)}">${esc(cta)} <span aria-hidden="true">→</span></a>` : ''}
+    <span class="section__label label" data-anim="section.label">(${pad(index)}) <span${at('label')}>${esc(label)}</span></span>
+    <h2 class="section__title" data-anim="section.title"${at('title')}>${esc(title)}</h2>
+    ${href ? html`<a class="btn glass section__cta" href="${esc(href)}"><span${at('cta')}>${esc(cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
   </header>`;
+};
 
 /** Album card (People / Places index). Hovering cycles through the first images. */
-export const albumCard = (ctx, kind, album, { landscape = false } = {}) => {
+export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {}) => {
+  const at = (field, type) => ed(`${kind}.json`, [index, field], type);
+  const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
   const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(0, 4);
   const sizes = landscape ? '(max-width: 760px) 100vw, 50vw' : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
   return html`
@@ -19,8 +24,8 @@ export const albumCard = (ctx, kind, album, { landscape = false } = {}) => {
       <span class="acard__count">${pad(album.images.length)}</span>
     </div>
     <div class="acard__info">
-      <h2 class="acard__name">${esc(album.name)}</h2>
-      <span class="acard__meta">${esc([album.role, album.location, album.year].filter(Boolean).join(' · '))}</span>
+      <h2 class="acard__name"${at('name')}>${esc(album.name)}</h2>
+      <span class="acard__meta">${meta.map(([f, type], i) => html`${i ? ' · ' : ''}<span${at(f, type)}>${esc(album[f])}</span>`)}</span>
       ${album.placeholder ? '<span class="tag">Placeholder</span>' : ''}
     </div>
   </a>`;
@@ -35,18 +40,18 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">
       <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}" data-cursor="${p.url ? 'Open' : 'Read'}">
         <span class="prow__num">${pad(i + 1)}</span>
-        <${h} class="prow__title">${esc(p.title)}</${h}>
-        <span class="prow__kind">${esc(p.kind)}</span>
-        <span class="prow__year">${esc(p.year)}</span>
+        <${h} class="prow__title"${ed('projects.json', [i, 'title'])}>${esc(p.title)}</${h}>
+        <span class="prow__kind"${ed('projects.json', [i, 'kind'])}>${esc(p.kind)}</span>
+        <span class="prow__year"${ed('projects.json', [i, 'year'], 'number')}>${esc(p.year)}</span>
         <span class="prow__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
           <div class="prow__media">${img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw' })}</div>
           <div class="prow__text">
-            <p>${esc(p.description)}</p>
+            <p${ed('projects.json', [i, 'description'], 'block')}>${lines(p.description)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
-            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}>${esc(p.linkLabel || 'Visit')} <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
+            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed('projects.json', [i, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
           </div>
         </div>
       </div>
@@ -57,10 +62,15 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
   </div>`;
 };
 
-/** Page heading used by index pages. */
-export const pageHead = ({ crumb, title, intro, count }) => html`
-  <section class="page-head">
-    <span class="label page-head__crumb">${crumb}</span>
-    <h1 class="page-title" data-anim="page.title">${esc(title)}${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
-    ${intro ? html`<p class="page-intro" data-anim="page.intro">${esc(intro)}</p>` : ''}
+/** Page heading used by index pages; copy comes from site.json "pages".<key>. */
+export const pageHead = (ctx, key, { count, center = false, after = '' } = {}) => {
+  const { crumb, title, intro } = ctx.site.pages[key];
+  const at = (field, type) => ed('site.json', ['pages', key, field], type);
+  return html`
+  <section class="page-head${center ? ' page-head--center' : ''}">
+    <span class="label page-head__crumb"${at('crumb')}>${esc(crumb)}</span>
+    <h1 class="page-title" data-anim="page.title"><span${at('title')}>${esc(title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
+    ${intro ? html`<p class="page-intro" data-anim="page.intro"${at('intro', 'block')}>${lines(intro)}</p>` : ''}
+    ${after}
   </section>`;
+};

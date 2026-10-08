@@ -37,5 +37,14 @@
       { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
       { "label": "Builds", "value": "Websites, Dev tools, DIY" }
     ]
-  }
+  },
+  "pages": {
+    "photography": { "crumb": "Photography", "title": "Photography", "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to." },
+    "people": { "crumb": "Photography / People", "title": "People", "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light." },
+    "places": { "crumb": "Photography / Places", "title": "Places", "intro": "Buildings, streets and castles. What is left when the people walk out of frame." },
+    "projects": { "crumb": "Projects", "title": "Projects", "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments." },
+    "about": { "crumb": "About" },
+    "notFound": { "crumb": "Error 404", "title": "Lost frame", "intro": "This page doesn't exist (yet).", "cta": "Back home" }
+  },
+  "footer": { "label": "Say hello", "cta": "Let's make\nsomething." }
 }

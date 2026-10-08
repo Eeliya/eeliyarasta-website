@@ -1,4 +1,4 @@
-import { html, esc, img, pad, creditText, ratio } from '../helpers.js';
+import { html, esc, img, pad, creditText, ratio, ed, lines } from '../helpers.js';
 
 /**
  * Album page (one person or place), Faint Film "slider view":
@@ -9,23 +9,24 @@ export function album(ctx, route) {
   const a = route.album;
   const n = a.images.length;
   const isPeople = route.kind === 'people';
+  const at = (field, type) => ed(route.file, [route.index, field], type);
   const meta = [
-    isPeople ? ['Role', a.role] : null,
-    isPeople ? ['Agency', a.agency] : null,
-    ['Location', a.location],
-    ['Year', a.year],
-    ['Photos', pad(n)],
+    isPeople ? ['Role', a.role, at('role')] : null,
+    isPeople ? ['Agency', a.agency, at('agency')] : null,
+    ['Location', a.location, at('location')],
+    ['Year', a.year, at('year', 'number')],
+    ['Photos', pad(n), ''],
   ].filter((m) => m && m[1]);
 
   return html`
   <section class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
       <a class="album__back label" href="/${route.kind}/"><span aria-hidden="true">←</span> ${esc(route.section)}</a>
-      <h1 class="album__title" data-anim="album.title">${esc(a.name)}</h1>
+      <h1 class="album__title" data-anim="album.title"${at('name')}>${esc(a.name)}</h1>
       <div class="album__details" data-anim="album.meta">
-        <dl class="album__meta">${meta.map(([k, v]) => html`<div><dt class="label">${esc(k)}</dt><dd>${esc(v)}</dd></div>`)}</dl>
-        ${a.summary ? html`<p class="album__summary">${esc(a.summary)}</p>` : ''}
-        ${a.placeholder ? html`<p class="album__note"><span class="tag">Placeholder</span> ${esc(a.note || '')}</p>` : ''}
+        <dl class="album__meta">${meta.map(([k, v, attr]) => html`<div><dt class="label">${esc(k)}</dt><dd${attr}>${esc(v)}</dd></div>`)}</dl>
+        ${a.summary ? html`<p class="album__summary"${at('summary', 'block')}>${lines(a.summary)}</p>` : ''}
+        ${a.placeholder ? html`<p class="album__note"><span class="tag">Placeholder</span> <span${at('note', 'block')}>${lines(a.note || '')}</span></p>` : ''}
       </div>
     </aside>
 

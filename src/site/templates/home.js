@@ -1,4 +1,4 @@
-import { html, esc, img, pad } from '../helpers.js';
+import { html, esc, img, pad, ed, lines } from '../helpers.js';
 import { sectionHead, projectList } from './partials.js';
 
 const heroPhoto = (ctx, p, i) => {
@@ -27,45 +27,45 @@ export function home(ctx) {
     <div class="hero__photos" data-anim="hero.photos">
       ${hero.photos.map((p, i) => heroPhoto(ctx, p, i))}
     </div>
-    <h1 class="hero__title" data-anim="hero.title" aria-label="${esc(site.name)}"><span>Eeliya</span> <span>Rasta</span></h1>
+    <h1 class="hero__title" data-anim="hero.title" aria-label="${esc(site.name)}">${site.name.split(' ').map((w, i) => html`${i ? ' ' : ''}<span>${esc(w)}</span>`)}</h1>
     <div class="hero__meta" data-anim="hero.meta">
-      <span class="label">${esc(hero.eyebrow)}</span>
+      <span class="label"${ed('home.json', ['hero', 'eyebrow'])}>${esc(hero.eyebrow)}</span>
       <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
-      <p class="hero__subline">${esc(hero.subline)}</p>
+      <p class="hero__subline"${ed('home.json', ['hero', 'subline'], 'block')}>${lines(hero.subline)}</p>
     </div>
   </section>
 
   <section class="intro">
-    <p class="intro__text" data-anim="home.intro">${esc(home.intro)}</p>
+    <p class="intro__text" data-anim="home.intro"${ed('home.json', ['intro'], 'block')}>${lines(home.intro)}</p>
   </section>
 
   <section class="section section--people">
-    ${sectionHead({ index: 1, ...sections.people, href: '/people/' })}
+    ${sectionHead({ key: 'people', index: 1, ...sections.people, href: '/people/' })}
     <div class="tiles" data-anim="home.people.grid">
       ${peopleTiles(people).map(({ person, image, index }) => html`
       <a class="tile" href="/people/${person.slug}/#${index + 1}" data-anim-item data-cursor="View · ${esc(person.name)}">
         <span class="tile__media">${img(ctx, image.src, { alt: image.alt, sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
-        <span class="tile__cap"><span>${esc(person.name)}</span><span>${pad(index + 1)}</span></span>
+        <span class="tile__cap"><span${ed('people.json', [people.indexOf(person), 'name'])}>${esc(person.name)}</span><span>${pad(index + 1)}</span></span>
       </a>`)}
     </div>
   </section>
 
   <section class="section section--places">
-    ${sectionHead({ index: 2, ...sections.places, href: '/places/' })}
+    ${sectionHead({ key: 'places', index: 2, ...sections.places, href: '/places/' })}
     <div class="placecards" data-anim="home.places.grid">
-      ${places.map((p) => html`
+      ${places.map((p, i) => html`
       <a class="placecard" href="/places/${p.slug}/" data-anim-item data-cursor="View · ${esc(p.name)}">
         <span class="placecard__media">${img(ctx, p.images[p.cover || 0].src, { alt: p.images[p.cover || 0].alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' })}</span>
         <span class="placecard__info">
-          <span class="placecard__name">${esc(p.name)}</span>
-          <span class="label">${esc(p.location)} · ${esc(p.year)} · ${pad(p.images.length)} photos</span>
+          <span class="placecard__name"${ed('places.json', [i, 'name'])}>${esc(p.name)}</span>
+          <span class="label"><span${ed('places.json', [i, 'location'])}>${esc(p.location)}</span> · <span${ed('places.json', [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(p.images.length)} photos</span>
         </span>
       </a>`)}
     </div>
   </section>
 
   <section class="section section--projects">
-    ${sectionHead({ index: 3, ...sections.projects, href: '/projects/' })}
+    ${sectionHead({ key: 'projects', index: 3, ...sections.projects, href: '/projects/' })}
     ${projectList(ctx, projects, { id: 'home-projects' })}
   </section>`;
 }

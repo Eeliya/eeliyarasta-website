@@ -11,6 +11,8 @@ export function getRoutes(content) {
       kind,
       section,
       album,
+      index: i,
+      file: `${kind}.json`,
       next: list[(i + 1) % list.length],
       title: `${album.name} | ${section} | ${site.name}`,
       description: album.summary,

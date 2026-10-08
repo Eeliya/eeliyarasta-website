@@ -15,6 +15,21 @@ const part = (v) => (Array.isArray(v) ? v.map(part).join('') : v === null || v =
 /** Tagged template literal: html`<p>${esc(text)}</p>` (does NOT auto-escape). */
 export const html = (strings, ...values) => strings.reduce((out, s, i) => out + s + (i < values.length ? part(values[i]) : ''), '');
 
+/** Text with line breaks ("a\nb" -> "a<br>b"), escaped. */
+export const lines = (text) => esc(text).replace(/\r?\n/g, '<br>');
+
+/** JSON Pointer (RFC 6901) from path parts: ['about', 'facts', 0] -> "/about/facts/0". */
+export const pointer = (parts) => parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
+
+/**
+ * Visual-editor marker: maps an element's text to a value in content/*.json.
+ *   ed('home.json', ['sections', 'people', 'title'])  ->  data-edit="home.json#/sections/people/title"
+ * type: 'text' (single line, default), 'block' (multi-line, \n <-> <br>) or 'number'.
+ * The editor (src/editor) finds these in its preview; the public site ignores them.
+ */
+export const ed = (file, parts, type = 'text') =>
+  ` data-edit="${esc(file + '#' + pointer(parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`;
+
 /** Zero-padded index: pad(3) -> "03". */
 export const pad = (n, len = 2) => String(n).padStart(len, '0');
 
