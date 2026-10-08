@@ -18,7 +18,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
   const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(0, 4);
   const sizes = landscape ? '(max-width: 760px) 100vw, 50vw' : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
   return html`
-  <a class="acard ${landscape ? 'acard--landscape' : ''}" href="/${kind}/${album.slug}/" data-anim-item data-card-cycle data-cursor="View · ${esc(album.name)}">
+  <a class="acard ${landscape ? 'acard--landscape' : ''}" href="/${kind}/${album.slug}/" data-anim-item data-card-cycle>
     <div class="acard__media">
       ${first.map((im, i) => img(ctx, im.src, { alt: i === 0 ? im.alt : '', sizes, cls: i === 0 ? 'is-active' : '' }))}
       <span class="acard__count">${pad(album.images.length)}</span>
@@ -38,7 +38,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
   <div class="plist" data-anim="projects.list" data-project-list="${id}">
     ${projects.map((p, i) => html`
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">
-      <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}" data-cursor="${p.url ? 'Open' : 'Read'}">
+      <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}">
         <span class="prow__num">${pad(i + 1)}</span>
         <${h} class="prow__title"${ed('projects.json', [i, 'title'])}>${esc(p.title)}</${h}>
         <span class="prow__kind"${ed('projects.json', [i, 'kind'])}>${esc(p.kind)}</span>

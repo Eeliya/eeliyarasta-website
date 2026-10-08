@@ -17,7 +17,7 @@ export const photography = (ctx) => {
   const panel = (href, label, list, kind) => {
     const cover = coverOf(list[0]);
     return html`
-    <a class="ppanel" href="${href}" data-anim-item data-cursor="Open · ${label}">
+    <a class="ppanel" href="${href}" data-anim-item>
       <span class="ppanel__media">${img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' })}</span>
       <span class="ppanel__info"><span class="ppanel__title">${label}</span><span class="label">${pad(list.length)} ${kind}</span></span>
     </a>`;

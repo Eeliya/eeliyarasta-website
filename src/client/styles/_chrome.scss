@@ -121,28 +121,6 @@
   &__foot { display: flex; gap: 20px; padding-top: 24px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 }
 
-/* ---------------- Cursor ---------------- */
-.cursor {
-  position: fixed; left: 0; top: 0; z-index: 120; pointer-events: none; mix-blend-mode: normal;
-  opacity: 0; transition: opacity 0.3s;
-  &.is-visible { opacity: 1; }
-  &__dot {
-    position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
-    background: var(--fg); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
-    transition: transform 0.4s var(--ease-out), opacity 0.3s;
-  }
-  &__label {
-    position: absolute; left: 0; top: 0; translate: -50% -50%;
-    padding: 11px 16px; white-space: nowrap;
-    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-    opacity: 0; scale: 0.4;
-    transition: opacity 0.35s var(--ease-out), scale 0.5s var(--ease-out);
-  }
-  &.is-label &__dot { transform: scale(0); }
-  &.is-label &__label { opacity: 1; scale: 1; }
-}
-.has-cursor [data-cursor], .has-cursor [data-cursor] * { cursor: none; }
-
 /* ---------------- Page transition curtain ---------------- */
 .curtain {
   position: fixed; inset: 0; z-index: 80; pointer-events: none;

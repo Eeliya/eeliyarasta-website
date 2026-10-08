@@ -52,11 +52,11 @@ export function album(ctx, route) {
 
     <div class="album__grid" data-album-grid hidden>
       ${a.images.map((im, i) => html`
-      <button class="gcell" type="button" data-goto="${i}" data-cursor="View ${pad(i + 1)}" aria-label="Open photo ${i + 1}">
+      <button class="gcell" type="button" data-goto="${i}" aria-label="Open photo ${i + 1}">
         <span class="gcell__num">${pad(i + 1)}</span>
         <span class="gcell__media">${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 50vw, 20vw' })}</span>
       </button>`)}
-      <a class="album__nextlink" href="/${route.kind}/${route.next.slug}/" data-cursor="Next">
+      <a class="album__nextlink" href="/${route.kind}/${route.next.slug}/">
         <span class="label">Next ${isPeople ? 'person' : 'place'}</span>
         <span class="album__nextname">${esc(route.next.name)} <span aria-hidden="true">→</span></span>
       </a>

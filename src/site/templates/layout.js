@@ -50,6 +50,5 @@ export function body(ctx, route, accent, view) {
     </div>
   </div>
   <div id="portal"></div>
-  <div class="cursor" aria-hidden="true"><span class="cursor__dot"></span><span class="cursor__label glass"></span></div>
   <div class="curtain" aria-hidden="true"><span class="curtain__label"></span></div>`;
 }

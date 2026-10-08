@@ -16,8 +16,6 @@ html.__ed-text [data-edit]:hover { outline-color: rgb(255 255 255 / .6); }
 html.__ed-text [data-edit]:focus { outline: 1.5px solid #9fd3ff; outline-offset: 3px; caret-color: #9fd3ff; }
 html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !important; }
-html.__ed-text .cursor, html.__ed-motion .cursor { display: none !important; }
-html.__ed-text [data-cursor], html.__ed-motion [data-cursor] { cursor: auto; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
 .__ed-box--hover { border: 1px dashed rgb(255 255 255 / .6); }

@@ -104,7 +104,6 @@
   "_elementsComment": "Per-element overrides keyed by \"<page path>|<target id>|<n>\" (n = nth element with that target on the page). Any value, including \"preset\", can be overridden. Written by the visual editor (/edit/).",
   "elements": {},
   "interactions": {
-    "cursor": { "follow": 0.18 },
     "cardCycle": { "interval": 0.75 },
     "album": { "wheelThreshold": 40, "wheelLock": 0.9, "dragThreshold": 50 }
   },

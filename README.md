@@ -37,12 +37,12 @@ src/
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
     templates/      ← layout, header/menu, footer, home, album, pages, partials
   client/           ← browser code
-    main.js         ← boot: smooth scroll, menu, cursor, router, per-page mount
+    main.js         ← boot: smooth scroll, menu, router, per-page mount
     router.js       ← SPA navigation over the prerendered HTML
     anim/engine.js  ← reads content/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
     modules/        ← album slider, project accordion, card hover, misc
-    ui/             ← menu (click-only), custom cursor, NL clock
+    ui/             ← menu (click-only), NL clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
   editor/           ← the visual editor app (/edit/), never loaded by the public site
     config.js       ← repo/branch/content files the editor may write
@@ -128,7 +128,7 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
     "hero.title":  { "preset": "hero-title" },
     "page.title":  { "preset": "split-chars", "trigger": "load", "delay": 0.1 }
   },
-  "interactions": { "...": "cursor follow, card cycle, album wheel/drag thresholds" },
+  "interactions": { "...": "card cycle, album wheel/drag thresholds" },
   "transitions":  { "...": "page curtain, accent tween, album slide, menu" }
 }
 ```

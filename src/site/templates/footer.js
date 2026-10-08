@@ -7,7 +7,7 @@ export function footer(ctx) {
   <footer class="footer">
     <div class="footer__cta">
       <span class="label"${ed('site.json', ['footer', 'label'])}>${esc(site.footer.label)}</span>
-      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta" data-cursor="Write me"${ed('site.json', ['footer', 'cta'], 'block')}>${lines(site.footer.cta)}</a>
+      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta"${ed('site.json', ['footer', 'cta'], 'block')}>${lines(site.footer.cta)}</a>
     </div>
     <div class="footer__cols" data-anim="footer.cols">
       <div class="footer__col">

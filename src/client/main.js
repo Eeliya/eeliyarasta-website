@@ -1,6 +1,6 @@
 /**
  * Client entry. The HTML is already prerendered; this file only adds behaviour:
- * smooth scroll, cursor, menu, router, and per-page mounting (animations + modules).
+ * smooth scroll, menu, router, and per-page mounting (animations + modules).
  */
 import './styles/main.scss';
 import { gsap, ScrollTrigger } from './lib/env.js';
@@ -9,7 +9,6 @@ import { flags } from './anim/flags.js';
 import { initSmooth, getSmoother } from './smooth.js';
 import { initRouter, navigate } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
-import { initCursor, resetCursor } from './ui/cursor.js';
 import { initClock, updateClocks } from './ui/clock.js';
 import { applyAccent } from './theme.js';
 import { album } from './modules/album.js';
@@ -59,7 +58,6 @@ function mount(view, { first = false } = {}) {
 function unmount() {
   current?.revert();
   current = null;
-  resetCursor();
 }
 
 /** Revert and re-run only the animations of the current page (modules stay mounted). */
@@ -141,7 +139,6 @@ async function start() {
   connectEditor();
   initSmooth();
   initMenu();
-  initCursor();
   initClock();
   initRouter({ mount, unmount, prepare: movePortals });
   // Wait for web fonts so text splitting measures the real glyphs (max 1.5s).
