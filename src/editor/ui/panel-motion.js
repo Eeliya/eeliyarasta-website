@@ -331,6 +331,7 @@ const HANDLES = [
     at: (p) => p.outAt,
     value: (x) => x,
   },
+  // Text in: left = start, right = duration
   {
     row: 't',
     ptr: '/textDelay',
@@ -347,6 +348,15 @@ const HANDLES = [
     at: (p, cc) => p.textIn + cc.labelIn.duration,
     value: (x, p) => x - p.textIn,
   },
+  // Text stays: left = start, right = duration (not the next bar's left edge)
+  {
+    row: 't',
+    ptr: '/holdStart',
+    label: 'Text stays starts',
+    min: 0,
+    at: (p) => p.textHold,
+    value: (x) => x,
+  },
   {
     row: 't',
     ptr: '/hold',
@@ -354,6 +364,15 @@ const HANDLES = [
     min: 0,
     at: (p, cc) => p.textHold + cc.hold,
     value: (x, p) => x - p.textHold,
+  },
+  // Text out: left = textOutStart on THIS bar, right = duration
+  {
+    row: 't',
+    ptr: '/textOutStart',
+    label: 'Text out starts',
+    min: 0,
+    at: (p) => p.textOut,
+    value: (x) => x,
   },
   {
     row: 't',
@@ -874,7 +893,7 @@ function pageTransitionGroup(store, bridge) {
           return;
         }
         const shown = applyNumber(ptr, n);
-        e.target.value = String(shown ?? n);
+        e.target.value = fmtS(shown ?? n);
         e.target.classList.remove('is-invalid');
       },
     });
@@ -962,7 +981,7 @@ function pageTransitionGroup(store, bridge) {
   // Total duration above the timeline (fixed axis window).
   const totalInput = numInput(TOTAL_PTR, '/total', 'tf__input', { min: 0, max: TOTAL_MAX });
   totalInput.placeholder = fmtS(getTotal());
-  totalInput.value = String(getTotal());
+  totalInput.value = fmtS(getTotal());
   const totalChanged = () => isChanged(TOTAL_PTR);
   const totalWrap = h(
     'div',
@@ -1069,7 +1088,7 @@ function pageTransitionGroup(store, bridge) {
       r.wrap.classList.toggle('is-changed', r.changed());
       if (r.special === 'total') {
         r.input.placeholder = fmtS(getTotal());
-        const shown = String(stored != null ? stored : getTotal());
+        const shown = fmtS(stored != null ? stored : getTotal());
         if (r.input !== document.activeElement && r.input.value !== shown) r.input.value = shown;
         continue;
       }
@@ -1079,8 +1098,10 @@ function pageTransitionGroup(store, bridge) {
       else if (r.rel === '/outStart' && v == null) v = eff.outStart;
       else if (r.rel === '/holdStart' && v == null) v = eff.holdStart;
       else if (r.rel === '/textOutStart' && v == null) v = eff.textOutStart;
-      if (r.input !== document.activeElement && r.input.value !== String(v ?? ''))
-        r.input.value = v ?? '';
+      if (r.input !== document.activeElement) {
+        const shown = v == null || v === '' ? '' : fmtS(Number(v));
+        if (r.input.value !== shown) r.input.value = shown;
+      }
     }
     syncEaseUi();
   };
