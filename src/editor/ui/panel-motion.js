@@ -395,7 +395,8 @@ function maxForPtr(ptr, cc, total) {
   const textInEnd = td + li;
   switch (ptr) {
     case '/in/duration':
-      return t;
+      // Enter end cannot pass leave start.
+      return Math.max(0, Math.min(t, leaveStart(cc)));
     case '/outStart':
       return t;
     case '/textDelay':
@@ -415,8 +416,9 @@ function maxForPtr(ptr, cc, total) {
   }
 }
 
-/** Floor for a field so text-in end never passes text-out start. */
+/** Floor so enter end never passes leave start (curtain or text). */
 function minForPtr(ptr, cc, min) {
+  if (ptr === '/outStart') return Math.max(min, cc.in.duration);
   if (ptr === '/textOutStart') return Math.max(min, cc.textDelay + cc.labelIn.duration);
   return min;
 }
@@ -436,6 +438,7 @@ function clampField(ptr, v, min, cc, total) {
 function curtainTimeline({ effective, getTotal, setField, onDrag }) {
   const bars = { c: [], t: [] };
   const handles = [];
+  let curtainGap = null; // closed-time label between curtain enter and leave
   let textGap = null; // stay-length label in the gap between text-in and text-out
   let total = 1;
   let drag = null;
@@ -492,18 +495,15 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
 
   function track(row, name) {
     const barsEl = h('div', { class: 'ptl__bars' });
-    const nBars = row === 't' ? TEXT_SEGS.length : 3;
+    // Curtain and text: enter + leave only (the wait between is an empty gap).
+    const nBars = row === 't' ? TEXT_SEGS.length : 2;
     for (let i = 0; i < nBars; i++) {
       const len = h('span', { class: 'ptl__len', 'aria-hidden': 'true' });
       const seg = row === 't' ? TEXT_SEGS[i] : null;
       const bar = h(
         'i',
         {
-          class: [
-            'ptl__bar',
-            row === 'c' && (i === 1 ? 'is-hold' : 'is-move'),
-            row === 't' && 'is-move is-text',
-          ],
+          class: ['ptl__bar', 'is-move', row === 't' && 'is-text'],
           ...(seg
             ? {
                 tabindex: '0',
@@ -539,12 +539,13 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       bars[row].push(bar);
       barsEl.append(bar);
     }
-    if (row === 't') {
+    {
       const gap = h('span', { class: 'ptl__gap', 'aria-hidden': 'true' });
       const gapLen = h('span', { class: 'ptl__len' });
       gap.append(gapLen);
       gap.__len = gapLen;
-      textGap = gap;
+      if (row === 'c') curtainGap = gap;
+      else textGap = gap;
       barsEl.append(gap);
     }
     const el = h('div', { class: 'ptl__track' }, h('div', { class: 'ptl__grid' }), barsEl);
@@ -685,17 +686,28 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
       // trackW is 0 on first layout before the box is in the DOM — keep labels visible then.
       bar.__len.hidden = len <= 0 || (trackW > 0 && px < 28);
     };
-    // Leave bar is pinned to total on the right (no end handle).
+    // Curtain: enter + leave only. Empty gap between them is closed time (no middle bar).
     const outEnd = total;
     place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's', cc.in.duration);
-    place(bars.c[1], p.closed, p.outAt, 'Closed', Math.max(0, p.outAt - p.closed));
     place(
-      bars.c[2],
+      bars.c[1],
       p.outAt,
       outEnd,
       'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's',
       Math.max(0, outEnd - p.outAt),
     );
+    if (curtainGap) {
+      const g0 = Math.min(total, p.closed);
+      const g1 = Math.min(total, Math.max(p.closed, p.outAt));
+      const gw = Math.max(0, g1 - g0);
+      curtainGap.style.left = pct(g0);
+      curtainGap.style.width = pct(gw);
+      const closed = Number(gw.toFixed(2));
+      curtainGap.__len.textContent = fmtS(closed) + 's';
+      const gpx = trackW ? (gw / total) * trackW : 0;
+      curtainGap.__len.hidden = closed <= 0 || (trackW > 0 && gpx < 28);
+      curtainGap.title = 'Closed ' + fmtS(closed) + 's';
+    }
     // Text row: in + out only. The empty gap between them is hold (no middle bar).
     const tIn0 = Math.min(total, p.textIn);
     const tIn1 = Math.min(total, p.textIn + cc.labelIn.duration);
