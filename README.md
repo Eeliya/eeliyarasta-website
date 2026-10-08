@@ -15,7 +15,7 @@ npm run build     # → dist/ (one index.html per route + 404.html, sitemap.xml,
 npm run preview   # serve dist/ on http://localhost:4173
 ```
 
-Visual editor: `/edit/` (see [Visual editor](#visual-editor-edit)).
+Visual editor (dev only): `http://localhost:5173/edit/` while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
 
 Requires Node 20.19+ (Vite 8).
 
@@ -29,7 +29,8 @@ media/              ← source photos (jpg), committed
 scripts/
   images.mjs        ← media/ → public/media/*.webp sizes + .generated/media.json
   content.mjs       ← loads content/*.json + media manifest (Node)
-  vite-plugin-static-site.mjs  ← the "static site builder" (dev render + build prerender + editor endpoints)
+  vite-plugin-static-site.mjs  ← the "static site builder" (dev render + build prerender)
+  editor-server.mjs ← dev-only editor endpoints: load / save / status / publish (localhost only)
 src/
   site/             ← isomorphic templates (no Node APIs, run at build time AND in a browser)
     routes.js       ← list of pages, derived from content
@@ -44,14 +45,14 @@ src/
     modules/        ← album slider, project accordion, card hover, misc
     ui/             ← menu (click-only), NL clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
-  editor/           ← the visual editor app (/edit/), never loaded by the public site
-    config.js       ← repo/branch/content files the editor may write
+  editor/           ← the visual editor app (/edit/), dev server only, never built or shipped
+    config.js       ← content files the editor may write and publish
     store.js        ← in-memory content copies, dirty state, undo/redo, rebase
     bridge.js       ← talks to the site inside the iframe (text overrides, selection, replay)
-    github.js       ← token storage + one-commit-for-all-files via the git data API
+    source.js       ← talks to the dev-server endpoints (load, save, status, publish)
     ui/             ← text panel, motion panel, ease picker, fields
 index.html          ← HTML shell with <!--ssr-head--> / <!--ssr-body--> markers
-edit/index.html     ← editor entry (noindex)
+edit/index.html     ← editor entry (served by `npm run dev` only)
 ```
 
 ### Build / prerender ("SSR but static")
@@ -81,7 +82,7 @@ page load.
 | file | what |
 | --- | --- |
 | `content/site.json` | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy |
-| `content/home.json` | hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
+| `content/home.json` | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
 | `content/people.json` | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits) |
 | `content/places.json` | places, same shape |
 | `content/projects.json` | projects: title, kind, year, description, url, image |
@@ -144,16 +145,17 @@ Types (`src/client/anim/types.js`): `reveal`, `split` (SplitText chars/words/lin
 `prefers-reduced-motion` is respected everywhere: no smooth scroll, no drift/parallax/splits,
 instant album slides, a quick crossfade between pages.
 
-### Visual editor (`/edit/`)
+### Visual editor (`/edit/`, dev only)
 
-A WYSIWYG editor for **text and animations** ships as a second Vite entry (`edit/index.html` →
-`src/editor/`). It's not linked anywhere, has `noindex`, and `/edit/` is disallowed in
-`robots.txt`. The public bundle contains **no editor code**: the site only exposes a small
-`window.__site` API and connects to the editor when it runs inside its iframe.
+A WYSIWYG editor for **text and animations** (`edit/index.html` → `src/editor/`). It only exists
+while **`npm run dev`** runs: `npm run build` bundles just the public site, so `dist/` has no
+`/edit/` page, no editor code and no editor endpoints, and the editor shortcut isn't in the
+public bundle either (the code that connects the site to the editor sits behind
+`import.meta.env.DEV`).
 
-**Open it:** `http://localhost:5173/edit/` while running `npm run dev`, or
-`https://eeliyarasta.com/edit/` on the live site. Shortcut: **Ctrl/⌘ + Shift + E** on any page
-of the site opens that page in the editor (and from the editor goes back to the live page).
+**Open it:** `http://localhost:5173/edit/` while running `npm run dev`. Shortcut: **Ctrl/⌘ +
+Shift + E** on any page of the dev site opens that page in the editor (and from the editor goes
+back to the page).
 
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
 dropdown, or click links in Browse mode. There's also a mobile (390 px) preview toggle.
@@ -184,43 +186,36 @@ undo/redo, **Esc** deselects.
 **How text maps to JSON.** Templates mark text with the `ed()` helper, e.g.
 `<h2${ed('home.json', ['sections', 'people', 'title'])}>`, which renders
 `data-edit="home.json#/sections/people/title"` (a JSON Pointer). Use `ed(file, path, 'block')`
-for multi-line text (`\n` ⇄ `<br>`) and `'number'` for numbers. Page copy (titles, intros,
+for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
+`<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros,
 footer) lives in `site.json → pages / footer` for this reason. The editor only ever writes
 `content/*.json` (the files listed in `src/editor/config.js`).
 
-**Saving**
+**Save and Publish**
 
-* **Dev** (`npm run dev`): *Save* writes the changed files to `content/` through a small dev
-  endpoint in the Vite plugin (`POST /__editor/save`, same-origin only, whitelisted file names).
-  Then review and commit with git as usual.
-* **Live site**: *Commit* makes **one commit** containing all changed files on
-  `Eeliya/eeliyarasta-website@main` (repo and branch are in `src/editor/config.js`), with your
-  message. Before committing, the editor fetches the branch head and the latest versions of the
-  changed files and re-applies your edits on top, so commits made elsewhere aren't overwritten
-  (if the branch moves mid-commit it retries once). The success message links to the commit.
-  **The live site updates after Vercel redeploys** (usually about a minute). Until you connect
-  GitHub, the editor shows the content snapshot from the last build (`/edit/content/`) and can't
-  save.
+* **Save** (**Ctrl/⌘+S**) writes the changed files to `content/` on disk. That's a **draft**:
+  the preview (and Browse mode) shows it, and nothing leaves your machine.
+* **Publish** commits **all saved content changes in one commit** and pushes it, so you can
+  batch many edits into one publish. The dialog lists the changed files (status, number of
+  changes, `+/-` lines) and any earlier commits on the branch that aren't pushed yet, and asks for a
+  commit message. If you have unsaved edits it offers to **save them first** and include them.
+  It then runs `git add` + `git commit` for **only the changed `content/*.json` files** (other
+  staged or modified files are never committed) and `git push origin <current branch>`. On
+  success it links to the commit on GitHub. If the push fails (e.g. git has no GitHub login on
+  this machine), the commit stays local, the error output is shown, and **Retry push** pushes it
+  later.
+* The panel footer always shows how many **saved changes aren't published** yet (and commits
+  not pushed).
+
+The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/status`,
+`/publish`). They exist only on the dev server, accept **only requests from this machine**
+(loopback address, localhost `Host`, same-origin `Origin`), and only touch the files listed in
+`src/editor/config.js`. Git runs without a shell and never prompts in the terminal, so pushing
+needs a working git login for GitHub on the machine running `npm run dev` (e.g. `gh auth login`
+then `gh auth setup-git`).
 
 All JSON is written by the same formatter (`src/editor/lib/json-format.js`), so saves only
 change the lines that changed.
-
-#### One-time setup: GitHub token for the live editor
-
-1. Go to GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens
-   → Generate new token** (<https://github.com/settings/personal-access-tokens/new>).
-2. Name it e.g. `eeliyarasta editor` and pick an expiration.
-3. **Repository access → Only select repositories →** `Eeliya/eeliyarasta-website`.
-4. **Permissions → Repository permissions → Contents: Read and write**. Leave everything else
-   unset (Metadata: read-only gets added automatically).
-5. Generate it, copy it, open `https://eeliyarasta.com/edit/`, click **Connect GitHub to save**
-   and paste it.
-
-The token is stored **only in that browser's `localStorage`** (key
-`eeliyarasta-editor:github-token`). It is never committed and only ever sent to
-`https://api.github.com` (the client refuses any other host). **Sign out** in the panel footer
-deletes it. If it leaks, revoke it on the same GitHub page. It can only touch this one
-repository's contents.
 
 **Later:** swapping and reordering album photos (upload to `media/`, edit `images[]`) isn't in
 the editor yet. Edit `people.json` / `places.json` and `media/` by hand for now.
@@ -232,6 +227,8 @@ the editor yet. Edit `people.json` / `places.json` and `media/` by hand for now.
 * Glass UI (`.glass`): blur + saturation backdrop filter, a flat translucent fill (faintly
   tinted by the album accent, no gradient), a thin inner highlight border and a soft shadow. The blur lives on `::before`, so glass nested in glass (nav pill →
   dropdown) still blurs the page behind it.
+* The normal system cursor everywhere (no custom cursor), and nothing follows the mouse: the hero
+  photos only drift and react to scrolling, and the project list preview sits next to the hovered row.
 * Navigation opens on **click only** (never hover): Photography (People, Places with names),
   Projects, About, Home. Small screens get a full-screen glass menu.
 * Inspiration: Gregor Collienne and Hannah Miles (home hero), Faint Film (album slider/grid),
@@ -242,6 +239,6 @@ the editor yet. Edit `people.json` / `places.json` and `media/` by hand for now.
 Any static host works: upload `dist/`.
 
 **Vercel**: import the repo, Framework preset **Other**, Build command `npm run build`,
-Output directory `dist`. Unknown URLs get `404.html` automatically. Commits made by the
-visual editor trigger a normal redeploy. (Netlify, Cloudflare Pages
+Output directory `dist`. Unknown URLs get `404.html` automatically. Pushes from the
+editor's Publish button trigger a normal redeploy. (Netlify, Cloudflare Pages
 and GitHub Pages work the same way.)

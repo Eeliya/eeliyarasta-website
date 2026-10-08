@@ -5,3 +5,4 @@ public/media
 .generated
 .DS_Store
 *.log
+.idea/
