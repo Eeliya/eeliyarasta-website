@@ -8,7 +8,7 @@
  */
 import { h, clear } from './dom.js';
 import { compile } from '../lib/pointer.js';
-import { numberField, textField, segmentField, customField } from './fields.js';
+import { numberField, textField, segmentField, customField, pairField } from './fields.js';
 import { easeField } from './ease.js';
 import { normalizeCurtain, curtainPlan } from '../../client/anim/curtain.js';
 
@@ -35,6 +35,7 @@ const F = {
   delay: { path: ['delay'], label: 'Delay', kind: 'number', max: 3, step: 0.05, unit: 's' },
   stagger: { path: ['stagger'], label: 'Stagger', kind: 'number', max: 0.4, step: 0.005, unit: 's', hint: 'Delay between children / letters / lines' },
   ease: { path: ['ease'], label: 'Ease', kind: 'ease' },
+  timing: { kind: 'pair', label: 'Duration / ease', paths: [['duration'], ['ease']], max: 4, step: 0.05, unit: 's' },
   trigger: { path: ['trigger'], label: 'Plays', kind: 'segment', options: [['load', 'On load'], ['scroll', 'On scroll']] },
   start: { path: ['start'], label: 'Scroll start', kind: 'text', suggestions: START, when: (s) => s.trigger === 'scroll', hint: '"<element edge> <viewport edge>", e.g. "top 85%"' },
   scrub: { path: ['scrub'], label: 'Scrub', kind: 'segment', options: [[false, 'Off'], [true, 'On'], [1, 'Smooth']], when: (s) => s.trigger === 'scroll', hint: 'Tie progress to the scroll position' },
@@ -57,7 +58,7 @@ const PROPS = {
   filter: { label: 'Filter', text: true, neutral: 'blur(0px)', init: 'blur(12px)', suggestions: ['blur(12px)', 'blur(0px)'] },
 };
 
-const TIMING = ['Timing', [F.duration, F.delay, F.stagger, F.ease]];
+const TIMING = ['Timing', [F.timing, F.delay, F.stagger]];
 const TRIGGER = ['Trigger', [F.trigger, F.start, F.scrub, F.end]];
 const GROUPS = {
   reveal: [TIMING, TRIGGER, 'from', 'to'],
@@ -65,7 +66,7 @@ const GROUPS = {
   'scrub-words': [['Scroll', [n(['fromOpacity'], 'Dim words opacity', 1, 0.01), { ...F.start, when: null }, { ...F.end, when: null }]]],
   parallax: [['Parallax', [n(['speed'], 'Speed', 40, 1, '%'), { ...F.scrub, options: [[true, 'On'], [0.5, 'Smooth .5'], [1.5, 'Smooth 1.5']], when: null }]]],
   scatter: [
-    ['Intro burst', [n(['intro', 'duration'], 'Duration', 4, 0.05, 's'), { path: ['intro', 'ease'], label: 'Ease', kind: 'ease' }, n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'), n(['intro', 'delay'], 'Delay', 2, 0.05, 's'), n(['intro', 'fromScale'], 'From scale', 1.5, 0.01)]],
+    ['Intro burst', [{ kind: 'pair', label: 'Duration / ease', paths: [['intro', 'duration'], ['intro', 'ease']], max: 4, step: 0.05, unit: 's' }, n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'), n(['intro', 'delay'], 'Delay', 2, 0.05, 's'), n(['intro', 'fromScale'], 'From scale', 1.5, 0.01)]],
     ['Drift', [n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'), n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'), n(['drift', 'minDuration'], 'Min duration', 20, 0.5, 's'), n(['drift', 'maxDuration'], 'Max duration', 20, 0.5, 's')]],
     ['Scroll', [n(['scroll', 'distance'], 'Fly-off distance', 150, 1, '%vh')]],
   ],
@@ -74,42 +75,181 @@ const GROUPS = {
 };
 
 const CURTAIN = '/transitions/page/curtain';
-// Page transition rows, in the order things happen. [pointer under CURTAIN, label, options]
+const MAX_S = 4;
+// Page transition rows, in the order things happen.
+//   ['pair', rel, label]  duration + ease of one move, on one row
+//   [rel, label, opts]    a single number
 const CURTAIN_ROWS = [
-  ['/in/duration', 'Curtain in (s)'],
-  ['/in/ease', 'Curtain in ease', { kind: 'ease' }],
+  ['pair', '/in', 'Curtain in'],
   ['/textDelay', 'Text starts after curtain (s)', { hint: 'Counted from when the curtain starts coming in. 0 = with the curtain. Same as "Curtain in" = once it is closed.' }],
-  ['/labelIn/duration', 'Text in (s)'],
-  ['/labelIn/ease', 'Text in ease', { kind: 'ease' }],
+  ['pair', '/labelIn', 'Text in'],
   ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
-  ['/labelOut/duration', 'Text out (s)'],
-  ['/labelOut/ease', 'Text out ease', { kind: 'ease' }],
+  ['pair', '/labelOut', 'Text out'],
   ['/afterText', 'Curtain leaves after text (s)', { min: -2, hint: 'Counted from when the text is fully gone. 0 = right away. Negative = the curtain starts leaving while the text is still going.' }],
-  ['/out/duration', 'Curtain out (s)'],
-  ['/out/ease', 'Curtain out ease', { kind: 'ease' }],
+  ['pair', '/out', 'Curtain out'],
+];
+/**
+ * Drag handles on the timeline, in time order per row. at(p, cc) = where the handle sits (s);
+ * value(x, p, cc) = the field value for the handle at x, using the plan from when the drag
+ * started (none of these depend on their own field, so the maths stays stable while dragging).
+ */
+const HANDLES = [
+  { row: 'c', ptr: '/in/duration', label: 'Curtain in', min: 0, at: (p) => p.closed, value: (x) => x },
+  { row: 'c', ptr: '/afterText', label: 'Curtain leaves after text', min: -2, at: (p) => p.outAt, value: (x, p) => x - p.textGone },
+  { row: 'c', ptr: '/out/duration', label: 'Curtain out', min: 0, at: (p) => p.outEnd, value: (x, p) => x - p.outAt },
+  { row: 't', ptr: '/textDelay', label: 'Text starts after curtain', min: 0, at: (p) => p.textIn, value: (x) => x },
+  { row: 't', ptr: '/labelIn/duration', label: 'Text in', min: 0, at: (p, cc) => p.textIn + cc.labelIn.duration, value: (x, p) => x - p.textIn },
+  { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p) => p.textOut, value: (x, p, cc) => x - p.textIn - cc.labelIn.duration },
+  { row: 't', ptr: '/labelOut/duration', label: 'Text out', min: 0, at: (p) => p.textGone, value: (x, p) => x - p.textOut },
 ];
 const fmtS = (v) => String(Math.round(v * 100) / 100);
+const clampS = (v, min) => Math.min(MAX_S, Math.max(min, Number(v.toFixed(2))));
+const digRel = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+const IDLE = 'Drag the bar ends to change the timing. Shift = 0.1s steps.';
 
-/** Two-row bar chart of the curtain and text over time (same maths as the router). */
-function curtainSketch(cc) {
-  const p = curtainPlan(cc, true);
-  const total = Math.max(p.end, 0.01);
-  const pct = (v) => (Math.max(0, v) / total) * 100 + '%';
-  const bar = (from, to, cls, title) => h('i', { class: ['ptl__bar', cls], title, style: { left: pct(from), width: pct(to - from) } });
-  const row = (name, bars) => h('div', { class: 'ptl__row' }, h('span', { class: 'ptl__name' }, name), h('div', { class: 'ptl__track' }, bars));
-  return h('div', { class: 'ptl', 'aria-hidden': 'true' },
-    row('Curtain', [
-      bar(0, p.closed, 'is-move', 'Comes in: 0 to ' + fmtS(p.closed) + 's'),
-      bar(p.closed, p.outAt, 'is-hold', 'Closed'),
-      bar(p.outAt, p.outEnd, 'is-move', 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(p.outEnd) + 's'),
-    ]),
-    row('Text', [
-      bar(p.textIn, p.textIn + cc.labelIn.duration, 'is-move is-text', 'Comes in: ' + fmtS(p.textIn) + 's'),
-      bar(p.textIn + cc.labelIn.duration, p.textOut, 'is-hold is-text', 'Stays'),
-      bar(p.textOut, p.textGone, 'is-move is-text', 'Leaves, gone at ' + fmtS(p.textGone) + 's'),
-    ]),
-    h('div', { class: 'ptl__axis' }, h('span', {}, '0s'), h('span', {}, fmtS(total) + 's')),
-  );
+/**
+ * Two-row timeline of the curtain and the text (same maths as the router), with draggable
+ * bar ends. Elements are built once and only re-laid out, so a drag survives store updates.
+ */
+function curtainTimeline({ effective, setField, onDrag }) {
+  const bars = { c: [], t: [] };
+  const handles = [];
+  let total = 1;
+  let drag = null;
+  const readout = h('div', { class: 'ptl__readout' }, IDLE);
+  const axis = h('div', { class: 'ptl__axis' });
+  let axisFor = null;
+
+  const near = (track, row, clientX, pointerType) => {
+    const cc = effective();
+    const p = curtainPlan(cc, true);
+    const r = track.getBoundingClientRect();
+    const px = clientX - r.left;
+    const tol = pointerType === 'touch' ? 16 : 8;
+    const hits = handles.filter((el) => el.__def.row === row)
+      .map((el) => ({ el, d: Math.abs((el.__def.at(p, cc) / total) * r.width - px) }))
+      .filter((c) => c.d <= tol);
+    if (!hits.length) return null;
+    const best = Math.min(...hits.map((c) => c.d));
+    return { list: hits.filter((c) => c.d - best < 2).map((c) => c.el), p, cc };
+  };
+  const show = (def, v) => {
+    readout.textContent = def.label + ': ' + fmtS(v) + 's';
+    readout.classList.add('is-on');
+  };
+  const idle = () => {
+    readout.textContent = IDLE;
+    readout.classList.remove('is-on');
+  };
+  const begin = (el) => {
+    drag.el = el;
+    el.classList.add('is-active');
+    show(el.__def, digRel(drag.cc0, el.__def.ptr) ?? 0);
+  };
+
+  function track(row, name) {
+    const barsEl = h('div', { class: 'ptl__bars' });
+    for (let i = 0; i < 3; i++) {
+      const bar = h('i', { class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'] });
+      bars[row].push(bar);
+      barsEl.append(bar);
+    }
+    const el = h('div', { class: 'ptl__track' }, h('div', { class: 'ptl__grid' }), barsEl);
+    for (const def of HANDLES.filter((d) => d.row === row)) {
+      const hd = h('button', {
+        type: 'button', class: 'ptl__handle', title: def.label + ' (drag, or arrow keys)', 'aria-label': def.label, dataset: { ptr: CURTAIN + def.ptr },
+        onkeydown: (e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          const cur = digRel(effective(), def.ptr) ?? 0;
+          const v = clampS(cur + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 0.1 : 0.01), def.min);
+          setField(def.ptr, v);
+          show(def, v);
+        },
+        onblur: () => !drag && idle(),
+      });
+      hd.__def = def;
+      handles.push(hd);
+      el.append(hd);
+    }
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      const hit = near(el, row, e.clientX, e.pointerType);
+      if (!hit) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      drag = { id: e.pointerId, track: el, x0: e.clientX, list: hit.list, el: null, p0: hit.p, cc0: hit.cc };
+      root.classList.add('is-dragging');
+      onDrag(true);
+      if (hit.list.length === 1) begin(hit.list[0]);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!drag) {
+        el.style.cursor = near(el, row, e.clientX, e.pointerType) ? 'ew-resize' : '';
+        return;
+      }
+      if (e.pointerId !== drag.id) return;
+      if (!drag.el) {
+        // Several ends on the same spot: the drag direction decides (right = the later one).
+        const dx = e.clientX - drag.x0;
+        if (Math.abs(dx) < 3) return;
+        begin(dx > 0 ? drag.list.at(-1) : drag.list[0]);
+      }
+      const r = el.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * total;
+      const def = drag.el.__def;
+      const step = e.shiftKey ? 0.1 : 0.01;
+      const v = clampS(Math.round(def.value(x, drag.p0, drag.cc0) / step) * step, def.min);
+      setField(def.ptr, v);
+      show(def, v);
+    });
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag.el?.classList.remove('is-active');
+      drag = null;
+      root.classList.remove('is-dragging');
+      onDrag(false);
+      idle();
+      layout();
+    };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('lostpointercapture', end);
+    return h('div', { class: 'ptl__row' }, h('span', { class: 'ptl__name' }, name), el);
+  }
+
+  const root = h('div', { class: 'ptl' }, track('c', 'Curtain'), track('t', 'Text'), axis, readout);
+
+  function layout() {
+    const cc = effective();
+    const p = curtainPlan(cc, true);
+    // The scale stays put while dragging so the bars don't slide under the pointer.
+    if (!drag) total = Math.max(1, Math.ceil((p.end + 0.2) / 0.5) * 0.5);
+    const pct = (v) => (v / total) * 100 + '%';
+    const place = (bar, from, to, title) => {
+      const f = Math.max(0, from);
+      bar.style.left = pct(f);
+      bar.style.width = pct(Math.max(0, to - f));
+      bar.title = title;
+    };
+    place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's');
+    place(bars.c[1], p.closed, p.outAt, 'Closed');
+    place(bars.c[2], p.outAt, p.outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(p.outEnd) + 's');
+    place(bars.t[0], p.textIn, p.textIn + cc.labelIn.duration, 'Comes in: ' + fmtS(p.textIn) + 's');
+    place(bars.t[1], p.textIn + cc.labelIn.duration, p.textOut, 'Stays');
+    place(bars.t[2], p.textOut, p.textGone, 'Leaves, gone at ' + fmtS(p.textGone) + 's');
+    for (const hd of handles) hd.style.left = pct(hd.__def.at(p, cc));
+    root.style.setProperty('--tick', pct(0.5));
+    if (axisFor !== total) {
+      axisFor = total;
+      const every = total <= 3 ? 0.5 : 1;
+      const marks = [];
+      for (let t = 0; t <= total + 1e-6; t += every) marks.push(h('span', { style: { left: pct(t) } }, fmtS(t) + 's'));
+      clear(axis, marks);
+    }
+  }
+  layout();
+  return { el: root, layout, get dragging() { return !!drag; } };
 }
 
 function pageTransitionGroup(store, bridge) {
@@ -117,43 +257,60 @@ function pageTransitionGroup(store, bridge) {
   const base = (ptr) => store.getBase(FILE, ptr);
   const set = (ptr, value, key) => store.set(FILE, ptr, value, { key, source: 'panel' });
   const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
-  const dig2 = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+  const isChanged = (ptr) => JSON.stringify(get(ptr)) !== JSON.stringify(base(ptr));
   const numbers = [];
-  const row = (rel, label, { kind = 'number', step = 0.01, min = 0, max = 4, hint } = {}) => {
+  const eases = [];
+  const head = (label) => h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
+  const numInput = (ptr, rel, cls, { step = 0.01, min = 0 } = {}) => h('input', {
+    class: cls,
+    type: 'number',
+    step: String(step),
+    min: String(min),
+    max: String(MAX_S),
+    value: get(ptr) ?? '',
+    placeholder: fmtS(digRel(effective(), rel) ?? 0),
+    dataset: { ptr },
+    oninput: (e) => {
+      const n = Number(e.target.value);
+      const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
+      e.target.classList.toggle('is-invalid', !ok);
+      if (ok) set(ptr, n, 'curtain:' + ptr);
+    },
+  });
+  const single = (rel, label, { min = 0, hint } = {}) => {
     const ptr = CURTAIN + rel;
-    const value = get(ptr);
-    const changed = JSON.stringify(value) !== JSON.stringify(base(ptr));
-    const head = h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
-    const note = hint ? h('p', { class: 'hint small tf__hint' }, hint) : null;
-    if (kind === 'ease') {
-      const ease = easeField({
-        gsap: bridge.api?.gsap,
-        value: value || dig2(effective(), rel) || 'expo.inOut',
-        onChange: (v) => set(ptr, v, 'curtain:' + ptr),
-      });
-      return h('div', { class: ['tf', changed && 'is-changed'] }, head, ease.el, note);
-    }
-    const input = h('input', {
-      class: 'tf__input',
-      type: 'number',
-      step: String(step),
-      min: String(min),
-      max: String(max),
-      value: value ?? '',
-      placeholder: fmtS(dig2(effective(), rel) ?? 0),
-      dataset: { ptr },
-      oninput: (e) => {
-        const n = Number(e.target.value);
-        const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
-        e.target.classList.toggle('is-invalid', !ok);
-        if (ok) set(ptr, n, 'curtain:' + ptr);
-      },
-    });
-    const wrap = h('div', { class: ['tf', changed && 'is-changed'] }, head, input, note);
-    numbers.push({ ptr, rel, input, wrap });
+    const input = numInput(ptr, rel, 'tf__input', { min });
+    const changed = () => isChanged(ptr);
+    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] }, head(label), input, hint ? h('p', { class: 'hint small tf__hint' }, hint) : null);
+    numbers.push({ ptr, rel, input, wrap, changed });
     return wrap;
   };
-  const sketchBox = h('div', { class: 'ptl-box' }, curtainSketch(effective()));
+  // Duration + ease of one move on a single row.
+  const pair = (rel, label) => {
+    const dPtr = CURTAIN + rel + '/duration';
+    const ePtr = CURTAIN + rel + '/ease';
+    const input = numInput(dPtr, rel + '/duration', 'f__num');
+    input.title = label + ' duration (seconds)';
+    const ease = easeField({
+      gsap: bridge.api?.gsap,
+      value: get(ePtr) || digRel(effective(), rel + '/ease') || 'expo.inOut',
+      compact: true,
+      onChange: (v) => set(ePtr, v, 'curtain:' + ePtr),
+    });
+    const changed = () => isChanged(dPtr) || isChanged(ePtr);
+    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] },
+      head(label),
+      h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')), ease.el),
+    );
+    numbers.push({ ptr: dPtr, rel: rel + '/duration', input, wrap, changed });
+    eases.push({ ptr: ePtr, rel: rel + '/ease', ease });
+    return wrap;
+  };
+  const timeline = curtainTimeline({
+    effective,
+    setField: (rel, v) => set(CURTAIN + rel, v, 'curtain:' + CURTAIN + rel),
+    onDrag: (on) => (el.__dragging = on),
+  });
   const replay = h('button', {
     type: 'button',
     class: 'btn-ed',
@@ -162,21 +319,22 @@ function pageTransitionGroup(store, bridge) {
   }, '\u21ba Replay');
   const el = h('section', { class: 'grp ptg' },
     h('h4', { class: 'grp__title' }, 'Page transition'),
-    h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
+    h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
     h('div', { class: 'ptg__actions' }, replay),
-    sketchBox,
-    CURTAIN_ROWS.map(([rel, label, opts]) => row(rel, label, opts)),
+    h('div', { class: 'ptl-box' }, timeline.el),
+    CURTAIN_ROWS.map(([kind, ...rest]) => (kind === 'pair' ? pair(...rest) : single(kind, ...rest))),
   );
-  // Refresh values in place (used while a number field has focus, so typing is not interrupted).
+  // Refresh in place (while typing in a field or dragging the timeline) without re-rendering.
   el.__update = () => {
     const eff = effective();
-    clear(sketchBox, curtainSketch(eff));
+    timeline.layout();
     for (const r of numbers) {
       const v = get(r.ptr);
-      r.wrap.classList.toggle('is-changed', JSON.stringify(v) !== JSON.stringify(base(r.ptr)));
-      r.input.placeholder = fmtS(dig2(eff, r.rel) ?? 0);
+      r.wrap.classList.toggle('is-changed', r.changed());
+      r.input.placeholder = fmtS(digRel(eff, r.rel) ?? 0);
       if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
     }
+    for (const r of eases) r.ease.update(get(r.ptr) || digRel(eff, r.rel));
   };
   return el;
 }
@@ -217,7 +375,21 @@ export function createMotionPanel({ store, bridge, root, toast }) {
   }
   const meta = (m, path) => ({ source: sourceOf(m, path), canReset: dig(m.layers[scope], path) !== undefined });
 
+  /** Duration + ease on one row (one badge / reset for both). */
+  function makePair(def) {
+    const [dp, ep] = def.paths;
+    const f = pairField({
+      label: def.label, hint: def.hint, min: def.min ?? 0, max: def.max, step: def.step, unit: def.unit,
+      ease: easeField({ gsap: bridge.api.gsap, value: 'none', compact: true, onChange: (v) => setValue(ep, v) }),
+      onNumber: (v) => setValue(dp, v),
+      onReset: () => store.batch(() => { resetValue(dp); resetValue(ep); }, { source: 'motion' }),
+    });
+    updaters.push((m) => f.update([dig(m.spec, dp), dig(m.spec, ep)], [meta(m, dp), meta(m, ep)]));
+    return f.el;
+  }
+
   function makeField(def) {
+    if (def.kind === 'pair') return makePair(def);
     const common = { label: def.label, hint: def.hint, onReset: () => resetValue(def.path) };
     const onChange = (v) => setValue(def.path, v);
     let f;
@@ -352,10 +524,10 @@ export function createMotionPanel({ store, bridge, root, toast }) {
     if (!bridge.api) return clear(root, h('p', { class: 'hint' }, 'Waiting for the preview…'));
     if (!sel) {
       updaters = [];
-      // Typing in a page-transition number: update in place instead of re-rendering (keeps focus).
+      // Typing in a page-transition field or dragging its timeline: update in place (keeps focus and the drag).
       const active = document.activeElement;
       const ptg = root.querySelector('.ptg');
-      if (ptg?.__update && active?.matches?.('input[data-ptr]') && ptg.contains(active)) return ptg.__update();
+      if (ptg?.__update && (ptg.__dragging || (active?.matches?.('[data-ptr]') && ptg.contains(active)))) return ptg.__update();
       const top = root.scrollTop;
       clear(root, renderList());
       root.scrollTop = top;

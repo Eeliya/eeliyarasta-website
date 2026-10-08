@@ -30,7 +30,7 @@ export function curveSvg(gsap, name, w = 120, hgt = 64, cls = 'curve') {
  * <ease field>: current curve + name; click opens a grid of all eases plus a
  * free-text input (e.g. "back.out(2.5)", "steps(6)").
  */
-export function easeField({ gsap, value, onChange }) {
+export function easeField({ gsap, value, onChange, compact = false }) {
   let current = value;
   let open = false;
   const big = h('div', { class: 'ease__big' });
@@ -67,7 +67,7 @@ export function easeField({ gsap, value, onChange }) {
     onChange(e);
   }
   draw();
-  const el = h('div', { class: 'ease' }, toggle, grid);
+  const el = h('div', { class: ['ease', compact && 'ease--compact'] }, toggle, grid);
   return {
     el,
     update(v) {

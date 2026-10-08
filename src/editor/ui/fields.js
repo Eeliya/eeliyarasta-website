@@ -16,9 +16,9 @@ function shell(label, control, { onReset, hint } = {}) {
   );
   return {
     el,
-    meta({ source, canReset } = {}) {
-      badge.textContent = source ? SOURCE_LABEL[source] : 'unset';
-      badge.dataset.src = source || 'none';
+    meta({ source, canReset, text } = {}) {
+      badge.textContent = text || (source ? SOURCE_LABEL[source] : 'unset');
+      badge.dataset.src = source || (text ? 'mixed' : 'none');
       reset.hidden = !canReset;
     },
   };
@@ -47,6 +47,30 @@ export function numberField({ label, min = 0, max = 1, step = 0.01, unit = '', h
       const v = value ?? '';
       if (!dragging && document.activeElement !== range) range.value = v;
       if (document.activeElement !== num) num.value = v;
+    },
+  };
+}
+
+/**
+ * Duration + ease on one row. update([duration, ease], [durationMeta, easeMeta]); the badge
+ * shows both sources when they differ, and reset clears both.
+ */
+export function pairField({ label, min = 0, max = 4, step = 0.01, unit = 's', hint, ease, onNumber, onReset }) {
+  const num = h('input', { type: 'number', class: 'f__num', step, min, max, title: 'Duration' });
+  num.addEventListener('input', () => {
+    if (num.value === '' || !Number.isFinite(Number(num.value))) return;
+    onNumber(Number(num.value));
+  });
+  const row = h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, num, unit ? h('span', { class: 'f__unit' }, unit) : null), ease.el);
+  const s = shell(label, row, { onReset, hint });
+  return {
+    el: s.el,
+    update([dv, ev] = [], [dm = {}, em = {}] = []) {
+      const same = dm.source === em.source;
+      const name = (x) => (x ? SOURCE_LABEL[x] : 'unset');
+      s.meta({ source: same ? dm.source : null, canReset: !!(dm.canReset || em.canReset), text: same ? null : name(dm.source) + ' / ' + name(em.source) });
+      if (document.activeElement !== num) num.value = dv ?? '';
+      ease.update(ev ?? 'none');
     },
   };
 }
