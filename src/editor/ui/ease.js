@@ -30,8 +30,9 @@ export function curveSvg(gsap, name, w = 120, hgt = 64, cls = 'curve') {
  * <ease field>: current curve + name; click opens a grid of all eases plus a
  * free-text input (e.g. "back.out(2.5)", "steps(6)").
  */
-export function easeField({ gsap, value, onChange, compact = false }) {
-  let current = value;
+export function easeField({ gsap, value, onChange, compact = false, mixed = false }) {
+  let current = value || 'none';
+  let isMixed = !!mixed;
   let open = false;
   const big = h('div', { class: 'ease__big' });
   const name = h('span', { class: 'ease__name' });
@@ -43,9 +44,10 @@ export function easeField({ gsap, value, onChange, compact = false }) {
   const toggle = h('button', { type: 'button', class: 'ease__toggle', 'aria-expanded': 'false', onclick: () => setOpen(!open) }, big, name);
 
   function draw() {
-    big.replaceChildren(curveSvg(gsap, current, 220, 72, 'curve curve--big'));
-    name.textContent = current;
-    grid.querySelectorAll('[data-ease]').forEach((b) => b.classList.toggle('is-active', b.dataset.ease === current));
+    big.replaceChildren(curveSvg(gsap, isMixed ? 'none' : current, 220, 72, 'curve curve--big'));
+    name.textContent = isMixed ? 'Mixed' : current;
+    el.classList.toggle('is-mixed', isMixed);
+    grid.querySelectorAll('[data-ease]').forEach((b) => b.classList.toggle('is-active', !isMixed && b.dataset.ease === current));
   }
   function setOpen(v) {
     open = v;
@@ -63,16 +65,19 @@ export function easeField({ gsap, value, onChange, compact = false }) {
   }
   function pick(e) {
     current = e;
+    isMixed = false;
     draw();
     onChange(e);
   }
+  const el = h('div', { class: ['ease', compact && 'ease--compact', isMixed && 'is-mixed'] }, toggle, grid);
   draw();
-  const el = h('div', { class: ['ease', compact && 'ease--compact'] }, toggle, grid);
   return {
     el,
-    update(v) {
-      if (v !== current) {
-        current = v;
+    update(v, nextMixed = false) {
+      const mix = !!nextMixed;
+      if (mix !== isMixed || (!mix && v !== current)) {
+        if (!mix) current = v || 'none';
+        isMixed = mix;
         draw();
       }
     },

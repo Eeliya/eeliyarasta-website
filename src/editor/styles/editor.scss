@@ -380,6 +380,25 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
   span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
   span:first-child { transform: none; } }
 .ptl__readout { min-height: 15px; padding-left: 64px; font-size: 10.5px; color: var(--faint); &.is-on { color: $hi; } }
+.ptg__ease { margin: 0 0 10px; }
+.ptg__advanced {
+  margin: 0 0 14px; padding: 8px 10px; border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--line); background: rgb(255 255 255 / 0.03);
+  summary {
+    cursor: pointer; list-style: none; font-size: 11px; letter-spacing: 0.04em;
+    color: var(--muted); user-select: none;
+    &::-webkit-details-marker { display: none; }
+    &::before { content: '\25B8'; display: inline-block; width: 1em; color: var(--faint); }
+  }
+  &[open] > summary { margin-bottom: 10px; color: var(--fg);
+    &::before { content: '\25BE'; }
+  }
+}
+.ptg__advanced-body { display: grid; gap: 10px; }
+.ptg__adv-ease .ease { margin-top: 4px; }
+.ease.is-mixed .ease__name { color: var(--muted); font-style: italic; }
+.ease.is-mixed .curve__line { stroke-dasharray: 4 3; opacity: 0.55; }
+
 
 /* Duration + ease on one row */
 .f__pair { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px;

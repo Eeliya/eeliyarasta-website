@@ -75,43 +75,87 @@ const GROUPS = {
 };
 
 const CURTAIN = '/transitions/page/curtain';
-const MAX_S = 4;
-// Page transition rows, in the order things happen.
-//   ['pair', rel, label]  duration + ease of one move, on one row
-//   [rel, label, opts]    a single number
+const TOTAL_PTR = CURTAIN + '/total';
+const TOTAL_MAX = 12;
+const EASE_PTRS = ['/in/ease', '/labelIn/ease', '/labelOut/ease', '/out/ease'];
+const EASE_LABELS = [
+  ['/in/ease', 'Curtain in'],
+  ['/labelIn/ease', 'Text in'],
+  ['/labelOut/ease', 'Text out'],
+  ['/out/ease', 'Curtain out'],
+];
+// Page transition duration rows (ease lives under the timeline / Advanced easing).
 const CURTAIN_ROWS = [
-  ['pair', '/in', 'Curtain in'],
+  ['/in/duration', 'Curtain in'],
   ['/textDelay', 'Text starts after curtain (s)', { hint: 'Counted from when the curtain starts coming in. 0 = with the curtain. Same as "Curtain in" = once it is closed.' }],
-  ['pair', '/labelIn', 'Text in'],
+  ['/labelIn/duration', 'Text in'],
   ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
-  ['pair', '/labelOut', 'Text out'],
+  ['/labelOut/duration', 'Text out'],
   ['/afterText', 'Curtain leaves after text (s)', { min: -2, hint: 'Counted from when the text is fully gone. 0 = right away. Negative = the curtain starts leaving while the text is still going.' }],
-  ['pair', '/out', 'Curtain out'],
+  ['/out/duration', 'Curtain out'],
 ];
 /**
  * Drag handles on the timeline, in time order per row. at(p, cc) = where the handle sits (s);
  * value(x, p, cc) = the field value for the handle at x, using the plan from when the drag
  * started (none of these depend on their own field, so the maths stays stable while dragging).
+ * The curtain-out end is pinned to total duration — no handle there.
  */
 const HANDLES = [
   { row: 'c', ptr: '/in/duration', label: 'Curtain in', min: 0, at: (p) => p.closed, value: (x) => x },
   { row: 'c', ptr: '/afterText', label: 'Curtain leaves after text', min: -2, at: (p) => p.outAt, value: (x, p) => x - p.textGone },
-  { row: 'c', ptr: '/out/duration', label: 'Curtain out', min: 0, at: (p) => p.outEnd, value: (x, p) => x - p.outAt },
   { row: 't', ptr: '/textDelay', label: 'Text starts after curtain', min: 0, at: (p) => p.textIn, value: (x) => x },
   { row: 't', ptr: '/labelIn/duration', label: 'Text in', min: 0, at: (p, cc) => p.textIn + cc.labelIn.duration, value: (x, p) => x - p.textIn },
   { row: 't', ptr: '/hold', label: 'Text stays', min: 0, at: (p) => p.textOut, value: (x, p, cc) => x - p.textIn - cc.labelIn.duration },
   { row: 't', ptr: '/labelOut/duration', label: 'Text out', min: 0, at: (p) => p.textGone, value: (x, p) => x - p.textOut },
 ];
 const fmtS = (v) => String(Math.round(v * 100) / 100);
-const clampS = (v, min) => Math.min(MAX_S, Math.max(min, Number(v.toFixed(2))));
 const digRel = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
 const IDLE = 'Drag the bar ends to change the timing. Shift = 0.1s steps.';
 
+/** End of the curtain-out bar (and the derived total when /total is unset). */
+const curtainOutEnd = (cc) => curtainPlan(cc, true).outEnd;
+const leaveStart = (cc) => curtainPlan(cc, true).outAt;
+
+/** Max value for a curtain field so the leave bar still starts at or before `total`. */
+function maxForPtr(ptr, cc, total) {
+  const t = total;
+  const li = cc.labelIn.duration;
+  const lo = cc.labelOut.duration;
+  const td = cc.textDelay;
+  const hold = cc.hold;
+  const after = cc.afterText;
+  switch (ptr) {
+    case '/in/duration':
+      return t;
+    case '/afterText':
+      return t - (td + li + hold + lo);
+    case '/textDelay':
+      return t - (li + hold + lo + after);
+    case '/labelIn/duration':
+      return t - (td + hold + lo + after);
+    case '/hold':
+      return t - (td + li + lo + after);
+    case '/labelOut/duration':
+      return t - (td + li + hold + after);
+    case '/out/duration':
+      return Math.max(0, t - leaveStart(cc));
+    default:
+      return TOTAL_MAX;
+  }
+}
+
+function clampField(ptr, v, min, cc, total) {
+  const hi = maxForPtr(ptr, cc, total);
+  const n = Math.min(hi, Math.max(min, Number(v)));
+  return Number(n.toFixed(2));
+}
+
 /**
  * Two-row timeline of the curtain and the text (same maths as the router), with draggable
- * bar ends. Elements are built once and only re-laid out, so a drag survives store updates.
+ * bar ends. The axis length is `getTotal()` and does not grow when bars are dragged.
+ * Elements are built once and only re-laid out, so a drag survives store updates.
  */
-function curtainTimeline({ effective, setField, onDrag }) {
+function curtainTimeline({ effective, getTotal, setField, onDrag }) {
   const bars = { c: [], t: [] };
   const handles = [];
   let total = 1;
@@ -161,8 +205,11 @@ function curtainTimeline({ effective, setField, onDrag }) {
         onkeydown: (e) => {
           if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
           e.preventDefault();
-          const cur = digRel(effective(), def.ptr) ?? 0;
-          const v = clampS(cur + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 0.1 : 0.01), def.min);
+          const cc = effective();
+          const cur = digRel(cc, def.ptr) ?? 0;
+          const step = e.shiftKey ? 0.1 : 0.01;
+          const raw = cur + (e.key === 'ArrowRight' ? 1 : -1) * step;
+          const v = clampField(def.ptr, Math.round(raw / step) * step, def.min, cc, getTotal());
           setField(def.ptr, v);
           show(def, v);
         },
@@ -199,7 +246,8 @@ function curtainTimeline({ effective, setField, onDrag }) {
       const x = ((e.clientX - r.left) / r.width) * total;
       const def = drag.el.__def;
       const step = e.shiftKey ? 0.1 : 0.01;
-      const v = clampS(Math.round(def.value(x, drag.p0, drag.cc0) / step) * step, def.min);
+      const raw = Math.round(def.value(x, drag.p0, drag.cc0) / step) * step;
+      const v = clampField(def.ptr, raw, def.min, drag.cc0, getTotal());
       setField(def.ptr, v);
       show(def, v);
     });
@@ -223,8 +271,8 @@ function curtainTimeline({ effective, setField, onDrag }) {
   function layout() {
     const cc = effective();
     const p = curtainPlan(cc, true);
-    // The scale stays put while dragging so the bars don't slide under the pointer.
-    if (!drag) total = Math.max(1, Math.ceil((p.end + 0.2) / 0.5) * 0.5);
+    // Axis length is the total-duration window; only the total field rescales it.
+    total = Math.max(0.01, getTotal());
     const pct = (v) => (v / total) * 100 + '%';
     const place = (bar, from, to, title) => {
       const f = Math.max(0, from);
@@ -232,9 +280,11 @@ function curtainTimeline({ effective, setField, onDrag }) {
       bar.style.width = pct(Math.max(0, to - f));
       bar.title = title;
     };
+    // Leave bar is pinned to total on the right (no end handle).
+    const outEnd = total;
     place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's');
     place(bars.c[1], p.closed, p.outAt, 'Closed');
-    place(bars.c[2], p.outAt, p.outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(p.outEnd) + 's');
+    place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's');
     place(bars.t[0], p.textIn, p.textIn + cc.labelIn.duration, 'Comes in: ' + fmtS(p.textIn) + 's');
     place(bars.t[1], p.textIn + cc.labelIn.duration, p.textOut, 'Stays');
     place(bars.t[2], p.textOut, p.textGone, 'Leaves, gone at ' + fmtS(p.textGone) + 's');
@@ -242,7 +292,7 @@ function curtainTimeline({ effective, setField, onDrag }) {
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {
       axisFor = total;
-      const every = total <= 3 ? 0.5 : 1;
+      const every = total <= 3 ? 0.5 : total <= 6 ? 1 : 2;
       const marks = [];
       for (let t = 0; t <= total + 1e-6; t += every) marks.push(h('span', { style: { left: pct(t) } }, fmtS(t) + 's'));
       clear(axis, marks);
@@ -259,14 +309,58 @@ function pageTransitionGroup(store, bridge) {
   const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
   const isChanged = (ptr) => JSON.stringify(get(ptr)) !== JSON.stringify(base(ptr));
   const numbers = [];
-  const eases = [];
   const head = (label) => h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
-  const numInput = (ptr, rel, cls, { step = 0.01, min = 0 } = {}) => h('input', {
+
+  // Session window when /total is not yet stored; only the total field writes /total.
+  let sessionTotal = null;
+  const readStoredTotal = () => {
+    const t = get(TOTAL_PTR);
+    return typeof t === 'number' && Number.isFinite(t) ? t : null;
+  };
+  const getTotal = () => {
+    const stored = readStoredTotal();
+    if (stored != null) return stored;
+    if (sessionTotal == null) sessionTotal = Math.max(leaveStart(effective()), curtainOutEnd(effective()));
+    return sessionTotal;
+  };
+  const pinOutDuration = (total) => {
+    const cc = effective();
+    const outAt = leaveStart(cc);
+    const od = Math.max(0, Number((total - outAt).toFixed(2)));
+    if (cc.out.duration !== od) set(CURTAIN + '/out/duration', od, 'curtain:' + CURTAIN + '/out/duration');
+  };
+  const setTotal = (raw, { storeTotal = true } = {}) => {
+    const cc = effective();
+    const min = leaveStart(cc);
+    const t = Number(Math.min(TOTAL_MAX, Math.max(min, Number(raw))).toFixed(2));
+    sessionTotal = t;
+    if (storeTotal) set(TOTAL_PTR, t, 'curtain:' + TOTAL_PTR);
+    pinOutDuration(t);
+    return t;
+  };
+  const setCurtainField = (rel, v) => {
+    const ptr = rel.startsWith('/') ? rel : '/' + rel;
+    if (ptr === '/out/duration') {
+      // Out duration lengthens/shortens via total (pinned end).
+      setTotal(leaveStart(effective()) + Math.max(0, v));
+      return;
+    }
+    const cc = effective();
+    const total = getTotal();
+    const def = HANDLES.find((d) => d.ptr === ptr);
+    const min = def ? def.min : 0;
+    const clamped = clampField(ptr, v, min, cc, total);
+    set(CURTAIN + ptr, clamped, 'curtain:' + CURTAIN + ptr);
+    // Keep the leave bar pinned to the current total window.
+    pinOutDuration(getTotal());
+  };
+
+  const numInput = (ptr, rel, cls, { step = 0.01, min = 0, max = TOTAL_MAX } = {}) => h('input', {
     class: cls,
     type: 'number',
     step: String(step),
     min: String(min),
-    max: String(MAX_S),
+    max: String(max),
     value: get(ptr) ?? '',
     placeholder: fmtS(digRel(effective(), rel) ?? 0),
     dataset: { ptr },
@@ -274,68 +368,141 @@ function pageTransitionGroup(store, bridge) {
       const n = Number(e.target.value);
       const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
       e.target.classList.toggle('is-invalid', !ok);
-      if (ok) set(ptr, n, 'curtain:' + ptr);
+      if (!ok) return;
+      if (ptr === TOTAL_PTR) {
+        const t = setTotal(n);
+        e.target.value = String(t);
+        return;
+      }
+      const relPtr = ptr.slice(CURTAIN.length);
+      setCurtainField(relPtr, n);
+      // Reflect clamp in the field.
+      const shown = relPtr === '/out/duration'
+        ? Math.max(0, getTotal() - leaveStart(effective()))
+        : get(ptr);
+      if (shown != null && Number(e.target.value) !== shown) e.target.value = String(shown);
     },
   });
+
   const single = (rel, label, { min = 0, hint } = {}) => {
     const ptr = CURTAIN + rel;
     const input = numInput(ptr, rel, 'tf__input', { min });
     const changed = () => isChanged(ptr);
     const wrap = h('div', { class: ['tf', changed() && 'is-changed'] }, head(label), input, hint ? h('p', { class: 'hint small tf__hint' }, hint) : null);
-    numbers.push({ ptr, rel, input, wrap, changed });
+    numbers.push({ ptr, rel, input, wrap, changed, min });
     return wrap;
   };
-  // Duration + ease of one move on a single row.
-  const pair = (rel, label) => {
-    const dPtr = CURTAIN + rel + '/duration';
-    const ePtr = CURTAIN + rel + '/ease';
-    const input = numInput(dPtr, rel + '/duration', 'f__num');
-    input.title = label + ' duration (seconds)';
-    const ease = easeField({
-      gsap: bridge.api?.gsap,
-      value: get(ePtr) || digRel(effective(), rel + '/ease') || 'expo.inOut',
-      compact: true,
-      onChange: (v) => set(ePtr, v, 'curtain:' + ePtr),
-    });
-    const changed = () => isChanged(dPtr) || isChanged(ePtr);
-    const wrap = h('div', { class: ['tf', changed() && 'is-changed'] },
-      head(label),
-      h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')), ease.el),
-    );
-    numbers.push({ ptr: dPtr, rel: rel + '/duration', input, wrap, changed });
-    eases.push({ ptr: ePtr, rel: rel + '/ease', ease });
-    return wrap;
-  };
+
+  // Total duration above the timeline (fixed axis window).
+  const totalInput = numInput(TOTAL_PTR, '/total', 'tf__input', { min: 0, max: TOTAL_MAX });
+  totalInput.placeholder = fmtS(getTotal());
+  totalInput.value = String(getTotal());
+  const totalChanged = () => isChanged(TOTAL_PTR);
+  const totalWrap = h('div', { class: ['tf', totalChanged() && 'is-changed'] },
+    head('Total duration (s)'),
+    totalInput,
+    h('p', { class: 'hint small tf__hint' }, 'Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will not grow this.'),
+  );
+  numbers.push({
+    ptr: TOTAL_PTR,
+    rel: '/total',
+    input: totalInput,
+    wrap: totalWrap,
+    changed: totalChanged,
+    special: 'total',
+  });
+
   const timeline = curtainTimeline({
     effective,
-    setField: (rel, v) => set(CURTAIN + rel, v, 'curtain:' + CURTAIN + rel),
+    getTotal,
+    setField: (rel, v) => setCurtainField(rel, v),
     onDrag: (on) => (el.__dragging = on),
   });
+
+  // One ease for all four moves; mixed when they differ.
+  const easeValues = () => EASE_PTRS.map((rel) => get(CURTAIN + rel) || digRel(effective(), rel) || 'expo.inOut');
+  const easeState = () => {
+    const vals = easeValues();
+    const same = vals.every((v) => v === vals[0]);
+    return { value: vals[0], mixed: !same, vals };
+  };
+  const globalEase = easeField({
+    gsap: bridge.api?.gsap,
+    value: easeState().value,
+    mixed: easeState().mixed,
+    onChange: (v) => {
+      for (const rel of EASE_PTRS) set(CURTAIN + rel, v, 'curtain:' + CURTAIN + rel);
+    },
+  });
+  const globalEaseWrap = h('div', { class: 'tf ptg__ease' },
+    head('Ease'),
+    globalEase.el,
+    h('p', { class: 'hint small tf__hint' }, 'Applies to curtain in, text in, text out, and curtain out.'),
+  );
+
+  const advEases = EASE_LABELS.map(([rel, label]) => {
+    const ptr = CURTAIN + rel;
+    const ease = easeField({
+      gsap: bridge.api?.gsap,
+      value: get(ptr) || digRel(effective(), rel) || 'expo.inOut',
+      compact: true,
+      onChange: (v) => set(ptr, v, 'curtain:' + ptr),
+    });
+    const wrap = h('div', { class: 'tf ptg__adv-ease' }, head(label), ease.el);
+    return { ptr, rel, ease, wrap };
+  });
+  const advanced = h('details', { class: 'ptg__advanced' },
+    h('summary', {}, 'Advanced easing'),
+    h('div', { class: 'ptg__advanced-body' }, ...advEases.map((r) => r.wrap)),
+  );
+
   const replay = h('button', {
     type: 'button',
     class: 'btn-ed',
     title: 'Play the transition over this page with the values above (no navigation)',
     onclick: () => bridge.api?.replayCurtain?.(),
   }, '\u21ba Replay');
+
   const el = h('section', { class: 'grp ptg' },
     h('h4', { class: 'grp__title' }, 'Page transition'),
     h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
     h('div', { class: 'ptg__actions' }, replay),
+    totalWrap,
     h('div', { class: 'ptl-box' }, timeline.el),
-    CURTAIN_ROWS.map(([kind, ...rest]) => (kind === 'pair' ? pair(...rest) : single(kind, ...rest))),
+    globalEaseWrap,
+    advanced,
+    CURTAIN_ROWS.map(([rel, label, opts]) => single(rel, label, opts || {})),
   );
+
   // Refresh in place (while typing in a field or dragging the timeline) without re-rendering.
   el.__update = () => {
     const eff = effective();
+    const stored = readStoredTotal();
+    if (stored != null) sessionTotal = stored;
+    else if (sessionTotal == null) sessionTotal = curtainOutEnd(eff);
+    // Display out.duration as pinned to the window (writes happen in setCurtainField / setTotal).
+    const wantOut = Math.max(0, Number((getTotal() - leaveStart(eff)).toFixed(2)));
     timeline.layout();
     for (const r of numbers) {
-      const v = get(r.ptr);
       r.wrap.classList.toggle('is-changed', r.changed());
+      if (r.special === 'total') {
+        r.input.placeholder = fmtS(getTotal());
+        const shown = String(stored != null ? stored : getTotal());
+        if (r.input !== document.activeElement && r.input.value !== shown) r.input.value = shown;
+        continue;
+      }
       r.input.placeholder = fmtS(digRel(eff, r.rel) ?? 0);
+      let v = get(r.ptr);
+      if (r.rel === '/out/duration') v = wantOut;
       if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
     }
-    for (const r of eases) r.ease.update(get(r.ptr) || digRel(eff, r.rel));
+    const st = easeState();
+    globalEase.update(st.value, st.mixed);
+    for (const r of advEases) r.ease.update(get(r.ptr) || digRel(eff, r.rel));
   };
+  // Initialise session total and pin once.
+  getTotal();
+  pinOutDuration(getTotal());
   return el;
 }
 
