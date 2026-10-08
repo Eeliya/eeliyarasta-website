@@ -1,0 +1,99 @@
+import { html, esc, img, pad, extAttrs, isExternal } from '../helpers.js';
+
+const caret = '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
+const arrowNE = '<span class="arrow-ne" aria-hidden="true">↗</span>';
+
+const albumLinks = (ctx, kind, list) =>
+  list.map((a) => html`
+    <li><a class="dd-link" href="/${kind}/${a.slug}/">
+      <span class="dd-link__thumb">${img(ctx, a.images[a.cover || 0].src, { alt: '', sizes: '48px' })}</span>
+      <span class="dd-link__name">${esc(a.name)}</span>
+      <span class="dd-link__count">${pad(a.images.length)}</span>
+    </a></li>`);
+
+const projectLink = (p) => {
+  const href = p.url && isExternal(p.url) && p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
+  return html`<li><a class="dd-link dd-link--text" href="${esc(href)}"${extAttrs(href)}>
+    <span class="dd-link__name">${esc(p.title)}</span><span class="dd-link__count">${esc(p.kind)}${isExternal(href) ? arrowNE : ''}</span>
+  </a></li>`;
+};
+
+/** Persistent header: logo, glass nav pill with click-to-open dropdowns, local time, mobile menu toggle. */
+export function header(ctx, route) {
+  const { site, people, places, projects } = ctx;
+  return html`
+  <header class="header" data-header>
+    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home"><span>Eeliya</span><span>Rasta</span></a>
+
+    <nav class="nav" aria-label="Main">
+      <div class="nav__pill glass">
+        <a class="nav__item" href="/" data-nav="/">Home</a>
+        <div class="nav__group">
+          <button class="nav__item" type="button" aria-expanded="false" aria-controls="dd-photography" data-dropdown-toggle data-nav-section="/photography/,/people/,/places/">Photography ${caret}</button>
+          <div class="dropdown glass" id="dd-photography" data-dropdown hidden>
+            <div class="dropdown__cols">
+              <div class="dropdown__col">
+                <a class="dropdown__head" href="/people/">People <sup>${pad(people.length)}</sup></a>
+                <ul>${albumLinks(ctx, 'people', people)}</ul>
+              </div>
+              <div class="dropdown__col">
+                <a class="dropdown__head" href="/places/">Places <sup>${pad(places.length)}</sup></a>
+                <ul>${albumLinks(ctx, 'places', places)}</ul>
+              </div>
+            </div>
+            <a class="dropdown__all" href="/photography/">All photography <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <div class="nav__group">
+          <button class="nav__item" type="button" aria-expanded="false" aria-controls="dd-projects" data-dropdown-toggle data-nav-section="/projects/">Projects ${caret}</button>
+          <div class="dropdown dropdown--narrow glass" id="dd-projects" data-dropdown hidden>
+            <ul class="dropdown__list">${projects.map(projectLink)}</ul>
+            <a class="dropdown__all" href="/projects/">All projects <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <a class="nav__item" href="/about/" data-nav="/about/">About</a>
+      </div>
+    </nav>
+
+    <div class="header__right">
+      <span class="header__clock"><span class="header__clock-dot"></span>NL <time data-clock>--:--</time></span>
+      <button class="menu-toggle glass" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
+        <span class="menu-toggle__label" data-open-label="Close">Menu</span>
+        <span class="menu-toggle__icon" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+  </header>`;
+}
+
+/** Full-screen glass menu used on small screens (opens on click only). */
+export function mobileMenu(ctx) {
+  const { site, people, places, projects } = ctx;
+  return html`
+  <div class="mmenu" id="mobile-menu" data-mobile-menu hidden>
+    <div class="mmenu__panel glass">
+      <nav class="mmenu__nav" aria-label="Mobile">
+        <a class="mmenu__big" href="/" data-nav="/" data-mm-item>Home</a>
+        <div class="mmenu__group" data-mm-item>
+          <a class="mmenu__big" href="/photography/" data-nav="/photography/">Photography</a>
+          <div class="mmenu__sub">
+            <div><a class="mmenu__head" href="/people/">People</a>${people.map((p) => html`<a href="/people/${p.slug}/">${esc(p.name)}</a>`)}</div>
+            <div><a class="mmenu__head" href="/places/">Places</a>${places.map((p) => html`<a href="/places/${p.slug}/">${esc(p.name)}</a>`)}</div>
+          </div>
+        </div>
+        <div class="mmenu__group" data-mm-item>
+          <a class="mmenu__big" href="/projects/" data-nav="/projects/">Projects</a>
+          <div class="mmenu__sub mmenu__sub--single">
+            <div>${projects.map((p) => {
+              const href = p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
+              return html`<a href="${esc(href)}"${extAttrs(href)}>${esc(p.title)}${isExternal(href) ? arrowNE : ''}</a>`;
+            })}</div>
+          </div>
+        </div>
+        <a class="mmenu__big" href="/about/" data-nav="/about/" data-mm-item>About</a>
+      </nav>
+      <div class="mmenu__foot" data-mm-item>
+        ${site.social.slice(0, 2).map((s) => html`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} ${arrowNE}</a>`)}
+      </div>
+    </div>
+  </div>`;
+}
