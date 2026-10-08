@@ -180,24 +180,65 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     const best = Math.min(...hits.map((c) => c.d));
     return { list: hits.filter((c) => c.d - best < 2).map((c) => c.el), p, cc };
   };
-  const show = (def, v) => {
-    readout.textContent = def.label + ': ' + fmtS(v) + 's';
+  const textHit = (track, clientX) => {
+    const cc = effective();
+    const p = curtainPlan(cc, true);
+    const r = track.getBoundingClientRect();
+    const x = ((clientX - r.left) / r.width) * total;
+    const segs = [
+      [p.textIn, p.textIn + cc.labelIn.duration],
+      [p.textIn + cc.labelIn.duration, p.textOut],
+      [p.textOut, p.textGone],
+    ];
+    if (!segs.some(([a, b]) => x >= a - 1e-6 && x <= b + 1e-6 && b - a > 1e-6)) return null;
+    return { p, cc, block: cc.labelIn.duration + cc.hold + cc.labelOut.duration };
+  };
+  const show = (label, v) => {
+    readout.textContent = label + ': ' + fmtS(v) + 's';
     readout.classList.add('is-on');
   };
   const idle = () => {
     readout.textContent = IDLE;
     readout.classList.remove('is-on');
   };
-  const begin = (el) => {
+  const beginHandle = (el) => {
     drag.el = el;
     el.classList.add('is-active');
-    show(el.__def, digRel(drag.cc0, el.__def.ptr) ?? 0);
+    show(el.__def.label, digRel(drag.cc0, el.__def.ptr) ?? 0);
+  };
+  const clampTextDelay = (v, block, tmax) => {
+    const hi = Math.max(0, tmax - block);
+    return Number(Math.min(hi, Math.max(0, v)).toFixed(2));
   };
 
   function track(row, name) {
     const barsEl = h('div', { class: 'ptl__bars' });
     for (let i = 0; i < 3; i++) {
-      const bar = h('i', { class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'] });
+      const len = h('span', { class: 'ptl__len', 'aria-hidden': 'true' });
+      const bar = h('i', {
+        class: ['ptl__bar', i === 1 ? 'is-hold' : 'is-move', row === 't' && 'is-text'],
+        ...(row === 't' ? {
+          tabindex: '0',
+          role: 'slider',
+          title: 'Drag to move the text block (arrow keys to nudge)',
+          'aria-label': 'Move text block',
+        } : {}),
+      }, len);
+      bar.__len = len;
+      if (row === 't') {
+        bar.addEventListener('keydown', (e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          const cc = effective();
+          const block = cc.labelIn.duration + cc.hold + cc.labelOut.duration;
+          const step = e.shiftKey ? 0.1 : 0.01;
+          const raw = cc.textDelay + (e.key === 'ArrowRight' ? 1 : -1) * step;
+          const v = clampTextDelay(Math.round(raw / step) * step, block, getTotal());
+          setField('/textDelay', v);
+          show('Text block', v);
+        });
+        bar.addEventListener('blur', () => !drag && idle());
+      }
       bars[row].push(bar);
       barsEl.append(bar);
     }
@@ -214,7 +255,7 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
           const raw = cur + (e.key === 'ArrowRight' ? 1 : -1) * step;
           const v = clampField(def.ptr, Math.round(raw / step) * step, def.min, cc, getTotal());
           setField(def.ptr, v);
-          show(def, v);
+          show(def.label, v);
         },
         onblur: () => !drag && idle(),
       });
@@ -225,40 +266,64 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     el.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       const hit = near(el, row, e.clientX, e.pointerType);
-      if (!hit) return;
+      if (hit) {
+        e.preventDefault();
+        el.setPointerCapture(e.pointerId);
+        drag = { kind: 'handle', id: e.pointerId, track: el, x0: e.clientX, list: hit.list, el: null, p0: hit.p, cc0: hit.cc };
+        root.classList.add('is-dragging');
+        onDrag(true);
+        if (hit.list.length === 1) beginHandle(hit.list[0]);
+        return;
+      }
+      if (row !== 't') return;
+      const body = textHit(el, e.clientX);
+      if (!body) return;
       e.preventDefault();
       el.setPointerCapture(e.pointerId);
-      drag = { id: e.pointerId, track: el, x0: e.clientX, list: hit.list, el: null, p0: hit.p, cc0: hit.cc };
-      root.classList.add('is-dragging');
+      drag = {
+        kind: 'move', id: e.pointerId, track: el, x0: e.clientX,
+        delay0: body.cc.textDelay, block: body.block, p0: body.p, cc0: body.cc,
+      };
+      root.classList.add('is-dragging', 'is-moving');
       onDrag(true);
-      if (hit.list.length === 1) begin(hit.list[0]);
+      show('Text block', body.cc.textDelay);
     });
     el.addEventListener('pointermove', (e) => {
       if (!drag) {
-        el.style.cursor = near(el, row, e.clientX, e.pointerType) ? 'ew-resize' : '';
+        if (near(el, row, e.clientX, e.pointerType)) el.style.cursor = 'ew-resize';
+        else if (row === 't' && textHit(el, e.clientX)) el.style.cursor = 'grab';
+        else el.style.cursor = '';
         return;
       }
       if (e.pointerId !== drag.id) return;
+      const r = el.getBoundingClientRect();
+      const step = e.shiftKey ? 0.1 : 0.01;
+      if (drag.kind === 'move') {
+        const dx = ((e.clientX - drag.x0) / r.width) * total;
+        const raw = Math.round((drag.delay0 + dx) / step) * step;
+        const v = clampTextDelay(raw, drag.block, getTotal());
+        setField('/textDelay', v);
+        show('Text block', v);
+        return;
+      }
       if (!drag.el) {
         // Several ends on the same spot: the drag direction decides (right = the later one).
         const dx = e.clientX - drag.x0;
         if (Math.abs(dx) < 3) return;
-        begin(dx > 0 ? drag.list.at(-1) : drag.list[0]);
+        beginHandle(dx > 0 ? drag.list.at(-1) : drag.list[0]);
       }
-      const r = el.getBoundingClientRect();
       const x = ((e.clientX - r.left) / r.width) * total;
       const def = drag.el.__def;
-      const step = e.shiftKey ? 0.1 : 0.01;
       const raw = Math.round(def.value(x, drag.p0, drag.cc0) / step) * step;
       const v = clampField(def.ptr, raw, def.min, drag.cc0, getTotal());
       setField(def.ptr, v);
-      show(def, v);
+      show(def.label, v);
     });
     const end = (e) => {
       if (!drag || e.pointerId !== drag.id) return;
       drag.el?.classList.remove('is-active');
       drag = null;
-      root.classList.remove('is-dragging');
+      root.classList.remove('is-dragging', 'is-moving');
       onDrag(false);
       idle();
       layout();
@@ -277,25 +342,31 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     // Axis length is the total-duration window; only the total field rescales it.
     total = Math.max(0.01, getTotal());
     const pct = (v) => (v / total) * 100 + '%';
-    const place = (bar, from, to, title) => {
+    const trackW = bars.c[0]?.parentElement?.parentElement?.getBoundingClientRect().width || 0;
+    const place = (bar, from, to, title, dur) => {
       const f = Math.max(0, from);
+      const w = Math.max(0, to - f);
       bar.style.left = pct(f);
-      bar.style.width = pct(Math.max(0, to - f));
+      bar.style.width = pct(w);
       bar.title = title;
+      const len = Number((dur != null ? dur : w).toFixed(2));
+      bar.__len.textContent = fmtS(len) + 's';
+      const px = trackW ? (w / total) * trackW : 0;
+      bar.__len.hidden = !(len > 0 && px >= 28);
     };
     // Leave bar is pinned to total on the right (no end handle).
     const outEnd = total;
-    place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's');
-    place(bars.c[1], p.closed, p.outAt, 'Closed');
-    place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's');
+    place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's', cc.in.duration);
+    place(bars.c[1], p.closed, p.outAt, 'Closed', Math.max(0, p.outAt - p.closed));
+    place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's', Math.max(0, outEnd - p.outAt));
     // Clip text geometry to the total window (handles + bars never sit past the end).
     const textIn = Math.min(total, p.textIn);
     const textMid = Math.min(total, p.textIn + cc.labelIn.duration);
     const textOut = Math.min(total, p.textOut);
     const textGone = Math.min(total, p.textGone);
-    place(bars.t[0], textIn, textMid, 'Comes in: ' + fmtS(p.textIn) + 's');
-    place(bars.t[1], textMid, textOut, 'Stays');
-    place(bars.t[2], textOut, textGone, 'Leaves, gone at ' + fmtS(Math.min(p.textGone, total)) + 's');
+    place(bars.t[0], textIn, textMid, 'Comes in: ' + fmtS(p.textIn) + 's', cc.labelIn.duration);
+    place(bars.t[1], textMid, textOut, 'Stays', cc.hold);
+    place(bars.t[2], textOut, textGone, 'Leaves, gone at ' + fmtS(Math.min(p.textGone, total)) + 's', cc.labelOut.duration);
     for (const hd of handles) hd.style.left = pct(Math.min(total, Math.max(0, hd.__def.at(p, cc))));
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {
