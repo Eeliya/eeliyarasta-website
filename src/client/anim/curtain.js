@@ -2,33 +2,34 @@
  * Page-transition curtain timing. Pure (no DOM), shared by the router and the editor.
  *
  * content/animations.json -> transitions.page.curtain
- *   easeMode      "shared" | "individual"  (missing = shared)
+ *   easeMode      shared | individual  (missing = shared)
  *   ease          one ease for every step when easeMode is shared
  *   in            { duration, ease }  curtain comes in (closes)
  *   textDelay     absolute start of text-in (from t=0)
  *   labelIn       { duration, ease }  text comes in
- *   holdStart     start of the stays gap (= textDelay + labelIn.duration; not independent)
- *   hold          how long the text stays (gap between text-in end and text-out start)
- *   textOutStart  absolute start of text-out (missing => holdStart + hold)
+ *   textOutStart  absolute start of text-out (missing => text-in end + legacy hold)
  *   labelOut      { duration, ease }  text leaves
- *   outStart      absolute start of curtain-out (missing => textGone + afterText;
- *                 re-derived each normalize when missing — supply outStart for a stable value)
- *   afterText     derived as outStart - textGone (compat only)
- *   out           { duration, ease }  curtain leaves (opens)
+ *   outStart      absolute start of curtain-out (missing => textGone + legacy afterText)
+ *   total         timeline window (missing => outStart + out.duration)
+ *   out           { ease, duration }  duration is always total - outStart (not a second source)
  *   label         false hides the text on every page
+ *
+ * Legacy JSON may still carry hold / afterText / out.duration; normalize derives absolutes
+ * from them and does not return those relative fields.
  */
 export const CURTAIN_DEFAULTS = {
   in: { duration: 0.7, ease: 'expo.inOut' },
   labelIn: { duration: 0.45, ease: 'expo.out' },
-  hold: 0.12,
   labelOut: { duration: 0.35, ease: 'power2.in' },
-  afterText: -0.25,
   out: { duration: 0.8, ease: 'expo.inOut' },
 };
 
+/** Only used when absolute fields are missing in old JSON. */
+const LEGACY = { hold: 0.12, afterText: -0.25 };
+
 const num = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 
-/** Curtain config with every value filled in, or null when the curtain is off. */
+/** Curtain config with every absolute value filled in, or null when the curtain is off. */
 export function normalizeCurtain(raw) {
   if (!raw) return null;
   const c = raw === true ? {} : raw;
@@ -41,7 +42,7 @@ export function normalizeCurtain(raw) {
   const inn = seg('in');
   const labelIn = seg('labelIn');
   const labelOut = seg('labelOut');
-  const out = seg('out');
+  const outSeg = seg('out');
 
   const easeMode = c.easeMode === 'individual' ? 'individual' : 'shared';
   const stepEases = [c.in?.ease, c.labelIn?.ease, c.labelOut?.ease, c.out?.ease].filter(
@@ -59,23 +60,25 @@ export function normalizeCurtain(raw) {
   });
 
   const textDelay = Math.max(0, num(c.textDelay, inn.duration));
-  // Stays is the gap between text-in and text-out — holdStart is always the text-in end.
-  const holdStart = textDelay + labelIn.duration;
+  const textInEnd = textDelay + labelIn.duration;
+
   let textOutStart = num(c.textOutStart, NaN);
-  let hold = Math.max(0, num(c.hold, D.hold));
-  if (Number.isFinite(textOutStart)) {
-    textOutStart = Math.max(0, textOutStart);
-    hold = Math.max(0, textOutStart - holdStart);
+  if (!Number.isFinite(textOutStart)) {
+    textOutStart = Math.max(0, textInEnd + Math.max(0, num(c.hold, LEGACY.hold)));
   } else {
-    textOutStart = Math.max(0, holdStart + hold);
+    textOutStart = Math.max(0, textOutStart);
   }
   const textGone = textOutStart + labelOut.duration;
 
-  const afterLegacy = num(c.afterText, D.afterText);
   let outStart = num(c.outStart, NaN);
-  if (!Number.isFinite(outStart)) outStart = textGone + afterLegacy;
+  if (!Number.isFinite(outStart)) outStart = textGone + num(c.afterText, LEGACY.afterText);
   outStart = Math.max(0, outStart);
-  const afterText = outStart - textGone;
+
+  let total = num(c.total, NaN);
+  if (!Number.isFinite(total)) total = outStart + outSeg.duration;
+  total = Number(Math.max(total, outStart, inn.duration).toFixed(2));
+
+  const outDuration = Number(Math.max(0, total - outStart).toFixed(2));
 
   return {
     label: c.label !== false,
@@ -84,39 +87,51 @@ export function normalizeCurtain(raw) {
     in: step(inn, c.in?.ease),
     textDelay,
     labelIn: step(labelIn, c.labelIn?.ease),
-    holdStart,
-    hold,
     textOutStart,
     labelOut: step(labelOut, c.labelOut?.ease),
     outStart,
-    afterText,
-    out: step(out, c.out?.ease),
+    total,
+    out: { ...step(outSeg, c.out?.ease), duration: outDuration },
   };
 }
 
 /**
- * When everything happens, in seconds from the moment the curtain starts coming in.
- * Text-in and text-out use absolute starts; the gap between them is the stays (hold).
+ * Geometry both the editor timeline and the router use.
+ * Ranges are [start, end] in seconds from the moment the curtain starts coming in.
+ * shut = closed wait between curtain enter and leave; stay = wait between text enter and leave.
  */
 export function curtainPlan(cc, hasText = true) {
-  const closed = cc.in.duration;
-  const outAt = Math.max(closed, Math.max(0, num(cc.outStart, closed)));
+  const total = Math.max(0.01, num(cc.total, cc.outStart + cc.out.duration));
+  const cIn1 = Math.max(0, cc.in.duration);
+  const cOut0 = Math.max(cIn1, Math.max(0, num(cc.outStart, cIn1)));
+  const cOut1 = total;
+  const shut = Math.max(0, cOut0 - cIn1);
+
   if (!hasText) {
-    return { closed, outAt, outEnd: outAt + cc.out.duration, end: outAt + cc.out.duration };
+    return {
+      total,
+      curtainIn: [0, cIn1],
+      curtainOut: [cOut0, cOut1],
+      textIn: null,
+      textOut: null,
+      shut,
+      stay: 0,
+    };
   }
-  const textIn = Math.max(0, num(cc.textDelay, 0));
-  const textHold = Math.max(0, num(cc.holdStart, textIn + cc.labelIn.duration));
-  const textOut = Math.max(0, num(cc.textOutStart, textHold + cc.hold));
-  const textGone = textOut + cc.labelOut.duration;
-  const outEnd = outAt + cc.out.duration;
+
+  const tIn0 = Math.max(0, num(cc.textDelay, 0));
+  const tIn1 = tIn0 + cc.labelIn.duration;
+  const tOut0 = Math.max(0, num(cc.textOutStart, tIn1));
+  const tOut1 = tOut0 + cc.labelOut.duration;
+  const stay = Math.max(0, tOut0 - tIn1);
+
   return {
-    closed,
-    textIn,
-    textHold,
-    textOut,
-    textGone,
-    outAt,
-    outEnd,
-    end: Math.max(outEnd, textGone),
+    total,
+    curtainIn: [0, cIn1],
+    curtainOut: [cOut0, cOut1],
+    textIn: [tIn0, tIn1],
+    textOut: [tOut0, tOut1],
+    shut,
+    stay,
   };
 }

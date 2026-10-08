@@ -70,9 +70,9 @@ const until = (tl, pos) =>
 /**
  * The curtain sequence, on one explicit timeline (times from anim/curtain.js curtainPlan):
  *   0                curtain starts coming in (and the old view leaves)
- *   textDelay        text-in starts
- *   textOutStart     text-out starts (absolute; the gap after text-in is hold/stays)
- *   outStart         curtain starts leaving (never before it is fully closed)
+ *   plan.textIn[0]       text-in starts
+ *   plan.textOut[0]      text-out starts (gap after text-in is stay)
+ *   plan.curtainOut[0]   curtain starts leaving (never before it is fully closed)
  *
  * `ready` resolves to { label, swap } once the next page is loaded. swap() runs as soon as
  * the curtain is fully closed and returns the new view. If the page arrives after the text
@@ -100,10 +100,12 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
   const text = cc.label ? String(page.label ?? '') : '';
   const p = curtainPlan(cc, !!text);
   const now = gsap.ticker.time - t0;
-  const late = Math.max(0, now - (text ? p.textIn : p.closed));
+  const textAt = text ? p.textIn[0] : p.curtainIn[1];
+  const late = Math.max(0, now - textAt);
   const at = (abs) => Math.max(0, abs + late - now);
-  const swapAt = Math.max(0, p.closed - now);
-  const outAt = Math.max(at(p.outAt), swapAt);
+  const swapAt = Math.max(0, p.curtainIn[1] - now);
+  const outAt = Math.max(at(p.curtainOut[0]), swapAt);
+  const outDur = p.curtainOut[1] - p.curtainOut[0];
 
   const tl = gsap.timeline();
   l.textContent = text;
@@ -112,16 +114,16 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
       l,
       { autoAlpha: 0, yPercent: 40 },
       { autoAlpha: 1, yPercent: 0, duration: cc.labelIn.duration, ease: cc.labelIn.ease },
-      at(p.textIn),
+      at(p.textIn[0]),
     ).to(
       l,
       { autoAlpha: 0, yPercent: -40, duration: cc.labelOut.duration, ease: cc.labelOut.ease },
-      at(p.textOut),
+      at(p.textOut[0]),
     );
   }
   tl.to(
     panel,
-    { scaleY: 0, transformOrigin: '50% 0%', duration: cc.out.duration, ease: cc.out.ease },
+    { scaleY: 0, transformOrigin: '50% 0%', duration: outDur, ease: cc.out.ease },
     outAt,
   );
 
@@ -139,7 +141,7 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
         ease: t.enter.ease,
         clearProps: 'transform,opacity,visibility',
       },
-      Math.max(tl.time(), outAt + cc.out.duration - 0.6),
+      Math.max(tl.time(), outAt + outDur - 0.6),
     );
   }
   // Mount the page's animations just before the curtain starts leaving.
