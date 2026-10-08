@@ -124,19 +124,26 @@ function maxForPtr(ptr, cc, total) {
   const td = cc.textDelay;
   const hold = cc.hold;
   const after = cc.afterText;
+  // Text block must end by total (textGone <= t). Also leave start
+  // (textGone + afterText) must stay <= t. When afterText is negative the
+  // textGone cap is the tighter one — that was the bug that let text past total.
+  const maxTextDelay = Math.min(t - (li + hold + lo), t - (li + hold + lo + after));
+  const maxLabelIn = Math.min(t - (td + hold + lo), t - (td + hold + lo + after));
+  const maxHold = Math.min(t - (td + li + lo), t - (td + li + lo + after));
+  const maxLabelOut = Math.min(t - (td + li + hold), t - (td + li + hold + after));
   switch (ptr) {
     case '/in/duration':
       return t;
     case '/afterText':
       return t - (td + li + hold + lo);
     case '/textDelay':
-      return t - (li + hold + lo + after);
+      return maxTextDelay;
     case '/labelIn/duration':
-      return t - (td + hold + lo + after);
+      return maxLabelIn;
     case '/hold':
-      return t - (td + li + lo + after);
+      return maxHold;
     case '/labelOut/duration':
-      return t - (td + li + hold + after);
+      return maxLabelOut;
     case '/out/duration':
       return Math.max(0, t - leaveStart(cc));
     default:
@@ -285,10 +292,15 @@ function curtainTimeline({ effective, getTotal, setField, onDrag }) {
     place(bars.c[0], 0, p.closed, 'Comes in: 0 to ' + fmtS(p.closed) + 's');
     place(bars.c[1], p.closed, p.outAt, 'Closed');
     place(bars.c[2], p.outAt, outEnd, 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(outEnd) + 's');
-    place(bars.t[0], p.textIn, p.textIn + cc.labelIn.duration, 'Comes in: ' + fmtS(p.textIn) + 's');
-    place(bars.t[1], p.textIn + cc.labelIn.duration, p.textOut, 'Stays');
-    place(bars.t[2], p.textOut, p.textGone, 'Leaves, gone at ' + fmtS(p.textGone) + 's');
-    for (const hd of handles) hd.style.left = pct(hd.__def.at(p, cc));
+    // Clip text geometry to the total window (handles + bars never sit past the end).
+    const textIn = Math.min(total, p.textIn);
+    const textMid = Math.min(total, p.textIn + cc.labelIn.duration);
+    const textOut = Math.min(total, p.textOut);
+    const textGone = Math.min(total, p.textGone);
+    place(bars.t[0], textIn, textMid, 'Comes in: ' + fmtS(p.textIn) + 's');
+    place(bars.t[1], textMid, textOut, 'Stays');
+    place(bars.t[2], textOut, textGone, 'Leaves, gone at ' + fmtS(Math.min(p.textGone, total)) + 's');
+    for (const hd of handles) hd.style.left = pct(Math.min(total, Math.max(0, hd.__def.at(p, cc))));
     root.style.setProperty('--tick', pct(0.5));
     if (axisFor !== total) {
       axisFor = total;
