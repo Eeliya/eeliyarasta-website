@@ -52,5 +52,5 @@ export function body(ctx, route, accent, view) {
     </div>
   </div>
   <div id="portal"></div>
-  <div class="curtain" aria-hidden="true"><span class="curtain__label"></span></div>`;
+  <div class="curtain" aria-hidden="true"><div class="curtain__panel"></div><span class="curtain__label"></span></div>`;
 }

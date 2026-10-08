@@ -7,7 +7,7 @@ import { gsap, ScrollTrigger } from './lib/env.js';
 import { mount as mountAnimations, config as animationConfig, resolve as resolveAnimation, setConfig, pageKey } from './anim/engine.js';
 import { flags } from './anim/flags.js';
 import { initSmooth, getSmoother } from './smooth.js';
-import { initRouter, navigate } from './router.js';
+import { initRouter, navigate, replayCurtain } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
 import { initClock, updateClocks } from './ui/clock.js';
 import { applyAccent } from './theme.js';
@@ -83,6 +83,8 @@ function connectEditor() {
     pageKey,
     hooks,
     navigate,
+    /** Play the page-transition curtain over the current page (no navigation). */
+    replayCurtain: (label) => replayCurtain(label),
     getSmoother,
     view: () => current?.view || null,
     /** Replace the animation config (in place) with an edited copy. */

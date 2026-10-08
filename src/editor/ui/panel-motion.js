@@ -10,6 +10,7 @@ import { h, clear } from './dom.js';
 import { compile } from '../lib/pointer.js';
 import { numberField, textField, segmentField, customField } from './fields.js';
 import { easeField } from './ease.js';
+import { normalizeCurtain, curtainPlan } from '../../client/anim/curtain.js';
 
 const FILE = 'animations.json';
 // Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
@@ -72,31 +73,65 @@ const GROUPS = {
   'hover-preview': [['Preview', [n(['x'], 'Position across the list', 100, 1, '%'), n(['glide'], 'Glide between rows', 1.5, 0.01, 's')]]],
 };
 
-const CURTAIN = {
-  hold: '/transitions/page/curtain/hold',
-  inDur: '/transitions/page/curtain/in/duration',
-  inEase: '/transitions/page/curtain/in/ease',
-  outDur: '/transitions/page/curtain/out/duration',
-  outEase: '/transitions/page/curtain/out/ease',
-};
+const CURTAIN = '/transitions/page/curtain';
+// Page transition rows, in the order things happen. [pointer under CURTAIN, label, options]
+const CURTAIN_ROWS = [
+  ['/in/duration', 'Curtain in (s)'],
+  ['/in/ease', 'Curtain in ease', { kind: 'ease' }],
+  ['/textDelay', 'Text starts after curtain (s)', { hint: 'Counted from when the curtain starts coming in. 0 = with the curtain. Same as "Curtain in" = once it is closed.' }],
+  ['/labelIn/duration', 'Text in (s)'],
+  ['/labelIn/ease', 'Text in ease', { kind: 'ease' }],
+  ['/hold', 'Text stays (s)', { hint: 'Fully visible. On pages without curtain text, the closed curtain stays this long.' }],
+  ['/labelOut/duration', 'Text out (s)'],
+  ['/labelOut/ease', 'Text out ease', { kind: 'ease' }],
+  ['/afterText', 'Curtain leaves after text (s)', { min: -2, hint: 'Counted from when the text is fully gone. 0 = right away. Negative = the curtain starts leaving while the text is still going.' }],
+  ['/out/duration', 'Curtain out (s)'],
+  ['/out/ease', 'Curtain out ease', { kind: 'ease' }],
+];
+const fmtS = (v) => String(Math.round(v * 100) / 100);
+
+/** Two-row bar chart of the curtain and text over time (same maths as the router). */
+function curtainSketch(cc) {
+  const p = curtainPlan(cc, true);
+  const total = Math.max(p.end, 0.01);
+  const pct = (v) => (Math.max(0, v) / total) * 100 + '%';
+  const bar = (from, to, cls, title) => h('i', { class: ['ptl__bar', cls], title, style: { left: pct(from), width: pct(to - from) } });
+  const row = (name, bars) => h('div', { class: 'ptl__row' }, h('span', { class: 'ptl__name' }, name), h('div', { class: 'ptl__track' }, bars));
+  return h('div', { class: 'ptl', 'aria-hidden': 'true' },
+    row('Curtain', [
+      bar(0, p.closed, 'is-move', 'Comes in: 0 to ' + fmtS(p.closed) + 's'),
+      bar(p.closed, p.outAt, 'is-hold', 'Closed'),
+      bar(p.outAt, p.outEnd, 'is-move', 'Leaves: ' + fmtS(p.outAt) + ' to ' + fmtS(p.outEnd) + 's'),
+    ]),
+    row('Text', [
+      bar(p.textIn, p.textIn + cc.labelIn.duration, 'is-move is-text', 'Comes in: ' + fmtS(p.textIn) + 's'),
+      bar(p.textIn + cc.labelIn.duration, p.textOut, 'is-hold is-text', 'Stays'),
+      bar(p.textOut, p.textGone, 'is-move is-text', 'Leaves, gone at ' + fmtS(p.textGone) + 's'),
+    ]),
+    h('div', { class: 'ptl__axis' }, h('span', {}, '0s'), h('span', {}, fmtS(total) + 's')),
+  );
+}
 
 function pageTransitionGroup(store, bridge) {
   const get = (ptr) => store.get(FILE, ptr);
   const base = (ptr) => store.getBase(FILE, ptr);
   const set = (ptr, value, key) => store.set(FILE, ptr, value, { key, source: 'panel' });
-  const row = (ptr, label, { kind = 'number', step = 0.01, min = 0, max = 4 } = {}) => {
+  const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
+  const dig2 = (obj, rel) => rel.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+  const numbers = [];
+  const row = (rel, label, { kind = 'number', step = 0.01, min = 0, max = 4, hint } = {}) => {
+    const ptr = CURTAIN + rel;
     const value = get(ptr);
     const changed = JSON.stringify(value) !== JSON.stringify(base(ptr));
+    const head = h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' }));
+    const note = hint ? h('p', { class: 'hint small tf__hint' }, hint) : null;
     if (kind === 'ease') {
       const ease = easeField({
         gsap: bridge.api?.gsap,
-        value: value || 'expo.inOut',
+        value: value || dig2(effective(), rel) || 'expo.inOut',
         onChange: (v) => set(ptr, v, 'curtain:' + ptr),
       });
-      return h('div', { class: ['tf', changed && 'is-changed'] },
-        h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' })),
-        ease.el,
-      );
+      return h('div', { class: ['tf', changed && 'is-changed'] }, head, ease.el, note);
     }
     const input = h('input', {
       class: 'tf__input',
@@ -105,6 +140,8 @@ function pageTransitionGroup(store, bridge) {
       min: String(min),
       max: String(max),
       value: value ?? '',
+      placeholder: fmtS(dig2(effective(), rel) ?? 0),
+      dataset: { ptr },
       oninput: (e) => {
         const n = Number(e.target.value);
         const ok = e.target.value.trim() !== '' && Number.isFinite(n) && n >= min;
@@ -112,20 +149,36 @@ function pageTransitionGroup(store, bridge) {
         if (ok) set(ptr, n, 'curtain:' + ptr);
       },
     });
-    return h('div', { class: ['tf', changed && 'is-changed'] },
-      h('label', { class: 'tf__label' }, h('span', { class: 'tf__file' }, 'animations'), label, h('i', { class: 'dot', title: 'Changed' })),
-      input,
-    );
+    const wrap = h('div', { class: ['tf', changed && 'is-changed'] }, head, input, note);
+    numbers.push({ ptr, rel, input, wrap });
+    return wrap;
   };
-  return h('section', { class: 'grp' },
+  const sketchBox = h('div', { class: 'ptl-box' }, curtainSketch(effective()));
+  const replay = h('button', {
+    type: 'button',
+    class: 'btn-ed',
+    title: 'Play the transition over this page with the values above (no navigation)',
+    onclick: () => bridge.api?.replayCurtain?.(),
+  }, '\u21ba Replay');
+  const el = h('section', { class: 'grp ptg' },
     h('h4', { class: 'grp__title' }, 'Page transition'),
-    h('p', { class: 'hint' }, 'Site-wide curtain timing. The label text is edited per page under Content → Page transition.'),
-    row(CURTAIN.hold, 'Hold (seconds)', { max: 3 }),
-    row(CURTAIN.inDur, 'Curtain in (seconds)'),
-    row(CURTAIN.inEase, 'Curtain in ease', { kind: 'ease' }),
-    row(CURTAIN.outDur, 'Curtain out (seconds)'),
-    row(CURTAIN.outEase, 'Curtain out ease', { kind: 'ease' }),
+    h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
+    h('div', { class: 'ptg__actions' }, replay),
+    sketchBox,
+    CURTAIN_ROWS.map(([rel, label, opts]) => row(rel, label, opts)),
   );
+  // Refresh values in place (used while a number field has focus, so typing is not interrupted).
+  el.__update = () => {
+    const eff = effective();
+    clear(sketchBox, curtainSketch(eff));
+    for (const r of numbers) {
+      const v = get(r.ptr);
+      r.wrap.classList.toggle('is-changed', JSON.stringify(v) !== JSON.stringify(base(r.ptr)));
+      r.input.placeholder = fmtS(dig2(eff, r.rel) ?? 0);
+      if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
+    }
+  };
+  return el;
 }
 
 export function createMotionPanel({ store, bridge, root, toast }) {
@@ -299,7 +352,14 @@ export function createMotionPanel({ store, bridge, root, toast }) {
     if (!bridge.api) return clear(root, h('p', { class: 'hint' }, 'Waiting for the preview…'));
     if (!sel) {
       updaters = [];
-      return clear(root, renderList());
+      // Typing in a page-transition number: update in place instead of re-rendering (keeps focus).
+      const active = document.activeElement;
+      const ptg = root.querySelector('.ptg');
+      if (ptg?.__update && active?.matches?.('input[data-ptr]') && ptg.contains(active)) return ptg.__update();
+      const top = root.scrollTop;
+      clear(root, renderList());
+      root.scrollTop = top;
+      return;
     }
     if (!force && sig(model()) === signature) {
       const m = model();

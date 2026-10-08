@@ -346,3 +346,19 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
   .ed-stage { inset: 0 0 50vh 0; padding: 8px; }
   .ed-panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: calc(50vh - 16px); }
 }
+
+/* Page transition: timeline sketch (Motion tab) */
+.ptg__actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.tf__hint { margin: 6px 0 0; }
+.ptg .tf { margin-bottom: 10px; }
+.ptl-box { margin: 0 0 14px; }
+.ptl { display: grid; gap: 6px; padding: 10px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); background: rgb(255 255 255 / 0.03); }
+.ptl__row { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; }
+.ptl__name { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.ptl__track { position: relative; height: 12px; border-radius: 3px; background: rgb(255 255 255 / 0.04); overflow: hidden; }
+.ptl__bar { position: absolute; top: 0; bottom: 0; display: block; }
+.ptl__bar.is-move { background: rgb(255 255 255 / 0.55); }
+.ptl__bar.is-hold { background: rgb(255 255 255 / 0.18); }
+.ptl__bar.is-text.is-move { background: $hi; }
+.ptl__bar.is-text.is-hold { background: rgb(159 211 255 / 0.3); }
+.ptl__axis { display: flex; justify-content: space-between; padding-left: 64px; font-size: 10px; color: var(--faint); }
