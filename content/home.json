@@ -81,5 +81,6 @@
     "people": { "label": "People", "title": "Models I've worked with", "cta": "All people" },
     "places": { "label": "Places", "title": "Buildings, streets & castles", "cta": "All places" },
     "projects": { "label": "Projects", "title": "Things I build", "cta": "All projects" }
-  }
+  },
+  "curtain": "Eeliya Rasta"
 }

@@ -92,7 +92,8 @@
           "license": "Unsplash License"
         }
       }
-    ]
+    ],
+    "curtain": "Noor Vermeer"
   },
   {
     "slug": "daan-okafor",
@@ -177,6 +178,7 @@
           "license": "Unsplash License"
         }
       }
-    ]
+    ],
+    "curtain": "Daan Okafor"
   }
 ]

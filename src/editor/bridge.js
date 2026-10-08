@@ -118,6 +118,14 @@ export function createBridge({ iframe, store, labelFor }) {
         if (!force && (el === doc.activeElement || applied.get(el) === value)) continue;
         pending.push([el, value]);
       }
+      // Keep the page-transition label on <main> in sync with the draft content.
+      const view = doc.querySelector('[data-router-view]');
+      if (view?.dataset.curtainEdit) {
+        const { file, ptr } = parseEdit(view.dataset.curtainEdit);
+        const curtainVal = store.get(file, ptr);
+        if (curtainVal !== undefined && curtainVal !== null) view.setAttribute('data-curtain', String(curtainVal));
+      }
+
       if (!pending.length) return;
       const run = () => {
         for (const [el, value] of pending) {

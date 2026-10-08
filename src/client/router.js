@@ -16,6 +16,27 @@ let hooks = { mount: () => {}, unmount: () => {} };
 
 const normalize = (pathname) => (pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/');
 
+/** Curtain timings from content/animations.json transitions.page.curtain (with defaults). */
+function curtainCfg() {
+  const raw = transitions.page?.curtain;
+  if (!raw) return null;
+  const c = raw === true ? {} : raw;
+  return {
+    label: c.label !== false,
+    hold: c.hold ?? 0.12,
+    in: { duration: 0.7, ease: 'expo.inOut', ...(c.in || {}) },
+    labelIn: { duration: 0.45, ease: 'expo.out', ...(c.labelIn || {}) },
+    labelOut: { duration: 0.35, ease: 'power2.in', ...(c.labelOut || {}) },
+    out: { duration: 0.8, ease: 'expo.inOut', ...(c.out || {}) },
+  };
+}
+
+/** Label for the curtain: data-curtain on the incoming view, else document title. Empty string = no text. */
+function curtainLabel(incoming, doc) {
+  if (incoming && incoming.hasAttribute('data-curtain')) return incoming.getAttribute('data-curtain') ?? '';
+  return doc.title.split('|')[0].trim();
+}
+
 function getPage(pathname) {
   const key = normalize(pathname);
   if (!cache.has(key)) {
@@ -42,30 +63,38 @@ const curtain = () => document.querySelector('.curtain');
 
 async function leave(view) {
   const t = transitions.page;
+  const cc = curtainCfg();
   if (reducedMotion()) return gsap.to(view, { autoAlpha: 0, duration: 0.2 });
   const tl = gsap.timeline();
   tl.to(view, { ...t.leave.to, duration: t.leave.duration, ease: t.leave.ease }, 0);
-  if (t.curtain) {
+  if (cc) {
     const c = curtain();
     gsap.set(c.querySelector('.curtain__label'), { autoAlpha: 0 });
-    tl.fromTo(c, { scaleY: 0, transformOrigin: '50% 100%' }, { scaleY: 1, duration: 0.7, ease: 'expo.inOut' }, 0);
+    tl.fromTo(c, { scaleY: 0, transformOrigin: '50% 100%' }, { scaleY: 1, duration: cc.in.duration, ease: cc.in.ease }, 0);
   }
   return tl;
 }
 
 function enter(view, label) {
   const t = transitions.page;
+  const cc = curtainCfg();
   if (reducedMotion()) return gsap.fromTo(view, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25 });
   const tl = gsap.timeline();
-  if (t.curtain) {
+  if (cc) {
     const c = curtain();
     const l = c.querySelector('.curtain__label');
-    l.textContent = label || '';
-    tl.fromTo(l, { autoAlpha: 0, yPercent: 40 }, { autoAlpha: 1, yPercent: 0, duration: 0.45, ease: 'expo.out' })
-      .to(l, { autoAlpha: 0, yPercent: -40, duration: 0.35, ease: 'power2.in' }, '+=0.12')
-      .to(c, { scaleY: 0, transformOrigin: '50% 0%', duration: 0.8, ease: 'expo.inOut' }, '-=0.25');
+    const text = cc.label === false ? '' : (label ?? '');
+    l.textContent = text;
+    if (text) {
+      tl.fromTo(l, { autoAlpha: 0, yPercent: 40 }, { autoAlpha: 1, yPercent: 0, duration: cc.labelIn.duration, ease: cc.labelIn.ease })
+        .to(l, { autoAlpha: 0, yPercent: -40, duration: cc.labelOut.duration, ease: cc.labelOut.ease }, `+=${cc.hold}`)
+        .to(c, { scaleY: 0, transformOrigin: '50% 0%', duration: cc.out.duration, ease: cc.out.ease }, '-=0.25');
+    } else {
+      // No label: briefly hold the solid curtain, then lift.
+      tl.to(c, { scaleY: 0, transformOrigin: '50% 0%', duration: cc.out.duration, ease: cc.out.ease }, `+=${cc.hold}`);
+    }
   }
-  tl.fromTo(view, t.enter.from, { autoAlpha: 1, y: 0, duration: t.enter.duration, ease: t.enter.ease, clearProps: 'transform,opacity,visibility' }, t.curtain ? '-=0.6' : 0);
+  tl.fromTo(view, t.enter.from, { autoAlpha: 1, y: 0, duration: t.enter.duration, ease: t.enter.ease, clearProps: 'transform,opacity,visibility' }, cc ? '-=0.6' : 0);
   return tl;
 }
 
@@ -97,7 +126,7 @@ export async function navigate(href, { push = true } = {}) {
       if (next && cur) cur.replaceWith(next.cloneNode(true));
     }
     scrollToTop(true);
-    const label = doc.title.split('|')[0].trim();
+    const label = curtainLabel(incoming, doc);
     gsap.set(view, transitions.page.enter.from);
     const tl = enter(view, label);
     // Mount animations while the curtain lifts.

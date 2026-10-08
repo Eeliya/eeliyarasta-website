@@ -90,7 +90,8 @@
           "license": "Unsplash License"
         }
       }
-    ]
+    ],
+    "curtain": "Kasteel de Haar"
   },
   {
     "slug": "concrete-studies",
@@ -183,6 +184,7 @@
           "license": "Unsplash License"
         }
       }
-    ]
+    ],
+    "curtain": "Concrete Studies"
   }
 ]

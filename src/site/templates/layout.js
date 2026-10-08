@@ -36,6 +36,8 @@ export function head(ctx, route, accent) {
 
 /** Full <body> contents injected at <!--ssr-body--> */
 export function body(ctx, route, accent, view) {
+  const curtain = route.curtain ?? '';
+  const curtainEdit = route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : '';
   return html`
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="backdrop" aria-hidden="true"><div class="backdrop__glow"></div><div class="backdrop__grain"></div></div>
@@ -43,7 +45,7 @@ export function body(ctx, route, accent, view) {
   ${mobileMenu(ctx, route)}
   <div id="smooth-wrapper">
     <div id="smooth-content">
-      <main id="main" class="view view--${esc(route.page)}" data-router-view data-page="${esc(route.page)}" data-accent="${esc(accent)}">
+      <main id="main" class="view view--${esc(route.page)}" data-router-view data-page="${esc(route.page)}" data-accent="${esc(accent)}" data-curtain="${esc(curtain)}"${curtainEdit}>
         ${view}
         ${route.page === 'album' ? '' : footer(ctx, route)}
       </main>
