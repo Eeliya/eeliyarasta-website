@@ -122,7 +122,7 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
   "presets": {
     "fade-up":   { "type": "reveal", "from": { "autoAlpha": 0, "y": 40 }, "to": { "autoAlpha": 1, "y": 0 } },
     "split-chars": { "type": "split", "split": "chars", "mask": "chars", "from": { "yPercent": 110 }, "to": { "yPercent": 0 }, "stagger": 0.035 },
-    "scatter-drift": { "type": "scatter", "drift": { "amplitude": 14 }, "mouse": { "strength": 34 }, "scroll": { "distance": 55 } }
+    "scatter-drift": { "type": "scatter", "drift": { "amplitude": 14 }, "scroll": { "distance": 55 } }
   },
   "targets": {
     "hero.title":  { "preset": "hero-title" },
@@ -139,8 +139,7 @@ The final spec for an element is
 `"trigger": "scroll"`, reveals play once at `start`, or follow the scrollbar between `start` and
 `end` when `"scrub"` is `true` or a number (seconds of smoothing).
 Types (`src/client/anim/types.js`): `reveal`, `split` (SplitText chars/words/lines, masked),
-`scrub-words`, `parallax`, `scatter` (hero photo burst + endless drift + mouse depth + scroll
-depth), `hero-title`, `hover-preview`. New effect = new type function + preset.
+`scrub-words`, `parallax`, `scatter` (hero photo burst + endless drift + scroll depth), `hero-title`, `hover-preview`. New effect = new type function + preset.
 
 `prefers-reduced-motion` is respected everywhere: no smooth scroll, no drift/parallax/splits,
 instant album slides, a quick crossfade between pages.

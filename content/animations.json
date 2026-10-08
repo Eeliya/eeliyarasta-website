@@ -61,7 +61,6 @@
       "type": "scatter",
       "intro": { "duration": 1.6, "ease": "expo.out", "stagger": 0.07, "delay": 0.15, "fromScale": 0.6 },
       "drift": { "amplitude": 14, "rotation": 2.5, "minDuration": 5, "maxDuration": 9 },
-      "mouse": { "strength": 34, "duration": 1.2 },
       "scroll": { "distance": 55 }
     },
     "hero-title": {
@@ -74,7 +73,7 @@
       "delay": 0.25,
       "scroll": { "scale": 0.82, "autoAlpha": 0.15 }
     },
-    "hover-preview": { "type": "hover-preview", "follow": 0.45, "rotate": 6 }
+    "hover-preview": { "type": "hover-preview", "x": 72, "glide": 0.45 }
   },
   "targets": {
     "hero.photos": { "preset": "scatter-drift" },

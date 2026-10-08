@@ -6,9 +6,9 @@ const heroPhoto = (ctx, p, i) => {
   const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${p.mx}%;--my:${p.my}%;--mw:${p.mw}vw;` : ''}`;
   return html`
   <a class="scatter scatter--${p.layer === 'front' ? 'front' : 'back'}${mobile ? '' : ' scatter--desktop'}" href="${esc(p.link)}" style="${style}" data-depth="${p.depth}" aria-label="${esc(p.label)}">
-    <span class="scatter__move"><span class="scatter__drift"><span class="scatter__frame">
+    <span class="scatter__drift"><span class="scatter__frame">
       ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, priority: i < 5 })}
-    </span></span></span>
+    </span></span>
   </a>`;
 };
 

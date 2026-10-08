@@ -86,18 +86,18 @@ function parallax(el, spec, { reduce }) {
 }
 
 /**
- * Home hero: photos burst out from the centre, then drift forever, follow the
- * mouse by depth, and fly off at different speeds while scrolling.
- * Markup: .scatter[data-depth] > .scatter__move > .scatter__drift > .scatter__frame > img
+ * Home hero: photos burst out from the centre, then drift forever and fly off
+ * at different speeds (by depth) while scrolling. They never follow the pointer.
+ * Markup: .scatter[data-depth] > .scatter__drift > .scatter__frame > img
  */
-function scatter(el, spec, { reduce, onCleanup }) {
+function scatter(el, spec, { reduce }) {
   const items = [...el.querySelectorAll('[data-depth]')].filter((i) => i.offsetParent !== null);
   if (reduce || !items.length) return;
   const hero = el.closest('[data-hero]') || el;
   const hb = hero.getBoundingClientRect();
   const cx = hb.left + hb.width / 2;
   const cy = hb.top + hb.height / 2;
-  const { intro, drift, mouse, scroll } = spec;
+  const { intro, drift, scroll } = spec;
   const rnd = gsap.utils.random;
 
   items.forEach((item, i) => {
@@ -124,24 +124,6 @@ function scatter(el, spec, { reduce, onCleanup }) {
       scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
     });
   });
-
-  // 4. mouse parallax (desktop only)
-  if (!finePointer()) return;
-  const movers = items.map((item) => ({
-    depth: parseFloat(item.dataset.depth) || 0.5,
-    x: gsap.quickTo(item.querySelector('.scatter__move'), 'x', { duration: mouse.duration, ease: 'power3' }),
-    y: gsap.quickTo(item.querySelector('.scatter__move'), 'y', { duration: mouse.duration, ease: 'power3' }),
-  }));
-  const onMove = (e) => {
-    const nx = e.clientX / window.innerWidth - 0.5;
-    const ny = e.clientY / window.innerHeight - 0.5;
-    for (const m of movers) {
-      m.x(-nx * mouse.strength * 2 * m.depth);
-      m.y(-ny * mouse.strength * 2 * m.depth);
-    }
-  };
-  window.addEventListener('pointermove', onMove, { passive: true });
-  onCleanup(() => window.removeEventListener('pointermove', onMove));
 }
 
 /** Big hero name: masked chars rise in; on scroll it shrinks and fades. */
@@ -158,7 +140,11 @@ function heroTitle(el, spec, { reduce, onCleanup }) {
   });
 }
 
-/** Floating image that follows the cursor over a project list. */
+/**
+ * Image preview for a project list. It does not follow the pointer: it sits at a
+ * fixed horizontal position over the list (`x`, % of the list width) and glides
+ * vertically to the row being hovered (`glide` seconds).
+ */
 function hoverPreview(el, spec, { reduce, onCleanup }) {
   const list = document.querySelector(`[data-project-list="${el.dataset.previewFor}"]`);
   if (!list || !finePointer()) {
@@ -166,19 +152,24 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
     return;
   }
   const imgs = [...el.querySelectorAll('img')];
-  gsap.set(el, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.7 });
+  gsap.set(el, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.85 });
   gsap.set(imgs, { autoAlpha: 0 });
-  const dur = reduce ? 0 : spec.follow;
-  const xTo = gsap.quickTo(el, 'x', { duration: dur, ease: 'power3' });
-  const yTo = gsap.quickTo(el, 'y', { duration: dur, ease: 'power3' });
-  const rTo = gsap.quickTo(el, 'rotation', { duration: 0.6, ease: 'power3' });
-  let lastX = 0, active = -1, visible = false;
+  const glide = reduce ? 0 : Number(spec.glide) || 0;
+  const yTo = gsap.quickTo(el, 'y', { duration: glide, ease: 'power3' });
+  const rows = [...list.querySelectorAll('[data-prow]')];
+  let active = -1, visible = false;
 
-  const onMove = (e) => {
-    if (!visible) gsap.set(el, { x: e.clientX, y: e.clientY });
-    xTo(e.clientX); yTo(e.clientY);
-    if (!reduce) rTo(gsap.utils.clamp(-spec.rotate, spec.rotate, (e.clientX - lastX) * 0.6));
-    lastX = e.clientX;
+  /** Anchor point for a row: fixed x over the list, vertical centre of the row's head. */
+  const anchor = (i) => {
+    const lb = list.getBoundingClientRect();
+    const hb = rows[i].querySelector('.prow__head').getBoundingClientRect();
+    return { x: lb.left + lb.width * ((Number(spec.x) || 72) / 100), y: hb.top + hb.height / 2 };
+  };
+  const place = (i, instant) => {
+    const { x, y } = anchor(i);
+    gsap.set(el, { x });
+    if (instant) gsap.set(el, { y });
+    else yTo(y);
   };
   const show = (i) => {
     if (i !== active) {
@@ -186,14 +177,14 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
       gsap.to(imgs[i], { autoAlpha: 1, duration: 0.3 });
       active = i;
     }
-    if (!visible) gsap.to(el, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'expo.out', overwrite: 'auto' });
+    place(i, !visible);
+    if (!visible) gsap.to(el, { autoAlpha: 1, scale: 1, duration: reduce ? 0 : 0.5, ease: 'expo.out', overwrite: 'auto' });
     visible = true;
   };
   const hide = () => {
     visible = false;
-    gsap.to(el, { autoAlpha: 0, scale: 0.7, duration: 0.35, ease: 'power2.in', overwrite: 'auto' });
+    gsap.to(el, { autoAlpha: 0, scale: 0.85, duration: reduce ? 0 : 0.35, ease: 'power2.in', overwrite: 'auto' });
   };
-  const rows = [...list.querySelectorAll('[data-prow]')];
   const enters = rows.map((row) => {
     const head = row.querySelector('.prow__head');
     const fn = () => (row.classList.contains('is-open') ? hide() : show(+row.dataset.previewIndex));
@@ -207,7 +198,8 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
     };
   });
   // Smooth scrolling moves rows under a still pointer without reliable enter/leave
-  // events, so while visible, verify each frame that the pointer is still on a row.
+  // events, so while visible, check each frame which row is under the pointer and
+  // keep the preview anchored to it as the list scrolls.
   let px = 0, py = 0;
   const track = (e) => ((px = e.clientX), (py = e.clientY));
   const verify = () => {
@@ -216,14 +208,13 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
     const row = head && list.contains(head) ? head.closest('[data-prow]') : null;
     if (!row || row.classList.contains('is-open')) hide();
     else if (+row.dataset.previewIndex !== active) show(+row.dataset.previewIndex);
+    else place(active, false);
   };
   gsap.ticker.add(verify);
-  window.addEventListener('pointermove', onMove, { passive: true });
   window.addEventListener('pointermove', track, { passive: true });
   onCleanup(() => {
     gsap.ticker.remove(verify);
     window.removeEventListener('pointermove', track);
-    window.removeEventListener('pointermove', onMove);
     enters.forEach((f) => f());
   });
 }

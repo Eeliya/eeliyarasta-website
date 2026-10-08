@@ -31,7 +31,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
   </a>`;
 };
 
-/** Editorial index list of projects with hover image preview + click-to-expand details. */
+/** Editorial index list of projects with a hover image preview (anchored to the row) + click-to-expand details. */
 export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 } = {}) => {
   const h = `h${headingLevel}`;
   return html`

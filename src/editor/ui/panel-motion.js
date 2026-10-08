@@ -66,11 +66,10 @@ const GROUPS = {
   scatter: [
     ['Intro burst', [n(['intro', 'duration'], 'Duration', 4, 0.05, 's'), { path: ['intro', 'ease'], label: 'Ease', kind: 'ease' }, n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'), n(['intro', 'delay'], 'Delay', 2, 0.05, 's'), n(['intro', 'fromScale'], 'From scale', 1.5, 0.01)]],
     ['Drift', [n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'), n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'), n(['drift', 'minDuration'], 'Min duration', 20, 0.5, 's'), n(['drift', 'maxDuration'], 'Max duration', 20, 0.5, 's')]],
-    ['Mouse', [n(['mouse', 'strength'], 'Strength', 100, 1, 'px'), n(['mouse', 'duration'], 'Lag', 3, 0.05, 's')]],
     ['Scroll', [n(['scroll', 'distance'], 'Fly-off distance', 150, 1, '%vh')]],
   ],
   'hero-title': [TIMING, 'from', 'to', ['On scroll', [n(['scroll', 'scale'], 'End scale', 1.5, 0.01), n(['scroll', 'autoAlpha'], 'End opacity', 1, 0.01)]]],
-  'hover-preview': [['Follow', [n(['follow'], 'Follow lag', 1.5, 0.01, 's'), n(['rotate'], 'Max tilt', 20, 0.5, '°')]]],
+  'hover-preview': [['Preview', [n(['x'], 'Position across the list', 100, 1, '%'), n(['glide'], 'Glide between rows', 1.5, 0.01, 's')]]],
 };
 
 export function createMotionPanel({ store, bridge, root, toast }) {

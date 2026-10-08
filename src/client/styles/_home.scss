@@ -43,7 +43,7 @@
   position: absolute; left: var(--x); top: var(--y); width: var(--w);
   z-index: 1; display: block;
   &--front { z-index: 3; }
-  &__move, &__drift, &__frame { display: block; }
+  &__drift, &__frame { display: block; }
   &__frame {
     overflow: hidden; border-radius: 3px;
     box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.9);
