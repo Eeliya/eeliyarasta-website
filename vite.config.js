@@ -8,10 +8,10 @@ export default defineConfig({
     target: 'es2020',
     assetsInlineLimit: 0,
     modulePreload: { polyfill: false },
-    // Two entries: the public site (index.html, prerendered per route) and the
-    // visual editor (edit/index.html). The site bundle never imports editor code.
+    // Only the public site is built. The visual editor (edit/index.html → src/editor)
+    // is served by the dev server only (`npm run dev` → /edit/) and never ships.
     rolldownOptions: {
-      input: { main: 'index.html', edit: 'edit/index.html' },
+      input: { main: 'index.html' },
     },
   },
   preview: { port: 4173 },

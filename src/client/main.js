@@ -16,7 +16,7 @@ import { projects } from './modules/projects.js';
 import { cards, toTop, imageFade } from './modules/misc.js';
 
 const pageModules = [imageFade, album, projects, cards, toTop];
-// Editor hooks (see window.__site below); empty on the public site.
+// Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;
 let frozen = false;
@@ -69,54 +69,64 @@ function remountAnimations() {
 }
 
 /**
- * Small API for the visual editor (src/editor), which loads the site in a
- * same-origin iframe. No editor code ships in this bundle.
+ * Dev only (`npm run dev`): connect to the visual editor (src/editor), which loads
+ * the site in a same-origin iframe at /edit/. `import.meta.env.DEV` is false in
+ * production builds, so this function, the window.__site API and the editor
+ * shortcut are dropped from the public bundle entirely.
  */
-const api = {
-  gsap,
-  ScrollTrigger,
-  animations: animationConfig,
-  resolve: resolveAnimation,
-  pageKey,
-  hooks,
-  navigate,
-  getSmoother,
-  view: () => current?.view || null,
-  /** Replace the animation config (in place) with an edited copy. */
-  setAnimations: (next) => setConfig(next),
-  remount: remountAnimations,
-  /** Stop all animations and show the page in its final, static state (for text editing). */
-  freeze() {
-    frozen = true;
-    remountAnimations();
-  },
-  unfreeze() {
-    frozen = false;
-    remountAnimations();
-  },
-  scrollTo(target, { smooth = true, position = 'center center' } = {}) {
-    const s = getSmoother();
-    if (s) return s.scrollTo(target, smooth, position);
-    if (typeof target === 'number') window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
-    else target?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'center' });
-  },
-  scrollTop(y) {
-    const s = getSmoother();
-    if (y === undefined) return s ? s.scrollTop() : window.scrollY;
-    if (s) s.scrollTop(y);
-    else window.scrollTo(0, y);
-  },
-  /** Scroll positions where `el` enters (top hits viewport bottom) and leaves (bottom hits top). */
-  scrollRange(el) {
-    const st = ScrollTrigger.create({ trigger: el, start: 'top bottom', end: 'bottom top' });
-    const range = { start: st.start, end: st.end, max: ScrollTrigger.maxScroll(window) };
-    st.kill();
-    return range;
-  },
-};
-window.__site = api;
-
 function connectEditor() {
+  const api = {
+    gsap,
+    ScrollTrigger,
+    animations: animationConfig,
+    resolve: resolveAnimation,
+    pageKey,
+    hooks,
+    navigate,
+    getSmoother,
+    view: () => current?.view || null,
+    /** Replace the animation config (in place) with an edited copy. */
+    setAnimations: (next) => setConfig(next),
+    remount: remountAnimations,
+    /** Stop all animations and show the page in its final, static state (for text editing). */
+    freeze() {
+      frozen = true;
+      remountAnimations();
+    },
+    unfreeze() {
+      frozen = false;
+      remountAnimations();
+    },
+    scrollTo(target, { smooth = true, position = 'center center' } = {}) {
+      const s = getSmoother();
+      if (s) return s.scrollTo(target, smooth, position);
+      if (typeof target === 'number') window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
+      else target?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'center' });
+    },
+    scrollTop(y) {
+      const s = getSmoother();
+      if (y === undefined) return s ? s.scrollTop() : window.scrollY;
+      if (s) s.scrollTop(y);
+      else window.scrollTo(0, y);
+    },
+    /** Scroll positions where `el` enters (top hits viewport bottom) and leaves (bottom hits top). */
+    scrollRange(el) {
+      const st = ScrollTrigger.create({ trigger: el, start: 'top bottom', end: 'bottom top' });
+      const range = { start: st.start, end: st.end, max: ScrollTrigger.maxScroll(window) };
+      st.kill();
+      return range;
+    },
+  };
+  window.__site = api;
+
+  // Ctrl/Cmd + Shift + E opens the current page in the editor.
+  window.addEventListener('keydown', (e) => {
+    if (window.parent === window && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      location.href = `/edit/?path=${encodeURIComponent(location.pathname)}`;
+    }
+  });
+
   try {
     const host = window.parent !== window ? window.parent.__siteEditor : null;
     if (!host) return;
@@ -127,16 +137,8 @@ function connectEditor() {
   }
 }
 
-// Ctrl/Cmd + Shift + E on the live site opens this page in the editor.
-window.addEventListener('keydown', (e) => {
-  if (window.parent === window && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
-    e.preventDefault();
-    location.href = `/edit/?path=${encodeURIComponent(location.pathname)}`;
-  }
-});
-
 async function start() {
-  connectEditor();
+  if (import.meta.env.DEV) connectEditor();
   initSmooth();
   initMenu();
   initClock();

@@ -9,47 +9,20 @@
  *
  * index.html is the shell; it contains two markers: <!--ssr-head--> and <!--ssr-body-->.
  *
- * Visual editor support (edit/index.html, src/editor):
- *  dev   → GET /__editor/content returns all content files; POST /__editor/save writes
- *          them back to content/*.json (same-origin JSON requests, whitelisted names).
- *  build → a snapshot of the content is copied to dist/edit/content/ so the deployed
- *          editor can start without GitHub; /edit/ is excluded in robots.txt.
+ * Visual editor (edit/index.html → src/editor) is DEV ONLY:
+ *  dev   → /edit/ is served by Vite, and /__editor/* (scripts/editor-server.mjs, localhost
+ *          only) loads, saves and publishes content/*.json.
+ *  build → only index.html is bundled; no editor page, code or endpoints are emitted.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadContent } from './content.mjs';
-import { formatJSON } from '../src/editor/lib/json-format.js';
-import editorConfig from '../src/editor/config.js';
+import { editorMiddleware } from './editor-server.mjs';
 
 const RENDER_MODULE = '/src/site/render.js';
 
 const fill = (shell, { head, body }) => shell.replace('<!--ssr-head-->', head).replace('<!--ssr-body-->', body);
-const EDITABLE = new Set(editorConfig.files);
-
-const readContentFiles = (root) =>
-  Object.fromEntries([...EDITABLE].map((f) => [f, JSON.parse(fs.readFileSync(path.join(root, 'content', f), 'utf8'))]));
-
-function readBody(req, limit = 5 * 1024 * 1024) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks = [];
-    req.on('data', (c) => {
-      size += c.length;
-      if (size > limit) reject(new Error('Body too large'));
-      else chunks.push(c);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
-}
-
-const sendJSON = (res, status, data) => {
-  res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
-  res.end(JSON.stringify(data));
-};
 
 export default function staticSite() {
   let config;
@@ -70,30 +43,12 @@ export default function staticSite() {
         if (/[\\/](content|src[\\/]site|\.generated)[\\/]/.test(file)) server.ws.send({ type: 'full-reload' });
       });
 
-      // Editor endpoints (dev only).
-      server.middlewares.use('/__editor', async (req, res) => {
-        try {
-          const origin = req.headers.origin;
-          if (origin && new URL(origin).host !== req.headers.host) return sendJSON(res, 403, { error: 'Cross-origin request refused' });
-          if (req.method === 'GET' && (req.url === '/content' || req.url.startsWith('/content?'))) {
-            return sendJSON(res, 200, { mode: 'dev', files: readContentFiles(root) });
-          }
-          if (req.method === 'POST' && req.url === '/save') {
-            if (!(req.headers['content-type'] || '').includes('application/json')) return sendJSON(res, 415, { error: 'JSON only' });
-            const { files } = JSON.parse(await readBody(req));
-            const names = Object.keys(files || {});
-            const bad = names.filter((n) => !EDITABLE.has(n) || files[n] === null || typeof files[n] !== 'object');
-            if (!names.length || bad.length) return sendJSON(res, 400, { error: `Not writable: ${bad.join(', ') || '(nothing)'}` });
-            quietUntil = Date.now() + 2000;
-            for (const n of names) fs.writeFileSync(path.join(root, 'content', n), formatJSON(files[n]));
-            config.logger.info(`\x1b[32m✓\x1b[0m editor saved ${names.map((n) => 'content/' + n).join(', ')}`, { timestamp: true });
-            return sendJSON(res, 200, { ok: true, written: names });
-          }
-          sendJSON(res, 404, { error: 'Unknown editor endpoint' });
-        } catch (err) {
-          sendJSON(res, 500, { error: err.message });
-        }
-      });
+      // Editor endpoints (dev only, localhost only).
+      server.middlewares.use('/__editor', editorMiddleware({
+        root,
+        logger: config.logger,
+        onWrite: () => (quietUntil = Date.now() + 2000),
+      }));
 
       server.middlewares.use(async (req, res, next) => {
         if (req.method !== 'GET') return next();
@@ -147,14 +102,10 @@ export default function staticSite() {
       }
       const urls = routes.filter((r) => !r.noindex).map((r) => `  <url><loc>${content.site.url}${r.path}</loc></url>`);
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
-      fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /edit/\nSitemap: ${content.site.url}/sitemap.xml\n`);
+      fs.writeFileSync(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${content.site.url}/sitemap.xml\n`);
 
-      // Content snapshot for the deployed editor (used until it is connected to GitHub).
-      const snapDir = path.join(outDir, 'edit', 'content');
-      fs.mkdirSync(snapDir, { recursive: true });
-      const files = readContentFiles(root);
-      for (const [name, data] of Object.entries(files)) fs.writeFileSync(path.join(snapDir, name), formatJSON(data));
-      fs.writeFileSync(path.join(snapDir, 'index.json'), JSON.stringify({ files: Object.keys(files) }) + '\n');
+      // The editor is dev-only: make sure nothing of it ends up in the build.
+      fs.rmSync(path.join(outDir, 'edit'), { recursive: true, force: true });
       fs.rmSync(path.join(outDir, '404'), { recursive: true, force: true });
       config.logger.info(`\x1b[32m✓\x1b[0m prerendered ${routes.length} routes into ${path.relative(root, outDir)}/`);
     },

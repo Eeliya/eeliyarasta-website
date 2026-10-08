@@ -6,25 +6,23 @@
  *   Motion  - click an animated element to edit its preset / timing / trigger
  *
  * Edits only touch in-memory copies of content/*.json (see store.js). Saving writes
- * them to disk (dev server) or commits them to GitHub (deployed site).
+ * them to disk through the dev server. The editor only exists under `npm run dev`.
  */
 import './styles/editor.scss';
 import config from './config.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
-import * as gh from './github.js';
 import { createBridge } from './bridge.js';
 import { createTextPanel, labelFor } from './ui/panel-text.js';
 import { createMotionPanel } from './ui/panel-motion.js';
 import { h, clear } from './ui/dom.js';
-import { formatJSON } from './lib/json-format.js';
 import { compile } from './lib/pointer.js';
 import { getRoutes } from '../site/routes.js';
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
-const state = { mode: 'browse', lastEdit: 'text', loaded: null, account: null, viewport: 'desktop', saving: false };
+const state = { mode: 'browse', lastEdit: 'text', loaded: null, viewport: 'desktop', saving: false };
 
 // ---------------------------------------------------------------- layout
 const app = document.getElementById('editor');
@@ -86,18 +84,12 @@ function renderChrome() {
   undoBtn.disabled = !store.canUndo();
   redoBtn.disabled = !store.canRedo();
   const n = countChanges();
-  const dev = state.loaded?.mode === 'dev';
   saveBtn.disabled = !n || state.saving;
-  saveBtn.textContent = state.saving ? 'Saving…' : `${dev ? 'Save' : 'Commit'}${n ? ` · ${n}` : ''}`;
-  saveBtn.title = dev ? `Write content/*.json (${MOD}+S)` : `Commit to ${config.owner}/${config.repo}@${config.branch} (${MOD}+S)`;
-  sourceLine.textContent = dev ? 'dev · local files' : state.account ? `GitHub · ${config.branch}` : 'snapshot · read-only';
-  sourceLine.dataset.kind = dev ? 'dev' : state.account ? 'github' : 'snapshot';
-  if (dev) clear(account, h('span', { class: 'muted' }, 'Saves write to ', h('code', {}, 'content/')));
-  else if (state.account) {
-    clear(account,
-      h('span', { class: 'muted' }, 'GitHub', state.account.login ? ` · ${state.account.login}` : ''),
-      h('button', { type: 'button', class: 'link', onclick: signOut }, 'Sign out'));
-  } else clear(account, h('button', { type: 'button', class: 'link', onclick: () => connectDialog() }, 'Connect GitHub to save'));
+  saveBtn.textContent = state.saving ? 'Saving…' : `Save${n ? ` · ${n}` : ''}`;
+  saveBtn.title = `Write content/*.json (${MOD}+S)`;
+  sourceLine.textContent = 'dev · local files';
+  sourceLine.dataset.kind = 'dev';
+  clear(account, h('span', { class: 'muted' }, 'Saves write to ', h('code', {}, 'content/')));
   document.title = `${n ? '● ' : ''}Editor · Eeliya Rasta`;
 }
 
@@ -108,7 +100,6 @@ const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 
 function renderOverview() {
   const dirty = store.dirtyFiles();
-  const dev = state.loaded?.mode === 'dev';
   clear(body,
     h('section', { class: 'grp' },
       h('h4', { class: 'grp__title' }, 'How it works'),
@@ -116,7 +107,7 @@ function renderOverview() {
         h('li', {}, h('b', {}, 'Text'), ' — click any outlined text in the preview and type.'),
         h('li', {}, h('b', {}, 'Motion'), ' — click an animated element to change its preset, timing, ease and scroll trigger. Changes replay live.'),
         h('li', {}, 'Browse navigates like the real site. In the edit modes, hold Alt to click through links.'),
-        h('li', {}, dev ? 'Saving writes content/*.json on this machine (commit with git as usual).' : `Saving makes one commit on ${config.owner}/${config.repo}@${config.branch}; Vercel then redeploys the live site.`),
+        h('li', {}, 'Saving writes content/*.json on this machine (commit with git as usual).'),
       ),
       h('p', { class: 'kbd-list' },
         h('span', {}, h('kbd', {}, `${MOD}+E`), ' edit mode'),
@@ -212,9 +203,7 @@ store.on(({ files, source: src }) => {
 // ---------------------------------------------------------------- saving
 async function save() {
   if (state.saving || !store.dirtyFiles().length) return;
-  if (state.loaded.mode === 'dev') return saveDev();
-  if (!state.account) return connectDialog({ then: commitDialog });
-  commitDialog();
+  return saveDev();
 }
 
 async function saveDev() {
@@ -242,141 +231,6 @@ function modal(title, ...children) {
   document.body.append(wrap);
   wrap.close = close;
   return wrap;
-}
-
-function commitDialog() {
-  const dirty = store.dirtyFiles();
-  const msg = h('textarea', { class: 'tf__input', rows: 3, value: `Edit ${dirty.map((f) => f.replace('.json', '')).join(', ')} in the visual editor` });
-  const go = h('button', { type: 'button', class: 'btn-primary' }, 'Commit');
-  const err = h('p', { class: 'error', hidden: true });
-  const m = modal(`Commit to ${config.owner}/${config.repo}`,
-    h('p', { class: 'hint' }, `One commit on `, h('code', {}, config.branch), ` with ${dirty.length} file${dirty.length > 1 ? 's' : ''}:`),
-    h('ul', { class: 'files' }, dirty.map((f) => h('li', {}, h('code', {}, `content/${f}`), h('span', { class: 'muted' }, ` · ${store.changes(f).length} change(s)`)))),
-    h('label', { class: 'tf__label' }, 'Commit message'),
-    msg, err,
-    h('div', { class: 'modal__actions' }, h('button', { type: 'button', class: 'link', onclick: () => m.close() }, 'Cancel'), go),
-  );
-  msg.focus();
-  msg.select();
-  go.onclick = async () => {
-    const message = msg.value.trim();
-    if (!message) return msg.focus();
-    go.disabled = true;
-    go.textContent = 'Committing…';
-    err.hidden = true;
-    try {
-      const res = await commitToGitHub(message);
-      m.close();
-      if (res.nothing) toast('Nothing to commit: GitHub already has these values.', { kind: 'info' });
-      else {
-        toast(h('span', {}, `Committed ${res.sha.slice(0, 7)} `, h('a', { href: res.url, target: '_blank', rel: 'noopener' }, 'View commit ↗'),
-          h('br'), h('span', { class: 'muted' }, 'The live site updates after Vercel redeploys (usually about a minute).'),
-          res.moved.length ? h('span', { class: 'muted' }, h('br'), `Merged with newer remote changes in ${res.moved.join(', ')}.`) : null), { kind: 'ok', timeout: 0 });
-        setStatus(`Committed ${res.sha.slice(0, 7)} · ${new Date().toLocaleTimeString()}`);
-      }
-    } catch (e) {
-      err.hidden = false;
-      err.textContent = e.message;
-      go.disabled = false;
-      go.textContent = 'Retry';
-    }
-  };
-}
-
-/** Fetch the branch head + latest file contents, re-apply our edits on top, commit. */
-async function commitToGitHub(message) {
-  state.saving = true;
-  renderChrome();
-  try {
-    for (let attempt = 0; ; attempt++) {
-      const head = await gh.head();
-      const dirty = store.dirtyFiles();
-      const remote = await gh.readFiles(dirty, head.sha);
-      const moved = store.rebase(remote);
-      const files = {};
-      for (const f of dirty) {
-        const text = store.serialize(f);
-        if (text !== formatJSON(remote[f])) files[f] = text;
-      }
-      if (!Object.keys(files).length) {
-        store.markSaved(dirty);
-        return { nothing: true };
-      }
-      try {
-        const res = await gh.commit({ files, message, parent: head });
-        store.markSaved(dirty);
-        return { ...res, moved };
-      } catch (err) {
-        if (err.status === 422 && attempt === 0) continue; // branch moved meanwhile: refetch and retry once
-        throw err;
-      }
-    }
-  } finally {
-    state.saving = false;
-    renderChrome();
-  }
-}
-
-// ---------------------------------------------------------------- GitHub token
-function connectDialog({ then } = {}) {
-  const input = h('input', { class: 'tf__input', type: 'password', autocomplete: 'off', spellcheck: false, placeholder: 'github_pat_…' });
-  const go = h('button', { type: 'button', class: 'btn-primary' }, 'Connect');
-  const err = h('p', { class: 'error', hidden: true });
-  const newTokenUrl = 'https://github.com/settings/personal-access-tokens/new';
-  const m = modal('Connect GitHub',
-    h('p', { class: 'hint' }, 'Saving on the live site commits to ', h('code', {}, `${config.owner}/${config.repo}`), '. Create a fine-grained token once:'),
-    h('ol', { class: 'steps' },
-      h('li', {}, 'Open ', h('a', { href: newTokenUrl, target: '_blank', rel: 'noopener' }, 'GitHub → Fine-grained tokens → Generate new ↗')),
-      h('li', {}, 'Repository access: ', h('b', {}, 'Only select repositories'), ' → ', h('code', {}, `${config.owner}/${config.repo}`)),
-      h('li', {}, 'Repository permissions: ', h('b', {}, 'Contents → Read and write'), ' (nothing else)'),
-      h('li', {}, 'Generate, copy and paste it here.'),
-    ),
-    input, err,
-    h('p', { class: 'hint small' }, 'The token is stored only in this browser (localStorage) and only sent to api.github.com. “Sign out” deletes it.'),
-    h('div', { class: 'modal__actions' }, h('button', { type: 'button', class: 'link', onclick: () => m.close() }, 'Cancel'), go),
-  );
-  input.focus();
-  const submit = async () => {
-    const value = input.value.trim();
-    if (!value) return input.focus();
-    go.disabled = true;
-    go.textContent = 'Checking…';
-    try {
-      state.account = await gh.verify(value);
-      gh.token.set(value);
-      m.close();
-      toast(`Connected to ${state.account.repo}${state.account.login ? ` as ${state.account.login}` : ''}.`, { kind: 'ok' });
-      await syncFromGitHub();
-      then?.();
-    } catch (e) {
-      err.hidden = false;
-      err.textContent = e.message;
-      go.disabled = false;
-      go.textContent = 'Connect';
-    }
-    renderChrome();
-  };
-  go.onclick = submit;
-  input.addEventListener('keydown', (e) => e.key === 'Enter' && submit());
-}
-
-/** After connecting: make GitHub's latest content the base, keeping local edits. */
-async function syncFromGitHub() {
-  try {
-    const head = await gh.head();
-    const remote = await gh.readFiles(config.files, head.sha);
-    const moved = store.rebase(remote);
-    setStatus(`Content from GitHub ${config.branch}@${head.sha.slice(0, 7)}${moved.length ? ` (newer than the deployed snapshot: ${moved.join(', ')})` : ''}`);
-  } catch (e) {
-    toast(`Could not read content from GitHub: ${e.message}`, { kind: 'error', timeout: 0 });
-  }
-}
-
-function signOut() {
-  gh.token.clear();
-  state.account = null;
-  toast('Signed out. The token was removed from this browser.', { kind: 'info' });
-  renderChrome();
 }
 
 // ---------------------------------------------------------------- keyboard
@@ -422,13 +276,6 @@ async function boot() {
   }
   store.load(state.loaded.files);
   setStatus(`Content: ${state.loaded.from}`);
-  if (state.loaded.warning) toast(`GitHub: ${state.loaded.warning}. Showing the deployed snapshot.`, { kind: 'error', timeout: 0 });
-  if (state.loaded.mode !== 'dev' && gh.token.get()) {
-    gh.verify(gh.token.get()).then((a) => {
-      state.account = a;
-      renderChrome();
-    }).catch(() => {});
-  }
   renderPages();
   renderChrome();
   renderBody();
