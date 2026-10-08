@@ -77,7 +77,7 @@
   },
   "targets": {
     "hero.photos": { "preset": "scatter-drift" },
-    "hero.title": { "preset": "hero-title" },
+    "hero.title": { "preset": "fade-in" },
     "hero.meta": { "preset": "fade-up", "trigger": "load", "delay": 1.1, "duration": 1.2 },
     "home.intro": { "preset": "scrub-words" },
     "section.label": { "preset": "fade-up", "duration": 0.9 },
@@ -126,8 +126,14 @@
       "view": { "duration": 0.9, "ease": "expo.inOut" }
     },
     "menu": {
-      "open": { "duration": 0.45, "ease": "expo.out", "y": 12 },
+      "open": { "duration": 0.45, "ease": "expo.out" ,
+        "y": 20
+      },
       "close": { "duration": 0.3 }
+    },
+    "menuItem": {
+      "open": { "duration": 0.45, "ease": "expo.out", "y": 0 },
+      "close": { "duration": 0.3, "y": 0 }
     }
   }
 }

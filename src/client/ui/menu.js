@@ -20,7 +20,7 @@ import { gsap, reducedMotion } from '../lib/env.js';
 import { transitions } from '../anim/engine.js';
 import { lockScroll } from '../smooth.js';
 
-const DEFAULTS = { open: { duration: 0.45, ease: 'expo.out', y: 12 }, close: { duration: 0.3 } };
+const DEFAULTS = { open: { duration: 0.45, ease: 'expo.out' }, close: { duration: 0.3 } };
 const timing = () => {
   const m = transitions.menu || {};
   return { open: { ...DEFAULTS.open, ...m.open }, close: { ...DEFAULTS.close, ...m.close } };
@@ -33,7 +33,7 @@ const timing = () => {
  *  dim    - optional overlay whose background fades in (mobile menu)
  *  yScale - multiplier for the configured y offset
  */
-function createReveal({ el, panel, dim = null, yScale = 1 }) {
+function createReveal({ toggle, el, panel, dim = null, yScale = 1 }) {
   let tl = null;
   let isOpen = false;
   const finish = () => {
@@ -49,6 +49,8 @@ function createReveal({ el, panel, dim = null, yScale = 1 }) {
     tl?.kill();
     tl = gsap.timeline({ paused: true, onReverseComplete: finish });
     if (!reduce) tl.fromTo(panel, { y: -(Number(open.y) || 0) * yScale }, { y: 0, ...vars }, 0);
+    const menuItemDefault = transitions.menuItem;
+    // tl.fromTo(toggle , { ...menuItemDefault.close }, { ...menuItemDefault.open, ...vars }, 0);
     tl.fromTo(panel, { '--glass-alpha': 0 }, { '--glass-alpha': 1, ...vars }, 0);
     tl.fromTo([...panel.children], { opacity: 0 }, { opacity: 1, ...vars }, 0);
     if (dim) tl.fromTo(dim, { backgroundColor: 'rgba(0, 0, 0, 0)' }, { backgroundColor: 'rgba(0, 0, 0, 0.35)', ...vars }, 0);
@@ -90,7 +92,8 @@ let openToggle = null;
 function dropdownFor(toggle) {
   if (!dropdowns.has(toggle)) {
     const panel = document.getElementById(toggle.getAttribute('aria-controls'));
-    dropdowns.set(toggle, createReveal({ el: panel, panel }));
+    console.log(toggle)
+    dropdowns.set(toggle, createReveal({ toggle, el: panel, panel }));
   }
   return dropdowns.get(toggle);
 }

@@ -26,7 +26,7 @@ export function header(ctx, route) {
     <a class="header__logo" href="/" aria-label="${esc(site.name)}, home"><span>Eeliya</span><span>Rasta</span></a>
 
     <nav class="nav" aria-label="Main">
-      <div class="nav__pill glass">
+      <div class="nav__pill">
         <a class="nav__item" href="/" data-nav="/">Home</a>
         <div class="nav__group">
           <button class="nav__item" type="button" aria-expanded="false" aria-controls="dd-photography" data-dropdown-toggle data-nav-section="/photography/,/people/,/places/">Photography ${caret}</button>
