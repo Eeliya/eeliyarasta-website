@@ -1482,17 +1482,23 @@ select {
       display: none;
     }
     &::before {
-      content: '\25B8';
+      // Font Awesome Free solid: fa-chevron-right / fa-chevron-down (editor-only webfont).
+      font-family: 'Font Awesome 7 Free';
+      font-weight: 900;
+      font-style: normal;
+      content: '\f054';
       display: inline-block;
       width: 1em;
+      margin-right: 0.35em;
       color: var(--faint);
+      -webkit-font-smoothing: antialiased;
     }
   }
   &[open] > summary {
     margin-bottom: 10px;
     color: var(--fg);
     &::before {
-      content: '\25BE';
+      content: '\f078';
     }
   }
 }
