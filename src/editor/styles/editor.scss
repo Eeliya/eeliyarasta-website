@@ -350,11 +350,17 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
 /* Page transition: timeline (Motion tab) */
 .ptg__actions { display: flex; gap: 8px; margin-bottom: 10px; }
 .tf__hint { margin: 6px 0 0; }
-.ptg .tf { margin-bottom: 10px; }
-.ptl-box { margin: 0 0 14px; }
-.ptl { display: grid; gap: 7px; padding: 12px 12px 8px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); background: rgb(255 255 255 / 0.03); }
+/* One bordered curtain group: total, timeline, ease, Advanced. */
+.ptg__box {
+  margin: 0 0 14px; padding: 12px 12px 0; border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--line); background: rgb(255 255 255 / 0.03);
+  display: grid; gap: 12px;
+  > .tf { margin-bottom: 0; }
+}
+.ptl { display: grid; gap: 10px; padding: 0; background: none; box-shadow: none; }
 .ptl.is-dragging { user-select: none; cursor: ew-resize; }
-.ptl__row { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; }
+/* Label above bar so the track can use the full width. */
+.ptl__row { display: grid; gap: 4px; }
 .ptl__name { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .ptl__track { position: relative; height: 16px; touch-action: none; }
 .ptl__bars, .ptl__grid { position: absolute; inset: 0; border-radius: 3px; pointer-events: none; }
@@ -376,14 +382,15 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
   .ptl:hover &::before { opacity: 0.85; }
   &:hover::before, &:focus-visible::before, &.is-active::before { opacity: 1; background: $hi; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), 0 0 0 4px rgb(159 211 255 / 0.18); }
 }
-.ptl__axis { position: relative; height: 12px; margin-left: 64px; font-size: 10px; color: var(--faint);
+.ptl__axis { position: relative; height: 12px; font-size: 10px; color: var(--faint);
   span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
   span:first-child { transform: none; } }
-.ptl__readout { min-height: 15px; padding-left: 64px; font-size: 10.5px; color: var(--faint); &.is-on { color: $hi; } }
-.ptg__ease { margin: 0 0 10px; }
+.ptl__readout { min-height: 15px; font-size: 10.5px; color: var(--faint); &.is-on { color: $hi; } }
+.ptg__ease { margin: 0; }
+/* Advanced sits on the bottom edge of the curtain box (same border). */
 .ptg__advanced {
-  margin: 0 0 14px; padding: 8px 10px; border-radius: 10px;
-  box-shadow: inset 0 0 0 1px var(--line); background: rgb(255 255 255 / 0.03);
+  margin: 0 -12px 0; padding: 10px 12px 12px; border-radius: 0 0 10px 10px;
+  box-shadow: inset 0 1px 0 var(--line); background: rgb(0 0 0 / 0.18);
   summary {
     cursor: pointer; list-style: none; font-size: 11px; letter-spacing: 0.04em;
     color: var(--muted); user-select: none;
@@ -395,6 +402,7 @@ select { appearance: none; padding-right: 26px; cursor: pointer;
   }
 }
 .ptg__advanced-body { display: grid; gap: 10px; }
+.ptg__box > .tf { margin-bottom: 0; }
 /* Page-transition ease toggles match the duration number input height (36px). */
 .ptg {
   .tf__input, .f__num {

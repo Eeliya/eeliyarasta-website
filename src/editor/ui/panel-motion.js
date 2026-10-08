@@ -558,10 +558,12 @@ function pageTransitionGroup(store, bridge) {
     h('h4', { class: 'grp__title' }, 'Page transition'),
     h('p', { class: 'hint' }, 'Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The text itself is edited per page under Content \u2192 Page transition. Changes apply to the next page change in the preview.'),
     h('div', { class: 'ptg__actions' }, replay),
-    totalWrap,
-    h('div', { class: 'ptl-box' }, timeline.el),
-    globalEaseWrap,
-    advanced,
+    h('div', { class: 'ptg__box' },
+      totalWrap,
+      timeline.el,
+      globalEaseWrap,
+      advanced,
+    ),
   );
 
   // Refresh in place (while typing in a field or dragging the timeline) without re-rendering.
