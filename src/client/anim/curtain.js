@@ -2,7 +2,9 @@
  * Page-transition curtain timing. Pure (no DOM), shared by the router and the editor.
  *
  * content/animations.json -> transitions.page.curtain
- *   in         { duration, ease }  the curtain comes in (closes)
+ *   easeMode   "shared" | "individual"  (missing = shared)
+ *   ease       one ease for every step when easeMode is shared
+ *   in         { duration, ease }  the curtain comes in (closes); ease used only in individual mode
  *   textDelay  seconds after the curtain STARTS coming in before the text starts coming in
  *              (0 = text and curtain start together; = in.duration: text waits for the closed curtain)
  *   labelIn    { duration, ease }  the text comes in
@@ -36,15 +38,35 @@ export function normalizeCurtain(raw) {
   const D = CURTAIN_DEFAULTS;
   const seg = (k) => ({ ...D[k], ...(c[k] || {}), duration: Math.max(0, num(c[k]?.duration, D[k].duration)) });
   const inn = seg('in');
+  const labelIn = seg('labelIn');
+  const labelOut = seg('labelOut');
+  const out = seg('out');
+
+  // Missing easeMode => shared. Shared ease: explicit ease, else in.ease, else a common step ease.
+  const easeMode = c.easeMode === 'individual' ? 'individual' : 'shared';
+  const stepEases = [c.in?.ease, c.labelIn?.ease, c.labelOut?.ease, c.out?.ease].filter((e) => typeof e === 'string' && e);
+  let sharedEase = typeof c.ease === 'string' && c.ease ? c.ease : null;
+  if (!sharedEase) {
+    if (stepEases.length && stepEases.every((e) => e === stepEases[0])) sharedEase = stepEases[0];
+    else sharedEase = (typeof c.in?.ease === 'string' && c.in.ease) || inn.ease;
+  }
+
+  const step = (segObj, own) => ({
+    ...segObj,
+    ease: easeMode === 'shared' ? sharedEase : (typeof own === 'string' && own ? own : sharedEase),
+  });
+
   return {
     label: c.label !== false,
-    in: inn,
+    easeMode,
+    ease: sharedEase,
+    in: step(inn, c.in?.ease),
     textDelay: Math.max(0, num(c.textDelay, inn.duration)),
-    labelIn: seg('labelIn'),
+    labelIn: step(labelIn, c.labelIn?.ease),
     hold: Math.max(0, num(c.hold, D.hold)),
-    labelOut: seg('labelOut'),
+    labelOut: step(labelOut, c.labelOut?.ease),
     afterText: num(c.afterText, D.afterText),
-    out: seg('out'),
+    out: step(out, c.out?.ease),
   };
 }
 

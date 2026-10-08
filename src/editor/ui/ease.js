@@ -5,7 +5,7 @@ const FAMILIES = ['power1', 'power2', 'power3', 'power4', 'sine', 'expo', 'circ'
 const VARIANTS = ['in', 'out', 'inOut'];
 export const EASES = ['none', ...FAMILIES.flatMap((f) => VARIANTS.map((v) => `${f}.${v}`))];
 
-/** SVG path of an ease in a w×h box; y range -0.35..1.35 so overshoot is visible. */
+/** SVG path of an ease in a w-h box; y range -0.35..1.35 so overshoot is visible. */
 export function curvePath(gsap, name, w, hgt) {
   const ease = gsap.parseEase(name) || gsap.parseEase('none');
   const y = (v) => hgt - ((v + 0.35) / 1.7) * hgt;
@@ -29,10 +29,12 @@ export function curveSvg(gsap, name, w = 120, hgt = 64, cls = 'curve') {
 /**
  * <ease field>: current curve + name; click opens a grid of all eases plus a
  * free-text input (e.g. "back.out(2.5)", "steps(6)").
+ * emptyLabel (e.g. "Individual") shows an inactive shared-field state until the user picks.
  */
-export function easeField({ gsap, value, onChange, compact = false, mixed = false }) {
+export function easeField({ gsap, value, onChange, compact = false, mixed = false, emptyLabel = null }) {
   let current = value || 'none';
   let isMixed = !!mixed;
+  let empty = emptyLabel || null;
   let open = false;
   const big = h('div', { class: 'ease__big' });
   const name = h('span', { class: 'ease__name' });
@@ -44,10 +46,12 @@ export function easeField({ gsap, value, onChange, compact = false, mixed = fals
   const toggle = h('button', { type: 'button', class: 'ease__toggle', 'aria-expanded': 'false', onclick: () => setOpen(!open) }, big, name);
 
   function draw() {
-    big.replaceChildren(curveSvg(gsap, isMixed ? 'none' : current, 220, 72, 'curve curve--big'));
-    name.textContent = isMixed ? 'Mixed' : current;
-    el.classList.toggle('is-mixed', isMixed);
-    grid.querySelectorAll('[data-ease]').forEach((b) => b.classList.toggle('is-active', !isMixed && b.dataset.ease === current));
+    const showEmpty = !!empty;
+    big.replaceChildren(curveSvg(gsap, showEmpty || isMixed ? 'none' : current, 220, 72, 'curve curve--big'));
+    name.textContent = showEmpty ? empty : (isMixed ? 'Mixed' : current);
+    el.classList.toggle('is-mixed', isMixed && !showEmpty);
+    el.classList.toggle('is-empty', showEmpty);
+    grid.querySelectorAll('[data-ease]').forEach((b) => b.classList.toggle('is-active', !showEmpty && !isMixed && b.dataset.ease === current));
   }
   function setOpen(v) {
     open = v;
@@ -66,18 +70,23 @@ export function easeField({ gsap, value, onChange, compact = false, mixed = fals
   function pick(e) {
     current = e;
     isMixed = false;
+    empty = null;
     draw();
     onChange(e);
   }
-  const el = h('div', { class: ['ease', compact && 'ease--compact', isMixed && 'is-mixed'] }, toggle, grid);
+  const el = h('div', { class: ['ease', compact && 'ease--compact', isMixed && 'is-mixed', empty && 'is-empty'] }, toggle, grid);
   draw();
   return {
     el,
-    update(v, nextMixed = false) {
-      const mix = !!nextMixed;
-      if (mix !== isMixed || (!mix && v !== current)) {
-        if (!mix) current = v || 'none';
+    update(v, opts = false) {
+      const o = opts && typeof opts === 'object' ? opts : { mixed: !!opts };
+      const mix = !!o.mixed;
+      const nextEmpty = o.emptyLabel || null;
+      if (mix !== isMixed || nextEmpty !== empty || (!mix && !nextEmpty && v !== current)) {
+        if (!mix && !nextEmpty) current = v || 'none';
+        else if (v) current = v;
         isMixed = mix;
+        empty = nextEmpty;
         draw();
       }
     },

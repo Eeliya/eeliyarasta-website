@@ -78,6 +78,8 @@ const CURTAIN = '/transitions/page/curtain';
 const TOTAL_PTR = CURTAIN + '/total';
 const TOTAL_MAX = 12;
 const EASE_PTRS = ['/in/ease', '/labelIn/ease', '/labelOut/ease', '/out/ease'];
+const EASE_MODE_PTR = CURTAIN + '/easeMode';
+const SHARED_EASE_PTR = CURTAIN + '/ease';
 // Individual curtain fields live under Advanced. 'pair' = duration + ease on one row.
 const CURTAIN_ROWS = [
   ['pair', '/in', 'Curtain in'],
@@ -433,6 +435,28 @@ function pageTransitionGroup(store, bridge) {
 
   // Duration + ease on one row (Advanced).
   const advEases = [];
+  const readMode = () => (get(EASE_MODE_PTR) === 'individual' || effective().easeMode === 'individual' ? 'individual' : 'shared');
+  const sharedEaseValue = () => get(SHARED_EASE_PTR) || effective().ease || 'expo.inOut';
+  const setSharedEase = (v) => {
+    // Shared mode: one value plays; clear per-step eases so they cannot affect playback.
+    store.batch(() => {
+      set(EASE_MODE_PTR, 'shared', 'curtain:easeMode');
+      set(SHARED_EASE_PTR, v, 'curtain:ease');
+      for (const rel of EASE_PTRS) set(CURTAIN + rel, undefined, 'curtain:' + CURTAIN + rel);
+    }, { source: 'panel' });
+  };
+  const setStepEase = (eRel, v) => {
+    const shared = sharedEaseValue();
+    // Individual mode: seed every step from the current shared ease, then apply this pick.
+    store.batch(() => {
+      set(EASE_MODE_PTR, 'individual', 'curtain:easeMode');
+      if (get(SHARED_EASE_PTR) == null) set(SHARED_EASE_PTR, shared, 'curtain:ease');
+      // Seed every step from the shared ease so untouched steps do not jump.
+      for (const rel of EASE_PTRS) set(CURTAIN + rel, shared, 'curtain:' + CURTAIN + rel);
+      set(CURTAIN + eRel, v, 'curtain:' + CURTAIN + eRel);
+    }, { source: 'panel' });
+  };
+
   const pair = (seg, label) => {
     const dRel = seg + '/duration';
     const eRel = seg + '/ease';
@@ -442,9 +466,9 @@ function pageTransitionGroup(store, bridge) {
     input.title = label + ' duration (seconds)';
     const ease = easeField({
       gsap: bridge.api?.gsap,
-      value: get(ePtr) || digRel(effective(), eRel) || 'expo.inOut',
+      value: get(ePtr) || sharedEaseValue(),
       compact: true,
-      onChange: (v) => set(ePtr, v, 'curtain:' + ePtr),
+      onChange: (v) => setStepEase(eRel, v),
     });
     const changed = () => isChanged(dPtr) || isChanged(ePtr);
     const wrap = h('div', { class: ['tf', changed() && 'is-changed'] },
@@ -452,7 +476,7 @@ function pageTransitionGroup(store, bridge) {
       h('div', { class: 'f__pair' }, h('span', { class: 'f__numwrap' }, input, h('span', { class: 'f__unit' }, 's')), ease.el),
     );
     numbers.push({ ptr: dPtr, rel: dRel, input, wrap, changed, min: 0 });
-    advEases.push({ ptr: ePtr, rel: eRel, ease });
+    advEases.push({ ptr: ePtr, rel: eRel, ease, wrap });
     return wrap;
   };
 
@@ -482,26 +506,19 @@ function pageTransitionGroup(store, bridge) {
     onDrag: (on) => (el.__dragging = on),
   });
 
-  // One ease for all four moves; mixed when they differ.
-  const easeValues = () => EASE_PTRS.map((rel) => get(CURTAIN + rel) || digRel(effective(), rel) || 'expo.inOut');
-  const easeState = () => {
-    const vals = easeValues();
-    const same = vals.every((v) => v === vals[0]);
-    return { value: vals[0], mixed: !same, vals };
-  };
+  // Shared ease under the timeline — either/or with Advanced per-step eases.
+  const easeHint = h('p', { class: 'hint small tf__hint' }, '');
   const globalEase = easeField({
     gsap: bridge.api?.gsap,
-    value: easeState().value,
-    mixed: easeState().mixed,
+    value: sharedEaseValue(),
+    emptyLabel: readMode() === 'individual' ? 'Individual' : null,
     compact: true,
-    onChange: (v) => {
-      for (const rel of EASE_PTRS) set(CURTAIN + rel, v, 'curtain:' + CURTAIN + rel);
-    },
+    onChange: (v) => setSharedEase(v),
   });
   const globalEaseWrap = h('div', { class: 'tf ptg__ease' },
     head('Ease'),
     globalEase.el,
-    h('p', { class: 'hint small tf__hint' }, 'Applies to curtain in, text in, text out, and curtain out.'),
+    easeHint,
   );
 
   const advancedBody = CURTAIN_ROWS.map((row) => (
@@ -518,6 +535,24 @@ function pageTransitionGroup(store, bridge) {
     title: 'Play the transition over this page with the values above (no navigation)',
     onclick: () => bridge.api?.replayCurtain?.(),
   }, '\u21ba Replay');
+
+  const syncEaseUi = () => {
+    const mode = readMode();
+    const shared = sharedEaseValue();
+    const individual = mode === 'individual';
+    globalEase.update(shared, { emptyLabel: individual ? 'Individual' : null });
+    easeHint.textContent = individual
+      ? 'Per-step eases in Advanced. Pick an ease here to use one for all.'
+      : 'One ease for every step. Set a step ease in Advanced to use separate eases.';
+    globalEaseWrap.classList.toggle('is-individual', individual);
+    for (const r of advEases) {
+      const v = individual ? (get(r.ptr) || shared) : shared;
+      r.ease.update(v);
+      r.wrap.classList.toggle('is-ease-inactive', !individual);
+      r.ease.el.classList.toggle('is-inactive', !individual);
+      r.ease.el.title = individual ? '' : 'Not in effect — shared ease is active. Pick an ease to switch to per-step.';
+    }
+  };
 
   const el = h('section', { class: 'grp ptg' },
     h('h4', { class: 'grp__title' }, 'Page transition'),
@@ -551,13 +586,12 @@ function pageTransitionGroup(store, bridge) {
       if (r.rel === '/out/duration') v = wantOut;
       if (r.input !== document.activeElement && r.input.value !== String(v ?? '')) r.input.value = v ?? '';
     }
-    const st = easeState();
-    globalEase.update(st.value, st.mixed);
-    for (const r of advEases) r.ease.update(get(r.ptr) || digRel(eff, r.rel));
+    syncEaseUi();
   };
   // Initialise session total and pin once.
   getTotal();
   pinOutDuration(getTotal());
+  syncEaseUi();
   return el;
 }
 
