@@ -1,4 +1,4 @@
-import { html, esc, img, pad, ed, lines } from '../helpers.js';
+import { html, esc, img, pad, ed, lines, words } from '../helpers.js';
 import { sectionHead, projectList } from './partials.js';
 
 const heroPhoto = (ctx, p, i) => {
@@ -27,7 +27,7 @@ export function home(ctx) {
     <div class="hero__photos" data-anim="hero.photos">
       ${hero.photos.map((p, i) => heroPhoto(ctx, p, i))}
     </div>
-    <h1 class="hero__title" data-anim="hero.title" aria-label="${esc(site.name)}">${site.name.split(' ').map((w, i) => html`${i ? ' ' : ''}<span>${esc(w)}</span>`)}</h1>
+    <h1 class="hero__title" data-anim="hero.title"><span class="hero__name"${ed('home.json', ['hero', 'title'], 'words')}>${words(hero.title ?? site.name)}</span></h1>
     <div class="hero__meta" data-anim="hero.meta">
       <span class="label"${ed('home.json', ['hero', 'eyebrow'])}>${esc(hero.eyebrow)}</span>
       <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>

@@ -27,6 +27,7 @@ export function createTextPanel({ store, bridge, root }) {
       const n = Number(raw);
       return raw.trim() !== '' && Number.isFinite(n) ? n : undefined;
     }
+    if (type === 'words') return raw.replace(/\s+/g, ' ').trim() || undefined; // hero name: never empty
     if (type === 'text') return raw.replace(/\s*\n\s*/g, ' ');
     return raw;
   }

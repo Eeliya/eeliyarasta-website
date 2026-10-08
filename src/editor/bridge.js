@@ -9,12 +9,15 @@
  *  - lets you hover/click [data-anim] elements to select them (Motion mode).
  */
 import { parse } from './lib/pointer.js';
+import { words } from '../site/helpers.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit] { outline: 1px dashed rgb(255 255 255 / .22); outline-offset: 3px; border-radius: 2px; cursor: text !important; }
 html.__ed-text [data-edit]:hover { outline-color: rgb(255 255 255 / .6); }
 html.__ed-text [data-edit]:focus { outline: 1.5px solid #9fd3ff; outline-offset: 3px; caret-color: #9fd3ff; }
 html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
+html.__ed-text [data-edit] { pointer-events: auto; }
+html.__ed-text .hero__title { z-index: 5; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
@@ -67,9 +70,11 @@ export function createBridge({ iframe, store, labelFor }) {
       if (!doc) return;
       doc.documentElement.classList.toggle('__ed-text', mode === 'text');
       doc.documentElement.classList.toggle('__ed-motion', mode === 'motion');
-      setEditable(mode === 'text');
+      // Freeze first: reverting split-text animations re-creates their inner elements,
+      // which would drop contenteditable from editable text inside them (page titles, hero name).
       if (mode === 'text') api.freeze();
       else api.unfreeze();
+      setEditable(mode === 'text');
       hoverEl = null;
       bridge.select(null);
       loop();
@@ -119,6 +124,9 @@ export function createBridge({ iframe, store, labelFor }) {
           applied.set(el, value);
           if (el.dataset.editType === 'block') {
             const html = escText(value).replace(/\r?\n/g, '<br>');
+            if (el.innerHTML !== html) el.innerHTML = html;
+          } else if (el.dataset.editType === 'words') {
+            const html = words(value);
             if (el.innerHTML !== html) el.innerHTML = html;
           } else if (el.textContent !== String(value)) el.textContent = String(value);
         }
@@ -198,6 +206,10 @@ export function createBridge({ iframe, store, labelFor }) {
   function readValue(el) {
     const type = el.dataset.editType || 'text';
     if (type === 'block') return el.innerText.replace(/\u00a0/g, ' ').replace(/\n+$/, '');
+    if (type === 'words') {
+      const text = el.textContent.replace(/\s+/g, ' ').trim();
+      return text || undefined; // the name can't be empty
+    }
     const text = el.textContent.replace(/\u00a0/g, ' ').replace(/\s*\n\s*/g, ' ');
     if (type === 'number') {
       const n = Number(text.trim());
@@ -279,11 +291,30 @@ export function createBridge({ iframe, store, labelFor }) {
     doc.addEventListener('focusin', (e) => {
       const el = e.target.closest?.('[data-edit]');
       if (mode !== 'text' || !el) return;
+      // Word-split text (hero name) is edited as plain text and re-split on blur.
+      if (el.dataset.editType === 'words') {
+        const { file, ptr } = parseEdit(el.dataset.edit);
+        el.textContent = String(store.get(file, ptr) ?? el.textContent.replace(/\s+/g, ' ').trim());
+        const sel = win.getSelection();
+        sel.selectAllChildren(el);
+        sel.collapseToEnd();
+      }
       bridge.select(el, 'text');
       emit('textFocus', el.dataset.edit);
       // Focus can scroll the smooth-scroll wrapper behind ScrollSmoother's back (e.g. Tab
       // to an off-screen field): make sure the field ends up visible.
       setTimeout(() => bridge.reveal(el), 50);
+    });
+
+    doc.addEventListener('focusout', (e) => {
+      const el = e.target.closest?.('[data-edit-type="words"]');
+      if (!el) return;
+      const { file, ptr } = parseEdit(el.dataset.edit);
+      const value = store.get(file, ptr);
+      if (value === undefined || value === null) return;
+      el.classList.remove('__ed-invalid');
+      el.innerHTML = words(value);
+      applied.set(el, value);
     });
 
     doc.addEventListener('input', (e) => {

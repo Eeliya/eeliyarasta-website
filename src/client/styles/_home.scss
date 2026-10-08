@@ -15,6 +15,10 @@
     font-size: clamp(64px, 14.2vw, 270px); line-height: 0.82; letter-spacing: -0.02em;
     white-space: nowrap; pointer-events: none;
     text-shadow: 0 10px 60px rgb(0 0 0 / 0.35);
+  }
+  // The name (home.json → hero.title), one span per word.
+  &__name {
+    display: flex; align-items: center; justify-content: center; gap: 0.18em;
     > span { display: inline-block; }
   }
 
@@ -31,7 +35,8 @@
 
   @media (max-width: $bp-sm) {
     &__photos { inset: calc(var(--header-h)) 0 90px; }
-    &__title { flex-direction: column; gap: 0; font-size: 27vw; line-height: 0.86; }
+    &__title { font-size: 27vw; line-height: 0.86; }
+    &__name { flex-direction: column; gap: 0; }
     &__meta { grid-template-columns: 1fr; gap: 8px; bottom: 22px; }
     &__subline { justify-self: start; text-align: left; }
     &__scroll { display: none; }

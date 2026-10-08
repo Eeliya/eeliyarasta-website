@@ -18,13 +18,22 @@ export const html = (strings, ...values) => strings.reduce((out, s, i) => out + 
 /** Text with line breaks ("a\nb" -> "a<br>b"), escaped. */
 export const lines = (text) => esc(text).replace(/\r?\n/g, '<br>');
 
+/**
+ * One <span> per word ("Eeliya Rasta" -> "<span>Eeliya</span> <span>Rasta</span>"), escaped.
+ * Used for the big hero name, whose layout (and SplitText animation) works per word.
+ * The editor re-renders edited values with the same function.
+ */
+export const words = (text) =>
+  String(text ?? '').trim().split(/\s+/).filter(Boolean).map((w) => `<span>${esc(w)}</span>`).join(' ');
+
 /** JSON Pointer (RFC 6901) from path parts: ['about', 'facts', 0] -> "/about/facts/0". */
 export const pointer = (parts) => parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
 
 /**
  * Visual-editor marker: maps an element's text to a value in content/*.json.
  *   ed('home.json', ['sections', 'people', 'title'])  ->  data-edit="home.json#/sections/people/title"
- * type: 'text' (single line, default), 'block' (multi-line, \n <-> <br>) or 'number'.
+ * type: 'text' (single line, default), 'block' (multi-line, \n <-> <br>), 'number', or
+ * 'words' (single line rendered with words(), e.g. the hero name).
  * The editor (src/editor) finds these in its preview; the public site ignores them.
  */
 export const ed = (file, parts, type = 'text') =>

@@ -1,5 +1,6 @@
 {
   "hero": {
+    "title": "Eeliya Rasta",
     "eyebrow": "Portrait & editorial photography",
     "subline": "Based in the Netherlands. Shot on a Fujifilm X100V. Also builds websites and things.",
     "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
