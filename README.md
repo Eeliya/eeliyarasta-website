@@ -218,30 +218,36 @@ button, or a click on a person/place/project in the preview, opens straight into
 **Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
 Explorer item, so a shared link opens the same view:
 `/edit/?path=/people/&tab=content&source=people&item=noor-vermeer` (`tab`: browse, content,
-motion, settings; `view`: menu, footer). Open/closed sections, the selected field or Motion
+motion, settings; `view`: menu, footer; `anim`: the animation open in the Motion tab's library). Open/closed sections, the selected field or Motion
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
-| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                 |
-| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                 |
-| **Motion** | Click an animated element (or pick one from the list). Edit its preset, duration, delay, stagger, ease (picker with curves), trigger (load / scroll), scroll start/end/scrub, from/to properties (distance, scale, rotation, opacity, clip-path…) and type-specific values (hero scatter, parallax speed, word scrub…). Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
+| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                             |
+| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                             |
+| **Motion** | Click an animated element (or pick one from the Elements list). Edit its animation, duration, delay, stagger, ease (picker with curves), trigger (load / scroll), scroll start/end/scrub, from/to properties (distance, scale, rotation, opacity, clip-path…) and type-specific values (hero scatter, parallax speed, word scrub…). Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
 
 In the edit modes, clicks on editable or animated elements select them instead of following
 links. Hold **Alt** to click through.
 
-Every value in Motion can be written at one of three **scopes**:
+In the editor a preset is called an **animation** (`presets` in `animations.json`). The
+Motion tab lists the page's animated **Elements**; pick one and choose where its edits go:
 
-- **This element**: `animations.json → elements["<path>|<target>|<n>"]`, e.g.
-  `"/about/|about.headline|0"`. Only this element on this page. This is how you give one
-  element a different preset without touching templates.
+- **This element**: `elements["<path>|<target>|<n>"]`, e.g. `"/about/|about.headline|0"`.
+  Only this element on this page. This is how you give one element a different animation
+  without touching templates.
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
-- **Preset**: `presets["fade-up"]`. Every target using that preset.
 
-Badges show where each value comes from (element / target / preset / default), and ↺ resets a
-value at the current scope.
+An animation's own values live in the **Animations library** (the Animations button at the
+top of the Motion tab, or the edit button next to an element's Animation): pick an
+animation to edit `presets["fade-up"]`, which every element using it gets unless it sets
+its own. The list shows how many elements on this page use each animation and which
+`data-anim` names use it on the site.
 
+Badges show where each value comes from: **element**, **all** (the `data-anim` name),
+**default** (the animation) or **global** (`defaults`); the reset button removes the value
+at the current scope.
 Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z** / **Shift+Ctrl/⌘+Z**
 undo/redo, **Esc** deselects.
 
