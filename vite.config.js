@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import staticSite from './scripts/vite-plugin-static-site.mjs';
 
 export default defineConfig({
   plugins: [
     staticSite(),
-    // Svelte is editor-only (trial: src/editor/svelte). The public site never imports it.
-    svelte({ include: ['src/editor/**/*.svelte'] }),
+    // Svelte is editor-only (src/editor/svelte). The public site never imports it.
+    // vitePreprocess: components can use <style lang="scss">.
+    svelte({ include: ['src/editor/**/*.svelte'], preprocess: vitePreprocess() }),
   ],
   css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
   build: {

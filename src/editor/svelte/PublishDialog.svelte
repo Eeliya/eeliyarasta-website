@@ -213,3 +213,81 @@
     {/if}
   </footer>
 </dialog>
+
+<style lang="scss">
+  .error {
+    color: #ff8a7a;
+    margin: 8px 0 0;
+  }
+
+  .pub-save {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgb(255 207 122 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 207 122 / 0.25);
+    cursor: pointer;
+
+    input {
+      accent-color: #ffcf7a;
+    }
+  }
+
+  .commits {
+    list-style: none;
+    padding: 0;
+    margin: -4px 0 12px;
+    display: grid;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--muted);
+
+    code {
+      color: var(--hi);
+    }
+  }
+
+  .pub-ok {
+    font-size: 15px;
+    margin: 12px 0 6px;
+    color: #b9f0c4;
+
+    a {
+      color: inherit;
+    }
+
+    code {
+      font-size: 14px;
+      color: inherit;
+    }
+  }
+
+  .pub-url {
+    word-break: break-all;
+  }
+
+  .pub-hint {
+    margin: 8px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgb(255 138 122 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 138 122 / 0.25);
+  }
+
+  .pub-out {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    max-height: 180px;
+    overflow: auto;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 0.5);
+    box-shadow: inset 0 0 0 1px var(--line);
+    font: 11px/1.5 var(--f-mono);
+    color: #ffb4a8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+</style>

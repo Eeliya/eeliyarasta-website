@@ -190,3 +190,171 @@
   <PublishDialog {live} {actions} bind:this={publishDialog} />
   <Toasts />
 {/if}
+
+<style lang="scss">
+  .ed-stage {
+    position: absolute;
+    inset: 0 calc(var(--panel-w) + 24px) 0 0;
+    padding: 12px 0 12px 12px;
+    display: grid;
+    place-items: center;
+  }
+
+  // the preview iframe
+  .ed-frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 30px 80px -30px rgb(0 0 0 / 0.9);
+    transition:
+      width 0.5s var(--ease-out),
+      height 0.5s var(--ease-out);
+    background: var(--bg);
+  }
+
+  .ed-stage.is-mobile .ed-frame {
+    width: 390px;
+    height: min(844px, 100%);
+    border-radius: 28px;
+  }
+
+  .ed-panel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: var(--panel-w);
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    overflow: hidden;
+    // glass: see-through and blurred over the stage
+    background: rgb(22 22 22 / 0.62);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    backdrop-filter: blur(24px) saturate(170%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 24px 60px -20px rgb(0 0 0 / 0.9),
+      0 2px 10px rgb(0 0 0 / 0.4);
+  }
+
+  // the tab panels (child components) may shrink
+  .ed-panel > :global(*) {
+    min-width: 0;
+  }
+
+  .ed-head {
+    padding: 16px 16px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  // "Editor" + the source pill (h1 > small)
+  .ed-brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .ed-source {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b9f0c4;
+    padding: 4px 8px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .ed-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  // pending line and status on their own rows, then [ empty | Save | Publish ]
+  .ed-foot {
+    border-top: 1px solid var(--line);
+    padding: 10px 16px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ed-foot > .btn-ghost {
+    grid-column: 2;
+  }
+
+  .ed-pending {
+    grid-column: 1 / -1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 4px;
+    font-size: 11px;
+    color: var(--muted);
+
+    b {
+      color: var(--fg);
+      font-weight: 500;
+    }
+
+    &__dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 4px;
+      background: #b9f0c4;
+      flex: none;
+    }
+
+    &[data-kind='pending'] .ed-pending__dot {
+      background: #ffcf7a;
+      box-shadow: 0 0 0 3px rgb(255 207 122 / 0.15);
+    }
+  }
+
+  .ed-status {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--faint);
+    font-size: 10.5px;
+    min-height: 1.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 900px) {
+    .ed-stage {
+      inset: 0 0 50vh 0;
+      padding: 8px;
+    }
+    .ed-panel {
+      top: auto;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      width: auto;
+      height: calc(50vh - 16px);
+    }
+  }
+</style>

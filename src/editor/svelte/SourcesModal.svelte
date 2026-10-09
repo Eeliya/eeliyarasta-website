@@ -214,3 +214,193 @@
     {/if}
   </section>
 </dialog>
+
+<style lang="scss">
+  // the Sources modal is a <dialog>: header on top, item list left, item fields right
+  dialog.src-modal {
+    width: min(1100px, 92vw);
+    height: calc(100vh - 64px);
+    max-height: 900px;
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 0;
+    overflow: hidden;
+
+    &:not([open]) {
+      display: none;
+    }
+  }
+
+  .src-modal__head {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid var(--line);
+
+    .modal__title {
+      margin: 0;
+    }
+  }
+
+  .src-modal__path {
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
+  .src-modal__x {
+    margin-left: auto;
+    align-self: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--fg);
+      background: rgb(255 255 255 / 0.06);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--hi);
+    }
+  }
+
+  // left: the list
+  .src-list {
+    overflow: auto;
+    padding: 14px 12px 18px;
+    border-right: 1px solid var(--line);
+  }
+
+  .src-list__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px 10px;
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .src-list__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  // number | name / meta | changed dot
+  .src-list__item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 10px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--fg);
+
+    .dot {
+      display: none;
+      grid-column: 3;
+      grid-row: 1 / 3;
+      margin: 0;
+    }
+
+    &.is-changed .dot {
+      display: inline-block;
+    }
+
+    &:hover {
+      background: rgb(255 255 255 / 0.05);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--hi);
+    }
+
+    &.is-selected {
+      background: rgb(159 211 255 / 0.2);
+    }
+  }
+
+  .src-list__num {
+    grid-row: 1 / 3;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .src-list__name,
+  .src-list__meta {
+    grid-column: 2;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .src-list__meta {
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
+  .src-list__note {
+    margin: 12px 6px 0;
+  }
+
+  // right: the selected item
+  .src-detail {
+    overflow: auto;
+    padding: 16px 22px 22px;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+  }
+
+  .src-detail__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 30px;
+    margin-bottom: 2px;
+
+    .src-item__title {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .src-detail__hint {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .src-detail :global(.tf__input:disabled) {
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .src-item__title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+</style>

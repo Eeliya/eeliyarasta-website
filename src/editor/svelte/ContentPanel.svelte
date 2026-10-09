@@ -285,3 +285,223 @@
 
   <SourcesModal bind:this={sourcesModal} {live} {bridge} />
 </section>
+
+<style lang="scss">
+  // content section groups: <details class="sec"> with the bar as its <summary>
+  .sec {
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+
+    > summary + :global(*) {
+      margin-top: 8px;
+    }
+
+    > :global(:not(summary)) {
+      margin-left: 2px;
+    }
+
+    > :global(:not(summary)) + :global(:not(summary)) {
+      margin-top: 12px;
+    }
+  }
+
+  // caret, title, then on the right: field count, move buttons and/or the on/off toggle
+  .sec__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+
+    .sec__caret + * {
+      margin-left: auto;
+    }
+  }
+
+  // (size and display come from Font Awesome's .fa-solid)
+  .sec__caret {
+    color: var(--muted);
+    flex: none;
+    font-size: 10px;
+    transition: rotate 0.15s;
+
+    .sec[open] & {
+      rotate: 90deg;
+    }
+  }
+
+  .sec__count {
+    color: var(--faint);
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  // on/off switch: a checkbox drawn as a track, its knob a radial gradient that slides right
+  // when checked. Off: dark track, grey knob. On: whitish track, black knob.
+  .sec__check {
+    flex: none;
+    appearance: none;
+    margin: 0;
+    width: 28px;
+    height: 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: radial-gradient(circle, var(--muted) 5.5px, transparent 6.5px) 0 0 / 16px 16px
+      no-repeat #262625;
+    box-shadow: inset 0 0 0 1px #3a3a38;
+    transition:
+      background-position 0.2s,
+      background-color 0.2s;
+
+    &:checked {
+      background-image: radial-gradient(circle, #030303 5.5px, transparent 6.5px);
+      background-position: 12px 0;
+      background-color: var(--fg);
+      box-shadow: none;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow:
+        0 0 0 2px #030303,
+        0 0 0 3px var(--fg);
+    }
+  }
+
+  .sec.is-off {
+    > summary {
+      color: var(--muted);
+    }
+
+    > :global(:not(summary)) {
+      opacity: 0.55;
+    }
+  }
+
+  // home section order (click only) and grid settings
+  .sec__move {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--fg);
+      background: rgb(255 255 255 / 0.06);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--hi);
+    }
+
+    &:disabled {
+      color: var(--faint);
+      cursor: default;
+    }
+
+    // up and down sit 2px apart
+    & + & {
+      margin-left: -6px;
+    }
+  }
+
+  .sec__opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .sec__opt {
+    position: relative;
+    min-width: 0;
+    padding: 2px;
+
+    // the edit button sits beside the label, drawn at the right of the title row
+    > .btn-sm {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      height: 22px;
+      margin: 0;
+    }
+
+    &.has-extra .tf__label {
+      padding-right: 28px;
+    }
+
+    .dot {
+      display: none;
+    }
+
+    &.is-changed .dot {
+      display: inline-block;
+    }
+  }
+
+  .sec__note {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .sec__opt-field {
+    display: block;
+  }
+
+  // sources: list in the Content panel + edit modal
+  .sec__opt .tf__label {
+    min-height: 22px;
+  }
+
+  .src-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  // file name, changed dot, item count, edit button
+  .src-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg);
+
+    .dot {
+      display: none;
+      margin-left: 0;
+    }
+
+    &.is-changed .dot {
+      display: inline-block;
+    }
+  }
+
+  .src-row__count {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+</style>

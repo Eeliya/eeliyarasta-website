@@ -99,3 +99,137 @@
     </ul>
   {/if}
 </div>
+
+<style lang="scss">
+  // custom page / component picker
+  .pm {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pm__btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    background: rgb(0 0 0 / 0.35);
+    box-shadow: inset 0 0 0 1px var(--line);
+
+    &:hover,
+    &[aria-expanded='true'] {
+      box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+    }
+  }
+
+  .pm__kind {
+    flex: none;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 999px;
+    color: var(--faint);
+    box-shadow: inset 0 0 0 1px var(--line);
+
+    &[data-kind='component'] {
+      color: #e6dcc4;
+      box-shadow: inset 0 0 0 1px rgb(230 220 196 / 0.35);
+    }
+  }
+
+  .pm__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--fg);
+  }
+
+  .pm__caret {
+    flex: none;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .pm__list {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: min(360px, 50vh);
+    overflow: auto;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border-radius: 12px;
+    background: rgb(22 22 22 / 0.92);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      0 24px 50px -20px rgb(0 0 0 / 0.9);
+  }
+
+  .pm__group {
+    padding: 8px 10px 4px;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .pm__opt {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+
+    &:hover,
+    &:focus-visible {
+      background: rgb(255 255 255 / 0.08);
+    }
+
+    &.is-active {
+      background: rgb(159 211 255 / 0.12);
+    }
+  }
+
+  .pm__badge {
+    grid-row: 1 / span 2;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    border-radius: 999px;
+    color: var(--faint);
+    box-shadow: inset 0 0 0 1px var(--line);
+
+    &.is-component {
+      color: #e6dcc4;
+      box-shadow: inset 0 0 0 1px rgb(230 220 196 / 0.35);
+    }
+  }
+
+  .pm__opt-title {
+    color: var(--fg);
+  }
+
+  .pm__opt-path {
+    grid-column: 2;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+</style>

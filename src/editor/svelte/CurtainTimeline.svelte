@@ -296,3 +296,187 @@
     {#each marks as t (t)}<span style:left={pct(t)}>{fmtS(t)}s</span>{/each}
   </div>
 </div>
+
+<style lang="scss">
+  .ptl {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .ptl.is-dragging {
+    user-select: none;
+    cursor: ew-resize;
+  }
+
+  /* Label above bar so the track can use the full width. */
+  .ptl__row {
+    display: grid;
+    gap: 4px;
+  }
+
+  .ptl__name {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ptl__track {
+    position: relative;
+    height: 28px;
+    touch-action: none;
+  }
+
+  .ptl__bars {
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+    pointer-events: none;
+    overflow: hidden;
+    background: rgb(255 255 255 / 0.04);
+
+    // Tick lines every 0.5s (--tick), over the bars.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to right,
+        rgb(255 255 255 / 0.08) 0 1px,
+        transparent 1px var(--tick, 25%)
+      );
+    }
+  }
+
+  .ptl__bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .ptl__len {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    color: #2b2b2b; // was rgb(0 0 0 / 0.72) on move bar
+    pointer-events: none;
+    white-space: nowrap;
+    user-select: none;
+    // DM Mono digits sit high in the em box — nudge ink to optical center.
+    transform: translateY(1px);
+  }
+
+  .ptl__bar.is-text.is-move .ptl__len {
+    color: #283540; // was rgb(0 0 0 / 0.75) on var(--hi)
+  }
+
+  // Stay length centered in the empty gap between text-in and text-out.
+  .ptl__gap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    pointer-events: none;
+    box-sizing: border-box;
+
+    .ptl__len {
+      color: #c1c1c1; // was rgb(255 255 255 / 0.72) on #212121
+    }
+  }
+
+  .ptl__bar.is-move {
+    background: rgb(255 255 255 / 0.55);
+  }
+
+  .ptl__bar.is-text.is-move {
+    background: var(--hi);
+  }
+
+  .ptl__bar.is-text {
+    pointer-events: auto;
+    cursor: grab;
+    outline: none;
+
+    &:focus-visible {
+      box-shadow: inset 0 0 0 1px var(--hi);
+    }
+  }
+
+  .ptl.is-moving .ptl__bar.is-text {
+    cursor: grabbing;
+  }
+
+  .ptl__handle {
+    position: absolute;
+    z-index: 2;
+    top: -4px;
+    bottom: -4px;
+    width: 12px;
+    margin-left: -6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: ew-resize;
+    outline: none;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 3px;
+      background: var(--solid-faint);
+      box-shadow: 0 0 0 1px rgb(0 0 0 / 0.7);
+      opacity: 1;
+      transition:
+        background 0.15s,
+        box-shadow 0.15s;
+    }
+
+    .ptl:hover &::before {
+      background: var(--fg);
+    }
+
+    &:hover::before,
+    &:focus-visible::before,
+    &.is-active::before {
+      opacity: 1;
+      background: var(--hi);
+      box-shadow:
+        0 0 0 1px rgb(0 0 0 / 0.6),
+        0 0 0 4px rgb(159 211 255 / 0.18);
+    }
+  }
+
+  .ptl__axis {
+    position: relative;
+    height: 12px;
+    font-size: 10px;
+    color: var(--faint);
+
+    span {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    span:first-child {
+      transform: none;
+    }
+  }
+</style>

@@ -239,3 +239,66 @@
       })}>Remove all overrides of this element</button
   >
 {/if}
+
+<style lang="scss">
+  .msel__head {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 12px;
+    justify-items: start;
+  }
+
+  .msel__title {
+    margin: 6px 0 0;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .msel__key {
+    color: var(--faint);
+    font-size: 10.5px;
+    word-break: break-all;
+  }
+
+  .msel__actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .scrub {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+
+  .scrub__label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .scrub__val {
+    width: 34px;
+    text-align: right;
+    color: var(--fg);
+  }
+
+  .scope {
+    margin-bottom: 14px;
+
+    .seg {
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      font-size: 11px;
+      margin: 0;
+    }
+  }
+</style>

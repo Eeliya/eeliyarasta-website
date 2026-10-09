@@ -170,3 +170,88 @@
     </details>
   </div>
 </section>
+
+<style lang="scss">
+  /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
+  .ptg > .btn-ed {
+    margin-bottom: 10px;
+  }
+
+  .tf__hint {
+    display: block;
+    margin: 6px 0 0;
+  }
+
+  /* One bordered curtain group: total, timeline, ease, Advanced. */
+  .ptg__box {
+    margin: 0 0 14px;
+    padding: 12px 12px 0;
+    border-radius: 10px;
+    background: var(--solid-card);
+    display: grid;
+    gap: 12px;
+
+    > .tf {
+      margin-bottom: 0;
+    }
+  }
+
+  .ptg__ease {
+    margin: 0;
+  }
+
+  /* Advanced sits on the bottom edge of the curtain box (same border). */
+  .ptg__advanced {
+    margin: 0 -12px 0;
+    padding: 0;
+    border-radius: 0 0 10px 10px;
+    box-shadow: inset 0 1px 0 var(--line);
+    background: rgb(0 0 0 / 0.18);
+
+    summary {
+      padding: 10px 12px 12px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      user-select: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      // Real FA icons in the summary markup (not CSS content — needs fontawesome.css).
+      .ptg__caret {
+        width: 1em;
+        margin-right: 0.35em;
+        color: var(--faint);
+        font-size: 0.95em;
+      }
+
+      .ptg__caret--open {
+        display: none;
+      }
+    }
+
+    &[open] > summary {
+      margin-bottom: 6px;
+      color: var(--fg);
+
+      .ptg__caret--closed {
+        display: none;
+      }
+
+      .ptg__caret--open {
+        display: inline-block;
+      }
+    }
+  }
+
+  .ptg__advanced-body {
+    display: grid;
+    // Same 6px rhythm as .tf__label → control and .tf__hint (title / field / help).
+    gap: 6px;
+    padding: 0 12px 12px;
+  }
+</style>

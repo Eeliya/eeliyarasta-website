@@ -143,3 +143,77 @@
     </p>
   </section>
 </section>
+
+<style lang="scss">
+  .help {
+    margin: 0 0 12px;
+    padding-left: 16px;
+    color: var(--muted);
+
+    li {
+      margin: 4px 0;
+    }
+
+    b {
+      color: var(--fg);
+      font-weight: 500;
+    }
+  }
+
+  .kbd-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    color: var(--muted);
+    margin: 0;
+
+    kbd {
+      padding: 2px 6px;
+      border-radius: 5px;
+      box-shadow:
+        inset 0 0 0 1px var(--line),
+        0 1px 0 rgb(255 255 255 / 0.1);
+      color: var(--fg);
+    }
+  }
+
+  // changes
+  .chg {
+    margin-bottom: 10px;
+
+    summary {
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 12px;
+      display: grid;
+      gap: 4px;
+    }
+  }
+
+  .chg__path {
+    color: var(--fg);
+    margin-right: 8px;
+  }
+
+  // the saved value, struck through, before the new one
+  .chg__was {
+    color: var(--muted);
+    margin-right: 8px;
+    word-break: break-word;
+  }
+
+  .chg__val {
+    color: var(--fg);
+    word-break: break-word;
+  }
+
+  .chg summary .btn-sm,
+  .chg summary .confirm {
+    margin-left: 6px;
+  }
+</style>

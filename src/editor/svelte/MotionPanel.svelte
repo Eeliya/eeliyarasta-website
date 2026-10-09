@@ -68,3 +68,36 @@
     {/if}
   {/if}
 </section>
+
+<style lang="scss">
+  // motion panel
+  .mlist__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+  }
+
+  .mlist__item {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    background: rgb(255 255 255 / 0.03);
+    box-shadow: inset 0 0 0 1px var(--line);
+
+    &:hover {
+      background: rgb(255 255 255 / 0.08);
+    }
+  }
+
+  .mlist__preset {
+    color: var(--muted);
+  }
+</style>

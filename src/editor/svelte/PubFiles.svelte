@@ -27,3 +27,53 @@
     </li>
   {/each}
 </ul>
+
+<style lang="scss">
+  .files {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 14px;
+    display: grid;
+    gap: 4px;
+  }
+
+  // publish dialog
+  .pfile {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 6px;
+
+    code {
+      color: var(--fg);
+    }
+  }
+
+  .pfile__st {
+    width: 16px;
+    flex: none;
+    font-weight: 500;
+    color: #ffcf7a;
+
+    &.is-new {
+      color: #b9f0c4;
+    }
+
+    &.is-deleted {
+      color: #ff8a7a;
+    }
+  }
+
+  .pfile__stat {
+    margin-left: auto;
+    font-size: 11px;
+
+    .add {
+      color: #b9f0c4;
+    }
+
+    .del {
+      color: #ff8a7a;
+    }
+  }
+</style>
