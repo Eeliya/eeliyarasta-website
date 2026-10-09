@@ -36,7 +36,7 @@ export function header(ctx, route) {
   const n = (key, fallback) => nav[key] ?? fallback;
   return html`
   <header class="header" data-header>
-    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home"><span>Eeliya</span><span>Rasta</span></a>
+    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home">Eeliya Rasta</a>
 
     <nav class="nav" aria-label="Main">
       <div class="nav__pill">

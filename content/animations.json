@@ -120,13 +120,16 @@
       },
       "curtain": {
         "label": true,
-        "in": { "duration": 0.7, "ease": "expo.inOut" },
-        "textDelay": 0.7,
-        "labelIn": { "duration": 0.45, "ease": "expo.out" },
-        "hold": 0.12,
-        "labelOut": { "duration": 0.35, "ease": "power2.in" },
+        "in": { "duration": 0.3, "ease": "power4.out" },
+        "textDelay": 0.15,
+        "labelIn": { "duration": 0.3, "ease": "expo.out" },
+        "hold": 0.15,
+        "labelOut": { "duration": 0.3, "ease": "power2.in" },
         "afterText": -0.25,
-        "out": { "duration": 0.8, "ease": "expo.inOut" }
+        "out": { "duration": 0.35, "ease": "power3.in" },
+        "outStart": 0.75,
+        "textOutStart": 0.6,
+        "total": 1.1
       }
     },
     "accent": { "duration": 1.2, "ease": "power2.inOut" },
