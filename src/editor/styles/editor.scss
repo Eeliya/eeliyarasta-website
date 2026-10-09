@@ -1693,7 +1693,11 @@ dialog.modal__box {
   padding: 12px 36px 12px 14px;
   border-radius: 12px;
   animation: fade 0.3s;
-  @include glass(rgb(24 24 24 / 0.8));
+  // solid like the dialogs: no see-through, no blur
+  background: var(--solid-card, #212121);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 24px 60px -20px rgb(0 0 0 / 0.9);
 
   &--ok {
     box-shadow:
