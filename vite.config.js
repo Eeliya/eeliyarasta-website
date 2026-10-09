@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import staticSite from './scripts/vite-plugin-static-site.mjs';
 
 export default defineConfig({
-  plugins: [staticSite()],
+  plugins: [
+    staticSite(),
+    // Svelte is editor-only (trial: src/editor/svelte). The public site never imports it.
+    svelte({ include: ['src/editor/**/*.svelte'] }),
+  ],
   css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
   build: {
     target: 'es2020',

@@ -7,6 +7,12 @@
 import { h, clear } from './dom.js';
 import { parse } from '../lib/pointer.js';
 import { SITE, HOME, sourceIdOf, baseName } from '../../site/files.js';
+import { mount, unmount } from 'svelte';
+import SourcesModal from '../svelte/SourcesModal.svelte';
+
+/** Trial: the Sources modal also exists in Svelte (src/editor/svelte). Default on. */
+const SVELTE_KEY = 'editor.svelteSources';
+const useSvelte = () => localStorage.getItem(SVELTE_KEY) !== 'off';
 
 /** Lists in content/sources/ (people, places, projects, ...). */
 const isSource = (file) => sourceIdOf(file) !== null;
@@ -149,6 +155,8 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
   ]);
   /** Open source modal: { file, el, list, detail, index, confirm } or null. */
   let modal = null;
+  /** Open Svelte version of that modal (component exports: open, setSelected, where) or null. */
+  let svelteModal = null;
 
   function parseValue(type, raw) {
     if (type === 'number') {
@@ -402,6 +410,10 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
   }
 
   function closeSource() {
+    if (svelteModal) {
+      unmount(svelteModal);
+      svelteModal = null;
+    }
     if (!modal) return;
     for (const [edit, input] of inputs) if (modal.el.contains(input)) inputs.delete(edit);
     modal.el.remove();
@@ -660,8 +672,33 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     if (title) title.textContent = itemName(list[modal.index]);
   }
 
+  /** Svelte version of the modal: mount once, then tell it what to show. */
+  function openSvelte(file, index, edit) {
+    if (modal) closeSource();
+    svelteModal ??= mount(SourcesModal, {
+      target: document.body,
+      props: {
+        store,
+        bridge,
+        onclose: closeSource,
+        onlistchange: render,
+        onswitch: switchEngine,
+      },
+    });
+    svelteModal.open(file, index, edit);
+  }
+
+  /** The "Svelte" toggle in the modal header: reopen the same item in the other version. */
+  function switchEngine() {
+    const at = svelteModal ? svelteModal.where() : { file: modal?.file, index: modal?.index };
+    localStorage.setItem(SVELTE_KEY, useSvelte() ? 'off' : 'on');
+    closeSource();
+    if (at.file) openSource(at.file, at.index);
+  }
+
   /** Open the modal for a source file (content/sources/<name>.json), optionally at an item. */
   function openSource(file, index) {
+    if (useSvelte()) return openSvelte(file, index);
     if (modal?.file === file) {
       if (index !== undefined && index !== modal.index) {
         modal.index = index;
@@ -688,6 +725,17 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
           { class: 'src-modal__head' },
           h('h3', { class: 'modal__title' }, baseName(file)),
           h('span', { class: 'src-modal__path' }, `content/${file}`),
+          h(
+            'button',
+            {
+              type: 'button',
+              class: 'src-engine',
+              'aria-pressed': 'false',
+              title: 'Hand-built version. Click for the Svelte one.',
+              onclick: switchEngine,
+            },
+            'Svelte',
+          ),
           h(
             'button',
             {
@@ -960,6 +1008,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
 
   function setSelectedField(edit) {
     selectedEdit = edit || null;
+    svelteModal?.setSelected(selectedEdit);
     for (const el of document.querySelectorAll('.tf.is-selected'))
       el.classList.remove('is-selected');
     if (!selectedEdit) return;
@@ -979,6 +1028,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
       const g = groupFor(store, { file, ptr }, page);
       // A list item shown on another page (a person's name on home): edit it in the modal.
       if (g.id.startsWith('source:')) {
+        if (useSvelte()) return openSvelte(file, Number(parse(ptr)[0]) || 0, edit);
         openSource(file, Number(parse(ptr)[0]) || 0);
         const field = inputs.get(edit);
         if (!field) return;

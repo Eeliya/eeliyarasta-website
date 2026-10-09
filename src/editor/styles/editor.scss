@@ -1285,6 +1285,34 @@ select {
   font-size: 10.5px;
 }
 
+// trial toggle: hand-built vs Svelte Sources modal (src/editor/svelte)
+.src-engine {
+  margin-left: auto;
+  align-self: center;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  background: none;
+  padding: 3px 10px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--fg);
+    border-color: #5a5a5a;
+  }
+
+  &.is-on {
+    color: #1a0d06;
+    border-color: #ff7a45;
+    background: #ff7a45;
+  }
+
+  + .src-modal__x {
+    margin-left: 4px;
+  }
+}
 .src-modal__x {
   margin-left: auto;
   align-self: center;
