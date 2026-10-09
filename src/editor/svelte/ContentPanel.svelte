@@ -81,7 +81,7 @@
     await tick();
     const moved = panel.querySelector(`[data-section="s${j}"]`);
     const button = moved.querySelector(`[data-dir="${dir < 0 ? 'up' : 'down'}"]`);
-    (button.disabled ? moved.querySelector('summary') : button).focus();
+    (button.disabled ? moved.querySelector('.sec__toggle') : button).focus();
   }
 
   function setConfig(g, key, value) {
@@ -272,13 +272,14 @@
 
   // home section order (click only) and grid settings
   .sec__move {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 0;
-    border-radius: 6px;
+    border-radius: 8px;
     background: none;
     color: var(--muted);
     font-size: 10px;
@@ -299,29 +300,29 @@
       cursor: default;
     }
 
-    // up and down sit 2px apart
+    // up and down touch
     & + & {
-      margin-left: -6px;
+      margin-left: -4px;
     }
   }
 
   .sec__opts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 
   .sec__opt {
     position: relative;
     min-width: 0;
-    padding: 2px;
+    padding: 4px;
 
     // the edit button sits beside the label, drawn at the right of the title row
     > .btn-sm {
       position: absolute;
-      top: 2px;
-      right: 2px;
-      height: 22px;
+      top: 4px;
+      right: 4px;
+      height: 24px;
       margin: 0;
     }
 
@@ -348,7 +349,7 @@
   }
 
   .sec__opt .tf__label {
-    min-height: 22px;
+    min-height: 24px;
   }
 
   // the Source Explorer button, above the hint
