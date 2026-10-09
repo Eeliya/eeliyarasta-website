@@ -13,7 +13,6 @@
     view     'edit' the control; 'read' the value as text in the top row (element view: what the
              animation does); 'inherit' the same control showing the inherited value, dimmed and
              out of reach (inert: no clicks, no focus), for a timing value the scope doesn't set
-    note     with 'inherit': where the value comes from, e.g. "from fade-up", in the top row
     onvalue  (path, value) on an edit
     actions  snippet for the end of the top row
 -->
@@ -25,7 +24,7 @@
   import EasePicker from './EasePicker.svelte';
   import { formatValue } from './motion.js';
 
-  let { def, value, gsap, view = 'edit', note = '', onvalue, actions } = $props();
+  let { def, value, gsap, view = 'edit', onvalue, actions } = $props();
 
   const list = `dl-motion-${++lists}`;
 
@@ -44,7 +43,6 @@
 <div class="f">
   <div class="f__top">
     <span class="f__label" title={def.hint || ''}>{def.label}</span>
-    {#if view === 'inherit' && note}<span class="f__from">{note}</span>{/if}
     {#if view === 'read'}
       <span class="f__value">{formatValue(def, value)}</span>
     {/if}

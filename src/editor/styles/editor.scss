@@ -480,12 +480,6 @@ select {
   text-align: right;
 }
 
-// where an inherited value comes from ("from fade-up"), after the label
-.f__from {
-  color: var(--muted);
-  font-size: 10.5px;
-}
-
 // an inherited timing value: the field's control, dimmed and inert (no clicks, no focus)
 .f__ctrl.is-inherited {
   opacity: 0.4;

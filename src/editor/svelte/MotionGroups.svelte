@@ -101,13 +101,6 @@
     );
 
   // ---- element view: Inherit / Custom
-  const FROM = { target: 'all', defaults: 'global' };
-  /** "from fade-up", "from all / global": where the inherited value comes from. */
-  function from(def) {
-    const layers = [...new Set(pathsOf(def).map((p) => inherited(m, scope, p)[1]))];
-    const names = layers.filter(Boolean).map((l) => FROM[l] || m.presetName);
-    return names.length ? `from ${names.join(' / ')}` : '';
-  }
   const inheritedValue = (def) => each(def, (p) => inherited(m, scope, p)[0]);
   const customValue = (def) =>
     each(def, (p) => dig(m.layers[scope], p) ?? inherited(m, scope, p)[0]);
@@ -170,7 +163,6 @@
           {gsap}
           view={custom ? 'edit' : 'inherit'}
           value={custom ? customValue(def) : inheritedValue(def)}
-          note={from(def)}
           onvalue={setValue}
         >
           {#snippet actions()}
@@ -178,7 +170,7 @@
               <button
                 type="button"
                 class={['seg__btn', !custom && 'is-active']}
-                title="Use the inherited value ({from(def) || 'unset'})"
+                title="Use the inherited value"
                 onclick={() => custom && setCustom(def, false)}>Inherit</button
               >
               <button
