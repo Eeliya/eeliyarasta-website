@@ -3,7 +3,7 @@
  * fields, how a new item looks, the slug format.
  */
 
-const SKIP_KEYS = new Set(['slug', 'cover', 'image']);
+const SKIP_KEYS = new Set(['slug', 'cover']);
 const BLOCK_KEYS = new Set(['summary', 'description', 'note']);
 
 export const itemName = (item) => item?.name || item?.title || 'Untitled';
@@ -18,21 +18,35 @@ export const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-/** The editable fields of one item: its top-level text and number values. */
+const field = (file, i, path, label, type) => {
+  const ptr = `/${i}${path.map((k) => `/${String(k).replace(/~/g, '~0').replace(/\//g, '~1')}`).join('')}`;
+  return { key: path.join('.'), label, path, edit: `${file}#${ptr}`, ptr, type };
+};
+
+/**
+ * The editable fields of one item: its top-level text and number values, "image" (a
+ * project's photo) and the src of every photo in "images" (an album's): { key, label, path,
+ * edit, ptr, type }.
+ */
 export function itemFields(file, item, i) {
-  return Object.entries(item || {})
-    .filter(([k, v]) => !SKIP_KEYS.has(k) && (typeof v === 'string' || typeof v === 'number'))
-    .map(([key, v]) => {
-      const ptr = `/${i}/${key.replace(/~/g, '~0').replace(/\//g, '~1')}`;
-      const type =
-        typeof v === 'number'
+  return Object.entries(item || {}).flatMap(([key, v]) => {
+    if (key === 'images' && Array.isArray(v))
+      return v.map((_, j) => field(file, i, [key, j, 'src'], `photo ${j + 1}`, 'image'));
+    if (SKIP_KEYS.has(key) || (typeof v !== 'string' && typeof v !== 'number')) return [];
+    const type =
+      key === 'image'
+        ? 'image'
+        : typeof v === 'number'
           ? 'number'
           : BLOCK_KEYS.has(key) || String(v).length > 60
             ? 'block'
             : 'text';
-      return { key, edit: `${file}#${ptr}`, ptr, type };
-    });
+    return [field(file, i, [key], key, type)];
+  });
 }
+
+/** The value at `path` in `item` (a field's path from itemFields). */
+export const valueAt = (item, path) => path.reduce((v, k) => v?.[k], item);
 
 /** An empty value shaped like `value` (strings "", lists [], numbers 0, year = this year). */
 function blankLike(value, key) {

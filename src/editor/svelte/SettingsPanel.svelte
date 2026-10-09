@@ -1,7 +1,7 @@
 <!--
   Settings tab: what is the same on every page. The site's name, title and meta
   (settings/site.json), smooth scrolling, the global page-transition curtain and the page
-  fade (settings/animations.json).
+  fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). Menu and Footer copy stays in Content: it is
   text you click in the preview.
@@ -49,6 +49,22 @@
         onvalue={(value) => set(key, value)}
       />
     {/each}
+  </Section>
+
+  <Section key="settings:media" title="Site" name="Photos">
+    <p class="hint">
+      Photos you upload in the editor go to Cloudflare R2 (keys in .env.local, see the README). The
+      content stores their key (photos/…); the site shows them from this address. Photos in media/
+      keep working.
+    </p>
+    <Field
+      edit="{SITE}#/mediaUrl"
+      label="Photo address (R2 public URL)"
+      placeholder="https://photos.eeliyarasta.com"
+      value={live.get(SITE, '/mediaUrl')}
+      changed={live.changed(SITE, '/mediaUrl')}
+      onvalue={(value) => set('mediaUrl', value.trim())}
+    />
   </Section>
 
   <Section key="settings:scroll" title="Site" name="Scrolling">

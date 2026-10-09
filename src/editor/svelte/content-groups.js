@@ -45,6 +45,14 @@ const titleCase = (s) =>
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+/** A field's label: the last part of its pointer; a photo in a list (".../photos/1/src") is "photo 2". */
+function fieldLabel(store, f) {
+  const parts = parse(f.ptr);
+  if (f.type === 'image' && parts.at(-1) === 'src' && /^\d+$/.test(parts.at(-2)))
+    return `photo ${Number(parts.at(-2)) + 1}`;
+  return labelFor(store, f).split(' / ').pop();
+}
+
 /** Home sections (pages/home.json "sections", an ordered list). */
 export function homeSections(store) {
   const list = store.current[HOME]?.sections;
@@ -186,7 +194,7 @@ export function contentGroups(store, bridge, target) {
   for (const f of fieldsOf(store, bridge, target)) {
     const group = groupFor(store, f, page);
     if (group.id.startsWith('source:')) continue;
-    add(group).fields.push({ ...f, label: labelFor(store, f).split(' / ').pop() });
+    add(group).fields.push({ ...f, label: fieldLabel(store, f) });
   }
 
   // The page transition text is an attribute of the page, not a [data-edit] element.

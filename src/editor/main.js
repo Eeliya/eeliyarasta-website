@@ -26,6 +26,7 @@ import App from './svelte/App.svelte';
 import { ui } from './svelte/ui.svelte.js';
 import { toast } from './svelte/toasts.svelte.js';
 import { createLive } from './svelte/live.svelte.js';
+import { connectMedia } from './svelte/media.svelte.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
@@ -38,6 +39,7 @@ import { restoreUi, restorePlace } from './svelte/persist.js';
 
 const store = createStore();
 const live = createLive(store);
+connectMedia(live); // photo URLs read site.json's mediaUrl from it
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
 
 restoreUi(bridge, live); // the tab, sections, ...: from the URL and sessionStorage (svelte/persist.js)

@@ -5,12 +5,14 @@
  * src/client/main.js), before it mounts the first page. From then on the editor:
  *  - pushes the edited settings/animations.json into the preview and re-mounts animations,
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
- *  - turns [data-edit] elements into inline editors (Text mode),
+ *  - turns [data-edit] elements into inline editors (Text mode); a photo
+ *    (data-edit-type="image") is picked with a click and edited in the panel,
  *  - lets you hover/click [data-anim] elements to select them (Motion mode).
  */
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
+import { imageUrl } from './svelte/media.svelte.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit] { outline: 1px dashed rgb(255 255 255 / .22); outline-offset: 3px; border-radius: 2px; cursor: text !important; }
@@ -18,6 +20,7 @@ html.__ed-text [data-edit]:hover { outline-color: rgb(255 255 255 / .6); }
 html.__ed-text [data-edit]:focus { outline: 1.5px solid var(--ed-accent); outline-offset: 3px; caret-color: var(--ed-accent); }
 html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
 html.__ed-text [data-edit] { pointer-events: auto; }
+html.__ed-text img[data-edit] { cursor: pointer !important; }
 html.__ed-text .hero__title { z-index: 5; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
@@ -199,7 +202,14 @@ export function createBridge({ store, labelFor }) {
       const run = () => {
         for (const [el, value] of pending) {
           applied.set(el, value);
-          if (el.dataset.editType === 'block') {
+          if (el.dataset.editType === 'image') {
+            // a new photo: one URL, no srcset (the sizes are for the old one)
+            const url = imageUrl(value);
+            if (el.getAttribute('src') !== url) {
+              el.removeAttribute('srcset');
+              el.src = url;
+            }
+          } else if (el.dataset.editType === 'block') {
             const html = escText(value).replace(/\r?\n/g, '<br>');
             if (el.innerHTML !== html) el.innerHTML = html;
           } else if (el.dataset.editType === 'words') {
@@ -272,7 +282,7 @@ export function createBridge({ store, labelFor }) {
   };
 
   function setEditable(on) {
-    for (const el of doc.querySelectorAll('[data-edit]')) {
+    for (const el of doc.querySelectorAll('[data-edit]:not([data-edit-type="image"])')) {
       if (on) {
         el.setAttribute('contenteditable', plaintext ? 'plaintext-only' : 'true');
         el.setAttribute('spellcheck', 'true');
@@ -380,6 +390,11 @@ export function createBridge({ store, labelFor }) {
         e.preventDefault();
         e.stopPropagation();
         if (mode === 'motion') bridge.select(hit, 'anim');
+        else if (hit.dataset.editType === 'image') {
+          // a photo can't take focus: pick it like a focused text
+          bridge.select(hit, 'text');
+          emit('textFocus', hit.dataset.edit);
+        }
       },
       true,
     );

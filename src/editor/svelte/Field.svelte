@@ -1,7 +1,10 @@
 <!--
   One text field: a label (name, changed dot and, when `file` is given, the file the value
   is stored in) wrapping an input, or a textarea for longer text.
-  Used by the Content panel and the Sources modal.
+  type 'image': a photo (its media/ path or R2 key) with a thumbnail and an Upload button;
+  a photo dropped on the field uploads too (Cloudflare R2, source.js upload()). The key it
+  gets is stored like a typed value: one undo step.
+  Used by the Content panel, the Sources modal and Settings.
 -->
 <script module>
   /** Input text -> stored value. undefined means invalid: the value is not stored. */
@@ -12,13 +15,18 @@
     }
     if (type === 'words') return raw.replace(/\s+/g, ' ').trim() || undefined;
     if (type === 'text') return raw.replace(/\s*\n\s*/g, ' ');
+    if (type === 'image') return raw.trim();
     return raw; // 'block': line breaks are kept
   }
 </script>
 
 <script>
+  import { upload } from '../source.js';
+  import { thumbUrl } from './media.svelte.js';
+  import { toast } from './toasts.svelte.js';
+
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
-  // type: 'text' | 'words' | 'number' | 'block'. onvalue(value) gets every valid input.
+  // type: 'text' | 'words' | 'number' | 'block' | 'image'. onvalue(value) gets every valid input.
   let {
     edit,
     label,
@@ -41,6 +49,54 @@
     if (document.activeElement !== el && el.value !== text) el.value = text;
   };
 
+  // ---- image: upload (picked or dropped), thumbnail
+  const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
+  let progress = $state(null); // 0..1 while uploading
+  let dropping = $state(false);
+  let local = $state(null); // { key, url }: the uploaded file itself, until R2 has a public URL
+  let failed = $state(''); // a thumbnail URL that did not load
+  const thumb = $derived(
+    type !== 'image' || !value ? '' : local?.key === value ? local.url : thumbUrl(value),
+  );
+
+  async function send(file) {
+    if (!file || progress !== null) return;
+    progress = 0;
+    try {
+      const { key } = await upload(file, (p) => (progress = p));
+      if (local) URL.revokeObjectURL(local.url);
+      local = { key, url: URL.createObjectURL(file) };
+      onvalue(key);
+      toast(`Uploaded ${file.name}`, { kind: 'ok', note: key });
+    } catch (err) {
+      toast(err.message, { kind: 'error', timeout: 0 });
+    } finally {
+      progress = null;
+    }
+  }
+
+  function pick() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = ACCEPT;
+    input.onchange = () => send(input.files[0]);
+    input.click();
+  }
+
+  const drop = {
+    ondragover(e) {
+      if (![...e.dataTransfer.types].includes('Files')) return;
+      e.preventDefault();
+      dropping = true;
+    },
+    ondragleave: () => (dropping = false),
+    ondrop(e) {
+      e.preventDefault();
+      dropping = false;
+      send(e.dataTransfer.files[0]);
+    },
+  };
+
   function oninput(e) {
     const next = parseValue(type, e.currentTarget.value);
     invalid = next === undefined;
@@ -48,13 +104,48 @@
   }
 </script>
 
-<label class={['tf', changed && 'is-changed', selected && 'is-selected']} data-edit={edit}>
+<label
+  class={['tf', changed && 'is-changed', selected && 'is-selected', dropping && 'is-drop']}
+  data-edit={edit}
+  {...type === 'image' ? drop : {}}
+>
   <span class="tf__label">
     {label}<i class="dot" title="Changed"></i>
-    <!-- folder included: pages/people.json and sources/people.json are different files -->
-    {#if file}<span class="tf__file" title="content/{file}">{file}</span>{/if}
+    {#if progress !== null}
+      <span class="tf__file">Uploading {Math.round(progress * 100)}%</span>
+    {:else if file}
+      <!-- folder included: pages/people.json and sources/people.json are different files -->
+      <span class="tf__file" title="content/{file}">{file}</span>
+    {/if}
   </span>
-  {#if type === 'block'}
+  {#if type === 'image'}
+    <span class="tf__photo">
+      {#if thumb && failed !== thumb}
+        <img class="tf__thumb" src={thumb} alt="" onerror={() => (failed = thumb)} />
+      {/if}
+      <input
+        class={['tf__input', invalid && 'is-invalid']}
+        spellcheck="false"
+        placeholder={placeholder || 'Drop a photo, or a media/ path'}
+        {@attach show(value)}
+        {onfocus}
+        {oninput}
+      />
+      <button
+        type="button"
+        class="tf__upload"
+        title="Upload a photo (or drop one on the field)"
+        aria-label="Upload a photo for {label}"
+        disabled={progress !== null}
+        onclick={pick}
+      >
+        <i
+          class={['fa-solid', progress === null ? 'fa-upload' : 'fa-spinner fa-spin']}
+          aria-hidden="true"
+        ></i>
+      </button>
+    </span>
+  {:else if type === 'block'}
     <textarea
       class={['tf__input', invalid && 'is-invalid']}
       {rows}
@@ -74,3 +165,59 @@
     />
   {/if}
 </label>
+
+<style lang="scss">
+  // a photo: thumbnail | path or key | Upload, all 36px tall like the input
+  .tf__photo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+
+    .tf__input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .tf__thumb {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .tf__upload {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: rgb(0 0 0 / 0.35);
+    box-shadow: inset 0 0 0 1px var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--fg);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
+    }
+
+    &:disabled {
+      cursor: progress;
+    }
+  }
+
+  // a photo dragged over the field
+  .is-drop .tf__photo {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ed-accent) 24%, transparent);
+  }
+</style>

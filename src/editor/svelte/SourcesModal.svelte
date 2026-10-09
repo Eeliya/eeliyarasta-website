@@ -12,7 +12,15 @@
   import { ui } from './ui.svelte.js';
   import { isSource } from './content-groups.js';
   import { baseName } from '../../site/files.js';
-  import { itemName, itemMeta, pad, slugify, itemFields, newItem } from './source-items.js';
+  import {
+    itemName,
+    itemMeta,
+    pad,
+    slugify,
+    itemFields,
+    newItem,
+    valueAt,
+  } from './source-items.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
@@ -41,7 +49,7 @@
       it,
       base.find((b) => b?.slug === it?.slug),
     );
-  const fieldChanged = (f) => !same(item?.[f.key], base[index]?.[f.key]);
+  const fieldChanged = (f) => !same(valueAt(item, f.path), valueAt(base[index], f.path));
   const fileChanged = (f) => !same(live.current(f), live.base(f));
 
   /** Show the stored value in an input, except while the user is typing in it. */
@@ -267,9 +275,9 @@
         {#each fields as f (f.edit)}
           <Field
             edit={f.edit}
-            label={f.key}
+            label={f.label}
             type={f.type}
-            value={item[f.key]}
+            value={valueAt(item, f.path)}
             changed={fieldChanged(f)}
             selected={ui.selection?.edit === f.edit}
             onfocus={() => bridge.focusEdit(f.edit)}

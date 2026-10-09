@@ -3,7 +3,7 @@
  * plugin in `configureServer`, so they only exist while `npm run dev` runs; a
  * production build has no editor and no endpoints.
  *
- *   GET  /__editor/content  → all editable content files
+ *   GET  /__editor/content  → all editable content files, and the media manifest's URLs
  *   POST /__editor/save     → write content files to disk ({ files: { name: json } }): a draft
  *   GET  /__editor/status   → saved-but-unpublished content files (git status vs HEAD) and
  *                             commits not pushed yet
@@ -69,6 +69,16 @@ export const readContentFiles = (root) =>
       JSON.parse(fs.readFileSync(path.join(root, CONTENT_DIR, f), 'utf8')),
     ]),
   );
+
+/** Local photos (.generated/media.json, scripts/images.mjs): { src, thumb } per media/ file. */
+function readMedia(root) {
+  const file = path.join(root, '.generated', 'media.json');
+  if (!fs.existsSync(file)) return {};
+  const all = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return Object.fromEntries(
+    Object.entries(all).map(([k, m]) => [k, { src: m.src, thumb: m.srcset?.[0]?.url || m.src }]),
+  );
+}
 
 /** The request body as a Buffer; over `limit` bytes fails with 413. */
 function readRaw(req, limit) {
@@ -361,7 +371,11 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
       const route = `${req.method} ${(req.url || '').split('?')[0]}`;
 
       if (route === 'GET /content')
-        return sendJSON(res, 200, { mode: 'dev', files: readContentFiles(root) });
+        return sendJSON(res, 200, {
+          mode: 'dev',
+          files: readContentFiles(root),
+          media: readMedia(root),
+        });
 
       if (route === 'POST /save') {
         const { files } = await readJSON(req);
