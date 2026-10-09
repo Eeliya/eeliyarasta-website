@@ -26,7 +26,7 @@
     ['element', 'This element', `Only this element on ${sel.key.split('|')[0]}`],
     [
       'target',
-      `All “${sel.id}”`,
+      'All',
       `Every data-anim="${sel.id}" element on the site (${sameTarget} on this page)`,
     ],
   ]);
@@ -110,7 +110,9 @@
         type="button"
         class={['seg__btn', s === sel.scope && 'is-active']}
         {title}
-        onclick={() => (sel.scope = s)}>{label}</button
+        onclick={() => (sel.scope = s)}
+        >{label}
+        {#if s === 'target'}<span class="scope__id">“{sel.id}”</span>{/if}</button
       >
     {/each}
   </div>
@@ -277,6 +279,11 @@
 
   .scope {
     margin-bottom: 16px;
+
+    // the data-anim name as written in the HTML (the tab's other text is uppercase)
+    &__id {
+      text-transform: none;
+    }
 
     .seg {
       margin-bottom: 8px;
