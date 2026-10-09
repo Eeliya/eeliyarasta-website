@@ -1,39 +1,33 @@
 <!--
-  One field of the Motion tab's element view: the label, a badge with the layer the value
-  comes from, a reset button, and the control. The badge names the layer for people:
-    element  this element only        all     every element with this data-anim name
-    default  the animation's value    global  animations.json defaults
+  One field of an animation: the label, actions at the end of its top row (given by
+  MotionGroups.svelte: badge, reset, Inherit / Custom, remove) and the control, or the value
+  as text where it can't be edited.
   Fields:
     number   range + number + unit
-    pair     duration number + ease, one row (one badge and reset for both)
+    pair     duration number + ease, one row
     text     text input with suggestions
     segment  a row of buttons
     ease     ease picker
-  def: a field from motion.js. value / meta: its value and { source, canReset }, an array
-  of two for a pair. onvalue(path, value) on an edit, onreset() on reset.
+    def      a field from motion.js
+    value    its value, an array of two for a pair
+    view     'edit' the control; 'read' the value as text in the top row (element view: what the
+             animation does); 'inherit' the value as muted text under it (a timing value the
+             scope doesn't set itself)
+    note     muted text after an inherited value, e.g. "from fade-up"
+    onvalue  (path, value) on an edit
+    actions  snippet for the end of the top row
 -->
 <script module>
-  // layer (motion.js) -> badge text; data-src keeps the layer name (colors in editor.scss)
-  const SOURCE = { element: 'element', target: 'all', preset: 'default', defaults: 'global' };
-  const name = (source) => (source ? SOURCE[source] : 'unset');
   let lists = 0;
 </script>
 
 <script>
   import EasePicker from './EasePicker.svelte';
+  import { formatValue } from './motion.js';
 
-  let { def, value, meta, gsap, onvalue, onreset } = $props();
+  let { def, value, gsap, view = 'edit', note = '', onvalue, actions } = $props();
 
   const list = `dl-motion-${++lists}`;
-  const badge = $derived.by(() => {
-    if (def.kind !== 'pair') return { src: meta.source || 'none', text: name(meta.source) };
-    const [d, e] = meta;
-    if (d.source === e.source) return { src: d.source || 'none', text: name(d.source) };
-    return { src: 'mixed', text: `${name(d.source)} / ${name(e.source)}` };
-  });
-  const canReset = $derived(
-    def.kind === 'pair' ? meta[0].canReset || meta[1].canReset : meta.canReset,
-  );
 
   /** Show the stored value, except in the input the user is typing in or dragging. */
   const show = (v) => (el) => {
@@ -50,15 +44,20 @@
 <div class="f">
   <div class="f__top">
     <span class="f__label" title={def.hint || ''}>{def.label}</span>
-    <span class="f__src" data-src={badge.src}>{badge.text}</span>
-    {#if canReset}
-      <button type="button" class="f__reset" title="Reset to inherited value" onclick={onreset}>
-        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-      </button>
+    {#if view === 'read'}
+      <span class="f__value">{formatValue(def, value)}</span>
     {/if}
+    {@render actions?.()}
   </div>
 
-  {#if def.kind === 'number'}
+  {#if view === 'inherit'}
+    <p class="f__value f__value--inherited">
+      {formatValue(def, value)}
+      {#if note}<span class="f__from">{note}</span>{/if}
+    </p>
+  {:else if view === 'read'}
+    <!-- the value is in the top row -->
+  {:else if def.kind === 'number'}
     <div class="f__row">
       <input
         type="range"

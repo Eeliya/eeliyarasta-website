@@ -7,8 +7,9 @@
  *   preset  -> presets["<animation>"]            (the animation's own values: the library)
  *   defaults                                     (every animation)
  * A value is read from the first layer that has it: element, target, preset, defaults.
- * The element view (AnimEditor.svelte) writes element / target, the Animations library
- * (AnimationsModal.svelte) writes the preset. Shown with MotionField.svelte. No DOM here.
+ * The element view (AnimEditor.svelte) writes element / target, timing only (TIMING_KEYS);
+ * the Animations library (AnimationsModal.svelte) writes the preset, every value.
+ * Shown with MotionField.svelte. No DOM here.
  */ import { compile } from '../lib/pointer.js';
 
 // Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
@@ -268,6 +269,27 @@ export const GROUPS = {
 };
 
 /**
+ * Timing: what an element, or every element with its data-anim name, can set for itself in the
+ * element view, each field with an Inherit / Custom switch. A field is timing when the last key
+ * of its path is here, so ['intro', 'duration'] (scatter) is timing and ['drift', 'minDuration']
+ * is not. Every other value says what the animation does (start / end state, distances, ...):
+ * read-only in the element view, edited in the Animations library only.
+ * Add or remove a key here to move fields between the two.
+ */
+export const TIMING_KEYS = new Set([
+  'duration',
+  'ease',
+  'delay',
+  'stagger',
+  'trigger',
+  'start',
+  'end',
+  'scrub',
+]);
+export const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
+export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.path);
+
+/**
  * The picked element's animation. cfg: animations.json, sel: { id, key }.
  * spec: the merged values; layers: each scope's own values (for the badges and resets).
  */
@@ -309,6 +331,29 @@ export const keepFor = (scope) => (scope === 'element' ? 1 : 2);
 export const sourceOf = (m, path) =>
   ['element', 'target', 'preset', 'defaults'].find((l) => dig(m.layers[l], path) !== undefined) ||
   null;
+
+// The layers a scope inherits from, nearest first.
+const BELOW = {
+  element: ['target', 'preset', 'defaults'],
+  target: ['preset', 'defaults'],
+  preset: ['defaults'],
+};
+/** What a scope gets without a value of its own: [value, the layer it comes from or null]. */
+export function inherited(m, scope, path) {
+  const layer = BELOW[scope].find((l) => dig(m.layers[l], path) !== undefined) || null;
+  return [layer && dig(m.layers[layer], path), layer];
+}
+
+/** A field's value as text, for read-only and inherited values. */
+export function formatValue(def, value) {
+  const unit = (v) => (v === undefined || v === '' ? '–' : `${v}${def.unit ? ' ' + def.unit : ''}`);
+  if (def.kind === 'pair') return `${unit(value[0])} · ${value[1] ?? 'none'}`;
+  if (def.kind === 'segment') {
+    const v = JSON.stringify(value ?? def.options[0][0]);
+    return def.options.find(([o]) => JSON.stringify(o) === v)?.[1] ?? String(value);
+  }
+  return unit(value);
+}
 
 /** The fields of a from / to group: one per property the animation has. */
 export function propFields(which, values) {

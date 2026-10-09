@@ -466,6 +466,36 @@ select {
   }
 }
 
+// a value as text (MotionField): read-only at the end of the top row, or an inherited timing
+// value, muted, under it, with where it comes from
+.f__value {
+  margin: 0 0 0 auto;
+  color: var(--fg);
+  text-align: right;
+
+  &--inherited {
+    margin: 0;
+    color: var(--muted);
+    text-align: left;
+  }
+}
+
+.f__from {
+  margin-left: 6px;
+  color: var(--faint);
+  font-size: 10.5px;
+}
+
+// Inherit / Custom of a timing value, at the end of the top row
+.f__mode {
+  flex: none;
+  margin-left: auto;
+
+  .seg__btn {
+    padding: 3px 8px;
+  }
+}
+
 .f__row {
   display: flex;
   align-items: center;

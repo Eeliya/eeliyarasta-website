@@ -1,9 +1,9 @@
 <!--
   Animations library: the animations in content/settings/animations.json ("presets" there),
   like the Source Explorer for content/sources/. It starts on the list of animations, each
-  with its type and how many elements use it; click one to edit its own values (what every
-  element using it gets, unless that element or its data-anim name sets its own), Back
-  returns to the list. MotionPanel.svelte calls open() from its Animations button (the list)
+  with its type and how many elements use it; click one to edit its own values, Back returns
+  to the list. The only place that defines what an animation does (its properties, added and
+  removed here); an element or its data-anim name can only set its own timing (TIMING_KEYS). MotionPanel.svelte calls open() from its Animations button (the list)
   and from an element's Animation edit button (straight into that animation).
   Where it is lives in ui.library, so persist.js can bring it back after a refresh.
 -->
@@ -115,8 +115,8 @@
       <div class="lib__info">
         <p class="hint">
           Type {m.type}. Used by {count(uses.length, 'element')} on this page and by
-          {targets(name).join(', ') || 'no data-anim name'} on the site. Elements and names can still
-          set their own values; badges: <b>default</b> = this animation, <b>global</b> = every animation.
+          {targets(name).join(', ') || 'no data-anim name'} on the site. Elements and names can set their
+          own timing only; badges: <b>default</b> = this animation, <b>global</b> = every animation.
         </p>
         <button
           type="button"
