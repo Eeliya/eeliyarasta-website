@@ -242,10 +242,10 @@ Motion tab lists the page's animated **Elements**; pick one and choose where its
   without touching templates.
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
 
-Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have an **Inherit /
-Custom** switch. Inherit shows the field's control with the inherited value, dimmed and
-inert (no clicks, no focus); it stores nothing. Custom stores the value at
-the chosen scope, and switching back to Inherit removes it (one undo step). Everything else
+Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have a **Custom**
+switch. Off (a faint "inherit" before it): the field's control shows the inherited value,
+dimmed and inert (no clicks, no focus); nothing is stored. On: the inherited value is copied
+to the chosen scope as a start and can be edited; switching off removes it (one undo step). Everything else
 the animation does is read-only here.
 
 The Motion tab has two sub-tabs: **Elements** (the curtain, the page's animated elements and
