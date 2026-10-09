@@ -6,6 +6,7 @@
 <script>
   import PageMenu from './PageMenu.svelte';
   import ContentPanel from './ContentPanel.svelte';
+  import MotionPanel from './MotionPanel.svelte';
   import { ui } from './ui.svelte.js';
   import { MOD, plural } from '../lib/format.js';
 
@@ -13,7 +14,7 @@
   // actions: setMode, pickTarget, save, publish
   let { live, bridge, actions } = $props();
 
-  // Browse and Motion are not Svelte yet: main.js renders them into this element.
+  // Browse is not Svelte yet: main.js renders it into this element.
   let body = $state();
   export const panelBody = () => body;
 
@@ -88,9 +89,11 @@
 
   {#if ui.mode === 'text'}
     <ContentPanel {live} {bridge} />
+  {:else if ui.mode === 'motion'}
+    <MotionPanel {live} {bridge} />
   {/if}
-  <!-- not Svelte yet: Browse and Motion render into this (see main.js renderBody) -->
-  <section class="ed-body" hidden={ui.mode === 'text'} bind:this={body}></section>
+  <!-- not Svelte yet: Browse renders into this (see main.js renderOverview) -->
+  <section class="ed-body" hidden={ui.mode !== 'browse'} bind:this={body}></section>
 
   <footer class="ed-foot">
     <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>

@@ -1763,14 +1763,13 @@ dialog.src-modal {
   }
 }
 
-/* Page transition: timeline (Motion tab) */
-.ptg__actions {
-  display: flex;
-  gap: 8px;
+/* Page transition: timeline (Motion tab, CurtainSection.svelte) */
+.ptg > .btn-ed {
   margin-bottom: 10px;
 }
 
 .tf__hint {
+  display: block;
   margin: 6px 0 0;
 }
 
@@ -1820,26 +1819,25 @@ dialog.src-modal {
   touch-action: none;
 }
 
-.ptl__bars,
-.ptl__grid {
+.ptl__bars {
   position: absolute;
   inset: 0;
   border-radius: 3px;
   pointer-events: none;
-}
-
-.ptl__bars {
   overflow: hidden;
   background: rgb(255 255 255 / 0.04);
-}
 
-.ptl__grid {
-  z-index: 1;
-  background: repeating-linear-gradient(
-    to right,
-    rgb(255 255 255 / 0.08) 0 1px,
-    transparent 1px var(--tick, 25%)
-  );
+  // Tick lines every 0.5s (--tick), over the bars.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to right,
+      rgb(255 255 255 / 0.08) 0 1px,
+      transparent 1px var(--tick, 25%)
+    );
+  }
 }
 
 .ptl__bar {
@@ -1988,16 +1986,6 @@ dialog.src-modal {
   }
 }
 
-.ptl__readout {
-  min-height: 15px;
-  font-size: 10.5px;
-  color: var(--faint);
-
-  &.is-on {
-    color: $hi;
-  }
-}
-
 .ptg__ease {
   margin: 0;
 }
@@ -2117,13 +2105,11 @@ dialog.src-modal {
   }
 }
 
-.ease.is-mixed .ease__name,
 .ease.is-empty .ease__name {
   color: var(--muted);
   font-style: italic;
 }
 
-.ease.is-mixed .curve__line,
 .ease.is-empty .curve__line {
   stroke-dasharray: 4 3;
   opacity: 0.55;

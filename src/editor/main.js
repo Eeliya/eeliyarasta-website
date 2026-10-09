@@ -12,10 +12,9 @@
  * Both go through the dev server (scripts/editor-server.mjs). The editor only exists
  * under `npm run dev`.
  *
- * The shell (layout, tabs, toolbar, footer) and the Content tab are Svelte: svelte/App.svelte
- * shows `ui` (svelte/ui.svelte.js); this file holds the logic and changes `ui`. Browse
- * (below) and Motion (ui/panel-motion.js) are not Svelte yet: they render into the panel
- * body element of App.svelte.
+ * The shell (layout, tabs, toolbar, footer) and the Content and Motion tabs are Svelte:
+ * svelte/App.svelte shows `ui` (svelte/ui.svelte.js); this file holds the logic and changes
+ * `ui`. Browse (below) is not Svelte yet: it renders into the panel body element of App.svelte.
  */
 import './styles/editor.scss';
 import '@fortawesome/fontawesome-free/css/fontawesome.css';
@@ -28,7 +27,6 @@ import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
-import { createMotionPanel } from './ui/panel-motion.js';
 import { h, clear } from './ui/dom.js';
 import { compile } from './lib/pointer.js';
 import { MOD, plural } from './lib/format.js';
@@ -87,7 +85,7 @@ function updatePages() {
 function pickTarget(item) {
   ui.target = item;
   if (item.kind === 'page') bridge.navigate(item.path);
-  renderBody(true);
+  renderBody();
 }
 
 /** Saved-but-unpublished content changes, from the last /__editor/status. */
@@ -103,7 +101,6 @@ async function refreshPublishStatus() {
 }
 
 // ---------------------------------------------------------------- panels
-const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 function renderOverview() {
   const dirty = store.dirtyFiles();
   clear(
@@ -264,17 +261,26 @@ function renderUnpublished() {
   );
 }
 
-/** Re-render the panel that is not Svelte yet (Content is Svelte and follows by itself). */
-function renderBody(force = true) {
-  if (ui.mode === 'motion') motionPanel.refresh(force);
-  else if (ui.mode === 'browse') renderOverview();
+/** Re-render the panel that is not Svelte yet (Content and Motion follow by themselves). */
+function renderBody() {
+  if (ui.mode === 'browse') renderOverview();
+}
+
+/** A pick in the preview (bridge 'select') -> ui.anim for the Motion tab. */
+function pickAnim(sel) {
+  if (sel?.kind !== 'anim') return null;
+  const { el } = sel;
+  const key = el.dataset.animKey;
+  // Edits go to the element if it already has overrides, otherwise to every element of its target.
+  const scope = store.current[ANIMATIONS].elements?.[key] ? 'element' : 'target';
+  return { el, id: el.dataset.anim, key, scope };
 }
 
 function setMode(mode) {
   ui.mode = mode;
   if (mode !== 'browse') ui.lastEdit = mode;
   bridge.setMode(mode);
-  if (mode === 'motion') motionPanel.select(null);
+  if (mode === 'motion') ui.anim = null;
   renderBody();
 }
 
@@ -305,11 +311,11 @@ bridge.on('navigate', (path) => {
   }
   updatePages();
   ui.previewVersion++;
-  if (ui.mode === 'motion') motionPanel.select(null);
-  else renderBody();
+  ui.anim = null;
+  renderBody();
 });
 bridge.on('select', (sel) => {
-  if (ui.mode === 'motion') motionPanel.select(sel);
+  if (ui.mode === 'motion') ui.anim = pickAnim(sel);
   else ui.selection = sel?.kind === 'text' ? { edit: sel.el.dataset.edit } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
@@ -335,8 +341,7 @@ store.on(({ files, source: src }) => {
     clearTimeout(animTimer);
     animTimer = setTimeout(() => bridge.updateAnimations(store.current[ANIMATIONS]), 180);
   }
-  if (ui.mode === 'motion') motionPanel.refresh(src !== 'motion');
-  else if (ui.mode === 'browse') renderOverview();
+  if (ui.mode === 'browse') renderOverview();
   if (textChanged && src !== 'panel' && !(src && src.nodeType === 1)) updatePages();
 });
 

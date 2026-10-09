@@ -26,6 +26,11 @@ export const ui = $state({
    * A new object on every pick, so picking the same text again scrolls to it again.
    */
   selection: null,
+  /**
+   * The animated element picked in the Motion tab: { el, id, key, scope }, or null.
+   * scope: where its edits go: 'element' | 'target' | 'preset' (see motion.js).
+   */
+  anim: null,
   /** Home sections (indexes) the preview can only show after Save (see sections.js). */
   staleSections: [],
 });
