@@ -12,7 +12,7 @@ import {
   pageKey,
 } from './anim/engine.js';
 import { flags } from './anim/flags.js';
-import { initSmooth, getSmoother } from './smooth.js';
+import { initSmooth, getSmoother, syncSmooth } from './smooth.js';
 import { initRouter, navigate, replayCurtain, setPageCurtains } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
 import { initClock, updateClocks } from './ui/clock.js';
@@ -96,8 +96,11 @@ function connectEditor() {
     setPageCurtains,
     getSmoother,
     view: () => current?.view || null,
-    /** Replace the animation config (in place) with an edited copy. */
-    setAnimations: (next) => setConfig(next),
+    /** Replace the animation config (in place) with an edited copy; smoothScroll applies at once. */
+    setAnimations: (next) => {
+      setConfig(next);
+      syncSmooth();
+    },
     remount: remountAnimations,
     /** Stop all animations and show the page in its final, static state (for text editing). */
     freeze() {

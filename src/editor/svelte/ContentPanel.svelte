@@ -200,10 +200,10 @@
           {/if}
           {#if g.toggle}
             {#if toggleChanged(g)}<i class="dot" title="Changed"></i>{/if}
-            <!-- on/off switch: a checkbox drawn by CSS (.sec__check) -->
+            <!-- on/off switch: a checkbox drawn by CSS (.switch, editor.scss) -->
             <input
               type="checkbox"
-              class="sec__check"
+              class="switch"
               aria-label="Show {g.title}"
               title={isOn(g) ? 'Section is visible' : 'Section is hidden on the public page'}
               checked={isOn(g)}
@@ -323,38 +323,6 @@
     color: var(--faint);
     font-size: 10px;
     letter-spacing: 0;
-  }
-
-  // on/off switch: a checkbox drawn as a track, its knob a radial gradient that slides right
-  // when checked. Off: dark track, grey knob. On: whitish track, black knob.
-  .sec__check {
-    flex: none;
-    appearance: none;
-    margin: 0;
-    width: 28px;
-    height: 16px;
-    border-radius: 999px;
-    cursor: pointer;
-    background: radial-gradient(circle, var(--muted) 5.5px, transparent 6.5px) 0 0 / 16px 16px
-      no-repeat #262625;
-    box-shadow: inset 0 0 0 1px #3a3a38;
-    transition:
-      background-position 0.2s,
-      background-color 0.2s;
-
-    &:checked {
-      background-image: radial-gradient(circle, #030303 5.5px, transparent 6.5px);
-      background-position: 12px 0;
-      background-color: var(--fg);
-      box-shadow: none;
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow:
-        0 0 0 2px #030303,
-        0 0 0 3px var(--fg);
-    }
   }
 
   .sec.is-off {

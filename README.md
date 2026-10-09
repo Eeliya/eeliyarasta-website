@@ -172,8 +172,12 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
   },
   "interactions": { "...": "card cycle, album wheel/drag thresholds" },
   "transitions": { "...": "page curtain, accent tween, album slide, menu" },
+  "smoothScroll": true,
 }
 ```
+
+`smoothScroll` turns GSAP ScrollSmoother on (default) or off (native scrolling); it is always off
+for visitors who prefer reduced motion. Switch it in the editor's Settings tab.
 
 The final spec for an element is
 `defaults ← preset ← target overrides ← element overrides ← data-anim-options`. Element overrides

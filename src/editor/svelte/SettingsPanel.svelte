@@ -1,7 +1,7 @@
 <!--
   Settings tab: what is the same on every page. The site's name, title and meta
-  (settings/site.json), the global page-transition curtain and the page fade
-  (settings/animations.json).
+  (settings/site.json), smooth scrolling, the global page-transition curtain and the page
+  fade (settings/animations.json).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). Menu and Footer copy stays in Content: it is
   text you click in the preview.
@@ -12,7 +12,7 @@
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SITE_SETTINGS } from './content-groups.js';
-  import { SITE } from '../../site/files.js';
+  import { ANIMATIONS, SITE } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
@@ -22,6 +22,11 @@
     ui.previewVersion;
     return bridge.api?.gsap;
   });
+
+  // animations.json "smoothScroll": missing means on. The preview switches at once.
+  const smooth = $derived(live.get(ANIMATIONS, '/smoothScroll') !== false);
+  const smoothChanged = $derived(live.changed(ANIMATIONS, '/smoothScroll'));
+  const setSmooth = (on) => live.store.set(ANIMATIONS, '/smoothScroll', on, { source: 'panel' });
 
   function set(key, value) {
     live.store.set(SITE, `/${key}`, value, { key: `text:${SITE}#/${key}`, source: 'panel' });
@@ -44,6 +49,23 @@
         onvalue={(value) => set(key, value)}
       />
     {/each}
+  </section>
+
+  <section class="grp">
+    <h4 class="grp__title">Scrolling</h4>
+    <label class={['tf', smoothChanged && 'is-changed']}>
+      <span class="tf__label"
+        >Smooth scroll<i class="dot" title="Changed"></i>
+        <input
+          type="checkbox"
+          class="switch"
+          aria-label="Smooth scroll"
+          checked={smooth}
+          onchange={(e) => setSmooth(e.currentTarget.checked)}
+        />
+      </span>
+    </label>
+    <p class="hint small">Eased scrolling with mouse and trackpad. Off: the browser's own.</p>
   </section>
 
   {#if gsap}

@@ -1,5 +1,6 @@
 {
   "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". spec = defaults <- presets[preset] <- targets[id] <- elements[key]. Edit by hand or with the visual editor at /edit/.",
+  "smoothScroll": true,
   "defaults": { "duration": 1.1, "ease": "expo.out", "delay": 0, "stagger": 0, "trigger": "scroll", "start": "top 85%" },
   "presets": {
     "fade-up": {

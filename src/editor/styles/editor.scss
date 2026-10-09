@@ -656,6 +656,44 @@ select {
   display: inline-block;
 }
 
+// On/off switch (Content section toggles, Settings): a checkbox drawn as a track, its knob a
+// radial gradient that slides right when checked. Off: dark track, grey knob. On: whitish
+// track, black knob.
+.switch {
+  flex: none;
+  appearance: none;
+  margin: 0;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: radial-gradient(circle, var(--muted) 5.5px, transparent 6.5px) 0 0 / 16px 16px
+    no-repeat #262625;
+  box-shadow: inset 0 0 0 1px #3a3a38;
+  transition:
+    background-position 0.2s,
+    background-color 0.2s;
+
+  &:checked {
+    background-image: radial-gradient(circle, #030303 5.5px, transparent 6.5px);
+    background-position: 12px 0;
+    background-color: var(--fg);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px #030303,
+      0 0 0 3px var(--fg);
+  }
+}
+
+// a switch in a field label sits at the end of the row
+.tf__label > .switch {
+  margin-left: auto;
+}
+
 .tf__file {
   margin-left: auto;
   font-size: 9.5px;
