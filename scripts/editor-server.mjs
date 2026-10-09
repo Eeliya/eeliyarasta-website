@@ -7,6 +7,8 @@
  *   POST /__editor/save     → write content files to disk ({ files: { name: json } }): a draft
  *   GET  /__editor/status   → saved-but-unpublished content files (git status vs HEAD) and
  *                             commits not pushed yet
+ *   POST /__editor/upload   → one image (the raw bytes, its Content-Type, X-Filename): stored
+ *                             in Cloudflare R2 (scripts/r2.mjs), answers { key }
  *   POST /__editor/publish  → { message }: git add + commit ONLY the changed content files in
  *                             one commit, then git push origin <current branch>
  *
@@ -22,6 +24,7 @@ import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
 import { isContentFile } from '../src/site/files.js';
+import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -67,19 +70,26 @@ export const readContentFiles = (root) =>
     ]),
   );
 
-function readBody(req, limit = 5 * 1024 * 1024) {
+/** The request body as a Buffer; over `limit` bytes fails with 413. */
+function readRaw(req, limit) {
   return new Promise((resolve, reject) => {
+    const tooLarge = () =>
+      Object.assign(new Error(`Too large (max ${limit / 1024 / 1024} MB)`), { status: 413 });
+    if (Number(req.headers['content-length']) > limit) return reject(tooLarge());
     let size = 0;
     const chunks = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > limit) reject(new Error('Body too large'));
+      if (size > limit) reject(tooLarge());
       else chunks.push(c);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
 }
+
+const readBody = async (req, limit = 5 * 1024 * 1024) =>
+  (await readRaw(req, limit)).toString('utf8');
 
 async function readJSON(req) {
   if (!(req.headers['content-type'] || '').includes('application/json')) {
@@ -337,10 +347,11 @@ const sendJSON = (res, status, data) => {
 };
 
 /**
- * @param {{ root: string, logger: import('vite').Logger, onWrite?: () => void }} opts
- * onWrite runs right before files are written (used to keep the editor from reloading itself).
+ * @param {{ root: string, logger: import('vite').Logger, env?: object, onWrite?: () => void }} opts
+ * env: the R2_* variables for uploads (Node side only). onWrite runs right before files are
+ * written (used to keep the editor from reloading itself).
  */
-export function editorMiddleware({ root, logger, onWrite = () => {} }) {
+export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} }) {
   const log = (msg) => logger.info(`\x1b[32m✓\x1b[0m ${msg}`, { timestamp: true });
 
   return async (req, res) => {
@@ -366,6 +377,17 @@ export function editorMiddleware({ root, logger, onWrite = () => {} }) {
           fs.writeFileSync(path.join(root, CONTENT_DIR, n), formatJSON(files[n]));
         log(`editor saved ${names.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
         return sendJSON(res, 200, { ok: true, written: names });
+      }
+
+      if (route === 'POST /upload') {
+        const type = String(req.headers['content-type'] || '')
+          .split(';')[0]
+          .trim();
+        const name = decodeURIComponent(String(req.headers['x-filename'] || ''));
+        const body = await readRaw(req, MAX_UPLOAD);
+        const { status, body: out } = await uploadPhoto(env, { name, type, body });
+        if (out.ok) log(`editor uploaded ${out.key} (${Math.round(out.size / 1024)} KB) to R2`);
+        return sendJSON(res, status, out);
       }
 
       if (route === 'GET /status') return sendJSON(res, 200, await contentStatus(root));

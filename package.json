@@ -8,7 +8,8 @@
     "dev": "node scripts/images.mjs && vite",
     "images": "node scripts/images.mjs",
     "build": "node scripts/images.mjs && vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "test": "node --test scripts/*.test.mjs"
   },
   "license": "MIT",
   "dependencies": {
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "aws4fetch": "^1.0.20",
     "prettier": "^3.9.9",
     "prettier-plugin-svelte": "^4.1.1",
     "sass": "^1.105.1",

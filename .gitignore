@@ -6,3 +6,7 @@ public/media
 .DS_Store
 *.log
 .idea/
+# secrets (R2 keys): only .env.example is committed
+.env
+.env.local
+.env*.local

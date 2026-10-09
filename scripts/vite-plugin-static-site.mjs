@@ -11,7 +11,8 @@
  *
  * Visual editor (edit/index.html → src/editor) is DEV ONLY:
  *  dev   → /edit/ is served by Vite, and /__editor/* (scripts/editor-server.mjs, localhost
- *          only) loads, saves and publishes the content JSON files.
+ *          only) loads, saves and publishes the content JSON files and uploads photos to
+ *          Cloudflare R2 with the R2_* keys from .env.local (read here, never sent to a page).
  *
  * Dev reloads: a change in content/, .generated/ or src/site/ sends the custom HMR event
  * "site:changed" { files, content, external } instead of Vite's full reload, which every
@@ -23,6 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { loadEnv } from 'vite';
 import { loadContent } from './content.mjs';
 import { editorMiddleware } from './editor-server.mjs';
 
@@ -55,6 +57,8 @@ export default function staticSite() {
         editorMiddleware({
           root,
           logger: config.logger,
+          // R2_* only (Node side): Vite exposes nothing but VITE_* to client code
+          env: loadEnv(config.mode, config.envDir || root, 'R2_'),
           onWrite: () => (editorWriteUntil = Date.now() + 2000),
         }),
       );
