@@ -51,7 +51,7 @@
   };
 
   // ---- image: upload (picked or dropped), thumbnail
-  const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
+  const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif,image/tiff';
   let progress = $state(null); // 0..1 while uploading, 1: the server is resizing
   let dropping = $state(false);
   let local = $state(null); // { key, url }: the uploaded file itself
