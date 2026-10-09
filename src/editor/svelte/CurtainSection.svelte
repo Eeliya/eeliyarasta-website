@@ -125,14 +125,16 @@
   </p>
 
   <div class="ptg__box">
+    <!-- drawn at the right of the row after it, like a grid's Source edit button -->
     <button
       type="button"
-      class="btn-ed"
-      title="Play the transition over this page with these values (no navigation)"
+      class="btn-sm btn-sm--compact ptg__replay"
+      title="Replay: play the transition over this page with these values (no navigation)"
+      aria-label="Replay"
       disabled={mode === 'off'}
       onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
     >
-      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Replay
+      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
     </button>
     {#if page}
       <div class={['tf', modeChanged && 'is-changed']}>
@@ -237,10 +239,6 @@
 
 <style lang="scss">
   /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
-  :global(.ptg) > .btn-ed {
-    margin-bottom: 10px;
-  }
-
   .tf__hint {
     display: block;
     margin: 6px 0 0;
@@ -248,6 +246,7 @@
 
   /* One bordered curtain group: total, timeline, ease, Advanced. */
   .ptg__box {
+    position: relative;
     margin: 0 0 14px;
     padding: 8px 8px 0;
     border-radius: 10px;
@@ -258,6 +257,20 @@
     > .tf {
       margin-bottom: 0;
     }
+
+    // the first row ("Curtain for this page", or "Total duration") leaves room for Replay
+    > .ptg__replay + * > .tf__label {
+      min-height: 22px;
+      padding-right: 28px;
+    }
+  }
+
+  .ptg__replay {
+    position: absolute;
+    top: 10px;
+    right: 8px;
+    height: 22px;
+    margin: 0;
   }
 
   .ptg__ease {

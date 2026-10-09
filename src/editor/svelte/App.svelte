@@ -96,7 +96,7 @@
     <header class="ed-head">
       <h1 class="ed-brand">Editor <small class="ed-source">dev · local files</small></h1>
 
-      <nav class="seg" aria-label="Mode">
+      <nav class="seg seg--pill" aria-label="Mode">
         {#each TABS as [mode, label, icon] (mode)}
           <button
             type="button"
