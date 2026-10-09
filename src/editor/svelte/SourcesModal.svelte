@@ -9,6 +9,8 @@
 <script>
   import { tick, flushSync } from 'svelte';
   import Field from './Field.svelte';
+  import ExplorerHead from './ExplorerHead.svelte';
+  import ExplorerRow from './ExplorerRow.svelte';
   import { ui } from './ui.svelte.js';
   import { isSource } from './content-groups.js';
   import { baseName } from '../../site/files.js';
@@ -101,7 +103,7 @@
     select(0);
     await tick();
     const back = from && dialog.querySelector(`[data-file="${CSS.escape(from)}"]`);
-    (back || dialog.querySelector('.src-list__item'))?.focus();
+    (back || dialog.querySelector('.xrow'))?.focus();
   }
 
   /**
@@ -115,7 +117,7 @@
     if (!dialog.open) dialog.showModal();
     ui.explorer.open = true;
     const field = edit && dialog.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
-    if (!field) return void (file || dialog.querySelector('.src-list__item').focus());
+    if (!field) return void (file || dialog.querySelector('.xrow').focus());
     field.querySelector('.tf__input').focus({ preventScroll: true });
     field.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
@@ -137,52 +139,28 @@
   onclick={(e) => e.target === dialog && dialog.close()}
   onclose={() => (ui.explorer.open = false)}
 >
-  <header class="src-modal__head">
-    {#if file}
-      <button
-        type="button"
-        class="src-modal__btn"
-        title="Back to files"
-        aria-label="Back to files"
-        onclick={() => goTo('')}
-      >
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-      </button>
-    {/if}
-    <h3 class="modal__title">Sources</h3>
-    <span class="src-modal__path">
-      <i class={['fa-solid', file ? 'fa-file-lines' : 'fa-folder-open']} aria-hidden="true"></i>
-      content/{file || 'sources/'}
-    </span>
-    <button
-      type="button"
-      class="src-modal__btn"
-      title="Close (Esc)"
-      aria-label="Close"
-      onclick={() => dialog.close()}
-    >
-      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-    </button>
-  </header>
+  <ExplorerHead
+    title="Sources"
+    path="content/{file || 'sources/'}"
+    icon={file ? 'fa-file-lines' : 'fa-folder-open'}
+    back={file ? 'Back to files' : ''}
+    onback={() => goTo('')}
+    onclose={() => dialog.close()}
+  />
 
   {#if !file}
     <ul class="list src-files" aria-label="Source files">
       {#each files as f (f)}
         {@const items = live.current(f)}
         <li>
-          <button
-            type="button"
-            class={['src-list__item', fileChanged(f) && 'is-changed']}
+          <ExplorerRow
+            icon="fa-file-lines"
+            name={baseName(f)}
+            meta={Array.isArray(items) ? `${items.length} items` : 'not a list'}
+            changed={fileChanged(f)}
             data-file={f}
             onclick={() => goTo(f)}
-          >
-            <i class="fa-solid fa-file-lines src-list__num" aria-hidden="true"></i>
-            <span class="src-list__name">{baseName(f)}</span>
-            <span class="src-list__meta">
-              {Array.isArray(items) ? `${items.length} items` : 'not a list'}
-            </span>
-            <i class="dot" title="Changed"></i>
-          </button>
+          />
         </li>
       {/each}
     </ul>
@@ -198,21 +176,15 @@
         <ul class="list src-list__items">
           {#each list as it, i (i)}
             <li>
-              <button
-                type="button"
-                class={[
-                  'src-list__item',
-                  i === index && 'is-selected',
-                  isChanged(it) && 'is-changed',
-                ]}
+              <ExplorerRow
+                lead={pad(i)}
+                name={itemName(it)}
+                meta={itemMeta(it)}
+                selected={i === index}
+                changed={isChanged(it)}
                 aria-current={i === index}
                 onclick={() => select(i)}
-              >
-                <span class="src-list__num">{pad(i)}</span>
-                <span class="src-list__name">{itemName(it)}</span>
-                <span class="src-list__meta">{itemMeta(it)}</span>
-                <i class="dot" title="Changed"></i>
-              </button>
+              />
             </li>
           {/each}
         </ul>
@@ -307,49 +279,6 @@
     }
   }
 
-  .src-modal__head {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--line);
-
-    .modal__title {
-      margin: 0;
-    }
-  }
-
-  .src-modal__path {
-    margin-right: auto;
-    color: var(--muted);
-    font-size: 10.5px;
-  }
-
-  // Back and Close
-  .src-modal__btn {
-    align-self: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    color: var(--muted);
-    font-size: 14px;
-    cursor: pointer;
-
-    &:hover {
-      color: var(--fg);
-      background: rgb(255 255 255 / 0.06);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
-  }
-
   // the list of files, across the whole modal
   .src-files {
     grid-column: 1 / -1;
@@ -357,10 +286,6 @@
     gap: 4px;
     overflow: auto;
     padding: 16px 12px 20px;
-
-    .src-list__num {
-      font-size: 14px;
-    }
   }
 
   // left: the file's items
@@ -381,66 +306,6 @@
 
   .src-list__items {
     gap: 4px;
-  }
-
-  // number | name / meta | changed dot
-  .src-list__item {
-    width: 100%;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 4px 12px;
-    padding: 8px 12px;
-    line-height: 16px; // two lines: 52px
-    border: 0;
-    border-radius: 12px;
-    background: none;
-    text-align: left;
-    cursor: pointer;
-    color: var(--fg);
-
-    .dot {
-      display: none;
-      grid-column: 3;
-      grid-row: 1 / 3;
-      margin: 0;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
-    }
-
-    &:hover {
-      background: rgb(255 255 255 / 0.05);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
-
-    &.is-selected {
-      background: color-mix(in srgb, var(--ed-accent) 20%, transparent);
-    }
-  }
-
-  .src-list__num {
-    grid-row: 1 / 3;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .src-list__name,
-  .src-list__meta {
-    grid-column: 2;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .src-list__meta {
-    color: var(--muted);
-    font-size: 10.5px;
   }
 
   .src-list__note {
