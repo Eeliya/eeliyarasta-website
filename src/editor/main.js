@@ -26,10 +26,12 @@ import { compile } from './lib/pointer.js';
 import { getRoutes } from '../site/routes.js';
 import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
+import { createLive } from './svelte/live.svelte.js';
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 const store = createStore();
+const live = createLive(store);
 const faIcon = (name) => h('i', { class: 'fa-solid ' + name, 'aria-hidden': 'true' });
 const state = {
   mode: 'browse',
@@ -247,6 +249,7 @@ async function refreshPublishStatus() {
 const bridge = createBridge({ iframe, store, labelFor: (p) => labelFor(store, p) });
 const textPanel = createTextPanel({
   store,
+  live,
   bridge,
   root: body,
   getTarget: () => state.target,
@@ -822,7 +825,7 @@ function onKey(e) {
     if (k === 'y' || e.shiftKey) store.redo();
     else store.undo();
   } else if (e.key === 'Escape') {
-    const open = document.querySelector('.modal');
+    const open = document.querySelector('.modal, dialog[open]');
     if (open) open.close();
     else if (bridge.selected) bridge.select(null);
   }
