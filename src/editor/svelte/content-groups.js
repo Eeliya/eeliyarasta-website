@@ -4,7 +4,7 @@
  * ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { SITE, HOME, pageIdOf, sourceIdOf } from '../../site/files.js';
+import { SITE, HOME, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
@@ -105,7 +105,13 @@ export function groupFor(store, { file, ptr }, page) {
     if (parts[0] === 'curtain') return TRANSITION;
     // Any other page: its heading, then the rest of its own copy (e.g. the About text).
     if (file !== HOME)
-      return HEADING.includes(parts[0]) ? PAGE_HEAD : { id: 'page-body', title: titleCase(pageId) };
+      return HEADING.includes(parts[0])
+        ? PAGE_HEAD
+        : {
+            id: 'page-body',
+            // people/[slug]: the labels every item page shares (section, next)
+            title: pageId.endsWith(TEMPLATE) ? 'Item pages' : titleCase(pageId),
+          };
   }
   if (file === SITE) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };

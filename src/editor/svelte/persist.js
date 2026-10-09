@@ -9,6 +9,7 @@
  *             (&source=people&item=noor-vermeer; item is the slug, or the number without one)
  *     motion  animations: the Motion tab's Animations sub-tab (the list of animations)
  *     anim    that sub-tab, open on that animation (&anim=fade-up)
+ *     pages   the Pages window, open on that folder (&pages=/people/; / is content/pages/)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed
  *     sections, the selected field or Motion element, the explorer's and library's lists,
  *     the panel and preview scroll.
@@ -20,7 +21,8 @@
  * so Back leaves the editor instead of stepping through tabs.
  *
  * main.js calls restoreUi() before the UI mounts and restorePlace() once the preview shows
- * the page; App.svelte calls writeUrl() whenever the tab, view, explorer or library changes.
+ * the page; App.svelte calls writeUrl() whenever the tab, view, explorer, library or Pages
+ * window changes.
  */
 import { tick } from 'svelte';
 import { ui } from './ui.svelte.js';
@@ -58,6 +60,8 @@ function readState() {
     state.explorer = { open: true, file: `sources/${q.get('source')}.json`, index: 0 };
     state.item = q.get('item');
   }
+  if (q.has('pages'))
+    state.pagesWin = { open: true, folder: q.get('pages').replace(/^\/+|\/+$/g, '') };
   if (q.get('motion') === 'animations' || q.has('anim')) {
     if (!q.has('tab')) state.mode = 'motion'; // the library is in the Motion tab
     state.library = { open: true, name: q.get('anim') || '' }; // an unknown name: the list
@@ -76,6 +80,7 @@ export function restoreUi(preview, content) {
   ui.sections = saved.sections || {};
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
   if (saved.library) ui.library = saved.library;
+  if (saved.pagesWin) ui.pagesWin = saved.pagesWin; // PagesModal opens itself
 
   addEventListener('pagehide', () => {
     sessionStorage.setItem(
@@ -87,6 +92,7 @@ export function restoreUi(preview, content) {
         sections: ui.sections,
         explorer: ui.explorer,
         library: ui.library,
+        pagesWin: ui.pagesWin,
         path: bridge.path(),
         edit: ui.selection?.edit,
         anim: ui.anim?.key,
@@ -153,5 +159,6 @@ export function writeUrl() {
   const library = ui.mode === 'motion' && ui.library.open;
   set('motion', library && 'animations');
   set('anim', library && ui.library.name);
+  set('pages', ui.pagesWin.open && `/${ui.pagesWin.folder}/`.replace('//', '/'));
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }

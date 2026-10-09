@@ -34,6 +34,21 @@ export const saveDev = (files) =>
     body: JSON.stringify({ files }),
   });
 
+/** The folders under content/pages/, empty ones included: ['people', 'places', ...]. */
+export const pageFolders = async () => (await json('/__editor/pages')).folders;
+
+/**
+ * Add, rename or delete pages and folders in content/pages/ (POST /__editor/pages, see
+ * pagesOp in scripts/editor-server.mjs): { op: 'add', folder, name, title }, ...
+ * Resolves to { id, created, removed } (content file names).
+ */
+export const pagesOp = (body) =>
+  json('/__editor/pages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
 /**
  * Upload a photo to Cloudflare R2 (POST /__editor/upload), where the dev server resizes it:
  * resolves to { key, photo }, key being the value to store in the content. onprogress(0..1)

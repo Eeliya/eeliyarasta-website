@@ -17,8 +17,13 @@ export const ui = $state({
   pub: null,
   /** Footer status line, e.g. "Saved 2 files · 12:40:03". */
   status: '',
-  /** Page menu items: every page, then the Menu and Footer components. */
+  /**
+   * Page menu items: every page, then the Menu and Footer components. A [slug] template is
+   * one item with `template` (its page id) and `items` ([{ path, title }], its pages).
+   */
   pages: [],
+  /** The path shown in the preview ("/people/noor-vermeer/"). */
+  path: '/',
   /** What the Content tab edits: a page { kind: 'page', path, title } or a component. */
   target: { kind: 'page', path: '/', title: 'Home' },
   /** Bumped when the preview shows a (new) page: the Content tab re-reads its texts. */
@@ -39,6 +44,8 @@ export const ui = $state({
   sections: {},
   /** The Source Explorer: open or not, its file ('' = the list of files) and item index. */
   explorer: { open: false, file: '', index: 0 },
+  /** The Pages window: open or not, and the folder it shows ('' = content/pages/ itself). */
+  pagesWin: { open: false, folder: '' },
   /** Motion tab: the Animations sub-tab (open) or Elements, and its animation ('' = the list). */
   library: { open: false, name: '' },
 });

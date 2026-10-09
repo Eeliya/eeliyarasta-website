@@ -32,8 +32,8 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
-import { getRoutes, curtainOverrides } from '../site/routes.js';
-import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
+import { getRoutes, curtainOverrides, pathOfId } from '../site/routes.js';
+import { ANIMATIONS, HOME, TEMPLATE, contentFromFiles, pageIdOf } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -48,7 +48,7 @@ const root = document.getElementById('editor');
 root.textContent = '';
 mount(App, {
   target: root,
-  props: { live, bridge, actions: { setMode, pickTarget, save, refreshStatus } },
+  props: { live, bridge, actions: { setMode, pickTarget, save, refreshStatus, pagesOp } },
 });
 
 // ---------------------------------------------------------------- ui
@@ -57,24 +57,122 @@ function pushCurtains() {
   bridge.api?.setPageCurtains?.(curtainOverrides(getRoutes(contentFromFiles(store.current))));
 }
 
+/**
+ * Page menu entries, grouped by folder: "/people/" holds the people page and the pages in its
+ * folder. A [slug] template is one entry ({ template, items }) for all its item pages.
+ */
+function pageEntries(routes) {
+  const ids = Object.keys(store.current).map(pageIdOf).filter(Boolean);
+  const folders = new Set(ids.map((id) => id.slice(0, Math.max(0, id.lastIndexOf('/')))));
+  const groupOf = (id) => {
+    const folder = folders.has(id) ? id : id.slice(0, Math.max(0, id.lastIndexOf('/')));
+    return folder ? `/${folder}/` : 'Pages';
+  };
+  const entries = [];
+  const templates = new Map();
+  const template = (id, section) => {
+    if (!templates.has(id)) {
+      const entry = {
+        kind: 'page',
+        template: id,
+        path: `/${id}`,
+        title: `${section || 'Item'} item`,
+        group: groupOf(id),
+        items: [],
+      };
+      templates.set(id, entry);
+      entries.push(entry);
+    }
+    return templates.get(id);
+  };
+  for (const r of routes) {
+    if (r.template)
+      template(r.id, r.section).items.push({ path: r.path, title: r.album?.name || r.slug });
+    else
+      entries.push({
+        kind: 'page',
+        path: r.path,
+        title: r.title.split('|')[0].trim(),
+        group: groupOf(r.id),
+      });
+  }
+  // a template whose source has no items yet has no pages, but is still a page to pick
+  for (const id of ids)
+    if (id.endsWith(TEMPLATE)) template(id, store.current[`pages/${id}.json`]?.section);
+  return entries;
+}
+
 /** The page menu: every page of the site (404 included: it has its own file), then Menu and Footer. */
 function updatePages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
   const routes = getRoutes(contentFromFiles(store.current));
   ui.pages = [
-    ...routes.map((r) => ({ kind: 'page', path: r.path, title: r.title.split('|')[0].trim() })),
+    ...pageEntries(routes),
     { kind: 'component', id: 'menu', title: 'Menu' },
     { kind: 'component', id: 'footer', title: 'Footer' },
   ];
   // Menu / Footer stay picked; otherwise follow the page shown in the preview.
+  // (a template page: the template's entry)
+  const shows = (i) => i.path === path || i.items?.some((it) => it.path === path);
   if (ui.target?.kind !== 'component')
-    ui.target = ui.pages.find((i) => i.kind === 'page' && i.path === path) || ui.pages[0];
+    ui.target = ui.pages.find((i) => i.kind === 'page' && shows(i)) || ui.pages[0];
 }
 
-/** The page menu picked a page (navigate the preview) or a component (Menu, Footer). */
-function pickTarget(item) {
+/**
+ * The page menu picked a page (navigate the preview), a template (one of its item pages:
+ * `path`, else the one shown, else the first) or a component (Menu, Footer).
+ */
+function pickTarget(item, path) {
   ui.target = item;
-  if (item.kind === 'page') bridge.navigate(item.path);
+  if (item.kind !== 'page') return;
+  const items = item.items;
+  const to = !items
+    ? item.path
+    : path || (items.some((i) => i.path === ui.path) ? ui.path : items[0]?.path);
+  if (to) bridge.navigate(to);
+  else toast(`${item.path} has no pages: its source has no items`, { kind: 'error' });
+}
+
+/**
+ * The Pages window: add, rename or delete pages on disk (source.pagesOp), then take the new
+ * and removed files into the store, update the page menu and show the page. Moving or
+ * deleting a page with unsaved edits needs a Save or Discard first. Resolves to the server's
+ * answer ({ id, created, removed }), or null when nothing happened.
+ */
+async function pagesOp(body) {
+  const touched = body.id
+    ? Object.keys(store.current).filter(
+        (f) => f === `pages/${body.id}.json` || f.startsWith(`pages/${body.id}/`),
+      )
+    : [];
+  const dirty = store.dirtyFiles().filter((f) => touched.includes(f));
+  if (dirty.length && ['rename', 'delete'].includes(body.op)) {
+    toast('Save or discard the unsaved changes first', { kind: 'error', files: dirty });
+    return null;
+  }
+  let res;
+  try {
+    res = await source.pagesOp(body);
+    const { files } = await source.load();
+    store.files(Object.fromEntries(res.created.map((f) => [f, files[f]])), res.removed);
+  } catch (err) {
+    toast(err.message, { kind: 'error' });
+    return null;
+  }
+  refreshStatus();
+  // Show the new page, follow a renamed one, leave a deleted one.
+  const shown = ui.path;
+  const oldPath = body.id && pathOfId(body.id);
+  const routes = getRoutes(contentFromFiles(store.current));
+  let to = null;
+  if (body.op === 'add') to = pathOfId(res.id);
+  else if (body.op === 'template') to = routes.find((r) => r.id === res.id)?.path;
+  else if (body.op === 'rename' && shown.startsWith(oldPath))
+    to = pathOfId(res.id) + shown.slice(oldPath.length);
+  else if (body.op === 'delete' && shown.startsWith(oldPath))
+    to = pathOfId(res.id).replace(/[^/]+\/$/, '');
+  if (to) bridge.navigate(to);
+  return res;
 }
 
 /** Saved-but-unpublished content changes (ui.pub), from /__editor/status. */
@@ -123,6 +221,7 @@ function syncSections() {
 }
 
 bridge.on('navigate', (path) => {
+  ui.path = path;
   if (syncSections()) bridge.applyTexts({ force: true });
   const url = new URL(location.href);
   url.searchParams.set('path', path);

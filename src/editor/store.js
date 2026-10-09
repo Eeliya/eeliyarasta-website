@@ -145,6 +145,26 @@ export function createStore() {
       }
       return moved;
     },
+    /**
+     * Files that appeared on disk (`files`: { name: data }) and files that are gone
+     * (`removed`: names), e.g. after the Pages window added, renamed or deleted a page.
+     * Not an undo step; undo steps that touched a removed file are dropped.
+     */
+    files(files = {}, removed = []) {
+      for (const f of removed) {
+        delete base[f];
+        delete current[f];
+      }
+      const touches = (entry) => entry.changes.some((c) => removed.includes(c.file));
+      history = history.filter((e) => !touches(e));
+      future = future.filter((e) => !touches(e));
+      for (const [f, data] of Object.entries(files)) {
+        base[f] = clone(data);
+        current[f] = clone(data);
+      }
+      const names = [...Object.keys(files), ...removed];
+      if (names.length) emit(names, 'files');
+    },
     /** Back to the saved version of `files` (all by default), as one undo step. */
     discard(files = Object.keys(current)) {
       const changes = files

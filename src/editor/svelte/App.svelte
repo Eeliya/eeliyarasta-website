@@ -11,16 +11,18 @@
   import MotionPanel from './MotionPanel.svelte';
   import SettingsPanel from './SettingsPanel.svelte';
   import PublishDialog from './PublishDialog.svelte';
+  import PagesModal from './PagesModal.svelte';
   import Toasts from './Toasts.svelte';
   import { ui } from './ui.svelte.js';
   import { writeUrl } from './persist.js';
   import { MOD, plural } from '../lib/format.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
-  // actions: setMode, pickTarget, save, refreshStatus
+  // actions: setMode, pickTarget, save, refreshStatus, pagesOp
   let { live, bridge, actions } = $props();
 
   let publishDialog = $state();
+  let pagesModal = $state();
   const publish = () => publishDialog.open();
 
   // [mode, label, icon]: a tab with an icon shows only the icon
@@ -144,6 +146,28 @@
 
       <div class="ed-bar">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
+        {#if ui.target?.items}
+          <!-- a [slug] page: which item's page the preview shows -->
+          <select
+            class="ed-items"
+            aria-label="Item"
+            value={ui.path}
+            onchange={(e) => actions.pickTarget(ui.target, e.currentTarget.value)}
+          >
+            {#each ui.target.items as item (item.path)}
+              <option value={item.path}>{item.title}</option>
+            {/each}
+          </select>
+        {/if}
+        <button
+          type="button"
+          class="icon-btn"
+          title="Pages: add, rename, delete"
+          aria-label="Pages"
+          onclick={() => pagesModal.open()}
+        >
+          <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+        </button>
       </div>
     </header>
 
@@ -204,6 +228,7 @@
   </aside>
 
   <PublishDialog {live} {actions} bind:this={publishDialog} />
+  <PagesModal {live} {actions} bind:this={pagesModal} />
   <Toasts />
 {/if}
 
@@ -309,6 +334,12 @@
     display: flex;
     gap: 8px;
     align-items: center;
+  }
+
+  // a [slug] page's item, next to the Pages button
+  .ed-items {
+    flex: 1;
+    min-width: 0;
   }
 
   // pending line and status on their own rows, then [ source | Save | Publish ]

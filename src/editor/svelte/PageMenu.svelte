@@ -5,7 +5,8 @@
 <script>
   import { tick } from 'svelte';
 
-  // items: [{ kind: 'page', path, title } | { kind: 'component', id, title }]
+  // items: [{ kind: 'page', path, title, group, items? } | { kind: 'component', id, title }]
+  // (a [slug] template has items: its pages)
   // value: the current item; onchange(item): an item was picked
   let { items, value, onchange } = $props();
 
@@ -15,13 +16,18 @@
 
   const key = (item) =>
     item?.kind === 'component' ? `component:${item.id}` : `page:${item?.path}`;
-  const kindName = (item) => (item?.kind === 'component' ? 'Component' : 'Page');
-  const groups = $derived(
-    [
-      ['Pages', items.filter((i) => i.kind === 'page')],
-      ['Components', items.filter((i) => i.kind === 'component')],
-    ].filter(([, list]) => list.length),
-  );
+  const kindName = (item) =>
+    item?.kind === 'component' ? 'Component' : item?.items ? 'Template' : 'Page';
+  // Pages by folder (item.group: "Pages" or "/people/"), then Components
+  const groups = $derived.by(() => {
+    const byGroup = new Map();
+    for (const i of items) {
+      const group = i.kind === 'component' ? 'Components' : i.group || 'Pages';
+      if (!byGroup.has(group)) byGroup.set(group, []);
+      byGroup.get(group).push(i);
+    }
+    return [...byGroup];
+  });
 
   async function toggle() {
     open = !open;
