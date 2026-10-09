@@ -1,15 +1,17 @@
 <!--
   Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
   replay and scroll it, pick where edits go (this element, or every element with its
-  data-anim name), its animation and the fields of the animation's type (motion.js).
-  An animation's own values are edited in the Animations library (AnimationsModal.svelte).
+  data-anim name), its animation, and its timing (Inherit / Custom per field, MotionGroups).
+  What the animation does is shown read-only: it is edited in the Animations library
+  (AnimationsModal.svelte). Older overrides of those values get a notice: move them into the
+  animation, or drop them.
   (In code and animations.json an animation is a "preset".)
   MotionPanel creates a new one for every pick.
 -->
 <script>
   import MotionGroups from './MotionGroups.svelte';
   import { ui } from './ui.svelte.js';
-  import { GENERIC_TYPES, animModel, keepFor, layerPtr } from './motion.js';
+  import { GENERIC_TYPES, animModel, keepFor, layerPtr, legacyOverrides } from './motion.js';
   import { compile } from '../lib/pointer.js';
   import { ANIMATIONS } from '../../site/files.js';
 
@@ -34,6 +36,7 @@
     ),
   );
   const hasOverrides = $derived(Object.keys(m.own).length > 0);
+  const legacy = $derived(legacyOverrides(m));
 
   // Scroll position of the element in the preview, 0-100 (read once, when it is picked).
   const scrolled = () => Math.round(bridge.scrubProgress(sel.el) * 100);
@@ -49,6 +52,24 @@
         keep: keepFor(sel.scope),
         source: 'motion-structure',
       });
+  }
+
+  /** Remove the older non-timing overrides; with move, copy them into the animation first. */
+  function settleLegacy(move) {
+    const list = legacy;
+    live.store.batch(
+      () => {
+        for (const o of list) {
+          const path = compile(o.path);
+          if (move)
+            live.store.set(ANIMATIONS, layerPtr(m, sel, 'preset') + path, o.value, { keep: 2 });
+          live.store.remove(ANIMATIONS, layerPtr(m, sel, o.scope) + path, {
+            keep: keepFor(o.scope),
+          });
+        }
+      },
+      { source: 'motion-structure' },
+    );
   }
 </script>
 
@@ -134,6 +155,35 @@
     {/each}
   </select>
 </div>
+{#if legacy.length}
+  <div class="legacy">
+    <p class="hint">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      Older overrides of what the animation does, which only the animation sets now:
+    </p>
+    <ul class="legacy__list">
+      {#each legacy as o (o.scope + o.path.join('.'))}
+        <li>
+          <code>{o.path.join('.')}: {JSON.stringify(o.value)}</code>
+          <span class="legacy__scope"
+            >{o.scope === 'element' ? 'this element' : `all "${sel.id}"`}</span
+          >
+        </li>
+      {/each}
+    </ul>
+    <p class="hint">
+      Move to animation copies them into {m.presetName}: every element using it changes.
+    </p>
+    <div class="legacy__actions">
+      <button type="button" class="btn-sm" onclick={() => settleLegacy(true)}>
+        <i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Move to animation
+      </button>
+      <button type="button" class="btn-sm btn-sm--danger" onclick={() => settleLegacy(false)}>
+        <i class="fa-solid fa-trash" aria-hidden="true"></i> Drop
+      </button>
+    </div>
+  </div>
+{/if}
 <MotionGroups {live} {gsap} {m} scope={sel.scope} ptr={ptr()} />
 {#if hasOverrides}
   <button
@@ -194,6 +244,35 @@
     width: 34px;
     text-align: right;
     color: var(--fg);
+  }
+
+  // older non-timing overrides: what they are, Move to animation / Drop
+  .legacy {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--line);
+
+    .hint {
+      font-size: 11px;
+      margin: 0 0 8px;
+    }
+  }
+
+  .legacy__list {
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .legacy__scope {
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
+  .legacy__actions {
+    display: flex;
+    gap: 8px;
   }
 
   .scope {

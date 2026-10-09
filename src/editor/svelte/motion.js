@@ -344,6 +344,22 @@ export function inherited(m, scope, path) {
   return [layer && dig(m.layers[layer], path), layer];
 }
 
+/**
+ * Non-timing values set on the element or its data-anim name: overrides from before the element
+ * view became read-only for them. [{ scope: 'target' | 'element', path, value }]
+ */
+export function legacyOverrides(m) {
+  const out = [];
+  const walk = (scope, obj, path) => {
+    for (const [k, v] of Object.entries(obj)) {
+      if (isObj(v)) walk(scope, v, [...path, k]);
+      else if (!isTimingPath([...path, k])) out.push({ scope, path: [...path, k], value: v });
+    }
+  };
+  for (const scope of ['target', 'element']) walk(scope, m.layers[scope], []);
+  return out;
+}
+
 /** A field's value as text, for read-only and inherited values. */
 export function formatValue(def, value) {
   const unit = (v) => (v === undefined || v === '' ? '–' : `${v}${def.unit ? ' ' + def.unit : ''}`);
