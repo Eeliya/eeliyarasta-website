@@ -1,23 +1,24 @@
 <!--
-  Source Explorer: the lists in content/sources/ (people, places, projects, ...). On the left
-  the files as tabs (with their item counts) above the file's items, on the right the
-  selected item's fields. ContentPanel.svelte calls open() from its Sources button, a grid's
-  Source edit button or a click on a list item in the preview: a file, an item or one field.
+  Source Explorer: the lists in content/sources/ (people, places, projects, ...). It starts on
+  the files with their item counts; click one to enter it: its items on the left, the
+  selected item's fields on the right, Back returns to the files. ContentPanel.svelte calls
+  open() from its Sources button (the files), and from a grid's Source edit button or a click
+  on a list item in the preview (straight into that file, item or field).
+  Where it is lives in ui.explorer, so persist.js can bring it back after a refresh.
 -->
 <script>
   import { tick, flushSync } from 'svelte';
   import Field from './Field.svelte';
   import { ui } from './ui.svelte.js';
   import { isSource } from './content-groups.js';
-  import { baseName, sourceIdOf } from '../../site/files.js';
+  import { baseName } from '../../site/files.js';
   import { itemName, itemMeta, pad, slugify, itemFields, newItem } from './source-items.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
 
   let dialog = $state();
-  let file = $state('');
-  let selected = $state(0);
+  const file = $derived(ui.explorer.file); // '' = the list of files
   let confirming = $state(false); // "Delete X?" is showing
   let slugBad = $state(false);
 
@@ -28,7 +29,7 @@
   const list = $derived(live.current(file));
   const base = $derived(live.base(file) || []);
   const isList = $derived(Array.isArray(list));
-  const index = $derived(isList ? Math.max(0, Math.min(selected, list.length - 1)) : 0);
+  const index = $derived(isList ? Math.max(0, Math.min(ui.explorer.index, list.length - 1)) : 0);
   const item = $derived(isList ? list[index] : undefined);
   const fields = $derived(item ? itemFields(file, item, index) : []);
   const saved = $derived(!!item && base.some((b) => b?.slug === item.slug));
@@ -41,6 +42,7 @@
       base.find((b) => b?.slug === it?.slug),
     );
   const fieldChanged = (f) => !same(item?.[f.key], base[index]?.[f.key]);
+  const fileChanged = (f) => !same(live.current(f), live.base(f));
 
   /** Show the stored value in an input, except while the user is typing in it. */
   const show = (value) => (el) => {
@@ -49,7 +51,7 @@
   };
 
   function select(i) {
-    selected = i;
+    ui.explorer.index = i;
     confirming = false;
     slugBad = false;
   }
@@ -84,24 +86,28 @@
       live.store.set(file, `/${at}/slug`, slug, { key: `slug:${file}#${at}`, source: 'panel' });
   }
 
-  /** Show the items of another file. */
-  function pickFile(next) {
-    if (next === file) return;
-    file = next;
+  /** Enter a file ('' = back to the list of files), keeping the keyboard focus in the modal. */
+  async function goTo(next) {
+    const from = file;
+    ui.explorer.file = next;
     select(0);
+    await tick();
+    const back = from && dialog.querySelector(`[data-file="${CSS.escape(from)}"]`);
+    (back || dialog.querySelector('.src-list__item'))?.focus();
   }
 
   /**
-   * Show a file (default: the last one shown, else the first), at its first item or at item
-   * nextIndex, optionally focusing one field.
+   * Open on the list of files, or straight into a file at item nextIndex, optionally
+   * focusing one field.
    */
-  export function open(nextFile = file || files[0], nextIndex = 0, edit = null) {
-    file = nextFile;
+  export function open(nextFile = '', nextIndex = 0, edit = null) {
+    ui.explorer.file = files.includes(nextFile) ? nextFile : '';
     select(nextIndex);
+    ui.explorer.open = true;
     flushSync(); // render now, so the field below exists
     if (!dialog.open) dialog.showModal();
     const field = edit && dialog.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
-    if (!field) return;
+    if (!field) return void (file || dialog.querySelector('.src-list__item').focus());
     field.querySelector('.tf__input').focus({ preventScroll: true });
     field.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
@@ -114,13 +120,28 @@
   aria-label="Sources"
   bind:this={dialog}
   onclick={(e) => e.target === dialog && dialog.close()}
+  onclose={() => (ui.explorer.open = false)}
 >
   <header class="src-modal__head">
+    {#if file}
+      <button
+        type="button"
+        class="src-modal__btn"
+        title="Back to files"
+        aria-label="Back to files"
+        onclick={() => goTo('')}
+      >
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      </button>
+    {/if}
     <h3 class="modal__title">Sources</h3>
-    <span class="src-modal__path">content/{file}</span>
+    <span class="src-modal__path">
+      <i class={['fa-solid', file ? 'fa-file-lines' : 'fa-folder-open']} aria-hidden="true"></i>
+      content/{file || 'sources/'}
+    </span>
     <button
       type="button"
-      class="src-modal__x"
+      class="src-modal__btn"
       title="Close (Esc)"
       aria-label="Close"
       onclick={() => dialog.close()}
@@ -129,122 +150,129 @@
     </button>
   </header>
 
-  <nav class="src-list" aria-label="Items">
-    <div class="seg seg--small src-files" role="tablist" aria-label="Source files">
+  {#if !file}
+    <ul class="list src-files" aria-label="Source files">
       {#each files as f (f)}
         {@const items = live.current(f)}
-        <button
-          type="button"
-          role="tab"
-          class={['seg__btn', f === file && 'is-active']}
-          aria-selected={f === file}
-          title="content/{f}"
-          onclick={() => pickFile(f)}
-        >
-          {sourceIdOf(f)}
-          {Array.isArray(items) ? items.length : '!'}
-        </button>
+        <li>
+          <button
+            type="button"
+            class={['src-list__item', fileChanged(f) && 'is-changed']}
+            data-file={f}
+            onclick={() => goTo(f)}
+          >
+            <i class="fa-solid fa-file-lines src-list__num" aria-hidden="true"></i>
+            <span class="src-list__name">{baseName(f)}</span>
+            <span class="src-list__meta">
+              {Array.isArray(items) ? `${items.length} items` : 'not a list'}
+            </span>
+            <i class="dot" title="Changed"></i>
+          </button>
+        </li>
       {/each}
-    </div>
-    {#if isList}
-      <header class="row src-list__head">
-        {list.length} item{list.length === 1 ? '' : 's'}
-        <button type="button" class="btn-sm" onclick={add}>
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
-        </button>
-      </header>
-      <ul class="list src-list__items">
-        {#each list as it, i (i)}
-          <li>
-            <button
-              type="button"
-              class={[
-                'src-list__item',
-                i === index && 'is-selected',
-                isChanged(it) && 'is-changed',
-              ]}
-              aria-current={i === index}
-              onclick={() => select(i)}
-            >
-              <span class="src-list__num">{pad(i)}</span>
-              <span class="src-list__name">{itemName(it)}</span>
-              <span class="src-list__meta">{itemMeta(it)}</span>
-              <i class="dot" title="Changed"></i>
-            </button>
-          </li>
-        {/each}
-      </ul>
-      {#if list.length !== base.length}
-        <p class="hint small src-list__note">
-          Added and deleted items show in the preview after Save.
-        </p>
+    </ul>
+  {:else}
+    <nav class="src-list" aria-label="Items">
+      {#if isList}
+        <header class="row src-list__head">
+          {list.length} item{list.length === 1 ? '' : 's'}
+          <button type="button" class="btn-sm" onclick={add}>
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
+          </button>
+        </header>
+        <ul class="list src-list__items">
+          {#each list as it, i (i)}
+            <li>
+              <button
+                type="button"
+                class={[
+                  'src-list__item',
+                  i === index && 'is-selected',
+                  isChanged(it) && 'is-changed',
+                ]}
+                aria-current={i === index}
+                onclick={() => select(i)}
+              >
+                <span class="src-list__num">{pad(i)}</span>
+                <span class="src-list__name">{itemName(it)}</span>
+                <span class="src-list__meta">{itemMeta(it)}</span>
+                <i class="dot" title="Changed"></i>
+              </button>
+            </li>
+          {/each}
+        </ul>
+        {#if list.length !== base.length}
+          <p class="hint small src-list__note">
+            Added and deleted items show in the preview after Save.
+          </p>
+        {/if}
       {/if}
-    {/if}
-  </nav>
+    </nav>
 
-  <section class="src-detail">
-    {#if !isList}
-      <p class="hint">{baseName(file)} is not a list.</p>
-    {:else if !item}
-      <p class="hint">No items yet. Add one on the left.</p>
-    {:else}
-      <header class="src-detail__head">
-        <h4 class="src-item__title">{itemName(item)}</h4>
-        {#if confirming}
-          <span class="confirm">
-            Delete {itemName(item)}?
-            <button type="button" class="btn-sm" onclick={() => (confirming = false)}>
-              Cancel
-            </button>
-            <button type="button" class="btn-sm btn-sm--danger" onclick={remove}>
+    <section class="src-detail">
+      {#if !isList}
+        <p class="hint">{baseName(file)} is not a list.</p>
+      {:else if !item}
+        <p class="hint">No items yet. Add one on the left.</p>
+      {:else}
+        <header class="src-detail__head">
+          <h4 class="src-item__title">{itemName(item)}</h4>
+          {#if confirming}
+            <span class="confirm">
+              Delete {itemName(item)}?
+              <button type="button" class="btn-sm" onclick={() => (confirming = false)}>
+                Cancel
+              </button>
+              <button type="button" class="btn-sm btn-sm--danger" onclick={remove}>
+                <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
+              </button>
+            </span>
+          {:else}
+            <button type="button" class="btn-sm btn-sm--danger" onclick={askDelete}>
               <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
             </button>
-          </span>
-        {:else}
-          <button type="button" class="btn-sm btn-sm--danger" onclick={askDelete}>
-            <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-          </button>
-        {/if}
-      </header>
+          {/if}
+        </header>
 
-      {#if 'slug' in item}
-        <!-- the slug is the page URL: editable until the item is saved -->
-        <label class="tf">
-          <span class="tf__label">
-            slug
-            <span class="src-detail__hint">
-              {saved ? 'fixed: it is the page URL' : 'page URL, fixed after Save'}
+        {#if 'slug' in item}
+          <!-- the slug is the page URL: editable until the item is saved -->
+          <label class="tf">
+            <span class="tf__label">
+              slug
+              <span class="src-detail__hint">
+                {saved ? 'fixed: it is the page URL' : 'page URL, fixed after Save'}
+              </span>
             </span>
-          </span>
-          <input
-            class={['tf__input', slugBad && 'is-invalid']}
-            spellcheck="false"
-            disabled={saved}
-            {@attach show(item.slug)}
-            oninput={onSlug}
-            onblur={(e) => {
-              e.currentTarget.value = item.slug;
-              slugBad = false;
-            }}
-          />
-        </label>
-      {/if}
+            <input
+              class={['tf__input', slugBad && 'is-invalid']}
+              spellcheck="false"
+              disabled={saved}
+              {@attach show(item.slug)}
+              oninput={onSlug}
+              onblur={(e) => {
+                e.currentTarget.value = item.slug;
+                slugBad = false;
+              }}
+            />
+          </label>
+        {/if}
 
-      {#each fields as f (f.edit)}
-        <Field
-          edit={f.edit}
-          label={f.key}
-          type={f.type}
-          value={item[f.key]}
-          changed={fieldChanged(f)}
-          selected={ui.selection?.edit === f.edit}
-          onfocus={() => bridge.focusEdit(f.edit)}
-          onvalue={(value) =>
-            live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' })}
-        />
-      {/each}
-    {/if}
-  </section>
+        {#each fields as f (f.edit)}
+          <Field
+            edit={f.edit}
+            label={f.key}
+            type={f.type}
+            value={item[f.key]}
+            changed={fieldChanged(f)}
+            selected={ui.selection?.edit === f.edit}
+            onfocus={() => bridge.focusEdit(f.edit)}
+            onvalue={(value) =>
+              live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' })}
+          />
+        {/each}
+      {/if}
+    </section>
+  {/if}
 </dialog>
 
 <style lang="scss">
@@ -278,12 +306,13 @@
   }
 
   .src-modal__path {
+    margin-right: auto;
     color: var(--muted);
     font-size: 10.5px;
   }
 
-  .src-modal__x {
-    margin-left: auto;
+  // Back and Close
+  .src-modal__btn {
     align-self: center;
     width: 28px;
     height: 28px;
@@ -305,24 +334,24 @@
     }
   }
 
-  // left: the file tabs, then the list
+  // the list of files, across the whole modal
+  .src-files {
+    grid-column: 1 / -1;
+    align-content: start;
+    gap: 2px;
+    overflow: auto;
+    padding: 14px 12px 18px;
+
+    .src-list__num {
+      font-size: 14px;
+    }
+  }
+
+  // left: the file's items
   .src-list {
     overflow: auto;
     padding: 14px 12px 18px;
     border-right: 1px solid var(--line);
-  }
-
-  // list name (people.json -> people) + item count, in normal case so they fit
-  .src-files {
-    flex-wrap: wrap;
-    margin-bottom: 14px;
-
-    .seg__btn {
-      padding-inline: 6px;
-      font-size: 10.5px;
-      letter-spacing: 0;
-      text-transform: none;
-    }
   }
 
   .src-list__head {

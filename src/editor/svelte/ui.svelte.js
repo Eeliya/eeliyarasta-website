@@ -37,4 +37,6 @@ export const ui = $state({
   staleSections: [],
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},
+  /** The Source Explorer: open or not, its file ('' = the list of files) and item index. */
+  explorer: { open: false, file: '', index: 0 },
 });
