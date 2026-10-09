@@ -14,8 +14,8 @@
   let { live, gsap } = $props();
 
   const ROWS = [
-    ['leave', 'Fade out (old page)'],
-    ['enter', 'Fade in (new page)'],
+    ['leave', 'Fade out old page (s)'],
+    ['enter', 'Fade in new page (s)'],
   ];
   const MAX = 5; // seconds
 
@@ -58,7 +58,7 @@
 <Section class="ptg" key="settings:fade" title="Page transition" name="Fade">
   <p class="hint">
     The old page fades out, the new one fades in: the whole page change when a page's curtain is
-    Off, behind the curtain otherwise. Duration (s) and ease.
+    Off, behind the curtain otherwise. Duration and ease.
   </p>
   {#each ROWS as [step, label] (step)}
     <div class={['tf', changed(step) && 'is-changed']}>
@@ -70,8 +70,7 @@
           inputmode="decimal"
           autocomplete="off"
           spellcheck="false"
-          aria-label="{label}: duration (s)"
-          title="Duration (s)"
+          aria-label="{label}: duration"
           data-ptr={ptr(step, 'duration')}
           {@attach show(get(step, 'duration'))}
           oninput={(e) => oninput(step, e)}

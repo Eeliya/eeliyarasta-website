@@ -75,19 +75,16 @@
         </div>
       {:else if def.kind === 'pair'}
         <div class="f__pair">
-          <span class="f__numwrap">
-            <input
-              type="number"
-              class="f__num"
-              step={def.step}
-              min={def.min ?? 0}
-              max={def.max}
-              title="Duration"
-              {@attach show(value[0])}
-              oninput={number(def.paths[0])}
-            />
-            {#if def.unit}<span class="f__unit">{def.unit}</span>{/if}
-          </span>
+          <input
+            type="number"
+            class="f__num"
+            step={def.step}
+            min={def.min ?? 0}
+            max={def.max}
+            aria-label="{def.label}: duration"
+            {@attach show(value[0])}
+            oninput={number(def.paths[0])}
+          />
           <EasePicker
             {gsap}
             value={value[1] ?? 'none'}
