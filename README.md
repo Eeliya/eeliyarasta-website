@@ -211,6 +211,14 @@ On the home page, every section box in the Content panel has ↑ / ↓ buttons t
 The preview follows reorders, on/off and layout right away; a grid switched to another source
 shows up in the preview after Save.
 
+The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
+item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
+button, or a click on a person/place/project in the preview, opens straight into that item.
+
+**Refresh** keeps your place: the tab, open/closed sections, the selected field or Motion
+element, the Source Explorer and the scroll positions come back. They're kept per browser tab
+(sessionStorage, `src/editor/svelte/persist.js`); the page itself is in the URL (`?path=`).
+
 | mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                 |
