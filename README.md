@@ -221,7 +221,7 @@ button, or a click on a person/place/project in the preview, opens straight into
 **Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
 Explorer item, so a shared link opens the same view:
 `/edit/?path=/people/&tab=content&source=people&item=noor-vermeer` (`tab`: browse, content,
-motion, settings; `view`: menu, footer; `anim`: the animation open in the Motion tab's library). Open/closed sections, the selected field or Motion
+motion, settings; `view`: menu, footer; `motion=animations`: the Motion tab's Animations sub-tab; `anim`: the animation open there). Open/closed sections, the selected field or Motion
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
@@ -229,7 +229,7 @@ element and the scroll positions are kept per browser tab in sessionStorage. See
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                  |
 | **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                  |
-| **Motion** | Click an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations library. Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
+| **Motion** | Click an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
 
 In the edit modes, clicks on editable or animated elements select them instead of following
 links. Hold **Alt** to click through.
@@ -248,12 +248,15 @@ inert (no clicks, no focus); it stores nothing. Custom stores the value at
 the chosen scope, and switching back to Inherit removes it (one undo step). Everything else
 the animation does is read-only here.
 
-The **Animations library** (the Animations button at the top of the Motion tab, or the edit
-button next to an element's Animation) is the only place that defines what an animation
+The Motion tab has two sub-tabs: **Elements** (the curtain, the page's animated elements and
+the picked element) and **Animations**, the library, inline in the panel so the preview stays
+in view while you edit (the edit button next to an element's Animation opens it there; picking
+an element in the preview goes back to Elements). It is the only place that defines what an animation
 does: pick an animation to edit `presets["fade-up"]`, every value including timing, and add
 or remove from/to properties. There is no global default layer: each animation carries every
-value it uses, so what you see in the library is what it does. The
-list shows how many elements on this page use each animation and which `data-anim` names
+value it uses, so what you see in the library is what it does. Edits play in the preview at
+once; **Replay** runs them again. Seconds are in the labels: `Duration (s) / ease`,
+`Delay (s)`, like the curtain's rows. The list shows how many elements on this page use each animation and which `data-anim` names
 use it on the site.
 
 Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `speed` in
