@@ -232,7 +232,8 @@ export function createBridge({ store, labelFor }) {
         if (r.bottom < 0 || r.top > vh * 0.8)
           api.scrollTo(el, { smooth: false, position: 'center center' });
       }
-      requestAnimationFrame(() => requestAnimationFrame(() => api.remount()));
+      // (api is null again if a save reloads the preview in between)
+      requestAnimationFrame(() => requestAnimationFrame(() => api?.remount()));
     },
 
     /** Scroll helper: 0 = element just entering the viewport, 1 = just left it. */
