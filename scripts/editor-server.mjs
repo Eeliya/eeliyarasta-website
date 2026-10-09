@@ -3,12 +3,14 @@
  * plugin in `configureServer`, so they only exist while `npm run dev` runs; a
  * production build has no editor and no endpoints.
  *
- *   GET  /__editor/content  → all editable content files, and the media manifest's URLs
+ *   GET  /__editor/content  → all editable content files, the media manifest's URLs and the
+ *                             R2 photos (settings/photos.json)
  *   POST /__editor/save     → write content files to disk ({ files: { name: json } }): a draft
  *   GET  /__editor/status   → saved-but-unpublished content files (git status vs HEAD) and
  *                             commits not pushed yet
- *   POST /__editor/upload   → one image (the raw bytes, its Content-Type, X-Filename): stored
- *                             in Cloudflare R2 (scripts/r2.mjs), answers { key }
+ *   POST /__editor/upload   → one image (the raw bytes, its Content-Type, X-Filename): resized,
+ *                             stored in Cloudflare R2 and added to settings/photos.json
+ *                             (scripts/r2.mjs), answers { key, photo }
  *   POST /__editor/publish  → { message }: git add + commit ONLY the changed content files in
  *                             one commit, then git push origin <current branch>
  *
@@ -23,7 +25,7 @@ import { execFile } from 'node:child_process';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
-import { isContentFile } from '../src/site/files.js';
+import { PHOTOS, isContentFile } from '../src/site/files.js';
 import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
 
 const CONTENT_DIR = editorConfig.contentDir;
@@ -36,7 +38,9 @@ export function editableFiles(root) {
     if (!fs.existsSync(dir)) continue;
     for (const name of fs.readdirSync(dir).sort()) {
       const file = `${folder}/${name}`;
-      if (isContentFile(file) && fs.statSync(path.join(dir, name)).isFile()) files.push(file);
+      // photos.json belongs to the upload, not to the editor's edits
+      if (isContentFile(file) && file !== PHOTOS && fs.statSync(path.join(dir, name)).isFile())
+        files.push(file);
     }
   }
   return new Set(files);
@@ -79,6 +83,11 @@ function readMedia(root) {
     Object.entries(all).map(([k, m]) => [k, { src: m.src, thumb: m.srcset?.[0]?.url || m.src }]),
   );
 }
+
+const readPhotos = (root) => {
+  const file = path.join(root, CONTENT_DIR, PHOTOS);
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+};
 
 /** The request body as a Buffer; over `limit` bytes fails with 413. */
 function readRaw(req, limit) {
@@ -375,6 +384,7 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
           mode: 'dev',
           files: readContentFiles(root),
           media: readMedia(root),
+          photos: readPhotos(root),
         });
 
       if (route === 'POST /save') {
@@ -399,8 +409,17 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
           .trim();
         const name = decodeURIComponent(String(req.headers['x-filename'] || ''));
         const body = await readRaw(req, MAX_UPLOAD);
-        const { status, body: out } = await uploadPhoto(env, { name, type, body });
-        if (out.ok) log(`editor uploaded ${out.key} (${Math.round(out.size / 1024)} KB) to R2`);
+        const { status, body: out } = await uploadPhoto(
+          env,
+          { name, type, body },
+          { photosFile: path.join(root, CONTENT_DIR, PHOTOS), onWrite },
+        );
+        if (out.ok)
+          log(
+            out.existing
+              ? `editor upload: ${out.key} is already in R2`
+              : `editor uploaded ${out.photo.srcset.length} sizes of ${name} to R2 (${out.key})`,
+          );
         return sendJSON(res, status, out);
       }
 

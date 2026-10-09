@@ -9,21 +9,32 @@
  *   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET   required
  *   R2_ENDPOINT   optional: another S3 endpoint (tests use a local mock)
  *
- * An upload is stored as photos/<name>-<hash>.<ext>: the hash of the bytes keeps names unique
- * and lets the object be cached forever (a changed photo gets a new key).
+ * An upload is resized like the photos in media/ (scripts/image-variants.mjs: auto-rotated,
+ * metadata stripped, WebP at 480/960/1600 px, never wider than the original) and each size is
+ * stored as photos/<name>-<hash>-<width>.webp. The hash is of the original bytes: the same
+ * photo always gets the same keys, and the objects can be cached forever. The original itself
+ * is not kept: the largest size is the fallback src, and it is the key the content stores.
+ *
+ * Sizes, placeholder and colour go into content/settings/photos.json (PHOTOS, files.js), keyed by
+ * that key, so the build renders srcset, width/height and the blurred placeholder without
+ * downloading anything from R2. Publish commits it with the content.
  */
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import { AwsClient } from 'aws4fetch';
+import { FORMAT, loadSharp, makeVariants, uprightSize, widthsFor } from './image-variants.mjs';
+import { formatJSON } from '../src/editor/lib/json-format.js';
 
-/** Accepted image types and their file extension. */
-export const IMAGE_TYPES = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/avif': 'avif',
-  'image/gif': 'gif',
-};
-export const MAX_UPLOAD = 30 * 1024 * 1024; // 30 MB: a full-size camera JPEG fits
+/** Image types an upload can be (they are stored as WebP). */
+export const IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif',
+  'image/tiff',
+]);
+export const MAX_UPLOAD = 60 * 1024 * 1024; // 60 MB: camera JPEGs, and most TIFFs
 const REQUIRED = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET'];
 export const NOT_CONFIGURED = 'R2 not configured: add keys to .env.local';
 
@@ -52,12 +63,15 @@ const slug = (s) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 60) || 'photo';
 
-/** "Noor Vermeer 01.JPG" + bytes -> "photos/noor-vermeer-01-3f9a0c1b2d.jpg" */
-export function photoKey(name, type, body) {
+/** "Noor Vermeer 01.JPG" + bytes -> "photos/noor-vermeer-01-3f9a0c1b2d" (sizes add "-<width>.webp") */
+export function photoBase(name, body) {
   const hash = crypto.createHash('sha256').update(body).digest('hex').slice(0, 10);
-  const base = slug(String(name || '').replace(/\.[a-z0-9]+$/i, ''));
-  return `photos/${base}-${hash}.${IMAGE_TYPES[type]}`;
+  return `photos/${slug(String(name || '').replace(/\.[a-z0-9]+$/i, ''))}-${hash}`;
 }
+
+const sizeKey = (base, w) => `${base}-${w}.${FORMAT.ext}`;
+
+const readJSON = (file) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
 
 /**
  * PUT one object, signed with SigV4 (region "auto") including the hash of the bytes, so R2
@@ -88,21 +102,61 @@ export async function putObject(cfg, { key, body, type }) {
 }
 
 /**
- * Check and store one uploaded image: { status, body } for the endpoint.
- * env: the R2_* variables; name: the original file name; type: its Content-Type.
+ * Check, resize and store one uploaded image: { status, body } for the endpoint; body.key is
+ * the value for the content, body.photo its photos.json entry.
+ *   env           the R2_* variables
+ *   name, type    the original file name and Content-Type; body: its bytes
+ *   photosFile    the photos.json to add the entry to
+ *   onWrite       called right before photos.json is written
+ * The same photo again (same bytes, same name) uploads nothing: it is already in photos.json.
  */
-export async function uploadPhoto(env, { name, type, body }) {
+export async function uploadPhoto(env, { name, type, body }, { photosFile, onWrite = () => {} }) {
   const cfg = r2Config(env);
   if (cfg.missing) return { status: 503, body: { error: NOT_CONFIGURED, missing: cfg.missing } };
-  if (!IMAGE_TYPES[type])
+  if (!IMAGE_TYPES.has(type))
     return {
       status: 415,
       body: {
-        error: `Not an image type the site takes (${type || 'unknown'}): JPEG, PNG, WebP, AVIF or GIF`,
+        error: `Not an image type the site takes (${type || 'unknown'}): JPEG, PNG, WebP, AVIF, GIF or TIFF`,
       },
     };
   if (!body.length) return { status: 400, body: { error: 'Empty file' } };
-  const key = photoKey(name, type, body);
-  await putObject(cfg, { key, body, type });
-  return { status: 200, body: { ok: true, key, size: body.length, type } };
+  const sharp = await loadSharp();
+  if (!sharp) return { status: 500, body: { error: 'sharp is not installed: run npm install' } };
+
+  let width;
+  try {
+    ({ width } = await uprightSize(sharp, body));
+  } catch {
+    return { status: 415, body: { error: `Could not read ${name || 'the file'} as an image` } };
+  }
+  const base = photoBase(name, body);
+  const key = sizeKey(base, widthsFor(width).at(-1));
+  const photos = readJSON(photosFile);
+  if (photos[key])
+    return { status: 200, body: { ok: true, key, photo: photos[key], existing: true } };
+
+  const v = await makeVariants(sharp, body);
+  const srcset = v.sizes.map(({ w }) => ({ key: sizeKey(base, w), w }));
+  await Promise.all(
+    v.sizes.map(({ w, buffer }) =>
+      putObject(cfg, { key: sizeKey(base, w), body: buffer, type: FORMAT.type }),
+    ),
+  );
+  const photo = { width: v.width, height: v.height, srcset, color: v.color, lqip: v.lqip };
+  // re-read: another upload may have finished meanwhile
+  const now = { ...readJSON(photosFile), [key]: photo };
+  onWrite();
+  fs.writeFileSync(
+    photosFile,
+    formatJSON(
+      Object.fromEntries(
+        Object.keys(now)
+          .sort()
+          .map((k) => [k, now[k]]),
+      ),
+    ),
+  );
+  const bytes = v.sizes.reduce((n, s) => n + s.buffer.length, 0);
+  return { status: 200, body: { ok: true, key, photo, size: body.length, stored: bytes } };
 }

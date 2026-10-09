@@ -5,7 +5,9 @@
  *   content/pages/<id>.json     one file per page: heading, copy, curtain text and transition
  *                               (home, photography, people, places, projects, about, 404)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
- *   content/settings/<id>.json  site-wide settings (site.json, animations.json)
+ *   content/settings/<id>.json  site-wide settings (site.json, animations.json), and photos.json:
+ *                               the sizes of photos uploaded to R2, written by the upload (not
+ *                               edited in the editor, committed by Publish)
  *
  * Paths are relative to content/ and are also the keys the editor uses
  * (data-edit="pages/home.json#/hero/title").
@@ -19,6 +21,7 @@ export const settingsFile = (id) => `settings/${id}.json`;
 export const SITE = settingsFile('site');
 export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
+export const PHOTOS = settingsFile('photos');
 
 /** "pages/about.json" -> "about" (null for files outside content/pages/). */
 export const pageIdOf = (file) => /^pages\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
@@ -55,5 +58,6 @@ export function contentFromFiles(files) {
     places: list('places'),
     projects: list('projects'),
     animations: files[ANIMATIONS] || {},
+    photos: files[PHOTOS] || {}, // R2 photos: { key: { width, height, srcset, color, lqip } }
   };
 }
