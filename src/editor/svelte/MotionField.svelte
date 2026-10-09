@@ -11,9 +11,9 @@
     def      a field from motion.js
     value    its value, an array of two for a pair
     view     'edit' the control; 'read' the value as text in the top row (element view: what the
-             animation does); 'inherit' the value as muted text under it (a timing value the
-             scope doesn't set itself)
-    note     muted text after an inherited value, e.g. "from fade-up"
+             animation does); 'inherit' the same control showing the inherited value, dimmed and
+             out of reach (inert: no clicks, no focus), for a timing value the scope doesn't set
+    note     with 'inherit': where the value comes from, e.g. "from fade-up", in the top row
     onvalue  (path, value) on an edit
     actions  snippet for the end of the top row
 -->
@@ -44,92 +44,90 @@
 <div class="f">
   <div class="f__top">
     <span class="f__label" title={def.hint || ''}>{def.label}</span>
+    {#if view === 'inherit' && note}<span class="f__from">{note}</span>{/if}
     {#if view === 'read'}
       <span class="f__value">{formatValue(def, value)}</span>
     {/if}
     {@render actions?.()}
   </div>
 
-  {#if view === 'inherit'}
-    <p class="f__value f__value--inherited">
-      {formatValue(def, value)}
-      {#if note}<span class="f__from">{note}</span>{/if}
-    </p>
-  {:else if view === 'read'}
-    <!-- the value is in the top row -->
-  {:else if def.kind === 'number'}
-    <div class="f__row">
-      <input
-        type="range"
-        class="f__range"
-        min={def.min ?? 0}
-        max={def.max}
-        step={def.step}
-        aria-label={def.label}
-        {@attach show(value)}
-        oninput={number(def.path)}
-      />
-      <input
-        type="number"
-        class="f__num"
-        step={def.step}
-        aria-label={def.label}
-        {@attach show(value)}
-        oninput={number(def.path)}
-      />
-      {#if def.unit}<span class="f__unit">{def.unit}</span>{/if}
-    </div>
-  {:else if def.kind === 'pair'}
-    <div class="f__pair">
-      <span class="f__numwrap">
+  {#if view !== 'read'}
+    <div class={['f__ctrl', view === 'inherit' && 'is-inherited']} inert={view === 'inherit'}>
+      {#if def.kind === 'number'}
+        <div class="f__row">
+          <input
+            type="range"
+            class="f__range"
+            min={def.min ?? 0}
+            max={def.max}
+            step={def.step}
+            aria-label={def.label}
+            {@attach show(value)}
+            oninput={number(def.path)}
+          />
+          <input
+            type="number"
+            class="f__num"
+            step={def.step}
+            aria-label={def.label}
+            {@attach show(value)}
+            oninput={number(def.path)}
+          />
+          {#if def.unit}<span class="f__unit">{def.unit}</span>{/if}
+        </div>
+      {:else if def.kind === 'pair'}
+        <div class="f__pair">
+          <span class="f__numwrap">
+            <input
+              type="number"
+              class="f__num"
+              step={def.step}
+              min={def.min ?? 0}
+              max={def.max}
+              title="Duration"
+              {@attach show(value[0])}
+              oninput={number(def.paths[0])}
+            />
+            {#if def.unit}<span class="f__unit">{def.unit}</span>{/if}
+          </span>
+          <EasePicker
+            {gsap}
+            value={value[1] ?? 'none'}
+            compact
+            onpick={(v) => onvalue(def.paths[1], v)}
+          />
+        </div>
+      {:else if def.kind === 'text'}
         <input
-          type="number"
-          class="f__num"
-          step={def.step}
-          min={def.min ?? 0}
-          max={def.max}
-          title="Duration"
-          {@attach show(value[0])}
-          oninput={number(def.paths[0])}
+          type="text"
+          class="f__text"
+          spellcheck="false"
+          aria-label={def.label}
+          list={def.suggestions?.length ? list : null}
+          {@attach show(value)}
+          onchange={(e) => onvalue(def.path, e.currentTarget.value.trim())}
         />
-        {#if def.unit}<span class="f__unit">{def.unit}</span>{/if}
-      </span>
-      <EasePicker
-        {gsap}
-        value={value[1] ?? 'none'}
-        compact
-        onpick={(v) => onvalue(def.paths[1], v)}
-      />
+        {#if def.suggestions?.length}
+          <datalist id={list}>
+            {#each def.suggestions as s (s)}<option value={s}></option>{/each}
+          </datalist>
+        {/if}
+      {:else if def.kind === 'segment'}
+        <div class="seg seg--small">
+          {#each def.options as [v, text] (text)}
+            <button
+              type="button"
+              class={[
+                'seg__btn',
+                JSON.stringify(v) === JSON.stringify(value ?? def.options[0][0]) && 'is-active',
+              ]}
+              onclick={() => onvalue(def.path, v)}>{text}</button
+            >
+          {/each}
+        </div>
+      {:else if def.kind === 'ease'}
+        <EasePicker {gsap} value={value ?? 'none'} onpick={(v) => onvalue(def.path, v)} />
+      {/if}
     </div>
-  {:else if def.kind === 'text'}
-    <input
-      type="text"
-      class="f__text"
-      spellcheck="false"
-      aria-label={def.label}
-      list={def.suggestions?.length ? list : null}
-      {@attach show(value)}
-      onchange={(e) => onvalue(def.path, e.currentTarget.value.trim())}
-    />
-    {#if def.suggestions?.length}
-      <datalist id={list}>
-        {#each def.suggestions as s (s)}<option value={s}></option>{/each}
-      </datalist>
-    {/if}
-  {:else if def.kind === 'segment'}
-    <div class="seg seg--small">
-      {#each def.options as [v, text] (text)}
-        <button
-          type="button"
-          class={[
-            'seg__btn',
-            JSON.stringify(v) === JSON.stringify(value ?? def.options[0][0]) && 'is-active',
-          ]}
-          onclick={() => onvalue(def.path, v)}>{text}</button
-        >
-      {/each}
-    </div>
-  {:else if def.kind === 'ease'}
-    <EasePicker {gsap} value={value ?? 'none'} onpick={(v) => onvalue(def.path, v)} />
   {/if}
 </div>

@@ -6,8 +6,9 @@
   can add and remove properties.
   Element view (AnimEditor.svelte, scope 'element' or 'target'): what the animation does is
   read-only; timing fields (TIMING_KEYS in motion.js) each have an Inherit / Custom switch.
-  Inherit shows the inherited value muted and stores nothing; Custom stores the value at the
-  scope (switching copies the inherited value there, Inherit removes it again).
+  Inherit shows the field's control with the inherited value, dimmed and inert, and stores
+  nothing; Custom stores the value at the scope (switching copies the inherited value there,
+  Inherit removes it again).
     m      the model: animModel() or presetModel() (motion.js)
     scope  the layer edits go to: 'element' | 'target' | 'preset'
     ptr    that layer's pointer in animations.json (layerPtr)
