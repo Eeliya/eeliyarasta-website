@@ -95,7 +95,38 @@
 
   <aside class="ed-panel">
     <header class="ed-head">
-      <h1 class="ed-brand">Editor <small class="ed-source">dev · local files</small></h1>
+      <!-- Editor | mobile view, undo, redo -->
+      <h1 class="ed-brand">Editor</h1>
+      <!-- the icon shows the view a click switches to -->
+      <button
+        type="button"
+        class="icon-btn"
+        title={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
+        onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
+      >
+        <i
+          class={['fa-solid', mobile ? 'fa-desktop' : 'fa-mobile-screen-button']}
+          aria-hidden="true"
+        ></i>
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        title="Undo ({MOD}+Z)"
+        disabled={!live.canUndo}
+        onclick={() => live.store.undo()}
+      >
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        title="Redo ({MOD}+Shift+Z)"
+        disabled={!live.canRedo}
+        onclick={() => live.store.redo()}
+      >
+        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+      </button>
 
       <nav class="seg seg--pill" aria-label="Mode">
         {#each TABS as [mode, label, icon] (mode)}
@@ -111,38 +142,8 @@
         {/each}
       </nav>
 
-      <div class="ed-bar" role="toolbar">
+      <div class="ed-bar">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
-        <!-- the icon shows the view a click switches to -->
-        <button
-          type="button"
-          class="icon-btn"
-          title={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
-          onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
-        >
-          <i
-            class={['fa-solid', mobile ? 'fa-desktop' : 'fa-mobile-screen-button']}
-            aria-hidden="true"
-          ></i>
-        </button>
-        <button
-          type="button"
-          class="icon-btn"
-          title="Undo ({MOD}+Z)"
-          disabled={!live.canUndo}
-          onclick={() => live.store.undo()}
-        >
-          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-        </button>
-        <button
-          type="button"
-          class="icon-btn"
-          title="Redo ({MOD}+Shift+Z)"
-          disabled={!live.canRedo}
-          onclick={() => live.store.redo()}
-        >
-          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-        </button>
       </div>
     </header>
 
@@ -178,6 +179,7 @@
         {/if}
       </p>
       <p class="ed-status" role="status" aria-live="polite">{ui.status}</p>
+      <span class="ed-source">dev · local files</span>
       <button
         type="button"
         class="btn-ghost"
@@ -262,20 +264,22 @@
     min-width: 0;
   }
 
+  // [ Editor | mobile | undo | redo ], then the tabs and the page menu on full rows
   .ed-head {
     padding: 16px 16px 12px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    align-items: center;
+    gap: 12px 4px;
     border-bottom: 1px solid var(--line);
+
+    > .seg,
+    > .ed-bar {
+      grid-column: 1 / -1;
+    }
   }
 
-  // "Editor" + the source pill (h1 > small)
   .ed-brand {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
     margin: 0;
     font-family: var(--f-display);
     font-size: 22px;
@@ -284,10 +288,15 @@
     letter-spacing: -0.01em;
   }
 
+  // where saves go, in the footer before Save / Publish; cut with … when narrow
   .ed-source {
-    font-family: var(--f-mono);
+    justify-self: start;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 10px;
-    line-height: 1.5;
+    line-height: 16px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #b9f0c4;
@@ -302,18 +311,14 @@
     align-items: center;
   }
 
-  // pending line and status on their own rows, then [ empty | Save | Publish ]
+  // pending line and status on their own rows, then [ source | Save | Publish ]
   .ed-foot {
     border-top: 1px solid var(--line);
     padding: 12px 16px 16px;
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 8px;
-  }
-
-  .ed-foot > .btn-ghost {
-    grid-column: 2;
   }
 
   .ed-pending {
