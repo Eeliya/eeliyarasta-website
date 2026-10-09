@@ -145,12 +145,15 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
 
 ```jsonc
 {
-  "defaults": { "duration": 1.1, "ease": "expo.out", "trigger": "scroll", "start": "top 85%" },
   "presets": {
     "fade-up": {
       "type": "reveal",
       "from": { "autoAlpha": 0, "y": 40 },
       "to": { "autoAlpha": 1, "y": 0 },
+      "duration": 1.1,
+      "ease": "expo.out",
+      "trigger": "scroll",
+      "start": "top 85%",
     },
     "split-chars": {
       "type": "split",
@@ -180,7 +183,7 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
 for visitors who prefer reduced motion. Switch it in the editor's Settings tab.
 
 The final spec for an element is
-`defaults ← preset ← target overrides ← element overrides ← data-anim-options`. Element overrides
+`preset ← target overrides ← element overrides ← data-anim-options`. Element overrides
 (`elements`, keyed `"<page path>|<target>|<n>"`) are mostly written by the visual editor. With
 `"trigger": "scroll"`, reveals play once at `start`, or follow the scrollbar between `start` and
 `end` when `"scrub"` is `true` or a number (seconds of smoothing).
@@ -241,16 +244,15 @@ Motion tab lists the page's animated **Elements**; pick one and choose where its
 
 Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have an **Inherit /
 Custom** switch. Inherit shows the field's control with the inherited value, dimmed and
-inert (no clicks, no focus), and where it comes from (`from fade-up`, `from all`, `from
-global`); it stores nothing. Custom stores the value at
+inert (no clicks, no focus); it stores nothing. Custom stores the value at
 the chosen scope, and switching back to Inherit removes it (one undo step). Everything else
 the animation does is read-only here.
 
 The **Animations library** (the Animations button at the top of the Motion tab, or the edit
 button next to an element's Animation) is the only place that defines what an animation
 does: pick an animation to edit `presets["fade-up"]`, every value including timing, and add
-or remove from/to properties. Badges show whether a value is the animation's own
-(**default**) or from `defaults` (**global**); reset removes the animation's own value. The
+or remove from/to properties. There is no global default layer: each animation carries every
+value it uses, so what you see in the library is what it does. The
 list shows how many elements on this page use each animation and which `data-anim` names
 use it on the site.
 
