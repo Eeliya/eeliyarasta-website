@@ -26,7 +26,7 @@ Requires Node 20.19+ (Vite 8).
 
 ```
 content/            ← all text, albums, projects, animation config (JSON)
-  pages/            ← one file per page (home, photography, people, places, projects, about, 404)
+  pages/            ← one file per page; its folders mirror the URLs (see "Pages and URLs")
   sources/          ← lists that grids pull from (people, places, projects): top level is an array
   settings/         ← site-wide settings (site.json, animations.json)
 media/              ← source photos (jpg), committed
@@ -34,10 +34,11 @@ scripts/
   images.mjs        ← media/ → public/media/*.webp sizes + .generated/media.json
   content.mjs       ← loads content/<folder>/*.json + media manifest (Node)
   vite-plugin-static-site.mjs  ← the "static site builder" (dev render + build prerender)
-  editor-server.mjs ← dev-only editor endpoints: load / save / status / publish (localhost only)
+  editor-server.mjs ← dev-only editor endpoints: load / save / status / publish / pages (localhost only)
+  check-links.mjs   ← npm run check:links: every internal link in dist/ points at a file
 src/
   site/             ← isomorphic templates (no Node APIs, run at build time AND in a browser)
-    routes.js       ← list of pages, derived from content
+    routes.js       ← list of pages, from the files in content/pages/
     render.js       ← renderRoute(route, content) → { head, body }
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
     templates/      ← layout, header/menu, footer, home, album, pages, partials
@@ -87,15 +88,17 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                               | what                                                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, nav labels, footer copy                                                                  |
-| `content/settings/animations.json` | **every animation** (see below)                                                                                                                              |
-| `content/pages/home.json`          | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
-| `content/pages/<page>.json`        | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text                                 |
-| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                         |
-| `content/sources/places.json`      | places, same shape                                                                                                                                           |
-| `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                         |
+| file                               | what                                                                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, nav labels, footer copy                                                                                |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                            |
+| `content/pages/home.json`          | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)               |
+| `content/pages/<page>.json`        | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text, `meta`: `title` / `description` for `<head>` |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                       |
+| `content/sources/places.json`      | places, same shape                                                                                                                                                         |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                                       |
+
+| `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
@@ -112,7 +115,7 @@ text, and settings under `config`:
 ```
 
 A grid fills itself from `content/sources/<source>.json` (a top-level array) and links each
-tile to `/<source>/<slug>/`. `config.layout` is `"staggered"` (default: offset columns) or `"even"`
+tile to the item's page (the `[slug].json` page that shows that source, e.g. `/people/<slug>/`). `config.layout` is `"staggered"` (default: offset columns) or `"even"`
 (every row lines up). The source picks the tile look: `places` shows landscape cards, any other
 list shows photo tiles (4 photos per item). A missing or non-array source logs a build warning and renders an
 empty grid.
@@ -123,6 +126,42 @@ Routes, menu, dropdowns, grids and sitemap update automatically.
 > Their photos are free Unsplash images (Unsplash License); photographer and source URL are
 > recorded per image in the JSON and shown as a credit in the album view. Replace them with
 > real shoots. The email `hello@eeliyarasta.com` is a placeholder too.
+
+### Pages and URLs
+
+The files in `content/pages/` are the site's pages, and their folders are its URLs:
+
+| file                              | URL                                                            |
+| --------------------------------- | -------------------------------------------------------------- |
+| `pages/home.json`                 | `/`                                                            |
+| `pages/404.json`                  | `404.html` (not in the sitemap)                                |
+| `pages/people.json`               | `/people/`: the index page of the `people/` folder next to it  |
+| `pages/people/whatever.json`      | `/people/whatever/`                                            |
+| `pages/people/whatever/deep.json` | `/people/whatever/deep/` (any depth)                           |
+| `pages/people/[slug].json`        | `/people/<slug>/` for **every item** of its source: a template |
+
+- **Index file:** a folder's own page is the file with the folder's name next to it
+  (`people.json` + `people/`), not an `index.json` inside it.
+- **Templates:** `[slug].json` says which list it shows, `{ "config": { "source": "people" } }`,
+  plus the labels its pages share (`"section": "People"`, the back link; `"next": "Next person"`).
+  An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
+  `noor-vermeer`). Items without one, with an invalid one or with a duplicate get no page and a
+  build warning (`[routes] ...`). A template page is an album (the person/place look):
+  `route.album` is the item, like before. A folder can have one `[slug].json`; there is none at
+  the root.
+- **Fixed beats template:** `pages/people/noor-vermeer.json` replaces the template's page for
+  that item (it is a normal page then).
+- **Views:** a page uses the view in its `view` field, else the built-in view with its name
+  (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else the plain
+  page view (its `crumb` / `title` / `intro` heading). A template uses `album`.
+- **Head:** the title is `meta.title`, else `title`, else the file name, plus `| <site name>`;
+  the description is `meta.description`, else the site's.
+- Links to an item (menu dropdowns, grids, next) come from the routes, so they follow a folder
+  rename. The menu itself is still `settings/site.json` + `templates/header.js` (a nav editor is
+  planned), so add a top-level page to it by hand.
+
+`npm run build` prints every route with its file. `npm run check:links` (after a build) checks
+that every internal `href` / `src` in `dist/` points at a file.
 
 ### Images
 
@@ -255,7 +294,17 @@ Shift + E** on any page of the dev site opens that page in the editor (and from 
 back to the page).
 
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
-dropdown, or click links in Browse mode. There's also a mobile (390 px) preview toggle.
+dropdown (grouped by folder; a `[slug]` template is one entry, `/people/[slug]`, with an item
+picker next to it for which person to show), or click links in Browse mode.
+
+**Pages window** (the sitemap button next to the page dropdown): the folders of
+`content/pages/` like the Source Explorer. Add a page (title -> URL name), **Turn on children**
+(creates its folder), add a `[slug]` page with a source, rename (moves the page and its
+folder), delete (asks first, also deletes what's inside). Names are slugs (a-z, 0-9, dashes);
+home and 404 can't be renamed or deleted. These write to disk right away through the dev server
+(`POST /__editor/pages`), and the dropdown and preview follow without a reload. Renaming or
+deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
+files. `&pages=/people/` in the URL reopens it on that folder. There's also a mobile (390 px) preview toggle.
 
 On the home page, every section box in the Content panel has ↑ / ↓ buttons that reorder
 `pages/home.json → sections` (one undo step each) and an On/Off switch. Grid sections also show a
@@ -322,7 +371,7 @@ for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for 
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
 in each page's `pages/<page>.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/pages/`, `content/sources/` and `content/settings/` (see
-`src/editor/config.js`); it never creates files.
+`src/editor/config.js`); only the Pages window creates or deletes files, and only page files.
 
 **Save and Publish**
 
