@@ -3,7 +3,7 @@
   Discard), and the saved changes that are not published yet.
 -->
 <script>
-  import PubFile from './PubFile.svelte';
+  import PubFiles from './PubFiles.svelte';
   import { ui } from './ui.svelte.js';
   import { labelFor } from './content-groups.js';
   import { compile } from '../lib/pointer.js';
@@ -122,11 +122,7 @@
 
   <section class="grp">
     <h4 class="grp__title">Saved, not published{pubFiles.length || ahead ? '' : ': none'}</h4>
-    {#if pubFiles.length}
-      <ul class="files">
-        {#each pubFiles as f (f.path)}<PubFile {f} />{/each}
-      </ul>
-    {/if}
+    {#if pubFiles.length}<PubFiles files={pubFiles} />{/if}
     {#if ahead}
       <p class="hint">
         {plural(ahead, 'commit')} on {ui.pub.branch} not pushed yet; Publish pushes {ahead === 1

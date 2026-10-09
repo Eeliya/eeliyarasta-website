@@ -6,7 +6,7 @@
 -->
 <script>
   import { tick } from 'svelte';
-  import PubFile from './PubFile.svelte';
+  import PubFiles from './PubFiles.svelte';
   import { ui } from './ui.svelte.js';
   import { toast } from './toasts.svelte.js';
   import * as source from '../source.js';
@@ -28,13 +28,28 @@
   let result = $state(null); // { ok: response } or { error }
 
   const branch = $derived(pub?.branch || 'main');
-  // The files the commit will have.
+  // The files the commit will have: their names, and the list shown (saved files first,
+  // then the files with only unsaved edits).
   const names = $derived(
     [...new Set([...(pub?.files || []).map((f) => f.name), ...(saveFirst ? dirty : [])])].sort(),
   );
-  const unsavedOnly = $derived(
-    saveFirst ? dirty.filter((f) => !pub.files.some((p) => p.name === f)) : [],
-  );
+  const listed = $derived([
+    ...(pub?.files || []).map((f) => ({
+      ...f,
+      note:
+        saveFirst && dirty.includes(f.name)
+          ? ` + ${plural(changes(f.name), 'unsaved change')}`
+          : '',
+    })),
+    ...(saveFirst ? dirty : [])
+      .filter((name) => !pub.files.some((p) => p.name === name))
+      .map((name) => ({
+        path: `content/${name}`,
+        status: 'modified',
+        changes: changes(name),
+        note: ' · unsaved, saved first',
+      })),
+  ]);
   const published = $derived(!!result?.ok);
 
   const defaultMessage = (files) =>
@@ -126,24 +141,7 @@
           Save my {plural(edits, 'unsaved edit')} first and include {edits === 1 ? 'it' : 'them'}
         </label>
       {/if}
-      {#if names.length}
-        <ul class="files">
-          {#each pub.files as f (f.path)}
-            <PubFile
-              {f}
-              note={saveFirst && dirty.includes(f.name)
-                ? ` + ${plural(changes(f.name), 'unsaved change')}`
-                : ''}
-            />
-          {/each}
-          {#each unsavedOnly as name (name)}
-            <PubFile
-              f={{ path: `content/${name}`, status: 'modified', changes: changes(name) }}
-              note=" · unsaved, saved first"
-            />
-          {/each}
-        </ul>
-      {/if}
+      {#if names.length}<PubFiles files={listed} />{/if}
       {#if pub.ahead}
         <p class="hint">
           Also pushes {plural(pub.ahead, 'earlier commit')} not on {pub.upstream ||
