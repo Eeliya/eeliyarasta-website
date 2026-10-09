@@ -94,7 +94,7 @@ const GRID_LOOKS = { places: placeCards };
 const sectionOn = (section) => section?.config?.enabled !== false;
 
 /**
- * Home sections, rendered in the order of home.json "sections". Each item has a `type`,
+ * Home sections, rendered in the order of pages/index.json "sections". Each item has a `type`,
  * its content fields, and settings under `config` (enabled, source, layout).
  */
 const SECTIONS = {

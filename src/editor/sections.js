@@ -1,6 +1,6 @@
 /**
  * Home sections in the preview: keeps the rendered page in step with the ordered
- * pages/home.json "sections" list while editing, without a reload.
+ * pages/index.json "sections" list while editing, without a reload.
  *
  * Every rendered section carries data-section="s<index>" and data-section-kind
  * ("intro", "projects", "grid:<source>"). On each change the preview's section elements

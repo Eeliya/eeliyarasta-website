@@ -19,7 +19,7 @@ export const SITE_SETTINGS = [
 /** Lists in content/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 
-/** "pages/home.json#/hero/title" -> { file: 'pages/home.json', ptr: '/hero/title' } */
+/** "pages/index.json#/hero/title" -> { file: 'pages/index.json', ptr: '/hero/title' } */
 export function splitEdit(edit) {
   const i = edit.indexOf('#');
   return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
@@ -53,7 +53,7 @@ function fieldLabel(store, f) {
   return labelFor(store, f).split(' / ').pop();
 }
 
-/** Home sections (pages/home.json "sections", an ordered list). */
+/** Home sections (pages/index.json "sections", an ordered list). */
 export function homeSections(store) {
   const list = store.current[HOME]?.sections;
   return Array.isArray(list) ? list : [];
@@ -62,7 +62,7 @@ export function homeSections(store) {
 const HERO = { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
 const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
 const PAGE_HEAD = { id: 'page-head', title: 'Page heading' };
-/** Page-file fields shown in the page heading (pages/<id>.json). */
+/** Page-file fields shown in the page heading (pages/<id>/index.json). */
 const HEADING = ['crumb', 'title', 'intro', 'cta'];
 
 /** Group for home section `i`: id "s<i>", titled by its label, with its on/off toggle. */

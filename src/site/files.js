@@ -2,20 +2,30 @@
  * Content files, by kind. Each kind has its own folder under content/, so a name
  * never means two things (a page called "site" and the site settings can coexist):
  *
- *   content/pages/<id>.json     one file per page: heading, copy, curtain text and transition.
- *                               Folders mirror URLs (pages/people/[slug].json is a template
- *                               page for every item of a source, see src/site/routes.js)
+ *   content/pages/              one folder per page, its URL: the page's file is index.json in
+ *                               it (pages/index.json is home, pages/people/index.json is
+ *                               /people/), plus maybe [slug].json, a template page for every
+ *                               item of a source (see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/settings/<id>.json  site-wide settings (site.json, animations.json), and photos.json:
  *                               the sizes of photos uploaded to R2, written by the upload (not
  *                               edited in the editor, committed by Publish)
  *
  * Paths are relative to content/ and are also the keys the editor uses
- * (data-edit="pages/home.json#/hero/title").
+ * (data-edit="pages/index.json#/hero/title").
  */
 export const FOLDERS = ['pages', 'sources', 'settings'];
 
-export const pageFile = (id) => `pages/${id}.json`;
+/**
+ * The file of a page by id: "home" -> "pages/index.json", "people" -> "pages/people/index.json",
+ * "people/[slug]" -> "pages/people/[slug].json".
+ */
+export const pageFile = (id) =>
+  id === 'home'
+    ? 'pages/index.json'
+    : id.endsWith('[slug]')
+      ? `pages/${id}.json`
+      : `pages/${id}/index.json`;
 export const sourceFile = (id) => `sources/${id}.json`;
 export const settingsFile = (id) => `settings/${id}.json`;
 
@@ -24,14 +34,23 @@ export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
 export const PHOTOS = settingsFile('photos');
 
-/** "pages/about.json" -> "about", "pages/people/[slug].json" -> "people/[slug]" (null outside content/pages/). */
-export const pageIdOf = (file) => /^pages\/(.+)\.json$/.exec(file || '')?.[1] ?? null;
+/**
+ * A page file's id (pageFile backwards): "pages/index.json" -> "home",
+ * "pages/people/index.json" -> "people", "pages/people/[slug].json" -> "people/[slug]".
+ * Null for anything else.
+ */
+export function pageIdOf(file) {
+  if (file === 'pages/index.json') return 'home';
+  const m = /^pages\/(.+)\/(index|\[slug\])\.json$/.exec(file || '');
+  if (!m) return null;
+  return m[2] === 'index' ? m[1] : `${m[1]}/[slug]`;
+}
 
 /** A URL segment and file name: lowercase letters, digits and dashes ("noor-vermeer"). */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = (s) => SLUG.test(String(s ?? ''));
 
-/** The file name of a template page: pages/people/[slug].json. */
+/** The name of a template page (pages/people/[slug].json) and the last part of its id. */
 export const TEMPLATE = '[slug]';
 
 /** "sources/people.json" -> "people" (null for files outside content/sources/). */
@@ -39,21 +58,22 @@ export const sourceIdOf = (file) => /^sources\/([^/]+)\.json$/.exec(file || '')?
 
 const NAME = '[a-z0-9][a-z0-9_-]*';
 const CONTENT_FILE = new RegExp(
-  `^(?:(?:${FOLDERS.join('|')})/${NAME}|pages/(?:${NAME}/)+(?:${NAME}|\\[slug\\]))\\.json$`,
+  `^(?:(?:sources|settings)/${NAME}|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
   'i',
 );
 
 /**
- * Editable content file name: <folder>/<name>.json, and under pages/ also nested folders
- * and [slug].json templates (pages/people/[slug].json). Nothing else.
+ * Editable content file name: sources/<name>.json, settings/<name>.json, and the page files:
+ * pages/index.json, pages/<folders>/index.json and pages/<folders>/[slug].json. Nothing else.
  */
 export const isContentFile = (file) => CONTENT_FILE.test(file || '');
 
-/** File name without its folder, for compact labels: "pages/home.json" -> "home.json". */
-export const baseName = (file) => String(file || '').replace(/^.*\//, '');
+/** Name without the kind folder, for compact labels: "pages/people/index.json" -> "people/index.json". */
+export const baseName = (file) => String(file || '').replace(/^(pages|sources|settings)\//, '');
 
 /**
- * Render context from content files keyed by path ({ "pages/home.json": data, ... }).
+ * Render context from content files keyed by path ({ "pages/index.json": data, ... }).
+ * pages is keyed by page id ({ home, people, "people/[slug]", ... }).
  * Sources that are not arrays stay as-is in `sources` (grids warn and render empty).
  */
 export function contentFromFiles(files) {
@@ -68,7 +88,11 @@ export function contentFromFiles(files) {
   return {
     site: files[SITE],
     home: files[HOME],
-    pages: byFolder('pages'),
+    pages: Object.fromEntries(
+      Object.entries(files)
+        .map(([f, data]) => [pageIdOf(f), data])
+        .filter(([id]) => id),
+    ),
     sources,
     people: list('people'),
     places: list('places'),

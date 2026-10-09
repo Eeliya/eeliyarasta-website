@@ -118,7 +118,7 @@
         {progress < 1 ? `Uploading ${Math.round(progress * 100)}%` : 'Resizing…'}
       </span>
     {:else if file}
-      <!-- folder included: pages/people.json and sources/people.json are different files -->
+      <!-- folder included: pages/people/index.json and sources/people.json are different files -->
       <span class="tf__file" title="content/{file}">{file}</span>
     {/if}
   </span>

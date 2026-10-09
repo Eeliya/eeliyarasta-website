@@ -2,14 +2,15 @@
  * Every page of the site, derived from content. The prerender step writes one
  * static HTML file per route; the client router fetches those same files.
  *
- * Routes come from the files in content/pages/, whose folders mirror the URLs:
+ * Routes come from content/pages/: every page is a folder, its URL, with the page's own
+ * file index.json inside (page ids: "home", "people", "people/whatever", "people/[slug]"):
  *
- *   pages/home.json             /                 (pages/404.json is 404.html)
- *   pages/people.json           /people/          the index page of the people/ folder
- *   pages/people/[slug].json    /people/<slug>/   a template: one page per item of its source
- *                                                 ({ "config": { "source": "people" } })
- *   pages/people/whatever.json  /people/whatever/ a fixed page; when an item has the same
- *                                                 slug, this file wins over the template
+ *   pages/index.json                   /                  home (pages/404/index.json is 404.html)
+ *   pages/people/index.json            /people/
+ *   pages/people/[slug].json           /people/<slug>/    a template: one page per item of its
+ *                                                         source ({ "config": { "source": "people" } })
+ *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
+ *                                                         slug, this one wins over the template
  *
  * Folders nest to any depth. A page uses the view named in its "view" field, else the
  * built-in view of the same name (home, photography, people, places, projects, about,
@@ -54,7 +55,7 @@ const titleCase = (s) =>
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
-/** Page ids in tree order: home first, 404 last, folders after their index page, templates last. */
+/** Page ids in tree order: home first, 404 last, a page before the pages in its folder, templates last. */
 const byTree = (a, b) => {
   const rank = (id) => (id === 'home' ? 0 : id === '404' ? 2 : 1);
   if (rank(a) !== rank(b)) return rank(a) - rank(b);
@@ -80,7 +81,7 @@ export function buildRoutes(content) {
   const exists = new Set(ids);
   const routes = [];
 
-  // Curtain text and transition of a page live in its own file, content/pages/<id>.json.
+  // Curtain text and transition of a page live in its own file, content/pages/<id>/index.json.
   const pageCurtain = (id, title) => ({
     curtain: curtainOf(pages[id]?.curtain, title),
     curtainEdit: curtainEditOf(pageFile(id), ['curtain']),

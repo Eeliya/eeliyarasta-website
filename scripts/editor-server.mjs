@@ -13,8 +13,7 @@
  *                             (scripts/r2.mjs), answers { key, photo }
  *   POST /__editor/publish  → { message }: git add + commit ONLY the changed content files in
  *                             one commit, then git push origin <current branch>
- *   GET  /__editor/pages    → { folders }: the folders under content/pages/, empty ones too
- *   POST /__editor/pages    → { op, ... }: add, rename or delete pages and folders (pagesOp)
+ *   POST /__editor/pages    → { op, ... }: add, rename or delete pages (pagesOp)
  *
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
@@ -28,14 +27,21 @@ import { execFile } from 'node:child_process';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
-import { PHOTOS, TEMPLATE, isContentFile, isSlug, sourceFile } from '../src/site/files.js';
+import {
+  PHOTOS,
+  TEMPLATE,
+  isContentFile,
+  isSlug,
+  pageFile,
+  sourceFile,
+} from '../src/site/files.js';
 import { NAMED_VIEWS } from '../src/site/routes.js';
 import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
 import { walkJson } from './content.mjs';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
-/** Editable content files that exist on disk, e.g. "pages/home.json" (paths relative to content/). */
+/** Editable content files that exist on disk, e.g. "pages/index.json" (paths relative to content/). */
 export function editableFiles(root) {
   const files = [];
   for (const folder of editorConfig.folders) {
@@ -52,7 +58,7 @@ export function editableFiles(root) {
 const PAGE_NAME = /^[a-z0-9][a-z0-9_-]*$/i;
 // Root names that are not pages: the editor, Vite's assets, the photos, and the two specials.
 const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
-const PROTECTED = new Set(['home', '404']); // no rename, delete or children
+const PROTECTED = new Set(['home', '404']); // no rename or delete
 
 const titleCase = (s) =>
   String(s)
@@ -60,127 +66,101 @@ const titleCase = (s) =>
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
-/** The folders under content/pages/ ("people", "people/whatever"), empty ones included. */
-export function pageFolders(root) {
-  const out = [];
-  const walk = (dir, prefix) => {
-    if (!fs.existsSync(dir)) return;
-    for (const e of fs.readdirSync(dir, { withFileTypes: true }))
-      if (e.isDirectory() && PAGE_NAME.test(e.name)) {
-        out.push(prefix + e.name);
-        walk(path.join(dir, e.name), `${prefix}${e.name}/`);
-      }
-  };
-  walk(path.join(root, CONTENT_DIR, 'pages'), '');
-  return out.sort();
-}
-
 /**
- * The Pages window (src/editor/svelte/PagesModal.svelte): page files and folders under
- * content/pages/, whose folders are the site's URLs (src/site/routes.js). Ids are paths
- * without .json ("people/whatever"); folder '' is content/pages/ itself.
+ * The Pages window (src/editor/svelte/PagesModal.svelte): the pages in content/pages/. Every
+ * page is a folder, its URL, with its own file index.json inside; pages/index.json is home,
+ * whose folder is content/pages/ itself. Ids as in src/site/files.js: "home", "people",
+ * "people/whatever", "people/[slug]". `parent` is the id of the page whose folder it is
+ * about, '' for the root (the pages next to home's file).
  *
- *   add       { folder, name, title? }  pages/<folder>/<name>.json: a heading to fill in
- *   children  { id }                    the folder pages/<id>/, for pages below /<id>/
- *   template  { folder, source }        pages/<folder>/[slug].json: a page per source item
- *   rename    { id, name }              the page and its folder (same parent)
- *   delete    { id }                    the page and its folder, with everything in it
+ *   add       { parent, name, title? }  the folder <parent>/<name>/ with its index.json
+ *   template  { parent, source }        <parent>/[slug].json: a page per item of the source
+ *   rename    { id, name }              the page's folder, with everything in it
+ *   delete    { id }                    the page's folder, with everything in it ([slug]: its file)
  *
- * Names must be slugs (a-z, 0-9, dashes). Returns { status, body }; body.created and
- * body.removed list the content files ("pages/x.json") that appeared and went.
+ * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted, and there
+ * is no [slug] at the root. Returns { status, body }; body.created and body.removed list the
+ * content files ("pages/x/index.json") that appeared and went.
  */
 export function pagesOp(
   root,
-  { op, id, folder = '', name, title, source } = {},
+  { op, id, parent = '', name, title, source } = {},
   onWrite = () => {},
 ) {
-  const dir = path.join(root, CONTENT_DIR, 'pages');
-  const fileOf = (pid) => path.join(dir, ...pid.split('/')) + '.json';
-  const dirOf = (pid) => path.join(dir, ...pid.split('/'));
-  const rel = (pid) => `pages/${pid}.json`;
+  const content = path.join(root, CONTENT_DIR);
+  const abs = (file) => path.join(content, ...file.split('/'));
+  const dirOf = (pid) => path.join(content, 'pages', ...pid.split('/'));
   const fail = (status, error) => ({ status, body: { error } });
-  const filesUnder = (pid) =>
-    walkJson(dirOf(pid))
-      .map((f) => `${pid}/${f.slice(0, -'.json'.length)}`)
-      .filter((p) => isContentFile(rel(p)));
-  const validPath = (p) => typeof p === 'string' && p.split('/').every((s) => PAGE_NAME.test(s));
-  const isPage = (pid) =>
-    typeof pid === 'string' && isContentFile(rel(pid)) && fs.existsSync(fileOf(pid));
-  const parentOf = (pid) => (pid.includes('/') ? pid.slice(0, pid.lastIndexOf('/')) : '');
-  const join = (f, n) => (f ? `${f}/${n}` : n);
   const done = (body) => ({ status: 200, body: { ok: true, created: [], removed: [], ...body } });
-  const checkName = (f, n) => {
+  const isPage = (pid) =>
+    typeof pid === 'string' && isContentFile(pageFile(pid)) && fs.existsSync(abs(pageFile(pid)));
+  const filesIn = (pid) =>
+    walkJson(dirOf(pid))
+      .map((f) => `pages/${pid}/${f}`)
+      .filter(isContentFile);
+  const parentOf = (pid) => (pid.includes('/') ? pid.slice(0, pid.lastIndexOf('/')) : '');
+  const join = (p, n) => (p ? `${p}/${n}` : n);
+  const checkName = (p, n) => {
     if (!isSlug(n)) return `"${n ?? ''}" is not a valid name: use a-z, 0-9 and dashes`;
-    if (!f && RESERVED.has(n)) return `"${n}" is reserved`;
-    if (fs.existsSync(fileOf(join(f, n))) || fs.existsSync(dirOf(join(f, n))))
-      return `/${join(f, n)}/ already exists`;
+    if (!p && RESERVED.has(n)) return `"${n}" is reserved`;
+    if (fs.existsSync(dirOf(join(p, n)))) return `/${join(p, n)}/ already exists`;
     return null;
   };
-  const write = (pid, data) => {
-    fs.mkdirSync(path.dirname(fileOf(pid)), { recursive: true });
-    fs.writeFileSync(fileOf(pid), formatJSON(data));
+  const write = (file, data) => {
+    fs.mkdirSync(path.dirname(abs(file)), { recursive: true });
+    fs.writeFileSync(abs(file), formatJSON(data));
   };
 
   if (op === 'add' || op === 'template') {
-    if (folder !== '' && (!validPath(folder) || !fs.existsSync(dirOf(folder))))
-      return fail(400, `No page folder "${folder}"`);
+    if (parent !== '' && (PROTECTED.has(parent) || parent.endsWith(TEMPLATE) || !isPage(parent)))
+      return fail(400, `No page "${parent}" to add to`);
     if (op === 'add') {
-      const bad = checkName(folder, name);
+      const bad = checkName(parent, name);
       if (bad) return fail(400, bad);
       const t = String(title || '').trim() || titleCase(name);
+      const file = pageFile(join(parent, name));
       onWrite();
-      write(join(folder, name), { crumb: t, title: t, intro: '', curtain: t });
-      return done({ id: join(folder, name), created: [rel(join(folder, name))] });
+      write(file, { crumb: t, title: t, intro: '', curtain: t });
+      return done({ id: join(parent, name), created: [file] });
     }
-    if (!folder) return fail(400, 'A [slug] page needs a folder: turn on children first');
-    const pid = join(folder, TEMPLATE);
-    if (fs.existsSync(fileOf(pid))) return fail(400, `/${folder}/ already has a [slug] page`);
-    const list = isSlug(source) && path.join(root, CONTENT_DIR, sourceFile(source));
-    if (!list || !fs.existsSync(list)) return fail(400, `No source "${source ?? ''}"`);
+    if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
+    const pid = join(parent, TEMPLATE);
+    if (isPage(pid)) return fail(400, `/${parent}/ already has a [slug] page`);
+    if (!isSlug(source) || !fs.existsSync(abs(sourceFile(source))))
+      return fail(400, `No source "${source ?? ''}"`);
     onWrite();
-    write(pid, { config: { source }, section: titleCase(source), next: 'Next' });
-    return done({ id: pid, created: [rel(pid)] });
+    write(pageFile(pid), { config: { source }, section: titleCase(source), next: 'Next' });
+    return done({ id: pid, created: [pageFile(pid)] });
   }
 
   if (!isPage(id)) return fail(404, `No page "${id ?? ''}"`);
+  if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed or deleted`);
   const template = id.endsWith(TEMPLATE);
-  if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed, deleted or get children`);
-
-  if (op === 'children') {
-    if (template) return fail(400, 'A [slug] page has no children');
-    if (fs.existsSync(dirOf(id))) return done({ id });
-    onWrite();
-    fs.mkdirSync(dirOf(id));
-    return done({ id });
-  }
 
   if (op === 'rename') {
     if (template) return fail(400, 'A [slug] page is always called [slug]');
-    const parent = parentOf(id);
-    const bad = checkName(parent, name);
+    const bad = checkName(parentOf(id), name);
     if (bad) return fail(400, bad);
-    const to = join(parent, name);
-    const data = JSON.parse(fs.readFileSync(fileOf(id), 'utf8'));
-    // A page named after a built-in view (people, about, ...) keeps that view.
-    if (NAMED_VIEWS[id] && !data.view) data.view = NAMED_VIEWS[id];
-    const inside = filesUnder(id);
+    const to = join(parentOf(id), name);
+    const inside = filesIn(id);
     onWrite();
-    write(to, data);
-    fs.rmSync(fileOf(id));
-    if (fs.existsSync(dirOf(id))) fs.renameSync(dirOf(id), dirOf(to));
+    fs.renameSync(dirOf(id), dirOf(to));
+    // A page named after a built-in view (people, about, ...) keeps that view.
+    const data = JSON.parse(fs.readFileSync(abs(pageFile(to)), 'utf8'));
+    if (NAMED_VIEWS[id] && !data.view) write(pageFile(to), { ...data, view: NAMED_VIEWS[id] });
     return done({
       id: to,
-      created: [rel(to), ...inside.map((p) => rel(to + p.slice(id.length)))],
-      removed: [rel(id), ...inside.map(rel)],
+      created: inside.map((f) => `pages/${to}/${f.slice(`pages/${id}/`.length)}`),
+      removed: inside,
     });
   }
 
   if (op === 'delete') {
-    const inside = fs.existsSync(dirOf(id)) ? filesUnder(id) : [];
+    const removed = template ? [pageFile(id)] : filesIn(id);
     onWrite();
-    fs.rmSync(fileOf(id));
-    if (fs.existsSync(dirOf(id)) && !template) fs.rmSync(dirOf(id), { recursive: true });
-    return done({ id, removed: [rel(id), ...inside.map(rel)] });
+    if (template) fs.rmSync(abs(pageFile(id)));
+    else fs.rmSync(dirOf(id), { recursive: true });
+    return done({ id, removed });
   }
   return fail(400, `Unknown pages op "${op ?? ''}"`);
 }
@@ -565,8 +545,6 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
       }
 
       if (route === 'GET /status') return sendJSON(res, 200, await contentStatus(root));
-
-      if (route === 'GET /pages') return sendJSON(res, 200, { folders: pageFolders(root) });
 
       if (route === 'POST /pages') {
         const op = await readJSON(req);

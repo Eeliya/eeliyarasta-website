@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildRoutes } from '../src/site/routes.js';
-import { contentFromFiles, isContentFile, pageIdOf } from '../src/site/files.js';
+import { contentFromFiles, isContentFile, pageFile, pageIdOf } from '../src/site/files.js';
 import { itemHref, slugify } from '../src/site/helpers.js';
 
 const site = { name: 'Site', title: 'Site home', description: 'd' };
@@ -10,12 +10,12 @@ const paths = (c) => buildRoutes(c).routes.map((r) => r.path);
 
 test('folders mirror URLs, in tree order', () => {
   const c = content({
-    'pages/home.json': {},
-    'pages/404.json': {},
-    'pages/people.json': { title: 'People' },
-    'pages/people/whatever.json': {},
-    'pages/people/whatever/deep.json': {},
-    'pages/about.json': {},
+    'pages/index.json': {},
+    'pages/404/index.json': {},
+    'pages/people/index.json': { title: 'People' },
+    'pages/people/whatever/index.json': {},
+    'pages/people/whatever/deep/index.json': {},
+    'pages/about/index.json': {},
   });
   assert.deepEqual(paths(c), [
     '/',
@@ -34,7 +34,7 @@ test('folders mirror URLs, in tree order', () => {
 
 test('[slug] template: a page per item, slug field or slugified name', () => {
   const c = content({
-    'pages/people.json': {},
+    'pages/people/index.json': {},
     'pages/people/[slug].json': { config: { source: 'people' }, section: 'People' },
     'sources/people.json': [{ slug: 'noor', name: 'Noor' }, { name: 'Daan Ökafor' }],
   });
@@ -55,7 +55,7 @@ test('[slug] template: a page per item, slug field or slugified name', () => {
 test('a fixed page beats the template for the same slug', () => {
   const c = content({
     'pages/people/[slug].json': { config: { source: 'people' } },
-    'pages/people/noor.json': { title: 'Mine' },
+    'pages/people/noor/index.json': { title: 'Mine' },
     'sources/people.json': [
       { slug: 'noor', name: 'Noor' },
       { slug: 'daan', name: 'Daan' },
@@ -92,10 +92,16 @@ test('missing, invalid and duplicate slugs warn and get no page', () => {
 
 test('content file names', () => {
   assert.ok(isContentFile('pages/people/[slug].json'));
-  assert.ok(isContentFile('pages/a/b/c.json'));
+  assert.ok(isContentFile('pages/a/b/index.json'));
+  assert.ok(!isContentFile('pages/a/b/c.json')); // a page is a folder with index.json
+  assert.ok(!isContentFile('pages/about.json'));
   assert.ok(!isContentFile('pages/[slug].json'));
   assert.ok(!isContentFile('sources/a/b.json'));
   assert.ok(!isContentFile('pages/a/../b.json'));
   assert.equal(pageIdOf('pages/people/[slug].json'), 'people/[slug]');
+  assert.equal(pageIdOf('pages/index.json'), 'home');
+  assert.equal(pageIdOf('pages/people/whatever/index.json'), 'people/whatever');
+  for (const id of ['home', 'people', 'people/[slug]', 'a/b'])
+    assert.equal(pageIdOf(pageFile(id)), id);
   assert.equal(slugify('  Kasteel de Haar! '), 'kasteel-de-haar');
 });

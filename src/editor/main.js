@@ -33,7 +33,7 @@ import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides, pathOfId } from '../site/routes.js';
-import { ANIMATIONS, HOME, TEMPLATE, contentFromFiles, pageIdOf } from '../site/files.js';
+import { ANIMATIONS, HOME, TEMPLATE, contentFromFiles, pageFile, pageIdOf } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -98,7 +98,7 @@ function pageEntries(routes) {
   }
   // a template whose source has no items yet has no pages, but is still a page to pick
   for (const id of ids)
-    if (id.endsWith(TEMPLATE)) template(id, store.current[`pages/${id}.json`]?.section);
+    if (id.endsWith(TEMPLATE)) template(id, store.current[pageFile(id)]?.section);
   return entries;
 }
 
@@ -142,7 +142,7 @@ function pickTarget(item, path) {
 async function pagesOp(body) {
   const touched = body.id
     ? Object.keys(store.current).filter(
-        (f) => f === `pages/${body.id}.json` || f.startsWith(`pages/${body.id}/`),
+        (f) => f === pageFile(body.id) || f.startsWith(`pages/${body.id}/`),
       )
     : [];
   const dirty = store.dirtyFiles().filter((f) => touched.includes(f));

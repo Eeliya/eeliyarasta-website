@@ -27,7 +27,7 @@ export function createLive(store) {
       version;
       return copy(store.base[file]);
     },
-    /** One edited value, e.g. get('pages/home.json', '/hero/title'). Don't change it in place. */
+    /** One edited value, e.g. get('pages/index.json', '/hero/title'). Don't change it in place. */
     get(file, ptr) {
       version;
       return store.get(file, ptr);

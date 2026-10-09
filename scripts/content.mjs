@@ -21,7 +21,7 @@ export function walkJson(dir) {
   return out.sort();
 }
 
-/** Every content file as { "pages/home.json": data, "pages/people/[slug].json": data, ... }. */
+/** Every content file as { "pages/index.json": data, "pages/people/[slug].json": data, ... }. */
 export function readContentDir(root) {
   const dir = path.join(root, 'content');
   const files = {};

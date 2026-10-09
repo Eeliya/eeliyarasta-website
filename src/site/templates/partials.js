@@ -95,7 +95,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
     </div>`;
 };
 
-/** Page heading used by index pages; copy comes from the page's own file, content/pages/<id>.json. */
+/** Page heading used by index pages; copy comes from the page's own file, content/pages/<id>/index.json. */
 export const pageHead = (ctx, id, { count, center = false, after = '' } = {}) => {
   const { crumb, title, intro } = ctx.pages[id];
   const at = (field, type) => ed(pageFile(id), [field], type);

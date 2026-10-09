@@ -110,7 +110,7 @@ export function setCurtainMode(store, page, mode) {
 /**
  * The curtain edits on the store. Every write goes through here, so the timeline and the
  * number fields follow the same rules. file + base: the curtain being edited, the global one
- * by default or a page's own ("pages/home.json", "/transition").
+ * by default or a page's own ("pages/index.json", "/transition").
  */
 export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN) {
   const TOTAL_PTR = base + '/total';

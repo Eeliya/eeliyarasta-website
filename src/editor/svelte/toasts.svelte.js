@@ -1,7 +1,7 @@
 /**
  * Toasts: short messages at the bottom left (Toasts.svelte shows them).
  *   toast('Save failed: …', { kind: 'error', timeout: 0 })
- *   toast('Saved', { kind: 'ok', files: ['pages/home.json'], note: '(draft, not published)' })
+ *   toast('Saved', { kind: 'ok', files: ['pages/index.json'], note: '(draft, not published)' })
  * kind: 'info' | 'ok' | 'error'. timeout: ms until it goes away, 0 = stays until dismissed.
  * files are shown as content/<file>; link: { href, label } opens in a new tab.
  */
