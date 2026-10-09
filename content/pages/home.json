@@ -77,12 +77,33 @@
     ],
     "enabled": true
   },
-  "intro": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
-  "sections": {
-    "people": { "label": "People", "title": "Models I've worked with", "cta": "All people", "enabled": true },
-    "places": { "label": "Places", "title": "Buildings, streets & castles", "cta": "All places", "enabled": true },
-    "projects": { "label": "Projects", "title": "Things I build", "cta": "All projects", "enabled": true },
-    "intro": { "enabled": true }
-  },
+  "sections": [
+    {
+      "type": "intro",
+      "text": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
+      "config": { "enabled": true }
+    },
+    {
+      "type": "grid",
+      "label": "People",
+      "title": "Models I've worked with",
+      "cta": "All people",
+      "config": { "enabled": true, "source": "people", "layout": "staggered" }
+    },
+    {
+      "type": "grid",
+      "label": "Places",
+      "title": "Buildings, streets & castles",
+      "cta": "All places",
+      "config": { "enabled": true, "source": "places", "layout": "staggered" }
+    },
+    {
+      "type": "projects",
+      "label": "Projects",
+      "title": "Things I build",
+      "cta": "All projects",
+      "config": { "enabled": true }
+    }
+  ],
   "curtain": "Eeliya Rasta"
 }

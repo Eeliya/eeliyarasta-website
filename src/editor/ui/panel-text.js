@@ -27,6 +27,31 @@ const TITLE_CASE = (s) =>
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+/** Home sections (pages/home.json "sections", an ordered list). */
+const homeSections = (store) => {
+  const list = store.current[HOME]?.sections;
+  return Array.isArray(list) ? list : [];
+};
+
+/** The source list a home section shows (grid: config.source; projects: projects). */
+const sourceOfSection = (section) =>
+  section?.type === 'grid'
+    ? section.config?.source || 'people'
+    : section?.type === 'projects'
+      ? 'projects'
+      : null;
+
+/** Panel group for home section `i`: id "s<i>", titled by its label, with its on/off toggle. */
+function sectionGroup(store, i) {
+  const section = homeSections(store)[i];
+  return {
+    id: `s${i}`,
+    index: i,
+    title: section?.label || TITLE_CASE(section?.type || `Section ${i + 1}`),
+    toggle: { file: HOME, ptr: `/sections/${i}/config/enabled` },
+  };
+}
+
 /**
  * Which collapsible group a field belongs to.
  * Returns { id, title, toggle? } where toggle is the enabled flag pointer if any.
@@ -36,19 +61,8 @@ function groupFor(store, { file, ptr }, page) {
   if (file === HOME) {
     if (parts[0] === 'hero')
       return { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
-    if (parts[0] === 'intro')
-      return {
-        id: 'intro',
-        title: 'Intro',
-        toggle: { file: HOME, ptr: '/sections/intro/enabled' },
-      };
-    if (parts[0] === 'sections' && parts[1] && parts[1] !== 'intro') {
-      return {
-        id: parts[1],
-        title: TITLE_CASE(parts[1]),
-        toggle: { file: HOME, ptr: `/sections/${parts[1]}/enabled` },
-      };
-    }
+    if (parts[0] === 'sections' && /^\d+$/.test(parts[1] || ''))
+      return sectionGroup(store, Number(parts[1]));
     if (parts[0] === 'curtain') return { id: 'transition', title: 'Page transition' };
   }
   if (file === SITE) {
@@ -61,13 +75,9 @@ function groupFor(store, { file, ptr }, page) {
   }
   if (isSource(file) && /^\d+$/.test(parts[0])) {
     if (page === 'home') {
-      const id = sourceIdOf(file);
-      if (['people', 'places', 'projects'].includes(id))
-        return {
-          id,
-          title: TITLE_CASE(id),
-          toggle: { file: HOME, ptr: `/sections/${id}/enabled` },
-        };
+      // List items shown on the home page belong to the (first) section that shows that list.
+      const i = homeSections(store).findIndex((s) => sourceOfSection(s) === sourceIdOf(file));
+      if (i >= 0) return sectionGroup(store, i);
     }
     const item = store.current[file]?.[parts[0]];
     const name = item?.name || item?.title || `#${Number(parts[0]) + 1}`;
@@ -124,17 +134,10 @@ function componentFields(id) {
   return [];
 }
 
-/** Home section toggles, even when a section has no visible text fields yet. */
-const HOME_TOGGLES = [
+/** Home groups with an on/off toggle (hero + every section), even without text fields. */
+const homeToggles = (store) => [
   { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } },
-  { id: 'intro', title: 'Intro', toggle: { file: HOME, ptr: '/sections/intro/enabled' } },
-  { id: 'people', title: 'People', toggle: { file: HOME, ptr: '/sections/people/enabled' } },
-  { id: 'places', title: 'Places', toggle: { file: HOME, ptr: '/sections/places/enabled' } },
-  {
-    id: 'projects',
-    title: 'Projects',
-    toggle: { file: HOME, ptr: '/sections/projects/enabled' },
-  },
+  ...homeSections(store).map((_, i) => sectionGroup(store, i)),
 ];
 
 export function createTextPanel({ store, bridge, root, getTarget }) {
@@ -143,10 +146,6 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
   let selectedEdit = null;
   let openGroups = new Set([
     'hero',
-    'intro',
-    'people',
-    'places',
-    'projects',
     'transition',
     'nav',
     'footer',
@@ -296,7 +295,14 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     );
   }
 
+  /** Home section groups start open; afterwards they keep whatever the user chose. */
+  const seenSections = new Set();
+
   function sectionBlock(group, fields) {
+    if (group.index !== undefined && !seenSections.has(group.id)) {
+      seenSections.add(group.id);
+      openGroups.add(group.id);
+    }
     const open = openGroups.has(group.id);
     const on = group.toggle ? store.get(group.toggle.file, group.toggle.ptr) !== false : true;
     const head = h(
@@ -381,7 +387,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       return groups.get(g.id);
     };
 
-    if (isHome) HOME_TOGGLES.forEach((g) => ensure(g));
+    if (isHome) homeToggles(store).forEach((g) => ensure(g));
 
     for (const f of rawFields) {
       const g = groupFor(store, f, page);
@@ -399,7 +405,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     }
 
     const order = isHome
-      ? ['hero', 'intro', 'people', 'places', 'projects', 'transition']
+      ? ['hero', ...homeSections(store).map((_, i) => `s${i}`), 'transition']
       : [...groups.keys()];
     const ordered = [
       ...order.filter((id) => groups.has(id)).map((id) => groups.get(id)),
@@ -447,7 +453,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     }
     // Keep section visibility in sync (e.g. after undo).
     if (bridge.doc) {
-      for (const g of HOME_TOGGLES) {
+      for (const g of homeToggles(store)) {
         const enabled = store.get(g.toggle.file, g.toggle.ptr) !== false;
         applySectionVisibility(g.id, enabled);
         const block = root.querySelector(`[data-section="${g.id}"]`);
@@ -479,7 +485,8 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     if (!input) {
       // Expand the group that owns this field, then re-render and try again.
       const { file, ptr } = splitEdit(edit);
-      const g = groupFor(store, { file, ptr });
+      const page = bridge.doc?.querySelector('[data-router-view]')?.dataset?.page;
+      const g = groupFor(store, { file, ptr }, page);
       openGroups.add(g.id);
       render();
       const again = inputs.get(edit);

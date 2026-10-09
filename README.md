@@ -95,6 +95,22 @@ site settings can live side by side):
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                         |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
+
+**Home sections** are an ordered list in `pages/home.json → sections`; the page renders them in
+that order and numbers the headed ones (01), (02), … automatically. Each item has a `type`, its
+text, and settings under `config`:
+
+```json
+{ "type": "intro", "text": "…", "config": { "enabled": true } }
+{ "type": "grid", "label": "People", "title": "Models I've worked with", "cta": "All people",
+  "config": { "enabled": true, "source": "people", "layout": "staggered" } }
+{ "type": "projects", "label": "Projects", "title": "Things I build", "cta": "All projects",
+  "config": { "enabled": true } }
+```
+
+A grid fills itself from `content/sources/<source>.json` (a top-level array) and links each
+tile to `/<source>/<slug>/`. A missing or non-array source logs a build warning and renders an
+empty grid.
 Routes, menu, dropdowns, grids and sitemap update automatically.
 
 > ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and

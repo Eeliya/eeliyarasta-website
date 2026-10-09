@@ -1,4 +1,4 @@
-import { html, esc, img, pad, ed, lines, words, isEnabled, sectionAttrs } from '../helpers.js';
+import { html, esc, img, pad, ed, lines, words, sectionAttrs } from '../helpers.js';
 import { HOME, sourceFile } from '../files.js';
 import { sectionHead, projectList } from './partials.js';
 
@@ -20,19 +20,104 @@ const heroPhoto = (ctx, p, i) => {
   </a>`;
 };
 
-/** Interleave the first N images of each person for the home "People" grid. */
-const peopleTiles = (people, perPerson = 4) => {
+/** Images of a source item: albums have images[], projects a single image. */
+const imagesOf = (item) =>
+  Array.isArray(item?.images)
+    ? item.images
+    : item?.image
+      ? [{ src: item.image, alt: item.title || item.name || '' }]
+      : [];
+
+/** Interleave the first N images of each item (e.g. 4 per person) for a photo-tile grid. */
+const interleave = (items, perItem = 4) => {
   const tiles = [];
-  for (let i = 0; i < perPerson; i++)
-    for (const p of people)
-      if (p.images[i]) tiles.push({ person: p, image: p.images[i], index: i });
+  for (let i = 0; i < perItem; i++)
+    items.forEach((item, at) => {
+      const image = imagesOf(item)[i];
+      if (image) tiles.push({ item, at, image, index: i });
+    });
   return tiles;
 };
 
+/**
+ * The list a grid section pulls from: content/sources/<source>.json. A missing file or
+ * one that isn't a top-level array logs a warning and renders an empty grid.
+ */
+function sourceList(ctx, source) {
+  const list = ctx.sources?.[source];
+  if (Array.isArray(list)) return list;
+  console.warn(
+    `[home] grid source "content/${sourceFile(source)}" ${list === undefined ? 'is missing' : 'is not a JSON array'}; the grid renders empty.`,
+  );
+  return [];
+}
+
+/** Photo tiles (people look): the first 4 images of every item, interleaved. */
+const photoTiles = (ctx, source, items) =>
+  html` <div class="tiles" data-anim="home.people.grid">
+    ${interleave(items).map(
+      ({ item, at, image, index }) => html`
+      <a class="tile" href="/${source}/${item.slug}/#${index + 1}" data-anim-item>
+        <span class="tile__media">${img(ctx, image.src, { alt: image.alt, sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
+        <span class="tile__cap"><span${ed(sourceFile(source), [at, item.name !== undefined ? 'name' : 'title'])}>${esc(item.name ?? item.title)}</span><span>${pad(index + 1)}</span></span>
+      </a>`,
+    )}
+  </div>`;
+
+/** Landscape cards (places look): cover image, name, location · year · photo count. */
+const placeCards = (ctx, source, items) =>
+  html` <div class="placecards" data-anim="home.places.grid">
+    ${items.map((p, i) => {
+      const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
+      return html`
+      <a class="placecard" href="/${source}/${p.slug}/" data-anim-item>
+        <span class="placecard__media">${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
+        <span class="placecard__info">
+          <span class="placecard__name"${ed(sourceFile(source), [i, 'name'])}>${esc(p.name)}</span>
+          <span class="label"><span${ed(sourceFile(source), [i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>
+        </span>
+      </a>`;
+    })}
+  </div>`;
+
+/** Which tile look a grid uses, by source. Anything not listed gets photo tiles. */
+const GRID_LOOKS = { places: placeCards };
+
+const sectionOn = (section) => section?.config?.enabled !== false;
+
+/**
+ * Home sections, rendered in the order of home.json "sections". Each item has a `type`,
+ * its content fields, and settings under `config` (enabled, source, layout).
+ */
+const SECTIONS = {
+  intro: (ctx, s, { at, attrs }) =>
+    html` <section class="intro" ${attrs}>
+      <p class="intro__text" data-anim="home.intro" ${ed(HOME, ['sections', at, 'text'], 'block')}>
+        ${lines(s.text)}
+      </p>
+    </section>`,
+
+  grid: (ctx, s, { at, number, attrs }) => {
+    const source = s.config?.source || 'people';
+    const look = GRID_LOOKS[source] || photoTiles;
+    return html` <section class="section section--${esc(source)}" ${attrs}>
+      ${sectionHead({ key: at, index: number, ...s, href: `/${source}/` })}
+      ${look(ctx, source, sourceList(ctx, source))}
+    </section>`;
+  },
+
+  projects: (ctx, s, { at, number, attrs }) =>
+    html` <section class="section section--projects" ${attrs}>
+      ${sectionHead({ key: at, index: number, ...s, href: '/projects/' })}
+      ${projectList(ctx, ctx.projects, { id: 'home-projects' })}
+    </section>`,
+};
+
 export function home(ctx) {
-  const { home, people, places, projects, site } = ctx;
-  const { hero, sections } = home;
-  const introOn = isEnabled(sections?.intro);
+  const { home, site } = ctx;
+  const { hero } = home;
+  const sections = Array.isArray(home.sections) ? home.sections : [];
+  let number = 0; // section numbers (01), (02), … count the visible headed sections in order
   return html` <section class="hero" data-hero${sectionAttrs('hero', hero.enabled !== false)}>
       <div class="hero__photos" data-anim="hero.photos">
         ${hero.photos.map((p, i) => heroPhoto(ctx, p, i))}
@@ -50,47 +135,15 @@ export function home(ctx) {
         </p>
       </div>
     </section>
-
-    <section class="intro" ${sectionAttrs('intro', introOn)}>
-      <p class="intro__text" data-anim="home.intro" ${ed(HOME, ['intro'], 'block')}>
-        ${lines(home.intro)}
-      </p>
-    </section>
-
-    <section class="section section--people" ${sectionAttrs('people', isEnabled(sections.people))}>
-      ${sectionHead({ key: 'people', index: 1, ...sections.people, href: '/people/' })}
-      <div class="tiles" data-anim="home.people.grid">
-        ${peopleTiles(people).map(
-          ({ person, image, index }) => html`
-      <a class="tile" href="/people/${person.slug}/#${index + 1}" data-anim-item>
-        <span class="tile__media">${img(ctx, image.src, { alt: image.alt, sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
-        <span class="tile__cap"><span${ed(sourceFile('people'), [people.indexOf(person), 'name'])}>${esc(person.name)}</span><span>${pad(index + 1)}</span></span>
-      </a>`,
-        )}
-      </div>
-    </section>
-
-    <section class="section section--places" ${sectionAttrs('places', isEnabled(sections.places))}>
-      ${sectionHead({ key: 'places', index: 2, ...sections.places, href: '/places/' })}
-      <div class="placecards" data-anim="home.places.grid">
-        ${places.map(
-          (p, i) => html`
-      <a class="placecard" href="/places/${p.slug}/" data-anim-item>
-        <span class="placecard__media">${img(ctx, p.images[p.cover || 0].src, { alt: p.images[p.cover || 0].alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' })}</span>
-        <span class="placecard__info">
-          <span class="placecard__name"${ed(sourceFile('places'), [i, 'name'])}>${esc(p.name)}</span>
-          <span class="label"><span${ed(sourceFile('places'), [i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile('places'), [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(p.images.length)} photos</span>
-        </span>
-      </a>`,
-        )}
-      </div>
-    </section>
-
-    <section
-      class="section section--projects"
-      ${sectionAttrs('projects', isEnabled(sections.projects))}
-    >
-      ${sectionHead({ key: 'projects', index: 3, ...sections.projects, href: '/projects/' })}
-      ${projectList(ctx, projects, { id: 'home-projects' })}
-    </section>`;
+    ${sections.map((s, at) => {
+      const render = SECTIONS[s?.type];
+      if (!render) {
+        console.warn(`[home] unknown section type "${s?.type}" at sections/${at}; skipped.`);
+        return '';
+      }
+      const on = sectionOn(s);
+      if (s.type !== 'intro' && on) number++;
+      const attrs = `${sectionAttrs(`s${at}`, on).trim()} data-section-kind="${esc(s.type === 'grid' ? `grid:${s.config?.source || 'people'}` : s.type)}"`;
+      return render(ctx, s, { at, number, attrs });
+    })}`;
 }
