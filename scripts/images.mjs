@@ -10,25 +10,21 @@
  *
  * If `sharp` isn't installed, originals are copied as-is and the site still works
  * (no srcset / placeholders). Outputs are cached: unchanged images are skipped.
+ * Sizes, format and quality: scripts/image-variants.mjs (shared with uploads to R2).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { FORMAT, loadSharp, makeVariants } from './image-variants.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'media');
 const OUT = path.join(ROOT, 'public', 'media');
 const MANIFEST = path.join(ROOT, '.generated', 'media.json');
-const WIDTHS = [480, 960, 1600];
-const QUALITY = 78;
 const EXT = /\.(jpe?g|png|webp|avif|tiff?)$/i;
 
-let sharp = null;
-try {
-  sharp = (await import('sharp')).default;
-} catch {
-  console.warn('[images] sharp not available: copying originals without resizing.');
-}
+const sharp = await loadSharp();
+if (!sharp) console.warn('[images] sharp not available: copying originals without resizing.');
 
 const walk = (dir) =>
   fs.existsSync(dir)
@@ -47,55 +43,6 @@ const prev = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf
 const manifest = {};
 const files = walk(SRC);
 let built = 0;
-
-/**
- * Most "vivid" colour of an image: bucket pixels by hue, weight by saturation ×
- * mid-lightness, return the average colour of the strongest bucket. Greyscale
- * images return a grey (templates then fall back to the site accent).
- */
-async function vividColor(file) {
-  const { data, info } = await sharp(file)
-    .resize(32, 32, { fit: 'cover' })
-    .removeAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
-  let total = { r: 0, g: 0, b: 0, n: 0 };
-  for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i],
-      g = data[i + 1],
-      b = data[i + 2];
-    total.r += r;
-    total.g += g;
-    total.b += b;
-    total.n++;
-    const max = Math.max(r, g, b) / 255,
-      min = Math.min(r, g, b) / 255,
-      l = (max + min) / 2,
-      d = max - min;
-    if (d < 0.08) continue;
-    const s = d / (1 - Math.abs(2 * l - 1));
-    let h =
-      max === r / 255
-        ? ((g - b) / 255 / d) % 6
-        : max === g / 255
-          ? (b - r) / 255 / d + 2
-          : (r - g) / 255 / d + 4;
-    h = (h * 60 + 360) % 360;
-    const w = s * (1 - Math.abs(2 * l - 1));
-    const bin = bins[Math.floor(h / 30) % 12];
-    bin.w += w;
-    bin.r += r * w;
-    bin.g += g * w;
-    bin.b += b * w;
-  }
-  const best = bins.reduce((a, c) => (c.w > a.w ? c : a));
-  if (best.w < 1) return hex({ r: total.r / total.n, g: total.g / total.n, b: total.b / total.n });
-  return hex({ r: best.r / best.w, g: best.g / best.w, b: best.b / best.w });
-}
-
-const hex = ({ r, g, b }) =>
-  '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
 
 for (const file of files) {
   const rel = path.relative(SRC, file).split(path.sep).join('/');
@@ -131,34 +78,22 @@ for (const file of files) {
     continue;
   }
 
-  const img = sharp(file).rotate();
-  const meta = await img.metadata();
-  const portrait = (meta.orientation || 1) >= 5;
-  const width = portrait ? meta.height : meta.width;
-  const height = portrait ? meta.width : meta.height;
+  const v = await makeVariants(sharp, file);
   const srcset = [];
-  for (const w of WIDTHS) {
-    if (w > width && srcset.length) break;
-    const tw = Math.min(w, width);
-    const url = `/media/${base}-${tw}.webp`;
-    await sharp(file)
-      .rotate()
-      .resize({ width: tw })
-      .webp({ quality: QUALITY })
-      .toFile(path.join(ROOT, 'public', url));
-    srcset.push({ url, w: tw });
+  for (const { w, buffer } of v.sizes) {
+    const url = `/media/${base}-${w}.${FORMAT.ext}`;
+    fs.writeFileSync(path.join(ROOT, 'public', url), buffer);
+    srcset.push({ url, w });
   }
-  const accent = await vividColor(file);
-  const lqipBuf = await sharp(file).rotate().resize(16).blur(1).webp({ quality: 40 }).toBuffer();
   manifest[rel] = {
     mtime,
     pipeline: 'sharp',
-    width,
-    height,
+    width: v.width,
+    height: v.height,
     src: srcset[srcset.length - 1].url,
     srcset,
-    color: accent,
-    lqip: `data:image/webp;base64,${lqipBuf.toString('base64')}`,
+    color: v.color,
+    lqip: v.lqip,
   };
   built++;
 }
