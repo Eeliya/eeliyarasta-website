@@ -105,5 +105,17 @@
       "config": { "enabled": true }
     }
   ],
-  "curtain": "Eeliya Rasta"
+  "curtain": "Eeliya Rasta",
+  "transition": {
+    "mode": "custom",
+    "label": true,
+    "in": { "duration": 0.3, "ease": "power4.out" },
+    "textDelay": 0.15,
+    "labelIn": { "duration": 0.3, "ease": "expo.out" },
+    "labelOut": { "duration": 0.3, "ease": "power2.in" },
+    "out": { "ease": "power3.in" },
+    "outStart": 0.75,
+    "textOutStart": 0.6,
+    "total": 1.1
+  }
 }

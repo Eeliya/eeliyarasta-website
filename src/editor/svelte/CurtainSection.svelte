@@ -123,17 +123,17 @@
       : 'The curtain every page uses unless Motion sets it to Custom or Off for that page. Drag the bar ends or type the values.'}
     Changes apply to the next page change in the preview.
   </p>
-  <button
-    type="button"
-    class="btn-ed"
-    title="Play the transition over this page with these values (no navigation)"
-    disabled={mode === 'off'}
-    onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
-  >
-    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Replay
-  </button>
 
   <div class="ptg__box">
+    <button
+      type="button"
+      class="btn-ed"
+      title="Play the transition over this page with these values (no navigation)"
+      disabled={mode === 'off'}
+      onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
+    >
+      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Replay
+    </button>
     {#if page}
       <div class={['tf', modeChanged && 'is-changed']}>
         <span class="tf__label">Curtain for this page<i class="dot" title="Changed"></i></span>
@@ -249,7 +249,7 @@
   /* One bordered curtain group: total, timeline, ease, Advanced. */
   .ptg__box {
     margin: 0 0 14px;
-    padding: 12px 12px 0;
+    padding: 8px 8px 0;
     border-radius: 10px;
     background: var(--solid-card);
     display: grid;

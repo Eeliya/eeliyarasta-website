@@ -69,8 +69,7 @@
   // caret, title, then on the right whatever the `bar` snippet adds
   .sec__bar {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 4px;
     min-height: 26px;
     cursor: pointer;
     list-style: none;
@@ -105,6 +104,9 @@
     color: var(--muted);
     flex: none;
     font-size: 10px;
+    line-height: 18px;
+    width: 18px;
+    height: 18px;
     transition: rotate 0.15s;
 
     .sec[open] & {
