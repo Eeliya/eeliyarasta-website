@@ -2,8 +2,8 @@
   Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
   replay and scroll it, pick where edits go (this element, or every element with its
   data-anim name), its animation, and its timing (Inherit / Custom per field, MotionGroups).
-  What the animation does is shown read-only: it is edited in the Animations library
-  (AnimationsModal.svelte). Older overrides of those values get a notice: move them into the
+  What the animation does is shown read-only: it is edited in the Animations sub-tab
+  (AnimLibrary.svelte). Older overrides of those values get a notice: move them into the
   animation, or drop them.
   (In code and animations.json an animation is a "preset".)
   MotionPanel creates a new one for every pick.
@@ -16,7 +16,7 @@
   import { ANIMATIONS } from '../../site/files.js';
 
   // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's;
-  // onlibrary(name): open the Animations library at that animation
+  // onlibrary(name): open the Animations sub-tab at that animation
   let { live, bridge, cfg, items, gsap, onlibrary } = $props();
 
   const sel = ui.anim; // { el, id, key, scope }
@@ -137,8 +137,8 @@
     <button
       type="button"
       class="btn-sm btn-sm--compact"
-      title="Edit {m.presetName} in the Animations library"
-      aria-label="Edit {m.presetName} in the Animations library"
+      title="Edit {m.presetName} in Animations"
+      aria-label="Edit {m.presetName} in Animations"
       onclick={() => onlibrary(m.presetName)}
     >
       <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>

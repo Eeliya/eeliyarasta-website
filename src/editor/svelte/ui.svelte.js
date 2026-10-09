@@ -39,6 +39,6 @@ export const ui = $state({
   sections: {},
   /** The Source Explorer: open or not, its file ('' = the list of files) and item index. */
   explorer: { open: false, file: '', index: 0 },
-  /** The Animations library (Motion tab): open or not, and its animation ('' = the list). */
+  /** Motion tab: the Animations sub-tab (open) or Elements, and its animation ('' = the list). */
   library: { open: false, name: '' },
 });

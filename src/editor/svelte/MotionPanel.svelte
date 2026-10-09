@@ -1,11 +1,15 @@
 <!--
-  Motion tab. Nothing picked: the page's curtain (Global / Custom / Off, CurtainSection; the
-  global curtain itself is in the Settings tab) and the page's animated elements (Elements).
-  An element picked (ui.anim, from the preview or the list): its animation (AnimEditor).
+  Motion tab, two sub-tabs (ui.library.open: Animations):
+  Elements    nothing picked: the page's curtain (Global / Custom / Off, CurtainSection; the
+              global curtain itself is in the Settings tab) and the page's animated elements.
+              An element picked (ui.anim, from the preview or the list): its animation
+              (AnimEditor).
+  Animations  the library (AnimLibrary): every animation, edit one with the preview in view.
+  Picking an element in the preview goes to Elements.
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
-  import AnimationsModal from './AnimationsModal.svelte';
+  import AnimLibrary from './AnimLibrary.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
@@ -17,7 +21,21 @@
   // onsettings: switch to the Settings tab
   let { live, bridge, onsettings } = $props();
 
-  let library = $state();
+  const TABS = [
+    [false, 'Elements'],
+    [true, 'Animations'],
+  ];
+  /** Open the Animations sub-tab, on animation `name` ('' = the list). */
+  function openLibrary(name = '') {
+    ui.library = { open: true, name };
+  }
+
+  // A new pick (preview click or the list) shows it: back to Elements.
+  let picked = ui.anim;
+  $effect(() => {
+    if (ui.anim && ui.anim !== picked) ui.library.open = false;
+    picked = ui.anim;
+  });
 
   // Where the previewed page's "transition" is stored ({ file, ptr }), null on other URLs.
   const page = $derived.by(() => {
@@ -44,63 +62,69 @@
 <section class="ed-body">
   {#if !gsap}
     <p class="hint">Waiting for the preview…</p>
-  {:else if ui.anim}
-    {#key ui.anim}
-      <AnimEditor {live} {bridge} {cfg} {items} {gsap} onlibrary={(name) => library.open(name)} />
-    {/key}
   {:else}
-    <button
-      type="button"
-      class="btn-sm lib-open"
-      title="The animations elements use: their own durations, eases, distances, ..."
-      onclick={() => library.open()}
-    >
-      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Animations
-    </button>
-    {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}
-    <p class="hint">
-      Click an animated element in the preview, or pick one below. Hold Alt to click through to
-      links.
-    </p>
-    <Section key="motion:elements" title="This page" name="Elements">
-      {#snippet bar()}<span class="mlist__count">{items.length}</span>{/snippet}
-      {#if items.length}
-        <ol class="list">
-          {#each items as { el, id, key } (el)}
-            <li>
-              <button
-                type="button"
-                class="mlist__item"
-                onclick={() => {
-                  bridge.reveal(el);
-                  bridge.select(el, 'anim');
-                }}
-                onpointerenter={() => bridge.setHover(el)}
-                onpointerleave={() => bridge.setHover(null)}
-              >
-                <span class="mlist__id">
-                  {id}
-                  {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
-                </span>
-                <span class="muted">
-                  {cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}
-                </span>
-              </button>
-            </li>
-          {/each}
-        </ol>
-      {:else}
-        <p class="hint">No animated elements on this page.</p>
-      {/if}
-    </Section>
+    <div class="seg mtabs" role="tablist" aria-label="Motion">
+      {#each TABS as [lib, label] (label)}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ui.library.open === lib}
+          class={['seg__btn', ui.library.open === lib && 'is-active']}
+          onclick={() => (ui.library.open = lib)}>{label}</button
+        >
+      {/each}
+    </div>
+    {#if ui.library.open}
+      <AnimLibrary {live} {bridge} {cfg} {items} {gsap} />
+    {:else if ui.anim}
+      {#key ui.anim}
+        <AnimEditor {live} {bridge} {cfg} {items} {gsap} onlibrary={openLibrary} />
+      {/key}
+    {:else}
+      {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}
+      <p class="hint">
+        Click an animated element in the preview, or pick one below. Hold Alt to click through to
+        links.
+      </p>
+      <Section key="motion:elements" title="This page" name="Elements">
+        {#snippet bar()}<span class="mlist__count">{items.length}</span>{/snippet}
+        {#if items.length}
+          <ol class="list">
+            {#each items as { el, id, key } (el)}
+              <li>
+                <button
+                  type="button"
+                  class="mlist__item"
+                  onclick={() => {
+                    bridge.reveal(el);
+                    bridge.select(el, 'anim');
+                  }}
+                  onpointerenter={() => bridge.setHover(el)}
+                  onpointerleave={() => bridge.setHover(null)}
+                >
+                  <span class="mlist__id">
+                    {id}
+                    {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
+                  </span>
+                  <span class="muted">
+                    {cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}
+                  </span>
+                </button>
+              </li>
+            {/each}
+          </ol>
+        {:else}
+          <p class="hint">No animated elements on this page.</p>
+        {/if}
+      </Section>
+    {/if}
   {/if}
-  {#if gsap}<AnimationsModal bind:this={library} {live} {bridge} {cfg} {items} {gsap} />{/if}
 </section>
 
 <style lang="scss">
-  // the Animations library button, above the curtain (like Sources in the Content tab)
-  .lib-open {
-    margin-bottom: 12px;
+  // Elements | Animations, above everything else in the tab
+  .mtabs {
+    margin-bottom: 16px;
   }
 
   .mlist__count {

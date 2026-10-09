@@ -1,7 +1,7 @@
 <!--
   The field groups of one animation (Timing, Trigger, From / To, ...: GROUPS in motion.js),
   each a Section of MotionFields, written to one layer of animations.json.
-  Animations library (AnimationsModal.svelte, scope 'preset'): every value of the animation is
+  Animations sub-tab (AnimLibrary.svelte, scope 'preset'): every value of the animation is
   editable; From / To can add and remove properties.
   Element view (AnimEditor.svelte, scope 'element' or 'target'): what the animation does is
   read-only; timing fields (TIMING_KEYS in motion.js) each have an Inherit / Custom switch.

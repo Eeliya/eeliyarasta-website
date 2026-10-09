@@ -7,7 +7,8 @@
  *     view    menu | footer, when the page menu shows one of those instead of a page
  *     source  + item: the Source Explorer, open on that file and item
  *             (&source=people&item=noor-vermeer; item is the slug, or the number without one)
- *     anim    the Animations library (Motion tab), open on that animation (&anim=fade-up)
+ *     motion  animations: the Motion tab's Animations sub-tab (the list of animations)
+ *     anim    that sub-tab, open on that animation (&anim=fade-up)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed
  *     sections, the selected field or Motion element, the explorer's and library's lists,
  *     the panel and preview scroll.
@@ -57,10 +58,10 @@ function readState() {
     state.explorer = { open: true, file: `sources/${q.get('source')}.json`, index: 0 };
     state.item = q.get('item');
   }
-  if (q.has('anim')) {
+  if (q.get('motion') === 'animations' || q.has('anim')) {
     if (!q.has('tab')) state.mode = 'motion'; // the library is in the Motion tab
-    state.library = { open: true, name: q.get('anim') }; // an unknown name: the list
-  }
+    state.library = { open: true, name: q.get('anim') || '' }; // an unknown name: the list
+  } else if (q.get('tab') === 'motion') state.library = { open: false, name: '' };
   return state;
 }
 
@@ -73,8 +74,8 @@ export function restoreUi(preview, content) {
   if (['text', 'motion'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
   if (saved.component) ui.target = saved.component; // Menu or Footer (pages: ?path=)
   ui.sections = saved.sections || {};
-  // AnimationsModal opens itself when ui.library.open is set (Motion tab only).
-  if (saved.library && ui.mode === 'motion') ui.library = saved.library;
+  // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
+  if (saved.library) ui.library = saved.library;
 
   addEventListener('pagehide', () => {
     sessionStorage.setItem(
@@ -115,7 +116,9 @@ export async function restorePlace() {
   if (path !== bridge.path()) return;
   bridge.api.scrollTop(previewY);
   // Motion: the picked element; Content (and the others, for later): the selected field
+  // (not on the Animations sub-tab: a pick goes to Elements)
   const motion = ui.mode === 'motion';
+  if (motion && ui.library.open) return;
   const sel = motion
     ? anim && `[data-anim-key="${CSS.escape(anim)}"]`
     : edit && `[data-edit="${CSS.escape(edit)}"]`;
@@ -147,6 +150,8 @@ export function writeUrl() {
   const list = open && file ? live.current(file) : null;
   set('source', list && sourceIdOf(file));
   set('item', Array.isArray(list) && list[index] && itemId(list[index], index));
-  set('anim', ui.mode === 'motion' && ui.library.open && ui.library.name);
+  const library = ui.mode === 'motion' && ui.library.open;
+  set('motion', library && 'animations');
+  set('anim', library && ui.library.name);
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }

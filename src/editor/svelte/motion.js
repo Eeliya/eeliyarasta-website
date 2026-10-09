@@ -8,7 +8,7 @@
  * A value is read from the first layer that has it: element, target, preset. There is no
  * global layer: each animation carries every value it uses.
  * The element view (AnimEditor.svelte) writes element / target, timing only (TIMING_KEYS);
- * the Animations library (AnimationsModal.svelte) writes the preset, every value.
+ * the Animations sub-tab (AnimLibrary.svelte) writes the preset, every value.
  * Shown with MotionField.svelte. No DOM here.
  */ import { compile } from '../lib/pointer.js';
 
