@@ -147,7 +147,7 @@
           Also pushes {plural(pub.ahead, 'earlier commit')} not on {pub.upstream ||
             `origin/${branch}`} yet:
         </p>
-        <ul class="commits">
+        <ul class="list commits">
           {#each pub.unpushed || [] as c (c.hash)}<li><code>{c.hash}</code> {c.subject}</li>{/each}
         </ul>
       {/if}
@@ -237,10 +237,7 @@
   }
 
   .commits {
-    list-style: none;
-    padding: 0;
     margin: -4px 0 12px;
-    display: grid;
     gap: 3px;
     font-size: 11px;
     color: var(--muted);

@@ -49,8 +49,28 @@ kbd {
   font-size: 11px;
 }
 
+// ---------------------------------------------------------------- utilities
+// Small Tailwind-like helpers for patterns that repeat across components. A component
+// class still carries what is specific to it; keep any element at 5 classes or fewer.
+
 .muted {
   color: var(--muted);
+}
+
+// a list without bullets or indent, items stacked 4px apart
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+// children side by side, vertically centred, 8px apart
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 // hidden wins over a display set by a class

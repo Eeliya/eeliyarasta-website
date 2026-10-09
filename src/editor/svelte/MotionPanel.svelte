@@ -39,7 +39,7 @@
       links.
     </p>
     {#if items.length}
-      <ol class="mlist__items">
+      <ol class="list">
         {#each items as { el, id, key } (key)}
           <li>
             <button
@@ -56,7 +56,7 @@
                 {id}
                 {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
               </span>
-              <span class="mlist__preset">
+              <span class="muted">
                 {cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}
               </span>
             </button>
@@ -71,14 +71,6 @@
 
 <style lang="scss">
   // motion panel
-  .mlist__items {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 4px;
-  }
-
   .mlist__item {
     width: 100%;
     display: flex;
@@ -95,9 +87,5 @@
     &:hover {
       background: rgb(255 255 255 / 0.08);
     }
-  }
-
-  .mlist__preset {
-    color: var(--muted);
   }
 </style>

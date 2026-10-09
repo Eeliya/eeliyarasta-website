@@ -13,7 +13,7 @@
   const LETTERS = { new: 'A', deleted: 'D' };
 </script>
 
-<ul class="files">
+<ul class="list files">
   {#each files as f (f.path)}
     <li class="pfile">
       <span class={['pfile__st', `is-${f.status}`]}>{LETTERS[f.status] || 'M'}</span>
@@ -30,11 +30,7 @@
 
 <style lang="scss">
   .files {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 14px;
-    display: grid;
-    gap: 4px;
+    margin-bottom: 14px;
   }
 
   // publish dialog

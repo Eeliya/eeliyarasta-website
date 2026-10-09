@@ -115,13 +115,13 @@
 
   <nav class="src-list" aria-label="Items">
     {#if isList}
-      <header class="src-list__head">
+      <header class="row src-list__head">
         {list.length} item{list.length === 1 ? '' : 's'}
         <button type="button" class="btn-sm" onclick={add}>
           <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
         </button>
       </header>
-      <ul class="src-list__items">
+      <ul class="list src-list__items">
         {#each list as it, i (i)}
           <li>
             <button
@@ -281,8 +281,6 @@
   }
 
   .src-list__head {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
     padding: 0 6px 10px;
     color: var(--muted);
@@ -292,10 +290,6 @@
   }
 
   .src-list__items {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
     gap: 2px;
   }
 
