@@ -1,5 +1,5 @@
 import { html, esc, img, pad, extAttrs, coverOf, imagesOf, ed, lines } from '../helpers.js';
-import { SITE, HOME, sourceFile } from '../files.js';
+import { HOME, pageFile, sourceFile } from '../files.js';
 
 const PROJECTS = sourceFile('projects');
 
@@ -84,10 +84,10 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
     </div>`;
 };
 
-/** Page heading used by index pages; copy comes from settings/site.json "pages".<key>. */
-export const pageHead = (ctx, key, { count, center = false, after = '' } = {}) => {
-  const { crumb, title, intro } = ctx.site.pages[key];
-  const at = (field, type) => ed(SITE, ['pages', key, field], type);
+/** Page heading used by index pages; copy comes from the page's own file, content/pages/<id>.json. */
+export const pageHead = (ctx, id, { count, center = false, after = '' } = {}) => {
+  const { crumb, title, intro } = ctx.pages[id];
+  const at = (field, type) => ed(pageFile(id), [field], type);
   return html`
   <section class="page-head${center ? ' page-head--center' : ''}">
     <span class="label page-head__crumb"${at('crumb')}>${esc(crumb)}</span>

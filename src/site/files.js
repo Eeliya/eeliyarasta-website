@@ -2,7 +2,8 @@
  * Content files, by kind. Each kind has its own folder under content/, so a name
  * never means two things (a page called "site" and the site settings can coexist):
  *
- *   content/pages/<id>.json     one file per page (home.json, ...)
+ *   content/pages/<id>.json     one file per page: heading, copy, curtain text and transition
+ *                               (home, photography, people, places, projects, about, 404)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/settings/<id>.json  site-wide settings (site.json, animations.json)
  *

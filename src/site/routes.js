@@ -2,7 +2,7 @@
  * Every page of the site, derived from content. The prerender step writes one
  * static HTML file per route; the client router fetches those same files.
  */
-import { SITE, HOME, sourceFile } from './files.js';
+import { pageFile, sourceFile } from './files.js';
 import { coverOf } from './helpers.js';
 import { curtainMode } from '../client/anim/curtain.js';
 
@@ -26,7 +26,7 @@ function curtainEditOf(file, parts) {
  * which curtain plays when navigating to the page: see curtainFor in client/anim/curtain.js.
  */
 export function getRoutes(content) {
-  const { site, people, places, home } = content;
+  const { site, pages, people, places } = content;
   const albums = (kind, list, section) =>
     list.map((album, i) => {
       const title = `${album.name} | ${section} | ${site.name}`;
@@ -49,11 +49,12 @@ export function getRoutes(content) {
       };
     });
 
-  const pageCurtain = (key, title) => ({
-    curtain: curtainOf(site.pages[key]?.curtain, title),
-    curtainEdit: curtainEditOf(SITE, ['pages', key, 'curtain']),
-    transition: site.pages[key]?.transition,
-    transitionEdit: curtainEditOf(SITE, ['pages', key, 'transition']),
+  // Curtain text and transition of a page live in its own file, content/pages/<id>.json.
+  const pageCurtain = (id, title) => ({
+    curtain: curtainOf(pages[id]?.curtain, title),
+    curtainEdit: curtainEditOf(pageFile(id), ['curtain']),
+    transition: pages[id]?.transition,
+    transitionEdit: curtainEditOf(pageFile(id), ['transition']),
   });
 
   const homeTitle = site.title;
@@ -63,10 +64,7 @@ export function getRoutes(content) {
       page: 'home',
       title: homeTitle,
       description: site.description,
-      curtain: curtainOf(home?.curtain, homeTitle),
-      curtainEdit: curtainEditOf(HOME, ['curtain']),
-      transition: home?.transition,
-      transitionEdit: curtainEditOf(HOME, ['transition']),
+      ...pageCurtain('home', homeTitle),
     },
     {
       path: '/photography/',
@@ -112,7 +110,7 @@ export function getRoutes(content) {
       title: `Not found | ${site.name}`,
       description: 'Page not found.',
       noindex: true,
-      ...pageCurtain('notFound', `Not found | ${site.name}`),
+      ...pageCurtain('404', `Not found | ${site.name}`),
     },
   ];
 }

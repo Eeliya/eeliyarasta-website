@@ -25,7 +25,7 @@ Requires Node 20.19+ (Vite 8).
 
 ```
 content/            ← all text, albums, projects, animation config (JSON)
-  pages/            ← one file per page (home.json)
+  pages/            ← one file per page (home, photography, people, places, projects, about, 404)
   sources/          ← lists that grids pull from (people, places, projects): top level is an array
   settings/         ← site-wide settings (site.json, animations.json)
 media/              ← source photos (jpg), committed
@@ -75,8 +75,9 @@ tags, and works with JavaScript disabled.
 
 `src/client/router.js` intercepts internal link clicks, fetches the target's prerendered HTML
 (prefetched on hover), runs the page-leave transition (a curtain showing the destination's
-name), swaps `<main data-router-view>`, updates title/meta/history, scrolls to top and re-mounts
-animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
+name; its text and an optional per-page `transition` live in the page's file `pages/<page>.json`,
+or in the album's item in `sources/`), swaps `<main data-router-view>`, updates
+title/meta/history, scrolls to top and re-mounts animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
 in one `gsap.context` and are reverted on leave. If anything fails it falls back to a normal
 page load.
 
@@ -87,9 +88,10 @@ site settings can live side by side):
 
 | file                               | what                                                                                                                                                         |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy                                    |
+| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, nav labels, footer copy                                                                  |
 | `content/settings/animations.json` | **every animation** (see below)                                                                                                                              |
 | `content/pages/home.json`          | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
+| `content/pages/<page>.json`        | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text                                 |
 | `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                         |
 | `content/sources/places.json`      | places, same shape                                                                                                                                           |
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                         |
@@ -232,8 +234,8 @@ undo/redo, **Esc** deselects.
 `<h2${ed('pages/home.json', ['hero', 'eyebrow'])}>`, which renders
 `data-edit="pages/home.json#/hero/eyebrow"` (a JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
-`<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros,
-footer) lives in `settings/site.json → pages / footer` for this reason. The editor only ever writes
+`<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
+in each page's `pages/<page>.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/pages/`, `content/sources/` and `content/settings/` (see
 `src/editor/config.js`); it never creates files.
 
