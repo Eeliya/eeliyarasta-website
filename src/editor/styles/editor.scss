@@ -1029,25 +1029,10 @@ select {
   letter-spacing: 0;
 }
 
-// label > checkbox (drawn as a switch) + "On" / "Off"
-.sec__toggle {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-
-  &.is-changed {
-    color: $hi;
-  }
-}
-
-// the knob is a radial gradient that slides right when checked
+// on/off switch: a checkbox drawn as a track, its knob a radial gradient that slides right
+// when checked. Off: dark track, grey knob. On: whitish track, black knob.
 .sec__check {
+  flex: none;
   appearance: none;
   margin: 0;
   width: 28px;
@@ -1055,23 +1040,24 @@ select {
   border-radius: 999px;
   cursor: pointer;
   background: radial-gradient(circle, var(--muted) 5.5px, transparent 6.5px) 0 0 / 16px 16px
-    no-repeat rgb(255 255 255 / 0.12);
-  box-shadow: inset 0 0 0 1px var(--line);
+    no-repeat #262625;
+  box-shadow: inset 0 0 0 1px #3a3a38;
   transition:
     background-position 0.2s,
     background-color 0.2s;
 
   &:checked {
-    background-image: radial-gradient(circle, $hi 5.5px, transparent 6.5px);
+    background-image: radial-gradient(circle, #030303 5.5px, transparent 6.5px);
     background-position: 12px 0;
-    background-color: rgb(159 211 255 / 0.25);
+    background-color: var(--fg);
+    box-shadow: none;
   }
 
   &:focus-visible {
     outline: none;
     box-shadow:
-      inset 0 0 0 1px $hi,
-      0 0 0 3px rgb(159 211 255 / 0.18);
+      0 0 0 2px #030303,
+      0 0 0 3px var(--fg);
   }
 }
 

@@ -197,19 +197,16 @@
             </button>
           {/if}
           {#if g.toggle}
-            <label
-              class={['sec__toggle', toggleChanged(g) && 'is-changed']}
+            {#if toggleChanged(g)}<i class="dot" title="Changed"></i>{/if}
+            <!-- on/off switch: a checkbox drawn by CSS (.sec__check) -->
+            <input
+              type="checkbox"
+              class="sec__check"
+              aria-label="Show {g.title}"
               title={isOn(g) ? 'Section is visible' : 'Section is hidden on the public page'}
-            >
-              <input
-                type="checkbox"
-                class="sec__check"
-                aria-label="{g.title} visible"
-                checked={isOn(g)}
-                onchange={(e) => setOn(g, e.currentTarget.checked)}
-              />
-              {isOn(g) ? 'On' : 'Off'}
-            </label>
+              checked={isOn(g)}
+              onchange={(e) => setOn(g, e.currentTarget.checked)}
+            />
           {/if}
         </summary>
 
