@@ -43,7 +43,7 @@
       {question}
       <button
         type="button"
-        class="src-edit"
+        class="btn-sm"
         onclick={() => (confirming = null)}
         {@attach (el) => el.focus()}
       >
@@ -51,14 +51,14 @@
       </button>
       <button
         type="button"
-        class="src-edit src-edit--danger"
+        class="btn-sm btn-sm--danger"
         onclick={() => discard(what === 'all' ? undefined : [what])}
       >
         <i class="fa-solid fa-trash" aria-hidden="true"></i> Discard
       </button>
     </span>
   {:else}
-    <button type="button" class="src-edit src-edit--danger" onclick={() => (confirming = what)}>
+    <button type="button" class="btn-sm btn-sm--danger" onclick={() => (confirming = what)}>
       <i class="fa-solid fa-trash" aria-hidden="true"></i>
       {what === 'all' ? 'Discard all changes' : 'Discard'}
     </button>

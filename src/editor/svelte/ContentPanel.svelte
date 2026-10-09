@@ -124,7 +124,7 @@
 {#snippet editButton(file, compact = false)}
   <button
     type="button"
-    class={['src-edit', compact && 'src-edit--compact']}
+    class={['btn-sm', compact && 'btn-sm--compact']}
     title="Edit {baseName(file)}"
     aria-label="Edit {baseName(file)}"
     onclick={() => sourcesModal.open(file)}
