@@ -40,7 +40,7 @@ const store = createStore();
 const live = createLive(store);
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
 
-restoreUi(bridge); // the tab, sections, ... from before a refresh (svelte/persist.js)
+restoreUi(bridge, live); // the tab, sections, ...: from the URL and sessionStorage (svelte/persist.js)
 
 const root = document.getElementById('editor');
 root.textContent = '';
@@ -139,7 +139,7 @@ bridge.on('select', (sel) => {
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
 // After the handlers above: the selection and scroll from before a refresh.
-bridge.on('navigate', () => restorePlace(bridge));
+bridge.on('navigate', restorePlace);
 
 // ---------------------------------------------------------------- store events
 let animTimer = 0;

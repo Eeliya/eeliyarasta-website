@@ -13,6 +13,7 @@
   import PublishDialog from './PublishDialog.svelte';
   import Toasts from './Toasts.svelte';
   import { ui } from './ui.svelte.js';
+  import { writeUrl } from './persist.js';
   import { MOD, plural } from '../lib/format.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
@@ -34,6 +35,9 @@
   const ahead = $derived(ui.pub?.ahead || 0);
   const unpublishedChanges = $derived(unpublished.reduce((n, f) => n + (f.changes || 1), 0));
   const branch = $derived(ui.pub?.branch ? `origin/${ui.pub.branch}` : 'GitHub');
+
+  // The tab, Menu/Footer and the open Source Explorer item in the URL (persist.js).
+  $effect(writeUrl);
 
   $effect(() => {
     document.title = `${live.changes ? '● ' : ''}Editor · Eeliya Rasta`;
