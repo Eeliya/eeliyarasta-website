@@ -453,10 +453,6 @@ select {
     color: $hi;
     box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.4);
   }
-
-  &[data-src='preset'] {
-    color: #e6dcc4;
-  }
 }
 
 .f__reset {

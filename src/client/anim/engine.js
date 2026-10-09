@@ -2,7 +2,7 @@
  * Animation engine: reads content/settings/animations.json (the single source of truth)
  * and wires every [data-anim="<target id>"] element in a view.
  *
- *   spec = defaults ⟵ presets[preset] ⟵ targets[id] ⟵ elements[key] ⟵ data-anim-options (JSON, optional)
+ *   spec = presets[preset] ⟵ targets[id] ⟵ elements[key] ⟵ data-anim-options (JSON, optional)
  *
  * `key` is a stable per-element id assigned at mount time: "<path>|<target id>|<n>"
  * (n = index among elements with that target on the page), e.g. "/about/|about.headline|0".
@@ -62,7 +62,7 @@ export function resolve(id, el) {
   }
   const { preset: _p, ...overrides } = target;
   const { preset: _q, ...ownOverrides } = own;
-  return merge(config.defaults, preset, overrides, ownOverrides, inline, {
+  return merge(preset, overrides, ownOverrides, inline, {
     id,
     key,
     preset: presetName,

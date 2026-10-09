@@ -116,7 +116,7 @@
         <p class="hint">
           Type {m.type}. Used by {count(uses.length, 'element')} on this page and by
           {targets(name).join(', ') || 'no data-anim name'} on the site. Elements and names can set their
-          own timing only; badges: <b>default</b> = this animation, <b>global</b> = every animation.
+          own timing only.
         </p>
         <button
           type="button"

@@ -2,8 +2,7 @@
   The field groups of one animation (Timing, Trigger, From / To, ...: GROUPS in motion.js),
   each a Section of MotionFields, written to one layer of animations.json.
   Animations library (AnimationsModal.svelte, scope 'preset'): every value of the animation is
-  editable, with a badge (default = this animation, global = defaults) and a reset; From / To
-  can add and remove properties.
+  editable; From / To can add and remove properties.
   Element view (AnimEditor.svelte, scope 'element' or 'target'): what the animation does is
   read-only; timing fields (TIMING_KEYS in motion.js) each have an Inherit / Custom switch.
   Inherit shows the field's control with the inherited value, dimmed and inert, and stores
@@ -27,7 +26,6 @@
     keepFor,
     missingProps,
     propFields,
-    sourceOf,
   } from './motion.js';
   import { compile } from '../lib/pointer.js';
   import { ANIMATIONS } from '../../site/files.js';
@@ -67,14 +65,7 @@
   const resetAll = (def, source = 'motion') =>
     live.store.batch(() => pathsOf(def).forEach(resetValue), { source });
 
-  // ---- library: badges, reset, add / remove properties
-  const SOURCE = { element: 'element', target: 'all', preset: 'default', defaults: 'global' };
-  const name = (source) => (source ? SOURCE[source] : 'unset');
-  function badge(def) {
-    const [a, b = a] = pathsOf(def).map((p) => sourceOf(m, p));
-    if (a === b) return { src: a || 'none', text: name(a) };
-    return { src: 'mixed', text: `${name(a)} / ${name(b)}` };
-  }
+  // ---- library: add / remove properties
   const own = (def) => pathsOf(def).some((p) => dig(m.layers[scope], p) !== undefined);
 
   /** Add a property to from / to; the other side gets its matching value, or GSAP would only set it. */
@@ -140,19 +131,6 @@
               >
                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
               </button>
-            {:else}
-              {@const b = badge(def)}
-              <span class="f__src" data-src={b.src}>{b.text}</span>
-              {#if own(def)}
-                <button
-                  type="button"
-                  class="f__reset"
-                  title="Reset to the global value"
-                  onclick={() => resetAll(def)}
-                >
-                  <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-                </button>
-              {/if}
             {/if}
           {/snippet}
         </MotionField>

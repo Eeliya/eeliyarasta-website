@@ -5,8 +5,8 @@
  *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
  *   target  -> targets["<target>"]               (every element with that data-anim, "All")
  *   preset  -> presets["<animation>"]            (the animation's own values: the library)
- *   defaults                                     (every animation)
- * A value is read from the first layer that has it: element, target, preset, defaults.
+ * A value is read from the first layer that has it: element, target, preset. There is no
+ * global layer: each animation carries every value it uses.
  * The element view (AnimEditor.svelte) writes element / target, timing only (TIMING_KEYS);
  * the Animations library (AnimationsModal.svelte) writes the preset, every value.
  * Shown with MotionField.svelte. No DOM here.
@@ -291,7 +291,7 @@ export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.pat
 
 /**
  * The picked element's animation. cfg: animations.json, sel: { id, key }.
- * spec: the merged values; layers: each scope's own values (for the badges and resets).
+ * spec: the merged values; layers: each scope's own values (for Inherit / Custom).
  */
 export function animModel(cfg, sel) {
   const target = cfg.targets[sel.id] || {};
@@ -299,16 +299,16 @@ export function animModel(cfg, sel) {
   const presetName = own.preset || target.preset;
   const preset = cfg.presets[presetName] || {};
   const strip = ({ preset: _p, ...rest }) => rest;
-  const layers = { element: strip(own), target: strip(target), preset, defaults: cfg.defaults };
-  const spec = merge(layers.defaults, layers.preset, layers.target, layers.element);
+  const layers = { element: strip(own), target: strip(target), preset };
+  const spec = merge(layers.preset, layers.target, layers.element);
   return { target, own, presetName, preset, layers, spec, type: preset.type };
 }
 
-/** One animation (preset) on its own, for the Animations library: its values over the defaults. */
+/** One animation (preset) on its own, for the Animations library. */
 export function presetModel(cfg, name) {
   const preset = cfg.presets[name] || {};
-  const layers = { element: {}, target: {}, preset, defaults: cfg.defaults };
-  const spec = merge(cfg.defaults, preset);
+  const layers = { element: {}, target: {}, preset };
+  const spec = merge(preset);
   return { target: {}, own: {}, presetName: name, preset, layers, spec, type: preset.type };
 }
 
@@ -327,17 +327,8 @@ export const layerPtr = (m, sel, scope) =>
 /** How many path levels store.remove keeps when a scope's object gets empty. */
 export const keepFor = (scope) => (scope === 'element' ? 1 : 2);
 
-/** The layer a value comes from: 'element' | 'target' | 'preset' | 'defaults' | null. */
-export const sourceOf = (m, path) =>
-  ['element', 'target', 'preset', 'defaults'].find((l) => dig(m.layers[l], path) !== undefined) ||
-  null;
-
 // The layers a scope inherits from, nearest first.
-const BELOW = {
-  element: ['target', 'preset', 'defaults'],
-  target: ['preset', 'defaults'],
-  preset: ['defaults'],
-};
+const BELOW = { element: ['target', 'preset'], target: ['preset'], preset: [] };
 /** What a scope gets without a value of its own: [value, the layer it comes from or null]. */
 export function inherited(m, scope, path) {
   const layer = BELOW[scope].find((l) => dig(m.layers[l], path) !== undefined) || null;
