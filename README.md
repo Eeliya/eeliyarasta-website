@@ -13,6 +13,7 @@ npm install
 npm run dev       # http://localhost:5173 – pages rendered on the fly, hot reload
 npm run build     # → dist/ (one index.html per route + 404.html, sitemap.xml, robots.txt)
 npm run preview   # serve dist/ on http://localhost:4173
+npm test          # unit tests (R2 upload against a local mock S3)
 ```
 
 Visual editor (dev only): `http://localhost:5173/edit/` while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
@@ -131,6 +132,44 @@ a tiny blurred placeholder (LQIP) and the image's most vivid colour. Templates u
 `srcset`, `width/height` (no layout shift) and lazy loading. Unchanged images are skipped.
 If `sharp` is missing, originals are copied and the site still works. Both output folders are
 generated, so they're git-ignored.
+
+### Photos on Cloudflare R2
+
+Photo fields in the editor (the About photo, the hero photos, album photos, a project's image;
+in the Content tab and the Sources window) have an **Upload** button, and take a photo dropped on
+them. The dev server puts it in an R2 bucket as `photos/<name>-<hash>.<ext>` (the hash of the
+bytes: the same photo gets the same key, and the object is cached forever) and the field gets
+that **key**, one undo step like typing. Save and Publish as usual.
+
+The content stores keys, not URLs: `mediaUrl()` (`src/site/helpers.js`) turns a value into a URL
+when the page is rendered. A path that is in `media/` (the media manifest) stays local, a full
+`https://` URL is used as is, anything else is `site.json` `mediaUrl` + `/` + key (Settings >
+Photos). So the photo domain can change in one place, and existing photos keep working; moving
+one to R2 under the same key later needs no content change. R2 photos are served as uploaded
+(no srcset sizes or placeholder: those are for `media/` photos).
+
+The keys live in `.env.local` (git-ignored; template: `.env.example`). Only the dev server reads
+them (`loadEnv` in `scripts/vite-plugin-static-site.mjs`, R2_* only); nothing reaches the
+browser or `dist/`. Uploads: `scripts/r2.mjs` (SigV4 via `aws4fetch`), JPEG, PNG, WebP, AVIF or
+GIF up to 30 MB. Without keys an upload says "R2 not configured: add keys to .env.local".
+
+Setup, once:
+
+1. Cloudflare dashboard > **R2** > **Create bucket**, e.g. `eeliyarasta-photos` (location:
+   automatic).
+2. The bucket > **Settings** > **Public access** > **Custom Domains** > **Connect Domain**, e.g.
+   `photos.eeliyarasta.com` (the domain's DNS must be on Cloudflare; it adds the record). Leave
+   the r2.dev URL off: it is rate-limited and meant for testing.
+3. **R2** overview > **Manage API tokens** > **Create API token**: permission **Object Read &
+   Write**, **Apply to specific buckets only**: the bucket above. Copy the **Access Key ID** and
+   **Secret Access Key** (shown once) and the **Account ID** (R2 overview).
+4. Copy `.env.example` to `.env.local` and fill in `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+   `R2_SECRET_ACCESS_KEY` and `R2_BUCKET`.
+5. Restart `npm run dev`.
+6. Editor > Settings > **Photos**: set the photo address to `https://photos.eeliyarasta.com`,
+   Save.
+
+No CORS rule is needed: the dev server uploads, and pages only show the photos.
 
 ### Album accent colours
 
@@ -296,7 +335,7 @@ existing JSON files in `content/pages/`, `content/sources/` and `content/setting
   not pushed).
 
 The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/status`,
-`/publish`). They exist only on the dev server, accept **only requests from this machine**
+`/upload`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
 (loopback address, localhost `Host`, same-origin `Origin`), and only touch the files listed in
 `src/editor/config.js`. Git runs without a shell and never prompts in the terminal, so pushing
 needs a working git login for GitHub on the machine running `npm run dev` (e.g. `gh auth login`
@@ -305,8 +344,9 @@ then `gh auth setup-git`).
 All JSON is written by the same formatter (`src/editor/lib/json-format.js`), so saves only
 change the lines that changed.
 
-**Later:** swapping and reordering album photos (upload to `media/`, edit `images[]`) isn't in
-the editor yet. Edit `content/sources/*.json` and `media/` by hand for now.
+**Later:** adding, removing and reordering album photos isn't in the editor yet (replacing one is:
+upload in its field, see [Photos on Cloudflare R2](#photos-on-cloudflare-r2)). Edit
+`content/sources/*.json` by hand for that.
 
 ### Design notes
 
