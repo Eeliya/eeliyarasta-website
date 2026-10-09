@@ -2,7 +2,7 @@
   Content tab: every editable text of the page in the preview (or of the Menu / Footer),
   grouped by section (content-groups.js decides which texts and groups). Home sections can
   be turned on/off and moved; grid sections pick their source list and layout. The Sources
-  section at the end opens the Sources modal.
+  button on top opens the Source Explorer (SourcesModal.svelte).
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
   the preview, a field sets it (via the bridge) when it gets focus. This panel highlights
@@ -12,7 +12,7 @@
   // Open/closed per group id, once the user toggled it. Kept while switching tabs.
   const opened = $state({});
   // Groups that start open; home sections ("s0", "s1", ...) do too.
-  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'about', 'content', 'sources'];
+  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'about', 'content'];
   const isOpen = (id) => opened[id] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
 </script>
 
@@ -25,12 +25,10 @@
     contentGroups,
     groupFor,
     homeSections,
-    isSource,
     previewPage,
     splitEdit,
   } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
-  import { plural } from '../lib/format.js';
   import { HOME, baseName } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
@@ -49,11 +47,6 @@
   const waiting = $derived.by(() => {
     ui.previewVersion;
     return ui.target.kind === 'page' && !bridge.api;
-  });
-  // The lists in content/sources/, shown under the page's own groups.
-  const sources = $derived.by(() => {
-    live.version;
-    return ui.target.kind === 'page' ? Object.keys(live.store.current).filter(isSource).sort() : [];
   });
   const hint = $derived(
     ui.target.kind === 'page'
@@ -121,15 +114,16 @@
   });
 </script>
 
-{#snippet editButton(file, compact = false)}
+<!-- opens the Source Explorer at a grid's source file -->
+{#snippet editButton(file)}
   <button
     type="button"
-    class={['btn-sm', compact && 'btn-sm--compact']}
+    class="btn-sm btn-sm--compact"
     title="Edit {baseName(file)}"
     aria-label="Edit {baseName(file)}"
     onclick={() => sourcesModal.open(file)}
   >
-    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>{compact ? '' : ' Edit'}
+    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
   </button>
 {/snippet}
 
@@ -151,11 +145,19 @@
         {/each}
       </select>
     </label>
-    {#if edit}{@render editButton(`sources/${value}.json`, true)}{/if}
+    {#if edit}{@render editButton(`sources/${value}.json`)}{/if}
   </div>
 {/snippet}
 
 <section class="ed-body" bind:this={panel}>
+  <button
+    type="button"
+    class="btn-sm src-open"
+    title="People, places, projects: the lists in content/sources/"
+    onclick={() => sourcesModal.open()}
+  >
+    <i class="fa-solid fa-database" aria-hidden="true"></i> Sources
+  </button>
   {#if waiting}
     <p class="hint">Waiting for the preview…</p>
   {:else}
@@ -254,33 +256,6 @@
     {:else}
       <p class="hint">No editable content here.</p>
     {/each}
-
-    {#if sources.length}
-      <details
-        class="sec"
-        data-section="sources"
-        open={isOpen('sources')}
-        ontoggle={(e) => (opened.sources = e.currentTarget.open)}
-      >
-        <summary class="sec__bar">
-          <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-          Sources
-          <span class="sec__count">{sources.length}</span>
-        </summary>
-        <ul class="src-rows">
-          {#each sources as file (file)}
-            {@const list = live.current(file)}
-            <li class={['src-row', live.changed(file, '') && 'is-changed']}>
-              {baseName(file)}<i class="dot" title="Changed"></i>
-              <span class="src-row__count">
-                {Array.isArray(list) ? plural(list.length, 'item') : 'not a list'}
-              </span>
-              {#if Array.isArray(list)}{@render editButton(file)}{/if}
-            </li>
-          {/each}
-        </ul>
-      </details>
-    {/if}
   {/if}
 
   <SourcesModal bind:this={sourcesModal} {live} {bridge} />
@@ -469,39 +444,12 @@
     display: block;
   }
 
-  // sources: list in the Content panel + edit modal
   .sec__opt .tf__label {
     min-height: 22px;
   }
 
-  .src-rows {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 12px;
-  }
-
-  // file name, changed dot, item count, edit button
-  .src-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--fg);
-
-    .dot {
-      display: none;
-      margin-left: 0;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
-    }
-  }
-
-  .src-row__count {
-    margin-left: auto;
-    color: var(--muted);
-    font-size: 10.5px;
+  // the Source Explorer button, above the hint
+  .src-open {
+    margin-bottom: 12px;
   }
 </style>

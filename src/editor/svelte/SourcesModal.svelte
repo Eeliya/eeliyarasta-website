@@ -1,13 +1,15 @@
 <!--
-  Sources modal: edit one list from content/sources/ (people, places, projects, ...).
-  The items on the left, the selected item's fields on the right. ContentPanel.svelte calls
-  open() to show a file, an item or one field (after a click in the preview).
+  Source Explorer: the lists in content/sources/ (people, places, projects, ...). On the left
+  the files as tabs (with their item counts) above the file's items, on the right the
+  selected item's fields. ContentPanel.svelte calls open() from its Sources button, a grid's
+  Source edit button or a click on a list item in the preview: a file, an item or one field.
 -->
 <script>
   import { tick, flushSync } from 'svelte';
   import Field from './Field.svelte';
   import { ui } from './ui.svelte.js';
-  import { baseName } from '../../site/files.js';
+  import { isSource } from './content-groups.js';
+  import { baseName, sourceIdOf } from '../../site/files.js';
   import { itemName, itemMeta, pad, slugify, itemFields, newItem } from './source-items.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
@@ -19,6 +21,10 @@
   let confirming = $state(false); // "Delete X?" is showing
   let slugBad = $state(false);
 
+  const files = $derived.by(() => {
+    live.version;
+    return Object.keys(live.store.current).filter(isSource).sort();
+  });
   const list = $derived(live.current(file));
   const base = $derived(live.base(file) || []);
   const isList = $derived(Array.isArray(list));
@@ -78,8 +84,18 @@
       live.store.set(file, `/${at}/slug`, slug, { key: `slug:${file}#${at}`, source: 'panel' });
   }
 
-  /** Show a file, at its first item or at item nextIndex, optionally focusing one field. */
-  export function open(nextFile, nextIndex = 0, edit = null) {
+  /** Show the items of another file. */
+  function pickFile(next) {
+    if (next === file) return;
+    file = next;
+    select(0);
+  }
+
+  /**
+   * Show a file (default: the last one shown, else the first), at its first item or at item
+   * nextIndex, optionally focusing one field.
+   */
+  export function open(nextFile = file || files[0], nextIndex = 0, edit = null) {
     file = nextFile;
     select(nextIndex);
     flushSync(); // render now, so the field below exists
@@ -95,12 +111,12 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <dialog
   class="modal__box src-modal"
-  aria-label={baseName(file)}
+  aria-label="Sources"
   bind:this={dialog}
   onclick={(e) => e.target === dialog && dialog.close()}
 >
   <header class="src-modal__head">
-    <h3 class="modal__title">{baseName(file)}</h3>
+    <h3 class="modal__title">Sources</h3>
     <span class="src-modal__path">content/{file}</span>
     <button
       type="button"
@@ -114,6 +130,22 @@
   </header>
 
   <nav class="src-list" aria-label="Items">
+    <div class="seg seg--small src-files" role="tablist" aria-label="Source files">
+      {#each files as f (f)}
+        {@const items = live.current(f)}
+        <button
+          type="button"
+          role="tab"
+          class={['seg__btn', f === file && 'is-active']}
+          aria-selected={f === file}
+          title="content/{f}"
+          onclick={() => pickFile(f)}
+        >
+          {sourceIdOf(f)}
+          {Array.isArray(items) ? items.length : '!'}
+        </button>
+      {/each}
+    </div>
     {#if isList}
       <header class="row src-list__head">
         {list.length} item{list.length === 1 ? '' : 's'}
@@ -222,7 +254,7 @@
     height: calc(100vh - 64px);
     max-height: 900px;
     display: grid;
-    grid-template-columns: minmax(220px, 300px) 1fr;
+    grid-template-columns: minmax(240px, 320px) 1fr;
     grid-template-rows: auto minmax(0, 1fr);
     padding: 0;
     overflow: hidden;
@@ -273,11 +305,24 @@
     }
   }
 
-  // left: the list
+  // left: the file tabs, then the list
   .src-list {
     overflow: auto;
     padding: 14px 12px 18px;
     border-right: 1px solid var(--line);
+  }
+
+  // list name (people.json -> people) + item count, in normal case so they fit
+  .src-files {
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+
+    .seg__btn {
+      padding-inline: 6px;
+      font-size: 10.5px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
   }
 
   .src-list__head {
