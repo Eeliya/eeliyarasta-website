@@ -180,5 +180,107 @@
       }
     ],
     "curtain": "Daan Okafor"
+  },
+  {
+    "slug": "mila-example",
+    "name": "Mila Example",
+    "placeholder": true,
+    "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
+    "role": "Model",
+    "agency": "Independent",
+    "location": "Rotterdam",
+    "year": 2026,
+    "summary": "PLACEHOLDER: test portraits to fill the people grid. Window light and quiet corners.",
+    "accent": "#b9a48f",
+    "cover": 0,
+    "images": [
+      {
+        "src": "people/noor-vermeer/05.jpg",
+        "alt": "A woman in a white top and blue jeans",
+        "credit": {
+          "name": "Sami Sadeghi",
+          "url": "https://unsplash.com/@sami__sadeghi",
+          "source": "https://unsplash.com/photos/a-woman-in-a-white-top-and-blue-jeans-m7mbCwc_zSM",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "people/noor-vermeer/06.jpg",
+        "alt": "A woman in a white shirt posing for a picture",
+        "credit": {
+          "name": "Sami Sadeghi",
+          "url": "https://unsplash.com/@sami__sadeghi",
+          "source": "https://unsplash.com/photos/a-woman-in-a-white-shirt-posing-for-a-picture-f5IWcEYBCVo",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "people/noor-vermeer/07.jpg",
+        "alt": "A woman sitting on top of a cement block",
+        "credit": {
+          "name": "Sami Sadeghi",
+          "url": "https://unsplash.com/@sami__sadeghi",
+          "source": "https://unsplash.com/photos/a-woman-sitting-on-top-of-a-cement-block-XXJ3agfdfvo",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "people/noor-vermeer/08.jpg",
+        "alt": "A woman standing on a balcony next to a street",
+        "credit": {
+          "name": "Sami Sadeghi",
+          "url": "https://unsplash.com/@sami__sadeghi",
+          "source": "https://unsplash.com/photos/a-woman-standing-on-a-balcony-next-to-a-street-Rdr4m8s8aE8",
+          "license": "Unsplash License"
+        }
+      }
+    ],
+    "curtain": "Mila Example"
+  },
+  {
+    "slug": "joris-placeholder",
+    "name": "Joris Placeholder",
+    "placeholder": true,
+    "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
+    "role": "Model",
+    "agency": "Independent",
+    "location": "Utrecht",
+    "year": 2026,
+    "summary": "PLACEHOLDER: test portraits to fill the people grid. Overcast streets, shot handheld.",
+    "accent": "",
+    "cover": 0,
+    "images": [
+      {
+        "src": "people/daan-okafor/05.jpg",
+        "alt": "A man with glasses sitting down in a black and white photo",
+        "credit": {
+          "name": "behrouz sasani",
+          "url": "https://unsplash.com/@behrouzsasani",
+          "source": "https://unsplash.com/photos/a-man-with-glasses-sitting-down-in-a-black-and-white-photo-qZnHiHyX9yc",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "people/daan-okafor/06.jpg",
+        "alt": "A man in a suit standing on a sidewalk",
+        "credit": {
+          "name": "behrouz sasani",
+          "url": "https://unsplash.com/@behrouzsasani",
+          "source": "https://unsplash.com/photos/a-man-in-a-suit-standing-on-a-sidewalk--cZiiL3datQ",
+          "license": "Unsplash License"
+        }
+      },
+      {
+        "src": "people/daan-okafor/07.jpg",
+        "alt": "Man playing guitar on stage with sunglasses",
+        "credit": {
+          "name": "behrouz sasani",
+          "url": "https://unsplash.com/@behrouzsasani",
+          "source": "https://unsplash.com/photos/man-playing-guitar-on-stage-with-sunglasses-N82_m1MTcQI",
+          "license": "Unsplash License"
+        }
+      }
+    ],
+    "curtain": "Joris Placeholder"
   }
 ]
