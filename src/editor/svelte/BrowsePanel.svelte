@@ -29,7 +29,7 @@
   const saved = (file, path) => live.store.getBase(file, compile(path));
   const show = (value) => (value === undefined ? '(removed)' : JSON.stringify(value).slice(0, 80));
 
-  /** Discard the unsaved changes of some files (all when files is undefined). Clears undo. */
+  /** Discard the unsaved changes of some files (all when names is undefined). Undo brings them back. */
   function discard(names) {
     confirming = null;
     live.store.discard(names);
