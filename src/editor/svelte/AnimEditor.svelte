@@ -6,6 +6,7 @@
 -->
 <script>
   import MotionField from './MotionField.svelte';
+  import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import {
     GENERIC_TYPES,
@@ -197,8 +198,7 @@
 {/if}
 
 {#each groups as [title, defs, props] (title)}
-  <section class="grp">
-    <h4 class="grp__title">{title}</h4>
+  <Section key="motion:{title}" {title}>
     {#each defs as def (def.label)}
       <MotionField
         {def}
@@ -225,7 +225,7 @@
         {/each}
       </select>
     {/if}
-  </section>
+  </Section>
 {/each}
 
 {#if hasOverrides}

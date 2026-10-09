@@ -6,6 +6,7 @@
 -->
 <script>
   import EasePicker from './EasePicker.svelte';
+  import Section from './Section.svelte';
   import { fmtS } from './curtain-edit.js';
   import { ANIMATIONS } from '../../site/files.js';
 
@@ -54,8 +55,7 @@
   }
 </script>
 
-<section class="grp ptg">
-  <h4 class="grp__title">Page fade</h4>
+<Section class="ptg" key="settings:fade" title="Page transition" name="Fade">
   <p class="hint">
     The old page fades out, the new one fades in: the whole page change when a page's curtain is
     Off, behind the curtain otherwise. Duration (s) and ease.
@@ -81,4 +81,4 @@
       </div>
     </div>
   {/each}
-</section>
+</Section>

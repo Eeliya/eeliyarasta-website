@@ -14,6 +14,7 @@
 <script>
   import CurtainTimeline from './CurtainTimeline.svelte';
   import EasePicker from './EasePicker.svelte';
+  import Section from './Section.svelte';
   import {
     CURTAIN,
     CURTAIN_ROWS,
@@ -110,8 +111,12 @@
   />
 {/snippet}
 
-<section class="grp ptg">
-  <h4 class="grp__title">Page transition</h4>
+<Section
+  class="ptg"
+  key={page ? 'motion:curtain' : 'settings:curtain'}
+  title="Page transition"
+  name="Curtain"
+>
   <p class="hint">
     {page
       ? 'The curtain that plays when you navigate to this page. Its text is edited under Content → Page transition.'
@@ -228,11 +233,11 @@
       </details>
     {/if}
   </div>
-</section>
+</Section>
 
 <style lang="scss">
   /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
-  .ptg > .btn-ed {
+  :global(.ptg) > .btn-ed {
     margin-bottom: 10px;
   }
 

@@ -9,18 +9,20 @@
   that field and scrolls to it.
 -->
 <script module>
-  // Open/closed per group id, once the user toggled it. Kept while switching tabs.
-  const opened = $state({});
-  // Groups that start open; home sections ("s0", "s1", ...) do too.
+  import { ui } from './ui.svelte.js';
+
+  // Groups that start open; home sections ("s0", "s1", ...) do too. Once toggled, the
+  // state is kept in ui.sections under "text:<group id>" (Section.svelte).
   const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'page-body', 'content'];
-  const isOpen = (id) => opened[id] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
+  const keyOf = (id) => `text:${id}`;
+  const isOpen = (id) => ui.sections[keyOf(id)] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
 </script>
 
 <script>
   import { tick } from 'svelte';
   import Field from './Field.svelte';
+  import Section from './Section.svelte';
   import SourcesModal from './SourcesModal.svelte';
-  import { ui } from './ui.svelte.js';
   import {
     contentGroups,
     groupFor,
@@ -73,7 +75,7 @@
     const list = [...homeSections(live.store)];
     [list[i], list[j]] = [list[j], list[i]];
     // Open/closed follows the section, not the position.
-    [opened[`s${i}`], opened[`s${j}`]] = [isOpen(`s${j}`), isOpen(`s${i}`)];
+    [ui.sections[keyOf(`s${i}`)], ui.sections[keyOf(`s${j}`)]] = [isOpen(`s${j}`), isOpen(`s${i}`)];
     live.store.set(HOME, '/sections', list, { source: 'panel' });
     // Keep the focus on the moved section's button (or its title at the top / bottom).
     await tick();
@@ -101,7 +103,7 @@
         sourcesModal.open(file, Number(parse(ptr)[0]) || 0, edit);
       return;
     }
-    opened[group.id] = true;
+    ui.sections[keyOf(group.id)] = true;
     await tick();
     panel
       .querySelector(`[data-edit="${CSS.escape(edit)}"]`)
@@ -163,15 +165,15 @@
   {:else}
     <p class="hint">{hint}</p>
     {#each groups as g (g.id)}
-      <details
-        class={['sec', !isOn(g) && 'is-off']}
-        data-section={g.id}
+      <Section
+        id={g.id}
+        key={keyOf(g.id)}
+        title={g.title}
+        name={g.name}
         open={isOpen(g.id)}
-        ontoggle={(e) => (opened[g.id] = e.currentTarget.open)}
+        off={!isOn(g)}
       >
-        <summary class="sec__bar">
-          <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-          {g.title}
+        {#snippet bar()}
           {#if !g.toggle}<span class="sec__count">{g.fields.length}</span>{/if}
           {#if g.index !== undefined}
             {@const last = homeSections(live.store).length - 1}
@@ -210,7 +212,7 @@
               onchange={(e) => setOn(g, e.currentTarget.checked)}
             />
           {/if}
-        </summary>
+        {/snippet}
 
         {#if g.grid}
           <div class="sec__opts">
@@ -252,7 +254,7 @@
             </p>
           {/if}
         {/each}
-      </details>
+      </Section>
     {:else}
       <p class="hint">No editable content here.</p>
     {/each}
@@ -262,77 +264,10 @@
 </section>
 
 <style lang="scss">
-  // content section groups: <details class="sec"> with the bar as its <summary>
-  .sec {
-    padding: 10px 0;
-    border-top: 1px solid var(--line);
-
-    > summary + :global(*) {
-      margin-top: 8px;
-    }
-
-    > :global(:not(summary)) {
-      margin-left: 2px;
-    }
-
-    > :global(:not(summary)) + :global(:not(summary)) {
-      margin-top: 12px;
-    }
-  }
-
-  // caret, title, then on the right: field count, move buttons and/or the on/off toggle
-  .sec__bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 26px;
-    cursor: pointer;
-    list-style: none;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--faint);
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-
-    &:hover {
-      color: #fff;
-    }
-
-    .sec__caret + * {
-      margin-left: auto;
-    }
-  }
-
-  // (size and display come from Font Awesome's .fa-solid)
-  .sec__caret {
-    color: var(--muted);
-    flex: none;
-    font-size: 10px;
-    transition: rotate 0.15s;
-
-    .sec[open] & {
-      rotate: 90deg;
-    }
-  }
-
   .sec__count {
     color: var(--faint);
     font-size: 10px;
     letter-spacing: 0;
-  }
-
-  .sec.is-off {
-    > summary {
-      color: var(--muted);
-    }
-
-    > :global(:not(summary)) {
-      opacity: 0.55;
-    }
   }
 
   // home section order (click only) and grid settings

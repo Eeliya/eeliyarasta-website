@@ -52,7 +52,7 @@ export function homeSections(store) {
 }
 
 const HERO = { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
-const TRANSITION = { id: 'transition', title: 'Page transition' };
+const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
 const PAGE_HEAD = { id: 'page-head', title: 'Page heading' };
 /** Page-file fields shown in the page heading (pages/<id>.json). */
 const HEADING = ['crumb', 'title', 'intro', 'cta'];

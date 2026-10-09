@@ -8,6 +8,7 @@
 -->
 <script>
   import Field from './Field.svelte';
+  import Section from './Section.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
@@ -34,8 +35,7 @@
 </script>
 
 <section class="ed-body">
-  <section class="grp">
-    <h4 class="grp__title">Site</h4>
+  <Section key="settings:site" title="Site" name="Name & meta">
     <p class="hint">
       Used on every page: page titles, meta tags and the footer. The preview shows them after Save.
     </p>
@@ -49,10 +49,9 @@
         onvalue={(value) => set(key, value)}
       />
     {/each}
-  </section>
+  </Section>
 
-  <section class="grp">
-    <h4 class="grp__title">Scrolling</h4>
+  <Section key="settings:scroll" title="Site" name="Scrolling">
     <label class={['tf', smoothChanged && 'is-changed']}>
       <span class="tf__label"
         >Smooth scroll<i class="dot" title="Changed"></i>
@@ -66,7 +65,7 @@
       </span>
     </label>
     <p class="hint small">Eased scrolling with mouse and trackpad. Off: the browser's own.</p>
-  </section>
+  </Section>
 
   {#if gsap}
     <CurtainSection {live} {bridge} {gsap} />

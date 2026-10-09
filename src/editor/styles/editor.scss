@@ -384,10 +384,15 @@ select {
 .grp__title {
   margin: 0 0 10px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--solid-faint);
+
+  strong {
+    display: block;
+    color: var(--accent);
+  }
 }
 
 .f {
