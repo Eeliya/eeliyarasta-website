@@ -1,6 +1,6 @@
 /**
- * Plain helpers for the Svelte Sources modal (trial). Same rules as the hand-built modal in
- * src/editor/ui/panel-text.js: which keys are fields, how a new item looks, slug format.
+ * Plain helpers for the Sources modal (SourcesModal.svelte): which keys of an item are
+ * fields, how a new item looks, the slug format.
  */
 
 const SKIP_KEYS = new Set(['slug', 'cover', 'image']);
@@ -32,16 +32,6 @@ export function itemFields(file, item, i) {
             : 'text';
       return { key, edit: `${file}#${ptr}`, ptr, type };
     });
-}
-
-/** Input text -> stored value (undefined = invalid, not stored). */
-export function parseValue(type, raw) {
-  if (type === 'number') {
-    const n = Number(raw);
-    return raw.trim() !== '' && Number.isFinite(n) ? n : undefined;
-  }
-  if (type === 'text') return raw.replace(/\s*\n\s*/g, ' ');
-  return raw;
 }
 
 /** An empty value shaped like `value` (strings "", lists [], numbers 0, year = this year). */

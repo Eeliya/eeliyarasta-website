@@ -963,41 +963,48 @@ select {
   }
 }
 
-// content section groups
+// content section groups: <details class="sec"> with the bar as its <summary>
 .sec {
   padding: 10px 0;
   border-top: 1px solid var(--line);
-  gap: 8px;
-  display: flex;
-  flex-direction: column;
 
-  &:first-child {
-    border-top: 0;
-    padding-top: 0;
+  > summary + * {
+    margin-top: 8px;
+  }
+
+  > :not(summary) {
+    margin-left: 2px;
+  }
+
+  > :not(summary) + :not(summary) {
+    margin-top: 12px;
   }
 }
 
+// caret, title, then on the right: field count, move buttons and/or the on/off toggle
 .sec__bar {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.sec__head {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  background: none;
-  padding: 4px 0;
+  min-height: 26px;
   cursor: pointer;
-  text-align: left;
-  color: var(--fg);
+  list-style: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
 
-  &:hover .sec__title {
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:hover {
     color: #fff;
+  }
+
+  .sec__caret + * {
+    margin-left: auto;
   }
 }
 
@@ -1009,32 +1016,20 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+  transition: rotate 0.15s;
 
-.sec__title {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-
-.sec__count {
-  margin-left: auto;
-  color: var(--faint);
-  font-size: 10px;
-}
-
-.sec__body {
-  display: grid;
-  gap: 12px;
-  padding-left: 2px;
-
-  &[hidden] {
-    display: none !important;
+  .sec[open] & {
+    rotate: 90deg;
   }
 }
 
+.sec__count {
+  color: var(--faint);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+// label > checkbox (drawn as a switch) + "On" / "Off"
 .sec__toggle {
   flex: none;
   display: inline-flex;
@@ -1044,74 +1039,52 @@ select {
   user-select: none;
   font-size: 10px;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--muted);
 
-  &.is-changed .sec__state {
+  &.is-changed {
     color: $hi;
   }
 }
 
+// the knob is a radial gradient that slides right when checked
 .sec__check {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.sec__switch {
+  appearance: none;
+  margin: 0;
   width: 28px;
   height: 16px;
   border-radius: 999px;
-  position: relative;
-  background: rgb(255 255 255 / 0.12);
+  cursor: pointer;
+  background: radial-gradient(circle, var(--muted) 5.5px, transparent 6.5px) 0 0 / 16px 16px
+    no-repeat rgb(255 255 255 / 0.12);
   box-shadow: inset 0 0 0 1px var(--line);
-  transition: background 0.2s;
+  transition:
+    background-position 0.2s,
+    background-color 0.2s;
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition:
-      transform 0.2s,
-      background 0.2s;
+  &:checked {
+    background-image: radial-gradient(circle, $hi 5.5px, transparent 6.5px);
+    background-position: 12px 0;
+    background-color: rgb(159 211 255 / 0.25);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1px $hi,
+      0 0 0 3px rgb(159 211 255 / 0.18);
   }
 }
 
-.sec__check:checked + .sec__switch {
-  background: rgb(159 211 255 / 0.25);
-}
+.sec.is-off {
+  > summary {
+    color: var(--muted);
+  }
 
-.sec__check:checked + .sec__switch::after {
-  transform: translateX(12px);
-  background: $hi;
+  > :not(summary) {
+    opacity: 0.55;
+  }
 }
-
-.sec__check:focus-visible + .sec__switch {
-  box-shadow:
-    inset 0 0 0 1px $hi,
-    0 0 0 3px rgb(159 211 255 / 0.18);
-}
-
-.sec.is-off .sec__title {
-  color: var(--muted);
-}
-
-.sec.is-off .sec__body {
-  opacity: 0.55;
-}
-
 // home section order (click only) and grid settings
-.sec__moves {
-  flex: none;
-  display: inline-flex;
-  gap: 2px;
-}
-
 .sec__move {
   width: 22px;
   height: 22px;
@@ -1138,6 +1111,11 @@ select {
   &:disabled {
     color: var(--faint);
     cursor: default;
+  }
+
+  // up and down sit 2px apart
+  & + & {
+    margin-left: -6px;
   }
 }
 
@@ -1226,10 +1204,20 @@ select {
   }
 }
 
+.src-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+// file name, changed dot, item count, edit button
 .src-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--fg);
 
   .dot {
     display: none;
@@ -1239,10 +1227,6 @@ select {
   &.is-changed .dot {
     display: inline-block;
   }
-}
-
-.src-row__name {
-  color: var(--fg);
 }
 
 .src-row__count {
@@ -1452,12 +1436,7 @@ dialog.src-modal {
   text-transform: uppercase;
   color: var(--fg);
 }
-// text panel
-.tlist {
-  display: grid;
-  gap: 12px;
-}
-
+// text fields (Field.svelte, also used by the curtain timeline)
 .tf {
   display: block;
   border-radius: 10px;

@@ -13,6 +13,10 @@ export function createLive(store) {
 
   return {
     store,
+    /** Read it to re-run after every store change (e.g. to re-read something outside the store). */
+    get version() {
+      return version;
+    },
     /** A copy of a file's edited value. A new object each time, so Svelte sees in-place edits. */
     current(file) {
       version;
@@ -22,6 +26,21 @@ export function createLive(store) {
     base(file) {
       version;
       return copy(store.base[file]);
+    },
+    /** One edited value, e.g. get('pages/home.json', '/hero/title'). Don't change it in place. */
+    get(file, ptr) {
+      version;
+      return store.get(file, ptr);
+    },
+    /** One last saved value. */
+    getBase(file, ptr) {
+      version;
+      return store.getBase(file, ptr);
+    },
+    /** Does the value at file#ptr differ from the saved one? */
+    changed(file, ptr) {
+      version;
+      return JSON.stringify(store.get(file, ptr)) !== JSON.stringify(store.getBase(file, ptr));
     },
     get canUndo() {
       version;

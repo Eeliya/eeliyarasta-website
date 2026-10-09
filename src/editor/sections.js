@@ -5,7 +5,7 @@
  * Every rendered section carries data-section="s<index>" and data-section-kind
  * ("intro", "projects", "grid:<source>"). On each change the preview's section elements
  * are matched to the list by kind, moved into list order, their data-edit pointers and
- * numbers (01), (02), … rewritten, and on/off + grid layout applied. A section whose kind
+ * numbers (01), (02), … rewritten, and on/off + grid layout applied (the hero's on/off too). A section whose kind
  * isn't on the page yet (e.g. a grid switched to another source) can't be shown until the
  * page is rendered again: it is reported as stale and the preview reloads after Save.
  */
@@ -31,6 +31,9 @@ export function syncHomeSections(doc, store) {
   const view = doc?.querySelector('[data-router-view]');
   const sections = store.current[HOME]?.sections;
   if (!view || view.dataset.page !== 'home' || !Array.isArray(sections)) return result;
+  // The hero is not in the list, it has its own on/off flag.
+  const heroOn = store.current[HOME]?.hero?.enabled !== false;
+  for (const el of doc.querySelectorAll('[data-section="hero"]')) el.hidden = !heroOn;
   const els = [...view.querySelectorAll('[data-section-kind]')];
   if (!els.length) return result;
 

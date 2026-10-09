@@ -1,29 +1,22 @@
 <!--
   Sources modal: edit one list from content/sources/ (people, places, projects, ...).
-  The items on the left, the selected item's fields on the right. ui/panel-text.js mounts
-  it and calls open() to show a file, an item or one field (after a click in the preview).
+  The items on the left, the selected item's fields on the right. ContentPanel.svelte calls
+  open() to show a file, an item or one field (after a click in the preview).
 -->
 <script>
   import { tick, flushSync } from 'svelte';
+  import Field from './Field.svelte';
+  import { ui } from './ui.svelte.js';
   import { baseName } from '../../site/files.js';
-  import {
-    itemName,
-    itemMeta,
-    pad,
-    slugify,
-    itemFields,
-    parseValue,
-    newItem,
-  } from './source-items.js';
+  import { itemName, itemMeta, pad, slugify, itemFields, newItem } from './source-items.js';
 
-  // live: reactive store (live.svelte.js). onclose / onlistchange: tell the Content panel.
-  let { live, bridge, onclose, onlistchange } = $props();
+  // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
+  let { live, bridge } = $props();
 
   let dialog = $state();
   let file = $state('');
   let selected = $state(0);
   let confirming = $state(false); // "Delete X?" is showing
-  let highlight = $state(null); // data-edit of the field picked in the preview
   let slugBad = $state(false);
 
   const list = $derived(live.current(file));
@@ -59,7 +52,6 @@
     const now = live.store.current[file];
     select(now.length);
     live.store.set(file, '', [...now, newItem(now)], { source: 'panel' });
-    onlistchange();
     await tick();
     dialog.querySelector('.tf__input:not([disabled])')?.focus();
   }
@@ -70,20 +62,12 @@
     select(Math.max(0, Math.min(at, now.length - 2)));
     const rest = now.filter((_, i) => i !== at);
     live.store.set(file, '', rest, { source: 'panel' });
-    onlistchange();
   }
 
   async function askDelete() {
     confirming = true;
     await tick();
     dialog.querySelector('.src-detail__confirm button')?.focus();
-  }
-
-  function onInput(f, e) {
-    const value = parseValue(f.type, e.currentTarget.value);
-    e.currentTarget.classList.toggle('is-invalid', value === undefined);
-    if (value !== undefined)
-      live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' });
   }
 
   function onSlug(e) {
@@ -94,25 +78,16 @@
       live.store.set(file, `/${at}/slug`, slug, { key: `slug:${file}#${at}`, source: 'panel' });
   }
 
-  /** Show a file, optionally at an item, optionally with one field focused + highlighted. */
-  export function open(nextFile, nextIndex, edit) {
-    if (nextFile !== file) {
-      file = nextFile;
-      select(0);
-    }
-    if (nextIndex !== undefined && nextIndex !== index) select(nextIndex);
-    highlight = edit ?? null;
+  /** Show a file, at its first item or at item nextIndex, optionally focusing one field. */
+  export function open(nextFile, nextIndex = 0, edit = null) {
+    file = nextFile;
+    select(nextIndex);
     flushSync(); // render now, so the field below exists
     if (!dialog.open) dialog.showModal();
     const field = edit && dialog.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
     if (!field) return;
     field.querySelector('.tf__input').focus({ preventScroll: true });
     field.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
-
-  /** The Content panel's selected field changed (e.g. a click elsewhere clears it). */
-  export function setSelected(edit) {
-    highlight = edit ?? null;
   }
 </script>
 
@@ -122,7 +97,6 @@
   class="modal__box src-modal"
   aria-label={baseName(file)}
   bind:this={dialog}
-  {onclose}
   onclick={(e) => e.target === dialog && dialog.close()}
 >
   <header class="src-modal__head">
@@ -225,29 +199,17 @@
       {/if}
 
       {#each fields as f (f.edit)}
-        <label
-          class={['tf', fieldChanged(f) && 'is-changed', highlight === f.edit && 'is-selected']}
-          data-edit={f.edit}
-        >
-          <span class="tf__label">{f.key}<i class="dot" title="Changed"></i></span>
-          {#if f.type === 'block'}
-            <textarea
-              class="tf__input"
-              rows={Math.min(8, Math.max(2, Math.ceil(String(item[f.key]).length / 42)))}
-              {@attach show(item[f.key])}
-              onfocus={() => bridge.focusEdit?.(f.edit)}
-              oninput={(e) => onInput(f, e)}></textarea>
-          {:else}
-            <input
-              class="tf__input"
-              type={f.type === 'number' ? 'number' : 'text'}
-              spellcheck={f.type !== 'number'}
-              {@attach show(item[f.key])}
-              onfocus={() => bridge.focusEdit?.(f.edit)}
-              oninput={(e) => onInput(f, e)}
-            />
-          {/if}
-        </label>
+        <Field
+          edit={f.edit}
+          label={f.key}
+          type={f.type}
+          value={item[f.key]}
+          changed={fieldChanged(f)}
+          selected={ui.selection?.edit === f.edit}
+          onfocus={() => bridge.focusEdit(f.edit)}
+          onvalue={(value) =>
+            live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' })}
+        />
       {/each}
     {/if}
   </section>

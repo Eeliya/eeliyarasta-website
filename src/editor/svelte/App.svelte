@@ -5,17 +5,17 @@
 -->
 <script>
   import PageMenu from './PageMenu.svelte';
+  import ContentPanel from './ContentPanel.svelte';
   import { ui } from './ui.svelte.js';
   import { MOD, plural } from '../lib/format.js';
 
-  // live: reactive store (live.svelte.js); actions: setMode, pickTarget, save, publish
-  let { live, actions } = $props();
+  // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
+  // actions: setMode, pickTarget, save, publish
+  let { live, bridge, actions } = $props();
 
-  // Filled by bind:this. main.js takes them through elements() for the parts that are not
-  // Svelte yet: the bridge drives the iframe, the tab panels render into the body.
-  let frame = $state();
+  // Browse and Motion are not Svelte yet: main.js renders them into this element.
   let body = $state();
-  export const elements = () => ({ frame, body });
+  export const panelBody = () => body;
 
   const TABS = [
     ['browse', 'Browse'],
@@ -34,7 +34,7 @@
 </script>
 
 <main class={['ed-stage', mobile && 'is-mobile']}>
-  <iframe class="ed-frame" title="Site preview" bind:this={frame}></iframe>
+  <iframe class="ed-frame" title="Site preview" {@attach bridge.attach}></iframe>
 </main>
 
 <aside class="ed-panel">
@@ -86,8 +86,11 @@
     </div>
   </header>
 
-  <!-- not Svelte yet: Browse, Content and Motion render into this (see main.js renderBody) -->
-  <section class="ed-body" bind:this={body}></section>
+  {#if ui.mode === 'text'}
+    <ContentPanel {live} {bridge} />
+  {/if}
+  <!-- not Svelte yet: Browse and Motion render into this (see main.js renderBody) -->
+  <section class="ed-body" hidden={ui.mode === 'text'} bind:this={body}></section>
 
   <footer class="ed-foot">
     <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>

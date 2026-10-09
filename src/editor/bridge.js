@@ -36,9 +36,13 @@ export const parseEdit = (attr) => {
   return { file: attr.slice(0, i), ptr: attr.slice(i + 1) };
 };
 
-export function createBridge({ iframe, store, labelFor }) {
+/**
+ * The preview iframe is attached later: App.svelte calls bridge.attach(iframe) when it renders.
+ */
+export function createBridge({ store, labelFor }) {
   const handlers = { connect: [], navigate: [], select: [], key: [], textFocus: [] };
   const emit = (name, ...args) => handlers[name].forEach((fn) => fn(...args));
+  let iframe = null;
   let api = null;
   let win = null;
   let doc = null;
@@ -67,6 +71,20 @@ export function createBridge({ iframe, store, labelFor }) {
       handlers[name].push(fn);
     },
     path: () => (win ? win.location.pathname : null),
+
+    /** Use `el` as the preview (an attachment: {@attach bridge.attach} in App.svelte). */
+    attach(el) {
+      iframe = el;
+      // A full navigation inside the frame to a non-site page (e.g. /edit/ itself): go home.
+      iframe.addEventListener('load', () => {
+        try {
+          const cw = iframe.contentWindow;
+          if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = '/';
+        } catch {
+          /* cross-origin or frame not ready */
+        }
+      });
+    },
 
     load(path) {
       iframe.src = path;
@@ -435,16 +453,6 @@ export function createBridge({ iframe, store, labelFor }) {
       emit('connect', api);
     },
   };
-
-  // A full navigation inside the frame to a non-site page (e.g. /edit/ itself): go home.
-  iframe.addEventListener('load', () => {
-    try {
-      const cw = iframe.contentWindow;
-      if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = '/';
-    } catch {
-      /* cross-origin or frame not ready */
-    }
-  });
 
   bridge.parsePtr = parse;
   return bridge;

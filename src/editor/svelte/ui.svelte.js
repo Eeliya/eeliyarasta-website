@@ -19,4 +19,13 @@ export const ui = $state({
   pages: [],
   /** What the Content tab edits: a page { kind: 'page', path, title } or a component. */
   target: { kind: 'page', path: '/', title: 'Home' },
+  /** Bumped when the preview shows a (new) page: the Content tab re-reads its texts. */
+  previewVersion: 0,
+  /**
+   * The text picked in the preview or in a field: { edit } (its data-edit), or null.
+   * A new object on every pick, so picking the same text again scrolls to it again.
+   */
+  selection: null,
+  /** Home sections (indexes) the preview can only show after Save (see sections.js). */
+  staleSections: [],
 });

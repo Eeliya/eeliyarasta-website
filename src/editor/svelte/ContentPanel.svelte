@@ -1,0 +1,290 @@
+<!--
+  Content tab: every editable text of the page in the preview (or of the Menu / Footer),
+  grouped by section (content-groups.js decides which texts and groups). Home sections can
+  be turned on/off and moved; grid sections pick their source list and layout. The Sources
+  section at the end opens the Sources modal.
+
+  Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
+  the preview, a field sets it (via the bridge) when it gets focus. This panel highlights
+  that field and scrolls to it.
+-->
+<script module>
+  // Open/closed per group id, once the user toggled it. Kept while switching tabs.
+  const opened = $state({});
+  // Groups that start open; home sections ("s0", "s1", ...) do too.
+  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'about', 'content', 'sources'];
+  const isOpen = (id) => opened[id] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
+</script>
+
+<script>
+  import { tick } from 'svelte';
+  import Field from './Field.svelte';
+  import SourcesModal from './SourcesModal.svelte';
+  import { ui } from './ui.svelte.js';
+  import {
+    contentGroups,
+    groupFor,
+    homeSections,
+    isSource,
+    previewPage,
+    splitEdit,
+  } from './content-groups.js';
+  import { parse } from '../lib/pointer.js';
+  import { plural } from '../lib/format.js';
+  import { HOME, baseName } from '../../site/files.js';
+
+  // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
+  let { live, bridge } = $props();
+
+  let panel = $state();
+  let sourcesModal = $state();
+
+  // The texts come from the preview's [data-edit] elements: re-read them after every edit
+  // (sections may have moved) and when the preview shows another page.
+  const groups = $derived.by(() => {
+    live.version;
+    ui.previewVersion;
+    return contentGroups(live.store, bridge, ui.target);
+  });
+  const waiting = $derived.by(() => {
+    ui.previewVersion;
+    return ui.target.kind === 'page' && !bridge.api;
+  });
+  // The lists in content/sources/, shown under the page's own groups.
+  const sources = $derived.by(() => {
+    live.version;
+    return ui.target.kind === 'page' ? Object.keys(live.store.current).filter(isSource).sort() : [];
+  });
+  const hint = $derived(
+    ui.target.kind === 'page'
+      ? 'Click any outlined text in the preview to edit it in place, or use the fields below. Turn a section Off to hide it on the public page.'
+      : ui.target.id === 'menu'
+        ? 'Editing Menu labels. Changes show in the header and mobile menu of the preview.'
+        : 'Editing Footer copy. Scroll the preview to the bottom to see changes.',
+  );
+
+  const isOn = (g) => !g.toggle || live.get(g.toggle.file, g.toggle.ptr) !== false;
+  // A missing flag counts as on.
+  const toggleChanged = (g) =>
+    (live.get(g.toggle.file, g.toggle.ptr) ?? true) !==
+    (live.getBase(g.toggle.file, g.toggle.ptr) ?? true);
+
+  function setOn(g, on) {
+    live.store.set(g.toggle.file, g.toggle.ptr, on, { key: `section:${g.id}`, source: 'panel' });
+  }
+
+  /** Swap home section `g` with its neighbour (dir -1 = up, 1 = down): one undo step. */
+  async function move(g, dir) {
+    const i = g.index;
+    const j = i + dir;
+    const list = [...homeSections(live.store)];
+    [list[i], list[j]] = [list[j], list[i]];
+    // Open/closed follows the section, not the position.
+    [opened[`s${i}`], opened[`s${j}`]] = [isOpen(`s${j}`), isOpen(`s${i}`)];
+    live.store.set(HOME, '/sections', list, { source: 'panel' });
+    // Keep the focus on the moved section's button (or its title at the top / bottom).
+    await tick();
+    const moved = panel.querySelector(`[data-section="s${j}"]`);
+    const button = moved.querySelector(`[data-dir="${dir < 0 ? 'up' : 'down'}"]`);
+    (button.disabled ? moved.querySelector('summary') : button).focus();
+  }
+
+  function setConfig(g, key, value) {
+    live.store.set(HOME, `/sections/${g.index}/config/${key}`, value, { source: 'panel' });
+  }
+
+  function setText(f, value) {
+    live.store.set(f.file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' });
+  }
+
+  /** Open the group holding `edit` and scroll to it; list items open the Sources modal. */
+  async function reveal(edit) {
+    await tick(); // not inside the effect below: the modal renders synchronously when opened
+    const group = groups.find((g) => g.fields.some((f) => f.edit === edit));
+    if (!group) {
+      const { file, ptr } = splitEdit(edit);
+      // A list item shown on the home page (a person's name): edit it in the modal.
+      if (groupFor(live.store, { file, ptr }, previewPage(bridge)).id.startsWith('source:'))
+        sourcesModal.open(file, Number(parse(ptr)[0]) || 0, edit);
+      return;
+    }
+    opened[group.id] = true;
+    await tick();
+    panel
+      .querySelector(`[data-edit="${CSS.escape(edit)}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  $effect(() => {
+    const edit = ui.selection?.edit;
+    if (edit) reveal(edit);
+  });
+</script>
+
+{#snippet editButton(file, compact = false)}
+  <button
+    type="button"
+    class={['src-edit', compact && 'src-edit--compact']}
+    title="Edit {baseName(file)}"
+    aria-label="Edit {baseName(file)}"
+    onclick={() => sourcesModal.open(file)}
+  >
+    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>{compact ? '' : ' Edit'}
+  </button>
+{/snippet}
+
+<!-- a grid setting: label (title + select), the Source one with an edit button beside it -->
+{#snippet option(g, key, title, value, options)}
+  {@const edit = key === 'source' && !g.grid.missing}
+  <div
+    class={[
+      'sec__opt',
+      live.changed(HOME, `/sections/${g.index}/config/${key}`) && 'is-changed',
+      edit && 'has-extra',
+    ]}
+  >
+    <label class="sec__opt-field">
+      <span class="tf__label">{title}<i class="dot" title="Changed"></i></span>
+      <select class="f__select" {value} onchange={(e) => setConfig(g, key, e.currentTarget.value)}>
+        {#each options as [v, text] (v)}
+          <option value={v}>{text}</option>
+        {/each}
+      </select>
+    </label>
+    {#if edit}{@render editButton(`sources/${value}.json`, true)}{/if}
+  </div>
+{/snippet}
+
+<section class="ed-body" bind:this={panel}>
+  {#if waiting}
+    <p class="hint">Waiting for the preview…</p>
+  {:else}
+    <p class="hint">{hint}</p>
+    {#each groups as g (g.id)}
+      <details
+        class={['sec', !isOn(g) && 'is-off']}
+        data-section={g.id}
+        open={isOpen(g.id)}
+        ontoggle={(e) => (opened[g.id] = e.currentTarget.open)}
+      >
+        <summary class="sec__bar">
+          <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
+          {g.title}
+          {#if !g.toggle}<span class="sec__count">{g.fields.length}</span>{/if}
+          {#if g.index !== undefined}
+            {@const last = homeSections(live.store).length - 1}
+            <button
+              type="button"
+              class="sec__move"
+              data-dir="up"
+              title="Move up"
+              aria-label="Move up: {g.title}"
+              disabled={g.index === 0}
+              onclick={() => move(g, -1)}
+            >
+              <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+            </button>
+            <button
+              type="button"
+              class="sec__move"
+              data-dir="down"
+              title="Move down"
+              aria-label="Move down: {g.title}"
+              disabled={g.index === last}
+              onclick={() => move(g, 1)}
+            >
+              <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+            </button>
+          {/if}
+          {#if g.toggle}
+            <label
+              class={['sec__toggle', toggleChanged(g) && 'is-changed']}
+              title={isOn(g) ? 'Section is visible' : 'Section is hidden on the public page'}
+            >
+              <input
+                type="checkbox"
+                class="sec__check"
+                aria-label="{g.title} visible"
+                checked={isOn(g)}
+                onchange={(e) => setOn(g, e.currentTarget.checked)}
+              />
+              {isOn(g) ? 'On' : 'Off'}
+            </label>
+          {/if}
+        </summary>
+
+        {#if g.grid}
+          <div class="sec__opts">
+            {@render option(
+              g,
+              'source',
+              'Source',
+              g.grid.source,
+              g.grid.sources.map((id) => [
+                id,
+                `${id}.json${id === g.grid.source && g.grid.missing ? ' (missing)' : ''}`,
+              ]),
+            )}
+            {@render option(g, 'layout', 'Layout', g.grid.layout, [
+              ['staggered', 'Staggered'],
+              ['even', 'Even'],
+            ])}
+            {#if ui.staleSections.includes(g.index)}
+              <p class="hint small sec__note">The preview shows this grid after Save.</p>
+            {/if}
+          </div>
+        {/if}
+
+        {#each g.fields as f (f.edit)}
+          <Field
+            {...f}
+            value={live.get(f.file, f.ptr)}
+            changed={live.changed(f.file, f.ptr)}
+            selected={ui.selection?.edit === f.edit}
+            onfocus={() => bridge.focusEdit(f.edit)}
+            onvalue={(value) => setText(f, value)}
+          />
+        {:else}
+          {#if !g.grid}
+            <p class="hint small">
+              {isOn(g)
+                ? 'No text fields in this section.'
+                : 'Section is off. Turn it on to show it on the page.'}
+            </p>
+          {/if}
+        {/each}
+      </details>
+    {:else}
+      <p class="hint">No editable content here.</p>
+    {/each}
+
+    {#if sources.length}
+      <details
+        class="sec"
+        data-section="sources"
+        open={isOpen('sources')}
+        ontoggle={(e) => (opened.sources = e.currentTarget.open)}
+      >
+        <summary class="sec__bar">
+          <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
+          Sources
+          <span class="sec__count">{sources.length}</span>
+        </summary>
+        <ul class="src-rows">
+          {#each sources as file (file)}
+            {@const list = live.current(file)}
+            <li class={['src-row', live.changed(file, '') && 'is-changed']}>
+              {baseName(file)}<i class="dot" title="Changed"></i>
+              <span class="src-row__count">
+                {Array.isArray(list) ? plural(list.length, 'item') : 'not a list'}
+              </span>
+              {#if Array.isArray(list)}{@render editButton(file)}{/if}
+            </li>
+          {/each}
+        </ul>
+      </details>
+    {/if}
+  {/if}
+
+  <SourcesModal bind:this={sourcesModal} {live} {bridge} />
+</section>

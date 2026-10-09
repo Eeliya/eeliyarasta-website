@@ -12,10 +12,10 @@
  * Both go through the dev server (scripts/editor-server.mjs). The editor only exists
  * under `npm run dev`.
  *
- * The shell (layout, tabs, toolbar, footer) is Svelte: svelte/App.svelte shows `ui`
- * (svelte/ui.svelte.js); this file holds the logic and changes `ui`. The tab
- * panels (Browse below, ui/panel-text.js, ui/panel-motion.js) are not Svelte yet: they
- * render into the panel body element of App.svelte.
+ * The shell (layout, tabs, toolbar, footer) and the Content tab are Svelte: svelte/App.svelte
+ * shows `ui` (svelte/ui.svelte.js); this file holds the logic and changes `ui`. Browse
+ * (below) and Motion (ui/panel-motion.js) are not Svelte yet: they render into the panel
+ * body element of App.svelte.
  */
 import './styles/editor.scss';
 import '@fortawesome/fontawesome-free/css/fontawesome.css';
@@ -27,7 +27,7 @@ import { createLive } from './svelte/live.svelte.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
-import { createTextPanel, labelFor } from './ui/panel-text.js';
+import { labelFor } from './svelte/content-groups.js';
 import { createMotionPanel } from './ui/panel-motion.js';
 import { h, clear } from './ui/dom.js';
 import { compile } from './lib/pointer.js';
@@ -38,18 +38,17 @@ import { syncHomeSections } from './sections.js';
 
 const store = createStore();
 const live = createLive(store);
-/** Home sections the preview can't show until it re-renders (see sections.js). */
-let staleSections = new Set();
+const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
 
 // ---------------------------------------------------------------- layout
 const root = document.getElementById('editor');
 root.textContent = '';
 const app = mount(App, {
   target: root,
-  props: { live, actions: { setMode, pickTarget, save, publish: publishDialog } },
+  props: { live, bridge, actions: { setMode, pickTarget, save, publish: publishDialog } },
 });
-flushSync(); // render now: the bridge and the panels below need the iframe and the body
-const { frame: iframe, body } = app.elements();
+flushSync(); // render now: the panels below need the body
+const body = app.panelBody();
 const toasts = h('div', { class: 'ed-toasts' });
 document.body.append(toasts);
 
@@ -103,16 +102,7 @@ async function refreshPublishStatus() {
   if (ui.mode === 'browse') renderOverview();
 }
 
-// ---------------------------------------------------------------- bridge + panels
-const bridge = createBridge({ iframe, store, labelFor: (p) => labelFor(store, p) });
-const textPanel = createTextPanel({
-  store,
-  live,
-  bridge,
-  root: body,
-  getTarget: () => ui.target,
-  getStaleSections: () => staleSections,
-});
+// ---------------------------------------------------------------- panels
 const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 function renderOverview() {
   const dirty = store.dirtyFiles();
@@ -274,10 +264,10 @@ function renderUnpublished() {
   );
 }
 
+/** Re-render the panel that is not Svelte yet (Content is Svelte and follows by itself). */
 function renderBody(force = true) {
-  if (ui.mode === 'text') textPanel.render();
-  else if (ui.mode === 'motion') motionPanel.refresh(force);
-  else renderOverview();
+  if (ui.mode === 'motion') motionPanel.refresh(force);
+  else if (ui.mode === 'browse') renderOverview();
 }
 
 function setMode(mode) {
@@ -290,6 +280,7 @@ function setMode(mode) {
 
 bridge.on('connect', () => {
   bridge.setMode(ui.mode);
+  ui.previewVersion++;
   renderBody();
 });
 /**
@@ -298,7 +289,7 @@ bridge.on('connect', () => {
  */
 function syncSections() {
   const r = syncHomeSections(bridge.doc, store);
-  staleSections = r.stale;
+  ui.staleSections = [...r.stale];
   if (r.moved) bridge.api?.ScrollTrigger?.refresh();
   return r.rewired;
 }
@@ -313,15 +304,15 @@ bridge.on('navigate', (path) => {
     ui.target = { kind: 'page', path, title: path === '/' ? 'Home' : path };
   }
   updatePages();
+  ui.previewVersion++;
   if (ui.mode === 'motion') motionPanel.select(null);
   else renderBody();
 });
 bridge.on('select', (sel) => {
   if (ui.mode === 'motion') motionPanel.select(sel);
-  else if (sel?.kind === 'text') textPanel.focusField(sel.el.dataset.edit);
-  else textPanel.focusField(null);
+  else ui.selection = sel?.kind === 'text' ? { edit: sel.el.dataset.edit } : null;
 });
-bridge.on('textFocus', (edit) => textPanel.focusField(edit));
+bridge.on('textFocus', (edit) => (ui.selection = { edit }));
 bridge.on('key', (e) => onKey(e));
 
 let animTimer = 0;
@@ -329,7 +320,6 @@ store.on(({ files, source: src }) => {
   if (src === 'saved') {
     // The source caught up with us: nothing changes in the preview.
     if (ui.mode === 'browse') renderOverview();
-    else if (ui.mode === 'text') textPanel.update();
     return;
   }
   const textChanged = files.some((f) => f !== ANIMATIONS);
@@ -345,10 +335,8 @@ store.on(({ files, source: src }) => {
     clearTimeout(animTimer);
     animTimer = setTimeout(() => bridge.updateAnimations(store.current[ANIMATIONS]), 180);
   }
-  if (ui.mode === 'text')
-    src === 'panel' || (src && src.nodeType === 1) ? textPanel.update() : textPanel.render();
-  else if (ui.mode === 'motion') motionPanel.refresh(src !== 'motion');
-  else renderOverview();
+  if (ui.mode === 'motion') motionPanel.refresh(src !== 'motion');
+  else if (ui.mode === 'browse') renderOverview();
   if (textChanged && src !== 'panel' && !(src && src.nodeType === 1)) updatePages();
 });
 
@@ -369,7 +357,7 @@ async function saveDev({ quiet = false } = {}) {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
     // A section the preview couldn't show yet (e.g. a grid with a new source): re-render it.
-    if ((listsChanged || staleSections.size) && bridge.path()) bridge.load(bridge.path());
+    if ((listsChanged || ui.staleSections.length) && bridge.path()) bridge.load(bridge.path());
     if (!quiet)
       toast(
         h(
