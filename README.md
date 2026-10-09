@@ -215,9 +215,12 @@ The **Sources** button opens the Source Explorer on the files in `content/source
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
 button, or a click on a person/place/project in the preview, opens straight into that item.
 
-**Refresh** keeps your place: the tab, open/closed sections, the selected field or Motion
-element, the Source Explorer and the scroll positions come back. They're kept per browser tab
-(sessionStorage, `src/editor/svelte/persist.js`); the page itself is in the URL (`?path=`).
+**Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
+Explorer item, so a shared link opens the same view:
+`/edit/?path=/people/&tab=content&source=people&item=noor-vermeer` (`tab`: browse, content,
+motion, settings; `view`: menu, footer). Open/closed sections, the selected field or Motion
+element and the scroll positions are kept per browser tab in sessionStorage. See
+`src/editor/svelte/persist.js`.
 
 | mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
