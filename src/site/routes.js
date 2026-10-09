@@ -34,7 +34,7 @@ function curtainEditOf(file, parts) {
 }
 
 /** Built-in views of pages named after them (src/site/templates/). */
-const NAMED_VIEWS = {
+export const NAMED_VIEWS = {
   home: 'home',
   photography: 'photography',
   people: 'people',
