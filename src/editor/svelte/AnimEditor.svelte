@@ -1,7 +1,7 @@
 <!--
   Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
   replay and scroll it, pick where edits go (this element, or every element with its
-  data-anim name), its animation, and its timing (Inherit / Custom per field, MotionGroups).
+  data-anim name), its animation, and its timing (a Custom switch per field, MotionGroups).
   What the animation does is shown read-only: it is edited in the Animations sub-tab
   (AnimLibrary.svelte). Older overrides of those values get a notice: move them into the
   animation, or drop them.

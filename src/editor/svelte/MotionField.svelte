@@ -1,6 +1,6 @@
 <!--
   One field of an animation: the label, actions at the end of its top row (given by
-  MotionGroups.svelte: badge, reset, Inherit / Custom, remove) and the control, or the value
+  MotionGroups.svelte: the Custom switch, remove) and the control, or the value
   as text where it can't be edited.
   Fields:
     number   range + number + unit

@@ -266,7 +266,7 @@ export const GROUPS = {
 
 /**
  * Timing: what an element, or every element with its data-anim name, can set for itself in the
- * element view, each field with an Inherit / Custom switch. A field is timing when the last key
+ * element view, each field with a Custom switch (off: inherit). A field is timing when the last key
  * of its path is here, so ['intro', 'duration'] (scatter) is timing and ['drift', 'minDuration']
  * is not. Every other value says what the animation does (start / end state, distances, ...):
  * read-only in the element view, edited in the Animations library only.
@@ -287,7 +287,7 @@ export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.pat
 
 /**
  * The picked element's animation. cfg: animations.json, sel: { id, key }.
- * spec: the merged values; layers: each scope's own values (for Inherit / Custom).
+ * spec: the merged values; layers: each scope's own values (for the Custom switches).
  */
 export function animModel(cfg, sel) {
   const target = cfg.targets[sel.id] || {};

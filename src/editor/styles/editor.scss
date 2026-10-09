@@ -481,13 +481,19 @@ select {
   opacity: 0.4;
 }
 
-// Inherit / Custom of a timing value, at the end of the top row
-.f__mode {
-  flex: none;
+// a timing value's Custom switch, at the end of the top row; off: a faint "inherit" before it
+.f__inherit,
+.f__top > .switch {
   margin-left: auto;
+}
 
-  .seg__btn {
-    padding: 4px 8px;
+.f__inherit {
+  color: var(--faint);
+  font-size: 10.5px;
+  line-height: 20px;
+
+  + .switch {
+    margin-left: 0;
   }
 }
 

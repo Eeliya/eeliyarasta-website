@@ -4,10 +4,10 @@
   Animations sub-tab (AnimLibrary.svelte, scope 'preset'): every value of the animation is
   editable; From / To can add and remove properties.
   Element view (AnimEditor.svelte, scope 'element' or 'target'): what the animation does is
-  read-only; timing fields (TIMING_KEYS in motion.js) each have an Inherit / Custom switch.
-  Inherit shows the field's control with the inherited value, dimmed and inert, and stores
-  nothing; Custom stores the value at the scope (switching copies the inherited value there,
-  Inherit removes it again).
+  read-only; timing fields (TIMING_KEYS in motion.js) each have a Custom switch. Off ("inherit"
+  before it): the field's control shows the inherited value, dimmed and inert, and nothing is
+  stored. On: the value is stored at the scope (switching on copies the inherited value there,
+  off removes it again).
     m      the model: animModel() or presetModel() (motion.js)
     scope  the layer edits go to: 'element' | 'target' | 'preset'
     ptr    that layer's pointer in animations.json (layerPtr)
@@ -91,7 +91,7 @@
       { source: 'motion-structure' },
     );
 
-  // ---- element view: Inherit / Custom
+  // ---- element view: the Custom switch (off = inherit)
   const inheritedValue = (def) => each(def, (p) => inherited(m, scope, p)[0]);
   const customValue = (def) =>
     each(def, (p) => dig(m.layers[scope], p) ?? inherited(m, scope, p)[0]);
@@ -144,20 +144,16 @@
           onvalue={setValue}
         >
           {#snippet actions()}
-            <div class="seg seg--small f__mode" role="group" aria-label="{def.label} value">
-              <button
-                type="button"
-                class={['seg__btn', !custom && 'is-active']}
-                title="Use the inherited value"
-                onclick={() => custom && setCustom(def, false)}>Inherit</button
-              >
-              <button
-                type="button"
-                class={['seg__btn', custom && 'is-active']}
-                title="Set an own value here"
-                onclick={() => !custom && setCustom(def, true)}>Custom</button
-              >
-            </div>
+            {#if !custom}<span class="f__inherit">inherit</span>{/if}
+            <input
+              type="checkbox"
+              role="switch"
+              class="switch"
+              aria-label="Custom {def.label}"
+              title={custom ? 'Own value (off: inherit)' : 'Inherited (on: own value)'}
+              checked={custom}
+              onchange={(e) => setCustom(def, e.currentTarget.checked)}
+            />
           {/snippet}
         </MotionField>
       {:else}
