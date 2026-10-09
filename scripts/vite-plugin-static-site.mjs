@@ -12,6 +12,12 @@
  * Visual editor (edit/index.html → src/editor) is DEV ONLY:
  *  dev   → /edit/ is served by Vite, and /__editor/* (scripts/editor-server.mjs, localhost
  *          only) loads, saves and publishes the content JSON files.
+ *
+ * Dev reloads: a change in content/, .generated/ or src/site/ sends the custom HMR event
+ * "site:changed" { files, content, external } instead of Vite's full reload, which every
+ * page would obey, the editor at /edit/ included. The editor reloads only its preview
+ * (src/editor/main.js); a plain site tab reloads itself (src/client/main.js). external is
+ * false for the editor's own saves. Code changes keep normal HMR.
  *  build → only index.html is bundled; no editor page, code or endpoints are emitted.
  */
 import fs from 'node:fs';
@@ -25,8 +31,13 @@ const RENDER_MODULE = '/src/site/render.js';
 const fill = (shell, { head, body }) =>
   shell.replace('<!--ssr-head-->', head).replace('<!--ssr-body-->', body);
 
+/** content/ and .generated/ files are data: they re-render pages, never hot-update modules. */
+const DATA = /^(content|\.generated)\//;
+
 export default function staticSite() {
   let config;
+  // Until then, content changes come from the editor's own Save (not "external").
+  let editorWriteUntil = 0;
   return {
     name: 'static-site',
     configResolved(c) {
@@ -35,15 +46,8 @@ export default function staticSite() {
 
     configureServer(server) {
       const root = config.root;
-      // Full reload when content or templates change (they are not part of the client graph).
+      // Content and media manifest changes re-render pages (see handleHotUpdate).
       server.watcher.add([path.join(root, 'content'), path.join(root, '.generated')]);
-      // Saves from the editor would otherwise reload the editor itself.
-      let quietUntil = 0;
-      server.watcher.on('change', (file) => {
-        if (Date.now() < quietUntil && /[\\/]content[\\/]/.test(file)) return;
-        if (/[\\/](content|src[\\/]site|\.generated)[\\/]/.test(file))
-          server.ws.send({ type: 'full-reload' });
-      });
 
       // Editor endpoints (dev only, localhost only).
       server.middlewares.use(
@@ -51,7 +55,7 @@ export default function staticSite() {
         editorMiddleware({
           root,
           logger: config.logger,
-          onWrite: () => (quietUntil = Date.now() + 2000),
+          onWrite: () => (editorWriteUntil = Date.now() + 2000),
         }),
       );
 
@@ -91,6 +95,22 @@ export default function staticSite() {
           next(err);
         }
       });
+    },
+
+    /** Content and templates changed: tell the pages (see the top of this file). */
+    handleHotUpdate({ file, server }) {
+      const rel = path.relative(config.root, file).split(path.sep).join('/');
+      const content = DATA.test(rel);
+      if (!content && !rel.startsWith('src/site/')) return;
+      const external = Date.now() >= editorWriteUntil;
+      server.ws.send({
+        type: 'custom',
+        event: 'site:changed',
+        data: { files: [rel], content, external },
+      });
+      // Client code imports animations.json: without this, Vite would full-reload every page.
+      // src/site modules keep Vite's own handling (the editor imports some of them).
+      if (content) return [];
     },
 
     async closeBundle() {

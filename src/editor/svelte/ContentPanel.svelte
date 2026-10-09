@@ -46,7 +46,7 @@
   });
   const waiting = $derived.by(() => {
     ui.previewVersion;
-    return ui.target.kind === 'page' && !bridge.api;
+    return ui.target.kind === 'page' && !bridge.doc;
   });
   const hint = $derived(
     ui.target.kind === 'page'

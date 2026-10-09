@@ -246,7 +246,11 @@ existing JSON files in `content/pages/`, `content/sources/` and `content/setting
 **Save and Publish**
 
 - **Save** (**Ctrl/⌘+S**) writes the changed files to `content/` on disk. That's a **draft**:
-  the preview (and Browse mode) shows it, and nothing leaves your machine.
+  the preview (and Browse mode) shows it, and nothing leaves your machine. Only the preview
+  reloads; the editor keeps its tab, scroll, open groups, selection and undo history.
+- **Edits outside the editor** (your IDE, a `git checkout`) are picked up too: the preview
+  reloads, and the editor takes the files on disk with your unsaved edits on top (a "Changed
+  on disk" note; undo history starts over for that change).
 - **Publish** commits **all saved content changes in one commit** and pushes it, so you can
   batch many edits into one publish. The dialog lists the changed files (status, number of
   changes, `+/-` lines) and any earlier commits on the branch that aren't pushed yet, and asks for a

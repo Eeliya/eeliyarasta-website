@@ -29,10 +29,10 @@ import { createLive } from './svelte/live.svelte.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
-import { labelFor, SITE_SETTINGS } from './svelte/content-groups.js';
+import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides } from '../site/routes.js';
-import { ANIMATIONS, HOME, SITE, contentFromFiles } from '../site/files.js';
+import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
 
 const store = createStore();
@@ -167,22 +167,13 @@ async function save({ quiet = false } = {}) {
   const dirty = store.dirtyFiles();
   if (!dirty.length) return true;
   if (ui.saving) return false;
-  // Items added to or deleted from a list only show in the preview once it re-renders.
-  const listsChanged = dirty.some(
-    (f) => Array.isArray(store.base[f]) && store.base[f].length !== store.current[f]?.length,
-  );
-  // Site settings (name, title, ...) are only in the rendered pages.
-  const settingsChanged = SITE_SETTINGS.some(
-    ([key]) => store.base[SITE]?.[key] !== store.current[SITE]?.[key],
-  );
   ui.saving = true;
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
-    // A section the preview couldn't show yet (e.g. a grid with a new source) or new site
-    // settings: re-render the page.
-    if ((listsChanged || settingsChanged || ui.staleSections.length) && bridge.path())
-      bridge.load(bridge.path());
+    // Re-render the preview from the saved files (new list items, site settings, a grid's new
+    // source...). Only the preview reloads, at the same scroll and selection; the editor stays.
+    if (bridge.path()) bridge.reload();
     if (!quiet) toast('Saved', { kind: 'ok', files: dirty, note: '(draft, not published)' });
     ui.status = `Saved ${plural(dirty.length, 'file')} · ${new Date().toLocaleTimeString()}`;
     return true;
@@ -194,6 +185,38 @@ async function save({ quiet = false } = {}) {
     refreshStatus();
   }
 }
+
+// ---------------------------------------------------------------- changes on disk
+/**
+ * The dev server reports content/, media and template changes as "site:changed"
+ * (scripts/vite-plugin-static-site.mjs) instead of reloading the editor. Our own saves
+ * already reloaded the preview. Anything else (the IDE, a git checkout, new media):
+ * content files on disk become the base with unsaved edits kept on top (store.rebase),
+ * then the preview reloads. A burst of changes is handled once.
+ */
+let diskTimer = 0;
+let diskContent = false;
+function onDiskChange({ content, external }) {
+  if (!external) return;
+  diskContent ||= content;
+  clearTimeout(diskTimer);
+  diskTimer = setTimeout(async () => {
+    const reloadStore = diskContent;
+    diskContent = false;
+    if (reloadStore) {
+      try {
+        const moved = store.rebase((await source.load()).files);
+        if (moved.length)
+          toast('Changed on disk', { files: moved, note: 'unsaved edits kept on top' });
+        refreshStatus();
+      } catch (err) {
+        toast(`Could not reload content: ${err.message}`, { kind: 'error' });
+      }
+    }
+    if (bridge.path()) bridge.reload();
+  }, 200);
+}
+import.meta.hot?.on('site:changed', onDiskChange);
 
 // ---------------------------------------------------------------- boot
 async function boot() {

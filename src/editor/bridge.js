@@ -53,6 +53,7 @@ export function createBridge({ store, labelFor }) {
   let raf = 0;
   let plaintext = true;
   let applied = new WeakMap(); // element -> value it currently shows
+  let restore = null; // after a reload(): puts scroll and selection back once mounted
 
   const bridge = {
     get api() {
@@ -88,6 +89,32 @@ export function createBridge({ store, labelFor }) {
 
     load(path) {
       iframe.src = path;
+    },
+    /** Reload the preview page (a fresh render from disk) at the same scroll and selection. */
+    reload() {
+      if (!api) {
+        iframe.src = iframe.src; // not connected yet: load it again
+        return;
+      }
+      const y = api.scrollTop();
+      const view = doc.querySelector('[data-router-view]');
+      const sel = selected && {
+        kind: selected.kind,
+        edit: selected.el.dataset.edit,
+        anim: [...view.querySelectorAll('[data-anim]')].indexOf(selected.el),
+      };
+      restore = () => {
+        api.scrollTop(y);
+        if (!sel) return;
+        const el = sel.edit
+          ? doc.querySelector(`[data-edit="${CSS.escape(sel.edit)}"]`)
+          : doc.querySelectorAll('[data-router-view] [data-anim]')[sel.anim];
+        if (el) bridge.select(el, sel.kind);
+      };
+      win.location.reload();
+      // The old page is going away: no calls into it until the new one connects. Its document
+      // stays readable meanwhile, so the panels keep their fields (no "waiting" flash).
+      api = win = null;
     },
     navigate(path) {
       if (api && win.location.pathname !== path) api.navigate(path);
@@ -447,6 +474,8 @@ export function createBridge({ store, labelFor }) {
         if (mode === 'text') setEditable(true);
         bridge.select(null);
         emit('navigate', win.location.pathname);
+        restore?.();
+        restore = null;
         loop();
       });
       attachListeners();
