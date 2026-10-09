@@ -21,7 +21,7 @@ export const CURTAIN_ROWS = [
   },
   { pair: '/labelIn', label: 'Text in (s)' },
   {
-    rel: '/hold',
+    rel: '/stay',
     label: 'Text stays (s)',
     hint: 'Gap between text-in and text-out on the timeline. Drag either facing edge, or set it here.',
   },
@@ -77,7 +77,7 @@ export function limits(field, plan) {
       return { min: tIn[1], max: Math.max(tIn[1], t - lo) };
     case 'labelOut/duration':
       return { min: 0, max: Math.max(0, t - tOut[0]) };
-    case 'hold':
+    case 'stay':
       return { min: 0, max: Math.max(0, t - lo - tIn[1]) };
     default:
       return { min: 0, max: TOTAL_MAX };
@@ -159,16 +159,16 @@ export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN) {
     pullInsideTotal(t);
   }
 
-  /** field: a path below the curtain, e.g. 'textDelay', 'labelIn/duration', 'hold', 'total'. */
+  /** field: a path below the curtain, e.g. 'textDelay', 'labelIn/duration', 'total', or 'stay'. */
   function setField(field, v) {
     const p = plan();
     if (field === 'total') return setTotal(v);
     // The leave end is pinned to total: changing the duration moves total.
     if (field === 'out/duration') return setTotal(p.curtainOut[0] + Math.max(0, v));
     // Stay is the gap between the text bars: only write textOutStart.
-    if (field === 'hold') {
-      const hold = clampTo('hold', v, p);
-      return set(base + '/textOutStart', clampTo('textOutStart', p.textIn[1] + hold, p));
+    if (field === 'stay') {
+      const stay = clampTo('stay', v, p);
+      return set(base + '/textOutStart', clampTo('textOutStart', p.textIn[1] + stay, p));
     }
     set(base + '/' + field, clampTo(field, v, p));
   }
@@ -216,12 +216,12 @@ export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN) {
     );
   }
 
-  /** The value a number field shows for `rel` ('/total', '/in/duration', '/hold', ...). */
+  /** The value a number field shows for `rel` ('/total', '/in/duration', '/stay', ...). */
   function shown(rel) {
     const p = plan();
     if (rel === '/total') return typeof get(TOTAL_PTR) === 'number' ? get(TOTAL_PTR) : p.total;
     if (rel === '/out/duration') return p.curtainOut[1] - p.curtainOut[0];
-    if (rel === '/hold') return p.stay;
+    if (rel === '/stay') return p.stay;
     return get(base + rel) ?? digRel(effective(), rel);
   }
 

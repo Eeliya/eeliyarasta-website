@@ -56,7 +56,8 @@
     live.version;
     return edit.shown(rel);
   };
-  const changed = (rel) => rel !== '/hold' && live.changed(edit.file, edit.base + rel);
+  // "stay" is not stored (it is the gap before textOutStart): never marked changed.
+  const changed = (rel) => rel !== '/stay' && live.changed(edit.file, edit.base + rel);
   const modeChanged = $derived.by(() => {
     live.version;
     return !!page && live.changed(page.file, page.ptr);

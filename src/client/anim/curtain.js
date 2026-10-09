@@ -7,15 +7,12 @@
  *   in            { duration, ease }  curtain comes in (closes)
  *   textDelay     absolute start of text-in (from t=0)
  *   labelIn       { duration, ease }  text comes in
- *   textOutStart  absolute start of text-out (missing => text-in end + legacy hold)
+ *   textOutStart  absolute start of text-out (missing => when text-in ends)
  *   labelOut      { duration, ease }  text leaves
- *   outStart      absolute start of curtain-out (missing => textGone + legacy afterText)
- *   total         timeline window (missing => outStart + out.duration)
- *   out           { ease, duration }  duration is always total - outStart (not a second source)
+ *   outStart      absolute start of curtain-out (missing => when the text is gone)
+ *   total         timeline window (missing => outStart + the default curtain-out duration)
+ *   out           { ease }  curtain leaves; its duration is total - outStart
  *   label         false hides the text on every page
- *
- * Legacy JSON may still carry hold / afterText / out.duration; normalize derives absolutes
- * from them and does not return those relative fields.
  *
  * Per page, a "transition" next to the page's curtain text (see src/site/routes.js):
  *   missing or { mode: 'global' }   the site-wide curtain above
@@ -42,9 +39,6 @@ export function curtainFor(transition, global) {
   if (mode === 'off') return null;
   return mode === 'custom' ? transition : global;
 }
-
-/** Only used when absolute fields are missing in old JSON. */
-const LEGACY = { hold: 0.12, afterText: -0.25 };
 
 const num = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 
@@ -81,17 +75,9 @@ export function normalizeCurtain(raw) {
   const textDelay = Math.max(0, num(c.textDelay, inn.duration));
   const textInEnd = textDelay + labelIn.duration;
 
-  let textOutStart = num(c.textOutStart, NaN);
-  if (!Number.isFinite(textOutStart)) {
-    textOutStart = Math.max(0, textInEnd + Math.max(0, num(c.hold, LEGACY.hold)));
-  } else {
-    textOutStart = Math.max(0, textOutStart);
-  }
+  const textOutStart = Math.max(0, num(c.textOutStart, textInEnd));
   const textGone = textOutStart + labelOut.duration;
-
-  let outStart = num(c.outStart, NaN);
-  if (!Number.isFinite(outStart)) outStart = textGone + num(c.afterText, LEGACY.afterText);
-  outStart = Math.max(0, outStart);
+  const outStart = Math.max(0, num(c.outStart, textGone));
 
   let total = num(c.total, NaN);
   if (!Number.isFinite(total)) total = outStart + outSeg.duration;
