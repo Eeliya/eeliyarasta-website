@@ -240,8 +240,9 @@ Motion tab lists the page's animated **Elements**; pick one and choose where its
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
 
 Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have an **Inherit /
-Custom** switch. Inherit shows the inherited value in muted text with where it comes from
-(`from fade-up`, `from all`, `from global`) and stores nothing; Custom stores the value at
+Custom** switch. Inherit shows the field's control with the inherited value, dimmed and
+inert (no clicks, no focus), and where it comes from (`from fade-up`, `from all`, `from
+global`); it stores nothing. Custom stores the value at
 the chosen scope, and switching back to Inherit removes it (one undo step). Everything else
 the animation does is read-only here.
 
