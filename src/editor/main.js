@@ -75,13 +75,14 @@ const pageMenu = createPageMenu({
     renderChrome();
   },
 });
-const vpIcon = faIcon('fa-desktop');
+// the icon shows the view a click switches to
+const vpIcon = faIcon('fa-mobile-screen-button');
 const vpBtn = h(
   'button',
   {
     type: 'button',
     class: 'icon-btn',
-    title: 'Toggle mobile viewport',
+    title: 'Switch to mobile view',
     onclick: () => toggleViewport(),
   },
   vpIcon,
@@ -431,8 +432,9 @@ function setMode(mode) {
 function toggleViewport() {
   state.viewport = state.viewport === 'desktop' ? 'mobile' : 'desktop';
   stage.classList.toggle('is-mobile', state.viewport === 'mobile');
-  vpIcon.className =
-    'fa-solid ' + (state.viewport === 'mobile' ? 'fa-mobile-screen-button' : 'fa-desktop');
+  const mobile = state.viewport === 'mobile';
+  vpIcon.className = 'fa-solid ' + (mobile ? 'fa-desktop' : 'fa-mobile-screen-button');
+  vpBtn.title = mobile ? 'Switch to desktop view' : 'Switch to mobile view';
 }
 
 bridge.on('connect', () => {
