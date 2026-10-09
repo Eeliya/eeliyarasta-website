@@ -17,8 +17,6 @@
 </script>
 
 <script>
-  import { baseName } from '../../site/files.js';
-
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
   // type: 'text' | 'words' | 'number' | 'block'. onvalue(value) gets every valid input.
   let {
@@ -53,7 +51,8 @@
 <label class={['tf', changed && 'is-changed', selected && 'is-selected']} data-edit={edit}>
   <span class="tf__label">
     {label}<i class="dot" title="Changed"></i>
-    {#if file}<span class="tf__file" title="content/{file}">{baseName(file)}</span>{/if}
+    <!-- folder included: pages/people.json and sources/people.json are different files -->
+    {#if file}<span class="tf__file" title="content/{file}">{file}</span>{/if}
   </span>
   {#if type === 'block'}
     <textarea

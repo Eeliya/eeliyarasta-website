@@ -4,7 +4,7 @@
  * ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { SITE, HOME, sourceIdOf } from '../../site/files.js';
+import { SITE, HOME, pageIdOf, sourceIdOf } from '../../site/files.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
@@ -52,6 +52,10 @@ export function homeSections(store) {
 }
 
 const HERO = { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
+const TRANSITION = { id: 'transition', title: 'Page transition' };
+const PAGE_HEAD = { id: 'page-head', title: 'Page heading' };
+/** Page-file fields shown in the page heading (pages/<id>.json). */
+const HEADING = ['crumb', 'title', 'intro', 'cta'];
 
 /** Group for home section `i`: id "s<i>", titled by its label, with its on/off toggle. */
 function sectionGroup(store, i) {
@@ -87,14 +91,18 @@ export function groupFor(store, { file, ptr }, page) {
     if (parts[0] === 'hero') return HERO;
     if (parts[0] === 'sections' && /^\d+$/.test(parts[1] || ''))
       return sectionGroup(store, Number(parts[1]));
-    if (parts[0] === 'curtain') return { id: 'transition', title: 'Page transition' };
+  }
+  const pageId = pageIdOf(file);
+  if (pageId !== null) {
+    if (parts[0] === 'curtain') return TRANSITION;
+    // Any other page: its heading, then the rest of its own copy (e.g. the About text).
+    if (file !== HOME)
+      return HEADING.includes(parts[0]) ? PAGE_HEAD : { id: 'page-body', title: titleCase(pageId) };
   }
   if (file === SITE) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
     if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
     if (parts[0] === 'social') return { id: 'social', title: 'Social links' };
-    if (parts[0] === 'about') return { id: 'about', title: 'About' };
-    if (parts[0] === 'pages') return { id: 'page-head', title: 'Page heading' };
     if (parts[0] === 'email' || parts[0] === 'location') return { id: 'footer', title: 'Footer' };
   }
   if (isSource(file) && /^\d+$/.test(parts[0])) {
@@ -184,7 +192,7 @@ export function contentGroups(store, bridge, target) {
   // The page transition text is an attribute of the page, not a [data-edit] element.
   const curtain = bridge.doc?.querySelector('[data-router-view]')?.dataset.curtainEdit;
   if (target.kind === 'page' && curtain) {
-    add({ id: 'transition', title: 'Page transition' }).fields.push({
+    add(TRANSITION).fields.push({
       edit: curtain,
       ...splitEdit(curtain),
       type: 'text',

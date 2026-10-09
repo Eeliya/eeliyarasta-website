@@ -20,6 +20,9 @@ export const SITE = settingsFile('site');
 export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
 
+/** "pages/about.json" -> "about" (null for files outside content/pages/). */
+export const pageIdOf = (file) => /^pages\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
+
 /** "sources/people.json" -> "people" (null for files outside content/sources/). */
 export const sourceIdOf = (file) => /^sources\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
 

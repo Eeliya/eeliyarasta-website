@@ -52,10 +52,10 @@ function pushCurtains() {
   bridge.api?.setPageCurtains?.(curtainOverrides(getRoutes(contentFromFiles(store.current))));
 }
 
-/** The page menu: every page of the site, then the Menu and Footer components. */
+/** The page menu: every page of the site (404 included: it has its own file), then Menu and Footer. */
 function updatePages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
-  const routes = getRoutes(contentFromFiles(store.current)).filter((r) => r.page !== 'notFound');
+  const routes = getRoutes(contentFromFiles(store.current));
   ui.pages = [
     ...routes.map((r) => ({ kind: 'page', path: r.path, title: r.title.split('|')[0].trim() })),
     { kind: 'component', id: 'menu', title: 'Menu' },

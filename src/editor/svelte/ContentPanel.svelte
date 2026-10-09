@@ -12,7 +12,7 @@
   // Open/closed per group id, once the user toggled it. Kept while switching tabs.
   const opened = $state({});
   // Groups that start open; home sections ("s0", "s1", ...) do too.
-  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'about', 'content'];
+  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'page-body', 'content'];
   const isOpen = (id) => opened[id] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
 </script>
 
