@@ -1,6 +1,7 @@
 <!--
   Settings tab: what is the same on every page. The site's name, title and meta
-  (settings/site.json) and the global page-transition curtain (settings/animations.json).
+  (settings/site.json), the global page-transition curtain and the page fade
+  (settings/animations.json).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). Menu and Footer copy stays in Content: it is
   text you click in the preview.
@@ -8,6 +9,7 @@
 <script>
   import Field from './Field.svelte';
   import CurtainSection from './CurtainSection.svelte';
+  import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SITE_SETTINGS } from './content-groups.js';
   import { SITE } from '../../site/files.js';
@@ -46,6 +48,7 @@
 
   {#if gsap}
     <CurtainSection {live} {bridge} {gsap} />
+    <PageFadeSection {live} {gsap} />
   {:else}
     <p class="hint">Waiting for the preview…</p>
   {/if}

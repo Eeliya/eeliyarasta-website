@@ -147,8 +147,11 @@
 
     {#if mode === 'off'}
       <p class="hint small">
-        No curtain when you navigate to this page: it fades in instead. Leaving it plays the curtain
-        of the page you go to.
+        No curtain when you navigate to this page: it fades in instead (<button
+          type="button"
+          class="link"
+          onclick={onsettings}>Page fade in Settings</button
+        >). Leaving it plays the curtain of the page you go to.
       </p>
     {:else if mode === 'global'}
       <p class="hint small">
