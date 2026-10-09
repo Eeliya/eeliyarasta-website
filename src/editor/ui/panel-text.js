@@ -210,9 +210,9 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       h(
         'label',
         { class: 'tf__label' },
-        h('span', { class: 'tf__file' }, file.replace('.json', '')),
         short,
         h('i', { class: 'dot', title: 'Changed' }),
+        h('span', { class: 'tf__file' }, file),
       ),
       input,
     );
@@ -249,9 +249,9 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       h(
         'label',
         { class: 'tf__label' },
-        h('span', { class: 'tf__file' }, file.replace('.json', '')),
         'Curtain text',
         h('i', { class: 'dot', title: 'Changed' }),
+        h('span', { class: 'tf__file' }, file),
       ),
       labelInput,
     );
