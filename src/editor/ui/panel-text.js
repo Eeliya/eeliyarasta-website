@@ -369,7 +369,6 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
         title: `Edit ${baseName(file)}`,
         'aria-label': `Edit ${baseName(file)}`,
         onclick: (e) => {
-          e.preventDefault();
           e.stopPropagation();
           openSource(file);
         },
@@ -723,24 +722,30 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     const changed = (key) =>
       JSON.stringify(store.get(HOME, `/sections/${i}/config/${key}`)) !==
       JSON.stringify(store.getBase(HOME, `/sections/${i}/config/${key}`));
+    // div > label (title + select, implicit association) + optional edit button beside the label
     const select = (key, label, value, options, extra = null) =>
       h(
-        'label',
-        { class: ['sec__opt', changed(key) && 'is-changed'] },
-        h('span', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' }), extra),
+        'div',
+        { class: ['sec__opt', changed(key) && 'is-changed', extra && 'has-extra'] },
         h(
-          'select',
-          {
-            class: 'f__select',
-            onchange: (e) => {
-              store.set(HOME, `/sections/${i}/config/${key}`, e.target.value, {
-                source: 'panel',
-              });
-              render();
+          'label',
+          { class: 'sec__opt-field' },
+          h('span', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' })),
+          h(
+            'select',
+            {
+              class: 'f__select',
+              onchange: (e) => {
+                store.set(HOME, `/sections/${i}/config/${key}`, e.target.value, {
+                  source: 'panel',
+                });
+                render();
+              },
             },
-          },
-          options.map(([v, text]) => h('option', { value: v, selected: v === value }, text)),
+            options.map(([v, text]) => h('option', { value: v, selected: v === value }, text)),
+          ),
         ),
+        extra,
       );
     const missing = !Object.keys(store.current).includes(`sources/${source}.json`);
     return h(

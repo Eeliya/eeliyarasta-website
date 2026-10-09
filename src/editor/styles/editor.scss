@@ -1155,9 +1155,22 @@ select {
 }
 
 .sec__opt {
-  display: block;
+  position: relative;
   min-width: 0;
   padding: 2px;
+
+  // the edit button sits beside the label, drawn at the right of the title row
+  > .src-edit {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    height: 22px;
+    margin: 0;
+  }
+
+  &.has-extra .tf__label {
+    padding-right: 28px;
+  }
 
   .dot {
     display: none;
@@ -1171,6 +1184,10 @@ select {
 .sec__note {
   grid-column: 1 / -1;
   margin: 0;
+}
+
+.sec__opt-field {
+  display: block;
 }
 
 // sources: list in the Content panel + edit modal
