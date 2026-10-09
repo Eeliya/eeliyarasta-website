@@ -27,6 +27,7 @@ import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
 import { PHOTOS, isContentFile } from '../src/site/files.js';
 import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
+import { walkJson } from './content.mjs';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -34,13 +35,10 @@ const CONTENT_DIR = editorConfig.contentDir;
 export function editableFiles(root) {
   const files = [];
   for (const folder of editorConfig.folders) {
-    const dir = path.join(root, CONTENT_DIR, folder);
-    if (!fs.existsSync(dir)) continue;
-    for (const name of fs.readdirSync(dir).sort()) {
+    for (const name of walkJson(path.join(root, CONTENT_DIR, folder))) {
       const file = `${folder}/${name}`;
       // photos.json belongs to the upload, not to the editor's edits
-      if (isContentFile(file) && file !== PHOTOS && fs.statSync(path.join(dir, name)).isFile())
-        files.push(file);
+      if (isContentFile(file) && file !== PHOTOS) files.push(file);
     }
   }
   return new Set(files);
@@ -177,7 +175,7 @@ export async function contentStatus(root) {
   const branch = branchR.stdout.trim();
   const prefix = prefixR.stdout.trim();
   // Every JSON file in the editable folders, including deleted or new ones.
-  const rel = editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/*.json`);
+  const rel = editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/**/*.json`);
 
   const st = await git(root, [
     'status',

@@ -23,8 +23,8 @@ export function album(ctx, route) {
 
   return html` <section class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
-      <a class="album__back label" href="/${route.kind}/"
-        ><span aria-hidden="true">←</span> ${esc(route.section)}</a
+      <a class="album__back label" href="${esc(route.parent)}"
+        ><span aria-hidden="true">←</span> <span${ed(route.template, ['section'])}>${esc(route.section)}</span></a
       >
       <h1 class="album__title" data-anim="album.title" ${at('name')}>${esc(a.name)}</h1>
       <div class="album__details" data-anim="album.meta">
@@ -121,8 +121,8 @@ export function album(ctx, route) {
             >
           </button>`,
       )}
-      <a class="album__nextlink" href="/${route.kind}/${route.next.slug}/">
-        <span class="label">Next ${isPeople ? 'person' : 'place'}</span>
+      <a class="album__nextlink" href="${esc(route.nextPath)}">
+        <span class="label"${ed(route.template, ['next'])}>${esc(route.nextLabel)}</span>
         <span class="album__nextname"
           >${esc(route.next.name)} <span aria-hidden="true">→</span></span
         >

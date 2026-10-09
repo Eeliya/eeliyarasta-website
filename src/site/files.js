@@ -2,8 +2,9 @@
  * Content files, by kind. Each kind has its own folder under content/, so a name
  * never means two things (a page called "site" and the site settings can coexist):
  *
- *   content/pages/<id>.json     one file per page: heading, copy, curtain text and transition
- *                               (home, photography, people, places, projects, about, 404)
+ *   content/pages/<id>.json     one file per page: heading, copy, curtain text and transition.
+ *                               Folders mirror URLs (pages/people/[slug].json is a template
+ *                               page for every item of a source, see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/settings/<id>.json  site-wide settings (site.json, animations.json), and photos.json:
  *                               the sizes of photos uploaded to R2, written by the upload (not
@@ -23,15 +24,30 @@ export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
 export const PHOTOS = settingsFile('photos');
 
-/** "pages/about.json" -> "about" (null for files outside content/pages/). */
-export const pageIdOf = (file) => /^pages\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
+/** "pages/about.json" -> "about", "pages/people/[slug].json" -> "people/[slug]" (null outside content/pages/). */
+export const pageIdOf = (file) => /^pages\/(.+)\.json$/.exec(file || '')?.[1] ?? null;
+
+/** A URL segment and file name: lowercase letters, digits and dashes ("noor-vermeer"). */
+export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const isSlug = (s) => SLUG.test(String(s ?? ''));
+
+/** The file name of a template page: pages/people/[slug].json. */
+export const TEMPLATE = '[slug]';
 
 /** "sources/people.json" -> "people" (null for files outside content/sources/). */
 export const sourceIdOf = (file) => /^sources\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
 
-/** Editable content file name: <folder>/<name>.json, nothing else. */
-export const isContentFile = (file) =>
-  new RegExp(`^(${FOLDERS.join('|')})/[a-z0-9][a-z0-9_-]*\\.json$`, 'i').test(file || '');
+const NAME = '[a-z0-9][a-z0-9_-]*';
+const CONTENT_FILE = new RegExp(
+  `^(?:(?:${FOLDERS.join('|')})/${NAME}|pages/(?:${NAME}/)+(?:${NAME}|\\[slug\\]))\\.json$`,
+  'i',
+);
+
+/**
+ * Editable content file name: <folder>/<name>.json, and under pages/ also nested folders
+ * and [slug].json templates (pages/people/[slug].json). Nothing else.
+ */
+export const isContentFile = (file) => CONTENT_FILE.test(file || '');
 
 /** File name without its folder, for compact labels: "pages/home.json" -> "home.json". */
 export const baseName = (file) => String(file || '').replace(/^.*\//, '');

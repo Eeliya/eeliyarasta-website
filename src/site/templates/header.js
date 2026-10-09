@@ -1,4 +1,15 @@
-import { html, esc, img, pad, extAttrs, isExternal, ed, coverOf, imagesOf } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  extAttrs,
+  isExternal,
+  ed,
+  coverOf,
+  imagesOf,
+  itemHref,
+} from '../helpers.js';
 import { SITE } from '../files.js';
 
 const caret =
@@ -9,7 +20,7 @@ const albumLinks = (ctx, kind, list) =>
   list.map(
     (a) =>
       html` <li>
-        <a class="dd-link" href="/${kind}/${a.slug}/">
+        <a class="dd-link" href="${esc(itemHref(ctx, kind, a))}">
           <span class="dd-link__thumb"
             >${coverOf(a) ? img(ctx, coverOf(a).src, { alt: '', sizes: '48px' }) : ''}</span
           >
@@ -92,8 +103,8 @@ export function mobileMenu(ctx) {
         <div class="mmenu__group" data-mm-item>
           <a class="mmenu__big" href="/photography/" data-nav="/photography/"><span${ed(SITE, ['nav', 'photography'])}>${esc(n('photography', 'Photography'))}</span></a>
           <div class="mmenu__sub">
-            <div><a class="mmenu__head" href="/people/"><span${ed(SITE, ['nav', 'people'])}>${esc(n('people', 'People'))}</span></a>${people.map((p) => html`<a href="/people/${p.slug}/">${esc(p.name)}</a>`)}</div>
-            <div><a class="mmenu__head" href="/places/"><span${ed(SITE, ['nav', 'places'])}>${esc(n('places', 'Places'))}</span></a>${places.map((p) => html`<a href="/places/${p.slug}/">${esc(p.name)}</a>`)}</div>
+            <div><a class="mmenu__head" href="/people/"><span${ed(SITE, ['nav', 'people'])}>${esc(n('people', 'People'))}</span></a>${people.map((p) => html`<a href="${esc(itemHref(ctx, 'people', p))}">${esc(p.name)}</a>`)}</div>
+            <div><a class="mmenu__head" href="/places/"><span${ed(SITE, ['nav', 'places'])}>${esc(n('places', 'Places'))}</span></a>${places.map((p) => html`<a href="${esc(itemHref(ctx, 'places', p))}">${esc(p.name)}</a>`)}</div>
           </div>
         </div>
         <div class="mmenu__group" data-mm-item>

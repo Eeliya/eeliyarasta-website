@@ -1,1 +1,8 @@
-{ "crumb": "Error 404", "title": "Lost frame", "intro": "This page doesn't exist (yet).", "cta": "Back home", "curtain": "Not found" }
+{
+  "crumb": "Error 404",
+  "title": "Lost frame",
+  "intro": "This page doesn't exist (yet).",
+  "cta": "Back home",
+  "curtain": "Not found",
+  "meta": { "title": "Not found", "description": "Page not found." }
+}

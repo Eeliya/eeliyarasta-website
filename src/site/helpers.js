@@ -54,6 +54,34 @@ export const pointer = (parts) =>
 export const ed = (file, parts, type = 'text') =>
   ` data-edit="${esc(file + '#' + pointer(parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`;
 
+/** "Noor Vermeer" -> "noor-vermeer". */
+export const slugify = (text) =>
+  String(text ?? '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+/** URL slug of a source item: its "slug" field, else its name (or title) slugified. */
+export const itemSlug = (item) =>
+  item?.slug != null && item.slug !== ''
+    ? String(item.slug)
+    : slugify(item?.name ?? item?.title ?? '');
+
+/**
+ * URL of a source item's page, from the routes (ctx.routes): the template route of its
+ * source (content/pages/<folder>/[slug].json) or the fixed page that replaced it.
+ * itemHref(ctx, 'people', item) -> "/people/noor-vermeer/"; "#" (and a warning) when no
+ * template shows that source.
+ */
+export const itemHref = (ctx, source, item) => {
+  const tpl = (ctx.routes || []).find((r) => r.source === source && r.template);
+  if (tpl) return `${tpl.parent}${itemSlug(item)}/`;
+  warnOnce(`no [slug].json page shows source "${source}": its links go nowhere`, 'routes');
+  return '#';
+};
+
 /** Zero-padded index: pad(3) -> "03". */
 export const pad = (n, len = 2) => String(n).padStart(len, '0');
 
@@ -84,10 +112,10 @@ export function mediaUrl(ctx, src = '') {
 
 const warned = new Set();
 /** Warn once per message (templates render every page, and again on every dev request). */
-function warnOnce(msg) {
+function warnOnce(msg, tag = 'photos') {
   if (warned.has(msg)) return;
   warned.add(msg);
-  console.warn(`[photos] ${msg}`);
+  console.warn(`[${tag}] ${msg}`);
 }
 
 /**

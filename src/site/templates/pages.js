@@ -81,4 +81,7 @@ export const notFound = (ctx) =>
     after: html`<a class="btn glass" href="/"><span${ed(NOT_FOUND, ['cta'])}>${esc(ctx.pages['404'].cta)}</span> <span aria-hidden="true">→</span></a>`,
   });
 
+/** A page without a view of its own (content/pages/<any>.json): its heading. */
+export const page = (ctx, route) => pageHead(ctx, route.id);
+
 export { creditText };

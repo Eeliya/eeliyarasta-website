@@ -1,4 +1,15 @@
-import { html, esc, img, pad, extAttrs, coverOf, imagesOf, ed, lines } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  extAttrs,
+  coverOf,
+  imagesOf,
+  ed,
+  lines,
+  itemHref,
+} from '../helpers.js';
 import { HOME, pageFile, sourceFile } from '../files.js';
 
 const PROJECTS = sourceFile('projects');
@@ -26,7 +37,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
     : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
   return html` <a
     class="acard ${landscape ? 'acard--landscape' : ''}"
-    href="/${kind}/${album.slug}/"
+    href="${esc(itemHref(ctx, kind, album))}"
     data-anim-item
     data-card-cycle
   >

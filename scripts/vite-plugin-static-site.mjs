@@ -27,6 +27,7 @@ import { pathToFileURL } from 'node:url';
 import { loadEnv } from 'vite';
 import { loadContent } from './content.mjs';
 import { editorMiddleware } from './editor-server.mjs';
+import { pageFile } from '../src/site/files.js';
 
 const RENDER_MODULE = '/src/site/render.js';
 
@@ -124,11 +125,12 @@ export default function staticSite() {
       const shellFile = path.join(outDir, 'index.html');
       if (!fs.existsSync(shellFile)) return;
       const shell = fs.readFileSync(shellFile, 'utf8');
-      const { getRoutes, renderRoute } = await import(
+      const { buildRoutes, renderRoute } = await import(
         pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`
       );
       const content = loadContent(root);
-      const routes = getRoutes(content);
+      const { routes, warnings } = buildRoutes(content);
+      for (const w of warnings) config.logger.warn(`\x1b[33m[routes]\x1b[0m ${w}`);
 
       for (const route of routes) {
         const rel = route.out || path.join(route.path, 'index.html');
@@ -152,7 +154,8 @@ export default function staticSite() {
       fs.rmSync(path.join(outDir, 'edit'), { recursive: true, force: true });
       fs.rmSync(path.join(outDir, '404'), { recursive: true, force: true });
       config.logger.info(
-        `\x1b[32m✓\x1b[0m prerendered ${routes.length} routes into ${path.relative(root, outDir)}/`,
+        `\x1b[32m✓\x1b[0m prerendered ${routes.length} routes into ${path.relative(root, outDir)}/\n` +
+          routes.map((r) => `  ${r.path.padEnd(28)} ${r.template || pageFile(r.id)}`).join('\n'),
       );
     },
   };
