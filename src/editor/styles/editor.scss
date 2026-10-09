@@ -15,6 +15,10 @@ body {
   height: 100%;
   background: #030303;
   color: var(--fg);
+  // Opaque text tokens — alpha fills are expensive to paint in the editor.
+  // Composited from rgb(242 239 233 / a) over #030303.
+  --muted: #868582; // was / 0.55
+  --faint: #4f4f4d; // was / 0.32
 }
 body {
   font: 400 12px/1.5 var(--f-mono);
@@ -1346,7 +1350,7 @@ select {
   line-height: 1;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
-  color: rgb(0 0 0 / 0.72);
+  color: #2b2b2b; // was rgb(0 0 0 / 0.72) on move bar
   pointer-events: none;
   white-space: nowrap;
   user-select: none;
@@ -1358,10 +1362,10 @@ select {
 }
 .ptl__bar.is-hold .ptl__len,
 .ptl__bar.is-text.is-hold .ptl__len {
-  color: rgb(255 255 255 / 0.72);
+  color: #c1c1c1; // was rgb(255 255 255 / 0.72) on #212121
 }
 .ptl__bar.is-text.is-move .ptl__len {
-  color: rgb(0 0 0 / 0.75);
+  color: #283540; // was rgb(0 0 0 / 0.75) on $hi
 }
 // Stay length centered in the empty gap between text-in and text-out.
 .ptl__gap {
@@ -1375,7 +1379,7 @@ select {
   pointer-events: none;
   box-sizing: border-box;
   .ptl__len {
-    color: rgb(255 255 255 / 0.72);
+    color: #c1c1c1; // was rgb(255 255 255 / 0.72) on #212121
   }
 }
 .ptl__bar.is-move {
