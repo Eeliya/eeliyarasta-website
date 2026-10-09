@@ -83,11 +83,13 @@ kbd {
   place-items: center;
 }
 
-.ed-frame-wrap {
+// the preview iframe
+.ed-frame {
+  display: block;
   width: 100%;
   height: 100%;
+  border: 0;
   border-radius: 14px;
-  overflow: hidden;
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.08),
     0 30px 80px -30px rgb(0 0 0 / 0.9);
@@ -97,17 +99,10 @@ kbd {
   background: var(--bg);
 }
 
-.ed-stage.is-mobile .ed-frame-wrap {
+.ed-stage.is-mobile .ed-frame {
   width: 390px;
   height: min(844px, 100%);
   border-radius: 28px;
-}
-
-.ed-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
 }
 
 // ------------------------------------------------------------ panel
@@ -136,36 +131,30 @@ kbd {
   border-bottom: 1px solid var(--line);
 }
 
+// "Editor" + the source pill (h1 > small)
 .ed-brand {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-}
-
-.ed-logo {
+  margin: 0;
   font-family: var(--f-display);
   font-size: 22px;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.01em;
 }
 
 .ed-source {
+  font-family: var(--f-mono);
   font-size: 10px;
+  line-height: 1.5;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: #b9f0c4;
   padding: 4px 8px;
   border-radius: 999px;
   box-shadow: inset 0 0 0 1px var(--line);
-
-  &[data-kind='dev'] {
-    color: #b9f0c4;
-  }
-
-  &[data-kind='github'] {
-    color: $hi;
-  }
 }
 
 .ed-bar {
@@ -543,21 +532,23 @@ select {
   vertical-align: middle;
 }
 
+// pending line and status on their own rows, then [ empty | Save | Publish ]
 .ed-foot {
   border-top: 1px solid var(--line);
   padding: 10px 16px 14px;
   display: grid;
-  gap: 8px;
-}
-
-.ed-foot__row {
-  display: flex;
-  justify-content: flex-end;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 8px;
 }
 
+.ed-foot > .btn-ghost {
+  grid-column: 2;
+}
+
 .ed-pending {
+  grid-column: 1 / -1;
+  margin: 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -586,6 +577,8 @@ select {
 }
 
 .ed-status {
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--faint);
   font-size: 10.5px;
   min-height: 1.5em;

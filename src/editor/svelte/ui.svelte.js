@@ -1,0 +1,22 @@
+/**
+ * Editor UI state. main.js changes it, the Svelte shell (App.svelte) shows it: it is a
+ * $state object, so a change re-renders whatever uses that field.
+ */
+export const ui = $state({
+  /** 'browse' | 'text' (the Content tab) | 'motion' */
+  mode: 'browse',
+  /** The edit tab Ctrl+E goes back to. */
+  lastEdit: 'text',
+  /** 'desktop' | 'mobile' preview size */
+  viewport: 'desktop',
+  saving: false,
+  publishing: false,
+  /** Last /__editor/status: saved files not published yet ({ files, ahead, branch, ... }). */
+  pub: null,
+  /** Footer status line, e.g. "Saved 2 files · 12:40:03". */
+  status: '',
+  /** Page menu items: every page, then the Menu and Footer components. */
+  pages: [],
+  /** What the Content tab edits: a page { kind: 'page', path, title } or a component. */
+  target: { kind: 'page', path: '/', title: 'Home' },
+});
