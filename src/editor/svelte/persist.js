@@ -9,7 +9,7 @@
  *             (&source=people&item=noor-vermeer; item is the slug, or the number without one)
  *     motion  animations: the Motion tab's Animations sub-tab (the list of animations)
  *     anim    that sub-tab, open on that animation (&anim=fade-up)
- *     pages   the Pages window, open on that folder (&pages=/people/; / is content/pages/)
+ *     pages   the Pages window, open on that page's folder (&pages=/people/; / is the root)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed
  *     sections, the selected field or Motion element, the explorer's and library's lists,
  *     the panel and preview scroll.

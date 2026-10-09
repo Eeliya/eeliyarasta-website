@@ -1,18 +1,19 @@
 <!--
-  Pages window: the page files in content/pages/, whose folders are the site's URLs
-  (src/site/routes.js). Folder-style like the Source Explorer: a folder's sub-folders, pages
-  and [slug] page on the left, the selected one on the right. Add a page, turn on children
-  (its folder), add a [slug] page (one page per item of a source), rename, delete. Changes
-  go straight to disk through the dev server (actions.pagesOp in main.js); the page menu
-  and the preview follow. Where it is lives in ui.pagesWin (persist.js).
+  Pages window: the pages in content/pages/. Every page is a folder, its URL, with its own
+  file index.json inside (src/site/routes.js); the root is home's folder. Folder-style like
+  the Source Explorer: a folder shows its own page first (the row "/people/"), then the pages
+  in it (folders: click to enter), then its [slug] page; the selected row on the right.
+  Add a page or a [slug] page (one page per item of a source) in any folder, rename or delete
+  a page with its whole folder. Changes go straight to disk through the dev server
+  (actions.pagesOp in main.js); the page menu and the preview follow. Where it is lives in
+  ui.pagesWin (persist.js).
 -->
 <script>
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
   import { ui } from './ui.svelte.js';
-  import * as source from '../source.js';
-  import { TEMPLATE, isSlug, pageIdOf, sourceIdOf } from '../../site/files.js';
+  import { TEMPLATE, isSlug, pageFile, pageIdOf, sourceIdOf } from '../../site/files.js';
   import { pathOfId } from '../../site/routes.js';
   import { slugify } from '../../site/helpers.js';
   import { plural } from '../lib/format.js';
@@ -22,43 +23,45 @@
 
   const PROTECTED = ['home', '404'];
   let dialog = $state();
-  let diskFolders = $state([]); // from the dev server: empty folders too
   let sel = $state(''); // a page id, or 'add' / 'add-template'
   let confirming = $state(false);
   let busy = $state(false);
   let newTitle = $state('');
   let newName = $state('');
   let newSource = $state('');
+  let renameTo = $state('');
 
+  // the folder shown: a page id, '' = the root (home's folder)
   const folder = $derived(ui.pagesWin.folder);
+  const own = $derived(folder || 'home');
   const join = (f, n) => (f ? `${f}/${n}` : n);
   const parentOf = (id) => id.slice(0, Math.max(0, id.lastIndexOf('/')));
   const nameOf = (id) => id.slice(id.lastIndexOf('/') + 1);
-  const fileOf = (id) => `pages/${id}.json`;
+  const isTemplate = (id) => nameOf(id) === TEMPLATE;
 
   const ids = $derived.by(() => {
     live.version;
-    return Object.keys(live.store.current).map(pageIdOf).filter(Boolean).sort();
+    return Object.keys(live.store.current).map(pageIdOf).filter(Boolean);
   });
   const sources = $derived.by(() => {
     live.version;
     return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
   });
-  const folders = $derived([...new Set([...diskFolders, ...ids.map(parentOf).filter(Boolean)])]);
-  const subFolders = $derived(folders.filter((f) => parentOf(f) === folder && f !== folder));
-  // home first and 404 last, like the site's routes
-  const rank = (id) => (id === 'home' ? 0 : id === '404' ? 2 : 1);
+  // the pages in this folder (home is the root's own page), 404 last
+  const rank = (id) => (id === '404' ? 1 : 0);
   const pages = $derived(
     ids
-      .filter((id) => parentOf(id) === folder && nameOf(id) !== TEMPLATE)
+      .filter((id) => id !== 'home' && parentOf(id) === folder && !isTemplate(id))
       .sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : 1)),
   );
-  const template = $derived(ids.find((id) => id === join(folder, TEMPLATE)));
-  const below = (id) => ids.filter((p) => p.startsWith(`${id}/`));
-  const data = (id) => live.current(fileOf(id)) || {};
+  const template = $derived(folder ? ids.find((id) => id === join(folder, TEMPLATE)) : undefined);
+  /** Everything in a page's folder, e.g. ['people/[slug]', 'people/team']. */
+  const below = (id) => (id === 'home' ? [] : ids.filter((p) => p.startsWith(`${id}/`)).sort());
+  const data = (id) => live.current(pageFile(id)) || {};
   const titleOf = (id) => {
-    const d = data(id);
     if (id === 'home') return 'Home';
+    if (isTemplate(id)) return '[slug]';
+    const d = data(id);
     return (
       d.meta?.title ||
       d.title ||
@@ -68,8 +71,10 @@
     );
   };
   const changed = (id) =>
-    JSON.stringify(live.current(fileOf(id))) !== JSON.stringify(live.base(fileOf(id)));
-  const urlOf = (id) => (id.endsWith(TEMPLATE) ? `/${id}` : pathOfId(id));
+    JSON.stringify(live.current(pageFile(id))) !== JSON.stringify(live.base(pageFile(id)));
+  const urlOf = (id) => (isTemplate(id) ? `/${id}` : pathOfId(id));
+  // a page's folder in content/
+  const pathOf = (id) => `content/pages/${id === 'home' ? '' : `${id}/`}`;
 
   // the add form: a name from the title, unless typed
   const slug = $derived(newName || slugify(newTitle));
@@ -78,13 +83,12 @@
       ? ''
       : !isSlug(slug)
         ? 'Use a-z, 0-9 and dashes'
-        : ids.includes(join(folder, slug)) || folders.includes(join(folder, slug))
-          ? `${urlOf(join(folder, slug))} already exists`
-          : '',
+        : ids.includes(join(folder, slug))
+          ? `${pathOfId(join(folder, slug))} already exists`
+          : !folder && ['home', '404', 'edit', 'assets', 'media'].includes(slug)
+            ? `"${slug}" is reserved`
+            : '',
   );
-
-  // rename: the selected page's new name
-  let renameTo = $state('');
   const renameError = $derived(
     !renameTo || renameTo === nameOf(sel)
       ? ''
@@ -94,14 +98,16 @@
           ? `${pathOfId(join(parentOf(sel), renameTo))} already exists`
           : '',
   );
-
-  async function loadFolders() {
-    try {
-      diskFolders = await source.pageFolders();
-    } catch {
-      diskFolders = [];
-    }
-  }
+  // [slug] pages: not at the root, not in 404, one per folder
+  const templateBlock = $derived(
+    !folder
+      ? 'No [slug] page at the root: add it in a page folder'
+      : folder === '404'
+        ? 'Not in 404'
+        : template
+          ? 'This folder has its [slug] page'
+          : '',
+  );
 
   function select(id) {
     sel = id;
@@ -111,7 +117,7 @@
     newSource = sources[0] || '';
   }
 
-  /** Enter a folder ('' = content/pages/), keeping the keyboard focus in the window. */
+  /** Enter a page's folder ('' = the root), keeping the keyboard focus in the window. */
   async function goTo(next) {
     const from = folder;
     ui.pagesWin.folder = next;
@@ -125,17 +131,21 @@
     busy = true;
     const res = await actions.pagesOp(body);
     busy = false;
-    await loadFolders();
     if (res) after?.(res);
     return res;
   }
 
   const add = () =>
-    run({ op: 'add', folder, name: slug, title: newTitle.trim() }, (r) => select(r.id));
-  const addTemplate = () => run({ op: 'template', folder, source: newSource }, (r) => select(r.id));
-  const children = (id) => run({ op: 'children', id }, () => goTo(id));
-  const rename = () => run({ op: 'rename', id: sel, name: renameTo }, (r) => select(r.id));
-  const remove = () => run({ op: 'delete', id: sel }, () => select(''));
+    run({ op: 'add', parent: folder, name: slug, title: newTitle.trim() }, () => select(''));
+  const addTemplate = () =>
+    run({ op: 'template', parent: folder, source: newSource }, (r) => select(r.id));
+  // the open folder's own page renamed or deleted: follow it, or go up
+  const rename = () =>
+    run({ op: 'rename', id: sel, name: renameTo }, (r) =>
+      sel === folder ? goTo(r.id).then(() => select(r.id)) : select(r.id),
+    );
+  const remove = () =>
+    run({ op: 'delete', id: sel }, () => (sel === folder ? goTo(parentOf(folder)) : select('')));
 
   async function startAdd(kind) {
     select(kind);
@@ -149,11 +159,15 @@
     dialog.querySelector('.confirm button')?.focus();
   }
 
+  function show(id) {
+    const item = ui.pages.find((p) => (isTemplate(id) ? p.template === id : p.path === urlOf(id)));
+    actions.pickTarget(item || { kind: 'page', path: urlOf(id), title: titleOf(id) });
+  }
+
   /** Open the window (on its last folder). */
   export function open(next = ui.pagesWin.folder) {
-    ui.pagesWin.folder = next === '' || folders.includes(next) ? next : '';
+    ui.pagesWin.folder = next === '' || (ids.includes(next) && !isTemplate(next)) ? next : '';
     select('');
-    loadFolders();
     flushSync();
     if (!dialog.open) dialog.showModal();
     ui.pagesWin.open = true;
@@ -177,53 +191,58 @@
 >
   <ExplorerHead
     title="Pages"
-    path="content/pages/{folder ? `${folder}/` : ''}"
+    path={pathOf(own)}
     back={folder ? 'Up one folder' : ''}
     onback={() => goTo(parentOf(folder))}
     onclose={() => dialog.close()}
   />
 
-  <nav class="pg-list" aria-label="Pages in this folder">
+  <nav class="pg-list" aria-label="This page and the pages in its folder">
     <header class="row pg-list__head">
-      {plural(pages.length + (template ? 1 : 0), 'page')}
+      {plural(pages.length + (template ? 1 : 0), 'page')} in it
       <span>
-        <button type="button" class="btn-sm" disabled={busy} onclick={() => startAdd('add')}>
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Page
+        <button
+          type="button"
+          class="btn-sm"
+          disabled={busy || folder === '404'}
+          onclick={() => startAdd('add')}
+        >
+          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
         </button>
-        {#if folder && !template}
-          <button
-            type="button"
-            class="btn-sm"
-            disabled={busy}
-            onclick={() => startAdd('add-template')}
-          >
-            <i class="fa-solid fa-plus" aria-hidden="true"></i> [slug]
-          </button>
-        {/if}
+        <button
+          type="button"
+          class="btn-sm"
+          disabled={busy || !!templateBlock}
+          title={templateBlock}
+          onclick={() => startAdd('add-template')}
+        >
+          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug]
+        </button>
       </span>
     </header>
     <ul class="list pg-list__items">
-      {#each subFolders as f (f)}
-        <li>
-          <ExplorerRow
-            icon="fa-folder"
-            name="{nameOf(f)}/"
-            meta={plural(below(f).length, 'page')}
-            data-folder={f}
-            onclick={() => goTo(f)}
-          />
-        </li>
-      {/each}
+      <li>
+        <ExplorerRow
+          icon="fa-file-lines"
+          name={urlOf(own)}
+          meta="{titleOf(own)} · index.json"
+          selected={sel === own}
+          changed={changed(own)}
+          aria-current={sel === own}
+          onclick={() => select(own)}
+        />
+      </li>
       {#each pages as id (id)}
         <li>
           <ExplorerRow
-            icon="fa-file-lines"
+            icon="fa-folder"
             name={titleOf(id)}
-            meta={urlOf(id)}
-            selected={sel === id}
+            meta="{urlOf(id)}{below(id).length
+              ? ` · ${plural(below(id).length, 'page')} in it`
+              : ''}"
             changed={changed(id)}
-            aria-current={sel === id}
-            onclick={() => select(id)}
+            data-folder={id}
+            onclick={() => goTo(id)}
           />
         </li>
       {/each}
@@ -245,7 +264,7 @@
 
   <section class="pg-detail">
     {#if sel === 'add'}
-      <h4 class="pg-detail__title">New page in /{folder ? `${folder}/` : ''}</h4>
+      <h4 class="pg-detail__title">New page in {pathOfId(own)}</h4>
       <label class="tf">
         <span class="tf__label">Title</span>
         <input class="tf__input" bind:value={newTitle} placeholder="My page" />
@@ -259,7 +278,10 @@
           placeholder={slugify(newTitle) || 'my-page'}
         />
       </label>
-      <p class="hint small">{slugError || (slug ? `${pathOfId(join(folder, slug))}` : '')}</p>
+      <p class="hint small">
+        {slugError ||
+          (slug ? `${pathOfId(join(folder, slug))}: ${pathOf(join(folder, slug))}index.json` : '')}
+      </p>
       <div class="row">
         <button type="button" class="btn-sm" onclick={() => select('')}>Cancel</button>
         <button type="button" class="btn-sm" disabled={!slug || !!slugError || busy} onclick={add}>
@@ -285,45 +307,40 @@
         </button>
       </div>
     {:else if sel && ids.includes(sel)}
-      {@const isTemplate = nameOf(sel) === TEMPLATE}
       {@const fixed = PROTECTED.includes(sel)}
       {@const inside = below(sel)}
       <header class="pg-detail__head">
-        <h4 class="pg-detail__title">{isTemplate ? '[slug]' : titleOf(sel)}</h4>
-        {#if confirming}
-          <span class="confirm">
-            Delete {urlOf(sel)}{inside.length ? ` and ${plural(inside.length, 'page')} in it` : ''}?
+        <h4 class="pg-detail__title">{titleOf(sel)}</h4>
+        {#if !confirming && !fixed}
+          <button type="button" class="btn-sm btn-sm--danger" onclick={askDelete}>
+            <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
+          </button>
+        {/if}
+      </header>
+      {#if confirming}
+        <div class="confirm pg-confirm">
+          <span>
+            Delete {urlOf(sel)}{inside.length
+              ? ` and everything in it: ${inside.map(urlOf).join(', ')}`
+              : ''}?
+          </span>
+          <span class="row">
             <button type="button" class="btn-sm" onclick={() => (confirming = false)}>Cancel</button
             >
             <button type="button" class="btn-sm btn-sm--danger" disabled={busy} onclick={remove}>
               <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
             </button>
           </span>
-        {:else if !fixed}
-          <button type="button" class="btn-sm btn-sm--danger" onclick={askDelete}>
-            <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-          </button>
-        {/if}
-      </header>
-      <p class="hint small">content/{fileOf(sel)}</p>
+        </div>
+      {/if}
+      <p class="hint small">content/{pageFile(sel)}</p>
       <div class="row">
-        <button
-          type="button"
-          class="btn-sm"
-          onclick={() =>
-            actions.pickTarget(
-              ui.pages.find((p) => (isTemplate ? p.template === sel : p.path === urlOf(sel))) || {
-                kind: 'page',
-                path: urlOf(sel),
-                title: '',
-              },
-            )}
-        >
+        <button type="button" class="btn-sm" onclick={() => show(sel)}>
           <i class="fa-solid fa-eye" aria-hidden="true"></i> Show {urlOf(sel)}
         </button>
       </div>
 
-      {#if isTemplate}
+      {#if isTemplate(sel)}
         <p class="hint small">
           A page per item of sources/{data(sel).config?.source}.json, at /{parentOf(
             sel,
@@ -335,7 +352,7 @@
         </p>
       {:else}
         <label class="tf">
-          <span class="tf__label">Name in the URL</span>
+          <span class="tf__label">Name in the URL (renames the folder, with everything in it)</span>
           <input
             class={['tf__input', renameError && 'is-invalid']}
             spellcheck="false"
@@ -352,21 +369,12 @@
           >
             <i class="fa-solid fa-pen" aria-hidden="true"></i> Rename
           </button>
-          {#if folders.includes(sel)}
-            <button type="button" class="btn-sm" onclick={() => goTo(sel)}>
-              <i class="fa-solid fa-folder-open" aria-hidden="true"></i> Open {nameOf(sel)}/
-            </button>
-          {:else}
-            <button type="button" class="btn-sm" disabled={busy} onclick={() => children(sel)}>
-              <i class="fa-solid fa-folder-plus" aria-hidden="true"></i> Turn on children
-            </button>
-          {/if}
         </div>
       {/if}
     {:else}
       <p class="hint">
-        Folders here are the site's URLs: {folder ? `${folder}.json` : 'people.json'} is /{folder ||
-          'people'}/, the pages in {folder || 'people'}/ are below it. Pick a page, or add one.
+        Every page is a folder, its URL, with its own index.json inside. {urlOf(own)} is the first row;
+        click a folder to see the pages in it.
       </p>
     {/if}
   </section>
@@ -424,6 +432,12 @@
     align-items: center;
     gap: 12px;
     min-height: 32px;
+  }
+
+  // the delete question: what goes, then Cancel / Delete
+  .pg-confirm {
+    display: grid;
+    gap: 8px;
   }
 
   .pg-detail__title {

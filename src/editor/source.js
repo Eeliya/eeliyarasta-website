@@ -34,12 +34,9 @@ export const saveDev = (files) =>
     body: JSON.stringify({ files }),
   });
 
-/** The folders under content/pages/, empty ones included: ['people', 'places', ...]. */
-export const pageFolders = async () => (await json('/__editor/pages')).folders;
-
 /**
  * Add, rename or delete pages and folders in content/pages/ (POST /__editor/pages, see
- * pagesOp in scripts/editor-server.mjs): { op: 'add', folder, name, title }, ...
+ * pagesOp in scripts/editor-server.mjs): { op: 'add', parent, name, title }, ...
  * Resolves to { id, created, removed } (content file names).
  */
 export const pagesOp = (body) =>
