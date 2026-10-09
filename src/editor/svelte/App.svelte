@@ -47,10 +47,11 @@
   function onKey(e) {
     const mod = e.metaKey || e.ctrlKey;
     const k = e.key.toLowerCase();
-    // Ctrl+Z in a field of the panel undoes the typing there, not an editor step.
+    // Ctrl+Z in a text field of the panel undoes the typing there, not an editor step
+    // (switches, sliders and selects have none: there it is the editor's undo).
     const inField =
       e.target instanceof Element &&
-      e.target.matches?.('input, textarea, select') &&
+      e.target.matches?.('textarea, input:not([type="checkbox"], [type="range"])') &&
       e.target.ownerDocument === document;
     if (mod && k === 's') {
       e.preventDefault();
