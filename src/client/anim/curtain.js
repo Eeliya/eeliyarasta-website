@@ -16,6 +16,12 @@
  *
  * Legacy JSON may still carry hold / afterText / out.duration; normalize derives absolutes
  * from them and does not return those relative fields.
+ *
+ * Per page, a "transition" next to the page's curtain text (see src/site/routes.js):
+ *   missing or { mode: 'global' }   the site-wide curtain above
+ *   { mode: 'custom', ...fields }   the page's own curtain, same fields as above
+ *   { mode: 'off' }                 no curtain when navigating to this page (a plain fade)
+ * The page you go to decides: leaving a page with its own curtain (or none) changes nothing.
  */
 export const CURTAIN_DEFAULTS = {
   in: { duration: 0.7, ease: 'expo.inOut' },
@@ -23,6 +29,19 @@ export const CURTAIN_DEFAULTS = {
   labelOut: { duration: 0.35, ease: 'power2.in' },
   out: { duration: 0.8, ease: 'expo.inOut' },
 };
+
+export const CURTAIN_MODES = ['global', 'custom', 'off'];
+
+/** A page transition's mode: 'global' unless it says 'custom' or 'off'. */
+export const curtainMode = (transition) =>
+  transition?.mode === 'custom' || transition?.mode === 'off' ? transition.mode : 'global';
+
+/** The raw curtain for a page (what normalizeCurtain takes): its own, the global one, or null. */
+export function curtainFor(transition, global) {
+  const mode = curtainMode(transition);
+  if (mode === 'off') return null;
+  return mode === 'custom' ? transition : global;
+}
 
 /** Only used when absolute fields are missing in old JSON. */
 const LEGACY = { hold: 0.12, afterText: -0.25 };

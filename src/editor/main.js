@@ -30,7 +30,7 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
-import { getRoutes } from '../site/routes.js';
+import { getRoutes, curtainOverrides } from '../site/routes.js';
 import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
 
@@ -46,6 +46,11 @@ mount(App, {
 });
 
 // ---------------------------------------------------------------- ui
+/** The preview's router gets the draft per-page curtains: they apply to the next page change. */
+function pushCurtains() {
+  bridge.api?.setPageCurtains?.(curtainOverrides(getRoutes(contentFromFiles(store.current))));
+}
+
 /** The page menu: every page of the site, then the Menu and Footer components. */
 function updatePages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
@@ -95,6 +100,7 @@ function setMode(mode) {
 // ---------------------------------------------------------------- preview events
 bridge.on('connect', () => {
   bridge.setMode(ui.mode);
+  pushCurtains();
   ui.previewVersion++;
 });
 
@@ -136,6 +142,7 @@ store.on(({ files, source: src }) => {
   const textChanged = files.some((f) => f !== ANIMATIONS);
   const rewired = files.includes(HOME) && syncSections();
   if (textChanged) {
+    pushCurtains();
     const fromPreview = src && src.nodeType === 1;
     bridge.applyTexts({
       skip: fromPreview ? src : null,

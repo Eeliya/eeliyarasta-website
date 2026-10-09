@@ -42,11 +42,21 @@ export function head(ctx, route, accent) {
     ${ld}`;
 }
 
+/**
+ * Pages whose curtain is not the global one, as JSON for the client router (router.js reads
+ * #page-curtains). Nothing when every page uses the global curtain.
+ */
+function pageCurtains(curtains) {
+  if (!Object.keys(curtains || {}).length) return '';
+  const json = JSON.stringify(curtains).replace(/</g, '\\u003c');
+  return `<script type="application/json" id="page-curtains">${json}</script>`;
+}
+
 /** Full <body> contents injected at <!--ssr-body--> */
 export function body(ctx, route, accent, view) {
   const curtain = route.curtain ?? '';
   const curtainEdit = route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : '';
-  return html` <a class="skip-link" href="#main">Skip to content</a>
+  const page = html` <a class="skip-link" href="#main">Skip to content</a>
     <div class="backdrop" aria-hidden="true">
       <div class="backdrop__glow"></div>
       <div class="backdrop__grain"></div>
@@ -72,4 +82,5 @@ export function body(ctx, route, accent, view) {
       <div class="curtain__panel"></div>
       <span class="curtain__label"></span>
     </div>`;
+  return page + pageCurtains(ctx.curtains);
 }

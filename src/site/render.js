@@ -7,13 +7,15 @@ import { head, body } from './templates/layout.js';
 import { home } from './templates/home.js';
 import { album } from './templates/album.js';
 import * as pages from './templates/pages.js';
+import { getRoutes, curtainOverrides } from './routes.js';
 
 const views = { home, album, ...pages };
 
-export { getRoutes } from './routes.js';
+export { getRoutes };
 
 export function renderRoute(route, content) {
-  const ctx = { ...content, route };
+  // curtains: every page carries the pages with their own curtain, for the router.
+  const ctx = { ...content, route, curtains: curtainOverrides(getRoutes(content)) };
   const view = views[route.page];
   if (!view) throw new Error(`No template for page "${route.page}"`);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;

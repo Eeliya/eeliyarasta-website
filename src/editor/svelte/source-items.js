@@ -52,6 +52,7 @@ export function newItem(list) {
   while (slugs.has(`new-item-${n}`)) n++;
   const item = blankLike(list[0] || { slug: '', name: '' });
   delete item.curtain; // no curtain text: the transition falls back to the item's name
+  delete item.transition; // the global curtain
   item.slug = `new-item-${n}`;
   if ('title' in item && !('name' in item)) item.title = `New item ${n}`;
   else item.name = `New item ${n}`;

@@ -4,6 +4,7 @@
  */
 import { SITE, HOME, sourceFile } from './files.js';
 import { coverOf } from './helpers.js';
+import { curtainMode } from '../client/anim/curtain.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -13,12 +14,17 @@ function curtainOf(explicit, title) {
     .trim();
 }
 
-/** data-curtain-edit value: content file + JSON pointer the editor writes to. */
+/** Edit pointer ("file#/json/pointer") of a page value, e.g. its curtain text. */
 function curtainEditOf(file, parts) {
   const ptr = parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
   return `${file}#${ptr}`;
 }
 
+/**
+ * Every route has its curtain text (curtain, curtainEdit) and its page transition
+ * (transition, transitionEdit): where it is stored next to that text. The transition says
+ * which curtain plays when navigating to the page: see curtainFor in client/anim/curtain.js.
+ */
 export function getRoutes(content) {
   const { site, people, places, home } = content;
   const albums = (kind, list, section) =>
@@ -38,12 +44,16 @@ export function getRoutes(content) {
         image: coverOf(album)?.src,
         curtain: curtainOf(album.curtain, title),
         curtainEdit: curtainEditOf(sourceFile(kind), [i, 'curtain']),
+        transition: album.transition,
+        transitionEdit: curtainEditOf(sourceFile(kind), [i, 'transition']),
       };
     });
 
   const pageCurtain = (key, title) => ({
     curtain: curtainOf(site.pages[key]?.curtain, title),
     curtainEdit: curtainEditOf(SITE, ['pages', key, 'curtain']),
+    transition: site.pages[key]?.transition,
+    transitionEdit: curtainEditOf(SITE, ['pages', key, 'transition']),
   });
 
   const homeTitle = site.title;
@@ -55,6 +65,8 @@ export function getRoutes(content) {
       description: site.description,
       curtain: curtainOf(home?.curtain, homeTitle),
       curtainEdit: curtainEditOf(HOME, ['curtain']),
+      transition: home?.transition,
+      transitionEdit: curtainEditOf(HOME, ['transition']),
     },
     {
       path: '/photography/',
@@ -103,4 +115,11 @@ export function getRoutes(content) {
       ...pageCurtain('notFound', `Not found | ${site.name}`),
     },
   ];
+}
+
+/** Pages with their own curtain or none: { "/about/": { mode: 'off' }, ... } for the router. */
+export function curtainOverrides(routes) {
+  return Object.fromEntries(
+    routes.filter((r) => curtainMode(r.transition) !== 'global').map((r) => [r.path, r.transition]),
+  );
 }

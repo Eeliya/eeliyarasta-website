@@ -6,7 +6,7 @@
  */
 import { gsap, reducedMotion } from './lib/env.js';
 import { transitions } from './anim/engine.js';
-import { normalizeCurtain, curtainPlan } from './anim/curtain.js';
+import { normalizeCurtain, curtainPlan, curtainFor } from './anim/curtain.js';
 import { closeMenus } from './ui/menu.js';
 import { scrollToTop } from './smooth.js';
 
@@ -19,10 +19,25 @@ const normalize = (pathname) =>
   pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/';
 
 /**
- * Curtain timings from content/settings/animations.json transitions.page.curtain (see anim/curtain.js).
- * Read on every navigation, so edits pushed by the editor apply to the next transition.
+ * Pages with their own curtain or none ({ "/about/": { mode: 'off' } }), prerendered into
+ * every page as #page-curtains (src/site/templates/layout.js). The router needs the
+ * destination's curtain before its HTML arrives, so it is known up front.
  */
-const curtainCfg = () => normalizeCurtain(transitions.page?.curtain);
+let pageCurtains = {};
+
+/** The editor's preview passes the draft list (see setPageCurtains in main.js). */
+export function setPageCurtains(map) {
+  pageCurtains = map || {};
+}
+
+/**
+ * Curtain timings for navigating to `pathname`: the page's own, the global one from
+ * content/settings/animations.json transitions.page.curtain, or null for none
+ * (see anim/curtain.js). Read on every navigation, so edits pushed by the editor apply
+ * to the next transition.
+ */
+const curtainCfg = (pathname = location.pathname) =>
+  normalizeCurtain(curtainFor(pageCurtains[normalize(pathname)], transitions.page?.curtain));
 
 /** Label for the curtain: data-curtain on the incoming view, else document title. Empty string = no text. */
 function curtainLabel(incoming, doc) {
@@ -152,7 +167,7 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
 
 /**
  * Editor preview (dev only): play the curtain over the current page without navigating,
- * with the current timings and the current page's curtain text.
+ * with the current page's timings and curtain text (nothing when its curtain is off).
  */
 export function replayCurtain(label) {
   const cc = curtainCfg();
@@ -211,7 +226,7 @@ export async function navigate(href, { push = true } = {}) {
   const oldView = document.querySelector('[data-router-view]');
   const t = transitions.page;
   const reduced = reducedMotion();
-  const cc = reduced ? null : curtainCfg();
+  const cc = reduced ? null : curtainCfg(url.pathname);
   try {
     const ready = getPage(url.pathname).then(parsePage);
     if (cc) {
@@ -260,6 +275,14 @@ export async function navigate(href, { push = true } = {}) {
 
 export function initRouter(h) {
   hooks = h;
+  const curtains = document.getElementById('page-curtains');
+  if (curtains) {
+    try {
+      pageCurtains = JSON.parse(curtains.textContent);
+    } catch (err) {
+      console.warn('[router] #page-curtains is not JSON', err);
+    }
+  }
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
   document.addEventListener('click', (e) => {

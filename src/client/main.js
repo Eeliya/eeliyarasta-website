@@ -13,7 +13,7 @@ import {
 } from './anim/engine.js';
 import { flags } from './anim/flags.js';
 import { initSmooth, getSmoother } from './smooth.js';
-import { initRouter, navigate, replayCurtain } from './router.js';
+import { initRouter, navigate, replayCurtain, setPageCurtains } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
 import { initClock, updateClocks } from './ui/clock.js';
 import { applyAccent } from './theme.js';
@@ -92,6 +92,8 @@ function connectEditor() {
     navigate,
     /** Play the page-transition curtain over the current page (no navigation). */
     replayCurtain: (label) => replayCurtain(label),
+    /** Pages with their own curtain or none, from the editor's draft content. */
+    setPageCurtains,
     getSmoother,
     view: () => current?.view || null,
     /** Replace the animation config (in place) with an edited copy. */
