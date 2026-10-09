@@ -24,7 +24,8 @@ import { createPageMenu } from './ui/page-menu.js';
 import { h, clear } from './ui/dom.js';
 import { compile } from './lib/pointer.js';
 import { getRoutes } from '../site/routes.js';
-import { ANIMATIONS, contentFromFiles } from '../site/files.js';
+import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
+import { syncHomeSections } from './sections.js';
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
@@ -39,6 +40,8 @@ const state = {
   publishing: false,
   pub: null,
   target: { kind: 'page', path: '/', title: 'Home' },
+  /** Home sections the preview can't show until it re-renders (see sections.js). */
+  staleSections: new Set(),
 };
 
 // ---------------------------------------------------------------- layout
@@ -241,7 +244,13 @@ async function refreshPublishStatus() {
 
 // ---------------------------------------------------------------- bridge + panels
 const bridge = createBridge({ iframe, store, labelFor: (p) => labelFor(store, p) });
-const textPanel = createTextPanel({ store, bridge, root: body, getTarget: () => state.target });
+const textPanel = createTextPanel({
+  store,
+  bridge,
+  root: body,
+  getTarget: () => state.target,
+  getStaleSections: () => state.staleSections,
+});
 const motionPanel = createMotionPanel({ store, bridge, root: body, toast });
 
 function renderOverview() {
@@ -430,7 +439,19 @@ bridge.on('connect', () => {
   bridge.setMode(state.mode);
   renderBody();
 });
+/**
+ * Keep the preview's home sections in list order (reorder, on/off, layout) after edits.
+ * Returns true when data-edit pointers moved, so texts must be re-applied.
+ */
+function syncSections() {
+  const r = syncHomeSections(bridge.doc, store);
+  state.staleSections = r.stale;
+  if (r.moved) bridge.api?.ScrollTrigger?.refresh();
+  return r.rewired;
+}
+
 bridge.on('navigate', (path) => {
+  if (syncSections()) bridge.applyTexts({ force: true });
   const url = new URL(location.href);
   url.searchParams.set('path', path);
   history.replaceState(null, '', url);
@@ -459,11 +480,12 @@ store.on(({ files, source: src }) => {
     return renderChrome();
   }
   const textChanged = files.some((f) => f !== ANIMATIONS);
+  const rewired = files.includes(HOME) && syncSections();
   if (textChanged) {
     const fromPreview = src && src.nodeType === 1;
     bridge.applyTexts({
       skip: fromPreview ? src : null,
-      force: ['undo', 'redo', 'rebase', 'discard'].includes(src),
+      force: rewired || ['undo', 'redo', 'rebase', 'discard'].includes(src),
     });
   }
   if (files.includes(ANIMATIONS)) {
@@ -491,6 +513,8 @@ async function saveDev({ quiet = false } = {}) {
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
+    // A section the preview couldn't show yet (e.g. a grid with a new source): re-render it.
+    if (state.staleSections?.size && bridge.path()) bridge.load(bridge.path());
     if (!quiet)
       toast(
         h(

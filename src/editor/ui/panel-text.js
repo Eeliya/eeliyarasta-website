@@ -140,7 +140,7 @@ const homeToggles = (store) => [
   ...homeSections(store).map((_, i) => sectionGroup(store, i)),
 ];
 
-export function createTextPanel({ store, bridge, root, getTarget }) {
+export function createTextPanel({ store, bridge, root, getTarget, getStaleSections }) {
   let inputs = new Map();
   /** @type {string | null} */
   let selectedEdit = null;
@@ -280,7 +280,8 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       onchange: (e) => {
         const enabled = e.target.checked;
         store.set(file, ptr, enabled, { key: `section:${group.id}`, source: 'panel' });
-        applySectionVisibility(group.id, enabled);
+        // Home sections are synced by the editor (src/editor/sections.js); the hero is not a list item.
+        if (group.index === undefined) applySectionVisibility(group.id, enabled);
       },
     });
     return h(
@@ -297,6 +298,105 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
 
   /** Home section groups start open; afterwards they keep whatever the user chose. */
   const seenSections = new Set();
+
+  /** Swap home section `i` with its neighbour (dir -1 = up, 1 = down): one undo step. */
+  function moveSection(i, dir) {
+    const list = homeSections(store);
+    const j = i + dir;
+    if (j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[i], next[j]] = [next[j], next[i]];
+    // Open/closed state follows the section, not the position.
+    const openI = openGroups.has(`s${i}`);
+    const openJ = openGroups.has(`s${j}`);
+    openGroups[openJ ? 'add' : 'delete'](`s${i}`);
+    openGroups[openI ? 'add' : 'delete'](`s${j}`);
+    store.set(HOME, '/sections', next, { source: 'panel' });
+    render();
+    const btn = root.querySelector(
+      `.sec[data-section="s${j}"] .sec__move[data-dir="${dir < 0 ? 'up' : 'down'}"]`,
+    );
+    (btn && !btn.disabled
+      ? btn
+      : root.querySelector(`.sec[data-section="s${j}"] .sec__head`)
+    )?.focus();
+  }
+
+  function moveButtons(group) {
+    const last = homeSections(store).length - 1;
+    const btn = (dir, icon, label, disabled) =>
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'sec__move',
+          title: label,
+          'aria-label': `${label}: ${group.title}`,
+          disabled,
+          dataset: { dir: dir < 0 ? 'up' : 'down' },
+          onclick: () => moveSection(group.index, dir),
+        },
+        h('i', { class: ['fa-solid', icon], 'aria-hidden': 'true' }),
+      );
+    return h(
+      'span',
+      { class: 'sec__moves' },
+      btn(-1, 'fa-arrow-up', 'Move up', group.index === 0),
+      btn(1, 'fa-arrow-down', 'Move down', group.index === last),
+    );
+  }
+
+  /** Settings of a grid section (config.source, config.layout) as two dropdowns. */
+  function gridOptions(group) {
+    const i = group.index;
+    const section = homeSections(store)[i];
+    if (section?.type !== 'grid') return null;
+    const config = section.config || {};
+    const source = config.source || 'people';
+    const layout = config.layout === 'even' ? 'even' : 'staggered';
+    const sources = Object.keys(store.current).map(sourceIdOf).filter(Boolean).sort();
+    if (!sources.includes(source)) sources.unshift(source);
+    const changed = (key) =>
+      JSON.stringify(store.get(HOME, `/sections/${i}/config/${key}`)) !==
+      JSON.stringify(store.getBase(HOME, `/sections/${i}/config/${key}`));
+    const select = (key, label, value, options) =>
+      h(
+        'label',
+        { class: ['sec__opt', changed(key) && 'is-changed'] },
+        h('span', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' })),
+        h(
+          'select',
+          {
+            class: 'f__select',
+            onchange: (e) => {
+              store.set(HOME, `/sections/${i}/config/${key}`, e.target.value, {
+                source: 'panel',
+              });
+              render();
+            },
+          },
+          options.map(([v, text]) => h('option', { value: v, selected: v === value }, text)),
+        ),
+      );
+    const missing = !Object.keys(store.current).includes(`sources/${source}.json`);
+    return h(
+      'div',
+      { class: 'sec__opts' },
+      select(
+        'source',
+        'Source',
+        source,
+        sources.map((id) => [id, `${id}.json${id === source && missing ? ' (missing)' : ''}`]),
+      ),
+      select('layout', 'Layout', layout, [
+        ['staggered', 'Staggered'],
+        ['even', 'Even'],
+      ]),
+      getStaleSections?.()?.has(i)
+        ? h('p', { class: 'hint small sec__note' }, 'The preview shows this grid after Save.')
+        : null,
+    );
+  }
 
   function sectionBlock(group, fields) {
     if (group.index !== undefined && !seenSections.has(group.id)) {
@@ -325,10 +425,12 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
       group.toggle ? null : h('span', { class: 'sec__count' }, String(fields.length)),
     );
 
+    const opts = group.index !== undefined ? gridOptions(group) : null;
     const body = h(
       'div',
       { class: 'sec__body', hidden: !open },
-      fields.length
+      opts,
+      fields.length || opts
         ? fields
         : h(
             'p',
@@ -342,7 +444,13 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     return h(
       'section',
       { class: ['sec', !on && 'is-off'], dataset: { section: group.id } },
-      h('div', { class: 'sec__bar' }, head, sectionToggle(group)),
+      h(
+        'div',
+        { class: 'sec__bar' },
+        head,
+        group.index !== undefined ? moveButtons(group) : null,
+        sectionToggle(group),
+      ),
       body,
     );
   }
@@ -455,7 +563,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     if (bridge.doc) {
       for (const g of homeToggles(store)) {
         const enabled = store.get(g.toggle.file, g.toggle.ptr) !== false;
-        applySectionVisibility(g.id, enabled);
+        if (g.index === undefined) applySectionVisibility(g.id, enabled);
         const block = root.querySelector(`[data-section="${g.id}"]`);
         if (block) {
           block.classList.toggle('is-off', !enabled);

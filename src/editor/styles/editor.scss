@@ -1112,6 +1112,67 @@ select {
   opacity: 0.55;
 }
 
+// home section order (click only) and grid settings
+.sec__moves {
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.sec__move {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--fg);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px $hi;
+  }
+
+  &:disabled {
+    color: var(--faint);
+    cursor: default;
+  }
+}
+
+.sec__opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sec__opt {
+  display: block;
+  min-width: 0;
+  padding: 2px;
+
+  .dot {
+    display: none;
+  }
+
+  &.is-changed .dot {
+    display: inline-block;
+  }
+}
+
+.sec__note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 // text panel
 .tlist {
   display: grid;

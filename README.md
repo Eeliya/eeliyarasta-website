@@ -199,6 +199,12 @@ back to the page).
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
 dropdown, or click links in Browse mode. There's also a mobile (390 px) preview toggle.
 
+On the home page, every section box in the Content panel has ↑ / ↓ buttons that reorder
+`pages/home.json → sections` (one undo step each) and an On/Off switch. Grid sections also show a
+**Source** dropdown (the files in `content/sources/`) and a **Layout** dropdown (Staggered, Even).
+The preview follows reorders, on/off and layout right away; a grid switched to another source
+shows up in the preview after Save.
+
 | mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                 |
