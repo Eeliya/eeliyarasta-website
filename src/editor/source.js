@@ -20,6 +20,7 @@ export async function load() {
   try {
     const dev = await json('/__editor/content');
     media.manifest = dev.media || {};
+    media.photos = dev.photos || {};
     return { mode: 'dev', files: dev.files, from: 'local files' };
   } catch (err) {
     throw new Error(`The editor only works with the dev server (npm run dev). ${err.message}`);
@@ -34,8 +35,9 @@ export const saveDev = (files) =>
   });
 
 /**
- * Upload a photo to Cloudflare R2 (POST /__editor/upload): resolves to { key }, the value to
- * store in the content. onprogress(0..1) follows the upload (fetch can't, so XMLHttpRequest).
+ * Upload a photo to Cloudflare R2 (POST /__editor/upload), where the dev server resizes it:
+ * resolves to { key, photo }, key being the value to store in the content. onprogress(0..1)
+ * follows the bytes going up (fetch can't, so XMLHttpRequest); at 1 the server is resizing.
  */
 export function upload(file, onprogress) {
   return new Promise((resolve, reject) => {
@@ -44,6 +46,7 @@ export function upload(file, onprogress) {
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
     xhr.upload.onprogress = (e) => e.lengthComputable && onprogress?.(e.loaded / e.total);
+    xhr.upload.onload = () => onprogress?.(1);
     xhr.onload = () => {
       let data = null;
       try {

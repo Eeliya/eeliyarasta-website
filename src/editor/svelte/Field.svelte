@@ -2,8 +2,9 @@
   One text field: a label (name, changed dot and, when `file` is given, the file the value
   is stored in) wrapping an input, or a textarea for longer text.
   type 'image': a photo (its media/ path or R2 key) with a thumbnail and an Upload button;
-  a photo dropped on the field uploads too (Cloudflare R2, source.js upload()). The key it
-  gets is stored like a typed value: one undo step.
+  a photo dropped on the field uploads too (source.js upload(): the dev server resizes it and
+  stores the sizes in Cloudflare R2). The key it gets is stored like a typed value: one undo
+  step.
   Used by the Content panel, the Sources modal and Settings.
 -->
 <script module>
@@ -22,7 +23,7 @@
 
 <script>
   import { upload } from '../source.js';
-  import { thumbUrl } from './media.svelte.js';
+  import { media, thumbUrl } from './media.svelte.js';
   import { toast } from './toasts.svelte.js';
 
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
@@ -51,19 +52,20 @@
 
   // ---- image: upload (picked or dropped), thumbnail
   const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
-  let progress = $state(null); // 0..1 while uploading
+  let progress = $state(null); // 0..1 while uploading, 1: the server is resizing
   let dropping = $state(false);
-  let local = $state(null); // { key, url }: the uploaded file itself, until R2 has a public URL
+  let local = $state(null); // { key, url }: the uploaded file itself
   let failed = $state(''); // a thumbnail URL that did not load
-  const thumb = $derived(
-    type !== 'image' || !value ? '' : local?.key === value ? local.url : thumbUrl(value),
-  );
+  // the smallest size; the uploaded file itself when that doesn't load (no Photos address yet)
+  const remote = $derived(type === 'image' && value ? thumbUrl(value) : '');
+  const thumb = $derived(failed === remote && local?.key === value ? local.url : remote);
 
   async function send(file) {
     if (!file || progress !== null) return;
     progress = 0;
     try {
-      const { key } = await upload(file, (p) => (progress = p));
+      const { key, photo } = await upload(file, (p) => (progress = p));
+      media.photos[key] = photo; // its sizes, for the thumbnail and the preview
       if (local) URL.revokeObjectURL(local.url);
       local = { key, url: URL.createObjectURL(file) };
       onvalue(key);
@@ -112,7 +114,9 @@
   <span class="tf__label">
     {label}<i class="dot" title="Changed"></i>
     {#if progress !== null}
-      <span class="tf__file">Uploading {Math.round(progress * 100)}%</span>
+      <span class="tf__file">
+        {progress < 1 ? `Uploading ${Math.round(progress * 100)}%` : 'Resizing…'}
+      </span>
     {:else if file}
       <!-- folder included: pages/people.json and sources/people.json are different files -->
       <span class="tf__file" title="content/{file}">{file}</span>

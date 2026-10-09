@@ -12,7 +12,7 @@
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
-import { imageUrl } from './svelte/media.svelte.js';
+import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit] { outline: 1px dashed rgb(255 255 255 / .22); outline-offset: 3px; border-radius: 2px; cursor: text !important; }
@@ -203,10 +203,12 @@ export function createBridge({ store, labelFor }) {
         for (const [el, value] of pending) {
           applied.set(el, value);
           if (el.dataset.editType === 'image') {
-            // a new photo: one URL, no srcset (the sizes are for the old one)
+            // a new photo: its URL and, for an R2 photo, its sizes (the sizes attribute stays)
             const url = imageUrl(value);
             if (el.getAttribute('src') !== url) {
-              el.removeAttribute('srcset');
+              const srcset = imageSrcset(value);
+              if (srcset) el.srcset = srcset;
+              else el.removeAttribute('srcset');
               el.src = url;
             }
           } else if (el.dataset.editType === 'block') {
