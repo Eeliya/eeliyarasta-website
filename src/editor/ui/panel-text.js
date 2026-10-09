@@ -145,7 +145,10 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     'page-head',
     'about',
     'content',
+    'sources',
   ]);
+  /** Open source modal: { file, el, body } or null. */
+  let modal = null;
 
   function parseValue(type, raw) {
     if (type === 'number') {
@@ -157,7 +160,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     return raw;
   }
 
-  function field({ edit, file, ptr, type }, { full = false } = {}) {
+  function field({ edit, file, ptr, type }) {
     // Skip enabled flags themselves — they have a dedicated toggle.
     if (ptr.endsWith('/enabled')) return null;
     const value = store.get(file, ptr);
@@ -173,9 +176,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     if (!exists && (ptr.includes('/links/') || ptr.includes('/social/'))) return null;
 
     const changed = JSON.stringify(value) !== JSON.stringify(store.getBase(file, ptr));
-    // In a whole-list group (a source on the home page) keep the item name: "Noor Vermeer / name".
-    const label = labelFor(store, { file, ptr });
-    const short = full ? label : label.split(' / ').pop();
+    const short = labelFor(store, { file, ptr }).split(' / ').pop();
     const common = {
       class: 'tf__input',
       spellcheck: type !== 'number',
@@ -341,6 +342,141 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     );
   }
 
+  /** Fields of one source item shown in the modal: its top-level text and number values. */
+  const SKIP_KEYS = new Set(['slug', 'cover', 'image']);
+  const BLOCK_KEYS = new Set(['summary', 'description', 'note']);
+  function itemFields(file, item, i) {
+    return Object.entries(item || {})
+      .filter(([k, v]) => !SKIP_KEYS.has(k) && (typeof v === 'string' || typeof v === 'number'))
+      .map(([k, v]) => {
+        const ptr = `/${i}/${k.replace(/~/g, '~0').replace(/\//g, '~1')}`;
+        const type =
+          typeof v === 'number'
+            ? 'number'
+            : BLOCK_KEYS.has(k) || String(v).length > 60
+              ? 'block'
+              : 'text';
+        return { edit: `${file}#${ptr}`, file, ptr, type };
+      });
+  }
+
+  function editSourceButton(file, { compact = false } = {}) {
+    return h(
+      'button',
+      {
+        type: 'button',
+        class: ['src-edit', compact && 'src-edit--compact'],
+        title: `Edit ${baseName(file)}`,
+        'aria-label': `Edit ${baseName(file)}`,
+        onclick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openSource(file);
+        },
+      },
+      h('i', { class: 'fa-solid fa-pen-to-square', 'aria-hidden': 'true' }),
+      compact ? null : ' Edit',
+    );
+  }
+
+  /** Sources section (end of the panel): every list in content/sources/ with an Edit button. */
+  function sourcesBlock() {
+    const files = Object.keys(store.current).filter(isSource).sort();
+    if (!files.length) return null;
+    const rows = files.map((file) => {
+      const list = store.current[file];
+      const dirty = JSON.stringify(list) !== JSON.stringify(store.base[file]);
+      return h(
+        'div',
+        { class: ['src-row', dirty && 'is-changed'] },
+        h('span', { class: 'src-row__name' }, baseName(file)),
+        h('i', { class: 'dot', title: 'Changed' }),
+        h(
+          'span',
+          { class: 'src-row__count' },
+          Array.isArray(list) ? `${list.length} item${list.length === 1 ? '' : 's'}` : 'not a list',
+        ),
+        Array.isArray(list) ? editSourceButton(file) : null,
+      );
+    });
+    return sectionBlock({ id: 'sources', title: 'Sources' }, rows);
+  }
+
+  function closeSource() {
+    if (!modal) return;
+    for (const [edit, input] of inputs) if (modal.el.contains(input)) inputs.delete(edit);
+    modal.el.remove();
+    modal = null;
+  }
+
+  /** Fill the open modal with the source's items and their fields (same inputs as the panel). */
+  function renderSource() {
+    if (!modal) return;
+    for (const [edit, input] of inputs) if (modal.el.contains(input)) inputs.delete(edit);
+    const list = store.current[modal.file];
+    const items = Array.isArray(list)
+      ? list.map((item, i) =>
+          h(
+            'section',
+            { class: 'src-item' },
+            h(
+              'h4',
+              { class: 'src-item__title' },
+              h('span', { class: 'src-item__num' }, String(i + 1).padStart(2, '0')),
+              item?.name || item?.title || item?.slug || `#${i + 1}`,
+            ),
+            itemFields(modal.file, item, i)
+              .map((f) => field(f))
+              .filter(Boolean),
+          ),
+        )
+      : h('p', { class: 'hint' }, `${baseName(modal.file)} is not a list.`);
+    clear(modal.body, items);
+    if (selectedEdit) inputs.get(selectedEdit)?.closest('.tf')?.classList.add('is-selected');
+  }
+
+  /** Open the modal for a source file (content/sources/<name>.json). */
+  function openSource(file) {
+    if (modal?.file === file) return renderSource();
+    closeSource();
+    const body = h('div', { class: 'src-modal__body' });
+    const el = h(
+      'div',
+      { class: 'modal src-modal', onclick: (e) => e.target === el && closeSource() },
+      h(
+        'div',
+        {
+          class: 'modal__box src-modal__box',
+          role: 'dialog',
+          'aria-modal': 'true',
+          'aria-label': baseName(file),
+        },
+        h(
+          'header',
+          { class: 'src-modal__head' },
+          h('h3', { class: 'modal__title' }, baseName(file)),
+          h('span', { class: 'src-modal__path' }, `content/${file}`),
+          h(
+            'button',
+            {
+              type: 'button',
+              class: 'src-modal__x',
+              title: 'Close (Esc)',
+              'aria-label': 'Close',
+              onclick: () => closeSource(),
+            },
+            h('i', { class: 'fa-solid fa-xmark', 'aria-hidden': 'true' }),
+          ),
+        ),
+        body,
+      ),
+    );
+    el.close = closeSource; // Esc (src/editor/main.js) closes any open .modal
+    modal = { file, el, body };
+    document.body.append(el);
+    renderSource();
+  }
+
   /** Settings of a grid section (config.source, config.layout) as two dropdowns. */
   function gridOptions(group) {
     const i = group.index;
@@ -354,11 +490,11 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     const changed = (key) =>
       JSON.stringify(store.get(HOME, `/sections/${i}/config/${key}`)) !==
       JSON.stringify(store.getBase(HOME, `/sections/${i}/config/${key}`));
-    const select = (key, label, value, options) =>
+    const select = (key, label, value, options, extra = null) =>
       h(
         'label',
         { class: ['sec__opt', changed(key) && 'is-changed'] },
-        h('span', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' })),
+        h('span', { class: 'tf__label' }, label, h('i', { class: 'dot', title: 'Changed' }), extra),
         h(
           'select',
           {
@@ -382,6 +518,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
         'Source',
         source,
         sources.map((id) => [id, `${id}.json${id === source && missing ? ' (missing)' : ''}`]),
+        missing ? null : editSourceButton(`sources/${source}.json`, { compact: true }),
       ),
       select('layout', 'Layout', layout, [
         ['staggered', 'Staggered'],
@@ -494,6 +631,8 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
 
     for (const f of rawFields) {
       const g = groupFor(store, f, page);
+      // List items on a page that isn't theirs are edited in the Sources modal.
+      if (g.id.startsWith('source:')) continue;
       ensure(g).fields.push(f);
       // Prefer toggle meta from groupFor when colliding with HOME_TOGGLES
       if (g.toggle) groups.get(g.id).group = { ...groups.get(g.id).group, ...g };
@@ -527,14 +666,13 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
       h('p', { class: 'hint' }, hint),
       ordered.length
         ? ordered.map(({ group, fields }) => {
-            const full = group.id.startsWith('source:');
-            const nodes = fields
-              .map((f) => (f.__node ? f.__node : field(f, { full })))
-              .filter(Boolean);
+            const nodes = fields.map((f) => (f.__node ? f.__node : field(f))).filter(Boolean);
             return sectionBlock(group, nodes);
           })
         : h('p', { class: 'hint' }, 'No editable content here.'),
+      target.kind === 'page' ? sourcesBlock() : null,
     );
+    renderSource();
     if (selectedEdit) {
       const input = inputs.get(selectedEdit);
       input?.closest('.tf')?.classList.add('is-selected');
@@ -549,6 +687,13 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
         input.value = value ?? '';
       const changed = JSON.stringify(value) !== JSON.stringify(store.getBase(file, ptr));
       input.parentElement?.classList.toggle('is-changed', changed);
+    }
+    for (const row of root.querySelectorAll('.src-row')) {
+      const file = `sources/${row.querySelector('.src-row__name').textContent}`;
+      row.classList.toggle(
+        'is-changed',
+        JSON.stringify(store.current[file]) !== JSON.stringify(store.base[file]),
+      );
     }
     const view = bridge.doc?.querySelector('[data-router-view]');
     const edit = view?.getAttribute('data-curtain-edit');
@@ -576,7 +721,8 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
 
   function setSelectedField(edit) {
     selectedEdit = edit || null;
-    for (const el of root.querySelectorAll('.tf.is-selected')) el.classList.remove('is-selected');
+    for (const el of document.querySelectorAll('.tf.is-selected'))
+      el.classList.remove('is-selected');
     if (!selectedEdit) return;
     const input = inputs.get(selectedEdit);
     input?.closest('.tf')?.classList.add('is-selected');
@@ -589,10 +735,18 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     }
     const input = inputs.get(edit);
     if (!input) {
-      // Expand the group that owns this field, then re-render and try again.
       const { file, ptr } = splitEdit(edit);
       const page = bridge.doc?.querySelector('[data-router-view]')?.dataset?.page;
       const g = groupFor(store, { file, ptr }, page);
+      // A list item shown on another page (a person's name on home): edit it in the modal.
+      if (g.id.startsWith('source:')) {
+        openSource(file);
+        const field = inputs.get(edit);
+        if (!field) return;
+        field.focus({ preventScroll: true });
+        return focusField(edit);
+      }
+      // Expand the group that owns this field, then re-render and try again.
       openGroups.add(g.id);
       render();
       const again = inputs.get(edit);

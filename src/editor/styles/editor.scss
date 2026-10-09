@@ -1173,6 +1173,148 @@ select {
   margin: 0;
 }
 
+// sources: list in the Content panel + edit modal
+.sec__opt .tf__label {
+  min-height: 22px;
+}
+
+.src-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  padding: 4px 6px;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--fg);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px $hi;
+  }
+
+  &--compact {
+    margin-left: auto;
+    padding: 3px 5px;
+    font-size: 10.5px;
+  }
+}
+
+.src-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .dot {
+    display: none;
+    margin-left: 0;
+  }
+
+  &.is-changed .dot {
+    display: inline-block;
+  }
+}
+
+.src-row__name {
+  color: var(--fg);
+}
+
+.src-row__count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.src-modal__box {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.src-modal__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid var(--line);
+
+  .modal__title {
+    margin: 0;
+  }
+}
+
+.src-modal__path {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.src-modal__x {
+  margin-left: auto;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--fg);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px $hi;
+  }
+}
+
+.src-modal__body {
+  overflow: auto;
+  padding: 16px 22px 22px;
+  display: grid;
+  gap: 22px;
+}
+
+.src-item {
+  display: grid;
+  gap: 12px;
+}
+
+// every field in the modal is from the same file: no file pill
+.src-modal .tf__file {
+  display: none;
+}
+
+.src-item__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.src-item__num {
+  color: var(--muted);
+  font-size: 10px;
+}
+
 // text panel
 .tlist {
   display: grid;
