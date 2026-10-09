@@ -290,6 +290,7 @@
       cursor: pointer;
       list-style: none;
       font-size: 11px;
+      line-height: 16px; // 40px tall
       letter-spacing: 0.04em;
       color: var(--muted);
       user-select: none;

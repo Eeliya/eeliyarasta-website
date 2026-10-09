@@ -157,6 +157,7 @@
     align-items: center;
     gap: 4px 12px;
     padding: 8px 12px;
+    line-height: 16px; // name + two meta lines: 68px
     border: 0;
     border-radius: 12px;
     background: rgb(255 255 255 / 0.03);

@@ -383,6 +383,7 @@
     align-items: center;
     gap: 4px 12px;
     padding: 8px 12px;
+    line-height: 16px; // two lines: 52px
     border: 0;
     border-radius: 12px;
     background: none;

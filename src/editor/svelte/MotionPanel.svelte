@@ -139,6 +139,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 8px 12px;
+    line-height: 16px; // 32px tall
     border: 0;
     border-radius: 12px;
     cursor: pointer;
