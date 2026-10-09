@@ -1,22 +1,25 @@
 <!--
   The editor shell: the site preview on the left, the side panel on the right with the
-  tabs, the toolbar, the current tab's panel and the Save / Publish footer.
+  tabs, the toolbar, the current tab's panel and the Save / Publish footer. Also the
+  publish dialog and the toasts.
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
 <script>
   import PageMenu from './PageMenu.svelte';
+  import BrowsePanel from './BrowsePanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
+  import PublishDialog from './PublishDialog.svelte';
+  import Toasts from './Toasts.svelte';
   import { ui } from './ui.svelte.js';
   import { MOD, plural } from '../lib/format.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
-  // actions: setMode, pickTarget, save, publish
+  // actions: setMode, pickTarget, save, refreshStatus
   let { live, bridge, actions } = $props();
 
-  // Browse is not Svelte yet: main.js renders it into this element.
-  let body = $state();
-  export const panelBody = () => body;
+  let publishDialog = $state();
+  const publish = () => publishDialog.open();
 
   const TABS = [
     ['browse', 'Browse'],
@@ -91,9 +94,9 @@
     <ContentPanel {live} {bridge} />
   {:else if ui.mode === 'motion'}
     <MotionPanel {live} {bridge} />
+  {:else}
+    <BrowsePanel {live} onpublish={publish} />
   {/if}
-  <!-- not Svelte yet: Browse renders into this (see main.js renderOverview) -->
-  <section class="ed-body" hidden={ui.mode !== 'browse'} bind:this={body}></section>
 
   <footer class="ed-foot">
     <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>
@@ -122,7 +125,7 @@
       class="btn-ghost"
       title="Write the changes to content/*.json as a draft ({MOD}+S)"
       disabled={!live.changes || ui.saving || ui.publishing}
-      onclick={actions.save}
+      onclick={() => actions.save()}
     >
       {ui.saving ? 'Saving…' : `Save${live.changes ? ` · ${live.changes}` : ''}`}
     </button>
@@ -131,7 +134,7 @@
       class="btn-primary"
       title="Commit all saved content changes in one commit and push to {branch}"
       disabled={ui.publishing || (!unpublished.length && !ahead && !live.changes)}
-      onclick={actions.publish}
+      onclick={publish}
     >
       {ui.publishing
         ? 'Publishing…'
@@ -139,3 +142,6 @@
     </button>
   </footer>
 </aside>
+
+<PublishDialog {live} {actions} bind:this={publishDialog} />
+<Toasts />

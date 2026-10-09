@@ -163,13 +163,6 @@ kbd {
   align-items: center;
 }
 
-.ed-page {
-  flex: 1;
-  min-width: 0;
-  width: 0;
-  text-overflow: ellipsis;
-}
-
 // custom page / component picker
 .pm {
   position: relative;
@@ -1230,16 +1223,10 @@ dialog.src-modal {
   grid-template-columns: minmax(220px, 300px) 1fr;
   grid-template-rows: auto minmax(0, 1fr);
   padding: 0;
-  border: 0;
-  color: var(--fg);
   overflow: hidden;
 
   &:not([open]) {
     display: none;
-  }
-
-  &::backdrop {
-    background: rgb(0 0 0 / 0.82);
   }
 }
 
@@ -1395,7 +1382,8 @@ dialog.src-modal {
   }
 }
 
-.src-detail__confirm {
+// inline "Sure?" for Delete (Sources modal) and Discard (Browse)
+.confirm {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1496,25 +1484,41 @@ dialog.src-modal {
   margin-right: 8px;
 }
 
-.chg__val {
+// the saved value, struck through, before the new one
+.chg__was {
   color: var(--muted);
+  margin-right: 8px;
   word-break: break-word;
 }
 
-// ------------------------------------------------------------ modal & toasts
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 0.82);
-  animation: fade 0.25s;
+.chg__val {
+  color: var(--fg);
+  word-break: break-word;
 }
 
+.chg summary .src-edit,
+.chg summary .confirm {
+  margin-left: 6px;
+}
+
+// ------------------------------------------------------------ dialogs & toasts
 @keyframes fade {
   from {
     opacity: 0;
+  }
+}
+
+// a modal <dialog> (publish dialog, Sources modal)
+dialog.modal__box {
+  border: 0;
+  color: var(--fg);
+
+  &[open] {
+    animation: fade 0.25s;
+  }
+
+  &::backdrop {
+    background: rgb(0 0 0 / 0.82);
   }
 }
 
@@ -1543,22 +1547,6 @@ dialog.src-modal {
   align-items: center;
   gap: 16px;
   margin-top: 16px;
-}
-
-.steps {
-  padding-left: 18px;
-  margin: 0 0 14px;
-
-  li {
-    margin: 5px 0;
-    color: var(--muted);
-  }
-
-  b,
-  code {
-    color: var(--fg);
-    font-weight: 500;
-  }
 }
 
 .files {
@@ -1630,18 +1618,10 @@ dialog.src-modal {
   }
 }
 
-.pub-ahead {
-  margin-bottom: 12px;
-
-  .hint {
-    margin-bottom: 6px;
-  }
-}
-
 .commits {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: -4px 0 12px;
   display: grid;
   gap: 3px;
   font-size: 11px;
@@ -1652,13 +1632,9 @@ dialog.src-modal {
   }
 }
 
-.pub-result {
-  margin-top: 12px;
-}
-
 .pub-ok {
   font-size: 15px;
-  margin: 0 0 6px;
+  margin: 12px 0 6px;
   color: #b9f0c4;
 
   a {
@@ -1713,6 +1689,7 @@ dialog.src-modal {
 
 .toast {
   position: relative;
+  margin: 0;
   padding: 12px 36px 12px 14px;
   border-radius: 12px;
   animation: fade 0.3s;
@@ -1745,7 +1722,7 @@ dialog.src-modal {
   background: none;
   color: var(--muted);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 @media (max-width: 900px) {

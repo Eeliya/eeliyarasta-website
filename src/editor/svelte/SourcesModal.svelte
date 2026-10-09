@@ -67,7 +67,7 @@
   async function askDelete() {
     confirming = true;
     await tick();
-    dialog.querySelector('.src-detail__confirm button')?.focus();
+    dialog.querySelector('.confirm button')?.focus();
   }
 
   function onSlug(e) {
@@ -159,7 +159,7 @@
       <header class="src-detail__head">
         <h4 class="src-item__title">{itemName(item)}</h4>
         {#if confirming}
-          <span class="src-detail__confirm">
+          <span class="confirm">
             Delete {itemName(item)}?
             <button type="button" class="src-edit" onclick={() => (confirming = false)}>
               Cancel
