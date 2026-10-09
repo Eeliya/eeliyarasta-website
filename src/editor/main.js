@@ -13,14 +13,14 @@
  * Both go through the dev server (scripts/editor-server.mjs). The editor only exists
  * under `npm run dev`.
  *
- * The whole UI is Svelte: svelte/App.svelte shows `ui` (svelte/ui.svelte.js). This file
- * mounts it and holds the glue: the preview (bridge.js) and the store (store.js) events,
- * saving, keyboard shortcuts and loading the content.
+ * The whole UI is Svelte: svelte/App.svelte shows `ui` (svelte/ui.svelte.js) and has the
+ * keyboard shortcuts. This file mounts it and holds the glue: the preview (bridge.js) and
+ * store (store.js) events, saving and loading the content.
  */
 import './styles/editor.scss';
 import '@fortawesome/fontawesome-free/css/fontawesome.css';
 import '@fortawesome/fontawesome-free/css/solid.css';
-import { mount, unmount } from 'svelte';
+import { mount } from 'svelte';
 import App from './svelte/App.svelte';
 import { ui } from './svelte/ui.svelte.js';
 import { toast } from './svelte/toasts.svelte.js';
@@ -40,7 +40,7 @@ const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
 
 const root = document.getElementById('editor');
 root.textContent = '';
-const app = mount(App, {
+mount(App, {
   target: root,
   props: { live, bridge, actions: { setMode, pickTarget, save, refreshStatus } },
 });
@@ -127,7 +127,6 @@ bridge.on('select', (sel) => {
   else ui.selection = sel?.kind === 'text' ? { edit: sel.el.dataset.edit } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
-bridge.on('key', (e) => onKey(e));
 
 // ---------------------------------------------------------------- store events
 let animTimer = 0;
@@ -181,42 +180,6 @@ async function save({ quiet = false } = {}) {
   }
 }
 
-// ---------------------------------------------------------------- keyboard
-function onKey(e) {
-  const mod = e.metaKey || e.ctrlKey;
-  const k = e.key.toLowerCase();
-  const inField =
-    e.target instanceof Element &&
-    e.target.matches?.('input, textarea, select') &&
-    e.target.ownerDocument === document;
-  if (mod && k === 's') {
-    e.preventDefault();
-    save();
-  } else if (mod && k === 'e' && e.shiftKey) {
-    e.preventDefault();
-    location.href = bridge.path() || '/';
-  } else if (mod && k === 'e') {
-    e.preventDefault();
-    setMode(ui.mode === 'browse' ? ui.lastEdit : 'browse');
-  } else if (mod && (k === 'z' || k === 'y') && !inField) {
-    e.preventDefault();
-    if (k === 'y' || e.shiftKey) store.redo();
-    else store.undo();
-  } else if (e.key === 'Escape') {
-    // A dialog closes itself on Esc; this also covers Esc pressed in the preview.
-    const open = document.querySelector('dialog[open]');
-    if (open) open.close();
-    else if (bridge.selected) bridge.select(null);
-  }
-}
-window.addEventListener('keydown', onKey);
-window.addEventListener('beforeunload', (e) => {
-  if (store.dirtyFiles().length) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
-
 // ---------------------------------------------------------------- boot
 async function boot() {
   ui.status = 'Loading content…';
@@ -224,11 +187,7 @@ async function boot() {
   try {
     loaded = await source.load();
   } catch (err) {
-    unmount(app);
-    const p = document.createElement('p');
-    p.className = 'ed-boot';
-    p.textContent = `Could not load content: ${err.message}`;
-    root.append(p);
+    ui.loadError = err.message; // App shows it instead of the editor
     return;
   }
   store.load(loaded.files);

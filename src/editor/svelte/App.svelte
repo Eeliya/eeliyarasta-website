@@ -1,7 +1,7 @@
 <!--
   The editor shell: the site preview on the left, the side panel on the right with the
   tabs, the toolbar, the current tab's panel and the Save / Publish footer. Also the
-  publish dialog and the toasts.
+  publish dialog, the toasts and the keyboard shortcuts.
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
 <script>
@@ -35,113 +35,158 @@
   $effect(() => {
     document.title = `${live.changes ? '● ' : ''}Editor · Eeliya Rasta`;
   });
+
+  /** Keyboard shortcuts, also while the preview has focus (it forwards them: bridge 'key'). */
+  function onKey(e) {
+    const mod = e.metaKey || e.ctrlKey;
+    const k = e.key.toLowerCase();
+    // Ctrl+Z in a field of the panel undoes the typing there, not an editor step.
+    const inField =
+      e.target instanceof Element &&
+      e.target.matches?.('input, textarea, select') &&
+      e.target.ownerDocument === document;
+    if (mod && k === 's') {
+      e.preventDefault();
+      actions.save();
+    } else if (mod && k === 'e' && e.shiftKey) {
+      e.preventDefault();
+      location.href = bridge.path() || '/';
+    } else if (mod && k === 'e') {
+      e.preventDefault();
+      actions.setMode(ui.mode === 'browse' ? ui.lastEdit : 'browse');
+    } else if (mod && (k === 'z' || k === 'y') && !inField) {
+      e.preventDefault();
+      if (k === 'y' || e.shiftKey) live.store.redo();
+      else live.store.undo();
+    } else if (e.key === 'Escape') {
+      // A dialog closes itself on Esc; this also covers Esc pressed in the preview.
+      const open = document.querySelector('dialog[open]');
+      if (open) open.close();
+      else if (bridge.selected) bridge.select(null);
+    }
+  }
+  $effect(() => bridge.on('key', onKey)); // once: the bridge never changes
+
+  /** Leaving the page with unsaved edits: the browser asks first. */
+  function onBeforeUnload(e) {
+    if (live.store.dirtyFiles().length) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  }
 </script>
 
-<main class={['ed-stage', mobile && 'is-mobile']}>
-  <iframe class="ed-frame" title="Site preview" {@attach bridge.attach}></iframe>
-</main>
+<svelte:window onkeydown={onKey} onbeforeunload={onBeforeUnload} />
 
-<aside class="ed-panel">
-  <header class="ed-head">
-    <h1 class="ed-brand">Editor <small class="ed-source">dev · local files</small></h1>
+{#if ui.loadError}
+  <p class="ed-boot">Could not load content: {ui.loadError}</p>
+{:else}
+  <main class={['ed-stage', mobile && 'is-mobile']}>
+    <iframe class="ed-frame" title="Site preview" {@attach bridge.attach}></iframe>
+  </main>
 
-    <nav class="seg" aria-label="Mode">
-      {#each TABS as [mode, label] (mode)}
+  <aside class="ed-panel">
+    <header class="ed-head">
+      <h1 class="ed-brand">Editor <small class="ed-source">dev · local files</small></h1>
+
+      <nav class="seg" aria-label="Mode">
+        {#each TABS as [mode, label] (mode)}
+          <button
+            type="button"
+            class={['seg__btn', ui.mode === mode && 'is-active']}
+            onclick={() => actions.setMode(mode)}>{label}</button
+          >
+        {/each}
+      </nav>
+
+      <div class="ed-bar" role="toolbar">
+        <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
+        <!-- the icon shows the view a click switches to -->
         <button
           type="button"
-          class={['seg__btn', ui.mode === mode && 'is-active']}
-          onclick={() => actions.setMode(mode)}>{label}</button
+          class="icon-btn"
+          title={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
+          onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
         >
-      {/each}
-    </nav>
+          <i
+            class={['fa-solid', mobile ? 'fa-desktop' : 'fa-mobile-screen-button']}
+            aria-hidden="true"
+          ></i>
+        </button>
+        <button
+          type="button"
+          class="icon-btn"
+          title="Undo ({MOD}+Z)"
+          disabled={!live.canUndo}
+          onclick={() => live.store.undo()}
+        >
+          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="icon-btn"
+          title="Redo ({MOD}+Shift+Z)"
+          disabled={!live.canRedo}
+          onclick={() => live.store.redo()}
+        >
+          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
 
-    <div class="ed-bar" role="toolbar">
-      <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
-      <!-- the icon shows the view a click switches to -->
-      <button
-        type="button"
-        class="icon-btn"
-        title={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
-        onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
-      >
-        <i
-          class={['fa-solid', mobile ? 'fa-desktop' : 'fa-mobile-screen-button']}
-          aria-hidden="true"
-        ></i>
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        title="Undo ({MOD}+Z)"
-        disabled={!live.canUndo}
-        onclick={() => live.store.undo()}
-      >
-        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        title="Redo ({MOD}+Shift+Z)"
-        disabled={!live.canRedo}
-        onclick={() => live.store.redo()}
-      >
-        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-      </button>
-    </div>
-  </header>
+    {#if ui.mode === 'text'}
+      <ContentPanel {live} {bridge} />
+    {:else if ui.mode === 'motion'}
+      <MotionPanel {live} {bridge} />
+    {:else}
+      <BrowsePanel {live} onpublish={publish} />
+    {/if}
 
-  {#if ui.mode === 'text'}
-    <ContentPanel {live} {bridge} />
-  {:else if ui.mode === 'motion'}
-    <MotionPanel {live} {bridge} />
-  {:else}
-    <BrowsePanel {live} onpublish={publish} />
-  {/if}
-
-  <footer class="ed-foot">
-    <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>
-      {#if !ui.pub}
-        <span class="muted">Checking for unpublished changes…</span>
-      {:else if ui.pub.error}
-        <span class="muted">Publish unavailable: {ui.pub.error}</span>
-      {:else}
-        <i class="ed-pending__dot"></i>
-        {#if unpublished.length}
-          <span>
-            <b>{plural(unpublishedChanges, 'saved change')}</b>
-            not published · {plural(unpublished.length, 'file')}
-          </span>
+    <footer class="ed-foot">
+      <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>
+        {#if !ui.pub}
+          <span class="muted">Checking for unpublished changes…</span>
+        {:else if ui.pub.error}
+          <span class="muted">Publish unavailable: {ui.pub.error}</span>
         {:else}
-          <span class="muted">Everything saved is published</span>
+          <i class="ed-pending__dot"></i>
+          {#if unpublished.length}
+            <span>
+              <b>{plural(unpublishedChanges, 'saved change')}</b>
+              not published · {plural(unpublished.length, 'file')}
+            </span>
+          {:else}
+            <span class="muted">Everything saved is published</span>
+          {/if}
+          {#if ahead}
+            <span class="muted">· {plural(ahead, 'commit')} not pushed</span>
+          {/if}
         {/if}
-        {#if ahead}
-          <span class="muted">· {plural(ahead, 'commit')} not pushed</span>
-        {/if}
-      {/if}
-    </p>
-    <p class="ed-status" role="status" aria-live="polite">{ui.status}</p>
-    <button
-      type="button"
-      class="btn-ghost"
-      title="Write the changes to content/*.json as a draft ({MOD}+S)"
-      disabled={!live.changes || ui.saving || ui.publishing}
-      onclick={() => actions.save()}
-    >
-      {ui.saving ? 'Saving…' : `Save${live.changes ? ` · ${live.changes}` : ''}`}
-    </button>
-    <button
-      type="button"
-      class="btn-primary"
-      title="Commit all saved content changes in one commit and push to {branch}"
-      disabled={ui.publishing || (!unpublished.length && !ahead && !live.changes)}
-      onclick={publish}
-    >
-      {ui.publishing
-        ? 'Publishing…'
-        : `Publish${unpublished.length ? ` · ${unpublishedChanges}` : ''}`}
-    </button>
-  </footer>
-</aside>
+      </p>
+      <p class="ed-status" role="status" aria-live="polite">{ui.status}</p>
+      <button
+        type="button"
+        class="btn-ghost"
+        title="Write the changes to content/*.json as a draft ({MOD}+S)"
+        disabled={!live.changes || ui.saving || ui.publishing}
+        onclick={() => actions.save()}
+      >
+        {ui.saving ? 'Saving…' : `Save${live.changes ? ` · ${live.changes}` : ''}`}
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        title="Commit all saved content changes in one commit and push to {branch}"
+        disabled={ui.publishing || (!unpublished.length && !ahead && !live.changes)}
+        onclick={publish}
+      >
+        {ui.publishing
+          ? 'Publishing…'
+          : `Publish${unpublished.length ? ` · ${unpublishedChanges}` : ''}`}
+      </button>
+    </footer>
+  </aside>
 
-<PublishDialog {live} {actions} bind:this={publishDialog} />
-<Toasts />
+  <PublishDialog {live} {actions} bind:this={publishDialog} />
+  <Toasts />
+{/if}

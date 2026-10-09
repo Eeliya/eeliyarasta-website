@@ -3,6 +3,8 @@
  * $state object, so a change re-renders whatever uses that field.
  */
 export const ui = $state({
+  /** Why the content could not be loaded; App shows it instead of the editor. */
+  loadError: '',
   /** 'browse' | 'text' (the Content tab) | 'motion' */
   mode: 'browse',
   /** The edit tab Ctrl+E goes back to. */
