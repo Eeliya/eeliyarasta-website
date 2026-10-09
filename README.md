@@ -222,11 +222,11 @@ motion, settings; `view`: menu, footer; `anim`: the animation open in the Motion
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
-| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                             |
-| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                             |
-| **Motion** | Click an animated element (or pick one from the Elements list). Edit its animation, duration, delay, stagger, ease (picker with curves), trigger (load / scroll), scroll start/end/scrub, from/to properties (distance, scale, rotation, opacity, clip-path…) and type-specific values (hero scatter, parallax speed, word scrub…). Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
+| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                  |
+| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                  |
+| **Motion** | Click an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations library. Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
 
 In the edit modes, clicks on editable or animated elements select them instead of following
 links. Hold **Alt** to click through.
@@ -239,15 +239,24 @@ Motion tab lists the page's animated **Elements**; pick one and choose where its
   without touching templates.
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
 
-An animation's own values live in the **Animations library** (the Animations button at the
-top of the Motion tab, or the edit button next to an element's Animation): pick an
-animation to edit `presets["fade-up"]`, which every element using it gets unless it sets
-its own. The list shows how many elements on this page use each animation and which
-`data-anim` names use it on the site.
+Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have an **Inherit /
+Custom** switch. Inherit shows the inherited value in muted text with where it comes from
+(`from fade-up`, `from all`, `from global`) and stores nothing; Custom stores the value at
+the chosen scope, and switching back to Inherit removes it (one undo step). Everything else
+the animation does is read-only here.
 
-Badges show where each value comes from: **element**, **all** (the `data-anim` name),
-**default** (the animation) or **global** (`defaults`); the reset button removes the value
-at the current scope.
+The **Animations library** (the Animations button at the top of the Motion tab, or the edit
+button next to an element's Animation) is the only place that defines what an animation
+does: pick an animation to edit `presets["fade-up"]`, every value including timing, and add
+or remove from/to properties. Badges show whether a value is the animation's own
+(**default**) or from `defaults` (**global**); reset removes the animation's own value. The
+list shows how many elements on this page use each animation and which `data-anim` names
+use it on the site.
+
+Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `speed` in
+`targets`) are listed in a notice in the element view: **Move to animation** copies them into
+the animation (which changes it for every element using it), **Drop** removes them.
+
 Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z** / **Shift+Ctrl/⌘+Z**
 undo/redo, **Esc** deselects.
 
