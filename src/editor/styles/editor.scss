@@ -1200,6 +1200,15 @@ select {
     box-shadow: inset 0 0 0 1px $hi;
   }
 
+  &--danger {
+    color: #ff8a7a;
+
+    &:hover {
+      color: #ffb3a8;
+      background: rgb(255 138 122 / 0.1);
+    }
+  }
+
   &--compact {
     margin-left: auto;
     padding: 3px 5px;
@@ -1232,9 +1241,10 @@ select {
   font-size: 10.5px;
 }
 
-.src-modal__box {
-  width: min(640px, calc(100vw - 32px));
-  max-height: calc(100vh - 64px);
+.modal__box.src-modal__box {
+  width: min(1100px, 92vw);
+  height: calc(100vh - 64px);
+  max-height: 900px;
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -1281,16 +1291,147 @@ select {
   }
 }
 
-.src-modal__body {
-  overflow: auto;
-  padding: 16px 22px 22px;
+.src-modal__panes {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  gap: 22px;
+  grid-template-columns: minmax(220px, 300px) 1fr;
 }
 
-.src-item {
+// left: the list
+.src-list {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 12px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.src-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 10px;
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.src-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.src-list__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--fg);
+
+  .dot {
+    display: none;
+    margin-left: auto;
+    flex: none;
+  }
+
+  &.is-changed .dot {
+    display: inline-block;
+  }
+
+  &:hover {
+    background: rgb(255 255 255 / 0.05);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px $hi;
+  }
+
+  &.is-selected {
+    background: rgb(159 211 255 / 0.2);
+  }
+}
+
+.src-list__num {
+  flex: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.src-list__text {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.src-list__name,
+.src-list__meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.src-list__meta {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.src-list__note {
+  margin: 12px 6px 0;
+}
+
+// right: the selected item
+.src-detail {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 22px 22px;
+}
+
+.src-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  margin-bottom: 14px;
+
+  .src-item__title {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.src-detail__confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  font-size: 11px;
+}
+
+.src-detail__fields {
   display: grid;
   gap: 12px;
+}
+
+.src-detail__hint {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.src-detail .tf__input:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 // every field in the modal is from the same file: no file pill

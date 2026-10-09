@@ -1,4 +1,4 @@
-import { html, esc, img, pad, extAttrs, coverOf, ed, lines } from '../helpers.js';
+import { html, esc, img, pad, extAttrs, coverOf, imagesOf, ed, lines } from '../helpers.js';
 import { SITE, HOME, sourceFile } from '../files.js';
 
 const PROJECTS = sourceFile('projects');
@@ -18,10 +18,9 @@ export const sectionHead = ({ key, index, label, title, href, cta }) => {
 export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {}) => {
   const at = (field, type) => ed(sourceFile(kind), [index, field], type);
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
-  const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(
-    0,
-    4,
-  );
+  const first = [coverOf(album), ...imagesOf(album).filter((_, i) => i !== (album.cover || 0))]
+    .filter(Boolean)
+    .slice(0, 4);
   const sizes = landscape
     ? '(max-width: 760px) 100vw, 50vw'
     : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
@@ -33,7 +32,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
   >
     <div class="acard__media">
       ${first.map((im, i) => img(ctx, im.src, { alt: i === 0 ? im.alt : '', sizes, cls: i === 0 ? 'is-active' : '' }))}
-      <span class="acard__count">${pad(album.images.length)}</span>
+      <span class="acard__count">${pad(imagesOf(album).length)}</span>
     </div>
     <div class="acard__info">
       <h2 class="acard__name" ${at('name')}>${esc(album.name)}</h2>
@@ -61,7 +60,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
-          <div class="prow__media">${img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw' })}</div>
+          <div class="prow__media">${p.image ? img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw' }) : ''}</div>
           <div class="prow__text">
             <p${ed(PROJECTS, [i, 'description'], 'block')}>${lines(p.description)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
@@ -80,7 +79,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       aria-hidden="true"
     >
       <div class="preview__frame">
-        ${projects.map((p) => img(ctx, p.image, { alt: '', sizes: '360px' }))}
+        ${projects.map((p) => (p.image ? img(ctx, p.image, { alt: '', sizes: '360px' }) : '<img alt="" />'))}
       </div>
     </div>`;
 };

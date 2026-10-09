@@ -161,7 +161,7 @@ const hsl = (h, s, l) => {
  */
 export function accentOf(ctx, album) {
   if (album?.accent) return album.accent;
-  const cover = album?.images?.[album.cover || 0]?.src;
+  const cover = coverOf(album)?.src;
   const color = cover && ctx.media?.[cover]?.color;
   if (!color) return ctx.site.accent;
   const [h, s] = rgbToHsl(hexToRgb(color));
@@ -169,8 +169,11 @@ export function accentOf(ctx, album) {
   return hsl(h, Math.min(0.55, Math.max(0.3, s)), 0.66);
 }
 
-/** Cover image of an album. */
-export const coverOf = (album) => album.images[album.cover || 0];
+/** Photos of an album ([] when it has none yet, e.g. a person just added in the editor). */
+export const imagesOf = (album) => (Array.isArray(album?.images) ? album.images : []);
+
+/** Cover image of an album (undefined when it has no photos). */
+export const coverOf = (album) => imagesOf(album)[album?.cover || 0] || imagesOf(album)[0];
 
 /** "Photo: Name / Unsplash" credit line (placeholder images). */
 export const creditText = (credit) =>

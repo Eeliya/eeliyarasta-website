@@ -3,6 +3,7 @@
  * static HTML file per route; the client router fetches those same files.
  */
 import { SITE, HOME, sourceFile } from './files.js';
+import { coverOf } from './helpers.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -34,7 +35,7 @@ export function getRoutes(content) {
         next: list[(i + 1) % list.length],
         title,
         description: album.summary,
-        image: album.images[album.cover || 0]?.src,
+        image: coverOf(album)?.src,
         curtain: curtainOf(album.curtain, title),
         curtainEdit: curtainEditOf(sourceFile(kind), [i, 'curtain']),
       };

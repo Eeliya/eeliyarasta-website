@@ -1,4 +1,4 @@
-import { html, esc, img, pad, creditText, ratio, ed, lines } from '../helpers.js';
+import { html, esc, img, pad, creditText, ratio, ed, lines, imagesOf } from '../helpers.js';
 
 /**
  * Album page (one person or place), Faint Film "slider view":
@@ -7,7 +7,8 @@ import { html, esc, img, pad, creditText, ratio, ed, lines } from '../helpers.js
  */
 export function album(ctx, route) {
   const a = route.album;
-  const n = a.images.length;
+  const images = imagesOf(a);
+  const n = images.length;
   const isPeople = route.kind === 'people';
   const at = (field, type) => ed(route.file, [route.index, field], type);
   const meta = [
@@ -40,7 +41,7 @@ export function album(ctx, route) {
       aria-roledescription="carousel"
       aria-label="${esc(a.name)} photos"
     >
-      ${a.images.map(
+      ${images.map(
         (im, i) =>
           html` <figure
             class="slide${i === 0 ? ' is-active' : ''}"
@@ -80,13 +81,13 @@ export function album(ctx, route) {
       <a
         class="album__credit label muted"
         data-album-credit
-        href="${esc(a.images[0].credit?.source || '#')}"
+        href="${esc(images[0]?.credit?.source || '#')}"
         target="_blank"
         rel="noopener"
-        >${esc(creditText(a.images[0].credit))}</a
+        >${esc(creditText(images[0]?.credit))}</a
       >
       <ol class="album__thumbs" data-anim="album.thumbs" data-album-thumbs>
-        ${a.images.map(
+        ${images.map(
           (im, i) =>
             html` <li>
               <button
@@ -104,7 +105,7 @@ export function album(ctx, route) {
     </div>
 
     <div class="album__grid" data-album-grid hidden>
-      ${a.images.map(
+      ${images.map(
         (im, i) =>
           html` <button
             class="gcell"

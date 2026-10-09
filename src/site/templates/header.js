@@ -1,4 +1,4 @@
-import { html, esc, img, pad, extAttrs, isExternal, ed } from '../helpers.js';
+import { html, esc, img, pad, extAttrs, isExternal, ed, coverOf, imagesOf } from '../helpers.js';
 import { SITE } from '../files.js';
 
 const caret =
@@ -11,10 +11,10 @@ const albumLinks = (ctx, kind, list) =>
       html` <li>
         <a class="dd-link" href="/${kind}/${a.slug}/">
           <span class="dd-link__thumb"
-            >${img(ctx, a.images[a.cover || 0].src, { alt: '', sizes: '48px' })}</span
+            >${coverOf(a) ? img(ctx, coverOf(a).src, { alt: '', sizes: '48px' }) : ''}</span
           >
           <span class="dd-link__name">${esc(a.name)}</span>
-          <span class="dd-link__count">${pad(a.images.length)}</span>
+          <span class="dd-link__count">${pad(imagesOf(a).length)}</span>
         </a>
       </li>`,
   );

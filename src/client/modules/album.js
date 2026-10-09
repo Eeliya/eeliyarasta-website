@@ -11,7 +11,7 @@ const pad = (n) => String(n).padStart(2, '0');
 
 export function album(view) {
   const root = view.querySelector('[data-album]');
-  if (!root) return null;
+  if (!root || !root.querySelector('[data-slide]')) return null; // no photos yet: static page
   const reduce = reducedMotion();
   const T = transitions.album;
   const I = interactions.album || {};

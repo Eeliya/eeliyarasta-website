@@ -147,7 +147,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     'content',
     'sources',
   ]);
-  /** Open source modal: { file, el, body } or null. */
+  /** Open source modal: { file, el, list, detail, index, confirm } or null. */
   let modal = null;
 
   function parseValue(type, raw) {
@@ -409,37 +409,270 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     modal = null;
   }
 
-  /** Fill the open modal with the source's items and their fields (same inputs as the panel). */
-  function renderSource() {
-    if (!modal) return;
-    for (const [edit, input] of inputs) if (modal.el.contains(input)) inputs.delete(edit);
-    const list = store.current[modal.file];
-    const items = Array.isArray(list)
-      ? list.map((item, i) =>
-          h(
-            'section',
-            { class: 'src-item' },
-            h(
-              'h4',
-              { class: 'src-item__title' },
-              h('span', { class: 'src-item__num' }, String(i + 1).padStart(2, '0')),
-              item?.name || item?.title || item?.slug || `#${i + 1}`,
-            ),
-            itemFields(modal.file, item, i)
-              .map((f) => field(f))
-              .filter(Boolean),
-          ),
-        )
-      : h('p', { class: 'hint' }, `${baseName(modal.file)} is not a list.`);
-    clear(modal.body, items);
-    if (selectedEdit) inputs.get(selectedEdit)?.closest('.tf')?.classList.add('is-selected');
+  const itemName = (item) => item?.name || item?.title || 'Untitled';
+  const itemMeta = (item) => item?.location || item?.kind || item?.slug || '';
+  const slugify = (s) =>
+    String(s || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+  /** An empty item shaped like the list's first item (strings "", lists [], numbers 0). */
+  function blankLike(value, key) {
+    if (Array.isArray(value)) return [];
+    if (value && typeof value === 'object')
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, blankLike(v, k)]));
+    if (typeof value === 'string') return '';
+    if (typeof value === 'number') return key === 'year' ? new Date().getFullYear() : 0;
+    if (typeof value === 'boolean') return false;
+    return value ?? null;
   }
 
-  /** Open the modal for a source file (content/sources/<name>.json). */
-  function openSource(file) {
-    if (modal?.file === file) return renderSource();
+  function addItem() {
+    const { file } = modal;
+    const list = store.current[file];
+    if (!Array.isArray(list)) return;
+    const slugs = new Set(list.map((it) => it?.slug));
+    let n = list.length + 1;
+    while (slugs.has(`new-item-${n}`)) n++;
+    const item = blankLike(list[0] || { slug: '', name: '' });
+    delete item.curtain; // no curtain text: the transition falls back to the item's name
+    item.slug = `new-item-${n}`;
+    if ('title' in item && !('name' in item)) item.title = `New item ${n}`;
+    else item.name = `New item ${n}`;
+    modal.index = list.length;
+    modal.confirm = false;
+    store.set(file, '', [...list, item], { source: 'panel' });
+    render();
+    modal?.detail.querySelector('.tf__input:not([disabled])')?.focus();
+  }
+
+  function deleteItem() {
+    const { file, index } = modal;
+    const list = store.current[file];
+    if (!Array.isArray(list) || !list[index]) return;
+    modal.index = Math.max(0, Math.min(index, list.length - 2));
+    modal.confirm = false;
+    store.set(
+      file,
+      '',
+      list.filter((_, i) => i !== index),
+      { source: 'panel' },
+    );
+    render();
+  }
+
+  /** Slug field: the item's URL. Editable until the item is saved, then fixed. */
+  function slugField(file, item, i) {
+    const saved = (store.base[file] || []).some((b) => b?.slug === item.slug);
+    const input = h('input', {
+      class: 'tf__input',
+      type: 'text',
+      spellcheck: false,
+      value: item.slug ?? '',
+      disabled: saved,
+      oninput: (e) => {
+        const v = slugify(e.target.value);
+        const taken = store.current[file].some((it, k) => k !== i && it?.slug === v);
+        e.target.classList.toggle('is-invalid', !v || taken);
+        if (v && !taken)
+          store.set(file, `/${i}/slug`, v, { key: `slug:${file}#${i}`, source: 'panel' });
+      },
+      onblur: (e) => {
+        e.target.value = store.get(file, `/${i}/slug`) ?? '';
+        e.target.classList.remove('is-invalid');
+      },
+    });
+    return h(
+      'div',
+      { class: 'tf' },
+      h(
+        'label',
+        { class: 'tf__label' },
+        'slug',
+        h(
+          'span',
+          { class: 'src-detail__hint' },
+          saved ? 'fixed: it is the page URL' : 'page URL, fixed after Save',
+        ),
+      ),
+      input,
+    );
+  }
+
+  /** Fill the open modal: item list on the left, the selected item's fields on the right. */
+  function renderSource() {
+    if (!modal) return;
+    const activeEdit = [...inputs].find(([, el]) => el === document.activeElement)?.[0];
+    for (const [edit, input] of inputs) if (modal.el.contains(input)) inputs.delete(edit);
+    const { file } = modal;
+    const list = store.current[file];
+    if (!Array.isArray(list)) {
+      clear(modal.list);
+      clear(modal.detail, h('p', { class: 'hint' }, `${baseName(file)} is not a list.`));
+      return;
+    }
+    modal.index = Math.max(0, Math.min(modal.index, list.length - 1));
+    const base = store.base[file] || [];
+    const baseBySlug = new Map(base.map((b) => [b?.slug, b]));
+    const isDirty = (item) => JSON.stringify(item) !== JSON.stringify(baseBySlug.get(item?.slug));
+
+    clear(
+      modal.list,
+      h(
+        'div',
+        { class: 'src-list__head' },
+        h('span', {}, `${list.length} item${list.length === 1 ? '' : 's'}`),
+        h(
+          'button',
+          { type: 'button', class: 'src-edit', onclick: addItem },
+          h('i', { class: 'fa-solid fa-plus', 'aria-hidden': 'true' }),
+          ' Add',
+        ),
+      ),
+      h(
+        'ul',
+        { class: 'src-list__items' },
+        list.map((item, i) =>
+          h(
+            'li',
+            {},
+            h(
+              'button',
+              {
+                type: 'button',
+                class: [
+                  'src-list__item',
+                  i === modal.index && 'is-selected',
+                  isDirty(item) && 'is-changed',
+                ],
+                'aria-current': i === modal.index ? 'true' : null,
+                onclick: () => {
+                  modal.index = i;
+                  modal.confirm = false;
+                  renderSource();
+                },
+              },
+              h('span', { class: 'src-list__num' }, String(i + 1).padStart(2, '0')),
+              h(
+                'span',
+                { class: 'src-list__text' },
+                h('span', { class: 'src-list__name' }, itemName(item)),
+                h('span', { class: 'src-list__meta' }, itemMeta(item)),
+              ),
+              h('i', { class: 'dot', title: 'Changed' }),
+            ),
+          ),
+        ),
+      ),
+      list.length !== base.length
+        ? h(
+            'p',
+            { class: 'hint small src-list__note' },
+            'Added and deleted items show in the preview after Save.',
+          )
+        : null,
+    );
+
+    const i = modal.index;
+    const item = list[i];
+    if (!item) {
+      clear(modal.detail, h('p', { class: 'hint' }, 'No items yet. Add one on the left.'));
+      return;
+    }
+    const del = modal.confirm
+      ? h(
+          'span',
+          { class: 'src-detail__confirm' },
+          `Delete ${itemName(item)}?`,
+          h(
+            'button',
+            {
+              type: 'button',
+              class: 'src-edit',
+              onclick: () => {
+                modal.confirm = false;
+                renderSource();
+              },
+            },
+            'Cancel',
+          ),
+          h(
+            'button',
+            { type: 'button', class: 'src-edit src-edit--danger', onclick: deleteItem },
+            h('i', { class: 'fa-solid fa-trash', 'aria-hidden': 'true' }),
+            ' Delete',
+          ),
+        )
+      : h(
+          'button',
+          {
+            type: 'button',
+            class: 'src-edit src-edit--danger',
+            title: `Delete ${itemName(item)}`,
+            onclick: () => {
+              modal.confirm = true;
+              renderSource();
+              modal.detail.querySelector('.src-detail__confirm .src-edit')?.focus();
+            },
+          },
+          h('i', { class: 'fa-solid fa-trash', 'aria-hidden': 'true' }),
+          ' Delete',
+        );
+    clear(
+      modal.detail,
+      h(
+        'div',
+        { class: 'src-detail__head' },
+        h('h4', { class: 'src-item__title' }, itemName(item)),
+        del,
+      ),
+      h(
+        'div',
+        { class: 'src-detail__fields' },
+        'slug' in item ? slugField(file, item, i) : null,
+        itemFields(file, item, i)
+          .map((f) => field(f))
+          .filter(Boolean),
+      ),
+    );
+    if (selectedEdit) inputs.get(selectedEdit)?.closest('.tf')?.classList.add('is-selected');
+    if (activeEdit && !document.activeElement?.closest?.('.src-modal'))
+      inputs.get(activeEdit)?.focus({ preventScroll: true });
+  }
+
+  /** Typing in the modal: refresh the list's names and changed dots without a re-render. */
+  function updateSourceList() {
+    const list = modal && store.current[modal.file];
+    if (!Array.isArray(list)) return;
+    const baseBySlug = new Map((store.base[modal.file] || []).map((b) => [b?.slug, b]));
+    modal.list.querySelectorAll('.src-list__item').forEach((btn, i) => {
+      const item = list[i];
+      btn.querySelector('.src-list__name').textContent = itemName(item);
+      btn.querySelector('.src-list__meta').textContent = itemMeta(item);
+      btn.classList.toggle(
+        'is-changed',
+        JSON.stringify(item) !== JSON.stringify(baseBySlug.get(item?.slug)),
+      );
+    });
+    const title = modal.detail.querySelector('.src-detail__head .src-item__title');
+    if (title) title.textContent = itemName(list[modal.index]);
+  }
+
+  /** Open the modal for a source file (content/sources/<name>.json), optionally at an item. */
+  function openSource(file, index) {
+    if (modal?.file === file) {
+      if (index !== undefined && index !== modal.index) {
+        modal.index = index;
+        modal.confirm = false;
+      }
+      return renderSource();
+    }
     closeSource();
-    const body = h('div', { class: 'src-modal__body' });
+    const list = h('div', { class: 'src-list' });
+    const detail = h('div', { class: 'src-detail' });
     const el = h(
       'div',
       { class: 'modal src-modal', onclick: (e) => e.target === el && closeSource() },
@@ -468,11 +701,11 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
             h('i', { class: 'fa-solid fa-xmark', 'aria-hidden': 'true' }),
           ),
         ),
-        body,
+        h('div', { class: 'src-modal__panes' }, list, detail),
       ),
     );
     el.close = closeSource; // Esc (src/editor/main.js) closes any open .modal
-    modal = { file, el, body };
+    modal = { file, el, list, detail, index: index ?? 0, confirm: false };
     document.body.append(el);
     renderSource();
   }
@@ -688,6 +921,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
       const changed = JSON.stringify(value) !== JSON.stringify(store.getBase(file, ptr));
       input.parentElement?.classList.toggle('is-changed', changed);
     }
+    updateSourceList();
     for (const row of root.querySelectorAll('.src-row')) {
       const file = `sources/${row.querySelector('.src-row__name').textContent}`;
       row.classList.toggle(
@@ -740,7 +974,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
       const g = groupFor(store, { file, ptr }, page);
       // A list item shown on another page (a person's name on home): edit it in the modal.
       if (g.id.startsWith('source:')) {
-        openSource(file);
+        openSource(file, Number(parse(ptr)[0]) || 0);
         const field = inputs.get(edit);
         if (!field) return;
         field.focus({ preventScroll: true });

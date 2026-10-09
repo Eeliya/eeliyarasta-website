@@ -23,7 +23,9 @@ export function createStore() {
     listeners.forEach((fn) => fn({ files: [...new Set(files)], source }));
 
   const write = (c, value) => {
-    if (value === undefined) remove(current[c.file], c.ptr, { keep: c.keep || 0 });
+    // ptr "" is the whole file (e.g. a source list after adding or deleting an item).
+    if (c.ptr === '') current[c.file] = clone(value);
+    else if (value === undefined) remove(current[c.file], c.ptr, { keep: c.keep || 0 });
     else set(current[c.file], c.ptr, clone(value));
   };
 

@@ -508,13 +508,17 @@ async function save() {
 
 async function saveDev({ quiet = false } = {}) {
   const dirty = store.dirtyFiles();
+  // Items added to or deleted from a list only show in the preview once it re-renders.
+  const listsChanged = dirty.some(
+    (f) => Array.isArray(store.base[f]) && store.base[f].length !== store.current[f]?.length,
+  );
   state.saving = true;
   renderChrome();
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
     // A section the preview couldn't show yet (e.g. a grid with a new source): re-render it.
-    if (state.staleSections?.size && bridge.path()) bridge.load(bridge.path());
+    if ((listsChanged || state.staleSections?.size) && bridge.path()) bridge.load(bridge.path());
     if (!quiet)
       toast(
         h(
