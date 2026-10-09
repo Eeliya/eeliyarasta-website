@@ -91,7 +91,7 @@ function connectEditor() {
     hooks,
     navigate,
     /** Play the page-transition curtain over the current page (no navigation). */
-    replayCurtain: (label) => replayCurtain(label),
+    replayCurtain: (label, curtain) => replayCurtain(label, curtain),
     /** Pages with their own curtain or none, from the editor's draft content. */
     setPageCurtains,
     getSmoother,

@@ -1,7 +1,10 @@
 <!--
-  Motion tab: the site-wide page-transition curtain. A fixed total duration, the timeline
-  (CurtainTimeline), one ease for every step or per-step eases (Advanced), and every value
-  as a number under Advanced. All edits go through curtain-edit.js.
+  A page-transition curtain: a fixed total duration, the timeline (CurtainTimeline), one ease
+  for every step or per-step eases (Advanced), and every value as a number under Advanced.
+  All edits go through curtain-edit.js.
+    Settings tab  no `page`: the global curtain (settings/animations.json).
+    Motion tab    `page` = where the page's "transition" is stored ({ file, ptr }): Global /
+                  Custom / Off on top; Custom edits the page's own curtain.
 -->
 <script module>
   // Advanced open/closed, kept while switching tabs.
@@ -11,13 +14,31 @@
 <script>
   import CurtainTimeline from './CurtainTimeline.svelte';
   import EasePicker from './EasePicker.svelte';
-  import { CURTAIN, CURTAIN_ROWS, TOTAL_MAX, curtainEdits, fmtS } from './curtain-edit.js';
+  import {
+    CURTAIN,
+    CURTAIN_ROWS,
+    TOTAL_MAX,
+    curtainEdits,
+    fmtS,
+    setCurtainMode,
+  } from './curtain-edit.js';
+  import { CURTAIN_MODES, curtainMode } from '../../client/anim/curtain.js';
   import { ANIMATIONS } from '../../site/files.js';
 
-  // gsap: the preview's, for the ease curves
-  let { live, bridge, gsap } = $props();
+  // gsap: the preview's, for the ease curves. page: see above. onsettings: open Settings.
+  let { live, bridge, gsap, page = null, onsettings } = $props();
 
-  const edit = $derived(curtainEdits(live.store));
+  const MODE_LABELS = { global: 'Global', custom: 'Custom', off: 'Off' };
+  const mode = $derived.by(() => {
+    live.version;
+    return page ? curtainMode(live.get(page.file, page.ptr)) : 'custom';
+  });
+  // The curtain shown: the page's own (Custom) or the global one.
+  const edit = $derived(
+    page && mode === 'custom'
+      ? curtainEdits(live.store, page.file, page.ptr)
+      : curtainEdits(live.store, ANIMATIONS, CURTAIN),
+  );
   // Re-read after every store change.
   const plan = $derived.by(() => {
     live.version;
@@ -35,7 +56,11 @@
     live.version;
     return edit.shown(rel);
   };
-  const changed = (rel) => rel !== '/hold' && live.changed(ANIMATIONS, CURTAIN + rel);
+  const changed = (rel) => rel !== '/hold' && live.changed(edit.file, edit.base + rel);
+  const modeChanged = $derived.by(() => {
+    live.version;
+    return !!page && live.changed(page.file, page.ptr);
+  });
 
   // Fields with input that is not a number (red outline), by rel.
   let invalid = $state({});
@@ -75,7 +100,7 @@
     inputmode="decimal"
     autocomplete="off"
     spellcheck="false"
-    data-ptr={CURTAIN + rel}
+    data-ptr={edit.base + rel}
     {title}
     placeholder={fmtS(value(rel) ?? 0)}
     {@attach show(value(rel))}
@@ -87,87 +112,117 @@
 <section class="grp ptg">
   <h4 class="grp__title">Page transition</h4>
   <p class="hint">
-    Site-wide curtain timing, in the order things happen. Drag the bar ends or type the values. The
-    text itself is edited per page under Content → Page transition. Changes apply to the next page
-    change in the preview.
+    {page
+      ? 'The curtain that plays when you navigate to this page. Its text is edited under Content → Page transition.'
+      : 'The curtain every page uses unless Motion sets it to Custom or Off for that page. Drag the bar ends or type the values.'}
+    Changes apply to the next page change in the preview.
   </p>
   <button
     type="button"
     class="btn-ed"
-    title="Play the transition over this page with the values above (no navigation)"
-    onclick={() => bridge.api?.replayCurtain?.()}
+    title="Play the transition over this page with these values (no navigation)"
+    disabled={mode === 'off'}
+    onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
   >
     <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Replay
   </button>
 
   <div class="ptg__box">
-    <label class={['tf', changed('/total') && 'is-changed']}>
-      <span class="tf__label">Total duration (s)<i class="dot" title="Changed"></i></span>
-      {@render number('/total', 'tf__input')}
-      <span class="hint small tf__hint">
-        Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will
-        not grow this.
-      </span>
-    </label>
-
-    <CurtainTimeline {plan} {edit} />
-
-    <div class={['tf ptg__ease', individual && 'is-individual']}>
-      <EasePicker
-        {gsap}
-        value={shared}
-        compact
-        empty={individual ? 'Individual' : null}
-        onpick={edit.setSharedEase}
-      />
-      <p class="hint small tf__hint">
-        {individual
-          ? 'Per-step eases in Advanced. Pick an ease here to use one for all.'
-          : 'One ease for every step. Set a step ease in Advanced to use separate eases.'}
-      </p>
-    </div>
-
-    <details class="ptg__advanced" bind:open={advanced}>
-      <summary>
-        <i class="fa-solid fa-chevron-right ptg__caret ptg__caret--closed" aria-hidden="true"></i>
-        <i class="fa-solid fa-chevron-down ptg__caret ptg__caret--open" aria-hidden="true"></i>
-        Advanced
-      </summary>
-      <div class="ptg__advanced-body">
-        {#each CURTAIN_ROWS as row (row.label)}
-          {#if row.pair}
-            {@const ease = row.pair + '/ease'}
-            <div
-              class={[
-                'tf',
-                (changed(row.pair + '/duration') || changed(ease)) && 'is-changed',
-                !individual && 'is-ease-inactive',
-              ]}
+    {#if page}
+      <div class={['tf', modeChanged && 'is-changed']}>
+        <span class="tf__label">Curtain for this page<i class="dot" title="Changed"></i></span>
+        <div class="seg seg--small" role="group" aria-label="Curtain for this page">
+          {#each CURTAIN_MODES as m (m)}
+            <button
+              type="button"
+              class={['seg__btn', mode === m && 'is-active']}
+              aria-pressed={mode === m}
+              onclick={() => setCurtainMode(live.store, page, m)}>{MODE_LABELS[m]}</button
             >
-              <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
-              <div class="f__pair">
-                {@render number(row.pair + '/duration', 'f__num', row.label)}
-                <EasePicker
-                  {gsap}
-                  value={individual ? live.get(ANIMATIONS, CURTAIN + ease) || shared : shared}
-                  compact
-                  title={individual
-                    ? ''
-                    : 'Not in effect — shared ease is active. Pick an ease to switch to per-step.'}
-                  onpick={(v) => edit.setStepEase(ease, v)}
-                />
-              </div>
-            </div>
-          {:else}
-            <label class={['tf', changed(row.rel) && 'is-changed']}>
-              <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
-              {@render number(row.rel, 'tf__input')}
-              {#if row.hint}<span class="hint small tf__hint">{row.hint}</span>{/if}
-            </label>
-          {/if}
-        {/each}
+          {/each}
+        </div>
       </div>
-    </details>
+    {/if}
+
+    {#if mode === 'off'}
+      <p class="hint small">
+        No curtain when you navigate to this page: it fades in instead. Leaving it plays the curtain
+        of the page you go to.
+      </p>
+    {:else if mode === 'global'}
+      <p class="hint small">
+        Uses the global curtain.
+        <button type="button" class="link" onclick={onsettings}>Edit it in Settings</button>
+      </p>
+    {:else}
+      <label class={['tf', changed('/total') && 'is-changed']}>
+        <span class="tf__label">Total duration (s)<i class="dot" title="Changed"></i></span>
+        {@render number('/total', 'tf__input')}
+        <span class="hint small tf__hint">
+          Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will
+          not grow this.
+        </span>
+      </label>
+
+      <CurtainTimeline {plan} {edit} />
+
+      <div class={['tf ptg__ease', individual && 'is-individual']}>
+        <EasePicker
+          {gsap}
+          value={shared}
+          compact
+          empty={individual ? 'Individual' : null}
+          onpick={edit.setSharedEase}
+        />
+        <p class="hint small tf__hint">
+          {individual
+            ? 'Per-step eases in Advanced. Pick an ease here to use one for all.'
+            : 'One ease for every step. Set a step ease in Advanced to use separate eases.'}
+        </p>
+      </div>
+
+      <details class="ptg__advanced" bind:open={advanced}>
+        <summary>
+          <i class="fa-solid fa-chevron-right ptg__caret ptg__caret--closed" aria-hidden="true"></i>
+          <i class="fa-solid fa-chevron-down ptg__caret ptg__caret--open" aria-hidden="true"></i>
+          Advanced
+        </summary>
+        <div class="ptg__advanced-body">
+          {#each CURTAIN_ROWS as row (row.label)}
+            {#if row.pair}
+              {@const ease = row.pair + '/ease'}
+              <div
+                class={[
+                  'tf',
+                  (changed(row.pair + '/duration') || changed(ease)) && 'is-changed',
+                  !individual && 'is-ease-inactive',
+                ]}
+              >
+                <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
+                <div class="f__pair">
+                  {@render number(row.pair + '/duration', 'f__num', row.label)}
+                  <EasePicker
+                    {gsap}
+                    value={individual ? edit.get(edit.base + ease) || shared : shared}
+                    compact
+                    title={individual
+                      ? ''
+                      : 'Not in effect — shared ease is active. Pick an ease to switch to per-step.'}
+                    onpick={(v) => edit.setStepEase(ease, v)}
+                  />
+                </div>
+              </div>
+            {:else}
+              <label class={['tf', changed(row.rel) && 'is-changed']}>
+                <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
+                {@render number(row.rel, 'tf__input')}
+                {#if row.hint}<span class="hint small tf__hint">{row.hint}</span>{/if}
+              </label>
+            {/if}
+          {/each}
+        </div>
+      </details>
+    {/if}
   </div>
 </section>
 

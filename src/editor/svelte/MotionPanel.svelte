@@ -1,15 +1,28 @@
 <!--
-  Motion tab. Nothing picked: the page's animated elements (the global page-transition
-  curtain is in the Settings tab). An element picked (ui.anim, from the preview or the list): its
+  Motion tab. Nothing picked: the page's curtain (Global / Custom / Off, CurtainSection; the
+  global curtain itself is in the Settings tab) and the page's animated elements. An element picked (ui.anim, from the preview or the list): its
   animation (AnimEditor).
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
+  import CurtainSection from './CurtainSection.svelte';
   import { ui } from './ui.svelte.js';
-  import { ANIMATIONS } from '../../site/files.js';
+  import { splitEdit } from './content-groups.js';
+  import { getRoutes } from '../../site/routes.js';
+  import { ANIMATIONS, contentFromFiles } from '../../site/files.js';
 
-  // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
-  let { live, bridge } = $props();
+  // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
+  // onsettings: switch to the Settings tab
+  let { live, bridge, onsettings } = $props();
+
+  // Where the previewed page's "transition" is stored ({ file, ptr }), null on other URLs.
+  const page = $derived.by(() => {
+    ui.previewVersion;
+    live.version;
+    const path = bridge.path();
+    const route = getRoutes(contentFromFiles(live.store.current)).find((r) => r.path === path);
+    return route ? splitEdit(route.transitionEdit) : null;
+  });
 
   const cfg = $derived(live.current(ANIMATIONS));
   // The preview's GSAP and animated elements: re-read when it shows another page.
@@ -32,6 +45,7 @@
       <AnimEditor {live} {bridge} {cfg} {items} {gsap} />
     {/key}
   {:else}
+    {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}
     <p class="hint">
       Click an animated element in the preview, or pick one below. Hold Alt to click through to
       links.

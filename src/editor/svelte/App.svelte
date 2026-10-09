@@ -144,7 +144,7 @@
     {#if ui.mode === 'text'}
       <ContentPanel {live} {bridge} />
     {:else if ui.mode === 'motion'}
-      <MotionPanel {live} {bridge} />
+      <MotionPanel {live} {bridge} onsettings={() => actions.setMode('settings')} />
     {:else if ui.mode === 'settings'}
       <SettingsPanel {live} {bridge} />
     {:else}

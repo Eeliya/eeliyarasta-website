@@ -1,17 +1,15 @@
 /**
- * Page-transition curtain: the edit rules behind the Motion tab's curtain section
- * (CurtainSection.svelte, CurtainTimeline.svelte). No DOM here.
- * Times come only from normalizeCurtain + curtainPlan (src/client/anim/curtain.js).
+ * Page-transition curtain: the edit rules behind the curtain section (CurtainSection.svelte,
+ * CurtainTimeline.svelte): the global curtain in Settings, a page's own one in Motion.
+ * No DOM here. Times come only from normalizeCurtain + curtainPlan (src/client/anim/curtain.js).
  */
 import { ANIMATIONS } from '../../site/files.js';
 import { normalizeCurtain, curtainPlan } from '../../client/anim/curtain.js';
 
+/** The global curtain in settings/animations.json. */
 export const CURTAIN = '/transitions/page/curtain';
-export const TOTAL_PTR = CURTAIN + '/total';
 export const TOTAL_MAX = 12;
 const EASE_PTRS = ['/in/ease', '/labelIn/ease', '/labelOut/ease', '/out/ease'];
-const EASE_MODE_PTR = CURTAIN + '/easeMode';
-const SHARED_EASE_PTR = CURTAIN + '/ease';
 
 /** Advanced rows, in the order things happen. pair = a duration + its ease. */
 export const CURTAIN_ROWS = [
@@ -93,14 +91,35 @@ export function clampTo(field, v, plan) {
 }
 
 /**
- * The curtain edits on the store. Every write goes through here, so the timeline and the
- * number fields follow the same rules.
+ * A page's curtain mode (Motion tab), as one undo step. `page` is where the page's
+ * "transition" is stored ({ file, ptr }, see src/site/routes.js). Custom starts from the
+ * page's earlier custom values, else from a copy of the global curtain. The values stay
+ * when switching to Global or Off, so switching back brings them back.
  */
-export function curtainEdits(store) {
-  const get = (ptr) => store.get(ANIMATIONS, ptr);
+export function setCurtainMode(store, page, mode) {
+  const now = store.get(page.file, page.ptr);
+  const fields = { ...(now && typeof now === 'object' ? now : {}) };
+  delete fields.mode;
+  if (mode === 'custom' && !Object.keys(fields).length)
+    Object.assign(fields, structuredClone(store.get(ANIMATIONS, CURTAIN) ?? {}));
+  // Global without earlier values: no "transition" at all, as before.
+  const next = mode === 'global' && !Object.keys(fields).length ? undefined : { mode, ...fields };
+  store.set(page.file, page.ptr, next, { source: 'panel' });
+}
+
+/**
+ * The curtain edits on the store. Every write goes through here, so the timeline and the
+ * number fields follow the same rules. file + base: the curtain being edited, the global one
+ * by default or a page's own ("pages/home.json", "/transition").
+ */
+export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN) {
+  const TOTAL_PTR = base + '/total';
+  const EASE_MODE_PTR = base + '/easeMode';
+  const SHARED_EASE_PTR = base + '/ease';
+  const get = (ptr) => store.get(file, ptr);
   const set = (ptr, value) =>
-    store.set(ANIMATIONS, ptr, value, { key: 'curtain:' + ptr, source: 'panel' });
-  const effective = () => normalizeCurtain(get(CURTAIN) ?? true);
+    store.set(file, ptr, value, { key: `curtain:${file}#${ptr}`, source: 'panel' });
+  const effective = () => normalizeCurtain(get(base) ?? true);
   const plan = () => curtainPlan(effective(), true);
 
   /** Pull text (and outStart) back inside total after the window shrinks. */
@@ -130,7 +149,7 @@ export function curtainEdits(store) {
       ['/labelOut/duration', lo],
     ];
     for (const [rel, v] of writes) {
-      if (get(CURTAIN + rel) !== snap(v)) set(CURTAIN + rel, snap(v));
+      if (get(base + rel) !== snap(v)) set(base + rel, snap(v));
     }
   }
 
@@ -149,17 +168,17 @@ export function curtainEdits(store) {
     // Stay is the gap between the text bars: only write textOutStart.
     if (field === 'hold') {
       const hold = clampTo('hold', v, p);
-      return set(CURTAIN + '/textOutStart', clampTo('textOutStart', p.textIn[1] + hold, p));
+      return set(base + '/textOutStart', clampTo('textOutStart', p.textIn[1] + hold, p));
     }
-    set(CURTAIN + '/' + field, clampTo(field, v, p));
+    set(base + '/' + field, clampTo(field, v, p));
   }
 
   /** Resize a text bar from the left: pin its end, write start + duration as one undo step. */
   function setResize(startField, start, durField, dur) {
     store.batch(
       () => {
-        set(CURTAIN + '/' + startField, start);
-        set(CURTAIN + '/' + durField, dur);
+        set(base + '/' + startField, start);
+        set(base + '/' + durField, dur);
       },
       { source: 'panel' },
     );
@@ -177,7 +196,7 @@ export function curtainEdits(store) {
       () => {
         set(EASE_MODE_PTR, 'shared');
         set(SHARED_EASE_PTR, v);
-        for (const r of EASE_PTRS) set(CURTAIN + r, undefined);
+        for (const r of EASE_PTRS) set(base + r, undefined);
       },
       { source: 'panel' },
     );
@@ -190,8 +209,8 @@ export function curtainEdits(store) {
       () => {
         set(EASE_MODE_PTR, 'individual');
         if (get(SHARED_EASE_PTR) == null) set(SHARED_EASE_PTR, shared);
-        for (const r of EASE_PTRS) set(CURTAIN + r, shared);
-        set(CURTAIN + rel, v);
+        for (const r of EASE_PTRS) set(base + r, shared);
+        set(base + rel, v);
       },
       { source: 'panel' },
     );
@@ -203,10 +222,12 @@ export function curtainEdits(store) {
     if (rel === '/total') return typeof get(TOTAL_PTR) === 'number' ? get(TOTAL_PTR) : p.total;
     if (rel === '/out/duration') return p.curtainOut[1] - p.curtainOut[0];
     if (rel === '/hold') return p.stay;
-    return get(CURTAIN + rel) ?? digRel(effective(), rel);
+    return get(base + rel) ?? digRel(effective(), rel);
   }
 
   return {
+    file,
+    base,
     get,
     effective,
     plan,

@@ -167,10 +167,11 @@ async function runCurtain(cc, { leaveView = null, ready, onMount }) {
 
 /**
  * Editor preview (dev only): play the curtain over the current page without navigating,
- * with the current page's timings and curtain text (nothing when its curtain is off).
+ * with the current page's curtain text and `curtain` (raw, as in the JSON), else the page's
+ * own timings. Nothing when that curtain is off.
  */
-export function replayCurtain(label) {
-  const cc = curtainCfg();
+export function replayCurtain(label, curtain) {
+  const cc = curtain === undefined ? curtainCfg() : normalizeCurtain(curtain);
   if (!cc || busy) return Promise.resolve(false);
   busy = true;
   const view = document.querySelector('[data-router-view]');

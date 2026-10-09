@@ -273,8 +273,13 @@ select {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: rgb(255 255 255 / 0.14);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
   }
 }
 
