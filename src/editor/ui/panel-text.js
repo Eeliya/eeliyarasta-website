@@ -33,14 +33,6 @@ const homeSections = (store) => {
   return Array.isArray(list) ? list : [];
 };
 
-/** The source list a home section shows (grid: config.source; projects: projects). */
-const sourceOfSection = (section) =>
-  section?.type === 'grid'
-    ? section.config?.source || 'people'
-    : section?.type === 'projects'
-      ? 'projects'
-      : null;
-
 /** Panel group for home section `i`: id "s<i>", titled by its label, with its on/off toggle. */
 function sectionGroup(store, i) {
   const section = homeSections(store)[i];
@@ -75,9 +67,10 @@ function groupFor(store, { file, ptr }, page) {
   }
   if (isSource(file) && /^\d+$/.test(parts[0])) {
     if (page === 'home') {
-      // List items shown on the home page belong to the (first) section that shows that list.
-      const i = homeSections(store).findIndex((s) => sourceOfSection(s) === sourceIdOf(file));
-      if (i >= 0) return sectionGroup(store, i);
+      // List items shown on a page belong to their source file, not to the section showing
+      // them: one (closed) group per list, after the page's own sections.
+      const id = sourceIdOf(file);
+      return { id: `source:${id}`, title: `${id}.json` };
     }
     const item = store.current[file]?.[parts[0]];
     const name = item?.name || item?.title || `#${Number(parts[0]) + 1}`;
@@ -164,7 +157,7 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     return raw;
   }
 
-  function field({ edit, file, ptr, type }) {
+  function field({ edit, file, ptr, type }, { full = false } = {}) {
     // Skip enabled flags themselves — they have a dedicated toggle.
     if (ptr.endsWith('/enabled')) return null;
     const value = store.get(file, ptr);
@@ -180,7 +173,9 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
     if (!exists && (ptr.includes('/links/') || ptr.includes('/social/'))) return null;
 
     const changed = JSON.stringify(value) !== JSON.stringify(store.getBase(file, ptr));
-    const short = labelFor(store, { file, ptr }).split(' / ').pop();
+    // In a whole-list group (a source on the home page) keep the item name: "Noor Vermeer / name".
+    const label = labelFor(store, { file, ptr });
+    const short = full ? label : label.split(' / ').pop();
     const common = {
       class: 'tf__input',
       spellcheck: type !== 'number',
@@ -532,7 +527,10 @@ export function createTextPanel({ store, bridge, root, getTarget, getStaleSectio
       h('p', { class: 'hint' }, hint),
       ordered.length
         ? ordered.map(({ group, fields }) => {
-            const nodes = fields.map((f) => (f.__node ? f.__node : field(f))).filter(Boolean);
+            const full = group.id.startsWith('source:');
+            const nodes = fields
+              .map((f) => (f.__node ? f.__node : field(f, { full })))
+              .filter(Boolean);
             return sectionBlock(group, nodes);
           })
         : h('p', { class: 'hint' }, 'No editable content here.'),
