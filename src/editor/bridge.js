@@ -300,7 +300,7 @@ export function createBridge({ store, labelFor }) {
 
   function boxLabel(el, kind) {
     if (kind === 'text') return labelFor?.(parseEdit(el.dataset.edit)) || el.dataset.edit;
-    return `${el.dataset.anim} · ${api.resolve(el.dataset.anim, el)?.preset || '?'}`;
+    return `${el.dataset.anim} · ${api?.resolve(el.dataset.anim, el)?.preset || '?'}`;
   }
 
   function placeBox(box, el, kind) {
