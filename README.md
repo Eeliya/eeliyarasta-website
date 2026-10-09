@@ -109,7 +109,9 @@ text, and settings under `config`:
 ```
 
 A grid fills itself from `content/sources/<source>.json` (a top-level array) and links each
-tile to `/<source>/<slug>/`. A missing or non-array source logs a build warning and renders an
+tile to `/<source>/<slug>/`. `config.layout` is `"staggered"` (default: offset columns) or `"even"`
+(every row lines up). The source picks the tile look: `places` shows landscape cards, any other
+list shows photo tiles (4 photos per item). A missing or non-array source logs a build warning and renders an
 empty grid.
 Routes, menu, dropdowns, grids and sitemap update automatically.
 

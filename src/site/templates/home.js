@@ -52,9 +52,14 @@ function sourceList(ctx, source) {
   return [];
 }
 
+/** Grid layouts: staggered (default, offset columns) or even (every row lines up). */
+const LAYOUTS = ['staggered', 'even'];
+const layoutOf = (section) =>
+  LAYOUTS.includes(section.config?.layout) ? section.config.layout : 'staggered';
+
 /** Photo tiles (people look): the first 4 images of every item, interleaved. */
-const photoTiles = (ctx, source, items) =>
-  html` <div class="tiles" data-anim="home.people.grid">
+const photoTiles = (ctx, source, items, layout) =>
+  html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}" data-anim="home.people.grid">
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="/${source}/${item.slug}/#${index + 1}" data-anim-item>
@@ -65,8 +70,11 @@ const photoTiles = (ctx, source, items) =>
   </div>`;
 
 /** Landscape cards (places look): cover image, name, location · year · photo count. */
-const placeCards = (ctx, source, items) =>
-  html` <div class="placecards" data-anim="home.places.grid">
+const placeCards = (ctx, source, items, layout) =>
+  html` <div
+    class="placecards${layout === 'even' ? ' placecards--even' : ''}"
+    data-anim="home.places.grid"
+  >
     ${items.map((p, i) => {
       const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
       return html`
@@ -102,7 +110,7 @@ const SECTIONS = {
     const look = GRID_LOOKS[source] || photoTiles;
     return html` <section class="section section--${esc(source)}" ${attrs}>
       ${sectionHead({ key: at, index: number, ...s, href: `/${source}/` })}
-      ${look(ctx, source, sourceList(ctx, source))}
+      ${look(ctx, source, sourceList(ctx, source), layoutOf(s))}
     </section>`;
   },
 

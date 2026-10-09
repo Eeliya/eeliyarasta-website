@@ -208,7 +208,7 @@
   }
 }
 
-// Hannah Miles style photo tiles with staggered columns
+// Hannah Miles style photo tiles with staggered columns (or even rows: .tiles--even)
 .tiles {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -228,6 +228,10 @@
     .tile:nth-child(2n) {
       margin-top: 18vw;
     }
+  }
+  // layout "even" (home section config): no column offsets, every row lines up
+  &.tiles--even .tile {
+    margin-top: 0;
   }
 }
 .tile {
@@ -275,6 +279,9 @@
     .placecard:nth-child(2n) {
       margin-top: 0;
     }
+  }
+  &.placecards--even .placecard {
+    margin-top: 0;
   }
 }
 .placecard {
