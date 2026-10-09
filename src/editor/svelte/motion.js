@@ -9,7 +9,7 @@
  * A value is read from the first layer that has it: element, target, preset, defaults.
  * The element view (AnimEditor.svelte) writes element / target, the Animations library
  * (AnimationsModal.svelte) writes the preset. Shown with MotionField.svelte. No DOM here.
- */import { compile } from '../lib/pointer.js';
+ */ import { compile } from '../lib/pointer.js';
 
 // Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
 export const GENERIC_TYPES = new Set(['reveal', 'split', 'scrub-words']);
@@ -282,7 +282,19 @@ export function animModel(cfg, sel) {
   return { target, own, presetName, preset, layers, spec, type: preset.type };
 }
 
-/** Pointer of a scope's object in animations.json. */
+/** One animation (preset) on its own, for the Animations library: its values over the defaults. */
+export function presetModel(cfg, name) {
+  const preset = cfg.presets[name] || {};
+  const layers = { element: {}, target: {}, preset, defaults: cfg.defaults };
+  const spec = merge(cfg.defaults, preset);
+  return { target: {}, own: {}, presetName: name, preset, layers, spec, type: preset.type };
+}
+
+/** The animation an element uses (items from bridge.animElements()): its own, else its target's. */
+export const animationOf = (cfg, { id, key }) =>
+  cfg.elements?.[key]?.preset || cfg.targets[id]?.preset;
+
+/** Pointer of a scope's object in animations.json (sel is not needed for 'preset'). */
 export const layerPtr = (m, sel, scope) =>
   scope === 'element'
     ? `/elements${compile([sel.key])}`

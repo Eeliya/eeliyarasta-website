@@ -5,6 +5,7 @@
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
+  import AnimationsModal from './AnimationsModal.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
@@ -15,6 +16,8 @@
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // onsettings: switch to the Settings tab
   let { live, bridge, onsettings } = $props();
+
+  let library = $state();
 
   // Where the previewed page's "transition" is stored ({ file, ptr }), null on other URLs.
   const page = $derived.by(() => {
@@ -43,9 +46,17 @@
     <p class="hint">Waiting for the preview…</p>
   {:else if ui.anim}
     {#key ui.anim}
-      <AnimEditor {live} {bridge} {cfg} {items} {gsap} />
+      <AnimEditor {live} {bridge} {cfg} {items} {gsap} onlibrary={(name) => library.open(name)} />
     {/key}
   {:else}
+    <button
+      type="button"
+      class="btn-sm lib-open"
+      title="The animations elements use: their own durations, eases, distances, ..."
+      onclick={() => library.open()}
+    >
+      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Animations
+    </button>
     {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}
     <p class="hint">
       Click an animated element in the preview, or pick one below. Hold Alt to click through to
@@ -83,9 +94,15 @@
       {/if}
     </Section>
   {/if}
+  {#if gsap}<AnimationsModal bind:this={library} {live} {bridge} {cfg} {items} {gsap} />{/if}
 </section>
 
 <style lang="scss">
+  // the Animations library button, above the curtain (like Sources in the Content tab)
+  .lib-open {
+    margin-bottom: 12px;
+  }
+
   .mlist__count {
     color: var(--muted);
     font-size: 10.5px;

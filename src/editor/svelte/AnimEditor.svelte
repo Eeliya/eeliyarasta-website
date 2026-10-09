@@ -7,27 +7,15 @@
   MotionPanel creates a new one for every pick.
 -->
 <script>
-  import MotionField from './MotionField.svelte';
-  import Section from './Section.svelte';
+  import MotionGroups from './MotionGroups.svelte';
   import { ui } from './ui.svelte.js';
-  import {
-    GENERIC_TYPES,
-    GROUPS,
-    PROPS,
-    TIMING,
-    animModel,
-    dig,
-    keepFor,
-    layerPtr,
-    missingProps,
-    propFields,
-    sourceOf,
-  } from './motion.js';
+  import { GENERIC_TYPES, animModel, keepFor, layerPtr } from './motion.js';
   import { compile } from '../lib/pointer.js';
   import { ANIMATIONS } from '../../site/files.js';
 
-  // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's
-  let { live, bridge, cfg, items, gsap } = $props();
+  // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's;
+  // onlibrary(name): open the Animations library at that animation
+  let { live, bridge, cfg, items, gsap, onlibrary } = $props();
 
   const sel = ui.anim; // { el, id, key, scope }
   const m = $derived(animModel(cfg, sel));
@@ -45,19 +33,6 @@
       ([name, p]) => GENERIC_TYPES.has(p.type) || name === m.presetName,
     ),
   );
-  // [title, fields, 'from' | 'to' | null]; from/to groups can also add properties.
-  const groups = $derived(
-    (GROUPS[m.type] || [TIMING])
-      .map((g) => {
-        if (g === 'from' || g === 'to')
-          return m.spec[g]
-            ? [g === 'from' ? 'From (start state)' : 'To (end state)', propFields(g, m.spec[g]), g]
-            : null;
-        const [title, defs] = g;
-        return [title, defs.filter((d) => !d.when || d.when(m.spec)), null];
-      })
-      .filter((g) => g && (g[1].length || g[2])),
-  );
   const hasOverrides = $derived(Object.keys(m.own).length > 0);
 
   // Scroll position of the element in the preview, 0-100 (read once, when it is picked).
@@ -65,32 +40,6 @@
   let progress = $state(scrolled());
 
   const ptr = () => layerPtr(m, sel, sel.scope);
-  function setValue(path, value) {
-    live.store.set(ANIMATIONS, ptr() + compile(path), value, {
-      key: `anim:${sel.scope}:${sel.key}:${path.join('.')}`,
-      keep: keepFor(sel.scope),
-      source: 'motion',
-    });
-  }
-  const resetValue = (path) =>
-    live.store.remove(ANIMATIONS, ptr() + compile(path), {
-      keep: keepFor(sel.scope),
-      source: 'motion',
-    });
-  const metaOf = (path) => ({
-    source: sourceOf(m, path),
-    canReset: dig(m.layers[sel.scope], path) !== undefined,
-  });
-
-  // A pair field (duration + ease) has two paths.
-  const valueFor = (def) =>
-    def.paths ? def.paths.map((p) => dig(m.spec, p)) : dig(m.spec, def.path);
-  const metaFor = (def) => (def.paths ? def.paths.map(metaOf) : metaOf(def.path));
-  function reset(def) {
-    if (!def.paths) return resetValue(def.path);
-    live.store.batch(() => def.paths.forEach(resetValue), { source: 'motion' });
-  }
-
   const removePreset = () =>
     live.store.remove(ANIMATIONS, `${ptr()}/preset`, { keep: 1, source: 'motion-structure' });
   function setPreset(name) {
@@ -100,20 +49,6 @@
         keep: keepFor(sel.scope),
         source: 'motion-structure',
       });
-  }
-
-  /** Add a property to from / to; the other side gets its matching value, or GSAP would only set it. */
-  function addProp(which, prop) {
-    const other = which === 'from' ? 'to' : 'from';
-    const { init, neutral } = PROPS[prop];
-    live.store.batch(
-      () => {
-        setValue([which, prop], which === 'from' ? init : neutral);
-        if (dig(m.spec, [other, prop]) === undefined)
-          setValue([other, prop], which === 'from' ? neutral : init);
-      },
-      { source: 'motion-structure' },
-    );
   }
 </script>
 
@@ -177,6 +112,16 @@
         <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
       </button>
     {/if}
+    <!-- like a grid's Source edit button: the animation's own values, in the library -->
+    <button
+      type="button"
+      class="btn-sm btn-sm--compact"
+      title="Edit {m.presetName} in the Animations library"
+      aria-label="Edit {m.presetName} in the Animations library"
+      onclick={() => onlibrary(m.presetName)}
+    >
+      <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+    </button>
   </div>
   <select
     class="f__select"
@@ -189,37 +134,7 @@
     {/each}
   </select>
 </div>
-{#each groups as [title, defs, props] (title)}
-  <Section key="motion:{title}" {title}>
-    {#each defs as def (def.label)}
-      <MotionField
-        {def}
-        {gsap}
-        value={valueFor(def)}
-        meta={metaFor(def)}
-        onvalue={setValue}
-        onreset={() => reset(def)}
-      />
-    {/each}
-    {#if props}
-      <select
-        class="f__add"
-        aria-label="Add a property"
-        onchange={(e) => {
-          const prop = e.currentTarget.value;
-          e.currentTarget.value = '';
-          if (prop) addProp(props, prop);
-        }}
-      >
-        <option value="">+ add property</option>
-        {#each missingProps(m.spec[props]) as k (k)}
-          <option value={k}>{PROPS[k].label}</option>
-        {/each}
-      </select>
-    {/if}
-  </Section>
-{/each}
-
+<MotionGroups {live} {gsap} {m} scope={sel.scope} ptr={ptr()} />
 {#if hasOverrides}
   <button
     type="button"
