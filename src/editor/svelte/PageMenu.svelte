@@ -203,7 +203,7 @@
     }
 
     &.is-active {
-      background: rgb(159 211 255 / 0.12);
+      background: color-mix(in srgb, var(--ed-accent) 12%, transparent);
     }
   }
 

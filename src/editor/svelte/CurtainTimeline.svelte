@@ -410,7 +410,7 @@
     outline: none;
 
     &:focus-visible {
-      box-shadow: inset 0 0 0 1px var(--hi);
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
     }
   }
 
@@ -455,10 +455,10 @@
     &:focus-visible::before,
     &.is-active::before {
       opacity: 1;
-      background: var(--hi);
+      background: var(--ed-accent);
       box-shadow:
         0 0 0 1px rgb(0 0 0 / 0.6),
-        0 0 0 4px rgb(159 211 255 / 0.18);
+        0 0 0 4px color-mix(in srgb, var(--ed-accent) 18%, transparent);
     }
   }
 

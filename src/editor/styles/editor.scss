@@ -21,7 +21,8 @@ body {
   // Composited from rgb(242 239 233 / a) over #030303.
   --muted: #868582; // was / 0.55
   --faint: #4f4f4d; // was / 0.32
-  --hi: #{$hi}; // highlight: links, focus, selection
+  --hi: #{$hi}; // highlight: links, badges, ease curves
+  --ed-accent: #33ccff; // focus and selection, everywhere in the editor (and the preview's outlines)
   --panel-w: 400px; // the side panel
 }
 
@@ -179,8 +180,8 @@ select,
 
   &:focus {
     box-shadow:
-      inset 0 0 0 1px $hi,
-      0 0 0 3px rgb(159 211 255 / 0.12);
+      inset 0 0 0 1px var(--ed-accent),
+      0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
   }
 }
 
@@ -324,7 +325,7 @@ select {
 
   &:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 1px $hi;
+    box-shadow: inset 0 0 0 1px var(--ed-accent);
   }
 
   &:disabled {
@@ -556,7 +557,7 @@ select {
   }
 
   &:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px rgb(159 211 255 / 0.35);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ed-accent) 35%, transparent);
   }
 }
 
@@ -649,10 +650,10 @@ select {
   }
 
   &.is-active {
-    background: rgb(159 211 255 / 0.14);
+    background: color-mix(in srgb, var(--ed-accent) 14%, transparent);
 
     .curve__line {
-      stroke: $hi;
+      stroke: var(--ed-accent);
     }
 
     span {
@@ -690,7 +691,7 @@ select {
 }
 
 .tf.is-selected {
-  background: rgb(159 211 255 / 0.2);
+  background: color-mix(in srgb, var(--ed-accent) 20%, transparent);
 }
 
 .tf__label {
@@ -740,7 +741,7 @@ select {
     outline: none;
     box-shadow:
       0 0 0 2px #030303,
-      0 0 0 3px var(--fg);
+      0 0 0 3px var(--ed-accent);
   }
 }
 

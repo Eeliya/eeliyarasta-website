@@ -338,7 +338,7 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--hi);
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
     }
   }
 
@@ -407,11 +407,11 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--hi);
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
     }
 
     &.is-selected {
-      background: rgb(159 211 255 / 0.2);
+      background: color-mix(in srgb, var(--ed-accent) 20%, transparent);
     }
   }
 

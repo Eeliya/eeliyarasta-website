@@ -117,7 +117,7 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--hi);
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
     }
 
     // the name under the title, like .grp__title strong
