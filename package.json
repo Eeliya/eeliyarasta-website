@@ -9,7 +9,8 @@
     "images": "node scripts/images.mjs",
     "build": "node scripts/images.mjs && vite build",
     "preview": "vite preview --port 4173",
-    "test": "node --test scripts/*.test.mjs"
+    "test": "node --test scripts/*.test.mjs",
+    "check:links": "node scripts/check-links.mjs"
   },
   "license": "MIT",
   "dependencies": {
