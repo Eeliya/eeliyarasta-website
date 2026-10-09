@@ -1,0 +1,325 @@
+/**
+ * The Motion tab's model: which fields each preset type has, and where a value comes from.
+ * Every value can be written at one of three scopes, all inside content/settings/animations.json:
+ *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
+ *   target  -> targets["<target>"]               (every element with that data-anim)
+ *   preset  -> presets["<preset>"]               (every target using the preset)
+ * A value is read from the first layer that has it: element, target, preset, defaults.
+ * Shown by MotionPanel.svelte / AnimEditor.svelte / MotionField.svelte. No DOM here.
+ */
+import { compile } from '../lib/pointer.js';
+
+// Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
+export const GENERIC_TYPES = new Set(['reveal', 'split', 'scrub-words']);
+
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+const merge = (...objs) => {
+  const out = {};
+  for (const o of objs) {
+    if (!o) continue;
+    for (const [k, v] of Object.entries(o))
+      out[k] = isObj(v) && isObj(out[k]) ? merge(out[k], v) : v;
+  }
+  return out;
+};
+export const dig = (obj, path) =>
+  path.reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+
+const START = [
+  'top bottom',
+  'top 95%',
+  'top 90%',
+  'top 85%',
+  'top 75%',
+  'top center',
+  'center center',
+];
+const END = ['bottom top', 'bottom center', 'bottom 60%', 'top 40%', 'center center', 'top top'];
+
+export const F = {
+  duration: {
+    path: ['duration'],
+    label: 'Duration',
+    kind: 'number',
+    max: 4,
+    step: 0.05,
+    unit: 's',
+  },
+  delay: { path: ['delay'], label: 'Delay', kind: 'number', max: 3, step: 0.05, unit: 's' },
+  stagger: {
+    path: ['stagger'],
+    label: 'Stagger',
+    kind: 'number',
+    max: 0.4,
+    step: 0.005,
+    unit: 's',
+    hint: 'Delay between children / letters / lines',
+  },
+  ease: { path: ['ease'], label: 'Ease', kind: 'ease' },
+  timing: {
+    kind: 'pair',
+    label: 'Duration / ease',
+    paths: [['duration'], ['ease']],
+    max: 4,
+    step: 0.05,
+    unit: 's',
+  },
+  trigger: {
+    path: ['trigger'],
+    label: 'Plays',
+    kind: 'segment',
+    options: [
+      ['load', 'On load'],
+      ['scroll', 'On scroll'],
+    ],
+  },
+  start: {
+    path: ['start'],
+    label: 'Scroll start',
+    kind: 'text',
+    suggestions: START,
+    when: (s) => s.trigger === 'scroll',
+    hint: '"<element edge> <viewport edge>", e.g. "top 85%"',
+  },
+  scrub: {
+    path: ['scrub'],
+    label: 'Scrub',
+    kind: 'segment',
+    options: [
+      [false, 'Off'],
+      [true, 'On'],
+      [1, 'Smooth'],
+    ],
+    when: (s) => s.trigger === 'scroll',
+    hint: 'Tie progress to the scroll position',
+  },
+  end: {
+    path: ['end'],
+    label: 'Scroll end',
+    kind: 'text',
+    suggestions: END,
+    when: (s) => s.trigger === 'scroll' && s.scrub,
+  },
+  split: {
+    path: ['split'],
+    label: 'Split into',
+    kind: 'segment',
+    options: [
+      ['chars', 'Chars'],
+      ['words', 'Words'],
+      ['lines', 'Lines'],
+    ],
+  },
+  mask: {
+    path: ['mask'],
+    label: 'Mask',
+    kind: 'segment',
+    options: [
+      [false, 'None'],
+      ['chars', 'Chars'],
+      ['words', 'Words'],
+      ['lines', 'Lines'],
+    ],
+  },
+};
+const n = (path, label, max, step, unit = '', min = 0) => ({
+  path,
+  label,
+  kind: 'number',
+  min,
+  max,
+  step,
+  unit,
+});
+
+export const PROPS = {
+  y: { label: 'Distance Y', min: -200, max: 200, step: 1, unit: 'px', neutral: 0, init: 40 },
+  x: { label: 'Distance X', min: -200, max: 200, step: 1, unit: 'px', neutral: 0, init: 40 },
+  yPercent: {
+    label: 'Distance Y %',
+    min: -150,
+    max: 150,
+    step: 1,
+    unit: '%',
+    neutral: 0,
+    init: 100,
+  },
+  xPercent: {
+    label: 'Distance X %',
+    min: -150,
+    max: 150,
+    step: 1,
+    unit: '%',
+    neutral: 0,
+    init: 100,
+  },
+  scale: { label: 'Scale', min: 0, max: 2, step: 0.01, neutral: 1, init: 0.9 },
+  rotate: { label: 'Rotation', min: -45, max: 45, step: 0.5, unit: '°', neutral: 0, init: 6 },
+  autoAlpha: { label: 'Opacity', min: 0, max: 1, step: 0.01, neutral: 1, init: 0 },
+  opacity: { label: 'Opacity (raw)', min: 0, max: 1, step: 0.01, neutral: 1, init: 0 },
+  clipPath: {
+    label: 'Clip path',
+    text: true,
+    neutral: 'inset(0% 0% 0% 0%)',
+    init: 'inset(100% 0% 0% 0%)',
+    suggestions: [
+      'inset(100% 0% 0% 0%)',
+      'inset(0% 0% 100% 0%)',
+      'inset(0% 100% 0% 0%)',
+      'inset(30% 0% 0% 0%)',
+      'inset(0% 0% 0% 0%)',
+    ],
+  },
+  filter: {
+    label: 'Filter',
+    text: true,
+    neutral: 'blur(0px)',
+    init: 'blur(12px)',
+    suggestions: ['blur(12px)', 'blur(0px)'],
+  },
+};
+
+export const TIMING = ['Timing', [F.timing, F.delay, F.stagger]];
+const TRIGGER = ['Trigger', [F.trigger, F.start, F.scrub, F.end]];
+export const GROUPS = {
+  reveal: [TIMING, TRIGGER, 'from', 'to'],
+  split: [['Split', [F.split, F.mask]], TIMING, TRIGGER, 'from', 'to'],
+  'scrub-words': [
+    [
+      'Scroll',
+      [
+        n(['fromOpacity'], 'Dim words opacity', 1, 0.01),
+        { ...F.start, when: null },
+        { ...F.end, when: null },
+      ],
+    ],
+  ],
+  parallax: [
+    [
+      'Parallax',
+      [
+        n(['speed'], 'Speed', 40, 1, '%'),
+        {
+          ...F.scrub,
+          options: [
+            [true, 'On'],
+            [0.5, 'Smooth .5'],
+            [1.5, 'Smooth 1.5'],
+          ],
+          when: null,
+        },
+      ],
+    ],
+  ],
+  scatter: [
+    [
+      'Intro burst',
+      [
+        {
+          kind: 'pair',
+          label: 'Duration / ease',
+          paths: [
+            ['intro', 'duration'],
+            ['intro', 'ease'],
+          ],
+          max: 4,
+          step: 0.05,
+          unit: 's',
+        },
+        n(['intro', 'stagger'], 'Stagger', 0.4, 0.005, 's'),
+        n(['intro', 'delay'], 'Delay', 2, 0.05, 's'),
+        n(['intro', 'fromScale'], 'From scale', 1.5, 0.01),
+      ],
+    ],
+    [
+      'Drift',
+      [
+        n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'),
+        n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'),
+        n(['drift', 'minDuration'], 'Min duration', 20, 0.5, 's'),
+        n(['drift', 'maxDuration'], 'Max duration', 20, 0.5, 's'),
+      ],
+    ],
+    ['Scroll', [n(['scroll', 'distance'], 'Fly-off distance', 150, 1, '%vh')]],
+  ],
+  'hero-title': [
+    TIMING,
+    'from',
+    'to',
+    [
+      'On scroll',
+      [
+        n(['scroll', 'scale'], 'End scale', 1.5, 0.01),
+        n(['scroll', 'autoAlpha'], 'End opacity', 1, 0.01),
+      ],
+    ],
+  ],
+  'hover-preview': [
+    [
+      'Preview',
+      [
+        n(['x'], 'Position across the list', 100, 1, '%'),
+        n(['glide'], 'Glide between rows', 1.5, 0.01, 's'),
+      ],
+    ],
+  ],
+};
+
+/**
+ * The picked element's animation. cfg: animations.json, sel: { id, key }.
+ * spec: the merged values; layers: each scope's own values (for the badges and resets).
+ */
+export function animModel(cfg, sel) {
+  const target = cfg.targets[sel.id] || {};
+  const own = cfg.elements?.[sel.key] || {};
+  const presetName = own.preset || target.preset;
+  const preset = cfg.presets[presetName] || {};
+  const strip = ({ preset: _p, ...rest }) => rest;
+  const layers = { element: strip(own), target: strip(target), preset, defaults: cfg.defaults };
+  const spec = merge(layers.defaults, layers.preset, layers.target, layers.element);
+  return { target, own, presetName, preset, layers, spec, type: preset.type };
+}
+
+/** Pointer of a scope's object in animations.json. */
+export const layerPtr = (m, sel, scope) =>
+  scope === 'element'
+    ? `/elements${compile([sel.key])}`
+    : scope === 'target'
+      ? `/targets${compile([sel.id])}`
+      : `/presets${compile([m.presetName])}`;
+
+/** How many path levels store.remove keeps when a scope's object gets empty. */
+export const keepFor = (scope) => (scope === 'element' ? 1 : 2);
+
+/** The layer a value comes from: 'element' | 'target' | 'preset' | 'defaults' | null. */
+export const sourceOf = (m, path) =>
+  ['element', 'target', 'preset', 'defaults'].find((l) => dig(m.layers[l], path) !== undefined) ||
+  null;
+
+/** The fields of a from / to group: one per property the animation has. */
+export function propFields(which, values) {
+  return Object.keys(values).map((prop) => {
+    const p = PROPS[prop] || {
+      label: prop,
+      min: -200,
+      max: 200,
+      step: 1,
+      text: typeof values[prop] !== 'number',
+    };
+    return p.text
+      ? { path: [which, prop], label: p.label, kind: 'text', suggestions: p.suggestions || [] }
+      : {
+          path: [which, prop],
+          label: p.label,
+          kind: 'number',
+          min: p.min,
+          max: p.max,
+          step: p.step,
+          unit: p.unit,
+        };
+  });
+}
+
+/** Properties a from / to group can still add (opacity and autoAlpha exclude each other). */
+export const missingProps = (values) =>
+  Object.keys(PROPS).filter((k) => !(k in values) && !(k === 'opacity' && 'autoAlpha' in values));
