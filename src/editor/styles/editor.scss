@@ -92,6 +92,14 @@ kbd {
     radial-gradient(50% 60% at 100% 100%, rgb(207 200 184 / 0.06), transparent 70%), #030303;
 }
 
+// One scrollbar for every scrolling area of the editor: the panel, the page menu, modals,
+// lists and textareas (not the preview: that is the site's own page).
+.ed,
+.ed * {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+}
+
 // ------------------------------------------------------------ controls
 // tabs (.seg), inputs, buttons
 // A segmented selector in the panel (Global / Custom / Off, ...): shaped like the input
@@ -365,8 +373,6 @@ select {
   overflow-x: hidden;
   padding: 16px 16px 24px;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.2) transparent;
 }
 
 .hint {
