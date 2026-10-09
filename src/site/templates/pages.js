@@ -1,4 +1,5 @@
 import { html, esc, img, pad, coverOf, creditText, ed, lines } from '../helpers.js';
+import { SITE } from '../files.js';
 import { albumCard, pageHead, projectList } from './partials.js';
 
 export const people = (ctx) =>
@@ -51,20 +52,16 @@ export const about = (ctx) => {
       </figcaption>
     </div>
     <div class="about__text">
-      <span class="label page-head__crumb" ${ed('site.json', ['pages', 'about', 'crumb'])}
+      <span class="label page-head__crumb" ${ed(SITE, ['pages', 'about', 'crumb'])}
         >${esc(ctx.site.pages.about.crumb)}</span
       >
-      <h1
-        class="about__headline"
-        data-anim="about.headline"
-        ${ed('site.json', ['about', 'headline'])}
-      >
+      <h1 class="about__headline" data-anim="about.headline" ${ed(SITE, ['about', 'headline'])}>
         ${esc(a.headline)}
       </h1>
       <div class="about__body" data-anim="about.body">
-        ${a.paragraphs.map((p, i) => html`<p${ed('site.json', ['about', 'paragraphs', i], 'block')}>${lines(p)}</p>`)}
+        ${a.paragraphs.map((p, i) => html`<p${ed(SITE, ['about', 'paragraphs', i], 'block')}>${lines(p)}</p>`)}
         <dl class="facts">
-          ${a.facts.map((f, i) => html`<div><dt class="label"${ed('site.json', ['about', 'facts', i, 'label'])}>${esc(f.label)}</dt><dd${ed('site.json', ['about', 'facts', i, 'value'])}>${esc(f.value)}</dd></div>`)}
+          ${a.facts.map((f, i) => html`<div><dt class="label"${ed(SITE, ['about', 'facts', i, 'label'])}>${esc(f.label)}</dt><dd${ed(SITE, ['about', 'facts', i, 'value'])}>${esc(f.value)}</dd></div>`)}
         </dl>
         <div class="about__links">
           <a class="btn glass" href="mailto:${esc(ctx.site.email)}"
@@ -80,7 +77,7 @@ export const about = (ctx) => {
 export const notFound = (ctx) =>
   pageHead(ctx, 'notFound', {
     center: true,
-    after: html`<a class="btn glass" href="/"><span${ed('site.json', ['pages', 'notFound', 'cta'])}>${esc(ctx.site.pages.notFound.cta)}</span> <span aria-hidden="true">→</span></a>`,
+    after: html`<a class="btn glass" href="/"><span${ed(SITE, ['pages', 'notFound', 'cta'])}>${esc(ctx.site.pages.notFound.cta)}</span> <span aria-hidden="true">→</span></a>`,
   });
 
 export { creditText };

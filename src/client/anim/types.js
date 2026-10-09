@@ -1,7 +1,7 @@
 /**
  * Animation types. Each receives (el, spec, { reduce, onCleanup }).
  * `spec` is the fully merged config for that element (see engine.js).
- * Add a new effect by adding a function here and a preset in animations.json.
+ * Add a new effect by adding a function here and a preset in settings/animations.json.
  */
 import { gsap, ScrollTrigger, SplitText, finePointer } from '../lib/env.js';
 import { flags } from './flags.js';

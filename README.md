@@ -25,10 +25,13 @@ Requires Node 20.19+ (Vite 8).
 
 ```
 content/            ← all text, albums, projects, animation config (JSON)
+  pages/            ← one file per page (home.json)
+  sources/          ← lists that grids pull from (people, places, projects): top level is an array
+  settings/         ← site-wide settings (site.json, animations.json)
 media/              ← source photos (jpg), committed
 scripts/
   images.mjs        ← media/ → public/media/*.webp sizes + .generated/media.json
-  content.mjs       ← loads content/*.json + media manifest (Node)
+  content.mjs       ← loads content/<folder>/*.json + media manifest (Node)
   vite-plugin-static-site.mjs  ← the "static site builder" (dev render + build prerender)
   editor-server.mjs ← dev-only editor endpoints: load / save / status / publish (localhost only)
 src/
@@ -40,7 +43,7 @@ src/
   client/           ← browser code
     main.js         ← boot: smooth scroll, menu, router, per-page mount
     router.js       ← SPA navigation over the prerendered HTML
-    anim/engine.js  ← reads content/animations.json, wires every [data-anim]
+    anim/engine.js  ← reads content/settings/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
     modules/        ← album slider, project accordion, card hover, misc
     ui/             ← menu (click-only), NL clock
@@ -59,7 +62,7 @@ edit/index.html     ← editor entry (served by `npm run dev` only)
 
 `vite-plugin-static-site.mjs` is the whole builder (~100 lines):
 
-- **dev**: a middleware renders any HTML request from `content/*.json` with `src/site/render.js`
+- **dev**: a middleware renders any HTML request from the `content/` JSON files with `src/site/render.js`
   (through Vite's SSR loader, so template edits reload instantly). Unknown URLs get the 404 page.
 - **build**: Vite bundles the client from `index.html` (hashed JS/CSS). Then, in `closeBundle`,
   every route from `routes.js` is rendered into that shell and written to
@@ -79,16 +82,19 @@ page load.
 
 ### Content
 
-| file                      | what                                                                                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `content/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy                                    |
-| `content/home.json`       | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
-| `content/people.json`     | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                         |
-| `content/places.json`     | places, same shape                                                                                                                                           |
-| `content/projects.json`   | projects: title, kind, year, description, url, image                                                                                                         |
-| `content/animations.json` | **every animation** (see below)                                                                                                                              |
+Content is split by kind, so a file name never means two things (a page called `site` and the
+site settings can live side by side):
 
-Add a person: drop photos into `media/people/<slug>/`, add an entry to `people.json`, done.
+| file                               | what                                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, About page, page titles/intros (`pages`), footer copy                                    |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                              |
+| `content/pages/home.json`          | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front) |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                         |
+| `content/sources/places.json`      | places, same shape                                                                                                                                           |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                         |
+
+Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 Routes, menu, dropdowns, grids and sitemap update automatically.
 
 > ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and
@@ -115,7 +121,7 @@ GSAP tweens the CSS variable `--accent`, which tints the glass UI and the backgr
 ### Animations: one config, one engine
 
 Markup only says **what** an element is: `data-anim="hero.title"`. All the **how** lives in
-`content/animations.json`:
+`content/settings/animations.json`:
 
 ```jsonc
 {
@@ -199,12 +205,13 @@ Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z*
 undo/redo, **Esc** deselects.
 
 **How text maps to JSON.** Templates mark text with the `ed()` helper, e.g.
-`<h2${ed('home.json', ['sections', 'people', 'title'])}>`, which renders
-`data-edit="home.json#/sections/people/title"` (a JSON Pointer). Use `ed(file, path, 'block')`
+`<h2${ed('pages/home.json', ['hero', 'eyebrow'])}>`, which renders
+`data-edit="pages/home.json#/hero/eyebrow"` (a JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros,
-footer) lives in `site.json → pages / footer` for this reason. The editor only ever writes
-`content/*.json` (the files listed in `src/editor/config.js`).
+footer) lives in `settings/site.json → pages / footer` for this reason. The editor only ever writes
+existing JSON files in `content/pages/`, `content/sources/` and `content/settings/` (see
+`src/editor/config.js`); it never creates files.
 
 **Save and Publish**
 
@@ -214,7 +221,7 @@ footer) lives in `site.json → pages / footer` for this reason. The editor only
   batch many edits into one publish. The dialog lists the changed files (status, number of
   changes, `+/-` lines) and any earlier commits on the branch that aren't pushed yet, and asks for a
   commit message. If you have unsaved edits it offers to **save them first** and include them.
-  It then runs `git add` + `git commit` for **only the changed `content/*.json` files** (other
+  It then runs `git add` + `git commit` for **only the changed content JSON files** (other
   staged or modified files are never committed) and `git push origin <current branch>`. On
   success it links to the commit on GitHub. If the push fails (e.g. git has no GitHub login on
   this machine), the commit stays local, the error output is shown, and **Retry push** pushes it
@@ -233,7 +240,7 @@ All JSON is written by the same formatter (`src/editor/lib/json-format.js`), so 
 change the lines that changed.
 
 **Later:** swapping and reordering album photos (upload to `media/`, edit `images[]`) isn't in
-the editor yet. Edit `people.json` / `places.json` and `media/` by hand for now.
+the editor yet. Edit `content/sources/*.json` and `media/` by hand for now.
 
 ### Design notes
 

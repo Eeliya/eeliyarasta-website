@@ -1,5 +1,5 @@
 /**
- * Animation engine: reads content/animations.json (the single source of truth)
+ * Animation engine: reads content/settings/animations.json (the single source of truth)
  * and wires every [data-anim="<target id>"] element in a view.
  *
  *   spec = defaults ⟵ presets[preset] ⟵ targets[id] ⟵ elements[key] ⟵ data-anim-options (JSON, optional)
@@ -16,7 +16,7 @@
  * The visual editor (src/editor) edits a copy of this JSON, pushes it in with
  * setConfig() and re-mounts; see window.__site in ../main.js.
  */
-import config from '../../../content/animations.json';
+import config from '../../../content/settings/animations.json';
 import { gsap, reducedMotion } from '../lib/env.js';
 import { types } from './types.js';
 
@@ -41,7 +41,7 @@ export const pageKey = (pathname = location.pathname) =>
 export function resolve(id, el) {
   const target = config.targets[id];
   if (!target) {
-    console.warn(`[anim] no target "${id}" in content/animations.json`);
+    console.warn(`[anim] no target "${id}" in content/settings/animations.json`);
     return null;
   }
   const key = el?.dataset.animKey;

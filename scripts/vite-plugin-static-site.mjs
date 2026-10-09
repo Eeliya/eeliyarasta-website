@@ -1,7 +1,7 @@
 /**
  * vite-plugin-static-site: the whole "static site builder" in one small plugin.
  *
- *  dev   → every HTML request is rendered on the fly from content/*.json with the
+ *  dev   → every HTML request is rendered on the fly from content/<folder>/*.json with the
  *          templates in src/site (via Vite's SSR loader, so edits hot-reload).
  *  build → after Vite bundles the client (index.html → dist/index.html with hashed
  *          JS/CSS), every route is rendered into that shell and written to
@@ -11,7 +11,7 @@
  *
  * Visual editor (edit/index.html → src/editor) is DEV ONLY:
  *  dev   → /edit/ is served by Vite, and /__editor/* (scripts/editor-server.mjs, localhost
- *          only) loads, saves and publishes content/*.json.
+ *          only) loads, saves and publishes the content JSON files.
  *  build → only index.html is bundled; no editor page, code or endpoints are emitted.
  */
 import fs from 'node:fs';

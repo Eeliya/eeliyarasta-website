@@ -1,8 +1,11 @@
 import { html, esc, img, pad, extAttrs, coverOf, ed, lines } from '../helpers.js';
+import { SITE, HOME, sourceFile } from '../files.js';
+
+const PROJECTS = sourceFile('projects');
 
 /** Section header used on the home page: (01) Label / Title / glass CTA. */
 export const sectionHead = ({ key, index, label, title, href, cta }) => {
-  const at = (field) => ed('home.json', ['sections', key, field]);
+  const at = (field) => ed(HOME, ['sections', key, field]);
   return html`
   <header class="section__head">
     <span class="section__label label" data-anim="section.label">(${pad(index)}) <span${at('label')}>${esc(label)}</span></span>
@@ -13,7 +16,7 @@ export const sectionHead = ({ key, index, label, title, href, cta }) => {
 
 /** Album card (People / Places index). Hovering cycles through the first images. */
 export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {}) => {
-  const at = (field, type) => ed(`${kind}.json`, [index, field], type);
+  const at = (field, type) => ed(sourceFile(kind), [index, field], type);
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
   const first = [coverOf(album), ...album.images.filter((_, i) => i !== (album.cover || 0))].slice(
     0,
@@ -51,18 +54,18 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">
       <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}">
         <span class="prow__num">${pad(i + 1)}</span>
-        <${h} class="prow__title"${ed('projects.json', [i, 'title'])}>${esc(p.title)}</${h}>
-        <span class="prow__kind"${ed('projects.json', [i, 'kind'])}>${esc(p.kind)}</span>
-        <span class="prow__year"${ed('projects.json', [i, 'year'], 'number')}>${esc(p.year)}</span>
+        <${h} class="prow__title"${ed(PROJECTS, [i, 'title'])}>${esc(p.title)}</${h}>
+        <span class="prow__kind"${ed(PROJECTS, [i, 'kind'])}>${esc(p.kind)}</span>
+        <span class="prow__year"${ed(PROJECTS, [i, 'year'], 'number')}>${esc(p.year)}</span>
         <span class="prow__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
           <div class="prow__media">${img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw' })}</div>
           <div class="prow__text">
-            <p${ed('projects.json', [i, 'description'], 'block')}>${lines(p.description)}</p>
+            <p${ed(PROJECTS, [i, 'description'], 'block')}>${lines(p.description)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
-            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed('projects.json', [i, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
+            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, [i, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
           </div>
         </div>
       </div>
@@ -82,10 +85,10 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
     </div>`;
 };
 
-/** Page heading used by index pages; copy comes from site.json "pages".<key>. */
+/** Page heading used by index pages; copy comes from settings/site.json "pages".<key>. */
 export const pageHead = (ctx, key, { count, center = false, after = '' } = {}) => {
   const { crumb, title, intro } = ctx.site.pages[key];
-  const at = (field, type) => ed('site.json', ['pages', key, field], type);
+  const at = (field, type) => ed(SITE, ['pages', key, field], type);
   return html`
   <section class="page-head${center ? ' page-head--center' : ''}">
     <span class="label page-head__crumb"${at('crumb')}>${esc(crumb)}</span>

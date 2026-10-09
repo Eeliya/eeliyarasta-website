@@ -45,8 +45,8 @@ export const pointer = (parts) =>
   parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
 
 /**
- * Visual-editor marker: maps an element's text to a value in content/*.json.
- *   ed('home.json', ['sections', 'people', 'title'])  ->  data-edit="home.json#/sections/people/title"
+ * Visual-editor marker: maps an element's text to a value in a content file (content/<folder>/<name>.json).
+ *   ed('pages/home.json', ['hero', 'title'])  ->  data-edit="pages/home.json#/hero/title"
  * type: 'text' (single line, default), 'block' (multi-line, \n <-> <br>), 'number', or
  * 'words' (single line rendered with words(), e.g. the hero name).
  * The editor (src/editor) finds these in its preview; the public site ignores them.

@@ -19,7 +19,7 @@ const normalize = (pathname) =>
   pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/';
 
 /**
- * Curtain timings from content/animations.json transitions.page.curtain (see anim/curtain.js).
+ * Curtain timings from content/settings/animations.json transitions.page.curtain (see anim/curtain.js).
  * Read on every navigation, so edits pushed by the editor apply to the next transition.
  */
 const curtainCfg = () => normalizeCurtain(transitions.page?.curtain);

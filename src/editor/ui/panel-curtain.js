@@ -3,10 +3,11 @@
  * Geometry comes only from normalizeCurtain + curtainPlan (src/client/anim/curtain.js).
  */
 import { h, clear } from './dom.js';
+import { ANIMATIONS } from '../../site/files.js';
 import { easeField } from './ease.js';
 import { normalizeCurtain, curtainPlan } from '../../client/anim/curtain.js';
 
-const FILE = 'animations.json';
+const FILE = ANIMATIONS;
 const CURTAIN = '/transitions/page/curtain';
 const TOTAL_PTR = CURTAIN + '/total';
 const TOTAL_MAX = 12;

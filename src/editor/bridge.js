@@ -3,13 +3,14 @@
  *
  * The site calls window.parent.__siteEditor.connect(api, win) at startup (see
  * src/client/main.js), before it mounts the first page. From then on the editor:
- *  - pushes the edited animations.json into the preview and re-mounts animations,
+ *  - pushes the edited settings/animations.json into the preview and re-mounts animations,
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
  *  - turns [data-edit] elements into inline editors (Text mode),
  *  - lets you hover/click [data-anim] elements to select them (Motion mode).
  */
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
+import { ANIMATIONS } from '../site/files.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit] { outline: 1px dashed rgb(255 255 255 / .22); outline-offset: 3px; border-radius: 2px; cursor: text !important; }
@@ -419,7 +420,7 @@ export function createBridge({ iframe, store, labelFor }) {
       raf = 0;
       selected = null;
       hoverEl = null;
-      api.setAnimations(store.current['animations.json']);
+      api.setAnimations(store.current[ANIMATIONS]);
       if (mode === 'text') api.freeze();
       api.hooks.beforeMount.add(() => bridge.applyTexts({ force: true, plain: true }));
       api.hooks.afterMount.add(() => {

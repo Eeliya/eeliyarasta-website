@@ -1,18 +1,19 @@
 /**
  * Motion panel: pick an animated element (click it in the preview or in the list),
  * then edit its preset and parameters. Every value can be written at one of three
- * scopes, all inside content/animations.json:
+ * scopes, all inside content/settings/animations.json:
  *   This element -> elements["<path>|<target>|<n>"]   (only this element on this page)
  *   Target       -> targets["<target>"]               (every element with that data-anim)
  *   Preset       -> presets["<preset>"]               (every target using the preset)
  */
 import { h, clear } from './dom.js';
+import { ANIMATIONS } from '../../site/files.js';
 import { compile } from '../lib/pointer.js';
 import { numberField, textField, segmentField, customField, pairField } from './fields.js';
 import { easeField } from './ease.js';
 import { pageTransitionGroup } from './panel-curtain.js';
 
-const FILE = 'animations.json';
+const FILE = ANIMATIONS;
 // Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
 const GENERIC_TYPES = new Set(['reveal', 'split', 'scrub-words']);
 

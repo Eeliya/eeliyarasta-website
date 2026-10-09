@@ -6,13 +6,15 @@
  */
 import { h, clear } from './dom.js';
 import { parse } from '../lib/pointer.js';
+import { SITE, HOME, sourceIdOf, baseName } from '../../site/files.js';
 
-const ARRAY_FILES = new Set(['people.json', 'places.json', 'projects.json']);
+/** Lists in content/sources/ (people, places, projects, ...). */
+const isSource = (file) => sourceIdOf(file) !== null;
 
-/** Human label for a pointer, e.g. people.json#/0/name -> "Noor Vermeer / name". */
+/** Human label for a pointer, e.g. sources/people.json#/0/name -> "Noor Vermeer / name". */
 export function labelFor(store, { file, ptr }) {
   const parts = parse(ptr);
-  if (ARRAY_FILES.has(file) && /^\d+$/.test(parts[0])) {
+  if (isSource(file) && /^\d+$/.test(parts[0])) {
     const item = store.current[file]?.[parts[0]];
     const name = item?.name || item?.title || `#${Number(parts[0]) + 1}`;
     return [name, ...parts.slice(1)].join(' / ');
@@ -31,25 +33,25 @@ const TITLE_CASE = (s) =>
  */
 function groupFor(store, { file, ptr }, page) {
   const parts = parse(ptr);
-  if (file === 'home.json') {
+  if (file === HOME) {
     if (parts[0] === 'hero')
-      return { id: 'hero', title: 'Hero', toggle: { file: 'home.json', ptr: '/hero/enabled' } };
+      return { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
     if (parts[0] === 'intro')
       return {
         id: 'intro',
         title: 'Intro',
-        toggle: { file: 'home.json', ptr: '/sections/intro/enabled' },
+        toggle: { file: HOME, ptr: '/sections/intro/enabled' },
       };
     if (parts[0] === 'sections' && parts[1] && parts[1] !== 'intro') {
       return {
         id: parts[1],
         title: TITLE_CASE(parts[1]),
-        toggle: { file: 'home.json', ptr: `/sections/${parts[1]}/enabled` },
+        toggle: { file: HOME, ptr: `/sections/${parts[1]}/enabled` },
       };
     }
     if (parts[0] === 'curtain') return { id: 'transition', title: 'Page transition' };
   }
-  if (file === 'site.json') {
+  if (file === SITE) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
     if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
     if (parts[0] === 'social') return { id: 'social', title: 'Social links' };
@@ -57,15 +59,14 @@ function groupFor(store, { file, ptr }, page) {
     if (parts[0] === 'pages') return { id: 'page-head', title: 'Page heading' };
     if (parts[0] === 'email' || parts[0] === 'location') return { id: 'footer', title: 'Footer' };
   }
-  if (ARRAY_FILES.has(file) && /^\d+$/.test(parts[0])) {
+  if (isSource(file) && /^\d+$/.test(parts[0])) {
     if (page === 'home') {
-      const map = { 'people.json': 'people', 'places.json': 'places', 'projects.json': 'projects' };
-      const id = map[file];
-      if (id)
+      const id = sourceIdOf(file);
+      if (['people', 'places', 'projects'].includes(id))
         return {
           id,
           title: TITLE_CASE(id),
-          toggle: { file: 'home.json', ptr: `/sections/${id}/enabled` },
+          toggle: { file: HOME, ptr: `/sections/${id}/enabled` },
         };
     }
     const item = store.current[file]?.[parts[0]];
@@ -91,8 +92,8 @@ function componentFields(id) {
       'menu',
       'close',
     ].map((key) => ({
-      edit: `site.json#/nav/${key}`,
-      file: 'site.json',
+      edit: `${SITE}#/nav/${key}`,
+      file: SITE,
       ptr: `/nav/${key}`,
       type: 'text',
     }));
@@ -118,21 +119,21 @@ function componentFields(id) {
     }
     return fields
       .filter((f) => true)
-      .map((f) => ({ edit: `site.json#${f.ptr}`, file: 'site.json', ptr: f.ptr, type: f.type }));
+      .map((f) => ({ edit: `${SITE}#${f.ptr}`, file: SITE, ptr: f.ptr, type: f.type }));
   }
   return [];
 }
 
 /** Home section toggles, even when a section has no visible text fields yet. */
 const HOME_TOGGLES = [
-  { id: 'hero', title: 'Hero', toggle: { file: 'home.json', ptr: '/hero/enabled' } },
-  { id: 'intro', title: 'Intro', toggle: { file: 'home.json', ptr: '/sections/intro/enabled' } },
-  { id: 'people', title: 'People', toggle: { file: 'home.json', ptr: '/sections/people/enabled' } },
-  { id: 'places', title: 'Places', toggle: { file: 'home.json', ptr: '/sections/places/enabled' } },
+  { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } },
+  { id: 'intro', title: 'Intro', toggle: { file: HOME, ptr: '/sections/intro/enabled' } },
+  { id: 'people', title: 'People', toggle: { file: HOME, ptr: '/sections/people/enabled' } },
+  { id: 'places', title: 'Places', toggle: { file: HOME, ptr: '/sections/places/enabled' } },
   {
     id: 'projects',
     title: 'Projects',
-    toggle: { file: 'home.json', ptr: '/sections/projects/enabled' },
+    toggle: { file: HOME, ptr: '/sections/projects/enabled' },
   },
 ];
 
@@ -168,12 +169,12 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     // Skip enabled flags themselves — they have a dedicated toggle.
     if (ptr.endsWith('/enabled')) return null;
     const value = store.get(file, ptr);
-    if (value === undefined && !edit.startsWith('site.json#/nav/')) {
+    if (value === undefined && !edit.startsWith(`${SITE}#/nav/`)) {
       // Still show nav keys that exist; skip missing optional footer slots.
-      if (file === 'site.json' && /\/links\/\d+\//.test(ptr) && value === undefined) return null;
-      if (file === 'site.json' && /\/social\/\d+\//.test(ptr) && value === undefined) return null;
+      if (file === SITE && /\/links\/\d+\//.test(ptr) && value === undefined) return null;
+      if (file === SITE && /\/social\/\d+\//.test(ptr) && value === undefined) return null;
     }
-    if (value === undefined && file === 'site.json' && ptr.startsWith('/nav/')) {
+    if (value === undefined && file === SITE && ptr.startsWith('/nav/')) {
       // show empty nav field only if key exists on base or current
     }
     const exists = store.get(file, ptr) !== undefined || store.getBase(file, ptr) !== undefined;
@@ -212,7 +213,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
         { class: 'tf__label' },
         short,
         h('i', { class: 'dot', title: 'Changed' }),
-        h('span', { class: 'tf__file' }, file),
+        h('span', { class: 'tf__file', title: `content/${file}` }, baseName(file)),
       ),
       input,
     );
@@ -251,7 +252,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
         { class: 'tf__label' },
         'Curtain text',
         h('i', { class: 'dot', title: 'Changed' }),
-        h('span', { class: 'tf__file' }, file),
+        h('span', { class: 'tf__file', title: `content/${file}` }, baseName(file)),
       ),
       labelInput,
     );
@@ -350,7 +351,7 @@ export function createTextPanel({ store, bridge, root, getTarget }) {
     }
     // Page content only: header/nav and footer are edited via the Menu / Footer components.
     return (bridge.editFields?.() || []).filter((f) => {
-      if (f.file !== 'site.json') return true;
+      if (f.file !== SITE) return true;
       const top = parse(f.ptr)[0];
       return (
         top !== 'nav' &&

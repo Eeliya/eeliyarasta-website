@@ -12,7 +12,8 @@
  *
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
- * Only the files listed in src/editor/config.js can be read or written.
+ * Only existing JSON files in content/pages/, content/sources/ and content/settings/ can be
+ * read or written (src/editor/config.js, src/site/files.js); Save never creates files.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,9 +21,23 @@ import { execFile } from 'node:child_process';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
+import { isContentFile } from '../src/site/files.js';
 
-export const EDITABLE = new Set(editorConfig.files);
 const CONTENT_DIR = editorConfig.contentDir;
+
+/** Editable content files that exist on disk, e.g. "pages/home.json" (paths relative to content/). */
+export function editableFiles(root) {
+  const files = [];
+  for (const folder of editorConfig.folders) {
+    const dir = path.join(root, CONTENT_DIR, folder);
+    if (!fs.existsSync(dir)) continue;
+    for (const name of fs.readdirSync(dir).sort()) {
+      const file = `${folder}/${name}`;
+      if (isContentFile(file) && fs.statSync(path.join(dir, name)).isFile()) files.push(file);
+    }
+  }
+  return new Set(files);
+}
 
 const LOOPBACK = /^(?:127(?:\.\d{1,3}){3}|::1|::ffff:127(?:\.\d{1,3}){3})$/;
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
@@ -46,7 +61,7 @@ export function isLocalRequest(req) {
 
 export const readContentFiles = (root) =>
   Object.fromEntries(
-    [...EDITABLE].map((f) => [
+    [...editableFiles(root)].map((f) => [
       f,
       JSON.parse(fs.readFileSync(path.join(root, CONTENT_DIR, f), 'utf8')),
     ]),
@@ -120,7 +135,7 @@ const parseJSON = (text) => {
 
 /**
  * Content files that differ from HEAD (the ones Publish would commit), plus branch and
- * push state. Only the editable files (src/editor/config.js) are ever looked at.
+ * push state. Only content files in the editable folders (src/editor/config.js) are looked at.
  */
 export async function contentStatus(root) {
   const inside = await git(root, ['rev-parse', '--is-inside-work-tree']);
@@ -132,7 +147,8 @@ export async function contentStatus(root) {
   ]);
   const branch = branchR.stdout.trim();
   const prefix = prefixR.stdout.trim();
-  const rel = [...EDITABLE].map((f) => `${CONTENT_DIR}/${f}`);
+  // Every JSON file in the editable folders, including deleted or new ones.
+  const rel = editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/*.json`);
 
   const st = await git(root, [
     'status',
@@ -143,14 +159,18 @@ export async function contentStatus(root) {
     ...rel,
   ]);
   const files = [];
-  for (const entry of st.stdout.split('\0').filter(Boolean)) {
+  const entries = st.stdout.split('\0').filter(Boolean);
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     const code = entry.slice(0, 2);
+    // Renames/copies are followed by their source path as a separate entry: skip it.
+    if (code[0] === 'R' || code[0] === 'C') i++;
     const repoPath = entry.slice(3);
     const p = repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : repoPath;
     const name = p.slice(CONTENT_DIR.length + 1);
-    if (!EDITABLE.has(name) || p !== `${CONTENT_DIR}/${name}`) continue;
+    if (!isContentFile(name) || p !== `${CONTENT_DIR}/${name}`) continue;
     const status =
-      code === '??'
+      code === '??' || code[0] === 'R' || code[0] === 'C'
         ? 'new'
         : code.includes('D')
           ? 'deleted'
@@ -335,8 +355,9 @@ export function editorMiddleware({ root, logger, onWrite = () => {} }) {
       if (route === 'POST /save') {
         const { files } = await readJSON(req);
         const names = Object.keys(files || {});
+        const editable = editableFiles(root);
         const bad = names.filter(
-          (n) => !EDITABLE.has(n) || files[n] === null || typeof files[n] !== 'object',
+          (n) => !editable.has(n) || files[n] === null || typeof files[n] !== 'object',
         );
         if (!names.length || bad.length)
           return sendJSON(res, 400, { error: `Not writable: ${bad.join(', ') || '(nothing)'}` });

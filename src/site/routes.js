@@ -2,6 +2,7 @@
  * Every page of the site, derived from content. The prerender step writes one
  * static HTML file per route; the client router fetches those same files.
  */
+import { SITE, HOME, sourceFile } from './files.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -29,19 +30,19 @@ export function getRoutes(content) {
         section,
         album,
         index: i,
-        file: `${kind}.json`,
+        file: sourceFile(kind),
         next: list[(i + 1) % list.length],
         title,
         description: album.summary,
         image: album.images[album.cover || 0]?.src,
         curtain: curtainOf(album.curtain, title),
-        curtainEdit: curtainEditOf(`${kind}.json`, [i, 'curtain']),
+        curtainEdit: curtainEditOf(sourceFile(kind), [i, 'curtain']),
       };
     });
 
   const pageCurtain = (key, title) => ({
     curtain: curtainOf(site.pages[key]?.curtain, title),
-    curtainEdit: curtainEditOf('site.json', ['pages', key, 'curtain']),
+    curtainEdit: curtainEditOf(SITE, ['pages', key, 'curtain']),
   });
 
   const homeTitle = site.title;
@@ -52,7 +53,7 @@ export function getRoutes(content) {
       title: homeTitle,
       description: site.description,
       curtain: curtainOf(home?.curtain, homeTitle),
-      curtainEdit: curtainEditOf('home.json', ['curtain']),
+      curtainEdit: curtainEditOf(HOME, ['curtain']),
     },
     {
       path: '/photography/',

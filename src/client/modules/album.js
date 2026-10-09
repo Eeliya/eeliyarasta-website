@@ -1,7 +1,7 @@
 /**
  * Album slider (Faint Film style): big current image, numbered thumbs, counter,
  * keyboard ← →, mouse wheel, drag / swipe, and a Slider ⇄ Grid toggle.
- * Timings come from animations.json → transitions.album / interactions.album.
+ * Timings come from settings/animations.json → transitions.album / interactions.album.
  */
 import { gsap, reducedMotion, $ } from '../lib/env.js';
 import { transitions, interactions } from '../anim/engine.js';

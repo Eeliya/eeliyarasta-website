@@ -7,7 +7,7 @@
  * Animation (GSAP): one timeline per panel. The panel fades in and slides down by `y`
  * as a whole (no per-item stagger); closing plays the same timeline in reverse, so
  * clicking again mid-animation just turns it around smoothly. Timing lives in
- * content/animations.json -> transitions.menu ({ open: { duration, ease, y }, close: { duration } });
+ * content/settings/animations.json -> transitions.menu ({ open: { duration, ease, y }, close: { duration } });
  * the close ease is the mirror of the open ease. Reduced motion: a short opacity fade only.
  *
  * Glass blur: in Chrome, opacity < 1 on an element makes it a "backdrop root", which

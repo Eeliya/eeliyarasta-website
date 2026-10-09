@@ -24,6 +24,7 @@ import { createPageMenu } from './ui/page-menu.js';
 import { h, clear } from './ui/dom.js';
 import { compile } from './lib/pointer.js';
 import { getRoutes } from '../site/routes.js';
+import { ANIMATIONS, contentFromFiles } from '../site/files.js';
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
@@ -150,16 +151,7 @@ function toast(content, { kind = 'info', timeout = 5000 } = {}) {
 }
 const setStatus = (text) => (status.textContent = text);
 
-function contentForRoutes() {
-  const c = store.current;
-  return {
-    site: c['site.json'],
-    home: c['home.json'],
-    people: c['people.json'],
-    places: c['places.json'],
-    projects: c['projects.json'],
-  };
-}
+const contentForRoutes = () => contentFromFiles(store.current);
 
 function renderPages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
@@ -326,9 +318,7 @@ function renderOverview() {
                   h(
                     'span',
                     { class: 'chg__path' },
-                    f === 'animations.json'
-                      ? op.path.join(' › ')
-                      : labelFor(store, { file: f, ptr }),
+                    f === ANIMATIONS ? op.path.join(' › ') : labelFor(store, { file: f, ptr }),
                   ),
                   h(
                     'span',
@@ -360,7 +350,7 @@ function renderOverview() {
       h(
         'p',
         { class: 'hint' },
-        'Swapping and reordering album photos will be added here; for now edit people.json / places.json and media/ by hand.',
+        'Swapping and reordering album photos will be added here; for now edit content/sources/*.json and media/ by hand.',
       ),
     ),
   );
@@ -468,7 +458,7 @@ store.on(({ files, source: src }) => {
     else if (state.mode === 'text') textPanel.update();
     return renderChrome();
   }
-  const textChanged = files.some((f) => f !== 'animations.json');
+  const textChanged = files.some((f) => f !== ANIMATIONS);
   if (textChanged) {
     const fromPreview = src && src.nodeType === 1;
     bridge.applyTexts({
@@ -476,9 +466,9 @@ store.on(({ files, source: src }) => {
       force: ['undo', 'redo', 'rebase', 'discard'].includes(src),
     });
   }
-  if (files.includes('animations.json')) {
+  if (files.includes(ANIMATIONS)) {
     clearTimeout(animTimer);
-    animTimer = setTimeout(() => bridge.updateAnimations(store.current['animations.json']), 180);
+    animTimer = setTimeout(() => bridge.updateAnimations(store.current[ANIMATIONS]), 180);
   }
   if (state.mode === 'text')
     src === 'panel' || (src && src.nodeType === 1) ? textPanel.update() : textPanel.render();
@@ -546,7 +536,7 @@ function modal(title, ...children) {
 // ---------------------------------------------------------------- publish
 const defaultMessage = (names) =>
   names.length
-    ? `Content: update ${names.map((n) => n.replace(/\.json$/, '')).join(', ')} (visual editor)`
+    ? `Content: update ${names.map((n) => n.replace(/^.*\//, '').replace(/\.json$/, '')).join(', ')} (visual editor)`
     : '';
 
 /**
