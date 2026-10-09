@@ -7,9 +7,10 @@
  *     view    menu | footer, when the page menu shows one of those instead of a page
  *     source  + item: the Source Explorer, open on that file and item
  *             (&source=people&item=noor-vermeer; item is the slug, or the number without one)
+ *     anim    the Animations library (Motion tab), open on that animation (&anim=fade-up)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed
- *     sections, the selected field or Motion element, the explorer's file list, the panel
- *     and preview scroll.
+ *     sections, the selected field or Motion element, the explorer's and library's lists,
+ *     the panel and preview scroll.
  *
  * On load the URL wins; what it doesn't say comes from sessionStorage. Values that don't
  * exist (a bad tab, a deleted field, a renamed file) are skipped.
@@ -18,7 +19,7 @@
  * so Back leaves the editor instead of stepping through tabs.
  *
  * main.js calls restoreUi() before the UI mounts and restorePlace() once the preview shows
- * the page; App.svelte calls writeUrl() whenever the tab, view or explorer changes.
+ * the page; App.svelte calls writeUrl() whenever the tab, view, explorer or library changes.
  */
 import { tick } from 'svelte';
 import { ui } from './ui.svelte.js';
@@ -56,6 +57,10 @@ function readState() {
     state.explorer = { open: true, file: `sources/${q.get('source')}.json`, index: 0 };
     state.item = q.get('item');
   }
+  if (q.has('anim')) {
+    if (!q.has('tab')) state.mode = 'motion'; // the library is in the Motion tab
+    state.library = { open: true, name: q.get('anim') }; // an unknown name: the list
+  }
   return state;
 }
 
@@ -68,6 +73,8 @@ export function restoreUi(preview, content) {
   if (['text', 'motion'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
   if (saved.component) ui.target = saved.component; // Menu or Footer (pages: ?path=)
   ui.sections = saved.sections || {};
+  // AnimationsModal opens itself when ui.library.open is set (Motion tab only).
+  if (saved.library && ui.mode === 'motion') ui.library = saved.library;
 
   addEventListener('pagehide', () => {
     sessionStorage.setItem(
@@ -78,6 +85,7 @@ export function restoreUi(preview, content) {
         component: ui.target?.kind === 'component' ? ui.target : null,
         sections: ui.sections,
         explorer: ui.explorer,
+        library: ui.library,
         path: bridge.path(),
         edit: ui.selection?.edit,
         anim: ui.anim?.key,
@@ -125,7 +133,7 @@ export async function restorePlace() {
 /** An explorer item in the URL: its slug, else its number (1, 2, ...). */
 const itemId = (it, index) => it?.slug || String(index + 1);
 
-/** Show the tab, view and open explorer item in the URL (App.svelte, in an $effect). */
+/** Show the tab, view, open explorer item and library animation in the URL (App.svelte, in an $effect). */
 export function writeUrl() {
   const url = new URL(location.href);
   const q = url.searchParams;
@@ -139,5 +147,6 @@ export function writeUrl() {
   const list = open && file ? live.current(file) : null;
   set('source', list && sourceIdOf(file));
   set('item', Array.isArray(list) && list[index] && itemId(list[index], index));
+  set('anim', ui.mode === 'motion' && ui.library.open && ui.library.name);
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }

@@ -36,7 +36,7 @@
   const unpublishedChanges = $derived(unpublished.reduce((n, f) => n + (f.changes || 1), 0));
   const branch = $derived(ui.pub?.branch ? `origin/${ui.pub.branch}` : 'GitHub');
 
-  // The tab, Menu/Footer and the open Source Explorer item in the URL (persist.js).
+  // The tab, Menu/Footer, the open Source Explorer item and library animation in the URL (persist.js).
   $effect(writeUrl);
 
   $effect(() => {
