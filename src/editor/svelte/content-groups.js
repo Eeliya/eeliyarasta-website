@@ -6,6 +6,16 @@
 import { parse } from '../lib/pointer.js';
 import { SITE, HOME, sourceIdOf } from '../../site/files.js';
 
+/** site.json values edited in the Settings tab: [key, label, field type]. */
+export const SITE_SETTINGS = [
+  ['name', 'Site name', 'text'],
+  ['title', 'Home page title', 'text'],
+  ['description', 'Description (meta tags)', 'block'],
+  ['url', 'Site URL (canonical links)', 'text'],
+  ['accent', 'Accent color', 'text'],
+  ['camera', 'Camera (footer)', 'text'],
+];
+
 /** Lists in content/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 

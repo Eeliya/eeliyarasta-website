@@ -9,6 +9,7 @@
   import BrowsePanel from './BrowsePanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
+  import SettingsPanel from './SettingsPanel.svelte';
   import PublishDialog from './PublishDialog.svelte';
   import Toasts from './Toasts.svelte';
   import { ui } from './ui.svelte.js';
@@ -21,10 +22,12 @@
   let publishDialog = $state();
   const publish = () => publishDialog.open();
 
+  // [mode, label, icon]: a tab with an icon shows only the icon
   const TABS = [
     ['browse', 'Browse'],
     ['text', 'Content'],
     ['motion', 'Motion'],
+    ['settings', 'Settings', 'fa-gear'],
   ];
   const mobile = $derived(ui.viewport === 'mobile');
   const unpublished = $derived(ui.pub?.files || []);
@@ -90,12 +93,16 @@
       <h1 class="ed-brand">Editor <small class="ed-source">dev · local files</small></h1>
 
       <nav class="seg" aria-label="Mode">
-        {#each TABS as [mode, label] (mode)}
+        {#each TABS as [mode, label, icon] (mode)}
           <button
             type="button"
-            class={['seg__btn', ui.mode === mode && 'is-active']}
-            onclick={() => actions.setMode(mode)}>{label}</button
+            class={['seg__btn', icon && 'seg__btn--icon', ui.mode === mode && 'is-active']}
+            aria-label={icon && label}
+            title={icon && label}
+            onclick={() => actions.setMode(mode)}
           >
+            {#if icon}<i class={['fa-solid', icon]} aria-hidden="true"></i>{:else}{label}{/if}
+          </button>
         {/each}
       </nav>
 
@@ -138,6 +145,8 @@
       <ContentPanel {live} {bridge} />
     {:else if ui.mode === 'motion'}
       <MotionPanel {live} {bridge} />
+    {:else if ui.mode === 'settings'}
+      <SettingsPanel {live} {bridge} />
     {:else}
       <BrowsePanel {live} onpublish={publish} />
     {/if}

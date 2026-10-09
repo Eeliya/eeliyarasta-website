@@ -4,6 +4,7 @@
  *   Browse  - use the site normally; overview of unsaved changes
  *   Content - click text in the preview to edit it (animations paused)
  *   Motion  - click an animated element to edit its preset / timing / trigger
+ *   Settings - site-wide values: site name and meta, the global page-transition curtain
  *
  * Edits only touch in-memory copies of content/*.json (see store.js).
  *   Save    - writes the changed files to content/ on disk (a draft: the preview and
@@ -28,10 +29,10 @@ import { createLive } from './svelte/live.svelte.js';
 import { createStore } from './store.js';
 import * as source from './source.js';
 import { createBridge } from './bridge.js';
-import { labelFor } from './svelte/content-groups.js';
+import { labelFor, SITE_SETTINGS } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides } from '../site/routes.js';
-import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
+import { ANIMATIONS, HOME, SITE, contentFromFiles } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
 
 const store = createStore();
@@ -92,14 +93,15 @@ function pickAnim(sel) {
 
 function setMode(mode) {
   ui.mode = mode;
-  if (mode !== 'browse') ui.lastEdit = mode;
-  bridge.setMode(mode);
+  if (mode === 'text' || mode === 'motion') ui.lastEdit = mode;
+  // Settings has nothing to pick in the preview: it behaves like Browse there.
+  bridge.setMode(mode === 'settings' ? 'browse' : mode);
   if (mode === 'motion') ui.anim = null;
 }
 
 // ---------------------------------------------------------------- preview events
 bridge.on('connect', () => {
-  bridge.setMode(ui.mode);
+  bridge.setMode(ui.mode === 'settings' ? 'browse' : ui.mode);
   pushCurtains();
   ui.previewVersion++;
 });
@@ -169,12 +171,18 @@ async function save({ quiet = false } = {}) {
   const listsChanged = dirty.some(
     (f) => Array.isArray(store.base[f]) && store.base[f].length !== store.current[f]?.length,
   );
+  // Site settings (name, title, ...) are only in the rendered pages.
+  const settingsChanged = SITE_SETTINGS.some(
+    ([key]) => store.base[SITE]?.[key] !== store.current[SITE]?.[key],
+  );
   ui.saving = true;
   try {
     await source.saveDev(Object.fromEntries(dirty.map((f) => [f, store.current[f]])));
     store.markSaved(dirty);
-    // A section the preview couldn't show yet (e.g. a grid with a new source): re-render it.
-    if ((listsChanged || ui.staleSections.length) && bridge.path()) bridge.load(bridge.path());
+    // A section the preview couldn't show yet (e.g. a grid with a new source) or new site
+    // settings: re-render the page.
+    if ((listsChanged || settingsChanged || ui.staleSections.length) && bridge.path())
+      bridge.load(bridge.path());
     if (!quiet) toast('Saved', { kind: 'ok', files: dirty, note: '(draft, not published)' });
     ui.status = `Saved ${plural(dirty.length, 'file')} · ${new Date().toLocaleTimeString()}`;
     return true;

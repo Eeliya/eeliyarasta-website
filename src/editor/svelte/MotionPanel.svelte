@@ -1,11 +1,10 @@
 <!--
-  Motion tab. Nothing picked: the page-transition curtain (CurtainSection) and the page's
-  animated elements. An element picked (ui.anim, from the preview or the list): its
+  Motion tab. Nothing picked: the page's animated elements (the global page-transition
+  curtain is in the Settings tab). An element picked (ui.anim, from the preview or the list): its
   animation (AnimEditor).
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
-  import CurtainSection from './CurtainSection.svelte';
   import { ui } from './ui.svelte.js';
   import { ANIMATIONS } from '../../site/files.js';
 
@@ -33,7 +32,6 @@
       <AnimEditor {live} {bridge} {cfg} {items} {gsap} />
     {/key}
   {:else}
-    <CurtainSection {live} {bridge} {gsap} />
     <p class="hint">
       Click an animated element in the preview, or pick one below. Hold Alt to click through to
       links.

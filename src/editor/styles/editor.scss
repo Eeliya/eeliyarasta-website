@@ -129,6 +129,12 @@ kbd {
       background: var(--fg);
       color: #000;
     }
+
+    // an icon-only tab (Settings) takes only the room it needs
+    &--icon {
+      flex: none;
+      padding-inline: 12px;
+    }
   }
 
   &--small &__btn {
