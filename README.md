@@ -131,27 +131,37 @@ Routes, menu, dropdowns, grids and sitemap update automatically.
 a tiny blurred placeholder (LQIP) and the image's most vivid colour. Templates use it for
 `srcset`, `width/height` (no layout shift) and lazy loading. Unchanged images are skipped.
 If `sharp` is missing, originals are copied and the site still works. Both output folders are
-generated, so they're git-ignored.
+generated, so they're git-ignored. Sizes, format and quality are in `scripts/image-variants.mjs`,
+shared with photos uploaded to R2 (below).
 
 ### Photos on Cloudflare R2
 
 Photo fields in the editor (the About photo, the hero photos, album photos, a project's image;
 in the Content tab and the Sources window) have an **Upload** button, and take a photo dropped on
-them. The dev server puts it in an R2 bucket as `photos/<name>-<hash>.<ext>` (the hash of the
-bytes: the same photo gets the same key, and the object is cached forever) and the field gets
-that **key**, one undo step like typing. Save and Publish as usual.
+them (JPEG, PNG, WebP, AVIF, GIF or TIFF, up to 60 MB). The dev server treats it like a photo in
+`media/`: auto-rotated from EXIF, metadata stripped (no GPS or camera data), WebP at 480, 960
+and 1600 px (never wider than the original). Each size goes to the R2 bucket as
+`photos/<name>-<hash>-<width>.webp` (the hash of the original bytes: the same photo gets the
+same keys, uploads nothing the second time, and is cached forever). The original is not kept:
+the largest size is the fallback `src`. The field gets that key (e.g.
+`photos/noor-01-3f9a0c1b2d-1600.webp`), one undo step like typing. The field shows "Uploading
+N%" then "Resizing…".
 
-The content stores keys, not URLs: `mediaUrl()` (`src/site/helpers.js`) turns a value into a URL
-when the page is rendered. A path that is in `media/` (the media manifest) stays local, a full
+Each upload adds an entry to **`content/settings/photos.json`**: size, the keys of its widths,
+the blurred placeholder and the accent colour. The build renders `srcset`, `width/height` and
+the placeholder from it, exactly like for `media/` photos, without downloading anything from R2.
+Publish commits it with the content (the editor itself never edits it). A key missing from it
+renders as a plain `<img>` and the build warns.
+
+The content stores keys, not URLs: `mediaUrl()` / `photoOf()` (`src/site/helpers.js`) turn a
+value into URLs when the page is rendered. A path that is in `media/` stays local, a full
 `https://` URL is used as is, anything else is `site.json` `mediaUrl` + `/` + key (Settings >
-Photos). So the photo domain can change in one place, and existing photos keep working; moving
-one to R2 under the same key later needs no content change. R2 photos are served as uploaded
-(no srcset sizes or placeholder: those are for `media/` photos).
+Photos). So the photo domain can change in one place, and existing photos keep working.
 
 The keys live in `.env.local` (git-ignored; template: `.env.example`). Only the dev server reads
 them (`loadEnv` in `scripts/vite-plugin-static-site.mjs`, R2_* only); nothing reaches the
-browser or `dist/`. Uploads: `scripts/r2.mjs` (SigV4 via `aws4fetch`), JPEG, PNG, WebP, AVIF or
-GIF up to 30 MB. Without keys an upload says "R2 not configured: add keys to .env.local".
+browser or `dist/`. Uploads: `scripts/r2.mjs` (SigV4 via `aws4fetch`, tested against a mock
+S3 by `npm test`). Without keys an upload says "R2 not configured: add keys to .env.local".
 
 Setup, once:
 
