@@ -1,4 +1,4 @@
-import { html, esc } from '../helpers.js';
+import { html, esc, isExternal, mediaUrl } from '../helpers.js';
 import { header, mobileMenu } from './header.js';
 import { footer } from './footer.js';
 
@@ -7,7 +7,7 @@ export function head(ctx, route, accent) {
   const { site } = ctx;
   const url = site.url + (route.out === '404.html' ? '/404' : route.path);
   const image = route.image
-    ? ctx.media?.[route.image]?.src || `/media/${route.image}`
+    ? mediaUrl(ctx, route.image)
     : ctx.media?.['people/noor-vermeer/02.jpg']?.src;
   const ld =
     route.page === 'home'
@@ -32,7 +32,7 @@ export function head(ctx, route, accent) {
     <meta property="og:title" content="${esc(route.title)}" />
     <meta property="og:description" content="${esc(route.description || site.description)}" />
     <meta property="og:url" content="${esc(url)}" />
-    ${image ? html`<meta property="og:image" content="${esc(site.url + image)}" />` : ''}
+    ${image ? html`<meta property="og:image" content="${esc(isExternal(image) ? image : site.url + image)}" />` : ''}
     <meta name="twitter:card" content="summary_large_image" />
     <style id="accent-init">
       :root {

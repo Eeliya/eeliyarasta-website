@@ -48,7 +48,7 @@ export const about = (ctx) => {
   return html` <section class="about">
     <div class="about__media">
       <figure class="about__figure" data-anim="about.image">
-        ${img(ctx, a.image, { alt: 'Fujifilm X100V camera on a wooden table', sizes: '(max-width: 760px) 100vw, 45vw', priority: true })}
+        ${img(ctx, a.image, { alt: 'Fujifilm X100V camera on a wooden table', sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: ed(ABOUT, ['image'], 'image') })}
       </figure>
       <figcaption class="label muted">
         ${esc(creditText(a.imageCredit))}${a.placeholder ? ' · placeholder' : ''}

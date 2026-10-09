@@ -64,8 +64,26 @@ export const isExternal = (url = '') => /^https?:\/\//.test(url);
 export const extAttrs = (url) => (isExternal(url) ? ' target="_blank" rel="noopener"' : '');
 
 /**
- * Responsive <img>. `src` is a path relative to /media (e.g. "people/x/01.jpg").
- * Uses the generated manifest (srcset, intrinsic size, blurred placeholder) when present.
+ * URL of a photo in the content. `src` is one of:
+ *   "people/x/01.jpg"            a file in media/, resized by scripts/images.mjs: /media/...
+ *   "photos/x-3f9a0c1b2d.jpg"    an object in Cloudflare R2 (uploaded in the editor):
+ *                                site.mediaUrl (settings/site.json) + "/" + key
+ *   "https://..."                a full URL, as is
+ * Files in the media manifest are local; anything else is read from site.mediaUrl, so a photo
+ * moved from media/ to R2 under the same key needs no content change. The content keeps keys,
+ * not URLs: the photo domain can change in one place.
+ */
+export function mediaUrl(ctx, src = '') {
+  if (isExternal(src)) return src;
+  const m = ctx.media?.[src];
+  if (m) return m.src;
+  const base = String(ctx.site?.mediaUrl || '').replace(/\/+$/, '');
+  return base ? `${base}/${String(src).replace(/^\/+/, '')}` : `/media/${src}`;
+}
+
+/**
+ * Responsive <img> for a photo (`src`: see mediaUrl).
+ * Uses the generated manifest (srcset, intrinsic size, blurred placeholder) for local photos.
  */
 export function img(
   ctx,
@@ -73,7 +91,7 @@ export function img(
   { alt = '', sizes = '100vw', cls = '', loading = 'lazy', attrs = '', priority = false } = {},
 ) {
   const m = ctx.media?.[src];
-  const url = m ? m.src : `/media/${src}`;
+  const url = mediaUrl(ctx, src);
   const srcset = m && m.srcset.length > 1 ? m.srcset.map((s) => `${s.url} ${s.w}w`).join(', ') : '';
   const dims = m && m.width ? ` width="${m.width}" height="${m.height}"` : '';
   const lqip = m?.lqip ? ` style="background-image:url(${m.lqip})"` : '';

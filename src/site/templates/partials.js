@@ -60,7 +60,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
-          <div class="prow__media">${p.image ? img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw' }) : ''}</div>
+          <div class="prow__media">${p.image ? img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
             <p${ed(PROJECTS, [i, 'description'], 'block')}>${lines(p.description)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
@@ -79,7 +79,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       aria-hidden="true"
     >
       <div class="preview__frame">
-        ${projects.map((p) => (p.image ? img(ctx, p.image, { alt: '', sizes: '360px' }) : '<img alt="" />'))}
+        ${projects.map((p, i) => (p.image ? img(ctx, p.image, { alt: '', sizes: '360px', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : '<img alt="" />'))}
       </div>
     </div>`;
 };

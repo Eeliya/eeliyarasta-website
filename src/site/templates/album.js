@@ -11,6 +11,8 @@ export function album(ctx, route) {
   const n = images.length;
   const isPeople = route.kind === 'people';
   const at = (field, type) => ed(route.file, [route.index, field], type);
+  // a photo's src, edited (and uploaded) in the editor
+  const photo = (i) => ed(route.file, [route.index, 'images', i, 'src'], 'image');
   const meta = [
     isPeople ? ['Role', a.role, at('role')] : null,
     isPeople ? ['Agency', a.agency, at('agency')] : null,
@@ -52,7 +54,7 @@ export function album(ctx, route) {
             aria-label="${i + 1} of ${n}"
             ${i === 0 ? '' : ' aria-hidden="true"'}
           >
-            ${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy' })}
+            ${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
           </figure>`,
       )}
       <button
@@ -97,7 +99,7 @@ export function album(ctx, route) {
                 aria-label="Show photo ${i + 1}"
               >
                 <span class="thumb__num">${pad(i + 1)}</span
-                >${img(ctx, im.src, { alt: '', sizes: '80px' })}
+                >${img(ctx, im.src, { alt: '', sizes: '80px', attrs: photo(i) })}
               </button>
             </li>`,
         )}
@@ -115,7 +117,7 @@ export function album(ctx, route) {
           >
             <span class="gcell__num">${pad(i + 1)}</span>
             <span class="gcell__media"
-              >${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 50vw, 20vw' })}</span
+              >${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
             >
           </button>`,
       )}
