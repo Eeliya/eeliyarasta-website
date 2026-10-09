@@ -111,8 +111,8 @@
   }
 
   $effect(() => {
-    const edit = ui.selection?.edit;
-    if (edit) reveal(edit);
+    const { edit, quiet } = ui.selection || {};
+    if (edit && !quiet) reveal(edit);
   });
 </script>
 

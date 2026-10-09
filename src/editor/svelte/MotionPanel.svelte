@@ -52,7 +52,7 @@
     </p>
     {#if items.length}
       <ol class="list">
-        {#each items as { el, id, key } (key)}
+        {#each items as { el, id, key } (el)}
           <li>
             <button
               type="button"

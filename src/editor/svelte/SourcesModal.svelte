@@ -103,14 +103,21 @@
   export function open(nextFile = '', nextIndex = 0, edit = null) {
     ui.explorer.file = files.includes(nextFile) ? nextFile : '';
     select(nextIndex);
-    ui.explorer.open = true;
     flushSync(); // render now, so the field below exists
     if (!dialog.open) dialog.showModal();
+    ui.explorer.open = true;
     const field = edit && dialog.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
     if (!field) return void (file || dialog.querySelector('.src-list__item').focus());
     field.querySelector('.tf__input').focus({ preventScroll: true });
     field.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
+
+  // Open again after a refresh (persist.js), once the files are loaded.
+  $effect(() => {
+    const { file, index } = ui.explorer;
+    // (after a tick: open() renders at once, which an effect may not do)
+    if (ui.explorer.open && files.length && !dialog.open) tick().then(() => open(file, index));
+  });
 </script>
 
 <!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->

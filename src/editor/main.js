@@ -34,10 +34,13 @@ import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides } from '../site/routes.js';
 import { ANIMATIONS, HOME, contentFromFiles } from '../site/files.js';
 import { syncHomeSections } from './sections.js';
+import { restoreUi, restorePlace } from './svelte/persist.js';
 
 const store = createStore();
 const live = createLive(store);
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
+
+restoreUi(bridge); // the tab, sections, ... from before a refresh (svelte/persist.js)
 
 const root = document.getElementById('editor');
 root.textContent = '';
@@ -135,6 +138,8 @@ bridge.on('select', (sel) => {
   else ui.selection = sel?.kind === 'text' ? { edit: sel.el.dataset.edit } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
+// After the handlers above: the selection and scroll from before a refresh.
+bridge.on('navigate', () => restorePlace(bridge));
 
 // ---------------------------------------------------------------- store events
 let animTimer = 0;
