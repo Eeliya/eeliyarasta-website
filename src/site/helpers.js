@@ -65,9 +65,10 @@ export const extAttrs = (url) => (isExternal(url) ? ' target="_blank" rel="noope
 
 /**
  * URL of a photo in the content. `src` is one of:
- *   "people/x/01.jpg"            a file in media/, resized by scripts/images.mjs: /media/...
- *   "photos/x-3f9a0c1b2d.jpg"    an object in Cloudflare R2 (uploaded in the editor):
- *                                site.mediaUrl (settings/site.json) + "/" + key
+ *   "people/x/01.jpg"               a file in media/, resized by scripts/images.mjs: /media/...
+ *   "photos/x-3f9a0c1b2d-1600.webp" an object in Cloudflare R2 (uploaded and resized in the
+ *                                   editor, scripts/r2.mjs): site.mediaUrl (settings/site.json)
+ *                                   + "/" + key; its other sizes are in ctx.photos
  *   "https://..."                a full URL, as is
  * Files in the media manifest are local; anything else is read from site.mediaUrl, so a photo
  * moved from media/ to R2 under the same key needs no content change. The content keeps keys,
@@ -81,17 +82,51 @@ export function mediaUrl(ctx, src = '') {
   return base ? `${base}/${String(src).replace(/^\/+/, '')}` : `/media/${src}`;
 }
 
+const warned = new Set();
+/** Warn once per message (templates render every page, and again on every dev request). */
+function warnOnce(msg) {
+  if (warned.has(msg)) return;
+  warned.add(msg);
+  console.warn(`[photos] ${msg}`);
+}
+
 /**
- * Responsive <img> for a photo (`src`: see mediaUrl).
- * Uses the generated manifest (srcset, intrinsic size, blurred placeholder) for local photos.
+ * Sizes of a photo, the same shape for both kinds: { src, srcset: [{ url, w }], width, height,
+ * color, lqip }, or null when there are none (a full URL, or a key missing from photos.json).
+ *   media/ photos: the generated manifest (.generated/media.json, scripts/images.mjs)
+ *   R2 photos:     content/settings/photos.json (written by the upload), keys made URLs here
+ */
+export function photoOf(ctx, src) {
+  if (!src || isExternal(src)) return null;
+  const local = ctx.media?.[src];
+  if (local) return local;
+  const r2 = ctx.photos?.[src];
+  if (!r2) {
+    warnOnce(`"${src}" is not in media/ or content/settings/photos.json: plain <img>, no sizes`);
+    return null;
+  }
+  if (!ctx.site?.mediaUrl)
+    warnOnce(
+      `"${src}" is in R2, but no Photos address is set (Settings > Photos, site.json mediaUrl)`,
+    );
+  return {
+    ...r2,
+    src: mediaUrl(ctx, src),
+    srcset: r2.srcset.map((s) => ({ url: mediaUrl(ctx, s.key), w: s.w })),
+  };
+}
+
+/**
+ * Responsive <img> for a photo (`src`: see mediaUrl): srcset, intrinsic size and blurred
+ * placeholder from photoOf(), for media/ and R2 photos alike.
  */
 export function img(
   ctx,
   src,
   { alt = '', sizes = '100vw', cls = '', loading = 'lazy', attrs = '', priority = false } = {},
 ) {
-  const m = ctx.media?.[src];
-  const url = mediaUrl(ctx, src);
+  const m = photoOf(ctx, src);
+  const url = m?.src || mediaUrl(ctx, src);
   const srcset = m && m.srcset.length > 1 ? m.srcset.map((s) => `${s.url} ${s.w}w`).join(', ') : '';
   const dims = m && m.width ? ` width="${m.width}" height="${m.height}"` : '';
   const lqip = m?.lqip ? ` style="background-image:url(${m.lqip})"` : '';
@@ -106,9 +141,9 @@ export function img(
   />`;
 }
 
-/** Aspect ratio of a media item (w/h), fallback 4/5. */
+/** Aspect ratio of a photo (w/h), fallback 4/5. */
 export const ratio = (ctx, src) => {
-  const m = ctx.media?.[src];
+  const m = photoOf(ctx, src);
   return m && m.width ? m.width / m.height : 0.8;
 };
 
@@ -180,7 +215,7 @@ const hsl = (h, s, l) => {
 export function accentOf(ctx, album) {
   if (album?.accent) return album.accent;
   const cover = coverOf(album)?.src;
-  const color = cover && ctx.media?.[cover]?.color;
+  const color = cover && photoOf(ctx, cover)?.color;
   if (!color) return ctx.site.accent;
   const [h, s] = rgbToHsl(hexToRgb(color));
   if (s < 0.12) return ctx.site.accent;
