@@ -98,7 +98,7 @@ kbd {
 // fields below (8px corners). The editor's main tabs are pills: .seg--pill.
 .seg {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   border-radius: 8px;
   background: rgb(0 0 0 / 0.35);
   box-shadow: inset 0 0 0 1px var(--line);
@@ -110,7 +110,7 @@ kbd {
     border: 0;
     background: none;
     cursor: pointer;
-    padding: 8px 10px;
+    padding: 8px 12px;
     border-radius: 0;
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -148,7 +148,7 @@ kbd {
 
   // the main tabs (Browse, Content, Motion, Settings): round, with a gap around the buttons
   &--pill {
-    padding: 3px;
+    padding: 4px;
     border-radius: 999px;
   }
 
@@ -165,7 +165,7 @@ select,
   border: 0;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--line);
-  padding: 8px 10px;
+  padding: 8px 12px;
   outline: none;
   transition: box-shadow 0.2s;
 
@@ -178,14 +178,14 @@ select,
 
 select {
   appearance: none;
-  padding-right: 26px;
+  padding-right: 28px;
   cursor: pointer;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted) 50%),
     linear-gradient(135deg, var(--muted) 50%, transparent 50%);
   background-position:
-    calc(100% - 14px) 50%,
-    calc(100% - 10px) 50%;
+    calc(100% - 16px) 50%,
+    calc(100% - 12px) 50%;
   background-size: 4px 4px;
   background-repeat: no-repeat;
 
@@ -195,8 +195,9 @@ select {
 }
 
 .icon-btn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -221,7 +222,7 @@ select {
 .btn-primary {
   border: 0;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 12px 20px;
   cursor: pointer;
   background: var(--fg);
   color: #000;
@@ -246,7 +247,7 @@ select {
 .btn-ghost {
   border: 0;
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 12px 20px;
   cursor: pointer;
   white-space: nowrap;
   background: rgb(255 255 255 / 0.08);
@@ -271,10 +272,10 @@ select {
 .btn-ed {
   display: inline-flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 4px;
   border: 0;
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   cursor: pointer;
   white-space: nowrap;
   background: rgb(255 255 255 / 0.08);
@@ -299,11 +300,11 @@ select {
 .btn-sm {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: none;
-  padding: 4px 6px;
+  padding: 4px 8px;
   color: var(--muted);
   font-size: 11px;
   cursor: pointer;
@@ -334,7 +335,7 @@ select {
 
   &--compact {
     margin-left: auto;
-    padding: 3px 5px;
+    padding: 4px;
     font-size: 10.5px;
   }
 }
@@ -362,7 +363,7 @@ select {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 14px 16px 24px;
+  padding: 16px 16px 24px;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgb(255 255 255 / 0.2) transparent;
@@ -389,17 +390,17 @@ select {
 
 // ------------------------------------------------------------ groups & fields
 .grp {
-  padding: 14px 0;
+  padding: 16px 0;
   border-top: 1px solid var(--line);
 
   &:first-child {
     border-top: 0;
-    padding-top: 2px;
+    padding-top: 4px;
   }
 }
 
 .grp__title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 10px;
   font-weight: 400;
   letter-spacing: 0.1em;
@@ -420,7 +421,7 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .f__label {
@@ -431,7 +432,7 @@ select {
   font-size: 9.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 999px;
   color: var(--faint);
   box-shadow: inset 0 0 0 1px var(--line);
@@ -459,7 +460,7 @@ select {
   cursor: pointer;
   color: var(--muted);
   font-size: 13px;
-  padding: 0 2px;
+  padding: 0 4px;
 
   &:hover {
     color: var(--fg);
@@ -481,7 +482,7 @@ select {
 }
 
 .f__from {
-  margin-left: 6px;
+  margin-left: 8px;
   color: var(--faint);
   font-size: 10.5px;
 }
@@ -492,14 +493,14 @@ select {
   margin-left: auto;
 
   .seg__btn {
-    padding: 3px 8px;
+    padding: 4px 8px;
   }
 }
 
 .f__row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .f__text,
@@ -508,14 +509,14 @@ select {
 }
 
 .f__num {
-  width: 74px;
-  padding: 6px 8px;
+  width: 76px;
+  padding: 8px;
   text-align: right;
 }
 
 .f__unit {
   color: var(--faint);
-  width: 22px;
+  width: 24px;
   font-size: 10.5px;
 }
 
@@ -523,13 +524,14 @@ select {
   width: 100%;
   color: var(--muted);
   font-size: 11px;
-  padding: 6px 26px 6px 10px;
+  padding: 8px 28px 8px 12px;
 }
 
 .f__range,
 .scrub__range {
   flex: 1;
   appearance: none;
+  margin: 0;
   height: 2px;
   background: rgb(255 255 255 / 0.18);
   border-radius: 2px;
@@ -538,16 +540,16 @@ select {
 
   &::-webkit-slider-thumb {
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--fg);
     box-shadow: 0 0 0 4px rgb(255 255 255 / 0.08);
   }
 
   &::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: 0;
     border-radius: 50%;
     background: var(--fg);
@@ -564,9 +566,9 @@ select {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   text-align: left;
   background: rgb(0 0 0 / 0.35);
@@ -580,11 +582,11 @@ select {
 
 .ease__big {
   flex: none;
-  width: 150px;
+  width: 152px;
 
   svg {
-    width: 150px;
-    height: 50px;
+    width: 152px;
+    height: 52px;
     display: block;
   }
 }
@@ -616,8 +618,8 @@ select {
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   margin-top: 8px;
-  padding: 6px;
-  border-radius: 10px;
+  padding: 8px;
+  border-radius: 12px;
   background: rgb(0 0 0 / 0.35);
   box-shadow: inset 0 0 0 1px var(--line);
 }
@@ -625,8 +627,8 @@ select {
 .ease__opt {
   display: grid;
   justify-items: center;
-  gap: 2px;
-  padding: 6px 2px 4px;
+  gap: 4px;
+  padding: 8px 4px 4px;
   border: 0;
   border-radius: 8px;
   background: none;
@@ -666,7 +668,7 @@ select {
   border: 0;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--line);
-  padding: 7px 10px;
+  padding: 8px 12px;
   outline: none;
 }
 
@@ -674,7 +676,7 @@ select {
 .confirm {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--fg);
   font-size: 11px;
 }
@@ -682,9 +684,9 @@ select {
 // text fields (Field.svelte, also used by the curtain timeline)
 .tf {
   display: block;
-  border-radius: 10px;
+  border-radius: 12px;
   transition: box-shadow 0.6s;
-  padding: 2px;
+  padding: 4px;
 }
 
 .tf.is-selected {
@@ -695,7 +697,7 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   color: var(--muted);
   font-size: 11px;
 }
@@ -750,7 +752,7 @@ select {
   margin-left: auto;
   font-size: 9.5px;
   letter-spacing: 0.02em;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 999px;
   color: var(--accent);
   background: var(--faint);
@@ -791,8 +793,8 @@ dialog.modal__box {
 
 .modal__box {
   width: min(520px, calc(100vw - 32px));
-  padding: 22px;
-  border-radius: 18px;
+  padding: 24px;
+  border-radius: 20px;
   // solid panel: no see-through, no blur
   background: var(--solid-card, #212121);
   box-shadow:
@@ -834,7 +836,7 @@ dialog.modal__box {
     box-sizing: border-box;
     height: 36px;
     min-height: 36px;
-    padding: 0 10px;
+    padding: 0 12px;
     border-radius: 8px;
     gap: 8px;
   }
@@ -860,7 +862,7 @@ dialog.modal__box {
 
     svg {
       width: 48px;
-      height: 18px;
+      height: 20px;
     }
   }
 
@@ -911,7 +913,7 @@ dialog.modal__box {
 .f__numwrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 
   .f__unit {
     width: auto;
@@ -919,8 +921,8 @@ dialog.modal__box {
 }
 
 .ease--compact .ease__toggle {
-  padding: 5px 10px;
-  gap: 10px;
+  padding: 4px 12px;
+  gap: 12px;
   min-height: 36px;
 }
 

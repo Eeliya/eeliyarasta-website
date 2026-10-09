@@ -304,7 +304,7 @@
     display: flex;
     align-items: baseline;
     gap: 12px;
-    padding: 20px 22px 14px;
+    padding: 20px 24px 16px;
     border-bottom: 1px solid var(--line);
 
     .modal__title {
@@ -323,6 +323,7 @@
     align-self: center;
     width: 28px;
     height: 28px;
+    padding: 0;
     border: 0;
     border-radius: 8px;
     background: none;
@@ -345,9 +346,9 @@
   .src-files {
     grid-column: 1 / -1;
     align-content: start;
-    gap: 2px;
+    gap: 4px;
     overflow: auto;
-    padding: 14px 12px 18px;
+    padding: 16px 12px 20px;
 
     .src-list__num {
       font-size: 14px;
@@ -357,13 +358,13 @@
   // left: the file's items
   .src-list {
     overflow: auto;
-    padding: 14px 12px 18px;
+    padding: 16px 12px 20px;
     border-right: 1px solid var(--line);
   }
 
   .src-list__head {
     justify-content: space-between;
-    padding: 0 6px 10px;
+    padding: 0 8px 12px;
     color: var(--muted);
     font-size: 10.5px;
     letter-spacing: 0.06em;
@@ -371,7 +372,7 @@
   }
 
   .src-list__items {
-    gap: 2px;
+    gap: 4px;
   }
 
   // number | name / meta | changed dot
@@ -380,10 +381,10 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 2px 10px;
-    padding: 8px 10px;
+    gap: 4px 12px;
+    padding: 8px 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: none;
     text-align: left;
     cursor: pointer;
@@ -434,13 +435,13 @@
   }
 
   .src-list__note {
-    margin: 12px 6px 0;
+    margin: 12px 8px 0;
   }
 
   // right: the selected item
   .src-detail {
     overflow: auto;
-    padding: 16px 22px 22px;
+    padding: 16px 24px 24px;
     display: grid;
     align-content: start;
     gap: 12px;
@@ -450,8 +451,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    min-height: 30px;
-    margin-bottom: 2px;
+    min-height: 32px;
+    margin-bottom: 4px;
 
     .src-item__title {
       flex: 1;

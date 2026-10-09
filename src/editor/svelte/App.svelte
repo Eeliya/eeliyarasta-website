@@ -219,7 +219,7 @@
     width: 100%;
     height: 100%;
     border: 0;
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow:
       0 0 0 1px rgb(255 255 255 / 0.08),
       0 30px 80px -30px rgb(0 0 0 / 0.9);
@@ -230,7 +230,7 @@
   }
 
   .ed-stage.is-mobile .ed-frame {
-    width: 390px;
+    width: 392px;
     height: min(844px, 100%);
     border-radius: 28px;
   }
@@ -243,7 +243,7 @@
     width: var(--panel-w);
     display: flex;
     flex-direction: column;
-    border-radius: 18px;
+    border-radius: 20px;
     overflow: hidden;
     // glass: see-through and blurred over the stage
     background: rgb(22 22 22 / 0.62);
@@ -274,7 +274,7 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
     margin: 0;
     font-family: var(--f-display);
     font-size: 22px;
@@ -297,14 +297,14 @@
 
   .ed-bar {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
   }
 
   // pending line and status on their own rows, then [ empty | Save | Publish ]
   .ed-foot {
     border-top: 1px solid var(--line);
-    padding: 10px 16px 14px;
+    padding: 12px 16px 16px;
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
@@ -331,8 +331,8 @@
     }
 
     &__dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       margin-right: 4px;
       background: #b9f0c4;

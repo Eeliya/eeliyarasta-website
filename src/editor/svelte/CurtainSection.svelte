@@ -241,15 +241,15 @@
   /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
   .tf__hint {
     display: block;
-    margin: 6px 0 0;
+    margin: 8px 0 0;
   }
 
   /* One bordered curtain group: total, timeline, ease, Advanced. */
   .ptg__box {
     position: relative;
-    margin: 0 0 14px;
+    margin: 0 0 16px;
     padding: 8px 8px 0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--solid-card);
     display: grid;
     gap: 12px;
@@ -260,16 +260,16 @@
 
     // the first row ("Curtain for this page", or "Total duration") leaves room for Replay
     > .ptg__replay + * > .tf__label {
-      min-height: 22px;
+      min-height: 24px;
       padding-right: 28px;
     }
   }
 
   .ptg__replay {
     position: absolute;
-    top: 10px;
+    top: 12px;
     right: 8px;
-    height: 22px;
+    height: 24px;
     margin: 0;
   }
 
@@ -281,12 +281,12 @@
   .ptg__advanced {
     margin: 0 -12px 0;
     padding: 0;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 12px 12px;
     box-shadow: inset 0 1px 0 var(--line);
     background: rgb(0 0 0 / 0.18);
 
     summary {
-      padding: 10px 12px 12px;
+      padding: 12px 12px 12px;
       cursor: pointer;
       list-style: none;
       font-size: 11px;
@@ -301,7 +301,7 @@
       // Real FA icons in the summary markup (not CSS content — needs fontawesome.css).
       .ptg__caret {
         width: 1em;
-        margin-right: 0.35em;
+        margin-right: 4px;
         color: var(--faint);
         font-size: 0.95em;
       }
@@ -312,7 +312,7 @@
     }
 
     &[open] > summary {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color: var(--fg);
 
       .ptg__caret--closed {
@@ -328,7 +328,7 @@
   .ptg__advanced-body {
     display: grid;
     // Same 6px rhythm as .tf__label → control and .tf__hint (title / field / help).
-    gap: 6px;
+    gap: 8px;
     padding: 0 12px 12px;
   }
 </style>

@@ -42,7 +42,7 @@
   .toast {
     position: relative;
     margin: 0;
-    padding: 12px 36px 12px 14px;
+    padding: 12px 36px 12px 16px;
     border-radius: 12px;
     animation: fade 0.3s;
     // solid like the dialogs: no see-through, no blur
@@ -72,7 +72,7 @@
 
   .toast__x {
     position: absolute;
-    top: 6px;
+    top: 8px;
     right: 8px;
     border: 0;
     background: none;

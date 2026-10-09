@@ -300,7 +300,7 @@
 <style lang="scss">
   .ptl {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     padding: 0;
     background: none;
     box-shadow: none;
@@ -333,7 +333,7 @@
   .ptl__bars {
     position: absolute;
     inset: 0;
-    border-radius: 3px;
+    border-radius: 4px;
     pointer-events: none;
     overflow: hidden;
     background: rgb(255 255 255 / 0.04);
@@ -423,8 +423,8 @@
     z-index: 2;
     top: -4px;
     bottom: -4px;
-    width: 12px;
-    margin-left: -6px;
+    width: 16px;
+    margin-left: -8px;
     padding: 0;
     border: 0;
     background: none;
@@ -438,7 +438,7 @@
       top: 0;
       bottom: 0;
       width: 4px;
-      border-radius: 3px;
+      border-radius: 4px;
       background: var(--solid-faint);
       box-shadow: 0 0 0 1px rgb(0 0 0 / 0.7);
       opacity: 1;

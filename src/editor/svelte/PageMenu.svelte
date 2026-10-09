@@ -114,7 +114,7 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
-    padding: 7px 10px;
+    padding: 8px 12px;
     border: 0;
     border-radius: 8px;
     cursor: pointer;
@@ -133,7 +133,7 @@
     font-size: 9px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: 999px;
     color: var(--faint);
     box-shadow: inset 0 0 0 1px var(--line);
@@ -162,13 +162,13 @@
   .pm__list {
     position: absolute;
     z-index: 20;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
     right: 0;
     max-height: min(360px, 50vh);
     overflow: auto;
     margin: 0;
-    padding: 6px;
+    padding: 8px;
     list-style: none;
     border-radius: 12px;
     background: rgb(22 22 22 / 0.92);
@@ -180,7 +180,7 @@
   }
 
   .pm__group {
-    padding: 8px 10px 4px;
+    padding: 8px 12px 4px;
     font-size: 9.5px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -190,9 +190,9 @@
   .pm__opt {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 2px 10px;
+    gap: 4px 12px;
     align-items: center;
-    padding: 8px 10px;
+    padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
     outline: none;
@@ -212,7 +212,7 @@
     font-size: 9px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 3px 6px;
+    padding: 4px 8px;
     border-radius: 999px;
     color: var(--faint);
     box-shadow: inset 0 0 0 1px var(--line);

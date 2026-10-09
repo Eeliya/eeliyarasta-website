@@ -113,10 +113,10 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    padding: 9px 12px;
+    gap: 12px;
+    padding: 8px 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     text-align: left;
     background: rgb(255 255 255 / 0.03);

@@ -162,7 +162,7 @@
     display: flex;
     align-items: baseline;
     gap: 12px;
-    padding: 20px 22px 14px;
+    padding: 20px 24px 16px;
     border-bottom: 1px solid var(--line);
 
     .modal__title {
@@ -181,6 +181,7 @@
     align-self: center;
     width: 28px;
     height: 28px;
+    padding: 0;
     border: 0;
     border-radius: 8px;
     background: none;
@@ -202,12 +203,12 @@
   .lib__list,
   .lib__body {
     overflow: auto;
-    padding: 14px 22px 22px;
+    padding: 16px 24px 24px;
   }
 
   .lib__list {
     align-content: start;
-    gap: 2px;
+    gap: 4px;
     padding-inline: 12px;
   }
 
@@ -217,10 +218,10 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 2px 12px;
-    padding: 8px 10px;
+    gap: 4px 12px;
+    padding: 8px 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: none;
     text-align: left;
     cursor: pointer;
@@ -249,7 +250,7 @@
   .lib__info {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
+    gap: 16px;
     margin-bottom: 8px;
 
     .hint {

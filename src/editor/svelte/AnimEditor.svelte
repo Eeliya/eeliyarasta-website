@@ -206,7 +206,7 @@
   }
 
   .msel__title {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     font-family: var(--f-display);
     font-weight: 400;
     font-size: 26px;
@@ -223,7 +223,7 @@
     display: flex;
     gap: 12px;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .scrub {
@@ -241,15 +241,15 @@
   }
 
   .scrub__val {
-    width: 34px;
+    width: 36px;
     text-align: right;
     color: var(--fg);
   }
 
   // older non-timing overrides: what they are, Move to animation / Drop
   .legacy {
-    margin-bottom: 14px;
-    padding: 10px 12px;
+    margin-bottom: 16px;
+    padding: 12px;
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px var(--line);
 
@@ -276,7 +276,7 @@
   }
 
   .scope {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 
     .seg {
       margin-bottom: 8px;

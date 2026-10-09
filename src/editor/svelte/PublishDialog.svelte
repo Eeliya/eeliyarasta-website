@@ -222,11 +222,11 @@
 
   .pub-save {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
-    margin: 0 0 14px;
-    padding: 10px 12px;
-    border-radius: 10px;
+    margin: 0 0 16px;
+    padding: 12px;
+    border-radius: 12px;
     background: rgb(255 207 122 / 0.08);
     box-shadow: inset 0 0 0 1px rgb(255 207 122 / 0.25);
     cursor: pointer;
@@ -238,7 +238,7 @@
 
   .commits {
     margin: -4px 0 12px;
-    gap: 3px;
+    gap: 4px;
     font-size: 11px;
     color: var(--muted);
 
@@ -249,7 +249,7 @@
 
   .pub-ok {
     font-size: 15px;
-    margin: 12px 0 6px;
+    margin: 12px 0 8px;
     color: #b9f0c4;
 
     a {
@@ -268,18 +268,18 @@
 
   .pub-hint {
     margin: 8px 0;
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 12px;
+    border-radius: 12px;
     background: rgb(255 138 122 / 0.08);
     box-shadow: inset 0 0 0 1px rgb(255 138 122 / 0.25);
   }
 
   .pub-out {
     margin: 8px 0 0;
-    padding: 10px 12px;
+    padding: 12px;
     max-height: 180px;
     overflow: auto;
-    border-radius: 10px;
+    border-radius: 12px;
     background: rgb(0 0 0 / 0.5);
     box-shadow: inset 0 0 0 1px var(--line);
     font: 11px/1.5 var(--f-mono);

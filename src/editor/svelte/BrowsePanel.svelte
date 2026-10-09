@@ -163,13 +163,13 @@
   .kbd-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 14px;
+    gap: 8px 16px;
     color: var(--muted);
     margin: 0;
 
     kbd {
-      padding: 2px 6px;
-      border-radius: 5px;
+      padding: 4px 8px;
+      border-radius: 4px;
       box-shadow:
         inset 0 0 0 1px var(--line),
         0 1px 0 rgb(255 255 255 / 0.1);
@@ -179,11 +179,11 @@
 
   // changes
   .chg {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 
     summary {
       cursor: pointer;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     ul {
@@ -214,6 +214,6 @@
 
   .chg summary .btn-sm,
   .chg summary .confirm {
-    margin-left: 6px;
+    margin-left: 8px;
   }
 </style>
