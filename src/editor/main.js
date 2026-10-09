@@ -3,7 +3,7 @@
  *
  *   Browse  - use the site normally; overview of unsaved changes
  *   Content - click text in the preview to edit it (animations paused)
- *   Motion  - click an animated element to edit its preset / timing / trigger
+ *   Motion  - click an animated element to edit its animation / timing / trigger
  *   Settings - site-wide values: site name and meta, the global page-transition curtain
  *
  * Edits only touch in-memory copies of content/*.json (see store.js).

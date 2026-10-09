@@ -1,11 +1,12 @@
 <!--
   Motion tab. Nothing picked: the page's curtain (Global / Custom / Off, CurtainSection; the
-  global curtain itself is in the Settings tab) and the page's animated elements. An element picked (ui.anim, from the preview or the list): its
-  animation (AnimEditor).
+  global curtain itself is in the Settings tab) and the page's animated elements (Elements).
+  An element picked (ui.anim, from the preview or the list): its animation (AnimEditor).
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
   import CurtainSection from './CurtainSection.svelte';
+  import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { splitEdit } from './content-groups.js';
   import { getRoutes } from '../../site/routes.js';
@@ -50,38 +51,46 @@
       Click an animated element in the preview, or pick one below. Hold Alt to click through to
       links.
     </p>
-    {#if items.length}
-      <ol class="list">
-        {#each items as { el, id, key } (el)}
-          <li>
-            <button
-              type="button"
-              class="mlist__item"
-              onclick={() => {
-                bridge.reveal(el);
-                bridge.select(el, 'anim');
-              }}
-              onpointerenter={() => bridge.setHover(el)}
-              onpointerleave={() => bridge.setHover(null)}
-            >
-              <span class="mlist__id">
-                {id}
-                {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
-              </span>
-              <span class="muted">
-                {cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}
-              </span>
-            </button>
-          </li>
-        {/each}
-      </ol>
-    {:else}
-      <p class="hint">No animated elements on this page.</p>
-    {/if}
+    <Section key="motion:elements" title="This page" name="Elements">
+      {#snippet bar()}<span class="mlist__count">{items.length}</span>{/snippet}
+      {#if items.length}
+        <ol class="list">
+          {#each items as { el, id, key } (el)}
+            <li>
+              <button
+                type="button"
+                class="mlist__item"
+                onclick={() => {
+                  bridge.reveal(el);
+                  bridge.select(el, 'anim');
+                }}
+                onpointerenter={() => bridge.setHover(el)}
+                onpointerleave={() => bridge.setHover(null)}
+              >
+                <span class="mlist__id">
+                  {id}
+                  {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
+                </span>
+                <span class="muted">
+                  {cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}
+                </span>
+              </button>
+            </li>
+          {/each}
+        </ol>
+      {:else}
+        <p class="hint">No animated elements on this page.</p>
+      {/if}
+    </Section>
   {/if}
 </section>
 
 <style lang="scss">
+  .mlist__count {
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
   // motion panel
   .mlist__item {
     width: 100%;

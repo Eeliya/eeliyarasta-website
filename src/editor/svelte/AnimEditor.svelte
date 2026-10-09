@@ -1,7 +1,9 @@
 <!--
-  Motion tab, one animated element (ui.anim, picked in the preview or in the list): replay
-  and scroll it, pick where edits go (this element, every element of its target, or the
-  preset), its preset and the fields of the preset's type (motion.js).
+  Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
+  replay and scroll it, pick where edits go (this element, or every element with its
+  data-anim name), its animation and the fields of the animation's type (motion.js).
+  An animation's own values are edited in the Animations library (AnimationsModal.svelte).
+  (In code and animations.json an animation is a "preset".)
   MotionPanel creates a new one for every pick.
 -->
 <script>
@@ -30,20 +32,12 @@
   const sel = ui.anim; // { el, id, key, scope }
   const m = $derived(animModel(cfg, sel));
   const sameTarget = $derived(items.filter((x) => x.id === sel.id).length);
-  const usage = $derived(
-    Object.values(cfg.targets).filter((t) => t.preset === m.presetName).length,
-  );
   const scopes = $derived([
     ['element', 'This element', `Only this element on ${sel.key.split('|')[0]}`],
     [
       'target',
       `All “${sel.id}”`,
       `Every data-anim="${sel.id}" element on the site (${sameTarget} on this page)`,
-    ],
-    [
-      'preset',
-      `Preset “${m.presetName}”`,
-      `The preset itself: used by ${usage} target${usage === 1 ? '' : 's'}`,
     ],
   ]);
   const presets = $derived(
@@ -125,7 +119,7 @@
 
 <div class="msel__head">
   <button type="button" class="link" onclick={() => bridge.select(null)}>
-    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> All animations
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Elements
   </button>
   <h3 class="msel__title">{sel.id}</h3>
   <code class="msel__key" title="Stable element key used for element overrides">{sel.key}</code>
@@ -167,36 +161,34 @@
   <p class="hint">Edits apply to: {scopes.find((s) => s[0] === sel.scope)[2]}.</p>
 </div>
 
-{#if sel.scope === 'preset'}
-  <p class="hint">
-    Type: {m.type}. Changing values here affects every target that uses “{m.presetName}”.
-  </p>
-{:else}
-  <div class="f">
-    <div class="f__top">
-      <span class="f__label">Preset</span>
-      <span class="f__src" data-src={m.own.preset ? 'element' : 'target'}
-        >{m.own.preset ? 'element' : 'target'}</span
-      >
-      {#if sel.scope === 'element' && m.own.preset}
-        <button type="button" class="f__reset" title="Use the target preset" onclick={removePreset}>
-          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-        </button>
-      {/if}
-    </div>
-    <select
-      class="f__select"
-      aria-label="Preset"
-      value={m.presetName}
-      onchange={(e) => setPreset(e.currentTarget.value)}
+<div class="f">
+  <div class="f__top">
+    <span class="f__label">Animation</span>
+    <span class="f__src" data-src={m.own.preset ? 'element' : 'target'}
+      >{m.own.preset ? 'element' : 'all'}</span
     >
-      {#each presets as [name, p] (name)}
-        <option value={name}>{name} ({p.type})</option>
-      {/each}
-    </select>
+    {#if sel.scope === 'element' && m.own.preset}
+      <button
+        type="button"
+        class="f__reset"
+        title="Use the animation of all &quot;{sel.id}&quot;"
+        onclick={removePreset}
+      >
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+      </button>
+    {/if}
   </div>
-{/if}
-
+  <select
+    class="f__select"
+    aria-label="Animation"
+    value={m.presetName}
+    onchange={(e) => setPreset(e.currentTarget.value)}
+  >
+    {#each presets as [name, p] (name)}
+      <option value={name}>{name} ({p.type})</option>
+    {/each}
+  </select>
+</div>
 {#each groups as [title, defs, props] (title)}
   <Section key="motion:{title}" {title}>
     {#each defs as def (def.label)}

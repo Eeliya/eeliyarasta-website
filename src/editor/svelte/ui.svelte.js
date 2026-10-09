@@ -30,7 +30,7 @@ export const ui = $state({
   selection: null,
   /**
    * The animated element picked in the Motion tab: { el, id, key, scope }, or null.
-   * scope: where its edits go: 'element' | 'target' | 'preset' (see motion.js).
+   * scope: where its edits go: 'element' | 'target' (see motion.js).
    */
   anim: null,
   /** Home sections (indexes) the preview can only show after Save (see sections.js). */

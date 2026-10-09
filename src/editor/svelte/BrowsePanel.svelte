@@ -71,7 +71,7 @@
     <ul class="help">
       <li><b>Content</b> — click any outlined text in the preview and type.</li>
       <li>
-        <b>Motion</b> — click an animated element to change its preset, timing, ease and scroll trigger.
+        <b>Motion</b> — click an animated element to change its animation, timing, ease and scroll trigger.
         Changes replay live.
       </li>
       <li>

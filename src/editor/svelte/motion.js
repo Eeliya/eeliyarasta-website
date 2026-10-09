@@ -1,13 +1,15 @@
 /**
- * The Motion tab's model: which fields each preset type has, and where a value comes from.
- * Every value can be written at one of three scopes, all inside content/settings/animations.json:
+ * The Motion tab's model: which fields each animation type has, and where a value comes from.
+ * In the editor an "animation" is what animations.json (and the code here) calls a preset.
+ * Every value lives at one of these layers of content/settings/animations.json:
  *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
- *   target  -> targets["<target>"]               (every element with that data-anim)
- *   preset  -> presets["<preset>"]               (every target using the preset)
+ *   target  -> targets["<target>"]               (every element with that data-anim, "All")
+ *   preset  -> presets["<animation>"]            (the animation's own values: the library)
+ *   defaults                                     (every animation)
  * A value is read from the first layer that has it: element, target, preset, defaults.
- * Shown by MotionPanel.svelte / AnimEditor.svelte / MotionField.svelte. No DOM here.
- */
-import { compile } from '../lib/pointer.js';
+ * The element view (AnimEditor.svelte) writes element / target, the Animations library
+ * (AnimationsModal.svelte) writes the preset. Shown with MotionField.svelte. No DOM here.
+ */import { compile } from '../lib/pointer.js';
 
 // Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
 export const GENERIC_TYPES = new Set(['reveal', 'split', 'scrub-words']);

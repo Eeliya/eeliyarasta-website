@@ -1,6 +1,9 @@
 <!--
   One field of the Motion tab's element view: the label, a badge with the layer the value
-  comes from (element / target / preset / default), a reset button, and the control:
+  comes from, a reset button, and the control. The badge names the layer for people:
+    element  this element only        all     every element with this data-anim name
+    default  the animation's value    global  animations.json defaults
+  Fields:
     number   range + number + unit
     pair     duration number + ease, one row (one badge and reset for both)
     text     text input with suggestions
@@ -10,7 +13,8 @@
   of two for a pair. onvalue(path, value) on an edit, onreset() on reset.
 -->
 <script module>
-  const SOURCE = { element: 'element', target: 'target', preset: 'preset', defaults: 'default' };
+  // layer (motion.js) -> badge text; data-src keeps the layer name (colors in editor.scss)
+  const SOURCE = { element: 'element', target: 'all', preset: 'default', defaults: 'global' };
   const name = (source) => (source ? SOURCE[source] : 'unset');
   let lists = 0;
 </script>
