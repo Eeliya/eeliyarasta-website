@@ -26,7 +26,7 @@ Requires Node 20.19+ (Vite 8).
 
 ```
 content/            ← all text, albums, projects, animation config (JSON)
-  pages/            ← one file per page; its folders mirror the URLs (see "Pages and URLs")
+  pages/            ← one folder per page (its URL) with index.json in it (see "Pages and URLs")
   sources/          ← lists that grids pull from (people, places, projects): top level is an array
   settings/         ← site-wide settings (site.json, animations.json)
 media/              ← source photos (jpg), committed
@@ -77,7 +77,7 @@ tags, and works with JavaScript disabled.
 
 `src/client/router.js` intercepts internal link clicks, fetches the target's prerendered HTML
 (prefetched on hover), runs the page-leave transition (a curtain showing the destination's
-name; its text and an optional per-page `transition` live in the page's file `pages/<page>.json`,
+name; its text and an optional per-page `transition` live in the page's file `pages/<page>/index.json`,
 or in the album's item in `sources/`), swaps `<main data-router-view>`, updates
 title/meta/history, scrolls to top and re-mounts animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
 in one `gsap.context` and are reverted on leave. If anything fails it falls back to a normal
@@ -92,8 +92,8 @@ site settings can live side by side):
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, nav labels, footer copy                                                                                |
 | `content/settings/animations.json` | **every animation** (see below)                                                                                                                                            |
-| `content/pages/home.json`          | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)               |
-| `content/pages/<page>.json`        | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text, `meta`: `title` / `description` for `<head>` |
+| `content/pages/index.json`         | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)               |
+| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text, `meta`: `title` / `description` for `<head>` |
 | `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                       |
 | `content/sources/places.json`      | places, same shape                                                                                                                                                         |
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                                       |
@@ -102,7 +102,7 @@ site settings can live side by side):
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
-**Home sections** are an ordered list in `pages/home.json → sections`; the page renders them in
+**Home sections** are an ordered list in `pages/index.json → sections`; the page renders them in
 that order and numbers the headed ones (01), (02), … automatically. Each item has a `type`, its
 text, and settings under `config`:
 
@@ -129,19 +129,21 @@ Routes, menu, dropdowns, grids and sitemap update automatically.
 
 ### Pages and URLs
 
-The files in `content/pages/` are the site's pages, and their folders are its URLs:
+Every page is a folder in `content/pages/`, and the folders are the URLs. A page's own file is
+`index.json` in its folder; home's folder is `content/pages/` itself:
 
-| file                              | URL                                                            |
-| --------------------------------- | -------------------------------------------------------------- |
-| `pages/home.json`                 | `/`                                                            |
-| `pages/404.json`                  | `404.html` (not in the sitemap)                                |
-| `pages/people.json`               | `/people/`: the index page of the `people/` folder next to it  |
-| `pages/people/whatever.json`      | `/people/whatever/`                                            |
-| `pages/people/whatever/deep.json` | `/people/whatever/deep/` (any depth)                           |
-| `pages/people/[slug].json`        | `/people/<slug>/` for **every item** of its source: a template |
+| file                                    | URL                                                            |
+| --------------------------------------- | -------------------------------------------------------------- |
+| `pages/index.json`                      | `/` (home)                                                     |
+| `pages/404/index.json`                  | `404.html` (not in the sitemap)                                |
+| `pages/people/index.json`               | `/people/`                                                     |
+| `pages/people/whatever/index.json`      | `/people/whatever/`                                            |
+| `pages/people/whatever/deep/index.json` | `/people/whatever/deep/` (any depth)                           |
+| `pages/people/[slug].json`              | `/people/<slug>/` for **every item** of its source: a template |
 
-- **Index file:** a folder's own page is the file with the folder's name next to it
-  (`people.json` + `people/`), not an `index.json` inside it.
+- **Ids:** code names a page by its folder path: `home`, `people`, `people/whatever`,
+  `people/[slug]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
+  page file: `pages/about.json` or `pages/people/x.json` are ignored.
 - **Templates:** `[slug].json` says which list it shows, `{ "config": { "source": "people" } }`,
   plus the labels its pages share (`"section": "People"`, the back link; `"next": "Next person"`).
   An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
@@ -149,7 +151,7 @@ The files in `content/pages/` are the site's pages, and their folders are its UR
   build warning (`[routes] ...`). A template page is an album (the person/place look):
   `route.album` is the item, like before. A folder can have one `[slug].json`; there is none at
   the root.
-- **Fixed beats template:** `pages/people/noor-vermeer.json` replaces the template's page for
+- **Fixed beats template:** `pages/people/noor-vermeer/index.json` replaces the template's page for
   that item (it is a normal page then).
 - **Views:** a page uses the view in its `view` field, else the built-in view with its name
   (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else the plain
@@ -297,17 +299,20 @@ Layout: the real site in a same-origin iframe, with a glass side panel. Pick a p
 dropdown (grouped by folder; a `[slug]` template is one entry, `/people/[slug]`, with an item
 picker next to it for which person to show), or click links in Browse mode.
 
-**Pages window** (the sitemap button next to the page dropdown): the folders of
-`content/pages/` like the Source Explorer. Add a page (title -> URL name), **Turn on children**
-(creates its folder), add a `[slug]` page with a source, rename (moves the page and its
-folder), delete (asks first, also deletes what's inside). Names are slugs (a-z, 0-9, dashes);
+**Pages window** (the sitemap button next to the page dropdown): the page folders, like the
+Source Explorer. A folder shows its own page first (the row `/` at the root, `/people/` in
+people), then a folder row per page in it (click to go in), then its `[slug]` page. Every
+folder has **Add page** (title -> URL name: a new folder with its `index.json`) and **Add
+[slug]** (a template with a source; one per folder, none at the root). Select a folder's own row
+to show it in the preview, rename it (the whole folder moves) or delete it (asks first, listing
+everything inside). Names are slugs (a-z, 0-9, dashes);
 home and 404 can't be renamed or deleted. These write to disk right away through the dev server
 (`POST /__editor/pages`), and the dropdown and preview follow without a reload. Renaming or
 deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
 files. `&pages=/people/` in the URL reopens it on that folder. There's also a mobile (390 px) preview toggle.
 
 On the home page, every section box in the Content panel has ↑ / ↓ buttons that reorder
-`pages/home.json → sections` (one undo step each) and an On/Off switch. Grid sections also show a
+`pages/index.json → sections` (one undo step each) and an On/Off switch. Grid sections also show a
 **Source** dropdown (the files in `content/sources/`) and a **Layout** dropdown (Staggered, Even).
 The preview follows reorders, on/off and layout right away; a grid switched to another source
 shows up in the preview after Save.
@@ -365,11 +370,11 @@ Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z*
 undo/redo, **Esc** deselects.
 
 **How text maps to JSON.** Templates mark text with the `ed()` helper, e.g.
-`<h2${ed('pages/home.json', ['hero', 'eyebrow'])}>`, which renders
-`data-edit="pages/home.json#/hero/eyebrow"` (a JSON Pointer). Use `ed(file, path, 'block')`
+`<h2${ed('pages/index.json', ['hero', 'eyebrow'])}>`, which renders
+`data-edit="pages/index.json#/hero/eyebrow"` (a JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
-in each page's `pages/<page>.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
+in each page's `pages/<page>/index.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/pages/`, `content/sources/` and `content/settings/` (see
 `src/editor/config.js`); only the Pages window creates or deletes files, and only page files.
 
