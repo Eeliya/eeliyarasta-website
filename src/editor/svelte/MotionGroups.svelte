@@ -16,6 +16,7 @@
 <script>
   import MotionField from './MotionField.svelte';
   import Section from './Section.svelte';
+  import Select from './Select.svelte';
   import {
     GROUPS,
     PROPS,
@@ -161,20 +162,13 @@
       {/if}
     {/each}
     {#if props && library}
-      <select
-        class="f__add"
+      <Select
         aria-label="Add a property"
-        onchange={(e) => {
-          const prop = e.currentTarget.value;
-          e.currentTarget.value = '';
-          if (prop) addProp(props, prop);
-        }}
-      >
-        <option value="">+ add property</option>
-        {#each missingProps(m.spec[props]) as k (k)}
-          <option value={k}>{PROPS[k].label}</option>
-        {/each}
-      </select>
+        value=""
+        placeholder="+ add property"
+        options={missingProps(m.spec[props]).map((k) => ({ value: k, label: PROPS[k].label }))}
+        onchange={(k) => addProp(props, k)}
+      />
     {/if}
   </Section>
 {/each}

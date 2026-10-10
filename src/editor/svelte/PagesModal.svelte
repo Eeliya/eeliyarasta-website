@@ -12,6 +12,7 @@
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
+  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { TEMPLATE, isSlug, pageFile, pageIdOf, sourceIdOf } from '../../site/files.js';
   import { pathOfId } from '../../site/routes.js';
@@ -29,6 +30,7 @@
   let newTitle = $state('');
   let newName = $state('');
   let newSource = $state('');
+  const uid = $props.id();
   let renameTo = $state('');
 
   // the folder shown: a page id, '' = the root (home's folder)
@@ -150,7 +152,7 @@
   async function startAdd(kind) {
     select(kind);
     await tick();
-    dialog.querySelector('.pg-detail input, .pg-detail select')?.focus();
+    dialog.querySelector('.pg-detail input, .pg-detail [role="combobox"]')?.focus();
   }
 
   async function askDelete() {
@@ -293,12 +295,14 @@
         One page per item of a source, at /{folder}/&lt;slug&gt;/, with the album look. A page with
         the same name in this folder wins over it.
       </p>
-      <label class="tf">
-        <span class="tf__label">Source</span>
-        <select class="tf__input f__select" bind:value={newSource}>
-          {#each sources as s (s)}<option value={s}>sources/{s}.json</option>{/each}
-        </select>
-      </label>
+      <div class="tf">
+        <label class="tf__label" for="{uid}-source">Source</label>
+        <Select
+          id="{uid}-source"
+          bind:value={newSource}
+          options={sources.map((s) => ({ value: s, label: `sources/${s}.json` }))}
+        />
+      </div>
       <div class="row">
         <button type="button" class="btn-sm" onclick={() => select('')}>Cancel</button>
         <button type="button" class="btn-sm" disabled={!newSource || busy} onclick={addTemplate}>

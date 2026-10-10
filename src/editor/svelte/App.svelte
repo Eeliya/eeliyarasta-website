@@ -6,6 +6,7 @@
 -->
 <script>
   import PageMenu from './PageMenu.svelte';
+  import Select from './Select.svelte';
   import BrowsePanel from './BrowsePanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
@@ -148,16 +149,12 @@
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
         {#if ui.target?.items}
           <!-- a [slug] page: which item's page the preview shows -->
-          <select
-            class="ed-items"
+          <Select
             aria-label="Item"
             value={ui.path}
-            onchange={(e) => actions.pickTarget(ui.target, e.currentTarget.value)}
-          >
-            {#each ui.target.items as item (item.path)}
-              <option value={item.path}>{item.title}</option>
-            {/each}
-          </select>
+            options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
+            onchange={(path) => actions.pickTarget(ui.target, path)}
+          />
         {/if}
         <button
           type="button"
@@ -335,12 +332,6 @@
     gap: 8px;
     align-items: center;
     justify-content: flex-end;
-  }
-
-  // a [slug] page's item, next to the Pages button
-  .ed-items {
-    flex: 1;
-    min-width: 0;
   }
 
   // pending line and status on their own rows, then [ source | Save | Publish ]

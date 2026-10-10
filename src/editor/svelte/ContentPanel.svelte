@@ -22,6 +22,7 @@
   import { tick } from 'svelte';
   import Field from './Field.svelte';
   import Section from './Section.svelte';
+  import Select from './Select.svelte';
   import SourcesModal from './SourcesModal.svelte';
   import {
     contentGroups,
@@ -32,6 +33,8 @@
   } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
   import { HOME, baseName } from '../../site/files.js';
+
+  const uid = $props.id();
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
@@ -139,14 +142,15 @@
       edit && 'has-extra',
     ]}
   >
-    <label class="sec__opt-field">
-      <span class="tf__label">{title}<i class="dot" title="Changed"></i></span>
-      <select class="f__select" {value} onchange={(e) => setConfig(g, key, e.currentTarget.value)}>
-        {#each options as [v, text] (v)}
-          <option value={v}>{text}</option>
-        {/each}
-      </select>
+    <label class="tf__label" for="{uid}-{g.index}-{key}">
+      {title}<i class="dot" title="Changed"></i>
     </label>
+    <Select
+      id="{uid}-{g.index}-{key}"
+      {value}
+      options={options.map(([v, label]) => ({ value: v, label }))}
+      onchange={(v) => setConfig(g, key, v)}
+    />
     {#if edit}{@render editButton(`sources/${value}.json`)}{/if}
   </div>
 {/snippet}
@@ -342,10 +346,6 @@
   .sec__note {
     grid-column: 1 / -1;
     margin: 0;
-  }
-
-  .sec__opt-field {
-    display: block;
   }
 
   .sec__opt .tf__label {

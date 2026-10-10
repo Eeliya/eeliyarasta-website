@@ -10,6 +10,7 @@
 -->
 <script>
   import MotionGroups from './MotionGroups.svelte';
+  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { GENERIC_TYPES, animModel, keepFor, layerPtr, legacyOverrides } from './motion.js';
   import { compile } from '../lib/pointer.js';
@@ -146,16 +147,12 @@
       <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
     </button>
   </div>
-  <select
-    class="f__select"
+  <Select
     aria-label="Animation"
     value={m.presetName}
-    onchange={(e) => setPreset(e.currentTarget.value)}
-  >
-    {#each presets as [name, p] (name)}
-      <option value={name}>{name} ({p.type})</option>
-    {/each}
-  </select>
+    options={presets.map(([name, p]) => ({ value: name, label: name, hint: p.type }))}
+    onchange={setPreset}
+  />
 </div>
 {#if legacy.length}
   <div class="legacy">
