@@ -12,7 +12,7 @@
  *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
  *                                                         slug, this one wins over the template
  *
- * Folders nest to any depth. Every page is its list of sections (src/site/sections/). Its
+ * Folders nest to any depth. Every page is its list of sections of blocks (src/site/layout/). Its
  * "view" (the class of <main> and <html data-page>, for the styles) is its "view" field,
  * else the built-in name of the same page (home, photography, people, places, projects,
  * about, 404), else "page"; templates default to "album" (no footer).
@@ -30,6 +30,7 @@ import { coverOf, itemSlug } from './helpers.js';
 import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
+import { blocksOf } from './layout/ids.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -60,9 +61,9 @@ export const NAMED_VIEWS = {
 export const pathOfId = (id) =>
   id === 'home' ? '/' : `/${id.replace(/(^|\/)\[slug\]$/, '')}/`.replace(/\/+$/, '/');
 
-/** A page's title: its first heading section's title (sections/pages.js), else undefined. */
+/** A page's title: its first heading block's title (blocks/pages.js), else undefined. */
 export const pageTitle = (page) =>
-  (Array.isArray(page?.sections) ? page.sections : []).find((s) => s?.type === 'heading')?.title;
+  blocksOf(page).find((b) => b?.type === 'heading')?.title;
 
 const titleCase = (s) =>
   String(s)

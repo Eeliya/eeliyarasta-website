@@ -21,7 +21,9 @@ import {
   sourceIdOf,
 } from './files.js';
 import { checkSchema } from './schemas.js';
-import { SECTION_TYPES } from './sections/index.js';
+import { BLOCK_TYPES } from './blocks/index.js';
+import { COLS, HEIGHTS, WIDTHS, ALIGNS } from './layout/index.js';
+import { isId } from './layout/ids.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const typeOf = (v) =>
@@ -181,7 +183,7 @@ function checkMeta(meta) {
 function checkAnimations(d) {
   const out = [
     ...required(d, ['presets', 'targets', 'transitions'], 'object'),
-    ...optional(d, { elements: 'object', interactions: 'object', smoothScroll: 'boolean' }),
+    ...optional(d, { elements: 'object', interactions: 'object' }),
   ];
   for (const group of ['presets', 'targets', 'elements'])
     for (const [k, v] of Object.entries(isObject(d[group]) ? d[group] : {}))
@@ -193,24 +195,70 @@ function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.config?.source !== 'string')
     out.push('"config.source" must name a source (a [slug] page makes a page per item)');
-  if (Array.isArray(d.sections)) out.push(...d.sections.flatMap(checkSection));
+  if (!Array.isArray(d.sections)) return out;
+  out.push(...d.sections.flatMap(checkSection));
+  const seen = new Set();
+  for (const id of d.sections.flatMap((s) => [s?.id, ...(s?.blocks || []).map((b) => b?.id)]))
+    if (typeof id === 'string' && seen.has(id)) out.push(`the id "${id}" is used twice`);
+    else seen.add(id);
   return out;
 }
 
 const FIELD_TYPES = { number: 'number' }; // the other field types are strings
 const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strings
+const whole = (v, min) => Number.isInteger(v) && v >= min;
 
-/** One page section against its type in the registry; an unknown type only warns (render). */
+/** A grid area { col, span, row, rows } of a block (pos, or its mobile area). */
+function checkArea(p, key) {
+  if (!isObject(p)) return [`"${key}" must be an object { col, span, row, rows }`];
+  const out = [];
+  for (const k of ['col', 'span', 'row', 'rows'])
+    if (!whole(p[k], 1)) out.push(`"${key}.${k}" must be a whole number from 1`);
+  if (!out.length && p.col + p.span - 1 > COLS)
+    out.push(`"${key}" must end by column ${COLS} (col ${p.col} + span ${p.span})`);
+  return out;
+}
+
+/** One page section: its layout, then each block. */
 function checkSection(s, at) {
   const where = `section ${at + 1}`;
   if (!isObject(s)) return [`${where} must be an object`];
-  if (typeof s.type !== 'string') return [`${where} needs a "type"`];
-  const t = SECTION_TYPES[s.type];
-  if (!t) return [];
   const out = [];
-  const bad = (key, want) => out.push(`${where} (${t.label}): "${key}" must be ${want}`);
+  const bad = (key, want) => out.push(`${where}: "${key}" must be ${want}`);
+  if (!isId(s.id, 's')) bad('id', 'a section id like "s-k3x9"');
+  if (s.height !== undefined && !HEIGHTS.includes(s.height)) bad('height', HEIGHTS.join(' or '));
+  if (s.align !== undefined && !ALIGNS.includes(s.align))
+    bad('align', `one of ${ALIGNS.join(', ')}`);
+  if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
+  if (s.rows !== undefined && !whole(s.rows, 1)) bad('rows', 'a whole number from 1');
+  if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
+  if (s.spacing !== undefined) {
+    if (!isObject(s.spacing)) bad('spacing', 'an object { top, bottom }');
+    else
+      for (const k of ['top', 'bottom'])
+        if (s.spacing[k] !== undefined && !whole(s.spacing[k], 0))
+          bad(`spacing.${k}`, 'a whole number of rows (0 or more)');
+  }
+  if (!Array.isArray(s.blocks)) return [...out, `${where}: "blocks" must be a list`];
+  return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
+}
+
+/** One block: its place, then its content against its type in the registry. */
+function checkBlock(b, where) {
+  if (!isObject(b)) return [`${where} must be an object`];
+  if (typeof b.type !== 'string') return [`${where} needs a "type"`];
+  const t = BLOCK_TYPES[b.type];
+  const name = t ? `${where} (${t.label})` : where;
+  const out = [];
+  const bad = (key, want) => out.push(`${name}: "${key}" must be ${want}`);
+  if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
+  out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
+  if (b.mobile !== undefined)
+    out.push(...checkArea(b.mobile, 'mobile').map((p) => `${name}: ${p}`));
+  if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
+  if (!t) return out; // an unknown type only warns (render)
   for (const f of t.fields || []) {
-    const v = s[f.key];
+    const v = b[f.key];
     if (v === undefined) continue;
     if (!f.list) {
       if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
@@ -221,13 +269,13 @@ function checkSection(s, at) {
     )
       bad(f.key, typeof f.list === 'string' ? 'a list of strings' : 'a list of objects');
   }
-  if (t.check) out.push(...t.check(s).map((p) => `${where} (${t.label}): ${p}`));
-  if (s.config === undefined) return out;
-  if (!isObject(s.config)) return [...out, `${where} (${t.label}): "config" must be an object`];
-  const { enabled } = s.config;
+  if (t.check) out.push(...t.check(b).map((p) => `${name}: ${p}`));
+  if (b.config === undefined) return out;
+  if (!isObject(b.config)) return [...out, `${name}: "config" must be an object`];
+  const { enabled } = b.config;
   if (enabled !== undefined && typeof enabled !== 'boolean') bad('config.enabled', 'true or false');
   for (const c of t.config || []) {
-    const v = s.config[c.key];
+    const v = b.config[c.key];
     if (v === undefined || (c.empty && v === '')) continue;
     if (typeof v !== (CONFIG_TYPES[c.type] || 'string'))
       bad(`config.${c.key}`, `a ${CONFIG_TYPES[c.type] || 'string'}`);

@@ -1,17 +1,66 @@
 {
   "curtain": "People",
-  "meta": { "description": "Models photographed by Eeliya Rasta." },
+  "meta": {
+    "description": "Models photographed by Eeliya Rasta."
+  },
   "sections": [
     {
-      "type": "heading",
-      "crumb": "Photography / People",
-      "title": "People",
-      "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
-      "config": { "enabled": true, "count": "people" }
+      "id": "s-8gt2",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 23,
+        "bottom": 9
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-j6je",
+          "type": "heading",
+          "crumb": "Photography / People",
+          "title": "People",
+          "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
+          "config": {
+            "count": "people"
+          },
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     },
     {
-      "type": "albums",
-      "config": { "enabled": true, "source": "people", "layout": "portrait" }
+      "id": "s-m9y2",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 0,
+        "bottom": 18
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-grz4",
+          "type": "albums",
+          "config": {
+            "source": "people",
+            "layout": "portrait"
+          },
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     }
   ]
 }

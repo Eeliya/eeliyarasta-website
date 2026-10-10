@@ -1,7 +1,7 @@
 /**
  * Source schemas: content/sources/<id>.schema.json, next to the list it describes
- * (sources/people.json). A small format of its own, shaped like the section registry's
- * field definitions (./sections/index.js):
+ * (sources/people.json). A small format of its own, shaped like the block registry's
+ * field definitions (./blocks/index.js):
  *
  *   {
  *     "label": "People",           the source's name in the editor

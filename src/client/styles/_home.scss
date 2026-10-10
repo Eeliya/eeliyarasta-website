@@ -156,7 +156,6 @@
 
 /* ---------------- Intro statement ---------------- */
 .intro {
-  padding: 22vh var(--pad) 20vh;
   &__text {
     max-width: 1280px;
     font-family: var(--f-display);
@@ -169,16 +168,14 @@
     } // SplitText word wrappers must not inherit the indent
   }
   @media (max-width: $bp-sm) {
-    padding: 14vh var(--pad);
     &__text {
       text-indent: 0;
     }
   }
 }
 
-/* ---------------- Home sections ---------------- */
+/* ---------------- Block heads (photo grid, project list) ---------------- */
 .section {
-  padding: 10vh var(--pad) 12vh;
   &__head {
     display: grid;
     grid-template-columns: 1fr auto;

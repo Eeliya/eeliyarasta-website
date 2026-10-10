@@ -5,7 +5,7 @@
  */
 import { gsap, reducedMotion, $ } from '../lib/env.js';
 import { transitions, interactions } from '../anim/engine.js';
-import { scrollToTop, refresh } from '../smooth.js';
+import { scrollToTop, refresh } from '../scroll.js';
 
 const pad = (n) => String(n).padStart(2, '0');
 

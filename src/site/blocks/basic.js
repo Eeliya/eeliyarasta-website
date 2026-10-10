@@ -1,5 +1,5 @@
 /**
- * Plain section types for any page: text, one photo, a button. See ./index.js for the shape.
+ * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
  */
 import { html, esc, img, extAttrs } from '../helpers.js';
 
@@ -13,16 +13,16 @@ export const text = {
     { key: 'text', label: 'Text (a blank line starts a paragraph)', type: 'block' },
   ],
   defaults: { title: '', text: 'Some text.' },
-  render: (s, ctx, sec) => {
+  render: (s, ctx, b) => {
     const paragraphs = String(s.text ?? '')
       .split(/\n\s*\n/)
       .filter((p) => p.trim());
-    return html` <section class="section textblock" ${sec.attrs}>
-      ${s.title ? html`<h2 class="section__title" data-anim="section.title" ${sec.ed('title')}>${esc(s.title)}</h2>` : ''}
-      <div class="textblock__body" data-anim="about.body" ${sec.ed('text', 'block')}>
+    return html` <div class="textblock">
+      ${s.title ? html`<h2 class="section__title" data-anim="section.title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
+      <div class="textblock__body" data-anim="about.body" ${b.ed('text', 'block')}>
         ${paragraphs.map((p) => html`<p>${esc(p.trim()).replace(/\r?\n/g, '<br>')}</p>`)}
       </div>
-    </section>`;
+    </div>`;
   },
 };
 
@@ -36,13 +36,13 @@ export const photo = {
     { key: 'caption', label: 'Caption (empty: none)' },
   ],
   defaults: { src: '', caption: '' },
-  render: (s, ctx, sec) =>
-    html` <section class="section photoblock" ${sec.attrs}>
+  render: (s, ctx, b) =>
+    html` <div class="photoblock">
       <figure class="photoblock__figure" data-anim="about.image">
-        ${s.src ? img(ctx, s.src, { sizes: '(max-width: 760px) 100vw, 60vw', attrs: sec.ed('src', 'image') }) : ''}
-        ${s.caption ? html`<figcaption class="label muted" ${sec.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
+        ${s.src ? img(ctx, s.src, { sizes: '(max-width: 760px) 100vw, 60vw', attrs: b.ed('src', 'image') }) : ''}
+        ${s.caption ? html`<figcaption class="label muted" ${b.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
       </figure>
-    </section>`,
+    </div>`,
 };
 
 /** A button linking somewhere (config.href: a path on the site or a full URL). */
@@ -53,10 +53,10 @@ export const button = {
   fields: [{ key: 'label', label: 'Label' }],
   config: [{ key: 'href', label: 'Link (/path/ or https://…)', type: 'text' }],
   defaults: { label: 'Get in touch', config: { href: '/about/' } },
-  render: (s, ctx, sec) => {
+  render: (s, ctx, b) => {
     const href = s.config?.href || '/';
-    return html` <section class="section buttonblock"${sec.attrs}>
-      <a class="btn glass" href="${esc(href)}"${extAttrs(href)}><span${sec.ed('label')}>${esc(s.label)}</span> <span aria-hidden="true">→</span></a>
-    </section>`;
+    return html` <div class="buttonblock">
+      <a class="btn glass" href="${esc(href)}"${extAttrs(href)}><span${b.ed('label')}>${esc(s.label)}</span> <span aria-hidden="true">→</span></a>
+    </div>`;
   },
 };

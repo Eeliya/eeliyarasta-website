@@ -16,6 +16,8 @@
   --pad: clamp(16px, 2.6vw, 40px);
   --gap: clamp(12px, 1.4vw, 22px);
   --header-h: 76px;
+  // the site grid's row (src/site/layout): sections and blocks are counted in these
+  --grid-row: 8px;
   --radius: 6px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 

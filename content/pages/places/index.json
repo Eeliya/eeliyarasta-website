@@ -1,17 +1,66 @@
 {
   "curtain": "Places",
-  "meta": { "description": "Places and architecture photographed by Eeliya Rasta." },
+  "meta": {
+    "description": "Places and architecture photographed by Eeliya Rasta."
+  },
   "sections": [
     {
-      "type": "heading",
-      "crumb": "Photography / Places",
-      "title": "Places",
-      "intro": "Buildings, streets and castles. What is left when the people walk out of frame.",
-      "config": { "enabled": true, "count": "places" }
+      "id": "s-jrwb",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 23,
+        "bottom": 9
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-erex",
+          "type": "heading",
+          "crumb": "Photography / Places",
+          "title": "Places",
+          "intro": "Buildings, streets and castles. What is left when the people walk out of frame.",
+          "config": {
+            "count": "places"
+          },
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     },
     {
-      "type": "albums",
-      "config": { "enabled": true, "source": "places", "layout": "landscape" }
+      "id": "s-v6rg",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 0,
+        "bottom": 18
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-syyw",
+          "type": "albums",
+          "config": {
+            "source": "places",
+            "layout": "landscape"
+          },
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     }
   ]
 }

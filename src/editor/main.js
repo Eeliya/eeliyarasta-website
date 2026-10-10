@@ -51,7 +51,7 @@ import {
   sitePaths,
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
-import { previewFile, syncSections as syncPreviewSections } from './sections.js';
+import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
 const store = createStore();
@@ -259,19 +259,33 @@ bridge.on('connect', () => {
 });
 
 /**
- * Keep the preview's sections in list order (reorder, on/off, layout) after edits.
- * Returns true when data-edit pointers moved, so texts must be re-applied.
+ * Keep the preview's sections in step with the page file after an edit: their order and
+ * layout at once, and the sections a structure edit changed rendered again by the dev server
+ * and swapped in (src/editor/layout-sync.js). One render at a time, in order.
  */
-function syncSections() {
-  const r = syncPreviewSections(bridge.doc, store);
-  ui.staleSections = [...r.stale];
-  if (r.moved) bridge.api?.ScrollTrigger?.refresh();
-  return r.rewired;
+let rendering = Promise.resolve();
+function syncSections({ structure = false } = {}) {
+  const stale = syncLayout(bridge.doc, store, { structure });
+  bridge.api?.ScrollTrigger?.refresh();
+  if (!stale.length) return;
+  rendering = rendering.then(async () => {
+    const file = previewFile(bridge.doc);
+    const path = bridge.path();
+    try {
+      const { html } = await source.render({ path, file, data: store.current[file], ids: stale });
+      if (previewFile(bridge.doc) !== file || bridge.path() !== path) return;
+      swapSections(bridge.doc, store, html);
+      bridge.api?.remountView();
+    } catch (err) {
+      toast(`Preview: ${err.message}`, { kind: 'error' });
+    }
+  });
 }
 
 bridge.on('navigate', (path) => {
   ui.path = path;
-  if (syncSections()) bridge.applyTexts({ force: true });
+  markRendered(bridge.doc, store);
+  syncSections();
   const url = new URL(location.href);
   url.searchParams.set('path', path);
   history.replaceState(null, '', url);
@@ -294,8 +308,9 @@ bridge.on('navigate', restorePlace);
 // ---------------------------------------------------------------- store events
 // The preview renders the unsaved edits: the dev server gets them after every change
 // (POST /__editor/draft; {} once saved), so pages the preview loads show them. A structure
-// change (a section or list item added or removed, a menu item moved) renders the preview
-// again right away, at the same scroll and selection.
+// change (a list item added or removed, a menu item moved) renders the preview again right
+// away, at the same scroll and selection; one of the page's own sections only swaps the
+// sections it touched (syncSections).
 let draftTimer = 0;
 let refreshPending = false;
 function pushDraft({ refresh = false } = {}) {
@@ -315,17 +330,19 @@ function pushDraft({ refresh = false } = {}) {
 
 let animTimer = 0;
 store.on(({ files, source: src, structure }) => {
-  if (files.some((f) => f !== ANIMATIONS)) pushDraft({ refresh: structure });
+  const page = previewFile(bridge.doc);
+  if (files.some((f) => f !== ANIMATIONS))
+    pushDraft({ refresh: structure && files.some((f) => f !== page) });
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
-  const rewired = files.includes(previewFile(bridge.doc)) && syncSections();
+  if (files.includes(page)) syncSections({ structure });
   if (textChanged) {
     pushCurtains();
     const fromPreview = src && src.nodeType === 1;
     bridge.applyTexts({
       skip: fromPreview ? src : null,
-      force: rewired || ['undo', 'redo', 'rebase', 'discard'].includes(src),
+      force: ['undo', 'redo', 'rebase', 'discard'].includes(src),
     });
   }
   if (files.includes(ANIMATIONS)) {

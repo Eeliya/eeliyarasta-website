@@ -1,6 +1,5 @@
 {
   "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". spec = presets[preset] <- targets[id] <- elements[key]. Edit by hand or with the visual editor at /edit/.",
-  "smoothScroll": false,
   "presets": {
     "fade-up": {
       "type": "reveal",

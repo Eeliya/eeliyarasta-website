@@ -14,13 +14,13 @@ import {
 import { sourceFile } from '../files.js';
 
 /**
- * A section's numbered head: (01) Label / Title / glass CTA. at(field): the section's
- * editor marker for one of its fields (see sections/index.js).
+ * A block's head: Label / Title / glass CTA. at(field): the block's editor marker for one
+ * of its fields (see blocks/index.js).
  */
-export const sectionHead = ({ at, index, label, title, href, cta }) => {
+export const sectionHead = ({ at, label, title, href, cta }) => {
   return html`
   <header class="section__head">
-    <span class="section__label label" data-anim="section.label">(${pad(index)}) <span${at('label')}>${esc(label)}</span></span>
+    <span class="section__label label" data-anim="section.label"${at('label')}>${esc(label)}</span>
     <h2 class="section__title" data-anim="section.title"${at('title')}>${esc(title)}</h2>
     ${href ? html`<a class="btn glass section__cta" href="${esc(href)}"><span${at('cta')}>${esc(cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
   </header>`;

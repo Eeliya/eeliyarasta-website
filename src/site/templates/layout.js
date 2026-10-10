@@ -81,22 +81,18 @@ export function body(ctx, route, accent, view, file) {
       <div class="backdrop__grain"></div>
     </div>
     ${header(ctx)} ${mobileMenu(ctx)}
-    <div id="smooth-wrapper">
-      <div id="smooth-content">
-        <main
-          id="main"
-          tabindex="-1"
-          class="view view--${esc(route.page)}"
-          data-router-view
-          data-page="${esc(route.page)}"
-          data-accent="${esc(accent)}"
-          data-curtain="${esc(curtain)}"
-          ${curtainEdit}
-        >
-          ${view} ${route.page === 'album' ? '' : footer(ctx, route)}
-        </main>
-      </div>
-    </div>
+    <main
+      id="main"
+      tabindex="-1"
+      class="view view--${esc(route.page)}"
+      data-router-view
+      data-page="${esc(route.page)}"
+      data-accent="${esc(accent)}"
+      data-curtain="${esc(curtain)}"
+      ${curtainEdit}
+    >
+      ${view} ${route.page === 'album' ? '' : footer(ctx, route)}
+    </main>
     <div id="portal"></div>
     <div class="curtain" aria-hidden="true">
       <div class="curtain__panel"></div>

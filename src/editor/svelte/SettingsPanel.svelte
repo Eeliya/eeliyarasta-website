@@ -2,7 +2,7 @@
   Settings tab: what is the same on every page. Where contact forms send (Forms), the site's
   name and details
   (settings/site.json), its search and share defaults (SEO: titles, description, share image,
-  address, robots, language; a page's own are in Content > SEO), smooth scrolling, the global page-transition curtain and the page
+  address, robots, language; a page's own are in Content > SEO), the global page-transition curtain and the page
   fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
@@ -33,11 +33,6 @@
     ui.previewVersion;
     return bridge.api?.gsap;
   });
-
-  // animations.json "smoothScroll": missing means on. The preview switches at once.
-  const smooth = $derived(live.get(ANIMATIONS, '/smoothScroll') !== false);
-  const smoothChanged = $derived(live.changed(ANIMATIONS, '/smoothScroll'));
-  const setSmooth = (on) => live.store.set(ANIMATIONS, '/smoothScroll', on, { source: 'panel' });
 
   function set(key, value) {
     live.store.set(SITE, `/${key}`, value, { key: `text:${SITE}#/${key}`, source: 'panel' });
@@ -149,22 +144,6 @@
       changed={live.changed(SITE, '/mediaUrl')}
       onvalue={(value) => set('mediaUrl', value.trim())}
     />
-  </Section>
-
-  <Section key="settings:scroll" title="Site" name="Scrolling">
-    <label class={['tf', smoothChanged && 'is-changed']}>
-      <span class="tf__label"
-        >Smooth scroll<i class="dot" title="Changed"></i>
-        <input
-          type="checkbox"
-          class="switch"
-          aria-label="Smooth scroll"
-          checked={smooth}
-          onchange={(e) => setSmooth(e.currentTarget.checked)}
-        />
-      </span>
-    </label>
-    <p class="hint small">Eased scrolling with mouse and trackpad. Off: the browser's own.</p>
   </Section>
 
   {#if gsap}

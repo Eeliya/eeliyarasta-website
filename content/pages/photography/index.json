@@ -1,21 +1,73 @@
 {
   "curtain": "Photography",
-  "meta": { "description": "People and places photographed by Eeliya Rasta." },
+  "meta": {
+    "description": "People and places photographed by Eeliya Rasta."
+  },
   "sections": [
     {
-      "type": "heading",
-      "crumb": "Photography",
-      "title": "Photography",
-      "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
-      "config": { "enabled": true }
+      "id": "s-a58t",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 23,
+        "bottom": 9
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-9m0e",
+          "type": "heading",
+          "crumb": "Photography",
+          "title": "Photography",
+          "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
+          "config": {},
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     },
     {
-      "type": "panels",
-      "panels": [
-        { "source": "people", "title": "People", "unit": "models" },
-        { "source": "places", "title": "Places", "unit": "places" }
-      ],
-      "config": { "enabled": true }
+      "id": "s-oq6n",
+      "height": "auto",
+      "align": "center",
+      "rows": 1,
+      "width": "contained",
+      "spacing": {
+        "top": 0,
+        "bottom": 18
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-2wrz",
+          "type": "panels",
+          "panels": [
+            {
+              "source": "people",
+              "title": "People",
+              "unit": "models"
+            },
+            {
+              "source": "places",
+              "title": "Places",
+              "unit": "places"
+            }
+          ],
+          "config": {},
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     }
   ]
 }

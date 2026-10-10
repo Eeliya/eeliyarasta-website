@@ -70,6 +70,7 @@ export default function staticSite() {
           env: loadEnv(config.mode, config.envDir || root, 'R2_'),
           drafts,
           onWrite: () => (editorWriteUntil = Date.now() + 2000),
+          render: () => server.ssrLoadModule(RENDER_MODULE),
         }),
       );
 

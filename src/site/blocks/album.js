@@ -1,5 +1,5 @@
 /**
- * The album section of a [slug] page: the page's item (one person or place), Faint Film
+ * The album block of a [slug] page: the page's item (one person or place), Faint Film
  * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
  * drag / wheel navigation and a Slider ⇄ Grid toggle. It shows the item of the page it is on
  * (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
@@ -12,10 +12,10 @@ export const album = {
   icon: 'film',
   item: true,
   defaults: {},
-  render: (s, ctx, sec) => albumOf(ctx, ctx.route, sec),
+  render: (s, ctx, b) => albumOf(ctx, ctx.route, b),
 };
 
-function albumOf(ctx, route, sec) {
+function albumOf(ctx, route, b) {
   const a = route.album;
   const images = imagesOf(a);
   const n = images.length;
@@ -31,7 +31,7 @@ function albumOf(ctx, route, sec) {
     ['Photos', pad(n), ''],
   ].filter((m) => m && m[1]);
 
-  return html` <section class="album" data-album data-view="slider" data-count="${n}"${sec.attrs}>
+  return html` <div class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
       <a class="album__back label" href="${esc(route.parent)}"
         ><span aria-hidden="true">←</span> <span${ed(route.template, ['section'])}>${esc(route.section)}</span></a
@@ -146,5 +146,5 @@ function albumOf(ctx, route, sec) {
       </button>
       <button type="button" aria-pressed="false" data-view-btn="grid">Grid</button>
     </div>
-  </section>`;
+  </div>`;
 }

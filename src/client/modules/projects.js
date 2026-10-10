@@ -1,6 +1,6 @@
 /** Project index rows: click to expand (GSAP height), deep-link via #slug. */
 import { gsap, reducedMotion } from '../lib/env.js';
-import { refresh, scrollToEl } from '../smooth.js';
+import { refresh, scrollToEl } from '../scroll.js';
 
 export function projects(view) {
   const rows = [...view.querySelectorAll('[data-prow]')];

@@ -1,7 +1,7 @@
 /** Small page behaviours: album-card hover cycling, back-to-top, image fade-in. */
 import { finePointer } from '../lib/env.js';
 import { interactions } from '../anim/engine.js';
-import { scrollToTop } from '../smooth.js';
+import { scrollToTop } from '../scroll.js';
 
 export function cards(view) {
   if (!finePointer()) return null;

@@ -1,0 +1,56 @@
+@use 'tokens' as *;
+
+/*
+ * The layout engine (src/site/layout/index.js): a section is a grid of 24 columns and
+ * --rows rows of --grid-row; a row grows when its content needs more. Blocks sit in it by
+ * their CSS variables: --c / --s (first column / columns), --r / --rs (first row / rows),
+ * --z (layer). Below 760px a section's blocks stack full width in their order, unless one
+ * of them has a mobile area (--mc --ms --mr --mrs, the section is then .sec--mgrid).
+ */
+.sec {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(var(--grid-row), auto));
+  column-gap: var(--gap);
+  padding: calc(var(--pt) * var(--grid-row)) var(--pad) calc(var(--pb) * var(--grid-row));
+  &--full {
+    padding-inline: 0;
+  }
+  &--screen {
+    min-height: 100svh;
+  }
+  &--top {
+    align-content: start;
+  }
+  &--center {
+    align-content: center;
+  }
+  &--bottom {
+    align-content: end;
+  }
+  &--stretch {
+    align-content: stretch;
+  }
+}
+
+.blk {
+  grid-column: var(--c) / span var(--s);
+  grid-row: var(--r) / span var(--rs);
+  z-index: var(--z, auto);
+  min-width: 0;
+}
+
+@media (width <= $bp-sm) {
+  .sec:not(.sec--mgrid) {
+    grid-template-rows: none;
+    row-gap: var(--gap);
+    > .blk {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+  }
+  .sec--mgrid > .blk {
+    grid-column: var(--mc, 1) / span var(--ms, 24);
+    grid-row: var(--mr, auto) / span var(--mrs, 1);
+  }
+}

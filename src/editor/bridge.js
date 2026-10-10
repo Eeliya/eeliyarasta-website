@@ -242,7 +242,7 @@ export function createBridge({ store, labelFor }) {
         const r = el.getBoundingClientRect();
         const vh = win.innerHeight;
         if (r.bottom < 0 || r.top > vh * 0.8)
-          api.scrollTo(el, { smooth: false, position: 'center center' });
+          api.scrollTo(el, { smooth: false });
       }
       // (api is null again if a save reloads the preview in between)
       requestAnimationFrame(() => requestAnimationFrame(() => api?.remount()));
@@ -273,7 +273,7 @@ export function createBridge({ store, labelFor }) {
       if (!el || !api) return;
       const r = el.getBoundingClientRect();
       if (r.bottom < 60 || r.top > win.innerHeight - 60)
-        api.scrollTo(el, { smooth: true, position: 'center center' });
+        api.scrollTo(el, { smooth: true });
     },
     focusEdit(edit) {
       const el = doc?.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
@@ -414,8 +414,8 @@ export function createBridge({ store, labelFor }) {
       }
       bridge.select(el, 'text');
       emit('textFocus', el.dataset.edit);
-      // Focus can scroll the smooth-scroll wrapper behind ScrollSmoother's back (e.g. Tab
-      // to an off-screen field): make sure the field ends up visible.
+      // Focus (e.g. Tab to an off-screen field) may leave the field under the header or at
+      // an edge: center it.
       setTimeout(() => bridge.reveal(el), 50);
     });
 

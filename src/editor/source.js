@@ -51,6 +51,17 @@ export const draft = (files) =>
   });
 
 /**
+ * The HTML of sections `ids` of the preview's page, rendered from `data`, its file's edited
+ * copy (POST /__editor/render, renderOp in scripts/editor-server.mjs): { html: { id: html } }.
+ */
+export const render = ({ path, file, data, ids }) =>
+  json('/__editor/render', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, file, data, ids }),
+  });
+
+/**
  * Add, rename or delete pages and folders in content/pages/ (POST /__editor/pages, see
  * pagesOp in scripts/editor-server.mjs): { op: 'add', parent, name, title }, ...
  * Resolves to { id, created, removed } (content file names).

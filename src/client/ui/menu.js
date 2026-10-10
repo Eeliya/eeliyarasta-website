@@ -18,7 +18,7 @@
  */
 import { gsap, reducedMotion } from '../lib/env.js';
 import { transitions } from '../anim/engine.js';
-import { lockScroll } from '../smooth.js';
+import { lockScroll } from '../scroll.js';
 
 const DEFAULTS = { open: { duration: 0.45, ease: 'expo.out' }, close: { duration: 0.3 } };
 const timing = () => {

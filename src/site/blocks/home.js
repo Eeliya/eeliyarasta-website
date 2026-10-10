@@ -1,5 +1,5 @@
 /**
- * Section types of the home page look: the hero with its scattered photos, the big intro
+ * Block types of the home page look: the hero with its scattered photos, the big intro
  * statement, a grid of a source's photos, the project list. See ./index.js for the shape.
  */
 import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed } from '../helpers.js';
@@ -12,7 +12,7 @@ import { sourceList, sourcePage } from './data.js';
 const imagesOf = (item) =>
   Array.isArray(item?.images) ? item.images : item?.image ? [{ src: item.image }] : [];
 
-const heroPhoto = (ctx, sec, p, i) => {
+const heroPhoto = (ctx, b, p, i) => {
   const mobile = p.mx !== undefined;
   const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${p.mx}%;--my:${p.my}%;--mw:${p.mw}vw;` : ''}`;
   if (!p.src) return '';
@@ -25,7 +25,7 @@ const heroPhoto = (ctx, sec, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: sec.ed(['photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
@@ -49,22 +49,22 @@ export const hero = {
     },
   ],
   defaults: { title: 'Your name', eyebrow: '', subline: '', photos: [] },
-  render: (s, ctx, sec) =>
-    html` <section class="hero" data-hero${sec.attrs}>
+  render: (s, ctx, b) =>
+    html` <div class="hero" data-hero>
       <div class="hero__photos" data-anim="hero.photos">
-        ${(s.photos || []).map((p, i) => heroPhoto(ctx, sec, p, i))}
+        ${(s.photos || []).map((p, i) => heroPhoto(ctx, b, p, i))}
       </div>
       <h1 class="hero__title" data-anim="hero.title">
-        <span class="hero__name" ${sec.ed('title', 'words')}
+        <span class="hero__name" ${b.ed('title', 'words')}
           >${words(s.title ?? ctx.site.name)}</span
         >
       </h1>
       <div class="hero__meta" data-anim="hero.meta">
-        <span class="label" ${sec.ed('eyebrow')}>${esc(s.eyebrow)}</span>
+        <span class="label" ${b.ed('eyebrow')}>${esc(s.eyebrow)}</span>
         <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
-        <p class="hero__subline" ${sec.ed('subline', 'block')}>${lines(s.subline)}</p>
+        <p class="hero__subline" ${b.ed('subline', 'block')}>${lines(s.subline)}</p>
       </div>
-    </section>`,
+    </div>`,
 };
 
 /** A big statement in the display font. */
@@ -74,10 +74,10 @@ export const intro = {
   icon: 'quote-left',
   fields: [{ key: 'text', label: 'Text', type: 'block' }],
   defaults: { text: 'A sentence about your work.' },
-  render: (s, ctx, sec) =>
-    html` <section class="intro" ${sec.attrs}>
-      <p class="intro__text" data-anim="home.intro" ${sec.ed('text', 'block')}>${lines(s.text)}</p>
-    </section>`,
+  render: (s, ctx, b) =>
+    html` <div class="intro">
+      <p class="intro__text" data-anim="home.intro" ${b.ed('text', 'block')}>${lines(s.text)}</p>
+    </div>`,
 };
 
 /** Interleave the first N images of each item (e.g. 4 per person) for a photo-tile grid. */
@@ -127,12 +127,11 @@ const placeCards = (ctx, source, items, layout) =>
 /** Which tile look a grid uses, by source. Anything not listed gets photo tiles. */
 const GRID_LOOKS = { places: placeCards };
 
-/** A numbered head (01), then a source's photos as tiles (or place cards for places). */
+/** A head (label, title, button), then a source's photos as tiles (or place cards for places). */
 export const grid = {
   type: 'grid',
   label: 'Photo grid',
   icon: 'table-cells',
-  numbered: true,
   fields: [
     { key: 'label', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title', width: 'half' },
@@ -156,26 +155,25 @@ export const grid = {
     cta: 'See all',
     config: { source: 'people', layout: 'staggered' },
   },
-  render: (s, ctx, sec) => {
+  render: (s, ctx, b) => {
     const source = s.config?.source || 'people';
     const look = GRID_LOOKS[source] || photoTiles;
     const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
-    return html` <section class="section section--${esc(source)}" ${sec.attrs}>
-      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: sourcePage(ctx, source) })}
+    return html` <div class="gridblock gridblock--${esc(source)}">
+      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
       ${look(ctx, source, sourceList(ctx, source), layout)}
-    </section>`;
+    </div>`;
   },
 };
 
 /**
- * The project list (a source's items, rows that open). With a title it has a numbered head
+ * The project list (a source's items, rows that open). With a title it has a head
  * and a link to all (the home look); without, it is a page's own list.
  */
 export const projects = {
   type: 'projects',
   label: 'Project list',
   icon: 'list',
-  numbered: (s) => !!s.title,
   fields: [
     { key: 'label', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title (empty: no heading)', width: 'half' },
@@ -188,16 +186,16 @@ export const projects = {
     cta: 'All projects',
     config: { source: 'projects' },
   },
-  render: (s, ctx, sec) => {
+  render: (s, ctx, b) => {
     const source = s.config?.source || 'projects';
     const list = sourceList(ctx, source);
     if (!s.title)
-      return html` <section class="section section--projects-page" ${sec.attrs}>
-        ${projectList(ctx, list, { id: `projects-${sec.at}`, source, headingLevel: 2 })}
-      </section>`;
-    return html` <section class="section section--projects" ${sec.attrs}>
-      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: sourcePage(ctx, source) })}
-      ${projectList(ctx, list, { id: `projects-${sec.at}`, source })}
-    </section>`;
+      return html` <div class="projectsblock">
+        ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2 })}
+      </div>`;
+    return html` <div class="projectsblock">
+      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
+      ${projectList(ctx, list, { id: `projects-${b.id}`, source })}
+    </div>`;
   },
 };

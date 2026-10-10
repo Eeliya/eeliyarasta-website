@@ -1,17 +1,18 @@
-/** Data helpers shared by section types. */
+/** Data helpers shared by block types. */
 import { warnOnce } from '../helpers.js';
 import { TEMPLATE, sourceFile } from '../files.js';
 import { pathOfId } from '../routes.js';
+import { blocksOf } from '../layout/ids.js';
 
 /**
- * The list a section pulls from: content/sources/<source>.json. A missing file or one that
- * isn't a top-level array warns and gives [] (the section renders empty).
+ * The list a block pulls from: content/sources/<source>.json. A missing file or one that
+ * isn't a top-level array warns and gives [] (the block renders empty).
  */
 export function sourceList(ctx, source) {
   const list = ctx.sources?.[source];
   if (Array.isArray(list)) return list;
   warnOnce(
-    `source "content/${sourceFile(source)}" ${list === undefined ? 'is missing' : 'is not a JSON array'}; the section renders empty.`,
+    `source "content/${sourceFile(source)}" ${list === undefined ? 'is missing' : 'is not a JSON array'}; the block renders empty.`,
     'sections',
   );
   return [];
@@ -19,7 +20,7 @@ export function sourceList(ctx, source) {
 
 /**
  * The page that shows all of a source ("See all" links): the folder of the [slug] page of
- * that source, else the first page (not home) with a section of it, else /<source>/. So a
+ * that source, else the first page (not home) with a block of it, else /<source>/. So a
  * renamed page keeps its links.
  */
 export function sourcePage(ctx, source) {
@@ -31,7 +32,7 @@ export function sourcePage(ctx, source) {
     (id) =>
       id !== 'home' &&
       !id.endsWith(TEMPLATE) &&
-      page(id)?.sections?.some?.((s) => s?.config?.source === source),
+      blocksOf(page(id)).some((b) => b?.config?.source === source),
   );
   return lists ? pathOfId(lists) : `/${source}/`;
 }

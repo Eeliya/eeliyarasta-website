@@ -45,7 +45,13 @@ import { checkItems, photoChecker, schemaOf } from '../src/site/schemas.js';
 import { NAMED_VIEWS, pathOfId } from '../src/site/routes.js';
 import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
-import { readContentDir, readContentFile, walkJson, writeFileAtomic } from './content.mjs';
+import {
+  loadContent,
+  readContentDir,
+  readContentFile,
+  walkJson,
+  writeFileAtomic,
+} from './content.mjs';
 import { set as setAt } from '../src/editor/lib/pointer.js';
 import {
   moveLinks,
@@ -57,7 +63,7 @@ import {
   sitePaths,
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
-import { newSection } from '../src/site/sections/index.js';
+import { newBlock, newSection } from '../src/site/layout/index.js';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -191,9 +197,11 @@ export function pagesOp(
       const t = String(title || '').trim() || titleCase(name);
       const file = pageFile(join(parent, name));
       onWrite();
-      // a new page starts with its heading (src/site/sections/)
-      const heading = { ...newSection('heading'), crumb: t, title: t };
-      write(file, { curtain: t, sections: [heading] });
+      // a new page starts with its heading (src/site/layout/), below the header
+      const ids = new Set();
+      const heading = { ...newBlock('heading', ids, { rows: 1 }), crumb: t, title: t };
+      const section = { ...newSection(ids, [heading]), spacing: { top: 23, bottom: 9 } };
+      write(file, { curtain: t, sections: [section] });
       return done({ id: join(parent, name), created: [file] });
     }
     if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
@@ -202,11 +210,21 @@ export function pagesOp(
     if (!isSlug(source) || !fs.existsSync(abs(sourceFile(source))))
       return fail(400, `No source "${source ?? ''}"`);
     onWrite();
+    const ids = new Set();
     write(pageFile(pid), {
       config: { source },
       section: titleCase(source),
       next: 'Next',
-      sections: [newSection('album')], // the item's album
+      // the item's album, filling the screen
+      sections: [
+        {
+          ...newSection(ids, [newBlock('album', ids, { rows: 1 })]),
+          height: 'screen',
+          align: 'stretch',
+          width: 'full',
+          spacing: { top: 0, bottom: 0 },
+        },
+      ],
     });
     return done({ id: pid, created: [pageFile(pid)] });
   }
@@ -751,6 +769,24 @@ export function draftOp(root, drafts, files) {
   return { status: 200, body: { ok: true, files: Object.keys(drafts), skipped } };
 }
 
+/**
+ * POST /__editor/render: the HTML of some sections of a page in the preview, from the
+ * editor's copy of its file (data) over the drafts, so the preview swaps just those
+ * sections after a structure edit (src/editor/layout-sync.js). render: src/site/render.js.
+ * { path, file, data, ids } -> { ok, html: { [section id]: html } }
+ */
+export function renderOp(render, root, drafts, { path: at, file, data, ids } = {}) {
+  if (typeof file !== 'string' || !Array.isArray(ids))
+    return { status: 400, body: { error: 'No file or ids' } };
+  const problems = checkContent(file, data);
+  if (problems.length) return { status: 400, body: { error: problems.join('; ') } };
+  const content = loadContent(root, { ...drafts, [file]: data });
+  const route = render.getRoutes(content).find((r) => r.path === at);
+  if (!route || pageFile(route.id) !== file)
+    return { status: 400, body: { error: `${at} is not a page of ${file}` } };
+  return { status: 200, body: { ok: true, html: render.renderRouteSections(route, content, ids) } };
+}
+
 const sendJSON = (res, status, data) => {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -759,12 +795,19 @@ const sendJSON = (res, status, data) => {
 };
 
 /**
- * @param {{ root: string, logger: import('vite').Logger, env?: object, drafts?: object, onWrite?: () => void }} opts
+ * @param {{ root: string, logger: import('vite').Logger, env?: object, drafts?: object, onWrite?: () => void, render?: () => Promise<object> }} opts
  * env: the R2_* variables for uploads (Node side only). drafts: the unsaved edits pages render
  * from (draftOp). onWrite runs right before files are written (used to keep the editor from
- * reloading itself).
+ * reloading itself). render: loads src/site/render.js (Vite's, so template edits show).
  */
-export function editorMiddleware({ root, logger, env = {}, drafts = {}, onWrite = () => {} }) {
+export function editorMiddleware({
+  root,
+  logger,
+  env = {},
+  drafts = {},
+  onWrite = () => {},
+  render = () => import('../src/site/render.js'),
+}) {
   const log = (msg) => logger.info(`\x1b[32m✓\x1b[0m ${msg}`, { timestamp: true });
 
   return async (req, res) => {
@@ -790,6 +833,11 @@ export function editorMiddleware({ root, logger, env = {}, drafts = {}, onWrite 
 
       if (route === 'POST /draft') {
         const { status, body } = draftOp(root, drafts, (await readJSON(req)).files);
+        return sendJSON(res, status, body);
+      }
+
+      if (route === 'POST /render') {
+        const { status, body } = renderOp(await render(), root, drafts, await readJSON(req));
         return sendJSON(res, status, body);
       }
 

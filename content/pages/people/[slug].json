@@ -1,11 +1,34 @@
 {
-  "config": { "source": "people" },
+  "config": {
+    "source": "people"
+  },
   "section": "People",
   "next": "Next person",
   "sections": [
     {
-      "type": "album",
-      "config": { "enabled": true }
+      "id": "s-2jiz",
+      "height": "screen",
+      "align": "stretch",
+      "rows": 1,
+      "width": "full",
+      "spacing": {
+        "top": 0,
+        "bottom": 0
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-j8hg",
+          "type": "album",
+          "config": {},
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     }
   ]
 }

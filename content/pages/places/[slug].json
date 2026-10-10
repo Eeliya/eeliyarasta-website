@@ -1,11 +1,34 @@
 {
-  "config": { "source": "places" },
+  "config": {
+    "source": "places"
+  },
   "section": "Places",
   "next": "Next place",
   "sections": [
     {
-      "type": "album",
-      "config": { "enabled": true }
+      "id": "s-gaii",
+      "height": "screen",
+      "align": "stretch",
+      "rows": 1,
+      "width": "full",
+      "spacing": {
+        "top": 0,
+        "bottom": 0
+      },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-gbxt",
+          "type": "album",
+          "config": {},
+          "pos": {
+            "col": 1,
+            "span": 24,
+            "row": 1,
+            "rows": 1
+          }
+        }
+      ]
     }
   ]
 }

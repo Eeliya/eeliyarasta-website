@@ -1,6 +1,6 @@
 /**
  * Client entry. The HTML is already prerendered; this file only adds behaviour:
- * smooth scroll, menu, router, and per-page mounting (animations + modules).
+ * menu, router, and per-page mounting (animations + modules).
  */
 import './styles/main.scss';
 import { gsap, ScrollTrigger } from './lib/env.js';
@@ -12,7 +12,6 @@ import {
   pageKey,
 } from './anim/engine.js';
 import { flags } from './anim/flags.js';
-import { initSmooth, getSmoother, syncSmooth } from './smooth.js';
 import { initRouter, navigate, replayCurtain, setPageCurtains } from './router.js';
 import { initMenu, updateActiveNav } from './ui/menu.js';
 import { initClock, updateClocks } from './ui/clock.js';
@@ -28,7 +27,7 @@ const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;
 let frozen = false;
 
-/** Move [data-portal] elements (fixed UI) out of the smooth-scroll content. */
+/** Move [data-portal] elements (fixed UI) out of the view, so page transitions leave them be. */
 function movePortals(view) {
   const portal = document.getElementById('portal');
   view.querySelectorAll('[data-portal]').forEach((el) => portal.appendChild(el));
@@ -95,14 +94,17 @@ function connectEditor() {
     replayCurtain: (label, curtain) => replayCurtain(label, curtain),
     /** Pages with their own curtain or none, from the editor's draft content. */
     setPageCurtains,
-    getSmoother,
     view: () => current?.view || null,
-    /** Replace the animation config (in place) with an edited copy; smoothScroll applies at once. */
-    setAnimations: (next) => {
-      setConfig(next);
-      syncSmooth();
-    },
+    /** Replace the animation config (in place) with an edited copy. */
+    setAnimations: (next) => setConfig(next),
     remount: remountAnimations,
+    /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
+    remountView() {
+      if (!current) return;
+      const { view } = current;
+      current.revert();
+      mount(view);
+    },
     /** Stop all animations and show the page in its final, static state (for text editing). */
     freeze() {
       frozen = true;
@@ -112,18 +114,14 @@ function connectEditor() {
       frozen = false;
       remountAnimations();
     },
-    scrollTo(target, { smooth = true, position = 'center center' } = {}) {
-      const s = getSmoother();
-      if (s) return s.scrollTo(target, smooth, position);
+    scrollTo(target, { smooth = true } = {}) {
       if (typeof target === 'number')
         window.scrollTo({ top: target, behavior: smooth ? 'smooth' : 'instant' });
       else target?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'center' });
     },
     scrollTop(y) {
-      const s = getSmoother();
-      if (y === undefined) return s ? s.scrollTop() : window.scrollY;
-      if (s) s.scrollTop(y);
-      else window.scrollTo(0, y);
+      if (y === undefined) return window.scrollY;
+      window.scrollTo(0, y);
     },
     /** Scroll positions where `el` enters (top hits viewport bottom) and leaves (bottom hits top). */
     scrollRange(el) {
@@ -166,7 +164,6 @@ function connectEditor() {
 
 async function start() {
   if (import.meta.env.DEV) connectEditor();
-  initSmooth();
   initMenu();
   initClock();
   initRouter({ mount, unmount, prepare: movePortals });

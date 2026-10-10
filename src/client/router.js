@@ -8,7 +8,7 @@ import { gsap, reducedMotion } from './lib/env.js';
 import { transitions } from './anim/engine.js';
 import { normalizeCurtain, curtainPlan, curtainFor } from './anim/curtain.js';
 import { closeMenus } from './ui/menu.js';
-import { scrollToTop } from './smooth.js';
+import { scrollToTop } from './scroll.js';
 
 const cache = new Map();
 let busy = false;

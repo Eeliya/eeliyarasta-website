@@ -38,8 +38,6 @@ export const ui = $state({
    * scope: where its edits go: 'element' | 'target' (see motion.js).
    */
   anim: null,
-  /** Home sections (indexes) the preview can only show after Save (see sections.js). */
-  staleSections: [],
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},
   /**
