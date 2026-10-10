@@ -131,7 +131,7 @@ export const about = {
         ${a.image ? img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: sec.ed('image', 'image') }) : ''}
       </figure>
       <figcaption class="label muted">
-        ${esc(creditText(a.imageCredit))}${a.placeholder ? ' · placeholder' : ''}
+        ${esc(creditText(a.imageCredit))}
       </figcaption>
     </div>
     <div class="about__text">

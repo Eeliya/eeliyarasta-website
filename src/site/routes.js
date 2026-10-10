@@ -17,11 +17,17 @@
  * else the built-in name of the same page (home, photography, people, places, projects,
  * about, 404), else "page"; templates default to "album" (no footer).
  *
- * Routes with noindex (404, and the pages of items with "placeholder": true) get
- * <meta name="robots" content="noindex"> and are left out of sitemap.xml.
+ * Search and share meta (src/site/seo.js): a page's title is its meta.title, else its first
+ * heading's title, else its folder name, in the site's titleTemplate (home: meta.title, else
+ * site.title, in full); description, image, canonical and noindex come from its "meta".
+ * A [slug] page: "<item name> | <section>", the item's summary and cover, else the template's
+ * meta.description / meta.image; its meta.noindex keeps every item page out.
+ * Routes with noindex (404, meta.noindex, items with "placeholder": true, or site.json
+ * "robots": "noindex") get <meta name="robots" content="noindex"> and stay out of sitemap.xml.
  */
 import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
 import { coverOf, itemSlug } from './helpers.js';
+import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
@@ -85,6 +91,7 @@ const byTree = (a, b) => {
 export function buildRoutes(content) {
   const { site, pages = {}, sources = {} } = content;
   const warnings = [];
+  const siteNoindex = site.robots === 'noindex';
   const ids = Object.keys(pages).sort(byTree);
   const exists = new Set(ids);
   const routes = [];
@@ -108,14 +115,17 @@ export function buildRoutes(content) {
     const title =
       id === 'home'
         ? (meta.title ?? site.title)
-        : `${meta.title ?? pageTitle(page) ?? titleCase(segments.at(-1))} | ${site.name}`;
+        : fillTitle(site, meta.title ?? pageTitle(page) ?? titleCase(segments.at(-1)));
     routes.push({
       path: pathOfId(id),
       id,
       page: page.view || NAMED_VIEWS[id] || 'page',
-      ...(id === '404' ? { out: '404.html', noindex: true } : {}),
+      ...(id === '404' ? { out: '404.html' } : {}),
       title,
-      description: meta.description ?? site.description,
+      description: meta.description || site.description,
+      image: meta.image || undefined,
+      canonical: meta.canonical || undefined,
+      noindex: siteNoindex || id === '404' || !!meta.noindex,
       ...pageCurtain(id, title),
     });
   }
@@ -132,6 +142,7 @@ export function buildRoutes(content) {
       return [];
     }
     const section = tpl.section ?? titleCase(source);
+    const meta = tpl.meta || {}; // defaults of its item pages
     const seen = new Set();
     const items = [];
     list.forEach((item, index) => {
@@ -156,7 +167,7 @@ export function buildRoutes(content) {
       .map(({ item, index, slug, path }) => {
         const k = items.findIndex((x) => x.item === item);
         const next = items[(k + 1) % items.length];
-        const title = `${item.name ?? item.title ?? slug} | ${section} | ${site.name}`;
+        const title = fillTitle(site, `${item.name ?? item.title ?? slug} | ${section}`);
         return {
           path,
           id,
@@ -174,10 +185,10 @@ export function buildRoutes(content) {
           next: next.item,
           nextPath: next.path,
           title,
-          description: item.summary,
-          image: coverOf(item)?.src,
+          description: item.summary || meta.description || site.description,
+          image: coverOf(item)?.src || meta.image || undefined,
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
-          ...(item.placeholder ? { noindex: true } : {}),
+          noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
           curtain: curtainOf(item.curtain, title),
           curtainEdit: curtainEditOf(sourceFile(source), [index, 'curtain']),
           transition: item.transition,
@@ -187,7 +198,7 @@ export function buildRoutes(content) {
   }
 }
 
-/** sitemap.xml: every route except the noindex ones (404, placeholder items). */
+/** sitemap.xml: every route except the noindex ones (404, placeholder items, meta.noindex). */
 export function sitemapXml(routes, siteUrl) {
   const urls = routes
     .filter((r) => !r.noindex)

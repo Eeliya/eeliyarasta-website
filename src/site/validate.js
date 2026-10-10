@@ -64,13 +64,19 @@ function checkSite(d) {
     ...required(d, ['name', 'url'], 'string'),
     ...optional(d, {
       title: 'string',
+      titleTemplate: 'string',
       description: 'string',
+      ogImage: 'string',
+      lang: 'string',
       timezone: 'string',
       social: 'array',
       footer: 'object',
       nav: 'object',
       labels: 'object',
     }),
+    ...(d.robots === undefined || ['index', 'noindex'].includes(d.robots)
+      ? []
+      : ['"robots" must be "index" or "noindex"']),
   ];
 }
 
@@ -109,6 +115,18 @@ function checkNav(d) {
   return out;
 }
 
+/** A page's search and share meta (src/site/seo.js). */
+function checkMeta(meta) {
+  if (!isObject(meta)) return [];
+  return optional(meta, {
+    title: 'string',
+    description: 'string',
+    image: 'string',
+    canonical: 'string',
+    noindex: 'boolean',
+  }).map((p) => `meta: ${p}`);
+}
+
 function checkAnimations(d) {
   const out = [
     ...required(d, ['presets', 'targets', 'transitions'], 'object'),
@@ -121,7 +139,7 @@ function checkAnimations(d) {
 }
 
 function checkPage(file, d) {
-  const out = optional(d, { meta: 'object', sections: 'array' });
+  const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.config?.source !== 'string')
     out.push('"config.source" must name a source (a [slug] page makes a page per item)');
   if (Array.isArray(d.sections)) out.push(...d.sections.flatMap(checkSection));

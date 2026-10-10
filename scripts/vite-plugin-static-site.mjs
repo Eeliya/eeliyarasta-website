@@ -31,8 +31,11 @@ import { pageFile } from '../src/site/files.js';
 
 const RENDER_MODULE = '/src/site/render.js';
 
-const fill = (shell, { head, body }) =>
-  shell.replace('<!--ssr-head-->', head).replace('<!--ssr-body-->', body);
+const fill = (shell, { head, body, lang }) =>
+  shell
+    .replace(/<html lang="[^"]*"/, `<html lang="${lang.replace(/[^\w-]/g, '')}"`)
+    .replace('<!--ssr-head-->', head)
+    .replace('<!--ssr-body-->', body);
 
 /** content/ and .generated/ files are data: they re-render pages, never hot-update modules. */
 const DATA = /^(content|\.generated)\//;
@@ -129,12 +132,13 @@ export default function staticSite() {
       const shellFile = path.join(outDir, 'index.html');
       if (!fs.existsSync(shellFile)) return;
       const shell = fs.readFileSync(shellFile, 'utf8');
-      const { buildRoutes, renderRoute, sitemapXml } = await import(
+      const { buildRoutes, renderRoute, seoWarnings, sitemapXml } = await import(
         pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`
       );
       const content = loadContent(root);
       const { routes, warnings } = buildRoutes(content);
       for (const w of warnings) config.logger.warn(`\x1b[33m[routes]\x1b[0m ${w}`);
+      for (const w of seoWarnings(routes)) config.logger.warn(`\x1b[33m[seo]\x1b[0m ${w}`);
 
       for (const route of routes) {
         const rel = route.out || path.join(route.path, 'index.html');

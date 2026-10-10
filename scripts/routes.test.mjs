@@ -114,7 +114,7 @@ test('placeholder items: noindex, so not in the sitemap', () => {
     'sources/people.json': [{ name: 'Real' }, { name: 'Stock', placeholder: true }],
   });
   const r = buildRoutes(c).routes;
-  assert.equal(r.find((x) => x.path === '/people/real/').noindex, undefined);
+  assert.equal(r.find((x) => x.path === '/people/real/').noindex, false);
   assert.equal(r.find((x) => x.path === '/people/stock/').noindex, true);
   const xml = sitemapXml(r, 'https://example.com');
   assert.match(xml, /<loc>https:\/\/example\.com\/people\/real\/<\/loc>/);

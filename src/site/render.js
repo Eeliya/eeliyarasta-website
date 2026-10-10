@@ -11,8 +11,11 @@ import { pageFile } from './files.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
 export { getRoutes, buildRoutes, sitemapXml };
+export { seoWarnings } from './seo.js';
 
-/** editable: render the editor's markers (the dev server), see setEditable in helpers.js. */
+/**
+ * { head, body, lang } of a route; lang: <html lang>.
+ * editable: render the editor's markers (the dev server), see setEditable in helpers.js. */
 export function renderRoute(route, content, { editable = false } = {}) {
   setEditable(editable);
   // curtains: every page carries the pages with their own curtain, for the router.
@@ -22,5 +25,9 @@ export function renderRoute(route, content, { editable = false } = {}) {
   const file = pageFile(route.id);
   const view = renderSections(ctx, route, file, content.pages[route.id]?.sections);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
-  return { head: head(ctx, route, accent), body: body(ctx, route, accent, view, file) };
+  return {
+    head: head(ctx, route, accent),
+    body: body(ctx, route, accent, view, file),
+    lang: content.site.lang || 'en',
+  };
 }
