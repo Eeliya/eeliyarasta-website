@@ -5,11 +5,14 @@
  *     tab     browse | content | motion | settings
  *     path    the page in the preview (main.js keeps it up to date)
  *     view    menu | footer, when the page menu shows one of those instead of a page
- *     source  + item: the Source Explorer, open on that file and item
- *             (&source=people&item=noor-vermeer; item is the slug, or the number without one)
+ *     source  + item (+ field): the Source Explorer, open on that file and item, with that field
+ *             highlighted (&source=people&item=noor-vermeer&field=summary; item is the
+ *             slug, or the number without one)
  *     motion  animations: the Motion tab's Animations sub-tab (the list of animations)
  *     anim    that sub-tab, open on that animation (&anim=fade-up)
  *     pages   the Pages window, open on that page's folder (&pages=/people/; / is the root)
+ *     media   + pick: the Media window, on that photo (&media=photos/x-1600.webp; / for none),
+ *             picking for that field (&pick=sources/people.json#/0/images/0/src)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed
  *     sections, the selected field or Motion element, the explorer's and library's lists,
  *     the panel and preview scroll.
@@ -21,8 +24,8 @@
  * so Back leaves the editor instead of stepping through tabs.
  *
  * main.js calls restoreUi() before the UI mounts and restorePlace() once the preview shows
- * the page; App.svelte calls writeUrl() whenever the tab, view, explorer, library or Pages
- * window changes.
+ * the page; App.svelte calls writeUrl() whenever the tab, view, explorer, library, Pages or
+ * Media window changes.
  */
 import { tick } from 'svelte';
 import { ui } from './ui.svelte.js';
@@ -65,6 +68,13 @@ function readState() {
     };
     state.item = q.get('item');
   }
+  if (q.has('media'))
+    state.media = {
+      open: true,
+      key: q.get('media') === '/' ? '' : q.get('media'),
+      filter: state.media?.filter || 'all',
+      pick: q.get('pick') || '',
+    };
   if (q.has('pages'))
     state.pagesWin = { open: true, folder: q.get('pages').replace(/^\/+|\/+$/g, '') };
   if (q.get('motion') === 'animations' || q.has('anim')) {
@@ -86,6 +96,7 @@ export function restoreUi(preview, content) {
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
   if (saved.library) ui.library = saved.library;
   if (saved.pagesWin) ui.pagesWin = saved.pagesWin; // PagesModal opens itself
+  if (saved.media) ui.media = saved.media; // and MediaModal
 
   addEventListener('pagehide', () => {
     sessionStorage.setItem(
@@ -98,6 +109,7 @@ export function restoreUi(preview, content) {
         explorer: ui.explorer,
         library: ui.library,
         pagesWin: ui.pagesWin,
+        media: ui.media,
         path: bridge.path(),
         edit: ui.selection?.edit,
         anim: ui.anim?.key,
@@ -166,5 +178,7 @@ export function writeUrl() {
   set('motion', library && 'animations');
   set('anim', library && ui.library.name);
   set('pages', ui.pagesWin.open && `/${ui.pagesWin.folder}/`.replace('//', '/'));
+  set('media', ui.media.open && (ui.media.key || '/'));
+  set('pick', ui.media.open && ui.media.pick);
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }

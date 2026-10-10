@@ -1,10 +1,21 @@
-<!-- The toasts of toasts.svelte.js, bottom left, newest last. -->
+<!--
+  The toasts of toasts.svelte.js, bottom left, newest last. A popover in the top layer, shown
+  again for every new toast: above an open window (Media, Pages, ...) too.
+-->
 <script>
   import Button from './Button.svelte';
   import { toasts, dismiss } from './toasts.svelte.js';
+
+  let box = $state();
+  $effect(() => {
+    const last = toasts.at(-1)?.id; // a new toast: on top of whatever opened since
+    if (!box) return;
+    if (box.matches(':popover-open')) box.hidePopover();
+    if (last) box.showPopover();
+  });
 </script>
 
-<section class="ed-toasts" aria-live="polite">
+<section class="ed-toasts" aria-live="polite" popover="manual" bind:this={box}>
   {#each toasts as t (t.id)}
     <p class="toast toast--{t.kind}">
       {t.text}
@@ -30,9 +41,13 @@
 
   .ed-toasts {
     position: fixed;
-    left: 24px;
-    bottom: 24px;
-    z-index: 60;
+    inset: auto auto 24px 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    color: inherit;
+    background: none;
     display: grid;
     gap: 8px;
     max-width: min(460px, calc(100vw - var(--panel-w) - 72px));

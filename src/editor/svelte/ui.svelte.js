@@ -47,6 +47,11 @@ export const ui = $state({
    * highlighted field (its key in source-items.js itemFields, e.g. "name", "images.1.src").
    */
   explorer: { open: false, file: '', index: 0, field: '' },
+  /**
+   * The Media window: open or not, the selected photo (media/ path or R2 key), the list filter
+   * ('all' | 'r2' | 'local') and the field it picks for (its data-edit, '' = just managing).
+   */
+  media: { open: false, key: '', filter: 'all', pick: '' },
   /** The Pages window: open or not, and the folder it shows ('' = content/pages/ itself). */
   pagesWin: { open: false, folder: '' },
   /** Motion tab: the Animations sub-tab (open) or Elements, and its animation ('' = the list). */

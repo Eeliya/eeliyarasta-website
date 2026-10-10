@@ -14,6 +14,8 @@
   import SettingsPanel from './SettingsPanel.svelte';
   import PublishDialog from './PublishDialog.svelte';
   import PagesModal from './PagesModal.svelte';
+  import MediaModal from './MediaModal.svelte';
+  import { openMedia } from './media.svelte.js';
   import Toasts from './Toasts.svelte';
   import { ui } from './ui.svelte.js';
   import { writeUrl } from './persist.js';
@@ -155,6 +157,13 @@
           title="Pages: add, rename, delete"
           onclick={() => pagesModal.open()}
         />
+        <Button
+          icon="images"
+          iconOnly
+          label="Media"
+          title="Media: every photo, upload, alt text"
+          onclick={() => openMedia({ key: ui.media.key })}
+        />
       </div>
     </header>
 
@@ -213,6 +222,7 @@
 
   <PublishDialog {live} {actions} bind:this={publishDialog} />
   <PagesModal {live} {actions} bind:this={pagesModal} />
+  <MediaModal {live} {bridge} {actions} />
   <Toasts />
 {/if}
 

@@ -52,6 +52,21 @@ export const pagesOp = (body) =>
   });
 
 /**
+ * The Media window's photo ops (POST /__editor/media, mediaOp in scripts/editor-server.mjs):
+ * { op: 'alt', key, alt } or { op: 'delete', key }. Takes the fresh photo lists it answers.
+ */
+export async function mediaOp(body) {
+  const res = await json('/__editor/media', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  media.photos = res.photos;
+  media.manifest = res.media;
+  return res;
+}
+
+/**
  * Upload a photo to Cloudflare R2 (POST /__editor/upload), where the dev server resizes it:
  * resolves to { key, photo }, key being the value to store in the content. onprogress(0..1)
  * follows the bytes going up (fetch can't, so XMLHttpRequest); at 1 the server is resizing.
