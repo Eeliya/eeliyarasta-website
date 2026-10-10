@@ -112,6 +112,8 @@ export function pagesOp(
     writeFileAtomic(abs(file), formatJSON(data));
   };
 
+  if (!['add', 'template', 'rename', 'delete'].includes(op))
+    return fail(400, `Unknown pages op "${op ?? ''}"`);
   if (op === 'add' || op === 'template') {
     if (parent !== '' && (PROTECTED.has(parent) || parent.endsWith(TEMPLATE) || !isPage(parent)))
       return fail(400, `No page "${parent}" to add to`);
@@ -156,14 +158,12 @@ export function pagesOp(
     });
   }
 
-  if (op === 'delete') {
-    const removed = template ? [pageFile(id)] : filesIn(id);
-    onWrite();
-    if (template) fs.rmSync(abs(pageFile(id)));
-    else fs.rmSync(dirOf(id), { recursive: true });
-    return done({ id, removed });
-  }
-  return fail(400, `Unknown pages op "${op ?? ''}"`);
+  // delete
+  const removed = template ? [pageFile(id)] : filesIn(id);
+  onWrite();
+  if (template) fs.rmSync(abs(pageFile(id)));
+  else fs.rmSync(dirOf(id), { recursive: true });
+  return done({ id, removed });
 }
 
 // ---------------------------------------------------------------- save

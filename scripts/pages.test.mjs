@@ -97,3 +97,9 @@ test('delete removes the folder and everything in it; home and 404 stay', () => 
   assert.equal(pagesOp(root, { op: 'delete', id: 'people' }).status, 404);
   assert.equal(pagesOp(root, { op: 'delete', id: '../sources/people' }).status, 404);
 });
+
+test('an unknown op says so (not "No page")', () => {
+  const r = pagesOp(site(), { op: 'nuke', id: 'about' });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.error, 'Unknown pages op "nuke"');
+});
