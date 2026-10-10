@@ -112,7 +112,7 @@
   // custom page / component picker
   .pm {
     position: relative;
-    flex: 1 0 auto;
+    flex: 1 1 auto;
     min-width: 0;
   }
 
