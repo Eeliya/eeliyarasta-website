@@ -336,15 +336,14 @@ export async function contentStatus(root) {
   ]);
   const files = [];
   const entries = st.stdout.split('\0').filter(Boolean);
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    const code = entry.slice(0, 2);
-    // Renames/copies are followed by their source path as a separate entry: skip it.
-    if (code[0] === 'R' || code[0] === 'C') i++;
-    const repoPath = entry.slice(3);
+  const add = (repoPath, status) => {
     const p = repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : repoPath;
     const name = p.slice(CONTENT_DIR.length + 1);
-    if (!isContentFile(name) || p !== `${CONTENT_DIR}/${name}`) continue;
+    if (isContentFile(name) && p === `${CONTENT_DIR}/${name}`)
+      files.push({ name, path: p, status });
+  };
+  for (let i = 0; i < entries.length; i++) {
+    const code = entries[i].slice(0, 2);
     const status =
       code === '??' || code[0] === 'R' || code[0] === 'C'
         ? 'new'
@@ -353,7 +352,12 @@ export async function contentStatus(root) {
           : code.includes('A')
             ? 'new'
             : 'modified';
-    files.push({ name, path: p, status });
+    add(entries[i].slice(3), status);
+    // A rename or copy is followed by its source path: a rename (git mv) deletes it.
+    if (code[0] === 'R' || code[0] === 'C') {
+      i++;
+      if (code[0] === 'R') add(entries[i], 'deleted');
+    }
   }
   await Promise.all(
     files.map(async (f) => {
@@ -459,10 +463,15 @@ export async function publish(root, message) {
     const paths = s.files.map((f) => f.path);
     // literal: "[slug].json" is not a glob here
     const specs = paths.map((p) => `:(literal)${p}`);
-    const add = await git(root, ['add', '--', ...specs]);
-    steps.push({ cmd: `git add -- ${paths.join(' ')}`, ...add });
-    if (!add.ok)
-      return { status: 500, body: { error: 'git add failed', output: add.output, steps } };
+    // Deleted files need no add (the commit below takes their removal; the old path of a
+    // `git mv` isn't known to git add at all).
+    const present = s.files.filter((f) => f.status !== 'deleted').map((f) => f.path);
+    if (present.length) {
+      const add = await git(root, ['add', '--', ...present.map((p) => `:(literal)${p}`)]);
+      steps.push({ cmd: `git add -- ${present.join(' ')}`, ...add });
+      if (!add.ok)
+        return { status: 500, body: { error: 'git add failed', output: add.output, steps } };
+    }
     // With pathspecs, `git commit` commits ONLY these paths, even if other files are staged.
     const commit = await git(root, ['commit', '-m', msg, '--', ...specs]);
     steps.push({ cmd: `git commit -m <message> -- ${paths.join(' ')}`, ...commit });
