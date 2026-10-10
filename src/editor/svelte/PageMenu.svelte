@@ -114,7 +114,6 @@
     position: relative;
     flex: 1 0 auto;
     min-width: 0;
-    width: 100%;
   }
 
   .pm__btn {

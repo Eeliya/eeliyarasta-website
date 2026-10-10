@@ -335,7 +335,6 @@
     gap: 8px;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
   }
 
   // a [slug] page's item, next to the Pages button
