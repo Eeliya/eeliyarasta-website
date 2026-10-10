@@ -1,5 +1,5 @@
 /**
- * Contact forms (src/site/sections/form.js): the page works without this (a plain POST);
+ * Contact forms (src/site/blocks/form.js): the page works without this (a plain POST);
  * with it, the form checks its fields in place, sends with fetch and shows the section's
  * messages (data-success, data-error, data-required, data-invalid, data-sending on the
  * <form>) without leaving the page. While sending, the button is disabled with a spinner;

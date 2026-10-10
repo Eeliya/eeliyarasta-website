@@ -38,6 +38,13 @@ export const ui = $state({
    * scope: where its edits go: 'element' | 'target' (see motion.js).
    */
   anim: null,
+  /** Content tab: the block open in the block inspector (its id), or null, and its tab. */
+  block: null,
+  /** 'content' | 'layout' | 'motion' */
+  blockTab: 'content',
+  /** Content tab: drag and resize blocks in the preview; show the grid's columns and rows. */
+  arrange: false,
+  grid: false,
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},
   /**

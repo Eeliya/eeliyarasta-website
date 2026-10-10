@@ -1,14 +1,14 @@
 /**
  * What the Content tab shows: the editable texts of the page in the preview (or of the
- * Menu / Footer), grouped by section. Plain functions over the store and the preview;
- * ContentPanel.svelte renders the result.
+ * Menu / Footer), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
+ * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
 import { NAV, SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
-import { SECTION_TYPES } from '../../site/sections/index.js';
-import { previewFile } from '../sections.js';
+import { BLOCK_TYPES } from '../../site/blocks/index.js';
+import { previewFile } from '../layout-sync.js';
 import { WIDGETS, itemName, schemaFor } from './source-items.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
@@ -33,7 +33,7 @@ export const SEO_SETTINGS = [
 /** Lists in content/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 
-/** "pages/index.json#/sections/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/title' } */
+/** "pages/index.json#/sections/0/blocks/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/blocks/0/title' } */
 export function splitEdit(edit) {
   const i = edit.indexOf('#');
   return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
@@ -59,7 +59,7 @@ export function labelFor(store, { file, ptr }) {
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-/** Labels of the texts outside sections: a template's shared labels, the footer, the menu. */
+/** Labels of the texts outside blocks: a template's shared labels, the footer, the menu. */
 const LABELS = {
   section: 'Back link',
   next: 'Next link',
@@ -126,8 +126,8 @@ export function sectionsOf(store, file) {
   return Array.isArray(list) ? list : [];
 }
 
-/** A short name for section s: its first text (label, title, ...), at most 40 characters. */
-function nameOf(s) {
+/** A short name for block b: its first text (label, title, ...), at most 40 characters. */
+export function nameOf(s) {
   const text = [s?.label, s?.title, s?.headline, s?.crumb, s?.caption].find(
     (v) => typeof v === 'string' && v.trim(),
   );
@@ -138,15 +138,16 @@ function nameOf(s) {
 }
 
 /**
- * The fields of section `at` from its type's registry entry: [{ edit, file, ptr, type, label }].
+ * The fields of a block from its type's registry entry: [{ edit, file, ptr, type, label }].
+ * base: the block's path in its file (['sections', 0, 'blocks', 1]).
  * A list field is one entry { list: true, edit, file, ptr, label, item, photo, items }: items
  * holds each item's fields ([[field, ...], ...]), item a new item, photo the subkey of a
  * photo item ('' for a list of photos, null for none) so Add can open the Media window.
  */
-function registryFields(file, at, s, t) {
-  // a list item's subkey type can be { type, label, options } (src/site/sections/index.js)
+function registryFields(file, base, s, t) {
+  // a list item's subkey type can be { type, label, options } (src/site/blocks/index.js)
   const field = (path, type, label) => {
-    const ptr = pointer(['sections', at, ...path]);
+    const ptr = pointer([...base, ...path]);
     const def = type && typeof type === 'object' ? type : { type };
     return {
       edit: `${file}#${ptr}`,
@@ -162,7 +163,7 @@ function registryFields(file, at, s, t) {
     if (!f.list) return field([f.key], f, f.label);
     const items = Array.isArray(s[f.key]) ? s[f.key] : [];
     const subs = typeof f.list === 'string' ? null : Object.entries(f.list);
-    const ptr = pointer(['sections', at, f.key]);
+    const ptr = pointer([...base, f.key]);
     return {
       list: true,
       edit: `${file}#${ptr}`,
@@ -204,25 +205,25 @@ export function runsOf(fields) {
 export const allFields = (g) => g.fields.flatMap((f) => (f.list ? f.items.flat() : [f]));
 
 /**
- * Group for section `at` of page file `file`: id "s<at>", titled by its type, named by its
- * text, with its on/off toggle, settings (config) and its type's fields.
+ * Group for block `j` of section `at` of page file `file`: id the block's, titled by its
+ * type, named by its text, with its on/off toggle, settings (config) and its type's fields.
  */
-function sectionGroup(store, file, at) {
-  const s = sectionsOf(store, file)[at];
-  const t = SECTION_TYPES[s?.type];
+function blockGroup(store, file, at, j) {
+  const s = sectionsOf(store, file)[at].blocks[j];
+  const t = BLOCK_TYPES[s?.type];
   const sources = Object.keys(store.current).map(sourceIdOf).filter(Boolean).sort();
+  const base = `/sections/${at}/blocks/${j}`;
   return {
-    id: `s${at}`,
-    key: `text:${file}#s${at}`,
-    index: at,
+    id: s.id,
+    block: { at, j },
     file,
     icon: t?.icon || 'question',
     title: t?.label || `Unknown type "${s?.type}"`,
     name: nameOf(s),
-    toggle: { file, ptr: `/sections/${at}/config/enabled` },
+    toggle: { file, ptr: `${base}/config/enabled` },
     config: (t?.config || []).map((c) => ({
       ...c,
-      ptr: `/sections/${at}/config/${c.key}`,
+      ptr: `${base}/config/${c.key}`,
       // a source list may be missing: it stays pickable, marked
       options:
         c.type === 'source'
@@ -234,17 +235,17 @@ function sectionGroup(store, file, at) {
             ]
           : c.options,
     })),
-    fields: t ? registryFields(file, at, s, t) : [],
+    fields: t ? registryFields(file, ['sections', at, 'blocks', j], s, t) : [],
   };
 }
 
-/** Which group a preview field belongs to: { id, title }; null for a section's own fields. */
+/** Which group a preview field belongs to: { id, title }; null for a block's own fields. */
 export function groupFor(store, { file, ptr }, page) {
   const parts = parse(ptr);
   const pageId = pageIdOf(file);
   if (pageId !== null) {
     if (parts[0] === 'curtain') return TRANSITION;
-    if (parts[0] === 'sections') return null; // in its section's group
+    if (parts[0] === 'sections') return null; // in its block's group
     // people/[slug]: the labels every item page shares (section, next)
     return {
       id: 'page-body',
@@ -337,10 +338,10 @@ function fieldsOf(store, bridge, target) {
 }
 
 /**
- * The Content tab's groups for `target`, in panel order: the page's sections (in list order),
- * then the other texts in the preview (list items, the shared labels of item pages), then the
- * page transition.
- * [{ id, title, name?, index?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
+ * The Content tab's groups for `target`, in panel order: the page's blocks (in section and
+ * block order; `block`: { at, j }, where it is), then the other texts in the preview (list
+ * items, the shared labels of item pages), then the page transition.
+ * [{ id, title, name?, block?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
  */
 export function contentGroups(store, bridge, target) {
   const page = previewPage(bridge);
@@ -351,16 +352,22 @@ export function contentGroups(store, bridge, target) {
     return groups.get(group.id);
   };
 
-  // Every section, even the ones without text (they still have a toggle and settings).
-  sectionsOf(store, file).forEach((_, i) => add(sectionGroup(store, file, i)));
+  // Every block, even the ones without text (they still have a toggle and settings).
+  const at = {}; // block group ids by their place ("0/1")
+  sectionsOf(store, file).forEach((s, i) =>
+    (Array.isArray(s?.blocks) ? s.blocks : []).forEach((b, j) => {
+      at[`${i}/${j}`] = add(blockGroup(store, file, i, j));
+    }),
+  );
 
   for (const f of fieldsOf(store, bridge, target)) {
     const group = groupFor(store, f, page);
     if (group?.id.startsWith('source:')) continue;
     if (group) add(group).fields.push(described(store, f));
     else {
-      // a section's text its type doesn't list (e.g. a photo credit): added to its group
-      const g = groups.get(`s${parse(f.ptr)[1]}`);
+      // a block's text its type doesn't list (e.g. a photo credit): added to its group
+      const [, i, , j] = parse(f.ptr);
+      const g = at[`${i}/${j}`];
       if (g && f.file === g.file && !allFields(g).some((x) => x.edit === f.edit))
         g.fields.push(described(store, f));
     }

@@ -52,12 +52,30 @@ import {
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
 import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
+import { placeBlock } from './layout-ops.js';
+import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
 const store = createStore();
 const live = createLive(store);
 connectMedia(live); // photo URLs read site.json's mediaUrl from it
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
+// the preview's layout overlay (Arrange, Grid; overlay.js): blockAt and placeBlock below
+const overlay = createOverlay({
+  ui,
+  onpick(id) {
+    ui.block = id;
+    ui.blockTab = 'layout';
+  },
+  onplace(id, pos) {
+    const b = blockAt(id);
+    if (b) placeBlock(store, b.file, b.at, b.j, pos);
+  },
+  blockOf(id) {
+    const b = blockAt(id);
+    return b && store.current[b.file].sections[b.at].blocks[b.j];
+  },
+});
 
 restoreUi(bridge, live); // the tab, sections, ...: from the URL and sessionStorage (svelte/persist.js)
 
@@ -65,7 +83,11 @@ const root = document.getElementById('editor');
 root.textContent = '';
 mount(App, {
   target: root,
-  props: { live, bridge, actions: { setMode, pickTarget, save, refreshStatus, pagesOp } },
+  props: {
+    live,
+    bridge,
+    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, arrange, showGrid, editMotion },
+  },
 });
 
 // ---------------------------------------------------------------- ui
@@ -243,17 +265,55 @@ function pickAnim(sel) {
   return { el, id: el.dataset.anim, key, scope };
 }
 
+/** The preview's mode: Settings has nothing to pick, Arrange drags blocks: both browse. */
+const previewMode = () => (ui.mode === 'settings' || ui.arrange ? 'browse' : ui.mode);
+
 function setMode(mode) {
   ui.mode = mode;
   if (mode === 'text' || mode === 'motion') ui.lastEdit = mode;
-  // Settings has nothing to pick in the preview: it behaves like Browse there.
-  bridge.setMode(mode === 'settings' ? 'browse' : mode);
+  if (mode !== 'text') ui.arrange = false;
+  bridge.setMode(previewMode());
+  overlay.refresh();
   if (mode === 'motion') ui.anim = null;
+}
+
+// ---------------------------------------------------------------- layout overlay
+/** Where block `id` is in the preview's page file: { file, at, j }, or null. */
+function blockAt(id) {
+  const file = previewFile(bridge.doc);
+  const list = store.current[file]?.sections || [];
+  for (const [at, s] of list.entries()) {
+    const j = (s.blocks || []).findIndex((b) => b.id === id);
+    if (j >= 0) return { file, at, j };
+  }
+  return null;
+}
+
+
+/** Content tab: drag and resize blocks in the preview (the page's own clicks are off). */
+function arrange(on) {
+  ui.arrange = on;
+  bridge.setMode(previewMode());
+  overlay.refresh();
+}
+
+/** Content tab: show the sections' columns and rows in the preview. */
+function showGrid(on) {
+  ui.grid = on;
+  overlay.refresh();
+}
+
+/** Open an animated element of the preview in the Motion tab. */
+function editMotion(el) {
+  setMode('motion');
+  ui.anim = pickAnim({ kind: 'anim', el });
+  bridge.select(el, 'anim');
 }
 
 // ---------------------------------------------------------------- preview events
 bridge.on('connect', () => {
-  bridge.setMode(ui.mode === 'settings' ? 'browse' : ui.mode);
+  bridge.setMode(previewMode());
+  overlay.attach(bridge.doc.defaultView);
   pushCurtains();
   ui.previewVersion++;
 });

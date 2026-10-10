@@ -20,7 +20,7 @@
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
-  import { TARGETS } from '../../site/sections/form.js';
+  import { TARGETS } from '../../site/blocks/form.js';
   import { SITE } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)

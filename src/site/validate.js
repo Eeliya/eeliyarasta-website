@@ -98,7 +98,7 @@ function checkSite(d) {
   ];
 }
 
-/** site.json "forms": where contact forms send (src/site/sections/form.js). */
+/** site.json "forms": where contact forms send (src/site/blocks/form.js). */
 function checkForms(f) {
   if (!isObject(f)) return [];
   const out = optional(f, { target: 'string', endpoint: 'string', turnstileSiteKey: 'string' });
