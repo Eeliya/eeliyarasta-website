@@ -11,13 +11,13 @@ import {
   itemHref,
   firstPhotos,
 } from '../helpers.js';
-import { HOME, pageFile, sourceFile } from '../files.js';
+import { sourceFile } from '../files.js';
 
-const PROJECTS = sourceFile('projects');
-
-/** Section header used on the home page: (01) Label / Title / glass CTA. */
-export const sectionHead = ({ key, index, label, title, href, cta }) => {
-  const at = (field) => ed(HOME, ['sections', key, field]);
+/**
+ * A section's numbered head: (01) Label / Title / glass CTA. at(field): the section's
+ * editor marker for one of its fields (see sections/index.js).
+ */
+export const sectionHead = ({ at, index, label, title, href, cta }) => {
   return html`
   <header class="section__head">
     <span class="section__label label" data-anim="section.label">(${pad(index)}) <span${at('label')}>${esc(label)}</span></span>
@@ -57,7 +57,12 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
 };
 
 /** Editorial index list of projects with a hover image preview (anchored to the row) + click-to-expand details. */
-export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 } = {}) => {
+export const projectList = (
+  ctx,
+  projects,
+  { id = 'projects', source = 'projects', headingLevel = 3 } = {},
+) => {
+  const PROJECTS = sourceFile(source);
   const h = `h${headingLevel}`;
   return html` <div class="plist" data-anim="projects.list" data-project-list="${id}">
       ${projects.map(
@@ -94,17 +99,4 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
         ${projects.map((p, i) => (p.image ? img(ctx, p.image, { decorative: true, sizes: '360px', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : '<img alt="" />'))}
       </div>
     </div>`;
-};
-
-/** Page heading used by index pages; copy comes from the page's own file, content/pages/<id>/index.json. */
-export const pageHead = (ctx, id, { count, center = false, after = '' } = {}) => {
-  const { crumb, title, intro } = ctx.pages[id];
-  const at = (field, type) => ed(pageFile(id), [field], type);
-  return html`
-  <section class="page-head${center ? ' page-head--center' : ''}">
-    <span class="label page-head__crumb"${at('crumb')}>${esc(crumb)}</span>
-    <h1 class="page-title" data-anim="page.title"><span${at('title')}>${esc(title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
-    ${intro ? html`<p class="page-intro" data-anim="page.intro" ${at('intro', 'block')}>${lines(intro)}</p>` : ''}
-    ${after}
-  </section>`;
 };

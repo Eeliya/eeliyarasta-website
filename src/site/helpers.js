@@ -123,7 +123,7 @@ export function mediaUrl(ctx, src = '') {
 
 const warned = new Set();
 /** Warn once per message (templates render every page, and again on every dev request). */
-function warnOnce(msg, tag = 'photos') {
+export function warnOnce(msg, tag = 'photos') {
   if (warned.has(msg)) return;
   warned.add(msg);
   console.warn(`[${tag}] ${msg}`);

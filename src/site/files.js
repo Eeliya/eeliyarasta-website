@@ -88,7 +88,6 @@ export function contentFromFiles(files) {
   const list = (id) => (Array.isArray(sources[id]) ? sources[id] : []);
   return {
     site: files[SITE],
-    home: files[HOME],
     pages: Object.fromEntries(
       Object.entries(files)
         .map(([f, data]) => [pageIdOf(f), data])

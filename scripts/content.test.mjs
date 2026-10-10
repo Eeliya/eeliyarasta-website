@@ -146,7 +146,7 @@ test('editor markers: only when rendering for the editor (dev), never in the bui
   assert.doesNotMatch(built.head + built.body, MARKERS);
   assert.match(built.body, /data-anim="/); // animations keep their hooks
   const dev = renderRoute(home, content, { editable: true });
-  assert.match(dev.body, /data-edit="pages\/index\.json#\/hero\/title"/);
+  assert.match(dev.body, /data-edit="pages\/index\.json#\/sections\/0\/title"/);
   assert.match(dev.body, /data-section="s0"/);
   assert.match(dev.body, /data-curtain-edit="/);
 });

@@ -1,7 +1,17 @@
 {
-  "crumb": "Projects",
-  "title": "Projects",
-  "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
   "curtain": "Projects",
-  "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." }
+  "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." },
+  "sections": [
+    {
+      "type": "heading",
+      "crumb": "Projects",
+      "title": "Projects",
+      "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
+      "config": { "enabled": true, "count": "projects" }
+    },
+    {
+      "type": "projects",
+      "config": { "enabled": true, "source": "projects" }
+    }
+  ]
 }

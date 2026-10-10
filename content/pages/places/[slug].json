@@ -1,5 +1,11 @@
 {
   "config": { "source": "places" },
   "section": "Places",
-  "next": "Next place"
+  "next": "Next place",
+  "sections": [
+    {
+      "type": "album",
+      "config": { "enabled": true }
+    }
+  ]
 }

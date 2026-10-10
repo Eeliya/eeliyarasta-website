@@ -1,15 +1,14 @@
 /**
  * Render a route to { head, body } HTML strings.
  * Used by the Vite plugin (dev middleware + build-time prerender).
+ * Every page is its file's list of sections (sections/index.js); a [slug] page's are in its
+ * template file, rendered for the route's item.
  */
 import { accentOf, setEditable } from './helpers.js';
 import { head, body } from './templates/layout.js';
-import { home } from './templates/home.js';
-import { album } from './templates/album.js';
-import * as pages from './templates/pages.js';
+import { renderSections } from './sections/index.js';
+import { pageFile } from './files.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
-
-const views = { home, album, ...pages };
 
 export { getRoutes, buildRoutes, sitemapXml };
 
@@ -20,8 +19,8 @@ export function renderRoute(route, content, { editable = false } = {}) {
   // routes: links to source items go to their pages (itemHref in helpers.js).
   const routes = getRoutes(content);
   const ctx = { ...content, route, routes, curtains: curtainOverrides(routes) };
-  const view = views[route.page];
-  if (!view) throw new Error(`No template for page "${route.page}"`);
+  const file = pageFile(route.id);
+  const view = renderSections(ctx, route, file, content.pages[route.id]?.sections);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
-  return { head: head(ctx, route, accent), body: body(ctx, route, accent, view(ctx, route)) };
+  return { head: head(ctx, route, accent), body: body(ctx, route, accent, view, file) };
 }

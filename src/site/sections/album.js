@@ -1,11 +1,21 @@
+/**
+ * The album section of a [slug] page: the page's item (one person or place), Faint Film
+ * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
+ * drag / wheel navigation and a Slider ⇄ Grid toggle. It shows the item of the page it is on
+ * (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
+ */
 import { html, esc, img, pad, creditText, ratio, ed, lines, imagesOf } from '../helpers.js';
 
-/**
- * Album page (one person or place), Faint Film "slider view":
- * a big current image, numbered thumbnail strip, 01/08 counter,
- * keyboard / drag / wheel navigation and a Slider ⇄ Grid toggle.
- */
-export function album(ctx, route) {
+export const album = {
+  type: 'album',
+  label: 'Album (the item)',
+  icon: 'film',
+  item: true,
+  defaults: {},
+  render: (s, ctx, sec) => albumOf(ctx, ctx.route, sec),
+};
+
+function albumOf(ctx, route, sec) {
   const a = route.album;
   const images = imagesOf(a);
   const n = images.length;
@@ -21,7 +31,7 @@ export function album(ctx, route) {
     ['Photos', pad(n), ''],
   ].filter((m) => m && m[1]);
 
-  return html` <section class="album" data-album data-view="slider" data-count="${n}">
+  return html` <section class="album" data-album data-view="slider" data-count="${n}"${sec.attrs}>
     <aside class="album__info">
       <a class="album__back label" href="${esc(route.parent)}"
         ><span aria-hidden="true">←</span> <span${ed(route.template, ['section'])}>${esc(route.section)}</span></a

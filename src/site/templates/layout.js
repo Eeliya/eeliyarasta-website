@@ -54,11 +54,13 @@ function pageCurtains(curtains) {
   return `<script type="application/json" id="page-curtains">${json}</script>`;
 }
 
-/** Full <body> contents injected at <!--ssr-body--> */
-export function body(ctx, route, accent, view) {
+/** Full <body> contents injected at <!--ssr-body-->; file: the page file of its sections. */
+export function body(ctx, route, accent, view, file) {
   const curtain = route.curtain ?? '';
-  const curtainEdit =
-    editable && route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : '';
+  // the editor: where the curtain text and the sections are stored
+  const curtainEdit = editable
+    ? `${route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : ''} data-page-file="${esc(file)}"`
+    : '';
   const page = html` <a class="skip-link" href="#main">Skip to content</a>
     <div class="backdrop" aria-hidden="true">
       <div class="backdrop__glow"></div>

@@ -397,3 +397,36 @@
     font-size: 14px;
   }
 }
+
+/* ---------------- Plain sections (any page): text, photo, button ---------------- */
+.textblock {
+  display: grid;
+  gap: 24px;
+  padding-block: 4vh;
+  &__body {
+    display: grid;
+    gap: 20px;
+    p {
+      max-width: 64ch;
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--solid-faint);
+    }
+  }
+}
+.photoblock {
+  padding-block: 4vh;
+  &__figure {
+    display: grid;
+    gap: 12px;
+    max-width: 960px;
+    img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius);
+    }
+  }
+}
+.buttonblock {
+  padding-block: 4vh;
+}

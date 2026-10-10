@@ -1,5 +1,11 @@
 {
   "config": { "source": "people" },
   "section": "People",
-  "next": "Next person"
+  "next": "Next person",
+  "sections": [
+    {
+      "type": "album",
+      "config": { "enabled": true }
+    }
+  ]
 }

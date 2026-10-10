@@ -1,7 +1,17 @@
 {
-  "crumb": "Photography / Places",
-  "title": "Places",
-  "intro": "Buildings, streets and castles. What is left when the people walk out of frame.",
   "curtain": "Places",
-  "meta": { "description": "Places and architecture photographed by Eeliya Rasta." }
+  "meta": { "description": "Places and architecture photographed by Eeliya Rasta." },
+  "sections": [
+    {
+      "type": "heading",
+      "crumb": "Photography / Places",
+      "title": "Places",
+      "intro": "Buildings, streets and castles. What is left when the people walk out of frame.",
+      "config": { "enabled": true, "count": "places" }
+    },
+    {
+      "type": "albums",
+      "config": { "enabled": true, "source": "places", "layout": "landscape" }
+    }
+  ]
 }

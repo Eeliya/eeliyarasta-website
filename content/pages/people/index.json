@@ -1,7 +1,17 @@
 {
-  "crumb": "Photography / People",
-  "title": "People",
-  "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
   "curtain": "People",
-  "meta": { "description": "Models photographed by Eeliya Rasta." }
+  "meta": { "description": "Models photographed by Eeliya Rasta." },
+  "sections": [
+    {
+      "type": "heading",
+      "crumb": "Photography / People",
+      "title": "People",
+      "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
+      "config": { "enabled": true, "count": "people" }
+    },
+    {
+      "type": "albums",
+      "config": { "enabled": true, "source": "people", "layout": "portrait" }
+    }
+  ]
 }

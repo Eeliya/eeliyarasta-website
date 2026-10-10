@@ -1,119 +1,133 @@
 {
-  "hero": {
-    "title": "Eeliya Rasta",
-    "eyebrow": "Portrait & editorial photography",
-    "subline": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
-    "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
-    "photos": [
-      {
-        "src": "people/noor-vermeer/02.jpg",
-        "link": "/people/noor-vermeer/",
-        "label": "Noor Vermeer",
-        "x": 7,
-        "y": 9,
-        "w": 13,
-        "depth": 0.35,
-        "layer": "back",
-        "mx": 4,
-        "my": 10,
-        "mw": 34
-      },
-      {
-        "src": "people/daan-okafor/02.jpg",
-        "link": "/people/daan-okafor/",
-        "label": "Daan Okafor",
-        "x": 31,
-        "y": 4,
-        "w": 10,
-        "depth": 0.7,
-        "layer": "back",
-        "mx": 62,
-        "my": 6,
-        "mw": 30
-      },
-      {
-        "src": "places/kasteel-de-haar/02.jpg",
-        "link": "/places/kasteel-de-haar/",
-        "label": "Kasteel de Haar",
-        "x": 63,
-        "y": 7,
-        "w": 16,
-        "depth": 0.5,
-        "layer": "back"
-      },
-      {
-        "src": "people/noor-vermeer/06.jpg",
-        "link": "/people/noor-vermeer/",
-        "label": "Noor Vermeer",
-        "x": 85,
-        "y": 18,
-        "w": 11,
-        "depth": 0.9,
-        "layer": "back"
-      },
-      {
-        "src": "people/daan-okafor/05.jpg",
-        "link": "/people/daan-okafor/",
-        "label": "Daan Okafor",
-        "x": 2,
-        "y": 58,
-        "w": 12,
-        "depth": 0.8,
-        "layer": "back",
-        "mx": 6,
-        "my": 66,
-        "mw": 28
-      },
-      {
-        "src": "people/noor-vermeer/04.jpg",
-        "link": "/people/noor-vermeer/",
-        "label": "Noor Vermeer",
-        "x": 22,
-        "y": 50,
-        "w": 12,
-        "depth": 1,
-        "layer": "front",
-        "mx": 40,
-        "my": 58,
-        "mw": 30
-      },
-      {
-        "src": "places/concrete-studies/05.jpg",
-        "link": "/places/concrete-studies/",
-        "label": "Concrete Studies",
-        "x": 47,
-        "y": 66,
-        "w": 9,
-        "depth": 0.45,
-        "layer": "back"
-      },
-      {
-        "src": "people/daan-okafor/01.jpg",
-        "link": "/people/daan-okafor/",
-        "label": "Daan Okafor",
-        "x": 66,
-        "y": 52,
-        "w": 12,
-        "depth": 0.85,
-        "layer": "front",
-        "mx": 70,
-        "my": 70,
-        "mw": 26
-      },
-      {
-        "src": "people/noor-vermeer/01.jpg",
-        "link": "/people/noor-vermeer/",
-        "label": "Noor Vermeer",
-        "x": 86,
-        "y": 64,
-        "w": 10,
-        "depth": 0.6,
-        "layer": "back"
-      }
-    ],
-    "enabled": true
+  "curtain": "Eeliya Rasta",
+  "transition": {
+    "mode": "custom",
+    "label": true,
+    "in": { "duration": 0.3, "ease": "power4.out" },
+    "textDelay": 0.15,
+    "labelIn": { "duration": 0.3, "ease": "expo.out" },
+    "labelOut": { "duration": 0.3, "ease": "power2.in" },
+    "out": { "ease": "power3.in" },
+    "outStart": 0.75,
+    "textOutStart": 0.6,
+    "total": 1.1
   },
   "sections": [
+    {
+      "type": "hero",
+      "title": "Eeliya Rasta",
+      "eyebrow": "Portrait & editorial photography",
+      "subline": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
+      "photos": [
+        {
+          "src": "people/noor-vermeer/02.jpg",
+          "link": "/people/noor-vermeer/",
+          "label": "Noor Vermeer",
+          "x": 7,
+          "y": 9,
+          "w": 13,
+          "depth": 0.35,
+          "layer": "back",
+          "mx": 4,
+          "my": 10,
+          "mw": 34
+        },
+        {
+          "src": "people/daan-okafor/02.jpg",
+          "link": "/people/daan-okafor/",
+          "label": "Daan Okafor",
+          "x": 31,
+          "y": 4,
+          "w": 10,
+          "depth": 0.7,
+          "layer": "back",
+          "mx": 62,
+          "my": 6,
+          "mw": 30
+        },
+        {
+          "src": "places/kasteel-de-haar/02.jpg",
+          "link": "/places/kasteel-de-haar/",
+          "label": "Kasteel de Haar",
+          "x": 63,
+          "y": 7,
+          "w": 16,
+          "depth": 0.5,
+          "layer": "back"
+        },
+        {
+          "src": "people/noor-vermeer/06.jpg",
+          "link": "/people/noor-vermeer/",
+          "label": "Noor Vermeer",
+          "x": 85,
+          "y": 18,
+          "w": 11,
+          "depth": 0.9,
+          "layer": "back"
+        },
+        {
+          "src": "people/daan-okafor/05.jpg",
+          "link": "/people/daan-okafor/",
+          "label": "Daan Okafor",
+          "x": 2,
+          "y": 58,
+          "w": 12,
+          "depth": 0.8,
+          "layer": "back",
+          "mx": 6,
+          "my": 66,
+          "mw": 28
+        },
+        {
+          "src": "people/noor-vermeer/04.jpg",
+          "link": "/people/noor-vermeer/",
+          "label": "Noor Vermeer",
+          "x": 22,
+          "y": 50,
+          "w": 12,
+          "depth": 1,
+          "layer": "front",
+          "mx": 40,
+          "my": 58,
+          "mw": 30
+        },
+        {
+          "src": "places/concrete-studies/05.jpg",
+          "link": "/places/concrete-studies/",
+          "label": "Concrete Studies",
+          "x": 47,
+          "y": 66,
+          "w": 9,
+          "depth": 0.45,
+          "layer": "back"
+        },
+        {
+          "src": "people/daan-okafor/01.jpg",
+          "link": "/people/daan-okafor/",
+          "label": "Daan Okafor",
+          "x": 66,
+          "y": 52,
+          "w": 12,
+          "depth": 0.85,
+          "layer": "front",
+          "mx": 70,
+          "my": 70,
+          "mw": 26
+        },
+        {
+          "src": "people/noor-vermeer/01.jpg",
+          "link": "/people/noor-vermeer/",
+          "label": "Noor Vermeer",
+          "x": 86,
+          "y": 64,
+          "w": 10,
+          "depth": 0.6,
+          "layer": "back"
+        }
+      ],
+      "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
+      "config": { "enabled": true }
+    },
     {
       "type": "intro",
       "text": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
@@ -140,18 +154,5 @@
       "cta": "All projects",
       "config": { "enabled": true }
     }
-  ],
-  "curtain": "Eeliya Rasta",
-  "transition": {
-    "mode": "custom",
-    "label": true,
-    "in": { "duration": 0.3, "ease": "power4.out" },
-    "textDelay": 0.15,
-    "labelIn": { "duration": 0.3, "ease": "expo.out" },
-    "labelOut": { "duration": 0.3, "ease": "power2.in" },
-    "out": { "ease": "power3.in" },
-    "outStart": 0.75,
-    "textOutStart": 0.6,
-    "total": 1.1
-  }
+  ]
 }

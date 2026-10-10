@@ -12,9 +12,10 @@
  *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
  *                                                         slug, this one wins over the template
  *
- * Folders nest to any depth. A page uses the view named in its "view" field, else the
- * built-in view of the same name (home, photography, people, places, projects, about,
- * 404), else the plain "page" view (just its heading); templates default to "album".
+ * Folders nest to any depth. Every page is its list of sections (src/site/sections/). Its
+ * "view" (the class of <main> and <html data-page>, for the styles) is its "view" field,
+ * else the built-in name of the same page (home, photography, people, places, projects,
+ * about, 404), else "page"; templates default to "album" (no footer).
  *
  * Routes with noindex (404, and the pages of items with "placeholder": true) get
  * <meta name="robots" content="noindex"> and are left out of sitemap.xml.
@@ -37,7 +38,7 @@ function curtainEditOf(file, parts) {
   return `${file}#${ptr}`;
 }
 
-/** Built-in views of pages named after them (src/site/templates/). */
+/** Views (style hooks) of pages named after them. */
 export const NAMED_VIEWS = {
   home: 'home',
   photography: 'photography',
@@ -51,6 +52,10 @@ export const NAMED_VIEWS = {
 /** "people/[slug]" -> "/people/", "about" -> "/about/", "home" -> "/". */
 export const pathOfId = (id) =>
   id === 'home' ? '/' : `/${id.replace(/(^|\/)\[slug\]$/, '')}/`.replace(/\/+$/, '/');
+
+/** A page's title: its first heading section's title (sections/pages.js), else undefined. */
+export const pageTitle = (page) =>
+  (Array.isArray(page?.sections) ? page.sections : []).find((s) => s?.type === 'heading')?.title;
 
 const titleCase = (s) =>
   String(s)
@@ -103,7 +108,7 @@ export function buildRoutes(content) {
     const title =
       id === 'home'
         ? (meta.title ?? site.title)
-        : `${meta.title ?? page.title ?? titleCase(segments.at(-1))} | ${site.name}`;
+        : `${meta.title ?? pageTitle(page) ?? titleCase(segments.at(-1))} | ${site.name}`;
     routes.push({
       path: pathOfId(id),
       id,
