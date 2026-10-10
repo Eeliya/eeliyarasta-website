@@ -43,7 +43,6 @@
   } = $props();
 
   let invalid = $state(false);
-  const rows = $derived(Math.min(8, Math.max(2, Math.ceil(String(value ?? '').length / 42))));
 
   /** Show the stored value, except while the user is typing in the field. */
   const show = (value) => (el) => {
@@ -148,7 +147,6 @@
   {:else if type === 'block'}
     <textarea
       class={['tf__input', invalid && 'is-invalid']}
-      {rows}
       {placeholder}
       {@attach show(value)}
       {onfocus}

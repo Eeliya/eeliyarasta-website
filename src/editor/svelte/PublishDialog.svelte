@@ -156,7 +156,6 @@
           <span class="tf__label">Commit message</span>
           <textarea
             class="tf__input"
-            rows="3"
             bind:this={textarea}
             bind:value={message}
             oninput={() => (touched = true)}></textarea>

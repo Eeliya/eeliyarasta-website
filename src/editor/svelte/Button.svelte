@@ -1,7 +1,7 @@
 <!--
   The editor's button: a pill after the footer's Save / Publish, or a round icon button.
     variant   'default' | 'primary' (the main action, light) | 'danger' (red: Delete, Discard)
-    size      'default' (40px; icon only 36px) | 'small' (32px; icon only 24px, unfilled)
+    size      'default' (40px; icon only 32px) | 'small' (32px; icon only 24px, unfilled)
     icon      Font Awesome name without the prefix, e.g. 'trash'
     iconOnly  round, just the icon; label is its aria-label and title
     label     the text when there are no children
@@ -123,8 +123,8 @@
 
   // round, just the icon
   .btn--icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     font-size: 15px;
   }

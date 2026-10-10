@@ -299,7 +299,7 @@ kbd {
     margin: 0;
     color: var(--muted);
     text-align: left;
-    height: 36px;
+    height: 32px;
   }
 }
 
@@ -530,7 +530,7 @@ kbd {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  min-height: 24px; // as tall with or without a .tf__file pill
+  min-height: 24px;
   color: var(--muted);
   font-size: 11px;
   line-height: 16px;
@@ -582,25 +582,21 @@ kbd {
   margin-left: auto;
 }
 
-.tf__file {
-  margin-left: auto;
-  font-size: 9.5px;
-  letter-spacing: 0.02em;
-  padding: 4px 8px;
-  border-radius: 999px;
-  color: var(--accent);
-  background: var(--faint);
-  text-transform: none;
-}
-
 .tf__input {
   width: 100%;
-  resize: vertical;
+  resize: none;
   display: block;
 
   &.is-invalid {
     box-shadow: inset 0 0 0 1px #ff8a7a;
   }
+}
+
+// a textarea: one line (32px, like the inputs), growing with its text
+textarea.tf__input {
+  field-sizing: content;
+  min-height: 32px;
+  max-height: 320px;
 }
 
 // ------------------------------------------------------------ dialogs
@@ -656,19 +652,19 @@ dialog.modal__box {
 // (not in a component's <style>) because they reach into other components and their order
 // against the ease picker rules above matters.
 
-/* Page-transition ease toggles match the duration number input height (36px). */
+/* Page-transition ease toggles match the duration number input height (32px). */
 .ptg {
   .tf__input,
   .f__num {
     box-sizing: border-box;
-    height: 36px;
+    height: 32px;
     line-height: 1.25;
   }
 
   .ease__toggle {
     box-sizing: border-box;
-    height: 36px;
-    min-height: 36px;
+    height: 32px;
+    min-height: 32px;
     padding: 0 12px;
     border-radius: 8px;
     gap: 8px;
@@ -746,7 +742,7 @@ dialog.modal__box {
 .ease--compact .ease__toggle {
   padding: 4px 12px;
   gap: 12px;
-  min-height: 36px;
+  min-height: 32px;
 }
 
 .ease--compact .ease__big {
