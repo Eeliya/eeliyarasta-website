@@ -409,7 +409,10 @@ export async function mediaOp(root, env, { op, key, alt } = {}, onWrite = () => 
     delete photos[key];
     writePhotos(photosFile, photos);
   }
-  return done({ key, deleted: [...new Set(files)].map((f) => path.relative(root, f)) });
+  return done({
+    key,
+    deleted: [...new Set(files)].map((f) => path.relative(root, f).split(path.sep).join('/')),
+  });
 }
 
 /** The request body as a Buffer; over `limit` bytes fails with 413. */
