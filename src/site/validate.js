@@ -7,6 +7,7 @@
  *   checkContent(file, data)   a list of problems ([] when fine), e.g. "footer must be an object"
  */
 import { ANIMATIONS, PHOTOS, SITE, TEMPLATE, pageIdOf, sourceIdOf } from './files.js';
+import { SECTION_TYPES } from './sections/index.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const typeOf = (v) =>
@@ -85,9 +86,49 @@ function checkAnimations(d) {
 }
 
 function checkPage(file, d) {
-  const out = optional(d, { meta: 'object', sections: 'array', title: 'string' });
+  const out = optional(d, { meta: 'object', sections: 'array' });
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.config?.source !== 'string')
     out.push('"config.source" must name a source (a [slug] page makes a page per item)');
+  if (Array.isArray(d.sections)) out.push(...d.sections.flatMap(checkSection));
+  return out;
+}
+
+const FIELD_TYPES = { number: 'number' }; // the other field types are strings
+const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strings
+
+/** One page section against its type in the registry; an unknown type only warns (render). */
+function checkSection(s, at) {
+  const where = `section ${at + 1}`;
+  if (!isObject(s)) return [`${where} must be an object`];
+  if (typeof s.type !== 'string') return [`${where} needs a "type"`];
+  const t = SECTION_TYPES[s.type];
+  if (!t) return [];
+  const out = [];
+  const bad = (key, want) => out.push(`${where} (${t.label}): "${key}" must be ${want}`);
+  for (const f of t.fields || []) {
+    const v = s[f.key];
+    if (v === undefined) continue;
+    if (!f.list) {
+      if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
+        bad(f.key, `a ${FIELD_TYPES[f.type] || 'string'}`);
+    } else if (!Array.isArray(v)) bad(f.key, 'a list');
+    else if (
+      typeof f.list === 'string' ? !v.every((x) => typeof x === 'string') : !v.every(isObject)
+    )
+      bad(f.key, typeof f.list === 'string' ? 'a list of strings' : 'a list of objects');
+  }
+  if (s.config === undefined) return out;
+  if (!isObject(s.config)) return [...out, `${where} (${t.label}): "config" must be an object`];
+  const { enabled } = s.config;
+  if (enabled !== undefined && typeof enabled !== 'boolean') bad('config.enabled', 'true or false');
+  for (const c of t.config || []) {
+    const v = s.config[c.key];
+    if (v === undefined || (c.empty && v === '')) continue;
+    if (typeof v !== (CONFIG_TYPES[c.type] || 'string'))
+      bad(`config.${c.key}`, `a ${CONFIG_TYPES[c.type] || 'string'}`);
+    else if (c.options && !c.options.some(([o]) => o === v))
+      bad(`config.${c.key}`, `one of ${c.options.map(([o]) => o).join(', ')}`);
+  }
   return out;
 }
 

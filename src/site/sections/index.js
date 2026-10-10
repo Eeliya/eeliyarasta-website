@@ -84,6 +84,7 @@ export function renderSections(ctx, route, file, sections) {
         );
         return '';
       }
+      // a section that's off still renders, hidden, so the editor can turn it on live
       const on = s.config?.enabled !== false;
       if (on && isNumbered(s)) number++;
       const sec = {

@@ -218,17 +218,6 @@ export const ratio = (ctx, src) => {
   return m && m.width ? m.width / m.height : 0.8;
 };
 
-/** Is a content section enabled? Missing/undefined counts as on. */
-export const isEnabled = (section) => section?.enabled !== false;
-
-/**
- * data-section + optional hidden for section toggles in the editor.
- * Templates always render the section; disabled ones are hidden (not omitted)
- * so the editor can turn them back on without a full page rebuild.
- */
-export const sectionAttrs = (id, enabled) =>
-  `${editable ? ` data-section="${esc(id)}"` : ''}${enabled === false ? ' hidden' : ''}`;
-
 /* ---------- colour helpers for album accents ---------- */
 
 const hexToRgb = (hex) => {
