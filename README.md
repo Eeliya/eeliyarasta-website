@@ -126,6 +126,8 @@ Routes, menu, dropdowns, grids and sitemap update automatically.
 > Their photos are free Unsplash images (Unsplash License); photographer and source URL are
 > recorded per image in the JSON and shown as a credit in the album view. Replace them with
 > real shoots. The email `hello@eeliyarasta.com` is a placeholder too.
+> Pages of items with `"placeholder": true` get `noindex` and are left out of `sitemap.xml`;
+> remove the flag (or set it to `false`) when the item is real.
 
 ### Pages and URLs
 

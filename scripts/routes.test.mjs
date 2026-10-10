@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildRoutes } from '../src/site/routes.js';
+import { buildRoutes, sitemapXml } from '../src/site/routes.js';
 import { contentFromFiles, isContentFile, pageFile, pageIdOf } from '../src/site/files.js';
 import { itemHref, slugify } from '../src/site/helpers.js';
 
@@ -27,6 +27,7 @@ test('folders mirror URLs, in tree order', () => {
   ]);
   const r = buildRoutes(c).routes;
   assert.equal(r.find((x) => x.path === '/404/').out, '404.html');
+  assert.doesNotMatch(sitemapXml(r, ''), /404/);
   assert.equal(r.find((x) => x.path === '/people/').page, 'people'); // built-in view
   assert.equal(r.find((x) => x.path === '/people/whatever/').page, 'page');
   assert.equal(r.find((x) => x.path === '/people/whatever/').title, 'Whatever | Site');
@@ -104,4 +105,18 @@ test('content file names', () => {
   for (const id of ['home', 'people', 'people/[slug]', 'a/b'])
     assert.equal(pageIdOf(pageFile(id)), id);
   assert.equal(slugify('  Kasteel de Haar! '), 'kasteel-de-haar');
+});
+
+test('placeholder items: noindex, so not in the sitemap', () => {
+  const c = content({
+    'pages/people/index.json': {},
+    'pages/people/[slug].json': { config: { source: 'people' } },
+    'sources/people.json': [{ name: 'Real' }, { name: 'Stock', placeholder: true }],
+  });
+  const r = buildRoutes(c).routes;
+  assert.equal(r.find((x) => x.path === '/people/real/').noindex, undefined);
+  assert.equal(r.find((x) => x.path === '/people/stock/').noindex, true);
+  const xml = sitemapXml(r, 'https://example.com');
+  assert.match(xml, /<loc>https:\/\/example\.com\/people\/real\/<\/loc>/);
+  assert.doesNotMatch(xml, /stock/);
 });

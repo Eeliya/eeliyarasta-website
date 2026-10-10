@@ -15,6 +15,9 @@
  * Folders nest to any depth. A page uses the view named in its "view" field, else the
  * built-in view of the same name (home, photography, people, places, projects, about,
  * 404), else the plain "page" view (just its heading); templates default to "album".
+ *
+ * Routes with noindex (404, and the pages of items with "placeholder": true) get
+ * <meta name="robots" content="noindex"> and are left out of sitemap.xml.
  */
 import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
 import { coverOf, itemSlug } from './helpers.js';
@@ -161,6 +164,8 @@ export function buildRoutes(content) {
           title,
           description: item.summary,
           image: coverOf(item)?.src,
+          // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
+          ...(item.placeholder ? { noindex: true } : {}),
           curtain: curtainOf(item.curtain, title),
           curtainEdit: curtainEditOf(sourceFile(source), [index, 'curtain']),
           transition: item.transition,
@@ -168,6 +173,14 @@ export function buildRoutes(content) {
         };
       });
   }
+}
+
+/** sitemap.xml: every route except the noindex ones (404, placeholder items). */
+export function sitemapXml(routes, siteUrl) {
+  const urls = routes
+    .filter((r) => !r.noindex)
+    .map((r) => `  <url><loc>${siteUrl}${r.path}</loc></url>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 }
 
 /** Every route of the site (see buildRoutes). */

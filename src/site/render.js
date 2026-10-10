@@ -7,11 +7,11 @@ import { head, body } from './templates/layout.js';
 import { home } from './templates/home.js';
 import { album } from './templates/album.js';
 import * as pages from './templates/pages.js';
-import { getRoutes, buildRoutes, curtainOverrides } from './routes.js';
+import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
 const views = { home, album, ...pages };
 
-export { getRoutes, buildRoutes };
+export { getRoutes, buildRoutes, sitemapXml };
 
 export function renderRoute(route, content) {
   // curtains: every page carries the pages with their own curtain, for the router.

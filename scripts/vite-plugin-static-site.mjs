@@ -126,7 +126,7 @@ export default function staticSite() {
       const shellFile = path.join(outDir, 'index.html');
       if (!fs.existsSync(shellFile)) return;
       const shell = fs.readFileSync(shellFile, 'utf8');
-      const { buildRoutes, renderRoute } = await import(
+      const { buildRoutes, renderRoute, sitemapXml } = await import(
         pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`
       );
       const content = loadContent(root);
@@ -139,13 +139,7 @@ export default function staticSite() {
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, fill(shell, renderRoute(route, content)));
       }
-      const urls = routes
-        .filter((r) => !r.noindex)
-        .map((r) => `  <url><loc>${content.site.url}${r.path}</loc></url>`);
-      fs.writeFileSync(
-        path.join(outDir, 'sitemap.xml'),
-        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
-      );
+      fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemapXml(routes, content.site.url));
       fs.writeFileSync(
         path.join(outDir, 'robots.txt'),
         `User-agent: *\nAllow: /\nSitemap: ${content.site.url}/sitemap.xml\n`,
