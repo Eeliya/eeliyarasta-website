@@ -120,3 +120,14 @@ test('placeholder items: noindex, so not in the sitemap', () => {
   assert.match(xml, /<loc>https:\/\/example\.com\/people\/real\/<\/loc>/);
   assert.doesNotMatch(xml, /stock/);
 });
+
+test('a name that makes no slug says so', () => {
+  const c = content({
+    'pages/people/[slug].json': { config: { source: 'people' } },
+    'sources/people.json': [{ name: '??? //' }, {}],
+  });
+  assert.deepEqual(buildRoutes(c).warnings, [
+    'sources/people.json item 1: name "??? //" makes no slug, add a "slug": no page',
+    'sources/people.json item 2 has no slug or name: no page',
+  ]);
+});

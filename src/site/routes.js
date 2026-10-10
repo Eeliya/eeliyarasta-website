@@ -132,7 +132,14 @@ export function buildRoutes(content) {
     list.forEach((item, index) => {
       const slug = itemSlug(item);
       const label = `sources/${source}.json item ${index + 1}`;
-      if (!slug) return warnings.push(`${label} has no slug or name: no page`);
+      if (!slug) {
+        const name = item?.name ?? item?.title;
+        return warnings.push(
+          name
+            ? `${label}: name "${name}" makes no slug, add a "slug": no page`
+            : `${label} has no slug or name: no page`,
+        );
+      }
       if (!isSlug(slug)) return warnings.push(`${label}: slug "${slug}" is not valid: no page`);
       if (seen.has(slug))
         return warnings.push(`${label}: duplicate slug "${slug}": no page for this one`);
