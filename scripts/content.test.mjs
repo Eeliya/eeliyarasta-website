@@ -135,3 +135,18 @@ test('formatJSON (what Save writes) is Prettier-clean for every content file', a
     assert.equal(text, pretty, `content/${file}`);
   }
 });
+
+test('editor markers: only when rendering for the editor (dev), never in the build', async () => {
+  const { buildRoutes } = await import('../src/site/routes.js');
+  const { renderRoute } = await import('../src/site/render.js');
+  const content = loadContent('.');
+  const home = buildRoutes(content).routes.find((r) => r.path === '/');
+  const MARKERS = /data-edit|data-section|data-curtain-edit/;
+  const built = renderRoute(home, content);
+  assert.doesNotMatch(built.head + built.body, MARKERS);
+  assert.match(built.body, /data-anim="/); // animations keep their hooks
+  const dev = renderRoute(home, content, { editable: true });
+  assert.match(dev.body, /data-edit="pages\/index\.json#\/hero\/title"/);
+  assert.match(dev.body, /data-section="s0"/);
+  assert.match(dev.body, /data-curtain-edit="/);
+});

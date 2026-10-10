@@ -2,7 +2,7 @@
  * Render a route to { head, body } HTML strings.
  * Used by the Vite plugin (dev middleware + build-time prerender).
  */
-import { accentOf } from './helpers.js';
+import { accentOf, setEditable } from './helpers.js';
 import { head, body } from './templates/layout.js';
 import { home } from './templates/home.js';
 import { album } from './templates/album.js';
@@ -13,7 +13,9 @@ const views = { home, album, ...pages };
 
 export { getRoutes, buildRoutes, sitemapXml };
 
-export function renderRoute(route, content) {
+/** editable: render the editor's markers (the dev server), see setEditable in helpers.js. */
+export function renderRoute(route, content, { editable = false } = {}) {
+  setEditable(editable);
   // curtains: every page carries the pages with their own curtain, for the router.
   // routes: links to source items go to their pages (itemHref in helpers.js).
   const routes = getRoutes(content);

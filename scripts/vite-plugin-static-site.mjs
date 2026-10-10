@@ -90,7 +90,7 @@ export default function staticSite() {
           const shell = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
           const html = await server.transformIndexHtml(
             req.url,
-            fill(shell, renderRoute(route, content)),
+            fill(shell, renderRoute(route, content, { editable: true })),
           );
           res.statusCode = status;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');

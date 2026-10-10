@@ -173,6 +173,10 @@ that every internal `href` / `src` in `dist/` points at a file.
 480/960/1600 px WebP files in `public/media/` and writes `.generated/media.json` with sizes,
 a tiny blurred placeholder (LQIP) and the image's most vivid colour. Templates use it for
 `srcset`, `width/height` (no layout shift) and lazy loading. Unchanged images are skipped.
+Photos load lazily, except the first ones at the top of a page (`firstPhotos(i)` in
+`src/site/helpers.js`, by template position): the first hero photo, people/places card and
+photography panel gets `loading="eager" fetchpriority="high"`, the next two `loading="eager"`.
+Album pages load their first two slides eagerly, and About its photo.
 If `sharp` is missing, originals are copied and the site still works. Both output folders are
 generated, so they're git-ignored. Sizes, format and quality are in `scripts/image-variants.mjs`,
 shared with photos uploaded to R2 (below).
@@ -379,6 +383,9 @@ for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for 
 in each page's `pages/<page>/index.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/pages/`, `content/sources/` and `content/settings/` (see
 `src/editor/config.js`); only the Pages window creates or deletes files, and only page files.
+These editor markers (`data-edit`, `data-edit-type`, `data-section`, `data-section-kind`,
+`data-curtain-edit`) are only rendered by the dev server; `npm run build` leaves them out
+(`renderRoute(route, content, { editable })`), which makes the built HTML about 9% smaller.
 
 **Save and Publish**
 

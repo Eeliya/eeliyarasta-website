@@ -7,6 +7,7 @@ import {
   lines,
   words,
   sectionAttrs,
+  editable,
   itemHref,
   firstPhotos,
 } from '../helpers.js';
@@ -162,7 +163,8 @@ export function home(ctx) {
       }
       const on = sectionOn(s);
       if (s.type !== 'intro' && on) number++;
-      const attrs = `${sectionAttrs(`s${at}`, on).trim()} data-section-kind="${esc(s.type === 'grid' ? `grid:${s.config?.source || 'people'}` : s.type)}"`;
+      const kind = s.type === 'grid' ? `grid:${s.config?.source || 'people'}` : s.type;
+      const attrs = `${sectionAttrs(`s${at}`, on).trim()}${editable ? ` data-section-kind="${esc(kind)}"` : ''}`;
       return render(ctx, s, { at, number, attrs });
     })}`;
 }
