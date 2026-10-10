@@ -22,7 +22,7 @@ body {
   --muted: #868582; // was / 0.55
   --faint: #4f4f4d; // was / 0.32
   --hi: #{$hi}; // highlight: links, badges, ease curves
-  --ed-accent: #33ccff; // focus and selection, everywhere in the editor (and the preview's outlines)
+  --ed-accent: #3cf; // focus and selection, everywhere in the editor (and the preview's outlines)
   --panel-w: 400px; // the side panel
 }
 
@@ -118,7 +118,7 @@ kbd {
     border: 0;
     background: none;
     cursor: pointer;
-    padding: 10px;
+    padding: 8px;
     border-radius: 0;
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -167,7 +167,7 @@ select,
   border: 0;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--line);
-  padding: 10px;
+  padding: 8px;
   outline: none;
   transition: box-shadow 0.2s;
   line-height: 16px;
@@ -373,8 +373,7 @@ select {
 
 .ed-body {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden auto;
   padding: 16px 16px 24px;
   overscroll-behavior: contain;
 }
@@ -546,9 +545,9 @@ select {
   flex: 1;
   appearance: none;
   margin: 0;
-  height: 2px;
+  height: 4px;
   background: rgb(255 255 255 / 0.18);
-  border-radius: 2px;
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
 

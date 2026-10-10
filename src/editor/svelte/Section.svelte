@@ -94,7 +94,7 @@
 
     // a changed-dot (8px) centered on the first line
     > :global(.dot) {
-      margin: 6px 0;
+      margin: calc((1lh - 8px) / 2) 0;
     }
   }
 

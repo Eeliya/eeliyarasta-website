@@ -198,11 +198,11 @@
   .chg__was {
     color: var(--muted);
     margin-right: 8px;
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .chg__val {
     color: var(--fg);
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 </style>

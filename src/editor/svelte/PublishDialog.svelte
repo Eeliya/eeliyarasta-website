@@ -284,6 +284,6 @@
     font: 11px/1.5 var(--f-mono);
     color: #ffb4a8;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 </style>

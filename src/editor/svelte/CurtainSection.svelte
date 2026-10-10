@@ -285,7 +285,7 @@
 
   /* Advanced sits on the bottom edge of the curtain box (same border). */
   .ptg__advanced {
-    margin: 0 -12px 0;
+    margin: 0 -12px;
     padding: 0;
     border-radius: 0 0 12px 12px;
     box-shadow: inset 0 1px 0 var(--line);

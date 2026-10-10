@@ -394,16 +394,13 @@
     text-overflow: ellipsis;
   }
 
-  @media (max-width: 900px) {
+  @media (width <= 900px) {
     .ed-stage {
-      inset: 0 0 50vh 0;
+      inset: 0 0 50vh;
       padding: 8px;
     }
     .ed-panel {
-      top: auto;
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
+      inset: auto 8px 8px;
       width: auto;
       height: calc(50vh - 16px);
     }

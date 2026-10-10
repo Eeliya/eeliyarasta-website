@@ -5,7 +5,7 @@
   --fg: #f2efe9;
   --muted: rgb(242 239 233 / 0.55);
   --faint: rgb(242 239 233 / 0.32);
-  --solid-faint: #aaaaaa;
+  --solid-faint: #aaa;
   --line: rgb(255 255 255 / 0.1);
   --accent: #cfc8b8;
   --solid-card: #212121;
@@ -19,7 +19,7 @@
   --radius: 6px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  @media (max-width: 760px) {
+  @media (width <= 760px) {
     --header-h: 64px;
   }
 }
