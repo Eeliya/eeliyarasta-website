@@ -382,6 +382,12 @@ existing JSON files in `content/pages/`, `content/sources/` and `content/setting
 
 **Save and Publish**
 
+- **Content checks** (`src/site/validate.js`): broken JSON in a content file stops the build and
+  the dev server with the file, line and column (the editor shows the same error). Save checks
+  the shape of every file first (pages are objects, a `[slug]` page names its source, sources
+  are lists of objects, `site.json` has `name` and `url`, `animations.json` has `presets`,
+  `targets` and `transitions`) and writes nothing when one is wrong; files are written to a
+  temporary file and renamed, so a crash never leaves half a file.
 - **Save** (**Ctrl/⌘+S**) writes the changed files to `content/` on disk. That's a **draft**:
   the preview (and Browse mode) shows it, and nothing leaves your machine. Only the preview
   reloads; the editor keeps its tab, scroll, open groups, selection and undo history.
