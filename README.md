@@ -111,17 +111,17 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                               | what                                                                                                                                                                                                                                                                                     |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                   |
-| `content/settings/site.json`       | name, SEO description, socials, email, the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
-| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                          |
-| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                     |
-| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: `title` / `description` for `<head>`                                                                                                                                                                           |
-| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                     |
-| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                       |
-| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                         |
-| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                 |
+| file                               | what                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                                                               |
+| `content/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), socials, email, the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `jobTitle` / `country` (structured data on home) |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                                      |
+| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                                                                 |
+| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                                                                                      |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                                                                 |
+| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                                   |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                                                                     |
+| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                                                             |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
@@ -235,14 +235,54 @@ Every page is a folder in `content/pages/`, and the folders are the URLs. A page
   `<html>`, for styles and scripts) is its `view` field, else its own name for the built-in
   pages (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else `page`.
   A template's is `album` (no footer). New pages start with a heading section.
-- **Head:** the title is `meta.title`, else its first heading section's `title`, else the file
-  name, plus `| <site name>`;
-  the description is `meta.description`, else the site's.
+- **Head:** title, description, share image and robots come from the page's `meta` and the
+  site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, so they follow a folder
   rename. A new page isn't in the menu by itself: add it in Settings > Menu (see "Menu").
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
+
+### SEO
+
+What `<head>` says about a page: `src/site/seo.js` (`seoOf`), from the site's defaults and the
+page's own `meta`. Edited in the editor: Settings > SEO (the defaults) and Content > SEO (the
+page in the preview; collapsed, below its sections, with a search-result and a share-card
+preview and the 60/160 character counts).
+
+**Site defaults** (`content/settings/site.json`):
+
+| key             | what                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| `title`         | home's title, in full                                                                              |
+| `titleTemplate` | every other page's title: `{page}` is its own title, `{site}` the site `name` (`{page} \| {site}`) |
+| `description`   | the description of pages without their own                                                         |
+| `ogImage`       | the share image of pages without their own (a media/ path or R2 key)                               |
+| `url`           | the site's address: canonical links, `og:url`, `og:image`, `sitemap.xml`                           |
+| `robots`        | `index` (default) or `noindex`: keeps the whole site out of search engines                         |
+| `lang`          | `<html lang>` (default `en`)                                                                       |
+
+**A page's own** (`"meta"` in its `index.json`), every key optional: `title` (else its first
+heading's title, else its folder name), `description`, `image` (share image), `noindex: true`
+(not in search, not in `sitemap.xml`), `canonical` (a path or URL, when the page copies
+another; else its own URL).
+
+**Item pages** (`[slug].json`), least magic: the title is `<item name> | <section>` in the
+template; the description is the item's `summary`, else the template's `meta.description`, else
+the site's; the share image is the item's cover, else the template's `meta.image`, else the
+site's. The template's `meta.noindex` hides every item page; an item with `"placeholder": true`
+gets `noindex` too. 404 is always `noindex`.
+
+**Output:** `<title>`, `description`, `canonical`, `og:title` / `description` / `url` / `type`,
+`og:image` (absolute: the R2 address or the site URL + the local path, the 960px size, with its
+`width` / `height` from the photo's sizes and `og:image:alt` from its alt text), `twitter:card`
+(`summary_large_image` with an image, else `summary`), `robots` when noindex, and the JSON-LD on
+home (a Person: `name`, `url`, `jobTitle`, `country`). `npm run build` prints `[seo]` warnings
+for indexable pages without a description (and no site default), titles over ~60 characters and
+descriptions over ~160. `checkContent` validates `meta` and the defaults.
+
+Pages are never placeholders: About is a normal page, indexed unless its `meta.noindex` is set.
+Only source items can be placeholders.
 
 ### Images
 
