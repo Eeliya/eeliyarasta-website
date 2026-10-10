@@ -23,7 +23,18 @@ import {
 } from './files.js';
 import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
-import { ALIGNS, COLS, HEIGHTS, MCOLS, PLACES, SIZES, WIDTHS, ratioOf } from './layout/index.js';
+import {
+  ALIGNS,
+  COLS,
+  HEIGHTS,
+  MCOLS,
+  PLACES,
+  ROW_MAX,
+  ROW_MIN,
+  SIZES,
+  WIDTHS,
+  ratioOf,
+} from './layout/index.js';
 import { isId } from './layout/ids.js';
 import { checkMotion } from './layout/motion.js';
 import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
@@ -245,6 +256,8 @@ function checkSection(s, at) {
     bad('align', `one of ${ALIGNS.join(', ')}`);
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   if (s.rows !== undefined && !whole(s.rows, 1)) bad('rows', 'a whole number from 1');
+  if (s.rowHeight !== undefined && !(whole(s.rowHeight, ROW_MIN) && s.rowHeight <= ROW_MAX))
+    bad('rowHeight', `a whole number of px from ${ROW_MIN} to ${ROW_MAX}`);
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
   if (s.height === 'aspect' && !isRatio(s.aspect)) bad('aspect', 'a ratio like "16:9"');
   if (s.spacing !== undefined) checkSpacing(s.spacing, 'spacing', bad);

@@ -4,12 +4,9 @@
       "id": "s-ud3l",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 116,
       "width": "contained",
-      "spacing": {
-        "top": 21,
-        "bottom": 16
-      },
+      "spacing": { "top": 21, "bottom": 16 },
       "enabled": true,
       "blocks": [
         {
@@ -30,38 +27,19 @@
             "Want to shoot together, or have a project in mind? Send me a message."
           ],
           "facts": [
-            {
-              "label": "Based in",
-              "value": "Netherlands"
-            },
-            {
-              "label": "Camera",
-              "value": "Fujifilm X100V"
-            },
-            {
-              "label": "Shoots",
-              "value": "Portrait, Editorial, Fashion, Architecture"
-            },
-            {
-              "label": "Builds",
-              "value": "Websites, Dev tools, DIY"
-            }
+            { "label": "Based in", "value": "Netherlands" },
+            { "label": "Camera", "value": "Fujifilm X100V" },
+            { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
+            { "label": "Builds", "value": "Websites, Dev tools, DIY" }
           ],
           "emailLabel": "Email me",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 116 },
+          "size": "auto"
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 12,
-          "bottom": 15
-        }
+        "spacing": { "top": 12, "bottom": 15 }
       }
     }
   ],

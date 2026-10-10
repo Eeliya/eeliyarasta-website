@@ -3,20 +3,28 @@
  * the site's styles nor the editor's reach it):
  *
  *   Grid      every section's 24 columns and its rows, from the section's own computed grid
- *   Arrange   blocks are picked with a click (the block inspector opens on its Layout tab),
- *             moved by dragging and resized by the handles on their edges and corners. A
- *             drag snaps to the columns and rows and shows its area live (the block's CSS
- *             variables); on release it is one edit, one undo step (onplace). Esc cancels.
+ *             (its real, uniform rows: src/site/layout/flow.js)
+ *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
+ *             a drag moves it and the handles on its edges and corners resize it; a double
+ *             click edits a text in place (bridge.js), the page's own clicks are off. A drag
+ *             snaps to the columns and rows and shows its area live (the block's CSS
+ *             variables); on release it is one edit, one undo step (onplace), which also stores
+ *             where the section's other blocks are now (their real rows). Esc cancels.
  *             Below 760px (the mobile preview) a drag edits the block's phone area, on the
  *             phone grid of 12 columns: in a section whose blocks still stack, the first drag
  *             turns the stack into that grid, every block keeping the place it had (measured).
- *             An aspect or auto block has no height in rows: only its sides resize.
+ *             An aspect or auto block's rows follow its width: only its sides resize.
+ *
+ * A block is where the site's rows.js put it (--fr / --frs: its stored row moved by the
+ * blocks above that grew or shrank), so a drag starts from there; while it runs the page
+ * holds its rows (data-flow-hold on <html>).
  *
  * The overlay follows the page with a frame loop while it shows something; it reads `ui`
- * (arrange, grid, block) every frame, and the section metrics once per drag, so the grid
+ * (mode, grid, block) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
 import { COLS, MCOLS, hasMobileArea, placeOf, sizeOf } from '../site/layout/index.js';
+import { rowsFor } from '../site/layout/flow.js';
 
 const MOBILE = 760;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
@@ -60,25 +68,33 @@ export function stackAreas(sec, win) {
       col: 1,
       span: MCOLS,
       row: Math.max(1, Math.round((r.top - top) / row) + 1),
-      rows: Math.max(1, Math.round(r.height / row)),
+      rows: rowsFor(r.height, row), // as the site's rows.js counts them
     };
   }
   return out;
 }
 
 /**
- * Rows of the row height a block's content needs (it may be stretched taller by its area):
- * from its top to its lowest child's bottom.
+ * Where the blocks of a section are now, as the site's rows.js placed them: { id: area }
+ * (the phone grid's on the phone; blocks it didn't place keep their stored area).
  */
-export function contentRows(el, win) {
-  const sec = el.closest('[data-sec]') || el;
-  const row = parseFloat(win.getComputedStyle(sec).getPropertyValue('--grid-row')) || 8;
-  const top = el.getBoundingClientRect().top;
-  const kids = [...el.children];
-  const bottom = kids.length
-    ? Math.max(...kids.map((k) => k.getBoundingClientRect().bottom))
-    : top + el.scrollHeight;
-  return Math.max(1, Math.ceil((bottom - top - 0.5) / row));
+export function flowAreas(sec, phone, blockOf) {
+  const out = {};
+  for (const el of sec.querySelectorAll('[data-block]')) {
+    if (el.closest('[data-sec]') !== sec) continue;
+    const b = blockOf(el.dataset.block);
+    if (!b) continue;
+    const stored = phone
+      ? hasMobileArea(b.mobile)
+        ? placeOf(b.mobile, MCOLS)
+        : null
+      : placeOf(b.pos);
+    if (!stored) continue;
+    const row = parseInt(el.style.getPropertyValue('--fr'), 10);
+    const rows = parseInt(el.style.getPropertyValue('--frs'), 10);
+    out[el.dataset.block] = { ...stored, ...(row > 0 && rows > 0 ? { row, rows } : {}) };
+  }
+  return out;
 }
 
 /** The page-relative rect of an element. */
@@ -129,9 +145,11 @@ function nearest(list, v, step) {
 }
 
 /**
- * onpick(id): a block was clicked; onplace(id, pos, { mobile, stack }): a drag ended with the
- * block at `pos` (mobile: its phone area; stack: the areas of a stacking section's blocks it
- * turned into a grid); blockOf(id): the stored block (null when it isn't on the page).
+ * onpick(id): a block was clicked; onplace(id, pos, { mobile, stack, flow, rows }): a drag
+ * ended with the block at `pos` (mobile: its phone area; stack: the areas of a stacking
+ * section's blocks it turned into a grid; flow: where the section's blocks are now, { id:
+ * area }, and rows: its rows now); blockOf(id): the stored block (null when it isn't on the
+ * page).
  */
 export function createOverlay({ ui, onpick, onplace, blockOf }) {
   let doc = null;
@@ -143,7 +161,8 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
   let gridKey = '';
   const els = {};
 
-  const shown = () => doc && (ui.arrange || ui.grid);
+  const arranging = () => ui.mode === 'text';
+  const shown = () => doc && (arranging() || ui.grid);
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
 
@@ -207,30 +226,20 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     );
   }
 
-  const labelOf = (p, b) =>
-    `${mobile() ? 'phone · ' : ''}col ${p.col} · ${p.span} wide · row ${p.row}` +
-    (sizeOf(b) === 'rows' ? ` · ${p.rows} tall` : ` · ${sizeOf(b)}`);
-
-  /** A block's area now: its pos, or on the phone its mobile area (or where it stacks). */
-  function areaOf(id, el) {
-    const b = blockOf(id);
-    if (!mobile()) return placeOf(b?.pos);
-    if (hasMobileArea(b?.mobile)) return placeOf(b.mobile, MCOLS);
-    return el ? stackAreas(el.closest('[data-sec]'), win)[id] : placeOf({}, MCOLS);
-  }
+  const labelOf = (b) => `${mobile() ? 'phone · ' : ''}${b?.type || 'block'}`;
 
   function frame() {
     raf = 0;
     if (!root?.isConnected) return;
     drawGrids();
-    const arrange = ui.arrange;
+    const arrange = arranging();
     const sel = arrange ? blockEl(ui.block) : null;
     els.sel.hidden = !sel;
     if (sel) {
       place(els.sel, rectOf(sel, win));
       const b = blockOf(ui.block);
       els.sel.classList.toggle('is-free', sizeOf(b) !== 'rows');
-      els.label.textContent = labelOf(drag?.pos || areaOf(ui.block, sel), b);
+      els.label.textContent = labelOf(b);
     }
     const h = arrange && hover !== sel ? hover : null;
     els.hover.hidden = !h;
@@ -252,6 +261,10 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     const saved = new Map(
       [sec, ...sec.querySelectorAll('[data-block]')].map((n) => [n, n.style.cssText]),
     );
+    // where the section's blocks are now (stored with the drag), then hold them there
+    const flow = stack ? null : flowAreas(sec, phone, blockOf);
+    const rows = Number(sec.style.getPropertyValue('--frows')) || 0;
+    doc.documentElement.setAttribute('data-flow-hold', '');
     const savedClass = sec.className;
     if (stack) {
       sec.classList.add('sec--mgrid');
@@ -263,7 +276,7 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       }
       sec.style.setProperty('--mrows', rows);
     }
-    const from = stack ? stack[id] : areaOf(id, el);
+    const from = stack ? stack[id] : flow[id];
     drag = {
       id,
       el,
@@ -279,7 +292,8 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       savedClass,
       cols: phone ? MCOLS : COLS,
       lines: linesOf(sec, win),
-      rows: sec.style.getPropertyValue(phone ? '--mrows' : '--rows'),
+      flow,
+      rows: rows || Number(sec.style.getPropertyValue(phone ? '--mrows' : '--rows')) || 1,
     };
     els.sel.classList.add('is-dragging');
     win.addEventListener('pointermove', move, true);
@@ -322,25 +336,24 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     show(drag.pos);
   }
 
-  /** An area as a block's CSS variables (desktop, or the phone's). */
+  /** An area as a block's CSS variables (desktop, or the phone's; and where it is now). */
   function setArea(s, p, phone) {
     s.setProperty(phone ? '--mc' : '--c', p.col);
     s.setProperty(phone ? '--ms' : '--s', p.span);
     s.setProperty(phone ? '--mr' : '--r', p.row);
     s.setProperty(phone ? '--mrs' : '--rs', p.rows);
+    s.setProperty('--fr', p.row);
+    s.setProperty('--frs', p.rows);
   }
 
   /** Show `pos` on the block (and grow the section's rows to hold it) without storing it. */
   function show(p) {
     setArea(drag.el.style, p, drag.phone);
-    const need = p.row + p.rows - 1;
-    drag.sec.style.setProperty(
-      drag.phone ? '--mrows' : '--rows',
-      Math.max(Number(drag.rows) || 1, need),
-    );
+    drag.sec.style.setProperty('--frows', Math.max(drag.rows, p.row + p.rows - 1));
   }
 
   function stop() {
+    doc.documentElement.removeAttribute('data-flow-hold');
     win.removeEventListener('pointermove', move, true);
     win.removeEventListener('pointerup', end, true);
     win.removeEventListener('keydown', cancel, true);
@@ -354,12 +367,12 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
   }
 
   function end() {
-    const { id, from, pos, phone, stack } = drag;
+    const { id, from, pos, phone, stack, flow, rows } = drag;
     const moved = ['col', 'span', 'row', 'rows'].some((k) => pos[k] !== from[k]);
-    if (stack && !moved) restore(); // a click on a stacking section changes nothing
+    if (!moved) restore(); // a click changes nothing
     stop();
     drag = null;
-    if (moved) onplace(id, pos, { mobile: phone, stack: stack || {} });
+    if (moved) onplace(id, pos, { mobile: phone, stack: stack || {}, flow: flow || {}, rows });
   }
 
   function cancel(e) {
@@ -371,22 +384,26 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     drag = null;
   }
 
-  // Arrange: clicks pick and drag blocks; the page's own clicks (links, text) are off.
+  // Arrange: clicks pick and drag blocks; the page's own clicks (links, buttons) are off. A
+  // text being edited in place (contenteditable, bridge.js) keeps its clicks (the caret).
+  const editing = (t) => !!t.closest?.('[contenteditable]');
   function onpointerdown(e) {
-    if (!ui.arrange || e.button !== 0) return;
+    if (!arranging() || e.button !== 0 || e.altKey || editing(e.target)) return;
     const el = e.target.closest?.('[data-block]');
     if (!el) return;
+    if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
     onpick(el.dataset.block);
     start(e, el);
   }
   const swallow = (e) => {
-    if (ui.arrange && e.target.closest?.('[data-block]')) {
+    if (!arranging() || e.altKey || editing(e.target)) return;
+    if (e.target.closest?.('[data-block]')) {
       e.preventDefault();
       e.stopPropagation();
     }
   };
   function onpointerover(e) {
-    hover = ui.arrange ? e.target.closest?.('[data-block]') || null : null;
+    hover = arranging() ? e.target.closest?.('[data-block]') || null : null;
   }
 
   return {
@@ -402,12 +419,11 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       doc.addEventListener('pointerover', onpointerover, true);
       this.refresh();
     },
-    /** ui.arrange, ui.grid or ui.block changed: show or hide what they ask for. */
+    /** ui.mode, ui.grid or ui.block changed: show or hide what they ask for. */
     refresh() {
       if (!doc || !root) return;
       gridKey = '';
       if (!ui.grid) els.grids.replaceChildren();
-      doc.documentElement.classList.toggle('__ed-arrange', !!ui.arrange);
       if (!raf) raf = win.requestAnimationFrame(frame);
     },
   };

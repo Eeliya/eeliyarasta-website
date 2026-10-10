@@ -22,6 +22,7 @@ import { projects } from './modules/projects.js';
 import { cards, toTop, imageFade } from './modules/misc.js';
 import { contactForms } from './modules/form.js';
 import { placements } from './modules/placements.js';
+import { watchRows } from './modules/rows.js';
 
 const pageModules = [imageFade, album, projects, cards, toTop, contactForms, placements];
 // Editor hooks (see connectEditor below); always empty on the public site.
@@ -47,13 +48,17 @@ function mount(view, { first = false } = {}) {
   updateActiveNav(location.pathname);
   updateClocks();
   document.documentElement.dataset.page = view.dataset.page;
+  // real rows first (modules/rows.js): animations and pins measure the page as it is laid out
+  const rows = watchRows(view, { onchange: () => ScrollTrigger.refresh() });
   const anim = startAnimations(view, portal);
   const cleanups = pageModules.map((m) => m(view)).filter(Boolean);
   current = {
     view,
     portal,
     anim,
+    rows,
     revert() {
+      rows.stop();
       cleanups.forEach((fn) => fn());
       this.anim.revert();
       portal.replaceChildren();
@@ -106,6 +111,10 @@ function connectEditor() {
       if (frozen || !current?.anim.replay?.(el)) return false;
       ScrollTrigger.refresh();
       return true;
+    },
+    /** The editor changed the layout of the view's sections: flow their rows again (rows.js). */
+    reflow() {
+      if (current?.rows.reflow()) ScrollTrigger.refresh();
     },
     /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
     remountView() {

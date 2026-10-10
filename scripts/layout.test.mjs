@@ -328,7 +328,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(
     html,
     new RegExp(
-      `^<section class="sec" data-sec="${s.id}" style="--rows:1;--pt:3;--pb:4;--mpt:12;--mpb:15">`,
+      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15">`,
     ),
   );
   assert.match(html, /Edited headline/);

@@ -6,7 +6,7 @@
       "id": "s-a58t",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 30,
       "width": "contained",
       "spacing": { "top": 23, "bottom": 9 },
       "enabled": true,
@@ -18,7 +18,8 @@
           "title": "Photography",
           "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 30 },
+          "size": "auto"
         }
       ],
       "mobile": {
@@ -29,7 +30,7 @@
       "id": "s-oq6n",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 106,
       "width": "contained",
       "spacing": { "top": 0, "bottom": 18 },
       "enabled": true,
@@ -42,8 +43,9 @@
             { "source": "places", "title": "Places", "unit": "places" }
           ],
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 106 },
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 },
+          "size": "auto"
         }
       ],
       "mobile": {

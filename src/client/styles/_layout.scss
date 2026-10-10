@@ -2,9 +2,12 @@
 
 /*
  * The layout engine (src/site/layout/index.js): a section is a grid of 24 columns and
- * --rows rows of --grid-row; a row grows when its content needs more. Blocks sit in it by
+ * --rows uniform rows of --grid-row (8px, or the section's row height). Blocks sit in it by
  * their CSS variables: --c / --s (first column / columns), --r / --rs (first row / rows),
- * --z (layer), --ar (an aspect block's ratio).
+ * --z (layer), --ar (an aspect block's ratio). Rows never grow: a block whose content needs
+ * more rows spans more, and modules/rows.js (src/site/layout/flow.js) sets where every block
+ * sits now and how many rows it spans (--fr / --frs) and the section's rows (--frows), which
+ * win over the stored ones. While it measures, a section has .sec--measure.
  *
  * Phones (below 760px): a section's blocks stack full width in their order, unless one of
  * them has a mobile area (the section is then .sec--mgrid): a grid of 12 columns (--mc --ms
@@ -25,7 +28,11 @@
 .sec {
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
-  grid-template-rows: repeat(var(--rows), minmax(var(--grid-row), auto));
+  // (--ffill: a screen section whose rows come within a row of its height: they fill it)
+  grid-template-rows: repeat(
+    var(--frows, var(--rows)),
+    minmax(var(--grid-row), var(--ffill, var(--grid-row)))
+  );
   column-gap: var(--gap);
   padding: calc(var(--pt) * var(--grid-row)) var(--pad) calc(var(--pb) * var(--grid-row));
   &--full {
@@ -47,8 +54,9 @@
   &--bottom {
     align-content: end;
   }
+  // its rows (still all the same height) fill it
   &--stretch {
-    align-content: stretch;
+    grid-template-rows: repeat(var(--frows, var(--rows)), minmax(var(--grid-row), 1fr));
   }
 }
 
@@ -56,19 +64,22 @@
 .blk {
   position: relative;
   grid-column: var(--c) / span var(--s);
-  grid-row: var(--r) / span var(--rs);
+  grid-row: var(--fr, var(--r)) / span var(--frs, var(--rs));
   z-index: var(--z, auto);
   min-width: 0;
 }
 
-// size: content height (its one row grows) / its columns' width × --ar
-.blk--auto,
+// size: its columns' width × --ar (it spans the rows that holds; auto: its content's)
 .blk--aspect {
   align-self: start;
-}
-.blk--aspect {
   aspect-ratio: var(--ar);
   overflow: hidden;
+}
+// measuring (modules/rows.js): every block as tall as its content, for one read
+.sec--measure > .blk,
+.sec--measure > .pin-spacer > .blk {
+  align-self: start;
+  min-height: 0;
 }
 
 // photos fill an aspect (or fullscreen) block: cover, the caption below
@@ -81,8 +92,11 @@
     max-width: none;
     grid-template-rows: minmax(0, 1fr) auto;
   }
+  // figure img: outranks a block's own figure img { height: auto }
   img,
-  video {
+  video,
+  figure img,
+  figure video {
     width: 100%;
     height: 100%;
     min-height: 0;
@@ -184,10 +198,10 @@
   }
   .sec--mgrid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: repeat(var(--mrows), minmax(var(--grid-row), auto));
+    grid-template-rows: repeat(var(--frows, var(--mrows)), var(--grid-row));
     > .blk {
       grid-column: var(--mc, 1) / span var(--ms, 12);
-      grid-row: var(--mr, auto) / span var(--mrs, 1);
+      grid-row: var(--fr, var(--mr, auto)) / span var(--frs, var(--mrs, 1));
     }
   }
   // a placed block's columns and rows: the phone's

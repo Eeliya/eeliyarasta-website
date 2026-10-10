@@ -3,8 +3,8 @@
     Content  its item (the source item its bound fields show, src/site/layout/bindings.js; on
              a [slug] page the page's own by default), settings and texts (GroupFields.svelte)
              with each field's Source switch
-    Layout   its size, where it sits in its section's grid, placement and layer, for the
-             desktop or the phone (LayoutTab.svelte)
+    Layout   its size (rows, aspect, auto), placement and layer, for the desktop or the phone
+             (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   Back returns to the list of sections (SectionsList.svelte).
@@ -127,7 +127,7 @@
 </div>
 
 {#if ui.blockTab === 'layout'}
-  <LayoutTab {g} {live} {bridge} {at} {j} {base} {block} />
+  <LayoutTab {g} {live} {at} {j} {base} {block} />
 {:else if ui.blockTab === 'motion'}
   {#key blockEl}
     <BlockMotion

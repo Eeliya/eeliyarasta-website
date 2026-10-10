@@ -1,20 +1,14 @@
 {
   "curtain": "Not found",
-  "meta": {
-    "title": "Not found",
-    "description": "Page not found."
-  },
+  "meta": { "title": "Not found", "description": "Page not found." },
   "sections": [
     {
       "id": "s-yzyj",
       "height": "screen",
       "align": "center",
-      "rows": 1,
+      "rows": 90,
       "width": "contained",
-      "spacing": {
-        "top": 0,
-        "bottom": 0
-      },
+      "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
       "blocks": [
         {
@@ -24,16 +18,9 @@
           "title": "Lost frame",
           "intro": "This page doesn't exist (yet).",
           "cta": "Back home",
-          "config": {
-            "href": "/",
-            "center": true
-          },
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "config": { "href": "/", "center": true },
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 90 },
+          "size": "auto"
         }
       ]
     }

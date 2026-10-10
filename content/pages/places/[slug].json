@@ -1,7 +1,5 @@
 {
-  "config": {
-    "source": "places"
-  },
+  "config": { "source": "places" },
   "section": "Places",
   "next": "Next place",
   "sections": [
@@ -9,40 +7,23 @@
       "id": "s-gaii",
       "height": "screen",
       "align": "stretch",
-      "rows": 1,
+      "rows": 112,
       "width": "full",
-      "spacing": {
-        "top": 0,
-        "bottom": 0
-      },
+      "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
       "blocks": [
         {
           "id": "b-gbxt",
           "type": "album",
-          "title": {
-            "bind": "name"
-          },
+          "title": { "bind": "name" },
           "meta": [
-            {
-              "label": "Location",
-              "value": "{{location}}"
-            },
-            {
-              "label": "Year",
-              "value": "{{year}}"
-            }
+            { "label": "Location", "value": "{{location}}" },
+            { "label": "Year", "value": "{{year}}" }
           ],
-          "summary": {
-            "bind": "summary"
-          },
+          "summary": { "bind": "summary" },
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 112 },
+          "size": "auto"
         }
       ]
     }

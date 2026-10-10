@@ -72,7 +72,13 @@ const SCRIPTED = /pinned|v-center/;
  */
 function applyLayout(el, s, moved = []) {
   el.className = sectionClass(s);
-  el.style.cssText = sectionVars(s);
+  // (the rows the site's rows.js worked out stay until it flows the section again)
+  const kept = ['--frows', '--ffill']
+    .map((v) => [v, el.style.getPropertyValue(v)])
+    .filter(([, x]) => x)
+    .map(([v, x]) => `;${v}:${x}`)
+    .join('');
+  el.style.cssText = sectionVars(s) + kept;
   el.hidden = s.enabled === false;
   let remount = false;
   for (const b of s.blocks || []) {
@@ -83,8 +89,12 @@ function applyLayout(el, s, moved = []) {
     if (node.className !== cls && (SCRIPTED.test(node.className) || SCRIPTED.test(cls)))
       remount = true;
     node.className = cls;
-    const bh = node.style.getPropertyValue('--bh');
-    node.style.cssText = blockVars(b) + (bh ? `;--bh:${bh}` : '');
+    const kept = ['--bh', '--fr', '--frs']
+      .map((v) => [v, node.style.getPropertyValue(v)])
+      .filter(([, x]) => x)
+      .map(([v, x]) => `;${v}:${x}`)
+      .join('');
+    node.style.cssText = blockVars(b) + kept;
     node.hidden = b.config?.enabled === false;
     const [anim, options] = motionOf(b);
     const a = setAttr(node, 'data-motion', anim);

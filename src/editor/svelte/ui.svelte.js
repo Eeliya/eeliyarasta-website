@@ -42,8 +42,7 @@ export const ui = $state({
   block: null,
   /** 'content' | 'layout' | 'motion' */
   blockTab: 'content',
-  /** Content tab: drag and resize blocks in the preview; show the grid's columns and rows. */
-  arrange: false,
+  /** Content tab: show the sections' columns and rows in the preview. */
   grid: false,
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},

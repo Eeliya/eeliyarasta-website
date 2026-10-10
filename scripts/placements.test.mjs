@@ -33,17 +33,17 @@ test('ratios: "w:h" with positive numbers', () => {
   for (const bad of ['16/9', '0:1', '1:', 'wide', undefined, 3]) assert.equal(ratioOf(bad), null);
 });
 
-test('sizes: aspect and auto blocks take one growing row; rows ignore their height', () => {
+test('sizes: every block spans its stored rows (rows.js works out what it needs)', () => {
   assert.equal(blockClass(blk()), 'blk blk--text');
   assert.equal(blockVars(blk()), '--c:3;--s:10;--r:5;--rs:20');
   const aspect = blk({ size: 'aspect', aspect: '4:5' });
   assert.equal(blockClass(aspect), 'blk blk--text blk--aspect');
-  assert.equal(blockVars(aspect), '--c:3;--s:10;--r:5;--rs:1;--ar:4 / 5');
+  assert.equal(blockVars(aspect), '--c:3;--s:10;--r:5;--rs:20;--ar:4 / 5');
   // no valid ratio: sized by its content
   assert.equal(blockClass(blk({ size: 'aspect', aspect: 'x' })), 'blk blk--text blk--auto');
   assert.equal(blockClass(blk({ size: 'auto' })), 'blk blk--text blk--auto');
   assert.equal(blockClass(blk({ size: 'huge' })), 'blk blk--text'); // unknown: rows
-  assert.equal(rowsOf(sec([aspect], { rows: 1 })), 5);
+  assert.equal(rowsOf(sec([aspect], { rows: 1 })), 24);
   assert.equal(rowsOf(sec([blk()], { rows: 1 })), 24);
 });
 

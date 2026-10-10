@@ -5,12 +5,14 @@
  * src/client/main.js), before it mounts the first page. From then on the editor:
  *  - pushes the edited settings/animations.json into the preview and re-mounts animations,
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
- *  - turns [data-edit] elements into inline editors (Text mode); a photo
- *    (data-edit-type="image") is picked with a click and edited in the panel,
+ *  - Content mode ('text'): a double click turns a [data-edit] element into an inline editor
+ *    until it loses focus (a single click picks its block: overlay.js); a double-clicked
+ *    photo (data-edit-type="image") or bound value opens its field in the panel. Links,
+ *    buttons and forms don't act on clicks (Alt+click does),
  *  - lets you hover/click blocks ([data-block]) and [data-anim] parts to select them (Motion
  *    mode: the innermost one under the pointer),
- *  - selects a bound value ([data-bound], src/site/layout/bindings.js) with a click: not
- *    typed in the preview, its field in the panel shows the binding.
+ *  - a bound value ([data-bound], src/site/layout/bindings.js) is not typed in the preview:
+ *    its field in the panel shows the binding.
  */
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
@@ -18,14 +20,12 @@ import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
 
 const INJECTED_CSS = `
-html.__ed-text [data-edit] { outline: 1px dashed rgb(255 255 255 / .22); outline-offset: 3px; border-radius: 2px; cursor: text !important; }
-html.__ed-text [data-edit]:hover { outline-color: rgb(255 255 255 / .6); }
-html.__ed-text [data-edit]:focus { outline: 1.5px solid var(--ed-accent); outline-offset: 3px; caret-color: var(--ed-accent); }
+html.__ed-text [data-edit], html.__ed-text [data-bound] { outline-offset: 3px; border-radius: 2px; pointer-events: auto; }
+html.__ed-text [data-edit]:hover { outline: 1px dashed rgb(255 255 255 / .5); }
+html.__ed-text [data-bound]:hover { outline: 1px dotted rgb(255 255 255 / .5); }
+html.__ed-text [data-edit][contenteditable] { outline: 1.5px solid var(--ed-accent); caret-color: var(--ed-accent); cursor: text !important; }
 html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
-html.__ed-text [data-edit] { pointer-events: auto; }
-html.__ed-text img[data-edit] { cursor: pointer !important; }
-html.__ed-text [data-bound] { outline: 1px dotted rgb(255 255 255 / .3); outline-offset: 3px; border-radius: 2px; cursor: pointer !important; pointer-events: auto; }
-html.__ed-text [data-bound]:hover { outline-color: rgb(255 255 255 / .6); }
+html.__ed-text [data-block], html.__ed-text [data-block] *:not([contenteditable], [contenteditable] *) { cursor: default !important; }
 [data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-block], html.__ed-motion [data-block] * { cursor: pointer !important; }
@@ -41,6 +41,8 @@ html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [
 
 /** What Motion mode picks under the pointer: a data-anim part, else its block. */
 const MOTION_PICK = '[data-anim], [data-block]';
+/** What would act on a click (follow, open, send): off in Content mode. */
+const ACTIVE = 'a, button, [role="button"], label, summary, input, select, textarea';
 
 const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export const parseEdit = (attr) => {
@@ -149,7 +151,7 @@ export function createBridge({ store, labelFor }) {
         if (mode === 'text') api.freeze();
         else api.unfreeze();
       }
-      setEditable(mode === 'text');
+      if (mode !== 'text') endEdits();
       hoverEl = null;
       bridge.select(null);
       loop();
@@ -312,18 +314,28 @@ export function createBridge({ store, labelFor }) {
     },
   };
 
-  function setEditable(on) {
-    for (const el of doc.querySelectorAll('[data-edit]:not([data-edit-type="image"])')) {
-      if (on) {
-        el.setAttribute('contenteditable', plaintext ? 'plaintext-only' : 'true');
-        el.setAttribute('spellcheck', 'true');
-        el.closest('a')?.setAttribute('draggable', 'false');
-      } else {
-        el.removeAttribute('contenteditable');
-        el.classList.remove('__ed-invalid');
-      }
+  /**
+   * Edit a text in place (a double click in Content mode): editable until it loses focus,
+   * the caret where it was clicked (x, y).
+   */
+  function startEdit(el, x, y) {
+    el.setAttribute('contenteditable', plaintext ? 'plaintext-only' : 'true');
+    el.setAttribute('spellcheck', 'true');
+    el.closest('a')?.setAttribute('draggable', 'false');
+    el.focus({ preventScroll: true });
+    const range = x === undefined ? null : doc.caretRangeFromPoint?.(x, y);
+    if (range && el.contains(range.startContainer)) {
+      const sel = win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
   }
+  function endEdit(el) {
+    el.removeAttribute('contenteditable');
+    el.removeAttribute('spellcheck');
+    el.classList.remove('__ed-invalid');
+  }
+  const endEdits = () => doc?.querySelectorAll('[data-edit][contenteditable]').forEach(endEdit);
 
   function readValue(el) {
     const type = el.dataset.editType || 'text';
@@ -410,36 +422,74 @@ export function createBridge({ store, labelFor }) {
     doc.addEventListener(
       'pointermove',
       (e) => {
-        if (mode === 'browse') return;
+        // (Content mode: the overlay shows the block under the pointer, CSS the text)
+        if (mode !== 'motion') return;
         const t = e.target instanceof win.Element ? e.target : null;
-        hoverEl = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : MOTION_PICK) || null;
+        hoverEl = t?.closest(MOTION_PICK) || null;
       },
       { passive: true },
     );
     doc.documentElement.addEventListener('pointerleave', () => (hoverEl = null));
 
-    // Clicks: in edit modes, clicks on editable / animated elements select instead of
-    // navigating. Hold Alt to click through.
+    /** A text's (or photo's, bound value's) field opens in the panel. */
+    const pickField = (hit) => {
+      bridge.select(hit, 'text');
+      emit('textFocus', hit.dataset.edit ?? hit.dataset.bound);
+    };
+
+    // Clicks: in edit modes, clicks select instead of navigating. In Content mode no link,
+    // button or form acts (a click in a block picks it: overlay.js; outside the blocks it
+    // picks the text's field); in Motion a click on an animated element picks it. Hold Alt
+    // to click through.
     win.addEventListener(
       'click',
       (e) => {
         if (mode === 'browse' || e.altKey) return;
         const t = e.target instanceof win.Element ? e.target : null;
-        const hit = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : MOTION_PICK);
+        if (mode === 'text') {
+          if (t?.closest('[contenteditable]')) {
+            if (t.closest('a, button')) e.preventDefault(); // the caret moves, nothing follows
+            return;
+          }
+          const hit = t?.closest('[data-edit], [data-bound]');
+          if (!hit && !t?.closest(ACTIVE)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (hit && !hit.closest('[data-block]')) pickField(hit);
+          return;
+        }
+        const hit = t?.closest(MOTION_PICK);
         if (!hit) return;
         e.preventDefault();
         e.stopPropagation();
-        if (mode === 'motion') bridge.select(hit, 'anim');
-        else if (hit.dataset.bound) {
-          // a bound value (src/site/layout/bindings.js) isn't typed here: its block opens on
-          // the field, which shows the binding
-          bridge.select(hit, 'text');
-          emit('textFocus', hit.dataset.bound);
-        } else if (hit.dataset.editType === 'image') {
-          // a photo can't take focus: pick it like a focused text
-          bridge.select(hit, 'text');
-          emit('textFocus', hit.dataset.edit);
-        }
+        bridge.select(hit, 'anim');
+      },
+      true,
+    );
+    // a form doesn't send, Enter in a field included
+    doc.addEventListener(
+      'submit',
+      (e) => {
+        if (mode === 'browse') return;
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true,
+    );
+
+    // Content mode: a double click edits a text in place; a photo or a bound value opens its
+    // field in the panel.
+    doc.addEventListener(
+      'dblclick',
+      (e) => {
+        if (mode !== 'text' || e.altKey) return;
+        const t = e.target instanceof win.Element ? e.target : null;
+        const hit = t?.closest('[data-edit], [data-bound]');
+        if (!hit || hit.isContentEditable) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (hit.dataset.bound !== undefined || hit.dataset.editType === 'image') pickField(hit);
+        else startEdit(hit, e.clientX, e.clientY);
       },
       true,
     );
@@ -463,6 +513,8 @@ export function createBridge({ store, labelFor }) {
     });
 
     doc.addEventListener('focusout', (e) => {
+      const edited = e.target.closest?.('[data-edit][contenteditable]');
+      if (edited) endEdit(edited);
       const el = e.target.closest?.('[data-edit-type="words"]');
       if (!el) return;
       const { file, ptr } = parseEdit(el.dataset.edit);
@@ -499,7 +551,10 @@ export function createBridge({ store, labelFor }) {
             return;
           }
           if (e.key === 'Escape') {
-            el.blur();
+            e.preventDefault();
+            e.stopPropagation();
+            el.blur(); // ends the edit (the block stays picked)
+            return;
           }
           e.stopPropagation(); // keep site shortcuts (album arrows, menu) out of typing
         }
@@ -534,7 +589,6 @@ export function createBridge({ store, labelFor }) {
       api.hooks.afterMount.add(() => {
         doc.documentElement.classList.toggle('__ed-text', mode === 'text');
         doc.documentElement.classList.toggle('__ed-motion', mode === 'motion');
-        if (mode === 'text') setEditable(true);
         bridge.select(null);
         emit('navigate', win.location.pathname);
         restore?.();

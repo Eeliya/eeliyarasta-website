@@ -8,19 +8,22 @@
  *                  "pos": { "col": 1, "span": 24, "row": 1, "rows": 12 }, "z": 0 }] }
  *
  * A section:
- *   height   'auto': `rows` rows of the row height (--grid-row, src/client/styles/_tokens.scss);
- *            a row grows when its content needs more | 'screen': at least the screen's height |
+ *   height   'auto': `rows` rows of its row height | 'screen': at least the screen's height |
  *            'aspect': at least its width × `aspect` ("16:9"); for both, its rows are placed
  *            by `align` ('top' | 'center' | 'bottom' | 'stretch': fill it)
+ *   rowHeight  optional, px (default 8, --grid-row in src/client/styles/_tokens.scss): the
+ *            height of every row of the section; rows are uniform and never grow (./flow.js)
  *   width    'contained': inside the page's side margins | 'full': edge to edge
  *   spacing  { top, bottom }: empty rows above and below the grid
  *   mobile   optional { spacing: { top, bottom } }: the phone's (below 760px), else `spacing`
  *   enabled  false: hidden (still rendered, so the editor can turn it on live)
  * A block (its content: src/site/blocks/index.js):
  *   pos      { col, span, row, rows }: its grid area, columns 1-24 and rows from 1
- *   size     'rows' (default): as tall as its rows | 'aspect': as tall as its columns' width ×
- *            `aspect` ("4:5", "16:9", any "w:h") | 'auto': as tall as its content. Aspect and
- *            auto blocks take one row (pos.rows doesn't count), which grows to hold them
+ *   size     'rows' (default): its rows, more when its content needs them | 'aspect': as tall
+ *            as its columns' width × `aspect` ("4:5", "16:9", any "w:h") | 'auto': as tall as
+ *            its content. Every block spans whole rows: an aspect or auto block the rows its
+ *            height needs at the page's width, rows.js on the page works them out (./flow.js);
+ *            its pos.rows is that span where it was last placed (the page's first render)
  *   place    'none' (default) | 'sticky-<corner>': held at a screen edge while its section
  *            scrolls by | 'fixed-<corner>': at a screen corner the whole time | 'fullscreen':
  *            covers the screen the whole time (behind the page unless its z is set: a
@@ -47,6 +50,10 @@ export const COLS = 24;
 /** Columns of the phone grid (a block's `mobile` area); see _layout.scss for why 12. */
 export const MCOLS = 12;
 export const HEIGHTS = ['auto', 'screen', 'aspect'];
+/** A section's row height in px: the default and its limits. */
+export const ROW_HEIGHT = 8;
+export const ROW_MIN = 4;
+export const ROW_MAX = 64;
 export const WIDTHS = ['contained', 'full'];
 export const ALIGNS = ['top', 'center', 'bottom', 'stretch'];
 /** A block's height: its rows, its width × an aspect ratio, or its content. */
@@ -96,8 +103,11 @@ export const hasMobileArea = (m) =>
 /** A block's size mode ('rows' when unset or unknown). */
 export const sizeOf = (b) => (SIZES.includes(b?.size) ? b.size : 'rows');
 
-/** The rows a block takes in its section: its own, or 1 (that row grows) for aspect / auto. */
-const spanOf = (b, area) => (sizeOf(b) === 'rows' ? area.rows : 1);
+/** A section's row height in px (its rowHeight, else 8). */
+export const rowHeightOf = (s) =>
+  Number.isInteger(s?.rowHeight) && s.rowHeight >= ROW_MIN && s.rowHeight <= ROW_MAX
+    ? s.rowHeight
+    : ROW_HEIGHT;
 
 /**
  * A new block of `type`: its defaults, on, full width at `pos` (12 rows from row 1 by
@@ -135,7 +145,7 @@ export function rowsOf(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
   return Math.max(
     int(section?.rows, 1, 1),
-    ...blocks.map((b) => placeOf(b?.pos).row + spanOf(b, placeOf(b?.pos)) - 1),
+    ...blocks.map((b) => placeOf(b?.pos).row + placeOf(b?.pos).rows - 1),
   );
 }
 
@@ -148,7 +158,7 @@ export function mobileRowsOf(section) {
       .filter((b) => hasMobileArea(b?.mobile))
       .map((b) => {
         const m = placeOf(b.mobile, MCOLS);
-        return m.row + spanOf(b, m) - 1;
+        return m.row + m.rows - 1;
       }),
   );
 }
@@ -165,7 +175,8 @@ export function sectionVars(s) {
     (Number.isInteger(m?.top) && m.top >= 0 ? `;--mpt:${m.top}` : '') +
     (Number.isInteger(m?.bottom) && m.bottom >= 0 ? `;--mpb:${m.bottom}` : '') +
     (phoneGrid(s) ? `;--mrows:${mobileRowsOf(s)}` : '') +
-    (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '')
+    (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '') +
+    (rowHeightOf(s) !== ROW_HEIGHT ? `;--grid-row:${rowHeightOf(s)}px` : '')
   );
 }
 
@@ -209,10 +220,10 @@ export function blockVars(b) {
   const m = hasMobileArea(b?.mobile) ? placeOf(b.mobile, MCOLS) : null;
   const ratio = sizeOf(b) === 'aspect' ? ratioOf(b?.aspect) : null;
   return (
-    `--c:${p.col};--s:${p.span};--r:${p.row};--rs:${spanOf(b, p)}` +
+    `--c:${p.col};--s:${p.span};--r:${p.row};--rs:${p.rows}` +
     (Number.isInteger(b?.z) && b.z !== 0 ? `;--z:${b.z}` : '') +
     (ratio ? `;--ar:${ratio[0]} / ${ratio[1]}` : '') +
-    (m ? `;--mc:${m.col};--ms:${m.span};--mr:${m.row};--mrs:${spanOf(b, m)}` : '')
+    (m ? `;--mc:${m.col};--ms:${m.span};--mr:${m.row};--mrs:${m.rows}` : '')
   );
 }
 

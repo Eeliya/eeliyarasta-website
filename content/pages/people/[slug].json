@@ -1,7 +1,5 @@
 {
-  "config": {
-    "source": "people"
-  },
+  "config": { "source": "people" },
   "section": "People",
   "next": "Next person",
   "sections": [
@@ -9,48 +7,25 @@
       "id": "s-2jiz",
       "height": "screen",
       "align": "stretch",
-      "rows": 1,
+      "rows": 112,
       "width": "full",
-      "spacing": {
-        "top": 0,
-        "bottom": 0
-      },
+      "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
       "blocks": [
         {
           "id": "b-j8hg",
           "type": "album",
-          "title": {
-            "bind": "name"
-          },
+          "title": { "bind": "name" },
           "meta": [
-            {
-              "label": "Role",
-              "value": "{{role}}"
-            },
-            {
-              "label": "Agency",
-              "value": "{{agency}}"
-            },
-            {
-              "label": "Location",
-              "value": "{{location}}"
-            },
-            {
-              "label": "Year",
-              "value": "{{year}}"
-            }
+            { "label": "Role", "value": "{{role}}" },
+            { "label": "Agency", "value": "{{agency}}" },
+            { "label": "Location", "value": "{{location}}" },
+            { "label": "Year", "value": "{{year}}" }
           ],
-          "summary": {
-            "bind": "summary"
-          },
+          "summary": { "bind": "summary" },
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 112 },
+          "size": "auto"
         }
       ]
     }

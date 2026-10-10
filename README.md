@@ -64,7 +64,7 @@ src/
     routes.js       ← list of pages, from the files in content/pages/
     render.js       ← renderRoute(route, content) → { head, body }
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
-    layout/         ← sections and blocks on the 24-column grid, ids (see "Layout")
+    layout/         ← sections and blocks on the 24-column grid, real rows, ids (see "Layout")
     blocks/         ← the block registry: every block type (see "Layout")
     templates/      ← layout, header/menu, footer, partials
   client/           ← browser code
@@ -72,7 +72,7 @@ src/
     router.js       ← SPA navigation over the prerendered HTML
     anim/engine.js  ← reads content/settings/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
-    modules/        ← album slider, project accordion, card hover, misc
+    modules/        ← real rows, placements, album slider, project accordion, card hover, misc
     ui/             ← menu (click-only), clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
   editor/           ← the visual editor app (/edit/), dev server only, never built or shipped
@@ -221,27 +221,43 @@ every section is a grid of **blocks** (`src/site/layout/`):
 }
 ```
 
-- **The grid:** 24 columns (with the page's gutter, `--gap`) and rows of `--grid-row`, **8px**,
-  one CSS variable in `src/client/styles/_tokens.scss`. A row is at least that tall and grows
-  when its content needs more (`minmax(var(--grid-row), auto)`), so text never spills out.
-- **A section:** `height` is `auto` (its `rows`, growing with content), `screen` (at least the
+- **The grid:** 24 columns (with the page's gutter, `--gap`) and **real rows**: every row of a
+  section has the same height, `--grid-row` (**8px**, `src/client/styles/_tokens.scss`, or the
+  section's `rowHeight`), and rows never grow. Every block spans a whole number of rows; when
+  its content needs more, it spans more (see Real rows below), so text never spills out.
+- **A section:** `height` is `auto` (its `rows`, as many as its blocks need), `screen` (at least the
   screen's height) or `aspect` (at least its width × `aspect`, e.g. `"21:9"`); in the last two
   `align` places its content: `top`, `center` (default), `bottom` or `stretch`, filling it.
   `width` is `contained` (inside the page's side margins, `--pad`) or `full` (edge to edge);
   `spacing` is the empty rows above and below it, and `mobile.spacing` the same on phones
   (`{ "mobile": { "spacing": { "top": 11, "bottom": 13 } } }`, the desktop's when unset);
-  `enabled: false` hides it. A section's rows grow to fit its lowest block.
+  `enabled: false` hides it. `rowHeight` (px, 4–64, default 8) is the height of its rows (a
+  taller row makes its rows-sized blocks and its spacing taller). A section's rows grow to fit
+  its lowest block.
 - **A block:** its `type` and content (below), `pos` (first column 1–24, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
   `place`, an optional `mobile` layout (below) and an optional `motion`
   (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
   timing, see Animations).
-- **Size** (`size`): `rows` (default: its `pos.rows`), `aspect` (its width, from its columns,
-  × `aspect`: `1:1 4:5 3:4 2:3 3:2 16:9 21:9` or any `"w:h"`; photos fill it, cropped
-  (`object-fit: cover`)) or `auto` (as tall as its content). An aspect or auto block ignores
-  `pos.rows`: it takes **one row**, and as rows are `minmax(8px, auto)` that row grows to its
-  height, pushing the rows below (and blocks starting there) down. Blocks beside it in that row
-  start at its top. So give it its own row band, or put what follows below its first row.
+- **Size** (`size`): `rows` (default: its `pos.rows`, more when its content needs them),
+  `aspect` (its width, from its columns, × `aspect`: `1:1 4:5 3:4 2:3 3:2 16:9 21:9` or any
+  `"w:h"`; photos fill it, cropped (`object-fit: cover`)) or `auto` (as tall as its content).
+  An aspect or auto block spans the rows its height needs at the page's width; its `pos.rows`
+  is that span where it was last placed (what the page renders before its script runs).
+- **Real rows** (`src/site/layout/flow.js`, applied by `src/client/modules/rows.js`): on the
+  page, every block is measured (its content, or its width × ratio) and spans the whole rows
+  that needs. A block that needs more rows than it stores pushes the blocks below it in its
+  columns down by the difference (and those push theirs; a block held by two takes the larger
+  push); one that needs fewer lets them up. Blocks beside it or overlapping it stay. The section
+  has the rows that holds, plus the empty rows it had below its lowest block. This runs when the
+  page mounts, at once on a window resize (and again on the next frame), when a block's content
+  changes size (images, fonts) and when the editor changes a layout; it sets `--fr` / `--frs`
+  on the blocks and `--frows` on the section, over the stored `--r` / `--rs` / `--rows` (the
+  phone grid's likewise). A screen-high block in a screen section fills it exactly: when the
+  rows come within a row of the screen they share it out evenly (`--ffill`). Without
+  JavaScript the stored areas apply as they are. Phone sections that stack have no rows.
+  The site's content was moved to this once: content-sized blocks became `auto` with their
+  span at 1440px stored, so the pages look as they did (within a row, 8px, per section).
 - **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
   - `none` (default): in the grid.
   - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
@@ -766,21 +782,26 @@ paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ 
 a field (a number in Layout too) is one undo step until you leave it, press Enter or pause for a
 second. A field's **Source** switch binds it to an item (see "Bindings").
 
-**Arrange** (beside Sources) turns the preview into a layout canvas: a click picks a block
-(the inspector opens on Layout), dragging moves it and the handles on its edges and corners
-resize it, snapping to the section's columns and rows; the area shows while dragging, Esc
-cancels, and a drag is one undo step. **Grid** shows every section's columns and rows. Both
-live in the preview's own layer (`src/editor/overlay.js`, a Shadow DOM). In the **mobile
-preview** Arrange edits the block's phone area (12 columns): the first drag in a stacking
-section turns it into the phone grid, its other blocks keeping their places in the stack.
+While the **Content** tab is open the preview is a layout canvas (always; there is no toggle):
+a **click** picks a block (its inspector opens), **dragging** moves it and the **handles** on
+its edges and corners resize it, snapping to the section's columns and its real rows; Esc
+cancels, and a drag is one undo step. A drag starts from where the block is shown and also
+stores where the section's other blocks are now (their real rows, see Layout), so what you see
+is what is stored. An aspect or auto block's rows follow its width: only its sides resize. A
+**double click** on a text edits it in place (until you click elsewhere, press Esc or Enter in
+a one-line text); a double click on a photo or a bound value opens its field in the panel.
+Links, buttons and forms in the preview don't act on clicks (Alt+click follows a link).
+**Grid** shows every section's columns and its rows. The canvas lives in the preview's own
+layer (`src/editor/overlay.js`, a Shadow DOM). In the **mobile preview** a drag edits the
+block's phone area (12 columns): the first drag in a stacking section turns it into the phone
+grid, its other blocks keeping their places in the stack. The Motion tab picks animated
+elements instead (no dragging); Browse uses the site normally.
 
-The **Layout** tab (`LayoutTab.svelte`) has **Desktop | Mobile** (which also switches the
-preview). Desktop: **Size** (Rows, Aspect ratio with its ratio or Custom "w:h", Auto), column,
-columns, row, rows (for Rows), **Placement**, its layer with Down / Up, and **Fit rows to
-content**: it measures the block's content at the preview's width and sets its rows (only when
-you click it). Mobile: the phone area (column 1–12, columns, row, rows), **Placement on
-phones**, and **Reset to stack**, which removes every phone area and placement of the section's
-blocks.
+The **Layout** tab (`LayoutTab.svelte`) holds only what can't be dragged: **Desktop | Mobile**
+(which also switches the preview), **Size** as buttons (Rows | Aspect | Auto; with Aspect its
+ratio as buttons: 1:1 … 21:9 or Custom "w:h"), **Placement** (on phones: Placement on phones),
+the layer with Down / Up (desktop) and **Reset to stack** (mobile), which removes every phone
+area and placement of the section's blocks. Each section's settings have **Row height (px)**.
 
 The preview follows the section and block settings, places and on/off right away (classes
 and CSS variables, `src/editor/layout-sync.js`). After a structure edit (a block or section
@@ -827,14 +848,14 @@ motion, settings; `view`: menu, footer; `motion=animations`: the Motion tab's An
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
-| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                    |
-| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                    |
-| **Motion** | Click a block or an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs that block (or the page) again, and the **Scroll** slider moves the page through it. |
+| mode        | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Browse**  | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                    |
+| **Content** | Animations pause. The preview is a layout canvas: click a block to open it, drag it and its handles to move and resize it, double-click a text to type in it (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                |
+| **Motion**  | Click a block or an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs that block (or the page) again, and the **Scroll** slider moves the page through it. |
 
-In the edit modes, clicks on editable or animated elements select them instead of following
-links. Hold **Alt** to click through.
+In the edit modes, clicks select instead of following links (in Content no link, button or
+form acts). Hold **Alt** to click through.
 
 In the editor a preset is called an **animation** (`presets` in `animations.json`). The
 Motion tab's **Elements** list is the page's **blocks**, grouped by section (each with its

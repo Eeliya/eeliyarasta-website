@@ -122,11 +122,29 @@ export function removeBlock(store, file, at, j) {
 }
 
 /**
- * Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
- * drag); key: typing in a number field coalesces (see writeSection).
+ * The rows the page shows (src/site/layout/flow.js) stored: flow { id: area } where the
+ * section's other blocks are now (their row and rows; `phone`: their mobile areas), rows the
+ * section's rows now. Blocks that grew or shrank (content, an aspect at this width) and the
+ * blocks they pushed are stored as they are seen.
  */
-export function placeBlock(store, file, at, j, pos, key) {
+function storeFlow(section, j, flow = {}, rows = 0, phone = false) {
+  section.blocks.forEach((b, k) => {
+    const a = k !== j && flow[b.id];
+    if (!a) return;
+    if (phone) b.mobile = { ...b.mobile, row: a.row, rows: a.rows };
+    else b.pos = { ...placeOf(b.pos), row: a.row, rows: a.rows };
+  });
+  if (!phone && Number.isInteger(rows) && rows > 0) section.rows = rows;
+}
+
+/**
+ * Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
+ * drag); key: typing in a number field coalesces (see writeSection). flow, rows: where the
+ * other blocks are now and the section's rows (storeFlow).
+ */
+export function placeBlock(store, file, at, j, pos, key, { flow, rows } = {}) {
   const section = listOf(store, file)[at];
+  storeFlow(section, j, flow, rows);
   section.blocks[j].pos = placeOf(pos);
   return writeSection(store, file, at, section, key);
 }
@@ -168,8 +186,9 @@ function setMobile(block, patch) {
  * the section's other blocks had in the stack ({ id: area }), when this turns the section from
  * a stack into a grid (they keep their places). One undo step; key: see writeSection.
  */
-export function placeMobile(store, file, at, j, area, { stack = {}, key } = {}) {
+export function placeMobile(store, file, at, j, area, { stack = {}, key, flow } = {}) {
   const section = listOf(store, file)[at];
+  storeFlow(section, j, flow, 0, true);
   section.blocks.forEach((b, k) => {
     if (k === j) setMobile(b, placeOf(area, MCOLS));
     else if (stack[b.id] && !['col', 'span', 'row', 'rows'].some((x) => b.mobile?.[x]))

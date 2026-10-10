@@ -3,8 +3,10 @@
   holding blocks (src/site/layout/): SectionsList.svelte lists them with their settings, and
   a block opens in BlockInspector.svelte (ui.block: its Content, Layout and Motion). Below the
   sections, the page's other texts (a [slug] page's shared labels, the curtain: groups from
-  content-groups.js) and its SEO (SeoSection.svelte). Arrange turns on dragging and resizing
-  blocks in the preview, Grid shows the sections' columns and rows (overlay.js). The Sources
+  content-groups.js) and its SEO (SeoSection.svelte). While this tab is open the preview is a
+  layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
+  a double click edits a text in place (bridge.js); links and buttons don't follow. Grid shows
+  the sections' columns and rows. The Sources
   button opens the Source Explorer (SourcesModal.svelte); so does the file button (people.json)
   of a group whose texts come from one source, or beside a field when a group mixes.
 
@@ -67,7 +69,7 @@
   });
   const hint = $derived(
     ui.target.kind === 'page'
-      ? 'Click any outlined text in the preview to edit it in place, or open a block below. Arrange: drag blocks and their edges in the preview.'
+      ? 'Click a block in the preview to open it, drag it to move it, drag its handles to resize it; double-click a text to edit it in place. Alt+click follows a link.'
       : ui.target.id === 'menu'
         ? 'Editing Menu labels. Changes show in the header and mobile menu of the preview.'
         : 'Editing Footer copy. Scroll the preview to the bottom to see changes.',
@@ -118,16 +120,6 @@
       Sources
     </Button>
     {#if file}
-      <Button
-        size="small"
-        icon="up-down-left-right"
-        variant={ui.arrange ? 'primary' : 'default'}
-        aria-pressed={ui.arrange}
-        title="Drag blocks and their edges in the preview"
-        onclick={() => actions.arrange(!ui.arrange)}
-      >
-        Arrange
-      </Button>
       <Button
         size="small"
         icon="table-cells"

@@ -6,7 +6,7 @@
       "id": "s-jrwb",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 27,
       "width": "contained",
       "spacing": { "top": 23, "bottom": 9 },
       "enabled": true,
@@ -18,7 +18,8 @@
           "title": "Places",
           "intro": "Buildings, streets and castles. What is left when the people walk out of frame.",
           "config": { "count": "places" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 27 },
+          "size": "auto"
         }
       ],
       "mobile": {
@@ -29,7 +30,7 @@
       "id": "s-v6rg",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 89,
       "width": "contained",
       "spacing": { "top": 0, "bottom": 18 },
       "enabled": true,
@@ -38,8 +39,9 @@
           "id": "b-syyw",
           "type": "albums",
           "config": { "source": "places", "layout": "landscape" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 89 },
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 },
+          "size": "auto"
         }
       ],
       "mobile": {

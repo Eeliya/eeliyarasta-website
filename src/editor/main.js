@@ -61,18 +61,19 @@ const store = createStore();
 const live = createLive(store);
 connectMedia(live); // photo URLs read site.json's mediaUrl from it
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
-// the preview's layout overlay (Arrange, Grid; overlay.js): blockAt and placeBlock below
+// the preview's layout overlay (arranging in the Content tab, Grid; overlay.js): blockAt and
+// placeBlock below
 const overlay = createOverlay({
   ui,
   onpick(id) {
+    if (ui.block !== id) ui.selection = null;
     ui.block = id;
-    ui.blockTab = 'layout';
   },
-  onplace(id, pos, { mobile = false, stack = {} } = {}) {
+  onplace(id, pos, { mobile = false, stack = {}, flow = {}, rows = 0 } = {}) {
     const b = blockAt(id);
     if (!b) return;
-    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { stack });
-    else placeBlock(store, b.file, b.at, b.j, pos);
+    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { stack, flow });
+    else placeBlock(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
   },
   blockOf(id) {
     const b = blockAt(id);
@@ -89,7 +90,7 @@ mount(App, {
   props: {
     live,
     bridge,
-    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, arrange, showGrid, editMotion },
+    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, showGrid, editMotion },
   },
 });
 
@@ -276,13 +277,12 @@ function pickAnim(sel) {
   return { el, id: el.dataset.anim, key, scope };
 }
 
-/** The preview's mode: Settings has nothing to pick, Arrange drags blocks: both browse. */
-const previewMode = () => (ui.mode === 'settings' || ui.arrange ? 'browse' : ui.mode);
+/** The preview's mode: Settings has nothing to pick (browse). */
+const previewMode = () => (ui.mode === 'settings' ? 'browse' : ui.mode);
 
 function setMode(mode) {
   ui.mode = mode;
   if (mode === 'text' || mode === 'motion') ui.lastEdit = mode;
-  if (mode !== 'text') ui.arrange = false;
   bridge.setMode(previewMode());
   overlay.refresh();
   if (mode === 'motion') {
@@ -303,13 +303,6 @@ function blockAt(id) {
     if (j >= 0) return { file, at, j };
   }
   return null;
-}
-
-/** Content tab: drag and resize blocks in the preview (the page's own clicks are off). */
-function arrange(on) {
-  ui.arrange = on;
-  bridge.setMode(previewMode());
-  overlay.refresh();
 }
 
 /** Content tab: show the sections' columns and rows in the preview. */
@@ -344,6 +337,7 @@ function syncSections({ structure = false } = {}) {
   if (stale.remount && !stale.length) bridge.api?.remountView();
   // a block's motion changed: its animation plays again (the whole page's when it lost it)
   else if (!stale.length) for (const el of stale.motion) bridge.replayOne(el);
+  bridge.api?.reflow?.(); // the rows the blocks need now (src/client/modules/rows.js)
   bridge.api?.ScrollTrigger?.refresh();
   renderSections(stale);
 }

@@ -6,7 +6,7 @@
       "id": "s-8gt2",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 27,
       "width": "contained",
       "spacing": { "top": 23, "bottom": 9 },
       "enabled": true,
@@ -18,7 +18,8 @@
           "title": "People",
           "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
           "config": { "count": "people" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 27 },
+          "size": "auto"
         }
       ],
       "mobile": {
@@ -29,7 +30,7 @@
       "id": "s-m9y2",
       "height": "auto",
       "align": "center",
-      "rows": 1,
+      "rows": 201,
       "width": "contained",
       "spacing": { "top": 0, "bottom": 18 },
       "enabled": true,
@@ -38,8 +39,9 @@
           "id": "b-grz4",
           "type": "albums",
           "config": { "source": "people", "layout": "portrait" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 201 },
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 },
+          "size": "auto"
         }
       ],
       "mobile": {
