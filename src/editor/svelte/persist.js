@@ -57,7 +57,12 @@ function readState() {
     };
   if (q.has('source')) {
     if (!q.has('tab')) state.mode = 'text'; // the explorer is in the Content tab
-    state.explorer = { open: true, file: `sources/${q.get('source')}.json`, index: 0 };
+    state.explorer = {
+      open: true,
+      file: `sources/${q.get('source')}.json`,
+      index: 0,
+      field: q.get('field') || '',
+    };
     state.item = q.get('item');
   }
   if (q.has('pages'))
@@ -156,6 +161,7 @@ export function writeUrl() {
   const list = open && file ? live.current(file) : null;
   set('source', list && sourceIdOf(file));
   set('item', Array.isArray(list) && list[index] && itemId(list[index], index));
+  set('field', Array.isArray(list) && list[index] && ui.explorer.field);
   const library = ui.mode === 'motion' && ui.library.open;
   set('motion', library && 'animations');
   set('anim', library && ui.library.name);

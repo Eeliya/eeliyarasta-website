@@ -577,8 +577,9 @@ kbd {
   }
 }
 
-// a switch in a field label sits at the end of the row
-.tf__label > .switch {
+// a switch or button (a value's source file) in a field label sits at the end of the row
+.tf__label > .switch,
+.tf__label > .btn {
   margin-left: auto;
 }
 

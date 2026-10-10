@@ -42,8 +42,11 @@ export const ui = $state({
   staleSections: [],
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},
-  /** The Source Explorer: open or not, its file ('' = the list of files) and item index. */
-  explorer: { open: false, file: '', index: 0 },
+  /**
+   * The Source Explorer: open or not, its file ('' = the list of files), item index and the
+   * highlighted field (its key in source-items.js itemFields, e.g. "name", "images.1.src").
+   */
+  explorer: { open: false, file: '', index: 0, field: '' },
   /** The Pages window: open or not, and the folder it shows ('' = content/pages/ itself). */
   pagesWin: { open: false, folder: '' },
   /** Motion tab: the Animations sub-tab (open) or Elements, and its animation ('' = the list). */

@@ -29,6 +29,7 @@
     contentGroups,
     groupFor,
     homeSections,
+    isSource,
     previewPage,
     splitEdit,
   } from './content-groups.js';
@@ -243,6 +244,8 @@
             value={live.get(f.file, f.ptr)}
             changed={live.changed(f.file, f.ptr)}
             selected={ui.selection?.edit === f.edit}
+            source={isSource(f.file) ? f.file : ''}
+            onsource={() => sourcesModal.open(f.file, Number(parse(f.ptr)[0]) || 0, f.edit)}
             onfocus={() => bridge.focusEdit(f.edit)}
             onvalue={(value) => setText(f, value)}
           />

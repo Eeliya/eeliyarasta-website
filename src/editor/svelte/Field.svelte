@@ -1,6 +1,7 @@
 <!--
-  One text field: a label (name, changed dot and, when `file` is given, the file the value
-  is stored in) wrapping an input, or a textarea for longer text.
+  One text field: a label (name, changed dot and, for a value from a source list, a button
+  naming its file, e.g. people.json, that opens it in the Source Explorer) wrapping an input,
+  or a textarea for longer text.
   type 'image': a photo (its media/ path or R2 key) with a thumbnail and an Upload button;
   a photo dropped on the field uploads too (source.js upload(): the dev server resizes it and
   stores the sizes in Cloudflare R2). The key it gets is stored like a typed value: one undo
@@ -23,18 +24,22 @@
 
 <script>
   import Button from './Button.svelte';
+  import { baseName } from '../../site/files.js';
   import { upload } from '../source.js';
   import { media, thumbUrl } from './media.svelte.js';
   import { toast } from './toasts.svelte.js';
 
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
   // type: 'text' | 'words' | 'number' | 'block' | 'image'. onvalue(value) gets every valid input.
+  // source: the content/sources/ file the value comes from ('' for the page's own), with
+  // onsource() opening it.
   let {
     edit,
     label,
     value,
     type = 'text',
-    file = null,
+    source = '',
+    onsource,
     placeholder = '',
     changed = false,
     selected = false,
@@ -42,6 +47,7 @@
     onvalue,
   } = $props();
 
+  const uid = $props.id();
   let invalid = $state(false);
 
   /** Show the stored value, except while the user is typing in the field. */
@@ -107,6 +113,7 @@
 </script>
 
 <label
+  for={uid}
   class={['tf', changed && 'is-changed', selected && 'is-selected', dropping && 'is-drop']}
   data-edit={edit}
   {...type === 'image' ? drop : {}}
@@ -117,9 +124,11 @@
       <span class="tf__file">
         {progress < 1 ? `Uploading ${Math.round(progress * 100)}%` : 'Resizing…'}
       </span>
-    {:else if file}
-      <!-- folder included: pages/people/index.json and sources/people.json are different files -->
-      <span class="tf__file" title="content/{file}">{file}</span>
+    {/if}
+    {#if source}
+      <Button size="small" title="Edit in the Source Explorer: content/{source}" onclick={onsource}>
+        {baseName(source)}
+      </Button>
     {/if}
   </span>
   {#if type === 'image'}
@@ -128,6 +137,7 @@
         <img class="tf__thumb" src={thumb} alt="" onerror={() => (failed = thumb)} />
       {/if}
       <input
+        id={uid}
         class={['tf__input', invalid && 'is-invalid']}
         spellcheck="false"
         placeholder={placeholder || 'Drop a photo, or a media/ path'}
@@ -146,6 +156,7 @@
     </span>
   {:else if type === 'block'}
     <textarea
+      id={uid}
       class={['tf__input', invalid && 'is-invalid']}
       {placeholder}
       {@attach show(value)}
@@ -153,6 +164,7 @@
       {oninput}></textarea>
   {:else}
     <input
+      id={uid}
       class={['tf__input', invalid && 'is-invalid']}
       type={type === 'number' ? 'number' : 'text'}
       spellcheck={type !== 'number'}
