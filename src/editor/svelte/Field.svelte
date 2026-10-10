@@ -1,11 +1,10 @@
 <!--
-  One text field: a label (name, changed dot and, for a value from a source list, a button
-  naming its file, e.g. people.json, that opens it in the Source Explorer) wrapping an input,
-  or a textarea for longer text.
-  type 'image': a photo (its media/ path or R2 key) with a thumbnail and an Upload button;
-  a photo dropped on the field uploads too (source.js upload(): the dev server resizes it and
-  stores the sizes in Cloudflare R2). The key it gets is stored like a typed value: one undo
-  step.
+  One field: a label (name, changed dot and, for a value from a source list, a button naming
+  its file, e.g. people.json, that opens it in the Source Explorer) with an input, or a
+  textarea for longer text.
+  type 'image': a photo (its media/ path or R2 key) as a thumbnail with its file name and
+  sizes; the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
+  stores the photo picked there in this field: one undo step. No text input.
   Used by the Content panel, the Sources modal and Settings.
 -->
 <script module>
@@ -17,7 +16,6 @@
     }
     if (type === 'words') return raw.replace(/\s+/g, ' ').trim() || undefined;
     if (type === 'text') return raw.replace(/\s*\n\s*/g, ' ');
-    if (type === 'image') return raw.trim();
     return raw; // 'block': line breaks are kept
   }
 </script>
@@ -25,9 +23,7 @@
 <script>
   import Button from './Button.svelte';
   import { baseName } from '../../site/files.js';
-  import { upload } from '../source.js';
-  import { media, thumbUrl } from './media.svelte.js';
-  import { toast } from './toasts.svelte.js';
+  import { fallback, openMedia, photoInfo, photoLine, thumbUrl } from './media.svelte.js';
 
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
   // type: 'text' | 'words' | 'number' | 'block' | 'image'. onvalue(value) gets every valid input.
@@ -49,6 +45,7 @@
 
   const uid = $props.id();
   let invalid = $state(false);
+  const photo = $derived(type === 'image');
 
   /** Show the stored value, except while the user is typing in the field. */
   const show = (value) => (el) => {
@@ -56,104 +53,53 @@
     if (document.activeElement !== el && el.value !== text) el.value = text;
   };
 
-  // ---- image: upload (picked or dropped), thumbnail
-  const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif,image/tiff';
-  let progress = $state(null); // 0..1 while uploading, 1: the server is resizing
-  let dropping = $state(false);
-  let local = $state(null); // { key, url }: the uploaded file itself
-  let failed = $state(''); // a thumbnail URL that did not load
-  // the smallest size; the uploaded file itself when that doesn't load (no Photos address yet)
-  const remote = $derived(type === 'image' && value ? thumbUrl(value) : '');
-  const thumb = $derived(failed === remote && local && local.key === value ? local.url : remote);
-
-  async function send(file) {
-    if (!file || progress !== null) return;
-    progress = 0;
-    try {
-      const { key, photo } = await upload(file, (p) => (progress = p));
-      media.photos[key] = photo; // its sizes, for the thumbnail and the preview
-      if (local) URL.revokeObjectURL(local.url);
-      local = { key, url: URL.createObjectURL(file) };
-      onvalue(key);
-      toast(`Uploaded ${file.name}`, { kind: 'ok', note: key });
-    } catch (err) {
-      toast(err.message, { kind: 'error', timeout: 0 });
-    } finally {
-      progress = null;
-    }
-  }
-
-  function pick() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = ACCEPT;
-    input.onchange = () => send(input.files[0]);
-    input.click();
-  }
-
-  const drop = {
-    ondragover(e) {
-      if (![...e.dataTransfer.types].includes('Files')) return;
-      e.preventDefault();
-      dropping = true;
-    },
-    ondragleave: () => (dropping = false),
-    ondrop(e) {
-      e.preventDefault();
-      dropping = false;
-      send(e.dataTransfer.files[0]);
-    },
-  };
-
   function oninput(e) {
     const next = parseValue(type, e.currentTarget.value);
     invalid = next === undefined;
     if (!invalid) onvalue(next);
   }
+
+  function change() {
+    onfocus?.();
+    openMedia({ key: value || '', pick: edit });
+  }
 </script>
 
-<label
-  for={uid}
-  class={['tf', changed && 'is-changed', selected && 'is-selected', dropping && 'is-drop']}
+<!-- a photo has no input to label: a div, its buttons say what they do -->
+<svelte:element
+  this={photo ? 'div' : 'label'}
+  for={photo ? undefined : uid}
+  class={['tf', changed && 'is-changed', selected && 'is-selected']}
   data-edit={edit}
-  {...type === 'image' ? drop : {}}
 >
   <span class="tf__label">
     {label}<i class="dot" title="Changed"></i>
-    {#if progress !== null}
-      <span class="tf__file">
-        {progress < 1 ? `Uploading ${Math.round(progress * 100)}%` : 'Resizing…'}
-      </span>
-    {/if}
     {#if source}
       <Button size="small" title="Edit in the Source Explorer: content/{source}" onclick={onsource}>
         {baseName(source)}
       </Button>
     {/if}
   </span>
-  {#if type === 'image'}
-    <span class="tf__photo">
-      {#if thumb && failed !== thumb}
-        <img class="tf__thumb" src={thumb} alt="" onerror={() => (failed = thumb)} />
-      {/if}
-      <input
-        id={uid}
-        class={['tf__input', invalid && 'is-invalid']}
-        spellcheck="false"
-        placeholder={placeholder || 'Drop a photo, or a media/ path'}
-        {@attach show(value)}
-        {onfocus}
-        {oninput}
-      />
-      <Button
-        icon={progress === null ? 'upload' : 'spinner fa-spin'}
-        iconOnly
-        label="Upload a photo for {label}"
-        title="Upload a photo (or drop one on the field)"
-        disabled={progress !== null}
-        onclick={pick}
-      />
-    </span>
+  {#if photo}
+    <div class="photo">
+      <button
+        type="button"
+        class="photo__thumb"
+        aria-label={value ? `Change ${label}: ${photoInfo(value).name}` : `Choose ${label}`}
+        onclick={change}
+      >
+        {#if value}
+          <img src={thumbUrl(value)} alt="" {@attach fallback(value)} />
+        {:else}
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        {/if}
+      </button>
+      <span class="photo__info">
+        <span class="photo__name" title={value}>{value ? photoInfo(value).name : 'No photo'}</span>
+        <span class="photo__meta">{value ? photoLine(value) : 'Choose one in Media'}</span>
+      </span>
+      <Button size="small" onclick={change}>{value ? 'Change' : 'Choose'}</Button>
+    </div>
   {:else if type === 'block'}
     <textarea
       id={uid}
@@ -174,33 +120,75 @@
       {oninput}
     />
   {/if}
-</label>
+</svelte:element>
 
 <style lang="scss">
-  // a photo: thumbnail | path or key | Upload, all 36px tall like the input
-  .tf__photo {
+  // a photo: 64px thumbnail (or a + tile), its file name and sizes, Change
+  .photo {
     display: flex;
     align-items: center;
-    gap: 8px;
-    border-radius: 8px;
+    gap: 12px;
+  }
 
-    .tf__input {
-      flex: 1;
-      min-width: 0;
+  .photo__thumb {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    color: var(--muted);
+    background: var(--btn);
+    box-shadow: inset 0 0 0 1px var(--line);
+    font-size: 16px;
+    transition: background 0.2s;
+
+    &:hover {
+      color: var(--fg);
+      background: var(--btn-hover);
+    }
+
+    &:hover img {
+      filter: brightness(1.15);
+    }
+
+    &:focus-visible,
+    .is-selected & {
+      outline: none;
+      box-shadow:
+        inset 0 0 0 1px var(--ed-accent),
+        0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
-  .tf__thumb {
-    flex: none;
-    width: 36px;
-    height: 36px;
-    object-fit: cover;
-    border-radius: 8px;
-    background: rgb(255 255 255 / 0.06);
+  .photo__info {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 16px;
   }
 
-  // a photo dragged over the field
-  .is-drop .tf__photo {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ed-accent) 24%, transparent);
+  .photo__name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--fg);
+  }
+
+  .photo__meta {
+    font-size: 11px;
+    color: var(--muted);
   }
 </style>
