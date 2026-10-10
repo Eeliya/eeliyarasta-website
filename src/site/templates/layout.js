@@ -6,9 +6,9 @@ import { footer } from './footer.js';
 export function head(ctx, route, accent) {
   const { site } = ctx;
   const url = site.url + (route.out === '404.html' ? '/404' : route.path);
-  const image = route.image
-    ? mediaUrl(ctx, route.image)
-    : ctx.media?.['people/noor-vermeer/02.jpg']?.src;
+  // The page's own image (an album's cover), else the site's share image (site.json ogImage).
+  const own = route.image || site.ogImage;
+  const image = own ? mediaUrl(ctx, own) : '';
   const ld =
     route.page === 'home'
       ? html`<script type="application/ld+json">
@@ -17,8 +17,10 @@ export function head(ctx, route, accent) {
             '@type': 'Person',
             name: site.name,
             url: site.url,
-            jobTitle: 'Photographer',
-            address: { '@type': 'PostalAddress', addressCountry: 'NL' },
+            jobTitle: site.jobTitle || undefined,
+            address: site.country
+              ? { '@type': 'PostalAddress', addressCountry: site.country }
+              : undefined,
             sameAs: (site.social || []).map((s) => s.url),
           })}
         </script>`

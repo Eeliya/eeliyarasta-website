@@ -6,6 +6,7 @@
     "year": 2026,
     "url": "https://observatory.eeliyarasta.com/",
     "linkLabel": "observatory.eeliyarasta.com",
+    "linkOut": true,
     "image": "projects/grok-observatory.jpg",
     "description": "Watch an AI coding assistant's edits replay live, file by file. It replays every save in a local browser tab and works with any agent that edits files in a git repo.",
     "placeholder": false

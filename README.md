@@ -48,7 +48,7 @@ src/
     anim/engine.js  ← reads content/settings/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
     modules/        ← album slider, project accordion, card hover, misc
-    ui/             ← menu (click-only), NL clock
+    ui/             ← menu (click-only), clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
   editor/           ← the visual editor app (/edit/), dev server only, never built or shipped
     config.js       ← content files the editor may write and publish
@@ -88,15 +88,15 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                               | what                                                                                                                                                                       |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content/settings/site.json`       | name, SEO description, socials (Instagram, YouTube, GitHub), email, nav labels, footer copy                                                                                |
-| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                            |
-| `content/pages/index.json`         | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)               |
-| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`), curtain text, `meta`: `title` / `description` for `<head>` |
-| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                       |
-| `content/sources/places.json`      | places, same shape                                                                                                                                                         |
-| `content/sources/projects.json`    | projects: title, kind, year, description, url, image                                                                                                                       |
+| file                               | what                                                                                                                                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/settings/site.json`       | name, SEO description, socials, email, nav labels (and the clock label `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                               |
+| `content/pages/index.json`         | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)                                                                                                  |
+| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `imageAlt`, `paragraphs`, `facts`, `emailLabel`; photography: `panels` `[{ source, title, unit }]`), curtain text, `meta`: `title` / `description` for `<head>`       |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
+| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                            |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                              |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 

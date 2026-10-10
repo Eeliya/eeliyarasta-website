@@ -3,5 +3,9 @@
   "title": "Photography",
   "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
   "curtain": "Photography",
+  "panels": [
+    { "source": "people", "title": "People", "unit": "models" },
+    { "source": "places", "title": "Places", "unit": "places" }
+  ],
   "meta": { "description": "People and places photographed by Eeliya Rasta." }
 }

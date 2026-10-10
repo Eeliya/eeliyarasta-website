@@ -30,9 +30,11 @@ const albumLinks = (ctx, kind, list) =>
       </li>`,
   );
 
+/** Where a project links in the menus: its own site when "linkOut" is on, else its spot on /projects/. */
+const projectHref = (p) => (p.linkOut && p.url ? p.url : `/projects/#${p.slug}`);
+
 const projectLink = (p) => {
-  const href =
-    p.url && isExternal(p.url) && p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
+  const href = projectHref(p);
   return html`<li>
     <a class="dd-link dd-link--text" href="${esc(href)}" ${extAttrs(href)}>
       <span class="dd-link__name">${esc(p.title)}</span
@@ -48,7 +50,7 @@ export function header(ctx, route) {
   const n = (key, fallback) => nav[key] ?? fallback;
   return html`
   <header class="header" data-header>
-    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home">Eeliya Rasta</a>
+    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home">${esc(site.name)}</a>
 
     <nav class="nav" aria-label="Main">
       <div class="nav__pill">
@@ -81,7 +83,7 @@ export function header(ctx, route) {
     </nav>
 
     <div class="header__right">
-      <span class="header__clock"><span class="header__clock-dot"></span>NL <time data-clock>--:--</time></span>
+      <span class="header__clock"><span class="header__clock-dot"></span><span${ed(SITE, ['nav', 'clock'])}>${esc(nav.clock)}</span> <time data-clock="${esc(site.timezone)}">--:--</time></span>
       <button class="menu-toggle glass" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
         <span class="menu-toggle__label" data-open-label="${esc(n('close', 'Close'))}"><span${ed(SITE, ['nav', 'menu'])}>${esc(n('menu', 'Menu'))}</span></span>
         <span class="menu-toggle__icon" aria-hidden="true"><i></i><i></i></span>
@@ -111,7 +113,7 @@ export function mobileMenu(ctx) {
           <a class="mmenu__big" href="/projects/" data-nav="/projects/"><span${ed(SITE, ['nav', 'projects'])}>${esc(n('projects', 'Projects'))}</span></a>
           <div class="mmenu__sub mmenu__sub--single">
             <div>${projects.map((p) => {
-              const href = p.slug === 'grok-observatory' ? p.url : `/projects/#${p.slug}`;
+              const href = projectHref(p);
               return html`<a href="${esc(href)}" ${extAttrs(href)}
                 >${esc(p.title)}${isExternal(href) ? arrowNE : ''}</a
               >`;

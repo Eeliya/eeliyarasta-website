@@ -34,13 +34,13 @@ export function footer(ctx) {
       </div>
       <div class="footer__col">
         <h2 class="label"${ed(SITE, ['footer', 'columns', 'time', 'title'])}>${esc(time.title)}</h2>
-        <ul><li><time data-clock>--:--</time> <span class="muted"${ed(SITE, ['location'])}>${esc(site.location)}</span></li></ul>
+        <ul><li><time data-clock="${esc(site.timezone)}">--:--</time> <span class="muted"${ed(SITE, ['location'])}>${esc(site.location)}</span></li></ul>
       </div>
     </div>
     <div class="footer__base">
       <span>© ${year} ${esc(site.name)}</span>
-      <span class="muted">Shot on ${esc(site.camera)}. Built with Vite + GSAP.</span>
-      <button class="btn glass" type="button" data-to-top>Back to top <span aria-hidden="true">↑</span></button>
+      <span class="muted"${ed(SITE, ['footer', 'note'])}>${esc(foot.note)}</span>
+      <button class="btn glass" type="button" data-to-top><span${ed(SITE, ['footer', 'toTop'])}>${esc(foot.toTop)}</span> <span aria-hidden="true">↑</span></button>
     </div>
   </footer>`;
 }

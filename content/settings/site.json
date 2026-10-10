@@ -8,7 +8,9 @@
   "tagline": "Portrait & editorial photography",
   "location": "Netherlands",
   "timezone": "Europe/Amsterdam",
-  "camera": "Fujifilm X100V",
+  "jobTitle": "Photographer",
+  "country": "NL",
+  "ogImage": "people/noor-vermeer/02.jpg",
   "email": "hello@eeliyarasta.com",
   "emailIsPlaceholder": true,
   "accent": "#cfc8b8",
@@ -32,6 +34,8 @@
   "footer": {
     "label": "Say hello",
     "cta": "Let's make\nsomething.",
+    "note": "Shot on Fujifilm X100V. Built with Vite + GSAP.",
+    "toTop": "Back to top",
     "columns": {
       "social": {
         "title": "Social"
@@ -79,6 +83,7 @@
     "allPhotography": "All photography",
     "allProjects": "All projects",
     "menu": "Menu",
-    "close": "Close"
+    "close": "Close",
+    "clock": "NL"
   }
 }

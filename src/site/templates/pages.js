@@ -18,23 +18,24 @@ export const places = (ctx) =>
     </section>`;
 
 export const photography = (ctx) => {
-  const panel = (href, label, list, kind) => {
+  const page = ctx.pages.photography || {};
+  const PHOTOGRAPHY = pageFile('photography');
+  // One panel per entry of "panels": { source, title, unit } ("People", "models").
+  const panel = ({ source, title, unit }, i) => {
+    const list = Array.isArray(ctx.sources[source]) ? ctx.sources[source] : [];
     const cover = list.map(coverOf).find(Boolean);
-    return html` <a class="ppanel" href="${href}" data-anim-item>
+    return html` <a class="ppanel" href="/${esc(source)}/" data-anim-item>
       <span class="ppanel__media"
         >${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span
       >
       <span class="ppanel__info"
-        ><span class="ppanel__title">${label}</span
-        ><span class="label">${pad(list.length)} ${kind}</span></span
+        ><span class="ppanel__title"${ed(PHOTOGRAPHY, ['panels', i, 'title'])}>${esc(title)}</span
+        ><span class="label">${pad(list.length)} <span${ed(PHOTOGRAPHY, ['panels', i, 'unit'])}>${esc(unit)}</span></span></span
       >
     </a>`;
   };
   return html` ${pageHead(ctx, 'photography')}
-    <section class="ppanels" data-anim="album.grid">
-      ${panel('/people/', 'People', ctx.people, 'models')}
-      ${panel('/places/', 'Places', ctx.places, 'places')}
-    </section>`;
+    <section class="ppanels" data-anim="album.grid">${(page.panels || []).map(panel)}</section>`;
 };
 
 export const projects = (ctx) =>
@@ -48,7 +49,7 @@ export const about = (ctx) => {
   return html` <section class="about">
     <div class="about__media">
       <figure class="about__figure" data-anim="about.image">
-        ${img(ctx, a.image, { alt: 'Fujifilm X100V camera on a wooden table', sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: ed(ABOUT, ['image'], 'image') })}
+        ${img(ctx, a.image, { alt: a.imageAlt, sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: ed(ABOUT, ['image'], 'image') })}
       </figure>
       <figcaption class="label muted">
         ${esc(creditText(a.imageCredit))}${a.placeholder ? ' · placeholder' : ''}
@@ -66,7 +67,8 @@ export const about = (ctx) => {
         </dl>
         <div class="about__links">
           <a class="btn glass" href="mailto:${esc(ctx.site.email)}"
-            >Email me <span aria-hidden="true">→</span></a
+            ><span${ed(ABOUT, ['emailLabel'])}>${esc(a.emailLabel)}</span>
+            <span aria-hidden="true">→</span></a
           >
           ${(ctx.site.social || []).slice(0, 2).map((s) => html`<a class="btn glass" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} <span class="arrow-ne" aria-hidden="true">↗</span></a>`)}
         </div>

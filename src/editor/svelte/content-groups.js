@@ -13,7 +13,10 @@ export const SITE_SETTINGS = [
   ['description', 'Description (meta tags)', 'block'],
   ['url', 'Site URL (canonical links)', 'text'],
   ['accent', 'Accent color', 'text'],
-  ['camera', 'Camera (footer)', 'text'],
+  ['timezone', 'Time zone of the clock (e.g. Europe/Amsterdam)', 'text'],
+  ['ogImage', 'Share image (pages without a photo of their own)', 'image'],
+  ['jobTitle', 'Job title (for search engines)', 'text'],
+  ['country', 'Country code (for search engines, e.g. NL)', 'text'],
 ];
 
 /** Lists in content/sources/ (people, places, projects, ...). */
@@ -145,10 +148,13 @@ const MENU = [
   'allProjects',
   'menu',
   'close',
+  'clock',
 ];
 const FOOTER = [
   ['/footer/label', 'text'],
   ['/footer/cta', 'block'],
+  ['/footer/note', 'text'],
+  ['/footer/toTop', 'text'],
   ['/footer/columns/social/title', 'text'],
   ['/footer/columns/index/title', 'text'],
   ['/footer/columns/contact/title', 'text'],
