@@ -19,11 +19,14 @@
  *   z        its layer when blocks overlap (higher is in front)
  *   mobile   optional { col, span, row, rows } below 760px; without one, the section's
  *            blocks stack full width in their order
+ *   item     optional { source, slug }: the source item its bound fields show (./bindings.js;
+ *            on a [slug] page they show the page's item without one)
  * Positions become CSS variables on the elements; src/client/styles/_layout.scss lays them out.
  */
-import { esc, ed, editable, warnOnce } from '../helpers.js';
+import { esc, ed, editable, pointer, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
+import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
 
 export const COLS = 24;
 export const HEIGHTS = ['auto', 'screen'];
@@ -131,15 +134,32 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
     warnOnce(`${where}: a "${t.type}" block only works on a [slug] page: skipped`, 'layout');
     return '';
   }
+  const parts = (path) => ['sections', at, 'blocks', j, ...[path].flat()];
+  const { item, source } = itemOf(ctx, route, block);
+  const keys = keysOf(ctx, source);
+  // a bound value isn't edited in the preview: data-bound instead (a click selects the block),
+  // and data-bound-missing when its item or a field of it is missing (a dimmed {{name}})
+  const bound = (value, path) => {
+    let missing = false;
+    resolve(value, { item, keys, onwarn: () => (missing = true) });
+    const attr = ` data-bound="${esc(file + '#' + pointer(parts(path)))}"`;
+    return missing ? `${attr} data-bound-missing` : attr;
+  };
   const b = {
     id: block.id,
     file,
     number: numbers[block.id] || 0,
-    ed: (path, type) => ed(file, ['sections', at, 'blocks', j, ...[path].flat()], type),
+    ed: (path, type) => {
+      const value = [path].flat().reduce((v, k) => v?.[k], block);
+      if (!isBound(value)) return ed(file, parts(path), type);
+      return editable ? bound(value, path) : '';
+    },
   };
+  // the block with the item's values in its bound fields (as it is when nothing is bound)
+  const data = resolveBlock(block, t, { item, source, ctx, at: where, placeholders: editable });
   const marker = editable ? ` data-block="${esc(block.id)}"` : '';
   const hidden = block.config?.enabled === false ? ' hidden' : '';
-  return `<div class="blk blk--${t.type}"${marker} style="${blockVars(block)}"${hidden}>${t.render(block, ctx, b)}</div>`;
+  return `<div class="blk blk--${t.type}"${marker} style="${blockVars(block)}"${hidden}>${t.render(data, ctx, b)}</div>`;
 }
 
 /**

@@ -243,8 +243,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
   ending by column 24, no id twice on a page) and each block against its type (strings, lists,
   config values). An unknown block type isn't an error: it logs a build warning and is skipped.
-- **Later (bindings, phase 2):** block fields are plain values now; a field will be able to
-  hold a binding to a source item's field instead, without changing the shape above.
+- **Bindings:** a block's field can show a source item's value instead of its own (below).
 
 **Blocks.** The block types live in **one registry**, `src/site/blocks/` (`index.js` explains the
 shape): the build renders with it, and the editor reads it for each block's fields and settings
@@ -266,13 +265,14 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 | `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                             |
 | `projects` | the project accordion of a source; with a `title` it gets a head (home)                                              |
 | `about`    | the about block: `image`, `crumb`, `headline`, `paragraphs`, `facts`, `emailLabel`                                   |
-| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page                                             |
+| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page: `title`, `meta` (facts), `summary`         |
 
 - **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its crumb
   with its number among the page's numbered headings that are on: (01), (02), …
 - **Item pages:** a `[slug].json`'s blocks render once per item. A type marked `item` (the
-  `album` block) reads the page's item, `ctx.route.album`. Other types render the same on every
-  item page. Item types are only offered on `[slug]` pages.
+  `album` block) reads the page's item, `ctx.route.album`, for its photos; its texts, like any
+  block's, are bindings to the item (below), so every block shows the page's item through them.
+  Item types are only offered on `[slug]` pages.
 - **Animations:** blocks keep their `data-anim` targets (`content/settings/animations.json`),
   so a new block animates like the others of its type.
 - **A new type:** add it to a file in `src/site/blocks/` and to `BLOCK_TYPES` in `index.js`
@@ -280,6 +280,52 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 - **Migration:** `scripts/migrate-layout.mjs` turned the old list of typed sections into this
   shape once (each old section became a section with it as one full-width block, its old
   padding the section's spacing); kept for reference, it changes nothing on migrated content.
+
+### Bindings
+
+Any text, long text, photo or link field of a block (and a link in its config, `href`) can show a
+value of a **source item** instead of its own (`src/site/layout/bindings.js`):
+
+```json
+{
+  "type": "heading",
+  "crumb": "Featured",
+  "title": { "bind": "name" },
+  "intro": "{{role}} in {{location}}",
+  "item": { "source": "people", "slug": "noor-vermeer" }
+}
+```
+
+- **Custom:** a plain value, as before.
+- **`{ "bind": "<field>" }`:** the item's whole value. Its type must fit the field's (a text field
+  takes `text`, `choice`, `number`, `date`, `link`; a long text also `longtext`; a photo
+  `photo`; a link `link`; a list of photos (`[{ src }]`) `photos`; see `BIND_TYPES`).
+- **`{{field}}` in a text:** the item's values in the text, e.g. `"{{name}}, {{role}}"` (text
+  fields only, also in a list's texts like the album's facts).
+- **The item:** a block's own `item: { source, slug }`, else, on a `[slug]` page, the page's
+  item. Without one its bound fields render empty (a build warning).
+- **Rendering:** one resolver, `resolveBlock()`, swaps the values in before every block renders
+  (`src/site/layout/index.js`), so blocks don't know about bindings; values are escaped as
+  always. A block without bindings renders exactly as before.
+- **Checks:** Save and the build check their shape (`validate.js`) and, against the sources'
+  schemas, `bindingProblems()`: a `{ bind }` to a field the source doesn't have or of a type
+  that doesn't fit, or an item from a source that isn't one, is an error (Save refuses, the
+  build stops; a changed schema that breaks a page's binding too). A `{{name}}` the source
+  doesn't have, a binding without an item and an item that isn't in its source are build
+  warnings (`[bindings] …`) and render empty.
+- **The `[slug]` pages** are built this way: the album block's title is `{ "bind": "name" }`, its
+  facts are `{ "label": "Role", "value": "{{role}}" }`, … (a fact whose value is empty is left
+  out; the photo count comes last), its summary `{ "bind": "summary" }`. Their output is the
+  same as before. A new `[slug]` page binds the source's title field, its list fields as facts
+  and its first long text.
+- **In the editor:** bound values aren't typed in the preview; a click selects them and opens
+  their block on the field. Each bindable field has a **Source** switch in its label row: on,
+  it shows a Select of the item's fields that fit (the title field first); off, the field
+  gets what it showed as its own text. Typing `{{` in a text lists the item's fields (↑ ↓,
+  Enter or Tab, Esc). The block's Content tab starts with **Item from** (a source, or none /
+  this page's item) and **Item**. The preview shows the values of the item it shows; what can't
+  be filled shows dimmed as `{{name}}` there (only there). Editing a source renders the
+  sections that show it again.
 
 ### Menu
 
@@ -635,7 +681,9 @@ section (empty, or with a block). Clicking a block (or a text of it in the previ
 (column, columns, row, rows; its layer with Down / Up) and **Motion** (its animated elements;
 one opens in the Motion tab). **Sections** goes back. A list field (hero photos, about
 paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ / Remove and an
-**Add** button (a new photo opens the Media window). Each of these is one undo step.
+**Add** button (a new photo opens the Media window). Each of these is one undo step. Typing in
+a field (a number in Layout too) is one undo step until you leave it, press Enter or pause for a
+second. A field's **Source** switch binds it to an item (see "Bindings").
 
 **Arrange** (beside Sources) turns the preview into a layout canvas: a click picks a block
 (the inspector opens on Layout), dragging moves it and the handles on its edges and corners

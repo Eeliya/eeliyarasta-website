@@ -16,6 +16,7 @@ import {
   REDIRECTS,
   SITE,
   TEMPLATE,
+  isSlug,
   pageIdOf,
   schemaIdOf,
   sourceIdOf,
@@ -24,6 +25,7 @@ import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
 import { COLS, HEIGHTS, WIDTHS, ALIGNS } from './layout/index.js';
 import { isId } from './layout/ids.js';
+import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const typeOf = (v) =>
@@ -257,9 +259,33 @@ function checkBlock(b, where) {
     out.push(...checkArea(b.mobile, 'mobile').map((p) => `${name}: ${p}`));
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
   if (!t) return out; // an unknown type only warns (render)
+  if (
+    b.item !== undefined &&
+    !(isObject(b.item) && isSlug(b.item.source) && typeof b.item.slug === 'string')
+  )
+    bad('item', '{ "source": "<source>", "slug": "<item slug>" }');
+  // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>" }, {{field}}
+  const bindShape = (key, v, type) => {
+    if (Object.keys(v).length !== 1 || !/^[\w-]+$/.test(v.bind))
+      bad(key, '{ "bind": "<field>" } (one field name)');
+    else if (!type) bad(key, "a list of its own (it can't be bound)");
+  };
+  const templateIn = (key, v, type) =>
+    hasTemplate(v) &&
+    !TEMPLATE_TYPES.includes(type) &&
+    bad(key, 'its own value ({{…}} is for text)');
+  for (const c of t.config || []) {
+    const v = b.config?.[c.key];
+    if (isBinding(v)) bindShape(`config.${c.key}`, v, bindTypeOf(c, { config: true }));
+  }
   for (const f of t.fields || []) {
     const v = b[f.key];
     if (v === undefined) continue;
+    if (isBinding(v)) {
+      bindShape(f.key, v, bindTypeOf(f));
+      continue;
+    }
+    templateIn(f.key, v, bindTypeOf(f));
     if (!f.list) {
       if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
         bad(f.key, `a ${FIELD_TYPES[f.type] || 'string'}`);
@@ -276,7 +302,7 @@ function checkBlock(b, where) {
   if (enabled !== undefined && typeof enabled !== 'boolean') bad('config.enabled', 'true or false');
   for (const c of t.config || []) {
     const v = b.config[c.key];
-    if (v === undefined || (c.empty && v === '')) continue;
+    if (v === undefined || (c.empty && v === '') || isBinding(v)) continue;
     if (typeof v !== (CONFIG_TYPES[c.type] || 'string'))
       bad(`config.${c.key}`, `a ${CONFIG_TYPES[c.type] || 'string'}`);
     else if (c.options && !c.options.some(([o]) => o === v))

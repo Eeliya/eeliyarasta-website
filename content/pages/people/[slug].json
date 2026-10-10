@@ -20,6 +20,30 @@
         {
           "id": "b-j8hg",
           "type": "album",
+          "title": {
+            "bind": "name"
+          },
+          "meta": [
+            {
+              "label": "Role",
+              "value": "{{role}}"
+            },
+            {
+              "label": "Agency",
+              "value": "{{agency}}"
+            },
+            {
+              "label": "Location",
+              "value": "{{location}}"
+            },
+            {
+              "label": "Year",
+              "value": "{{year}}"
+            }
+          ],
+          "summary": {
+            "bind": "summary"
+          },
           "config": {},
           "pos": {
             "col": 1,

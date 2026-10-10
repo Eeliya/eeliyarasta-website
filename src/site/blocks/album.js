@@ -1,8 +1,11 @@
 /**
  * The album block of a [slug] page: the page's item (one person or place), Faint Film
  * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
- * drag / wheel navigation and a Slider ⇄ Grid toggle. It shows the item of the page it is on
- * (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
+ * drag / wheel navigation and a Slider ⇄ Grid toggle. Its photos are the item of the page it
+ * is on (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
+ * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "name" },
+ * the facts ("Role" / "{{role}}"; a fact whose value is empty is left out, "Photos" and the
+ * count always come last) and the summary { "bind": "summary" }.
  */
 import { html, esc, img, pad, creditText, ratio, ed, lines, imagesOf } from '../helpers.js';
 
@@ -11,37 +14,59 @@ export const album = {
   label: 'Album (the item)',
   icon: 'film',
   item: true,
-  defaults: {},
-  render: (s, ctx) => albumOf(ctx, ctx.route),
+  fields: [
+    { key: 'title', label: 'Title' },
+    {
+      key: 'meta',
+      label: 'Facts',
+      list: {
+        label: { type: 'text', label: 'Label', width: 'half' },
+        value: { type: 'text', label: 'Value', width: 'half' },
+      },
+    },
+    { key: 'summary', label: 'Summary', type: 'block' },
+  ],
+  defaults: {
+    title: { bind: 'name' },
+    meta: [
+      { label: 'Location', value: '{{location}}' },
+      { label: 'Year', value: '{{year}}' },
+    ],
+    summary: { bind: 'summary' },
+  },
+  render: (s, ctx, b) => albumOf(s, ctx, ctx.route, b),
 };
 
-function albumOf(ctx, route) {
+function albumOf(s, ctx, route, b) {
   const a = route.album;
   const images = imagesOf(a);
   const n = images.length;
-  const isPeople = route.kind === 'people';
   const at = (field, type) => ed(route.file, [route.index, field], type);
   // a photo's src, edited (and uploaded) in the editor
   const photo = (i) => ed(route.file, [route.index, 'images', i, 'src'], 'image');
+  const title = String(s.title ?? '');
+  const summary = String(s.summary ?? '');
   const meta = [
-    isPeople ? ['Role', a.role, at('role')] : null,
-    isPeople ? ['Agency', a.agency, at('agency')] : null,
-    ['Location', a.location, at('location')],
-    ['Year', a.year, at('year', 'number')],
-    ['Photos', pad(n), ''],
-  ].filter((m) => m && m[1]);
+    ...(Array.isArray(s.meta) ? s.meta : []).map((m, i) => [
+      m?.label,
+      m?.value,
+      b.ed(['meta', i, 'value']),
+      b.ed(['meta', i, 'label']),
+    ]),
+    ['Photos', pad(n), '', ''],
+  ].filter((m) => m[0] && m[1] !== undefined && m[1] !== null && String(m[1]) !== '');
 
   return html` <div class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
       <a class="album__back label" href="${esc(route.parent)}"
         ><span aria-hidden="true">←</span> <span${ed(route.template, ['section'])}>${esc(route.section)}</span></a
       >
-      <h1 class="album__title" data-anim="album.title" ${at('name')}>${esc(a.name)}</h1>
+      <h1 class="album__title" data-anim="album.title" ${b.ed('title')}>${esc(title)}</h1>
       <div class="album__details" data-anim="album.meta">
         <dl class="album__meta">
-          ${meta.map(([k, v, attr]) => html`<div><dt class="label">${esc(k)}</dt><dd${attr}>${esc(v)}</dd></div>`)}
+          ${meta.map(([k, v, attr, labelAttr]) => html`<div><dt class="label"${labelAttr}>${esc(k)}</dt><dd${attr}>${esc(v)}</dd></div>`)}
         </dl>
-        ${a.summary ? html`<p class="album__summary" ${at('summary', 'block')}>${lines(a.summary)}</p>` : ''}
+        ${summary ? html`<p class="album__summary" ${b.ed('summary', 'block')}>${lines(summary)}</p>` : ''}
         ${a.placeholder ? html`<p class="album__note"><span class="tag">Placeholder</span> <span${at('note', 'block')}>${lines(a.note || '')}</span></p>` : ''}
       </div>
     </aside>
@@ -51,7 +76,7 @@ function albumOf(ctx, route) {
       data-anim="album.stage"
       data-album-stage
       aria-roledescription="carousel"
-      aria-label="${esc(a.name)} photos"
+      aria-label="${esc(title || a.name)} photos"
     >
       ${images.map(
         (im, i) =>

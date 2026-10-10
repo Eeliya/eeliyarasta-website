@@ -20,6 +20,22 @@
         {
           "id": "b-gbxt",
           "type": "album",
+          "title": {
+            "bind": "name"
+          },
+          "meta": [
+            {
+              "label": "Location",
+              "value": "{{location}}"
+            },
+            {
+              "label": "Year",
+              "value": "{{year}}"
+            }
+          ],
+          "summary": {
+            "bind": "summary"
+          },
           "config": {},
           "pos": {
             "col": 1,

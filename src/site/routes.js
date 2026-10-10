@@ -31,6 +31,7 @@ import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
 import { blocksOf } from './layout/ids.js';
+import { isBound } from './layout/bindings.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -62,7 +63,11 @@ export const pathOfId = (id) =>
   id === 'home' ? '/' : `/${id.replace(/(^|\/)\[slug\]$/, '')}/`.replace(/\/+$/, '/');
 
 /** A page's title: its first heading block's title (blocks/pages.js), else undefined. */
-export const pageTitle = (page) => blocksOf(page).find((b) => b?.type === 'heading')?.title;
+export const pageTitle = (page) => {
+  const title = blocksOf(page).find((b) => b?.type === 'heading')?.title;
+  // a bound title (layout/bindings.js) names the item, not the page
+  return typeof title === 'string' && !isBound(title) ? title : undefined;
+};
 
 const titleCase = (s) =>
   String(s)

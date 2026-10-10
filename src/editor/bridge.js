@@ -7,7 +7,9 @@
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
  *  - turns [data-edit] elements into inline editors (Text mode); a photo
  *    (data-edit-type="image") is picked with a click and edited in the panel,
- *  - lets you hover/click [data-anim] elements to select them (Motion mode).
+ *  - lets you hover/click [data-anim] elements to select them (Motion mode),
+ *  - selects a bound value ([data-bound], src/site/layout/bindings.js) with a click: not
+ *    typed in the preview, its field in the panel shows the binding.
  */
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
@@ -21,6 +23,9 @@ html.__ed-text [data-edit]:focus { outline: 1.5px solid var(--ed-accent); outlin
 html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
 html.__ed-text [data-edit] { pointer-events: auto; }
 html.__ed-text img[data-edit] { cursor: pointer !important; }
+html.__ed-text [data-bound] { outline: 1px dotted rgb(255 255 255 / .3); outline-offset: 3px; border-radius: 2px; cursor: pointer !important; pointer-events: auto; }
+html.__ed-text [data-bound]:hover { outline-color: rgb(255 255 255 / .6); }
+[data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
@@ -103,14 +108,16 @@ export function createBridge({ store, labelFor }) {
       const view = doc.querySelector('[data-router-view]');
       const sel = selected && {
         kind: selected.kind,
-        edit: selected.el.dataset.edit,
+        edit: selected.el.dataset.edit ?? selected.el.dataset.bound,
         anim: [...view.querySelectorAll('[data-anim]')].indexOf(selected.el),
       };
       restore = () => {
         api.scrollTop(y);
         if (!sel) return;
         const el = sel.edit
-          ? doc.querySelector(`[data-edit="${CSS.escape(sel.edit)}"]`)
+          ? doc.querySelector(
+              `[data-edit="${CSS.escape(sel.edit)}"], [data-bound="${CSS.escape(sel.edit)}"]`,
+            )
           : doc.querySelectorAll('[data-router-view] [data-anim]')[sel.anim];
         if (el) bridge.select(el, sel.kind);
       };
@@ -274,7 +281,9 @@ export function createBridge({ store, labelFor }) {
       if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true });
     },
     focusEdit(edit) {
-      const el = doc?.querySelector(`[data-edit="${CSS.escape(edit)}"]`);
+      const el = doc?.querySelector(
+        `[data-edit="${CSS.escape(edit)}"], [data-bound="${CSS.escape(edit)}"]`,
+      );
       if (!el) return;
       bridge.reveal(el);
       bridge.select(el, 'text');
@@ -310,7 +319,12 @@ export function createBridge({ store, labelFor }) {
   }
 
   function boxLabel(el, kind) {
-    if (kind === 'text') return labelFor?.(parseEdit(el.dataset.edit)) || el.dataset.edit;
+    if (kind === 'text') {
+      // a bound value: its field's label, "from the item"
+      const edit = el.dataset.edit ?? el.dataset.bound;
+      const label = labelFor?.(parseEdit(edit)) || edit;
+      return el.dataset.bound ? `${label} · from the item` : label;
+    }
     return `${el.dataset.anim} · ${api?.resolve(el.dataset.anim, el)?.preset || '?'}`;
   }
 
@@ -372,7 +386,7 @@ export function createBridge({ store, labelFor }) {
       (e) => {
         if (mode === 'browse') return;
         const t = e.target instanceof win.Element ? e.target : null;
-        hoverEl = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]') || null;
+        hoverEl = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : '[data-anim]') || null;
       },
       { passive: true },
     );
@@ -385,12 +399,17 @@ export function createBridge({ store, labelFor }) {
       (e) => {
         if (mode === 'browse' || e.altKey) return;
         const t = e.target instanceof win.Element ? e.target : null;
-        const hit = t?.closest(mode === 'text' ? '[data-edit]' : '[data-anim]');
+        const hit = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : '[data-anim]');
         if (!hit) return;
         e.preventDefault();
         e.stopPropagation();
         if (mode === 'motion') bridge.select(hit, 'anim');
-        else if (hit.dataset.editType === 'image') {
+        else if (hit.dataset.bound) {
+          // a bound value (src/site/layout/bindings.js) isn't typed here: its block opens on
+          // the field, which shows the binding
+          bridge.select(hit, 'text');
+          emit('textFocus', hit.dataset.bound);
+        } else if (hit.dataset.editType === 'image') {
           // a photo can't take focus: pick it like a focused text
           bridge.select(hit, 'text');
           emit('textFocus', hit.dataset.edit);

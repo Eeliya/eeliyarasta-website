@@ -5,7 +5,8 @@
  *   current[file] - the edited version shown in the preview
  *
  * Every change is { file, ptr, before, after } (after === undefined removes the value).
- * Rapid changes with the same `key` (typing in one field) coalesce into one undo step.
+ * Rapid changes with the same `key` (typing in one field) coalesce into one undo step, until a
+ * pause of a second or seal() (the field lost focus, Enter).
  * A change marked `structure` (a section or list item added or removed, a menu item moved)
  * needs the preview rendered again: listeners get { structure: true } for it, and for its
  * undo and redo.
@@ -38,6 +39,7 @@ export function createStore() {
       entry.key &&
       last &&
       last.key === entry.key &&
+      !last.sealed &&
       Date.now() - last.t < 1000 &&
       last.changes.length === 1 &&
       entry.changes.length === 1
@@ -118,6 +120,14 @@ export function createStore() {
         entry.structure,
       );
       return true;
+    },
+    /**
+     * End the edit session: the next change starts a new undo step even with the same key
+     * (main.js calls it when a field loses focus or gets Enter).
+     */
+    seal() {
+      const last = history.at(-1);
+      if (last) last.sealed = true;
     },
     canUndo: () => history.length > 0,
     canRedo: () => future.length > 0,

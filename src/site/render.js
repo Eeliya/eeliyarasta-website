@@ -8,11 +8,17 @@ import { accentOf, setEditable } from './helpers.js';
 import { head, body } from './templates/layout.js';
 import { renderSections, renderSection, headingNumbers } from './layout/index.js';
 import { pageFile } from './files.js';
+import { bindingProblems } from './layout/bindings.js';
+import { BLOCK_TYPES } from './blocks/index.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
 export { getRoutes, buildRoutes, sitemapXml };
 export { seoWarnings } from './seo.js';
 export { buildRedirects, pathsOf, redirectsText } from './redirects.js';
+
+/** Schema-aware checks of the pages' bindings: [{ level, message }] (layout/bindings.js). */
+export const bindingChecks = (content, files = null) =>
+  bindingProblems(content, { types: BLOCK_TYPES, pageFile, files });
 
 /**
  * { head, body, lang } of a route; lang: <html lang>.

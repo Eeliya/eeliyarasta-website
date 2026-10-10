@@ -145,6 +145,7 @@ export default function staticSite() {
         pathsOf,
         redirectsText,
         renderRoute,
+        bindingChecks,
         seoWarnings,
         sitemapXml,
       } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
@@ -152,6 +153,11 @@ export default function staticSite() {
       // every source against its schema (required fields, types, photos): stop on a mistake
       const problems = checkSources(content);
       if (problems.length) throw new Error(`Content problems:\n  ${problems.join('\n  ')}`);
+      // bindings against the sources' schemas: a wrong one stops, an empty one warns
+      const bindings = bindingChecks(content);
+      const wrong = bindings.filter((p) => p.level === 'error').map((p) => p.message);
+      if (wrong.length) throw new Error(`Binding problems:\n  ${wrong.join('\n  ')}`);
+      for (const p of bindings) config.logger.warn(`\x1b[33m[bindings]\x1b[0m ${p.message}`);
       const { routes, warnings } = buildRoutes(content);
       for (const w of warnings) config.logger.warn(`\x1b[33m[routes]\x1b[0m ${w}`);
       for (const w of seoWarnings(routes)) config.logger.warn(`\x1b[33m[seo]\x1b[0m ${w}`);

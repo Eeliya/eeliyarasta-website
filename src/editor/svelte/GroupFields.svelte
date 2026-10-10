@@ -7,6 +7,8 @@
     live      reactive store (live.svelte.js); bridge: the preview (../bridge.js)
     sourceIds the files in content/sources/, for a list item's source
     onsource  (file, item?, edit?): open the Source Explorer
+    bindings  a block's: { binds(type), names, resolved(f) } for its fields' Source switch and
+              {{name}} suggestions (BlockInspector.svelte, Field.svelte); null: none
 -->
 <script>
   import Button from './Button.svelte';
@@ -19,8 +21,9 @@
   import { openMedia } from './media.svelte.js';
   import { pairedHalves } from './source-items.js';
   import { baseName } from '../../site/files.js';
+  import { isBound } from '../../site/layout/bindings.js';
 
-  let { g, live, bridge, sourceIds, onsource } = $props();
+  let { g, live, bridge, sourceIds, onsource, bindings = null } = $props();
   const uid = $props.id();
 
   // a setting changes what the block shows: the preview renders it again (structure)
@@ -65,11 +68,18 @@
   }
 
   // a switch or a choice can change what the block shows: rendered again
+  // a bound value (an object, or text with {{name}}) shows the item's: rendered again too
   function setValue(f, value) {
-    const structure = f.type === 'boolean' || f.type === 'select';
+    const structure =
+      f.type === 'boolean' ||
+      f.type === 'select' ||
+      isBound(value) ||
+      isBound(live.get(f.file, f.ptr));
+    const typed = f.type !== 'boolean' && f.type !== 'select' && typeof value !== 'object';
     live.store.set(f.file, f.ptr, value, {
       source: 'panel',
-      ...(structure ? { structure } : { key: `text:${f.edit}` }),
+      structure,
+      ...(typed ? { key: `text:${f.edit}` } : {}),
     });
   }
 
@@ -106,6 +116,9 @@
       onsource={() => onsource(f.file, itemOf(f), f.edit)}
       onfocus={() => bridge.focusEdit(f.edit)}
       onvalue={(value) => setValue(f, value)}
+      binds={bindings && f.bindType && f.type !== 'boolean' ? bindings.binds(f.bindType) : null}
+      names={bindings && f.textual ? bindings.names : null}
+      resolved={bindings?.resolved(f) ?? ''}
     />
   {/if}
 {/snippet}
@@ -171,6 +184,9 @@
     value={live.get(g.file, c.ptr)}
     changed={live.changed(g.file, c.ptr)}
     onvalue={(value) => setConfig(c, value)}
+    binds={bindings ? bindings.binds('link') : null}
+    names={bindings?.names ?? null}
+    resolved={bindings?.resolved({ file: g.file, ptr: c.ptr, type: 'link' }) ?? ''}
   />
 {/each}
 

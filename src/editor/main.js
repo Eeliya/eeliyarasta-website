@@ -40,6 +40,7 @@ import {
   contentFromFiles,
   pageFile,
   pageIdOf,
+  schemaIdOf,
   sourceIdOf,
 } from '../site/files.js';
 import {
@@ -326,6 +327,22 @@ let rendering = Promise.resolve();
 function syncSections({ structure = false } = {}) {
   const stale = syncLayout(bridge.doc, store, { structure });
   bridge.api?.ScrollTrigger?.refresh();
+  renderSections(stale);
+}
+
+/**
+ * Sections showing bound values (src/site/layout/bindings.js) rendered again: a source they
+ * show was edited (after its draft reached the dev server, see pushDraft).
+ */
+function rebind() {
+  const ids = [...(bridge.doc?.querySelectorAll('[data-sec]') || [])]
+    .filter((s) => s.querySelector('[data-bound]'))
+    .map((s) => s.dataset.sec);
+  renderSections(ids);
+}
+
+/** Sections `ids` of the previewed page rendered by the dev server and swapped in, in turn. */
+function renderSections(stale) {
   if (!stale.length) return;
   rendering = rendering.then(async () => {
     const file = previewFile(bridge.doc);
@@ -358,13 +375,23 @@ bridge.on('navigate', (path) => {
 });
 bridge.on('select', (sel) => {
   if (ui.mode === 'motion') ui.anim = pickAnim(sel);
-  else ui.selection = sel?.kind === 'text' ? { edit: sel.el.dataset.edit } : null;
+  else
+    ui.selection =
+      sel?.kind === 'text' ? { edit: sel.el.dataset.edit ?? sel.el.dataset.bound } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
 // After the handlers above: the selection and scroll from before a refresh.
 bridge.on('navigate', restorePlace);
 
 // ---------------------------------------------------------------- store events
+// Typing in one field is one undo step (store.js: same key, no pause of a second); leaving
+// the field or Enter ends that step, so the next edit of it is a new one.
+document.addEventListener('focusout', () => store.seal(), true);
+document.addEventListener(
+  'keydown',
+  (e) => e.key === 'Enter' && e.target.matches?.('input') && store.seal(),
+  true,
+);
 // The preview renders the unsaved edits: the dev server gets them after every change
 // (POST /__editor/draft; {} once saved), so pages the preview loads show them. A structure
 // change (a list item added or removed, a menu item moved) renders the preview again right
@@ -372,18 +399,22 @@ bridge.on('navigate', restorePlace);
 // sections it touched (syncSections).
 let draftTimer = 0;
 let refreshPending = false;
-function pushDraft({ refresh = false } = {}) {
+let rebindPending = false;
+function pushDraft({ refresh = false, sources = false } = {}) {
   refreshPending ||= refresh;
+  rebindPending ||= sources;
   clearTimeout(draftTimer);
   draftTimer = setTimeout(async () => {
     const reload = refreshPending;
-    refreshPending = false;
+    const bound = rebindPending;
+    refreshPending = rebindPending = false;
     try {
       await source.draft(Object.fromEntries(store.dirtyFiles().map((f) => [f, store.current[f]])));
     } catch (err) {
       toast(`Preview: ${err.message}`, { kind: 'error' });
     }
     if (reload && bridge.path()) bridge.reload();
+    else if (bound) rebind();
   }, 250);
 }
 
@@ -391,7 +422,10 @@ let animTimer = 0;
 store.on(({ files, source: src, structure }) => {
   const page = previewFile(bridge.doc);
   if (files.some((f) => f !== ANIMATIONS))
-    pushDraft({ refresh: structure && files.some((f) => f !== page) });
+    pushDraft({
+      refresh: structure && files.some((f) => f !== page),
+      sources: files.some((f) => sourceIdOf(f) || schemaIdOf(f)),
+    });
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);

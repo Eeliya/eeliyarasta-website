@@ -64,6 +64,8 @@ import {
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
+import { bindingProblems } from '../src/site/layout/bindings.js';
+import { BLOCK_TYPES } from '../src/site/blocks/index.js';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -218,7 +220,7 @@ export function pagesOp(
       // the item's album, filling the screen
       sections: [
         {
-          ...newSection(ids, [newBlock('album', ids, { rows: 1 })]),
+          ...newSection(ids, [albumBlock(root, source, ids)]),
           height: 'screen',
           align: 'stretch',
           width: 'full',
@@ -315,6 +317,46 @@ function sourceProblems(root, files) {
 }
 
 /**
+ * A new [slug] page's album block, its texts bound to the source's fields (its schema): the
+ * title field, the fields shown in item lists as facts ("{{role}}"), the first long text.
+ */
+function albumBlock(root, source, ids) {
+  const list = readContentFile(root, sourceFile(source), { check: false });
+  const own = fs.existsSync(path.join(root, CONTENT_DIR, schemaFile(source)))
+    ? readContentFile(root, schemaFile(source), { check: false })
+    : undefined;
+  const schema = schemaOf({ sources: { [source]: list }, schemas: { [source]: own } }, source);
+  const fields = schema.fields || [];
+  const long = fields.find((f) => f.type === 'longtext');
+  return {
+    ...newBlock('album', ids, { rows: 1 }),
+    title: schema.title ? { bind: schema.title } : '',
+    meta: fields
+      .filter((f) => f.list && ['text', 'choice', 'number', 'date'].includes(f.type))
+      .map((f) => ({ label: f.label, value: `{{${f.key}}}` })),
+    summary: long ? { bind: long.key } : '',
+  };
+}
+
+/**
+ * Bindings of the saved pages that don't fit their sources' schemas (src/site/layout/bindings.js;
+ * the 'error' level: an unknown source or field, a type that doesn't fit). A saved schema or
+ * source can break any page's bindings, so then every page is checked.
+ */
+function bindingErrors(root, files) {
+  const names = Object.keys(files);
+  const all = names.some((n) => sourceIdOf(n) || schemaIdOf(n));
+  const content = loadContent(root, files);
+  return bindingProblems(content, {
+    types: BLOCK_TYPES,
+    pageFile,
+    files: all ? null : new Set(names),
+  })
+    .filter((p) => p.level === 'error')
+    .map((p) => p.message);
+}
+
+/**
  * Save: write the editor's files ({ "pages/index.json": data, ... }) to content/. Only existing
  * editable files, and only when every one of them has the right shape (src/site/validate.js)
  * and every source fits its schema (sourceProblems): nothing is written otherwise. Each file is written atomically (temp file + rename).
@@ -329,7 +371,9 @@ export function save(root, files, onWrite = () => {}) {
   const shape = names.flatMap((n) =>
     checkContent(n, files[n]).map((p) => `${CONTENT_DIR}/${n}: ${p}`),
   );
-  const problems = shape.length ? shape : sourceProblems(root, files);
+  const problems = shape.length
+    ? shape
+    : [...sourceProblems(root, files), ...bindingErrors(root, files)];
   if (problems.length)
     return { status: 400, body: { error: `Not saved. ${problems.join('; ')}`, problems } };
   onWrite();

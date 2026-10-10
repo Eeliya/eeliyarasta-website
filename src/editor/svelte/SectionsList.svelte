@@ -59,10 +59,12 @@
   const typeOf = (b) => BLOCK_TYPES[b?.type];
   const nameOfSection = (s) => (s.blocks || []).map(nameOf).find(Boolean) || '';
   const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
-  const set = (at, patch) => setSection(live.store, file, at, patch);
+  const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   const whole = (v, min) => Math.max(min, Math.round(v));
-  const spacing = (s, key, v) =>
-    set(sections.indexOf(s), { spacing: { ...s.spacing, [key]: whole(v, 0) } });
+  const spacing = (s, key, v) => {
+    const at = sections.indexOf(s);
+    set(at, { spacing: { ...s.spacing, [key]: whole(v, 0) } }, `section:${file}#${at}/${key}`);
+  };
 
   function setBlockOn(at, j, on) {
     const b = sections[at].blocks[j];
@@ -188,7 +190,7 @@
           half
           value={rowsOf(s)}
           changed={changed(at, 'rows')}
-          onvalue={(rows) => set(at, { rows: whole(rows, 1) })}
+          onvalue={(rows) => set(at, { rows: whole(rows, 1) }, `section:${file}#${at}/rows`)}
         />
       {/if}
       <Field

@@ -14,9 +14,17 @@ const listOf = (store, file) => {
 };
 const write = (store, file, list, structure = true) =>
   store.set(file, '/sections', list, { source: 'panel', structure });
-/** Section `at` replaced by `section` (its rows grown to fit its blocks): no new render. */
-const writeSection = (store, file, at, section) =>
-  store.set(file, `/sections/${at}`, { ...section, rows: rowsOf(section) }, { source: 'panel' });
+/**
+ * Section `at` replaced by `section` (its rows grown to fit its blocks): no new render.
+ * key: typing in one field (a number) coalesces into one undo step (store.js).
+ */
+const writeSection = (store, file, at, section, key) =>
+  store.set(
+    file,
+    `/sections/${at}`,
+    { ...section, rows: rowsOf(section) },
+    { source: 'panel', key },
+  );
 
 /** A copy of a section ('s') or block ('b') with new ids (taken: the page's ids, the new ones added). */
 function copyOf(item, kind, taken) {
@@ -57,10 +65,13 @@ export function removeSection(store, file, at) {
   return write(store, file, list);
 }
 
-/** Section `at`'s settings (height, align, rows, width, spacing, enabled) changed by `patch`. */
-export function setSection(store, file, at, patch) {
+/**
+ * Section `at`'s settings (height, align, rows, width, spacing, enabled) changed by `patch`;
+ * key: see writeSection.
+ */
+export function setSection(store, file, at, patch, key) {
   const section = listOf(store, file)[at];
-  return writeSection(store, file, at, { ...section, ...patch });
+  return writeSection(store, file, at, { ...section, ...patch }, key);
 }
 
 /** The first free row below every block of a section. */
@@ -108,11 +119,14 @@ export function removeBlock(store, file, at, j) {
   return write(store, file, list);
 }
 
-/** Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step. */
-export function placeBlock(store, file, at, j, pos) {
+/**
+ * Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
+ * drag); key: typing in a number field coalesces (see writeSection).
+ */
+export function placeBlock(store, file, at, j, pos, key) {
   const section = listOf(store, file)[at];
   section.blocks[j].pos = placeOf(pos);
-  return writeSection(store, file, at, section);
+  return writeSection(store, file, at, section, key);
 }
 
 /** Block `j` of section `at` one layer up (dir 1) or down (-1). */

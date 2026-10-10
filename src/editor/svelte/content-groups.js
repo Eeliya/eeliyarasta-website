@@ -8,6 +8,7 @@ import { NAV, SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
 import { BLOCK_TYPES } from '../../site/blocks/index.js';
+import { bindTypeOf } from '../../site/layout/bindings.js';
 import { previewFile } from '../layout-sync.js';
 import { WIDGETS, itemName, schemaFor } from './source-items.js';
 
@@ -145,8 +146,10 @@ export function nameOf(s) {
  * photo item ('' for a list of photos, null for none) so Add can open the Media window.
  */
 function registryFields(file, base, s, t) {
-  // a list item's subkey type can be { type, label, options } (src/site/blocks/index.js)
-  const field = (path, type, label) => {
+  // a list item's subkey type can be { type, label, options } (src/site/blocks/index.js).
+  // bindType: what it can show of an item as a whole (src/site/layout/bindings.js; a list
+  // item's subkey can't, null); textual: its text can hold {{name}}
+  const field = (path, type, label, whole = false) => {
     const ptr = pointer([...base, ...path]);
     const def = type && typeof type === 'object' ? type : { type };
     return {
@@ -157,10 +160,12 @@ function registryFields(file, base, s, t) {
       label: def.label || label,
       half: def.width === 'half',
       ...(def.options ? { options: def.options } : {}),
+      bindType: whole ? bindTypeOf(def) : null,
+      textual: TEXT_TYPES.includes(def.type || 'text'),
     };
   };
   return (t.fields || []).map((f) => {
-    if (!f.list) return field([f.key], f, f.label);
+    if (!f.list) return field([f.key], f, f.label, true);
     const items = Array.isArray(s[f.key]) ? s[f.key] : [];
     const subs = typeof f.list === 'string' ? null : Object.entries(f.list);
     const ptr = pointer([...base, f.key]);
@@ -203,6 +208,8 @@ export function runsOf(fields) {
 
 /** Every field of a group, list items included. */
 export const allFields = (g) => g.fields.flatMap((f) => (f.list ? f.items.flat() : [f]));
+
+const TEXT_TYPES = ['text', 'words', 'block'];
 
 /**
  * Group for block `j` of section `at` of page file `file`: id the block's, titled by its
