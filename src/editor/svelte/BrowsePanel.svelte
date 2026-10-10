@@ -4,6 +4,7 @@
 -->
 <script>
   import PubFiles from './PubFiles.svelte';
+  import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { labelFor } from './content-groups.js';
   import { compile } from '../lib/pointer.js';
@@ -97,13 +98,10 @@
   <section class="grp">
     <h4 class="grp__title">Unsaved changes{files.length ? '' : ': none'}</h4>
     {#each files as f (f.name)}
-      <details class="chg" open>
-        <summary>
-          <code>content/{f.name}</code>
-          <span class="muted">· {f.changes.length}</span>
-          {@render discardButton(f.name, `Discard ${plural(f.changes.length, 'change')}?`)}
-        </summary>
-        <ul>
+      <Section title="content/{f.name}" class="chg">
+        {#snippet bar()}<span class="muted">{f.changes.length}</span>{/snippet}
+        {@render discardButton(f.name, `Discard ${plural(f.changes.length, 'change')}?`)}
+        <ul class="chg__list">
           {#each f.changes.slice(0, 40) as { path, value }, i (i)}
             {@const before = saved(f.name, path)}
             <li>
@@ -113,7 +111,7 @@
             </li>
           {/each}
         </ul>
-      </details>
+      </Section>
     {/each}
     {#if files.length}
       {@render discardButton('all', `Discard all ${plural(live.changes, 'unsaved change')}?`)}
@@ -177,22 +175,18 @@
     }
   }
 
-  // changes
-  .chg {
-    margin-bottom: 12px;
+  // changes: a Section per file (class chg); file names keep their case
+  :global(.chg .sec__toggle) {
+    text-transform: none;
+    letter-spacing: 0;
+  }
 
-    summary {
-      cursor: pointer;
-      margin-bottom: 8px;
-    }
-
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 0 0 0 12px;
-      display: grid;
-      gap: 4px;
-    }
+  .chg__list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 24px;
+    display: grid;
+    gap: 4px;
   }
 
   .chg__path {
@@ -210,10 +204,5 @@
   .chg__val {
     color: var(--fg);
     word-break: break-word;
-  }
-
-  .chg summary .btn-sm,
-  .chg summary .confirm {
-    margin-left: 8px;
   }
 </style>
