@@ -7,6 +7,7 @@
  *                               /people/), plus maybe [slug].json, a template page for every
  *                               item of a source (see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
+ *   content/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
  *   content/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
  *                               animations.json, redirects.json: a list), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
@@ -29,6 +30,7 @@ export const pageFile = (id) =>
       ? `pages/${id}.json`
       : `pages/${id}/index.json`;
 export const sourceFile = (id) => `sources/${id}.json`;
+export const schemaFile = (id) => `sources/${id}.schema.json`;
 export const settingsFile = (id) => `settings/${id}.json`;
 
 export const SITE = settingsFile('site');
@@ -57,18 +59,24 @@ export const isSlug = (s) => SLUG.test(String(s ?? ''));
 /** The name of a template page (pages/people/[slug].json) and the last part of its id. */
 export const TEMPLATE = '[slug]';
 
-/** "sources/people.json" -> "people" (null for files outside content/sources/). */
-export const sourceIdOf = (file) => /^sources\/([^/]+)\.json$/.exec(file || '')?.[1] ?? null;
-
 const NAME = '[a-z0-9][a-z0-9_-]*';
+const SOURCE = new RegExp(`^sources/(${NAME})\\.json$`, 'i');
+const SCHEMA = new RegExp(`^sources/(${NAME})\\.schema\\.json$`, 'i');
 const CONTENT_FILE = new RegExp(
-  `^(?:(?:sources|settings)/${NAME}|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
+  `^(?:(?:sources|settings)/${NAME}|sources/${NAME}\\.schema|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
   'i',
 );
 
+/** "sources/people.json" -> "people" (null for anything else, schema files too). */
+export const sourceIdOf = (file) => SOURCE.exec(file || '')?.[1] ?? null;
+
+/** "sources/people.schema.json" -> "people" (null for anything else). */
+export const schemaIdOf = (file) => SCHEMA.exec(file || '')?.[1] ?? null;
+
 /**
- * Editable content file name: sources/<name>.json, settings/<name>.json, and the page files:
- * pages/index.json, pages/<folders>/index.json and pages/<folders>/[slug].json. Nothing else.
+ * Editable content file name: sources/<name>.json and its sources/<name>.schema.json,
+ * settings/<name>.json, and the page files: pages/index.json, pages/<folders>/index.json
+ * and pages/<folders>/[slug].json. Nothing else.
  */
 export const isContentFile = (file) => CONTENT_FILE.test(file || '');
 
@@ -77,27 +85,25 @@ export const baseName = (file) => String(file || '').replace(/^(pages|sources|se
 
 /**
  * Render context from content files keyed by path ({ "pages/index.json": data, ... }).
- * pages is keyed by page id ({ home, people, "people/[slug]", ... }).
- * Sources that are not arrays stay as-is in `sources` (grids warn and render empty).
+ * pages is keyed by page id ({ home, people, "people/[slug]", ... }), sources and schemas
+ * by source id. Sources that are not arrays stay as-is in `sources` (grids warn and render
+ * empty).
  */
 export function contentFromFiles(files) {
-  const byFolder = (folder) =>
+  const byId = (idOf) =>
     Object.fromEntries(
       Object.entries(files)
-        .filter(([f]) => f.startsWith(`${folder}/`))
-        .map(([f, data]) => [f.slice(folder.length + 1, -'.json'.length), data]),
+        .map(([f, data]) => [idOf(f), data])
+        .filter(([id]) => id),
     );
-  const sources = byFolder('sources');
+  const sources = byId(sourceIdOf);
   const list = (id) => (Array.isArray(sources[id]) ? sources[id] : []);
   return {
     site: files[SITE],
     nav: files[NAV] || {},
-    pages: Object.fromEntries(
-      Object.entries(files)
-        .map(([f, data]) => [pageIdOf(f), data])
-        .filter(([id]) => id),
-    ),
+    pages: byId(pageIdOf),
     sources,
+    schemas: byId(schemaIdOf),
     people: list('people'),
     places: list('places'),
     projects: list('projects'),

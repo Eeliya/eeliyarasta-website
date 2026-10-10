@@ -36,8 +36,12 @@ import {
   isContentFile,
   isSlug,
   pageFile,
+  schemaFile,
+  schemaIdOf,
   sourceFile,
+  sourceIdOf,
 } from '../src/site/files.js';
+import { checkItems, photoChecker, schemaOf } from '../src/site/schemas.js';
 import { NAMED_VIEWS, pathOfId } from '../src/site/routes.js';
 import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
@@ -265,9 +269,37 @@ export function pagesOp(
 // ---------------------------------------------------------------- save
 
 /**
+ * Problems of the sources among `files` (or whose schema is among them) against their
+ * schema (src/site/schemas.js): the schema in `files`, else on disk, else inferred. Photos
+ * must be in the media manifest or photos.json.
+ */
+function sourceProblems(root, files) {
+  const names = Object.keys(files);
+  const ids = new Set([...names.map(sourceIdOf), ...names.map(schemaIdOf)].filter(Boolean));
+  const read = (file) =>
+    file in files
+      ? files[file]
+      : fs.existsSync(path.join(root, CONTENT_DIR, file))
+        ? readContentFile(root, file, { check: false })
+        : undefined;
+  const photos = read(PHOTOS) || {};
+  const photoExists = photoChecker(readMediaManifest(root), photos);
+  return [...ids].flatMap((id) => {
+    const list = read(sourceFile(id));
+    const schema = schemaOf(
+      { sources: { [id]: list }, schemas: { [id]: read(schemaFile(id)) } },
+      id,
+    );
+    return checkItems(list, schema, { photoExists }).map(
+      (p) => `${CONTENT_DIR}/${sourceFile(id)}: ${p}`,
+    );
+  });
+}
+
+/**
  * Save: write the editor's files ({ "pages/index.json": data, ... }) to content/. Only existing
- * editable files, and only when every one of them has the right shape (src/site/validate.js):
- * nothing is written otherwise. Each file is written atomically (temp file + rename).
+ * editable files, and only when every one of them has the right shape (src/site/validate.js)
+ * and every source fits its schema (sourceProblems): nothing is written otherwise. Each file is written atomically (temp file + rename).
  * Returns { status, body }.
  */
 export function save(root, files, onWrite = () => {}) {
@@ -276,9 +308,10 @@ export function save(root, files, onWrite = () => {}) {
   const bad = names.filter((n) => !editable.has(n));
   if (!names.length || bad.length)
     return { status: 400, body: { error: `Not writable: ${bad.join(', ') || '(nothing)'}` } };
-  const problems = names.flatMap((n) =>
+  const shape = names.flatMap((n) =>
     checkContent(n, files[n]).map((p) => `${CONTENT_DIR}/${n}: ${p}`),
   );
+  const problems = shape.length ? shape : sourceProblems(root, files);
   if (problems.length)
     return { status: 400, body: { error: `Not saved. ${problems.join('; ')}`, problems } };
   onWrite();

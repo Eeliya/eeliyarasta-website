@@ -5,6 +5,9 @@
  *
  *   parseContent(text, file)   JSON.parse, with "content/<file>: invalid JSON … (line L, column C)"
  *   checkContent(file, data)   a list of problems ([] when fine), e.g. "footer must be an object"
+ *
+ * A source's items against its schema (required fields, types, photos) are checked by
+ * checkItems (src/site/schemas.js): that needs the schema and the photos, not one file.
  */
 import {
   ANIMATIONS,
@@ -14,8 +17,10 @@ import {
   SITE,
   TEMPLATE,
   pageIdOf,
+  schemaIdOf,
   sourceIdOf,
 } from './files.js';
+import { checkSchema } from './schemas.js';
 import { SECTION_TYPES } from './sections/index.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -250,6 +255,7 @@ export function checkContent(file, data) {
     if (!Array.isArray(data)) return [`must be a list (a JSON array), not ${typeOf(data)}`];
     return data.flatMap((item, i) => (isObject(item) ? [] : [`item ${i + 1} must be an object`]));
   }
+  if (schemaIdOf(file)) return checkSchema(data);
   if (file === REDIRECTS) return checkRedirects(data);
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
   if (file === SITE) return checkSite(data);

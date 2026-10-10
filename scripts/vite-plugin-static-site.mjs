@@ -30,6 +30,7 @@ import { loadContent } from './content.mjs';
 import { editorMiddleware } from './editor-server.mjs';
 import { contactMiddleware } from './contact-dev.mjs';
 import { pageFile } from '../src/site/files.js';
+import { checkSources } from '../src/site/schemas.js';
 
 const RENDER_MODULE = '/src/site/render.js';
 
@@ -147,6 +148,9 @@ export default function staticSite() {
         sitemapXml,
       } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
       const content = loadContent(root);
+      // every source against its schema (required fields, types, photos): stop on a mistake
+      const problems = checkSources(content);
+      if (problems.length) throw new Error(`Content problems:\n  ${problems.join('\n  ')}`);
       const { routes, warnings } = buildRoutes(content);
       for (const w of warnings) config.logger.warn(`\x1b[33m[routes]\x1b[0m ${w}`);
       for (const w of seoWarnings(routes)) config.logger.warn(`\x1b[33m[seo]\x1b[0m ${w}`);

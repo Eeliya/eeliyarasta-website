@@ -4,6 +4,7 @@
  */
 import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed } from '../helpers.js';
 import { sourceFile } from '../files.js';
+import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
 
@@ -91,16 +92,18 @@ const interleave = (items, perItem = 4) => {
 };
 
 /** Photo tiles (people look): the first 4 images of every item, interleaved. */
-const photoTiles = (ctx, source, items, layout) =>
-  html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}" data-anim="home.people.grid">
+const photoTiles = (ctx, source, items, layout) => {
+  const { title } = schemaOf(ctx, source); // the field that names an item
+  return html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}" data-anim="home.people.grid">
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
         <span class="tile__media">${img(ctx, image.src, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
-        <span class="tile__cap"><span${ed(sourceFile(source), [at, item.name !== undefined ? 'name' : 'title'])}>${esc(item.name ?? item.title)}</span><span>${pad(index + 1)}</span></span>
+        <span class="tile__cap"><span${ed(sourceFile(source), [at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
       </a>`,
     )}
   </div>`;
+};
 
 /** Landscape cards (places look): cover image, name, location · year · photo count. */
 const placeCards = (ctx, source, items, layout) =>

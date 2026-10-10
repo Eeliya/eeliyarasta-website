@@ -29,6 +29,7 @@ import {
   slugify,
   warnOnce,
 } from '../helpers.js';
+import { schemaOf } from '../schemas.js';
 import { NAV, SITE } from '../files.js';
 
 const caret =
@@ -55,11 +56,18 @@ function itemsOf(ctx, item) {
     return { list: [], pages: false };
   }
   const pages = (ctx.routes || []).some((r) => r.source === item.items && r.template);
-  return { list, pages, source: item.items, page: linkOf(ctx, item) };
+  return {
+    list,
+    pages,
+    source: item.items,
+    page: linkOf(ctx, item),
+    schema: schemaOf(ctx, item.items),
+  };
 }
 
 /** A source item without a page of its own: its own site with "linkOut", else its spot on the page. */
-const spotHref = (items, p) => (p.linkOut && p.url ? p.url : `${items.page}#${itemSlug(p)}`);
+const spotHref = (items, p) =>
+  p.linkOut && p.url ? p.url : `${items.page}#${itemSlug(p, items.schema)}`;
 
 /** Dropdown rows: photo, name and photo count (items with pages), or title and kind. */
 const ddLinks = (ctx, items) =>

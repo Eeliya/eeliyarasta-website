@@ -27,6 +27,7 @@
  */
 import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
 import { coverOf, itemSlug } from './helpers.js';
+import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
 
@@ -142,17 +143,18 @@ export function buildRoutes(content) {
       return [];
     }
     const section = tpl.section ?? titleCase(source);
+    const schema = schemaOf(content, source);
     const meta = tpl.meta || {}; // defaults of its item pages
     const seen = new Set();
     const items = [];
     list.forEach((item, index) => {
-      const slug = itemSlug(item);
+      const slug = itemSlug(item, schema);
       const label = `sources/${source}.json item ${index + 1}`;
       if (!slug) {
-        const name = item?.name ?? item?.title;
+        const name = itemTitle(item, schema);
         return warnings.push(
           name
-            ? `${label}: name "${name}" makes no slug, add a "slug": no page`
+            ? `${label}: name "${name}" makes no slug, add a "${schema.slug || 'slug'}": no page`
             : `${label} has no slug or name: no page`,
         );
       }
@@ -167,7 +169,8 @@ export function buildRoutes(content) {
       .map(({ item, index, slug, path }) => {
         const k = items.findIndex((x) => x.item === item);
         const next = items[(k + 1) % items.length];
-        const title = fillTitle(site, `${item.name ?? item.title ?? slug} | ${section}`);
+        const name = itemTitle(item, schema) ?? slug;
+        const title = fillTitle(site, `${name} | ${section}`);
         return {
           path,
           id,
@@ -176,6 +179,7 @@ export function buildRoutes(content) {
           source,
           kind: source,
           slug,
+          name,
           parent,
           section,
           nextLabel: tpl.next ?? 'Next',

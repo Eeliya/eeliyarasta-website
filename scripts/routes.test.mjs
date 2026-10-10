@@ -50,7 +50,7 @@ test('[slug] template: a page per item, slug field or slugified name', () => {
   assert.equal(noor.nextPath, '/people/daan-okafor/');
   assert.equal(r[2].nextPath, '/people/noor/');
   assert.equal(noor.title, 'Noor | People | Site');
-  assert.equal(itemHref({ routes: r }, 'people', c.people[1]), '/people/daan-okafor/');
+  assert.equal(itemHref({ ...c, routes: r }, 'people', c.people[1]), '/people/daan-okafor/');
 });
 
 test('a fixed page beats the template for the same slug', () => {

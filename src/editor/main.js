@@ -104,7 +104,7 @@ function pageEntries(routes) {
   };
   for (const r of routes) {
     if (r.template)
-      template(r.id, r.section).items.push({ path: r.path, title: r.album?.name || r.slug });
+      template(r.id, r.section).items.push({ path: r.path, title: r.name });
     else
       entries.push({
         kind: 'page',

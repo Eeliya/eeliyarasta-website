@@ -6,6 +6,8 @@
  */
 
 /** Escape text for HTML text/attribute context. Always use for content values. */
+import { itemTitle, schemaOf } from './schemas.js';
+
 export const esc = (value = '') =>
   String(value ?? '').replace(
     /[&<>"']/g,
@@ -74,11 +76,11 @@ export const slugify = (text) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-/** URL slug of a source item: its "slug" field, else its name (or title) slugified. */
-export const itemSlug = (item) =>
-  item?.slug != null && item.slug !== ''
-    ? String(item.slug)
-    : slugify(item?.name ?? item?.title ?? '');
+/** URL slug of a source item: its schema's slug field, else its title slugified (src/site/schemas.js). */
+export const itemSlug = (item, schema) => {
+  const own = schema.slug ? item?.[schema.slug] : undefined;
+  return own != null && own !== '' ? String(own) : slugify(itemTitle(item, schema) ?? '');
+};
 
 /**
  * URL of a source item's page, from the routes (ctx.routes): the template route of its
@@ -88,7 +90,7 @@ export const itemSlug = (item) =>
  */
 export const itemHref = (ctx, source, item) => {
   const tpl = (ctx.routes || []).find((r) => r.source === source && r.template);
-  if (tpl) return `${tpl.parent}${itemSlug(item)}/`;
+  if (tpl) return `${tpl.parent}${itemSlug(item, schemaOf(ctx, source))}/`;
   warnOnce(`no [slug].json page shows source "${source}": its links go nowhere`, 'routes');
   return '#';
 };

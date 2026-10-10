@@ -143,7 +143,7 @@ export function itemMoves(before, after) {
   const items = (files) => getRoutes(contentFromFiles(files)).filter((r) => r.album);
   const now = items(after);
   const paths = new Set(now.map((r) => r.path));
-  const nameOf = (r) => r.album.name ?? r.album.title;
+  const nameOf = (r) => r.name;
   const moves = new Map();
   for (const r of items(before)) {
     if (paths.has(r.path)) continue;
