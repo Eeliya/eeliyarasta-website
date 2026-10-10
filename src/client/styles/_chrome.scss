@@ -87,8 +87,9 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgb(242 239 233 / 0.78);
-    transition: background 0.35s var(--ease-out),
-    color 0.35s var(--ease-out);
+    transition:
+      background 0.35s var(--ease-out),
+      color 0.35s var(--ease-out);
 
     &:hover {
       background: rgb(255 255 255 / 0.08);
@@ -388,9 +389,9 @@
       position: absolute;
       inset: 0;
       background: radial-gradient(
-              50% 50% at 50% 50%,
-              color-mix(in oklab, var(--accent) 14%, transparent),
-              transparent 70%
+        50% 50% at 50% 50%,
+        color-mix(in oklab, var(--accent) 14%, transparent),
+        transparent 70%
       );
     }
   }
