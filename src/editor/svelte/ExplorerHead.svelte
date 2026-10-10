@@ -5,15 +5,14 @@
   onclick goes there. sep: drawn between crumbs ('' = none, the labels carry their slashes).
 -->
 <script>
+  import Button from './Button.svelte';
   // back: the Back button's label ('' = no Back button)
   let { title, crumbs = [], sep = '', icon, back = '', onback, onclose } = $props();
 </script>
 
 <header class="xhead">
   {#if back}
-    <button type="button" class="icon-btn" title={back} aria-label={back} onclick={onback}>
-      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-    </button>
+    <Button icon="arrow-left" iconOnly label={back} onclick={onback} />
   {/if}
   <div class="xhead__main">
     <h3 class="modal__title">{title}</h3>
@@ -31,9 +30,7 @@
       {/each}
     </nav>
   </div>
-  <button type="button" class="icon-btn" title="Close (Esc)" aria-label="Close" onclick={onclose}>
-    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-  </button>
+  <Button icon="xmark" iconOnly label="Close" title="Close (Esc)" onclick={onclose} />
 </header>
 
 <style lang="scss">

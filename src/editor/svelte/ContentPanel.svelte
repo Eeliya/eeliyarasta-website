@@ -19,6 +19,7 @@
 </script>
 
 <script>
+  import Button from './Button.svelte';
   import { tick } from 'svelte';
   import Field from './Field.svelte';
   import Section from './Section.svelte';
@@ -121,15 +122,13 @@
 
 <!-- opens the Source Explorer at a grid's source file -->
 {#snippet editButton(file)}
-  <button
-    type="button"
-    class="icon-btn icon-btn--small"
-    title="Edit {baseName(file)}"
-    aria-label="Edit {baseName(file)}"
+  <Button
+    size="small"
+    icon="pen-to-square"
+    iconOnly
+    label="Edit {baseName(file)}"
     onclick={() => sourcesModal.open(file)}
-  >
-    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-  </button>
+  />
 {/snippet}
 
 <!-- a grid setting: label (title + select), the Source one with an edit button beside it -->
@@ -156,14 +155,14 @@
 {/snippet}
 
 <section class="ed-body" bind:this={panel}>
-  <button
-    type="button"
-    class="btn btn--small src-open"
+  <Button
+    size="small"
+    icon="database"
     title="People, places, projects: the lists in content/sources/"
     onclick={() => sourcesModal.open()}
   >
-    <i class="fa-solid fa-database" aria-hidden="true"></i> Sources
-  </button>
+    Sources
+  </Button>
   {#if waiting}
     <p class="hint">Waiting for the preview…</p>
   {:else}
@@ -181,28 +180,26 @@
           {#if !g.toggle}<span class="sec__count">{g.fields.length}</span>{/if}
           {#if g.index !== undefined}
             {@const last = homeSections(live.store).length - 1}
-            <button
-              type="button"
-              class="icon-btn icon-btn--small"
+            <Button
+              size="small"
+              icon="arrow-up"
+              iconOnly
+              label="Move up: {g.title}"
               data-dir="up"
               title="Move up"
-              aria-label="Move up: {g.title}"
               disabled={g.index === 0}
               onclick={() => move(g, -1)}
-            >
-              <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-            </button>
-            <button
-              type="button"
-              class="icon-btn icon-btn--small"
+            />
+            <Button
+              size="small"
+              icon="arrow-down"
+              iconOnly
+              label="Move down: {g.title}"
               data-dir="down"
               title="Move down"
-              aria-label="Move down: {g.title}"
               disabled={g.index === last}
               onclick={() => move(g, 1)}
-            >
-              <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-            </button>
+            />
           {/if}
           {#if g.toggle}
             {#if toggleChanged(g)}<i class="dot" title="Changed"></i>{/if}
@@ -286,7 +283,7 @@
     padding: 4px;
 
     // the edit button sits beside the label, drawn at the right of the title row
-    > .icon-btn {
+    > :global(.btn) {
       position: absolute;
       top: 4px;
       right: 4px;
@@ -317,7 +314,7 @@
   }
 
   // the Source Explorer button, above the hint
-  .src-open {
+  .ed-body > :global(.btn) {
     margin-bottom: 12px;
   }
 </style>

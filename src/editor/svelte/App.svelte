@@ -5,6 +5,7 @@
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
 <script>
+  import Button from './Button.svelte';
   import PageMenu from './PageMenu.svelte';
   import Select from './Select.svelte';
   import BrowsePanel from './BrowsePanel.svelte';
@@ -101,35 +102,26 @@
       <!-- Editor | mobile view, undo, redo -->
       <h1 class="ed-brand">Editor</h1>
       <!-- the icon shows the view a click switches to -->
-      <button
-        type="button"
-        class="icon-btn"
-        title={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
+      <Button
+        icon={mobile ? 'desktop' : 'mobile-screen-button'}
+        iconOnly
+        label={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
         onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
-      >
-        <i
-          class={['fa-solid', mobile ? 'fa-desktop' : 'fa-mobile-screen-button']}
-          aria-hidden="true"
-        ></i>
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        title="Undo ({MOD}+Z)"
+      />
+      <Button
+        icon="rotate-left"
+        iconOnly
+        label="Undo ({MOD}+Z)"
         disabled={!live.canUndo}
         onclick={() => live.store.undo()}
-      >
-        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="icon-btn"
-        title="Redo ({MOD}+Shift+Z)"
+      />
+      <Button
+        icon="rotate-right"
+        iconOnly
+        label="Redo ({MOD}+Shift+Z)"
         disabled={!live.canRedo}
         onclick={() => live.store.redo()}
-      >
-        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-      </button>
+      />
 
       <nav class="seg seg--pill" aria-label="Mode">
         {#each TABS as [mode, label, icon] (mode)}
@@ -156,15 +148,13 @@
             onchange={(path) => actions.pickTarget(ui.target, path)}
           />
         {/if}
-        <button
-          type="button"
-          class="icon-btn"
+        <Button
+          icon="sitemap"
+          iconOnly
+          label="Pages"
           title="Pages: add, rename, delete"
-          aria-label="Pages"
           onclick={() => pagesModal.open()}
-        >
-          <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
-        </button>
+        />
       </div>
     </header>
 
@@ -201,18 +191,15 @@
       </p>
       <p class="ed-status" role="status" aria-live="polite">{ui.status}</p>
       <span class="ed-source">dev · local files</span>
-      <button
-        type="button"
-        class="btn"
+      <Button
         title="Write the changes to content/*.json as a draft ({MOD}+S)"
         disabled={!live.changes || ui.saving || ui.publishing}
         onclick={() => actions.save()}
       >
         {ui.saving ? 'Saving…' : `Save${live.changes ? ` · ${live.changes}` : ''}`}
-      </button>
-      <button
-        type="button"
-        class="btn btn--primary"
+      </Button>
+      <Button
+        variant="primary"
         title="Commit all saved content changes in one commit and push to {branch}"
         disabled={ui.publishing || (!unpublished.length && !ahead && !live.changes)}
         onclick={publish}
@@ -220,7 +207,7 @@
         {ui.publishing
           ? 'Publishing…'
           : `Publish${unpublished.length ? ` · ${unpublishedChanges}` : ''}`}
-      </button>
+      </Button>
     </footer>
   </aside>
 

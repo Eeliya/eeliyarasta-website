@@ -7,6 +7,7 @@
                   Custom / Off on top; Custom edits the page's own curtain.
 -->
 <script>
+  import Button from './Button.svelte';
   import CurtainTimeline from './CurtainTimeline.svelte';
   import EasePicker from './EasePicker.svelte';
   import Section from './Section.svelte';
@@ -126,17 +127,15 @@
 
   <div class="ptg__box">
     <!-- drawn at the right of the row after it, like a grid's Source edit button -->
-    <button
-      type="button"
-      class="icon-btn icon-btn--small ptg__replay"
+    <Button
+      size="small"
+      icon="rotate-right"
+      iconOnly
+      label="Replay"
       title="Replay: play the transition over this page with these values (no navigation)"
-      aria-label="Replay"
       disabled={mode === 'off'}
       onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
-    >
-      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-      Replay
-    </button>
+    />
     {#if page}
       <div class={['tf', modeChanged && 'is-changed']}>
         <span class="tf__label">Curtain for this page<i class="dot" title="Changed"></i></span>
@@ -265,18 +264,16 @@
     }
 
     // the first row ("Curtain for this page", or "Total duration") leaves room for Replay
-    > .ptg__replay + * > .tf__label {
+    > :nth-child(2) > .tf__label {
       min-height: 24px;
       padding-right: 28px;
     }
   }
 
-  .ptg__replay {
+  .ptg__box > :global(.btn) {
     position: absolute;
     top: 12px;
     right: 8px;
-    height: 24px;
-    margin: 0;
   }
 
   .ptg__ease {

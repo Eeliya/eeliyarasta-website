@@ -22,6 +22,7 @@
 </script>
 
 <script>
+  import Button from './Button.svelte';
   import { upload } from '../source.js';
   import { media, thumbUrl } from './media.svelte.js';
   import { toast } from './toasts.svelte.js';
@@ -135,19 +136,14 @@
         {onfocus}
         {oninput}
       />
-      <button
-        type="button"
-        class="icon-btn tf__upload"
+      <Button
+        icon={progress === null ? 'upload' : 'spinner fa-spin'}
+        iconOnly
+        label="Upload a photo for {label}"
         title="Upload a photo (or drop one on the field)"
-        aria-label="Upload a photo for {label}"
         disabled={progress !== null}
         onclick={pick}
-      >
-        <i
-          class={['fa-solid', progress === null ? 'fa-upload' : 'fa-spinner fa-spin']}
-          aria-hidden="true"
-        ></i>
-      </button>
+      />
     </span>
   {:else if type === 'block'}
     <textarea
@@ -191,11 +187,6 @@
     object-fit: cover;
     border-radius: 8px;
     background: rgb(255 255 255 / 0.06);
-  }
-
-  // busy uploading
-  .tf__upload:disabled {
-    cursor: progress;
   }
 
   // a photo dragged over the field

@@ -3,6 +3,7 @@
   Discard), and the saved changes that are not published yet.
 -->
 <script>
+  import Button from './Button.svelte';
   import PubFiles from './PubFiles.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
@@ -42,27 +43,22 @@
   {#if confirming === what}
     <span class="confirm">
       {question}
-      <button
-        type="button"
-        class="btn btn--small"
-        onclick={() => (confirming = null)}
-        {@attach (el) => el.focus()}
-      >
+      <Button size="small" onclick={() => (confirming = null)} {@attach (el) => el.focus()}>
         Cancel
-      </button>
-      <button
-        type="button"
-        class="btn btn--small btn--danger"
+      </Button>
+      <Button
+        variant="danger"
+        size="small"
+        icon="trash"
         onclick={() => discard(what === 'all' ? undefined : [what])}
       >
-        <i class="fa-solid fa-trash" aria-hidden="true"></i> Discard
-      </button>
+        Discard
+      </Button>
     </span>
   {:else}
-    <button type="button" class="btn btn--small btn--danger" onclick={() => (confirming = what)}>
-      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+    <Button variant="danger" size="small" icon="trash" onclick={() => (confirming = what)}>
       {what === 'all' ? 'Discard all changes' : 'Discard'}
-    </button>
+    </Button>
   {/if}
 {/snippet}
 
@@ -129,7 +125,7 @@
       </p>
     {/if}
     {#if pubFiles.length || ahead}
-      <button type="button" class="btn btn--small" onclick={onpublish}>Publish…</button>
+      <Button size="small" onclick={onpublish}>Publish…</Button>
     {/if}
   </section>
 

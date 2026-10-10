@@ -8,6 +8,7 @@
   The animation shown is ui.library.name ('' = the list), kept by persist.js.
 -->
 <script>
+  import Button from './Button.svelte';
   import { tick } from 'svelte';
   import MotionGroups from './MotionGroups.svelte';
   import { ui } from './ui.svelte.js';
@@ -36,7 +37,7 @@
     ui.library.name = next;
     await tick();
     const back = from && root.querySelector(`[data-name="${CSS.escape(from)}"]`);
-    (back || root.querySelector('.lib__btn, .lib__item'))?.focus();
+    (back || root.querySelector('.lib__head button, .lib__item'))?.focus();
   }
 
   /** Play the page's animations again, with the first element using this one in view. */
@@ -46,15 +47,13 @@
 <div class="lib" bind:this={root}>
   <header class="lib__head">
     {#if name}
-      <button
-        type="button"
-        class="icon-btn icon-btn--small lib__btn"
-        title="Back to the animations"
-        aria-label="Back to the animations"
+      <Button
+        size="small"
+        icon="arrow-left"
+        iconOnly
+        label="Back to the animations"
         onclick={() => goTo('')}
-      >
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-      </button>
+      />
     {/if}
     <h3 class="lib__title">{name || 'Animations'}</h3>
     <span class="lib__path">content/settings/animations.json</span>
@@ -82,15 +81,15 @@
         {targets(name).join(', ') || 'no data-anim name'} on the site. Elements and names can set their
         own timing only.
       </p>
-      <button
-        type="button"
-        class="btn btn--small"
+      <Button
+        size="small"
+        icon="play"
         title="Play the page's animations again"
         disabled={!uses.length}
         onclick={replay}
       >
-        <i class="fa-solid fa-play" aria-hidden="true"></i> Replay
-      </button>
+        Replay
+      </Button>
     </div>
     {#key name}
       <MotionGroups
@@ -111,8 +110,9 @@
     display: grid;
     align-items: center;
     grid-template-columns: min-content 1fr;
+    // Back, when there, takes the free cell
     grid-template-areas:
-      'button title'
+      '. title'
       '. path';
     gap: 4px 8px;
     margin-bottom: 12px;
@@ -130,10 +130,6 @@
     grid-area: path;
     color: var(--muted);
     font-size: 10.5px;
-  }
-
-  .lib__btn {
-    grid-area: button;
   }
 
   // icon | name / type and usage

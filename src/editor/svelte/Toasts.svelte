@@ -1,5 +1,6 @@
 <!-- The toasts of toasts.svelte.js, bottom left, newest last. -->
 <script>
+  import Button from './Button.svelte';
   import { toasts, dismiss } from './toasts.svelte.js';
 </script>
 
@@ -15,14 +16,7 @@
           <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
         </a>
       {/if}
-      <button
-        type="button"
-        class="icon-btn icon-btn--small toast__x"
-        aria-label="Dismiss"
-        onclick={() => dismiss(t.id)}
-      >
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-      </button>
+      <Button size="small" icon="xmark" iconOnly label="Dismiss" onclick={() => dismiss(t.id)} />
     </p>
   {/each}
 </section>
@@ -75,7 +69,7 @@
     }
   }
 
-  .toast__x {
+  .toast > :global(.btn) {
     position: absolute;
     top: 8px;
     right: 8px;

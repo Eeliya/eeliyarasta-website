@@ -7,6 +7,7 @@
   Where it is lives in ui.explorer, so persist.js can bring it back after a refresh.
 -->
 <script>
+  import Button from './Button.svelte';
   import { tick, flushSync } from 'svelte';
   import Field from './Field.svelte';
   import ExplorerHead from './ExplorerHead.svelte';
@@ -175,9 +176,7 @@
       {#if isList}
         <header class="row src-list__head">
           {list.length} item{list.length === 1 ? '' : 's'}
-          <button type="button" class="btn btn--small" onclick={add}>
-            <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
-          </button>
+          <Button size="small" icon="plus" onclick={add}>Add</Button>
         </header>
         <ul class="list src-list__items">
           {#each list as it, i (i)}
@@ -213,17 +212,11 @@
           {#if confirming}
             <span class="confirm">
               Delete {itemName(item)}?
-              <button type="button" class="btn btn--small" onclick={() => (confirming = false)}>
-                Cancel
-              </button>
-              <button type="button" class="btn btn--small btn--danger" onclick={remove}>
-                <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-              </button>
+              <Button size="small" onclick={() => (confirming = false)}>Cancel</Button>
+              <Button variant="danger" size="small" icon="trash" onclick={remove}>Delete</Button>
             </span>
           {:else}
-            <button type="button" class="btn btn--small btn--danger" onclick={askDelete}>
-              <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-            </button>
+            <Button variant="danger" size="small" icon="trash" onclick={askDelete}>Delete</Button>
           {/if}
         </header>
 

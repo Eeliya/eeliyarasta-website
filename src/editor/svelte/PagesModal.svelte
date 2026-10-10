@@ -10,6 +10,7 @@
   ui.pagesWin (persist.js).
 -->
 <script>
+  import Button from './Button.svelte';
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
@@ -210,23 +211,23 @@
 
   <nav class="pg-list" aria-label="This page and the pages in its folder">
     <div class="row pg-list__head">
-      <button
-        type="button"
-        class="btn btn--small"
+      <Button
+        size="small"
+        icon="plus"
         disabled={busy || folder === '404'}
         onclick={() => startAdd('add')}
       >
-        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
-      </button>
-      <button
-        type="button"
-        class="btn btn--small"
+        Add page
+      </Button>
+      <Button
+        size="small"
+        icon="plus"
         disabled={busy || !!templateBlock}
         title={templateBlock}
         onclick={() => startAdd('add-template')}
       >
-        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug]
-      </button>
+        Add [slug]
+      </Button>
     </div>
     <ul class="list pg-list__items">
       <li>
@@ -292,15 +293,10 @@
           (slug ? `${pathOfId(join(folder, slug))}: ${pathOf(join(folder, slug))}index.json` : '')}
       </p>
       <div class="row">
-        <button type="button" class="btn btn--small" onclick={() => select('')}>Cancel</button>
-        <button
-          type="button"
-          class="btn btn--small"
-          disabled={!slug || !!slugError || busy}
-          onclick={add}
-        >
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
-        </button>
+        <Button size="small" onclick={() => select('')}>Cancel</Button>
+        <Button size="small" icon="plus" disabled={!slug || !!slugError || busy} onclick={add}>
+          Add page
+        </Button>
       </div>
     {:else if sel === 'add-template'}
       <h4 class="pg-detail__title">New [slug] page in /{folder}/</h4>
@@ -317,15 +313,10 @@
         />
       </div>
       <div class="row">
-        <button type="button" class="btn btn--small" onclick={() => select('')}>Cancel</button>
-        <button
-          type="button"
-          class="btn btn--small"
-          disabled={!newSource || busy}
-          onclick={addTemplate}
-        >
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug] page
-        </button>
+        <Button size="small" onclick={() => select('')}>Cancel</Button>
+        <Button size="small" icon="plus" disabled={!newSource || busy} onclick={addTemplate}>
+          Add [slug] page
+        </Button>
       </div>
     {:else if sel && ids.includes(sel)}
       {@const fixed = PROTECTED.includes(sel)}
@@ -333,9 +324,7 @@
       <header class="pg-detail__head">
         <h4 class="pg-detail__title">{titleOf(sel)}</h4>
         {#if !confirming && !fixed}
-          <button type="button" class="btn btn--small btn--danger" onclick={askDelete}>
-            <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-          </button>
+          <Button variant="danger" size="small" icon="trash" onclick={askDelete}>Delete</Button>
         {/if}
       </header>
       {#if confirming}
@@ -346,30 +335,23 @@
               : ''}?
           </span>
           <span class="row">
-            <button type="button" class="btn btn--small" onclick={() => (confirming = false)}
-              >Cancel</button
-            >
-            <button
-              type="button"
-              class="btn btn--small btn--danger"
-              disabled={busy}
-              onclick={remove}
-            >
-              <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
-            </button>
+            <Button size="small" onclick={() => (confirming = false)}>Cancel</Button>
+            <Button variant="danger" size="small" icon="trash" disabled={busy} onclick={remove}>
+              Delete
+            </Button>
           </span>
         </div>
       {/if}
       <p class="hint small">content/{pageFile(sel)}</p>
       <div class="row">
-        <button
-          type="button"
-          class="btn btn--small"
+        <Button
+          size="small"
+          icon="eye"
           title="Show {urlOf(sel)} in the preview"
           onclick={() => show(sel)}
         >
-          <i class="fa-solid fa-eye" aria-hidden="true"></i> Open in preview
-        </button>
+          Open in preview
+        </Button>
       </div>
 
       {#if isTemplate(sel)}
@@ -393,14 +375,14 @@
         </label>
         <p class="hint small">{renameError}</p>
         <div class="row">
-          <button
-            type="button"
-            class="btn btn--small"
+          <Button
+            size="small"
+            icon="pen"
             disabled={!renameTo || renameTo === nameOf(sel) || !!renameError || busy}
             onclick={rename}
           >
-            <i class="fa-solid fa-pen" aria-hidden="true"></i> Rename
-          </button>
+            Rename
+          </Button>
         </div>
       {/if}
     {:else}

@@ -5,6 +5,7 @@
   retried. App.svelte calls open().
 -->
 <script>
+  import Button from './Button.svelte';
   import { tick } from 'svelte';
   import PubFiles from './PubFiles.svelte';
   import { ui } from './ui.svelte.js';
@@ -197,18 +198,17 @@
   {/if}
 
   <footer class="modal__actions">
-    <button type="button" class="btn" onclick={() => dialog.close()}>
+    <Button onclick={() => dialog.close()}>
       {published ? 'Close' : 'Cancel'}
-    </button>
+    </Button>
     {#if pub && !published}
-      <button
-        type="button"
-        class="btn btn--primary"
+      <Button
+        variant="primary"
         disabled={!!phase || (!names.length && !pub.ahead)}
         onclick={publish}
       >
         {phase || retry || (names.length ? 'Publish' : `Push ${plural(pub.ahead, 'commit')}`)}
-      </button>
+      </Button>
     {/if}
   </footer>
 </dialog>

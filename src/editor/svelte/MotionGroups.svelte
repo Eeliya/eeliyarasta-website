@@ -14,6 +14,7 @@
     key    prefix of the sections' open/closed keys, e.g. 'motion' or 'library'
 -->
 <script>
+  import Button from './Button.svelte';
   import MotionField from './MotionField.svelte';
   import Section from './Section.svelte';
   import Select from './Select.svelte';
@@ -123,15 +124,14 @@
         <MotionField {def} {gsap} value={each(def, (p) => dig(m.spec, p))} onvalue={setValue}>
           {#snippet actions()}
             {#if props}
-              <button
-                type="button"
-                class="icon-btn icon-btn--small"
+              <Button
+                size="small"
+                icon="trash"
+                iconOnly
+                label="Remove {def.label}"
                 title="Remove {def.label} from this animation"
-                aria-label="Remove {def.label}"
                 onclick={() => removeProp(def.path[1])}
-              >
-                <i class="fa-solid fa-trash" aria-hidden="true"></i>
-              </button>
+              />
             {/if}
           {/snippet}
         </MotionField>
