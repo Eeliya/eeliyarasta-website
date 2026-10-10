@@ -25,6 +25,11 @@ export default [
     languageOptions: { globals: globals.browser },
     rules: { 'no-console': ['warn', { allow: ['warn', 'error'] }] },
   },
+  // Cloudflare Pages Functions: a worker (fetch, Request, Response, console).
+  {
+    files: ['functions/**/*.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
   // Build scripts, the Vite plugin and config, and the tests run in Node.
   {
     files: ['scripts/**/*.{js,mjs}', '*.config.js', 'eslint.config.js'],

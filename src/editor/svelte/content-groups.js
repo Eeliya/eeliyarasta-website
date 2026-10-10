@@ -101,9 +101,18 @@ function nameOf(s) {
  * photo item ('' for a list of photos, null for none) so Add can open the Media window.
  */
 function registryFields(file, at, s, t) {
+  // a list item's subkey type can be { type, label, options } (src/site/sections/index.js)
   const field = (path, type, label) => {
     const ptr = pointer(['sections', at, ...path]);
-    return { edit: `${file}#${ptr}`, file, ptr, type: type || 'text', label };
+    const def = type && typeof type === 'object' ? type : { type };
+    return {
+      edit: `${file}#${ptr}`,
+      file,
+      ptr,
+      type: def.type || 'text',
+      label: def.label || label,
+      ...(def.options ? { options: def.options } : {}),
+    };
   };
   return (t.fields || []).map((f) => {
     if (!f.list) return field([f.key], f.type, f.label);
@@ -118,7 +127,7 @@ function registryFields(file, at, s, t) {
       label: f.label,
       item: f.item ?? (subs ? Object.fromEntries(subs.map(([k]) => [k, ''])) : ''),
       photo: subs
-        ? (subs.find(([, type]) => type === 'image')?.[0] ?? null)
+        ? (subs.find(([, type]) => (type?.type ?? type) === 'image')?.[0] ?? null)
         : f.list === 'image'
           ? ''
           : null,

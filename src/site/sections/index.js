@@ -15,7 +15,9 @@
  *               type: 'text' (default) | 'block' (multi-line) | 'words' | 'number' | 'image'
  *               list: the field is a list: a type for a list of values ('block'), or
  *                     { subkey: type } for a list of objects ({ title: 'text' }; a subkey
- *                     can also be 'source', a content/sources file)
+ *                     can also be 'source', a content/sources file, 'boolean' (a switch), or
+ *                     { type, label, options? }: a type with its label, 'select' with options
+ *                     [[value, label]])
  *               item: a new item of the list (default: '' or the subkeys empty)
  *   config    its settings: [{ key, label, type, options?, empty? }]
  *               type: 'source' (a content/sources file) | 'select' (options [[value, label]])
@@ -23,6 +25,7 @@
  *   defaults  a new section of this type (Add section)
  *   numbered  counts in the (01), (02) numbering of section heads (a function of the
  *             section when it depends on it)
+ *   check(section)  optional: more problems than the fields' types (src/site/validate.js)
  *   item      shows the item of a [slug] page (ctx.route.album): only on those pages
  *   render(section, ctx, sec)  its HTML. sec: { at, file, number, attrs, ed }: its index,
  *             the page file, its number (01), the attributes for its root element (editor
@@ -36,12 +39,25 @@ import { hero, intro, grid, projects } from './home.js';
 import { heading, albums, panels, about } from './pages.js';
 import { album } from './album.js';
 import { text, photo, button } from './basic.js';
+import { form } from './form.js';
 
 /** Every section type, in the order the editor offers them. */
 export const SECTION_TYPES = Object.fromEntries(
-  [heading, text, photo, button, hero, intro, grid, albums, panels, projects, about, album].map(
-    (t) => [t.type, t],
-  ),
+  [
+    heading,
+    text,
+    photo,
+    button,
+    form,
+    hero,
+    intro,
+    grid,
+    albums,
+    panels,
+    projects,
+    about,
+    album,
+  ].map((t) => [t.type, t]),
 );
 
 /**

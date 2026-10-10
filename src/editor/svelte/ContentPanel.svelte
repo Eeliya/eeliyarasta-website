@@ -235,6 +235,37 @@
         onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
       />
     </div>
+  {:else if f.type === 'select'}
+    {@const value = live.get(f.file, f.ptr)}
+    <div class={['sec__opt', live.changed(f.file, f.ptr) && 'is-changed']}>
+      <label class="tf__label" for="{uid}-{f.edit}"
+        >{f.label}<i class="dot" title="Changed"></i></label
+      >
+      <Select
+        id="{uid}-{f.edit}"
+        value={value ?? ''}
+        placeholder="Pick…"
+        options={f.options.map(([v, label]) => ({ value: v, label }))}
+        onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
+      />
+    </div>
+  {:else if f.type === 'boolean'}
+    <label class={['tf', live.changed(f.file, f.ptr) && 'is-changed']}>
+      <span class="tf__label"
+        >{f.label}<i class="dot" title="Changed"></i>
+        <input
+          type="checkbox"
+          class="switch"
+          aria-label={f.label}
+          checked={!!live.get(f.file, f.ptr)}
+          onchange={(e) =>
+            live.store.set(f.file, f.ptr, e.currentTarget.checked, {
+              source: 'panel',
+              structure: true,
+            })}
+        />
+      </span>
+    </label>
   {:else}
     <Field
       {...f}

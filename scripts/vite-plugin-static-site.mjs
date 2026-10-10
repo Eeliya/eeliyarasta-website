@@ -28,6 +28,7 @@ import { pathToFileURL } from 'node:url';
 import { loadEnv } from 'vite';
 import { loadContent } from './content.mjs';
 import { editorMiddleware } from './editor-server.mjs';
+import { contactMiddleware } from './contact-dev.mjs';
 import { pageFile } from '../src/site/files.js';
 
 const RENDER_MODULE = '/src/site/render.js';
@@ -70,6 +71,9 @@ export default function staticSite() {
           onWrite: () => (editorWriteUntil = Date.now() + 2000),
         }),
       );
+
+      // The contact form's POST /api/contact (functions/api/contact.js): checked, logged, not sent
+      server.middlewares.use('/api/contact', contactMiddleware(config.logger));
 
       server.middlewares.use(async (req, res, next) => {
         if (req.method !== 'GET') return next();

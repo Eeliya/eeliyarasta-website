@@ -82,11 +82,24 @@ function checkSite(d) {
       footer: 'object',
       nav: 'object',
       labels: 'object',
+      forms: 'object',
     }),
+    ...checkForms(d.forms),
     ...(d.robots === undefined || ['index', 'noindex'].includes(d.robots)
       ? []
       : ['"robots" must be "index" or "noindex"']),
   ];
+}
+
+/** site.json "forms": where contact forms send (src/site/sections/form.js). */
+function checkForms(f) {
+  if (!isObject(f)) return [];
+  const out = optional(f, { target: 'string', endpoint: 'string', turnstileSiteKey: 'string' });
+  if (f.target !== undefined && !['function', 'endpoint', 'email'].includes(f.target))
+    out.push('"target" must be "function", "endpoint" or "email"');
+  if (f.endpoint && !/^https:\/\/\S+$/.test(f.endpoint))
+    out.push('"endpoint" must be an https:// URL');
+  return out.map((p) => `forms: ${p}`);
 }
 
 /**
@@ -203,6 +216,7 @@ function checkSection(s, at) {
     )
       bad(f.key, typeof f.list === 'string' ? 'a list of strings' : 'a list of objects');
   }
+  if (t.check) out.push(...t.check(s).map((p) => `${where} (${t.label}): ${p}`));
   if (s.config === undefined) return out;
   if (!isObject(s.config)) return [...out, `${where} (${t.label}): "config" must be an object`];
   const { enabled } = s.config;

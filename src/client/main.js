@@ -20,8 +20,9 @@ import { applyAccent } from './theme.js';
 import { album } from './modules/album.js';
 import { projects } from './modules/projects.js';
 import { cards, toTop, imageFade } from './modules/misc.js';
+import { contactForms } from './modules/form.js';
 
-const pageModules = [imageFade, album, projects, cards, toTop];
+const pageModules = [imageFade, album, projects, cards, toTop, contactForms];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;

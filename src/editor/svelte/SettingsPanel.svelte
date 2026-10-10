@@ -1,5 +1,6 @@
 <!--
-  Settings tab: what is the same on every page. The site's name and details
+  Settings tab: what is the same on every page. Where contact forms send (Forms), the site's
+  name and details
   (settings/site.json), its search and share defaults (SEO: titles, description, share image,
   address, robots, language; a page's own are in Content > SEO), smooth scrolling, the global page-transition curtain and the page
   fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
@@ -19,6 +20,7 @@
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
+  import { TARGETS } from '../../site/sections/form.js';
   import { ANIMATIONS, SITE } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
@@ -89,6 +91,44 @@
         onchange={(value) => set('robots', value)}
       />
     </div>
+  </Section>
+
+  <Section key="settings:forms" title="Site" name="Forms">
+    <p class="hint">
+      Where contact forms send (a form can pick its own in Content). The Cloudflare function emails
+      through Resend with the keys set in the Cloudflare Pages project, never here (see the README,
+      "Contact form"). In npm run dev it only logs the message.
+    </p>
+    <div class={['tf', live.changed(SITE, '/forms/target') && 'is-changed']}>
+      <label class="tf__label" for="{uid}-forms"
+        >Forms send to<i class="dot" title="Changed"></i></label
+      >
+      <Select
+        id="{uid}-forms"
+        value={live.get(SITE, '/forms/target') || 'function'}
+        options={TARGETS.map(([value, label]) => ({ value, label }))}
+        onchange={(value) => set('forms/target', value)}
+      />
+    </div>
+    <Field
+      edit="{SITE}#/forms/endpoint"
+      label="External endpoint (https://…, e.g. Formspree)"
+      placeholder="https://formspree.io/f/…"
+      value={live.get(SITE, '/forms/endpoint')}
+      changed={live.changed(SITE, '/forms/endpoint')}
+      onvalue={(value) => set('forms/endpoint', value.trim() || undefined)}
+    />
+    <Field
+      edit="{SITE}#/forms/turnstileSiteKey"
+      label="Turnstile site key (optional spam check; empty: off)"
+      value={live.get(SITE, '/forms/turnstileSiteKey')}
+      changed={live.changed(SITE, '/forms/turnstileSiteKey')}
+      onvalue={(value) => set('forms/turnstileSiteKey', value.trim() || undefined)}
+    />
+    <p class="hint small">
+      Email link: the visitor's mail app, to the site email ({live.get(SITE, '/email') ||
+        'not set'}).
+    </p>
   </Section>
 
   <MenuSettings {live} />
