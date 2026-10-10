@@ -49,7 +49,8 @@ run `npm install` after pulling this. It works in Git for Windows' sh. Skip it o
 ```
 content/            ← all text, albums, projects, animation config (JSON)
   pages/            ← one folder per page (its URL) with index.json in it (see "Pages and URLs")
-  sources/          ← lists that grids pull from (people, places, projects): top level is an array
+  sources/          ← lists that grids pull from (people, places, projects): top level is an array,
+                      plus <id>.schema.json: the fields of its items (see "Sources & schemas")
   settings/         ← site-wide settings (site.json, animations.json)
 media/              ← source photos (jpg), committed
 scripts/
@@ -129,6 +130,54 @@ site settings can live side by side):
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
 Routes, menu, dropdowns, grids and sitemap update automatically.
+
+### Sources & schemas
+
+Each list in `content/sources/` can have a schema next to it, `<id>.schema.json`
+(`people.schema.json`): what an item has, in a small format of its own (not JSON Schema),
+shaped like the section registry's fields (`src/site/schemas.js`):
+
+```json
+{
+  "label": "People",
+  "title": "name",
+  "slug": "slug",
+  "fields": [
+    { "key": "slug", "label": "Slug", "type": "text", "required": true, "help": "The page URL" },
+    { "key": "name", "label": "Name", "type": "text", "required": true },
+    { "key": "role", "label": "Role", "type": "text", "width": "half", "list": true },
+    { "key": "year", "label": "Year", "type": "number", "width": "half" },
+    { "key": "images", "label": "Photos", "type": "photos" }
+  ]
+}
+```
+
+- `title`: the field that names an item (the editor's lists, page titles, `<name> | People`);
+  `slug`: the field with its URL slug (`/people/<slug>/`; empty: the title, slugified).
+- `type`: `text`, `longtext` (lines), `number`, `photo` (a `media/` path or R2 key), `photos`
+  (a list of `{ "src", "credit"? }`), `link` (`https://…`, `/path/` or `mailto:`), `choice`
+  (one of `options: ["a", "b"]`), `boolean`, `date` (`YYYY-MM-DD`).
+- `width: "half"`: two half fields next to each other share a row in the editor (one column
+  when the panel is narrow); `required`, `help` (a hint under the field), `list` (shown under
+  the name in the Source Explorer's item list).
+- Keys a schema doesn't name are kept as they are, not edited or checked (`imageCredit`,
+  `transition`).
+
+**Checks.** Save and `npm run build` check every source against its schema: required values,
+types, choice options, links, dates, valid unique slugs, and photos that exist (in `media/` or
+`content/settings/photos.json`). Save writes nothing and shows the problems
+(`content/sources/people.json: item 1: "Name" is required`); the build stops with the list.
+
+**No schema?** A source without one still works: its schema is inferred from its items, one
+type per field across all of them (numbers, true/false, lists of photos, media paths, text with
+line breaks or over ~80 characters as `longtext`, text under ~24 characters as half width;
+objects and mixed values are left out). The title is `name`, else `title`, else the first text
+field; the slug is `slug`. Write a schema file to give fields labels, order, help and checks.
+
+The editor uses the schema everywhere: the Source Explorer's fields (labels, widgets, widths,
+help), the item names and list lines, the slug field, a new item's empty fields; the Content
+tab's labels and widgets for source fields. Schema files are not sources: pickers and the
+Source Explorer don't list them. A new source is a new `<id>.json` (with its schema) by hand.
 
 > ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and
 > the two DIY projects are placeholders (`"placeholder": true`, shown with a "Placeholder" tag).
@@ -547,8 +596,16 @@ to the page picks which item's page the preview shows.
 The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
 button, or a click on a person/place/project in the preview, opens straight into that item. In
-the Content tab, a field whose value comes from a source shows its file (`people.json`) as a
-button: it opens the explorer on that item with the field highlighted (`&field=` in the URL).
+the Content tab, a group whose texts come from a source (a person on their page) shows its file
+(`people.json`) as a button in its bar (beside each field only when a group mixes sources): it
+opens the explorer on that item (with a field highlighted: `&field=` in the URL). What the
+explorer shows comes from the source's schema (see "Sources & schemas").
+
+Fields come in rows: two `half` fields (a schema's or a section type's `width: "half"`) share
+one, a lone half takes the row, and a panel under ~340px shows one column. The bar of the
+section you are scrolling through stays on top of the panel. The footer sums up what's left in
+one line (`Unsaved changes`, `2 changes to publish`, `All published`); its tooltip has the
+details (files, commits not pushed, the last save).
 
 **Photo fields** show the photo (64 px), its file name and sizes (`1600×2000 · 3 sizes · R2`,
 `1280×1600 · local`); no text input. The thumbnail or **Change** opens the **Media window**
