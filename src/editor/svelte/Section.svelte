@@ -5,6 +5,7 @@
   tabs and the Animations library. .sec is a flex column: bar, body.
 
     title     the bar title (small caps)
+    icon      optional: a Font Awesome icon name before the title (a page section's type)
     name      optional: what it is, on a second line in the accent color
               ("Page transition" / "Curtain")
     key       remembers open/closed in ui.sections (also kept across a refresh, persist.js),
@@ -21,6 +22,7 @@
 
   let {
     title,
+    icon = '',
     name = '',
     key = '',
     open = true,
@@ -51,7 +53,10 @@
       onclick={toggle}
     >
       <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-      {title}
+      <span>
+        {#if icon}<i class="fa-solid fa-{icon} sec__icon" aria-hidden="true"></i>{/if}
+        {title}
+      </span>
       {#if name}<strong>{name}</strong>{/if}
     </button>
     {@render bar?.()}
@@ -146,6 +151,12 @@
     [aria-expanded='true'] > & {
       rotate: 90deg;
     }
+  }
+
+  .sec__icon {
+    width: 16px;
+    margin-right: 4px;
+    text-align: center;
   }
 
   .sec__body > :global(* + *) {

@@ -1,8 +1,9 @@
 <!--
   Content tab: every editable text of the page in the preview (or of the Menu / Footer),
-  grouped by section (content-groups.js decides which texts and groups). Home sections can
-  be turned on/off and moved; grid sections pick their source list and layout. The Sources
-  button on top opens the Source Explorer (SourcesModal.svelte).
+  grouped by section (content-groups.js decides which texts and groups). A page is a list of
+  sections (src/site/sections/): each can be moved, duplicated, deleted, turned on/off and
+  configured (its type's config: source, layout, ...); Add section picks a type from the
+  registry. The Sources button on top opens the Source Explorer (SourcesModal.svelte).
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
   the preview, a field sets it (via the bridge) when it gets focus. This panel highlights
@@ -11,11 +12,11 @@
 <script module>
   import { ui } from './ui.svelte.js';
 
-  // Groups that start open; home sections ("s0", "s1", ...) do too. Once toggled, the
-  // state is kept in ui.sections under "text:<group id>" (Section.svelte).
-  const OPEN = ['hero', 'transition', 'nav', 'footer', 'page-head', 'page-body', 'content'];
-  const keyOf = (id) => `text:${id}`;
-  const isOpen = (id) => ui.sections[keyOf(id)] ?? (OPEN.includes(id) || /^s\d+$/.test(id));
+  // Groups that start open; page sections ("s0", "s1", ...) do too. Once toggled, the
+  // state is kept in ui.sections under the group's key (Section.svelte).
+  const OPEN = ['transition', 'nav', 'footer', 'page-body', 'content'];
+  const keyOf = (g) => g.key || `text:${g.id}`;
+  const isOpen = (g) => ui.sections[keyOf(g)] ?? (OPEN.includes(g.id) || g.index !== undefined);
 </script>
 
 <script>
@@ -28,13 +29,16 @@
   import {
     contentGroups,
     groupFor,
-    homeSections,
     isSource,
     previewPage,
+    sectionsOf,
     splitEdit,
   } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
-  import { HOME, baseName } from '../../site/files.js';
+  import { previewFile } from '../sections.js';
+  import { addSection, duplicateSection, moveSection, removeSection } from '../section-ops.js';
+  import { SECTION_TYPES } from '../../site/sections/index.js';
+  import { TEMPLATE, baseName, pageIdOf } from '../../site/files.js';
 
   const uid = $props.id();
 
@@ -43,6 +47,7 @@
 
   let panel = $state();
   let sourcesModal = $state();
+  let deleting = $state(''); // "<file>#<index>": the section asking "Delete?"
 
   // The texts come from the preview's [data-edit] elements: re-read them after every edit
   // (sections may have moved) and when the preview shows another page.
@@ -55,6 +60,19 @@
     ui.previewVersion;
     return ui.target.kind === 'page' && !bridge.doc;
   });
+  // the page file of the preview, whose sections are listed
+  const file = $derived.by(() => {
+    ui.previewVersion;
+    return ui.target.kind === 'page' ? previewFile(bridge.doc) : '';
+  });
+  const count = $derived.by(() => {
+    live.version;
+    return sectionsOf(live.store, file).length;
+  });
+  // the types Add section offers: item types (the item of a [slug] page) only there
+  const types = $derived(
+    Object.values(SECTION_TYPES).filter((t) => !t.item || pageIdOf(file)?.endsWith(TEMPLATE)),
+  );
   const hint = $derived(
     ui.target.kind === 'page'
       ? 'Click any outlined text in the preview to edit it in place, or use the fields below. Turn a section Off to hide it on the public page.'
@@ -73,24 +91,62 @@
     live.store.set(g.toggle.file, g.toggle.ptr, on, { key: `section:${g.id}`, source: 'panel' });
   }
 
-  /** Swap home section `g` with its neighbour (dir -1 = up, 1 = down): one undo step. */
+  /**
+   * Run a section list change; open/closed follows the sections, not the positions.
+   * order(indexes): the old index at each new position (undefined for a new section).
+   */
+  async function change(op, order) {
+    const key = (i) => `text:${file}#s${i}`;
+    const was = Array.from({ length: count }, (_, i) => isOpen({ key: key(i), index: i }));
+    deleting = '';
+    op();
+    order([...was.keys()]).forEach((old, i) => (ui.sections[key(i)] = was[old] ?? true));
+    await tick();
+  }
+
+  /** Move section `g` up (dir -1) or down (1), keeping the focus on its button. */
   async function move(g, dir) {
     const i = g.index;
     const j = i + dir;
-    const list = [...homeSections(live.store)];
-    [list[i], list[j]] = [list[j], list[i]];
-    // Open/closed follows the section, not the position.
-    [ui.sections[keyOf(`s${i}`)], ui.sections[keyOf(`s${j}`)]] = [isOpen(`s${j}`), isOpen(`s${i}`)];
-    live.store.set(HOME, '/sections', list, { source: 'panel' });
-    // Keep the focus on the moved section's button (or its title at the top / bottom).
-    await tick();
+    await change(
+      () => moveSection(live.store, file, i, j),
+      (o) => (([o[i], o[j]] = [o[j], o[i]]), o),
+    );
     const moved = panel.querySelector(`[data-section="s${j}"]`);
-    const button = moved.querySelector(`[data-dir="${dir < 0 ? 'up' : 'down'}"]`);
-    (button.disabled ? moved.querySelector('.sec__toggle') : button).focus();
+    const button = moved?.querySelector(`[data-dir="${dir < 0 ? 'up' : 'down'}"]`);
+    (button?.disabled ? moved.querySelector('.sec__toggle') : button)?.focus();
   }
 
-  function setConfig(g, key, value) {
-    live.store.set(HOME, `/sections/${g.index}/config/${key}`, value, { source: 'panel' });
+  const duplicate = (g) =>
+    change(
+      () => duplicateSection(live.store, file, g.index),
+      (o) => (o.splice(g.index + 1, 0, g.index), o),
+    );
+
+  const remove = (g) =>
+    change(
+      () => removeSection(live.store, file, g.index),
+      (o) => (o.splice(g.index, 1), o),
+    );
+
+  async function add(type) {
+    const at = count;
+    await change(
+      () => addSection(live.store, file, type),
+      (o) => [...o, undefined],
+    );
+    const added = panel.querySelector(`[data-section="s${at}"]`);
+    added?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    added?.querySelector('.sec__toggle')?.focus();
+  }
+
+  function askDelete(g) {
+    deleting = `${file}#${g.index}`;
+    ui.sections[keyOf(g)] = true;
+  }
+
+  function setConfig(g, c, value) {
+    live.store.set(g.file, c.ptr, value, { key: `config:${g.file}${c.ptr}`, source: 'panel' });
   }
 
   function setText(f, value) {
@@ -104,11 +160,11 @@
     if (!group) {
       const { file, ptr } = splitEdit(edit);
       // A list item shown on the home page (a person's name): edit it in the modal.
-      if (groupFor(live.store, { file, ptr }, previewPage(bridge)).id.startsWith('source:'))
+      if (groupFor(live.store, { file, ptr }, previewPage(bridge))?.id.startsWith('source:'))
         sourcesModal.open(file, Number(parse(ptr)[0]) || 0, edit);
       return;
     }
-    ui.sections[keyOf(group.id)] = true;
+    ui.sections[keyOf(group)] = true;
     await tick();
     panel
       .querySelector(`[data-edit="${CSS.escape(edit)}"]`)
@@ -121,7 +177,7 @@
   });
 </script>
 
-<!-- opens the Source Explorer at a grid's source file -->
+<!-- opens the Source Explorer at a source file -->
 {#snippet editButton(file)}
   <Button
     size="small"
@@ -132,25 +188,35 @@
   />
 {/snippet}
 
-<!-- a grid setting: label (title + select), the Source one with an edit button beside it -->
-{#snippet option(g, key, title, value, options)}
-  {@const edit = key === 'source' && !g.grid.missing}
-  <div
-    class={[
-      'sec__opt',
-      live.changed(HOME, `/sections/${g.index}/config/${key}`) && 'is-changed',
-      edit && 'has-extra',
-    ]}
-  >
-    <label class="tf__label" for="{uid}-{g.index}-{key}">
-      {title}<i class="dot" title="Changed"></i>
+<!-- a section setting (config): a Select (source, select) or a switch (boolean), labelled;
+     a source has an edit button beside it -->
+{#snippet option(g, c)}
+  {@const value = live.get(g.file, c.ptr)}
+  {@const edit =
+    c.type === 'source' &&
+    value &&
+    !String(c.options.find(([v]) => v === value)?.[1]).endsWith('(missing)')}
+  <div class={['sec__opt', live.changed(g.file, c.ptr) && 'is-changed', edit && 'has-extra']}>
+    <label class="tf__label" for="{uid}-{g.index}-{c.key}">
+      {c.label}<i class="dot" title="Changed"></i>
     </label>
-    <Select
-      id="{uid}-{g.index}-{key}"
-      {value}
-      options={options.map(([v, label]) => ({ value: v, label }))}
-      onchange={(v) => setConfig(g, key, v)}
-    />
+    {#if c.type === 'boolean'}
+      <input
+        id="{uid}-{g.index}-{c.key}"
+        type="checkbox"
+        class="switch"
+        checked={!!value}
+        onchange={(e) => setConfig(g, c, e.currentTarget.checked)}
+      />
+    {:else}
+      <Select
+        id="{uid}-{g.index}-{c.key}"
+        value={value ?? ''}
+        placeholder="Pick…"
+        options={c.options.map(([v, label]) => ({ value: v, label }))}
+        onchange={(v) => setConfig(g, c, v)}
+      />
+    {/if}
     {#if edit}{@render editButton(`sources/${value}.json`)}{/if}
   </div>
 {/snippet}
@@ -168,26 +234,25 @@
     <p class="hint">Waiting for the preview…</p>
   {:else}
     <p class="hint">{hint}</p>
-    {#each groups as g (g.id)}
+    {#each groups as g (g.key || g.id)}
       <Section
         id={g.id}
-        key={keyOf(g.id)}
+        key={keyOf(g)}
+        icon={g.icon}
         title={g.title}
         name={g.name}
-        open={isOpen(g.id)}
+        open={isOpen(g)}
         off={!isOn(g)}
       >
         {#snippet bar()}
           {#if !g.toggle}<span class="sec__count">{g.fields.length}</span>{/if}
           {#if g.index !== undefined}
-            {@const last = homeSections(live.store).length - 1}
             <Button
               size="small"
               icon="arrow-up"
               iconOnly
               label="Move up: {g.title}"
               data-dir="up"
-              title="Move up"
               disabled={g.index === 0}
               onclick={() => move(g, -1)}
             />
@@ -197,9 +262,22 @@
               iconOnly
               label="Move down: {g.title}"
               data-dir="down"
-              title="Move down"
-              disabled={g.index === last}
+              disabled={g.index === count - 1}
               onclick={() => move(g, 1)}
+            />
+            <Button
+              size="small"
+              icon="copy"
+              iconOnly
+              label="Duplicate: {g.title}"
+              onclick={() => duplicate(g)}
+            />
+            <Button
+              size="small"
+              icon="trash"
+              iconOnly
+              label="Delete: {g.title}"
+              onclick={() => askDelete(g)}
             />
           {/if}
           {#if g.toggle}
@@ -216,26 +294,34 @@
           {/if}
         {/snippet}
 
-        {#if g.grid}
-          <div class="sec__opts">
-            {@render option(
-              g,
-              'source',
-              'Source',
-              g.grid.source,
-              g.grid.sources.map((id) => [
-                id,
-                `${id}.json${id === g.grid.source && g.grid.missing ? ' (missing)' : ''}`,
-              ]),
-            )}
-            {@render option(g, 'layout', 'Layout', g.grid.layout, [
-              ['staggered', 'Staggered'],
-              ['even', 'Even'],
-            ])}
-            {#if ui.staleSections.includes(g.index)}
-              <p class="hint small sec__note">The preview shows this grid after Save.</p>
-            {/if}
+        {#if deleting === `${file}#${g.index}`}
+          <div class="sec__confirm" role="group" aria-label="Delete {g.title}?">
+            <span>Delete this section?</span>
+            <Button size="small" variant="danger" icon="trash" onclick={() => remove(g)}>
+              Delete
+            </Button>
+            <Button size="small" onclick={() => (deleting = '')}>Cancel</Button>
           </div>
+        {/if}
+
+        {#if g.config?.some((c) => c.options || c.type === 'boolean')}
+          <div class="sec__opts">
+            {#each g.config.filter((c) => c.options || c.type === 'boolean') as c (c.key)}
+              {@render option(g, c)}
+            {/each}
+          </div>
+        {/if}
+        {#each g.config?.filter((c) => c.type === 'text') ?? [] as c (c.key)}
+          <Field
+            edit="{g.file}#{c.ptr}"
+            label={c.label}
+            value={live.get(g.file, c.ptr)}
+            changed={live.changed(g.file, c.ptr)}
+            onvalue={(value) => setConfig(g, c, value)}
+          />
+        {/each}
+        {#if ui.staleSections.includes(g.index)}
+          <p class="hint small">The preview shows this section after Save.</p>
         {/if}
 
         {#each g.fields as f (f.edit)}
@@ -250,7 +336,7 @@
             onvalue={(value) => setText(f, value)}
           />
         {:else}
-          {#if !g.grid}
+          {#if !g.config?.length}
             <p class="hint small">
               {isOn(g)
                 ? 'No text fields in this section.'
@@ -262,6 +348,22 @@
     {:else}
       <p class="hint">No editable content here.</p>
     {/each}
+
+    {#if file}
+      <div class="sec__add">
+        <Select
+          aria-label="Add section"
+          value={null}
+          placeholder="Add section…"
+          options={types.map((t) => ({ value: t.type, label: t.label, icon: t.icon }))}
+          onchange={(type) => add(type)}
+        >
+          {#snippet option(o)}
+            <i class="fa-solid fa-{o.icon} sec__type" aria-hidden="true"></i>{o.label}
+          {/snippet}
+        </Select>
+      </div>
+    {/if}
   {/if}
 
   <SourcesModal bind:this={sourcesModal} {live} {bridge} />
@@ -307,9 +409,26 @@
     }
   }
 
-  .sec__note {
-    grid-column: 1 / -1;
-    margin: 0;
+  .sec__confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+
+    span {
+      flex: 1;
+    }
+  }
+
+  .sec__add {
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .sec__type {
+    width: 16px;
+    color: var(--solid-faint);
+    text-align: center;
   }
 
   .sec__opt .tf__label {

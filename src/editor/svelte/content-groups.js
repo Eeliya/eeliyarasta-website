@@ -4,7 +4,10 @@
  * ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { SITE, HOME, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
+import { SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
+import { pointer } from '../../site/helpers.js';
+import { SECTION_TYPES } from '../../site/sections/index.js';
+import { previewFile } from '../sections.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
@@ -22,7 +25,7 @@ export const SITE_SETTINGS = [
 /** Lists in content/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 
-/** "pages/index.json#/hero/title" -> { file: 'pages/index.json', ptr: '/hero/title' } */
+/** "pages/index.json#/sections/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/title' } */
 export function splitEdit(edit) {
   const i = edit.indexOf('#');
   return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
@@ -56,65 +59,99 @@ function fieldLabel(store, f) {
   return labelFor(store, f).split(' / ').pop();
 }
 
-/** Home sections (pages/index.json "sections", an ordered list). */
-export function homeSections(store) {
-  const list = store.current[HOME]?.sections;
+const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
+
+/** The sections of page file `file` (its "sections" list). */
+export function sectionsOf(store, file) {
+  const list = store.current[file]?.sections;
   return Array.isArray(list) ? list : [];
 }
 
-const HERO = { id: 'hero', title: 'Hero', toggle: { file: HOME, ptr: '/hero/enabled' } };
-const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
-const PAGE_HEAD = { id: 'page-head', title: 'Page heading' };
-/** Page-file fields shown in the page heading (pages/<id>/index.json). */
-const HEADING = ['crumb', 'title', 'intro', 'cta'];
-
-/** Group for home section `i`: id "s<i>", titled by its label, with its on/off toggle. */
-function sectionGroup(store, i) {
-  const section = homeSections(store)[i];
-  return {
-    id: `s${i}`,
-    index: i,
-    title: section?.label || titleCase(section?.type || `Section ${i + 1}`),
-    toggle: { file: HOME, ptr: `/sections/${i}/config/enabled` },
-    grid: gridOptions(store, i),
-  };
+/** A short name for section s: its first text (label, title, ...), at most 40 characters. */
+function nameOf(s) {
+  const text = [s?.label, s?.title, s?.headline, s?.crumb, s?.caption].find(
+    (v) => typeof v === 'string' && v.trim(),
+  );
+  const line = String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return line.length > 40 ? `${line.slice(0, 39)}…` : line;
 }
 
-/** A grid section's settings (config.source, config.layout), or null for other sections. */
-function gridOptions(store, i) {
-  const section = homeSections(store)[i];
-  if (section?.type !== 'grid') return null;
-  const source = section.config?.source || 'people';
+/**
+ * The fields of section `at` from its type's registry entry: [{ edit, file, ptr, type, label }].
+ * A list field gives one field per item ("Photos 2"; "Facts 2: value" for lists of objects).
+ */
+function registryFields(file, at, s, t) {
+  const field = (path, type, label) => {
+    const ptr = pointer(['sections', at, ...path]);
+    return { edit: `${file}#${ptr}`, file, ptr, type: type || 'text', label };
+  };
+  return (t.fields || []).flatMap((f) => {
+    if (!f.list) return [field([f.key], f.type, f.label)];
+    const items = Array.isArray(s[f.key]) ? s[f.key] : [];
+    if (typeof f.list === 'string')
+      return items.map((_, j) => field([f.key, j], f.list, `${f.label} ${j + 1}`));
+    const subs = Object.entries(f.list);
+    return items.flatMap((_, j) =>
+      subs.map(([sub, type]) =>
+        field(
+          [f.key, j, sub],
+          type,
+          subs.length > 1 ? `${f.label} ${j + 1}: ${sub}` : `${f.label} ${j + 1}`,
+        ),
+      ),
+    );
+  });
+}
+
+/**
+ * Group for section `at` of page file `file`: id "s<at>", titled by its type, named by its
+ * text, with its on/off toggle, settings (config) and its type's fields.
+ */
+function sectionGroup(store, file, at) {
+  const s = sectionsOf(store, file)[at];
+  const t = SECTION_TYPES[s?.type];
   const sources = Object.keys(store.current).map(sourceIdOf).filter(Boolean).sort();
-  const missing = !sources.includes(source);
   return {
-    source,
-    layout: section.config?.layout === 'even' ? 'even' : 'staggered',
-    sources: missing ? [source, ...sources] : sources,
-    missing,
+    id: `s${at}`,
+    key: `text:${file}#s${at}`,
+    index: at,
+    file,
+    icon: t?.icon || 'question',
+    title: t?.label || `Unknown type "${s?.type}"`,
+    name: nameOf(s),
+    toggle: { file, ptr: `/sections/${at}/config/enabled` },
+    config: (t?.config || []).map((c) => ({
+      ...c,
+      ptr: `/sections/${at}/config/${c.key}`,
+      // a source list may be missing: it stays pickable, marked
+      options:
+        c.type === 'source'
+          ? [
+              ...(c.empty ? [['', c.empty]] : []),
+              ...[...new Set([s.config?.[c.key], ...sources])]
+                .filter(Boolean)
+                .map((id) => [id, `${id}.json${sources.includes(id) ? '' : ' (missing)'}`]),
+            ]
+          : c.options,
+    })),
+    fields: t ? registryFields(file, at, s, t) : [],
   };
 }
 
-/** Which group a field belongs to: { id, title, index?, toggle?, grid? }. */
+/** Which group a preview field belongs to: { id, title }; null for a section's own fields. */
 export function groupFor(store, { file, ptr }, page) {
   const parts = parse(ptr);
-  if (file === HOME) {
-    if (parts[0] === 'hero') return HERO;
-    if (parts[0] === 'sections' && /^\d+$/.test(parts[1] || ''))
-      return sectionGroup(store, Number(parts[1]));
-  }
   const pageId = pageIdOf(file);
   if (pageId !== null) {
     if (parts[0] === 'curtain') return TRANSITION;
-    // Any other page: its heading, then the rest of its own copy (e.g. the About text).
-    if (file !== HOME)
-      return HEADING.includes(parts[0])
-        ? PAGE_HEAD
-        : {
-            id: 'page-body',
-            // people/[slug]: the labels every item page shares (section, next)
-            title: pageId.endsWith(TEMPLATE) ? 'Item pages' : titleCase(pageId),
-          };
+    if (parts[0] === 'sections') return null; // in its section's group
+    // people/[slug]: the labels every item page shares (section, next)
+    return {
+      id: 'page-body',
+      title: pageId.endsWith(TEMPLATE) ? 'Item pages' : titleCase(pageId),
+    };
   }
   if (file === SITE) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
@@ -132,7 +169,6 @@ export function groupFor(store, { file, ptr }, page) {
       title: item?.name || item?.title || `#${Number(parts[0]) + 1}`,
     };
   }
-  if (page === 'home') return { id: 'other', title: 'Other' };
   return { id: 'content', title: 'Content' };
 }
 
@@ -188,25 +224,33 @@ function fieldsOf(store, bridge, target) {
 }
 
 /**
- * The Content tab's groups for `target`, in panel order:
- * [{ id, title, index?, toggle?, grid?, fields: [{ edit, file, ptr, type, label }] }]
+ * The Content tab's groups for `target`, in panel order: the page's sections (in list order),
+ * then the other texts in the preview (list items, the shared labels of item pages), then the
+ * page transition.
+ * [{ id, title, name?, index?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
  */
 export function contentGroups(store, bridge, target) {
   const page = previewPage(bridge);
-  const isHome = target.kind === 'page' && (target.path === '/' || page === 'home');
+  const file = target.kind === 'page' ? previewFile(bridge.doc) : '';
   const groups = new Map();
   const add = (group) => {
-    if (!groups.has(group.id)) groups.set(group.id, { ...group, fields: [] });
+    if (!groups.has(group.id)) groups.set(group.id, { fields: [], ...group });
     return groups.get(group.id);
   };
 
-  // Home: the hero and every section, even the ones without text (they still have a toggle).
-  if (isHome) [HERO, ...homeSections(store).map((_, i) => sectionGroup(store, i))].forEach(add);
+  // Every section, even the ones without text (they still have a toggle and settings).
+  sectionsOf(store, file).forEach((_, i) => add(sectionGroup(store, file, i)));
 
   for (const f of fieldsOf(store, bridge, target)) {
     const group = groupFor(store, f, page);
-    if (group.id.startsWith('source:')) continue;
-    add(group).fields.push({ ...f, label: fieldLabel(store, f) });
+    if (group?.id.startsWith('source:')) continue;
+    if (group) add(group).fields.push({ ...f, label: fieldLabel(store, f) });
+    else {
+      // a section's text its type doesn't list (e.g. a photo credit): added to its group
+      const g = groups.get(`s${parse(f.ptr)[1]}`);
+      if (g && f.file === g.file && !g.fields.some((x) => x.edit === f.edit))
+        g.fields.push({ ...f, label: fieldLabel(store, f) });
+    }
   }
 
   // The page transition text is an attribute of the page, not a [data-edit] element.
@@ -220,11 +264,5 @@ export function contentGroups(store, bridge, target) {
       placeholder: 'Leave empty to hide the label',
     });
   }
-
-  // Home keeps the section order with the transition last; other pages keep document order.
-  if (!isHome) return [...groups.values()];
-  const order = ['hero', ...homeSections(store).map((_, i) => `s${i}`), 'transition'];
-  return [...groups.values()].sort((a, b) => rank(order, a.id) - rank(order, b.id));
+  return [...groups.values()];
 }
-
-const rank = (order, id) => (order.includes(id) ? order.indexOf(id) : order.length);

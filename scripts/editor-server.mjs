@@ -42,6 +42,7 @@ import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
 import { readContentFile, walkJson, writeFileAtomic } from './content.mjs';
 import { checkContent } from '../src/site/validate.js';
+import { newSection } from '../src/site/sections/index.js';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -125,7 +126,9 @@ export function pagesOp(
       const t = String(title || '').trim() || titleCase(name);
       const file = pageFile(join(parent, name));
       onWrite();
-      write(file, { crumb: t, title: t, intro: '', curtain: t });
+      // a new page starts with its heading (src/site/sections/)
+      const heading = { ...newSection('heading'), crumb: t, title: t };
+      write(file, { curtain: t, sections: [heading] });
       return done({ id: join(parent, name), created: [file] });
     }
     if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
@@ -134,7 +137,12 @@ export function pagesOp(
     if (!isSlug(source) || !fs.existsSync(abs(sourceFile(source))))
       return fail(400, `No source "${source ?? ''}"`);
     onWrite();
-    write(pageFile(pid), { config: { source }, section: titleCase(source), next: 'Next' });
+    write(pageFile(pid), {
+      config: { source },
+      section: titleCase(source),
+      next: 'Next',
+      sections: [newSection('album')], // the item's album
+    });
     return done({ id: pid, created: [pageFile(pid)] });
   }
 

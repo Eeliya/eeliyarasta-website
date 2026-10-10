@@ -17,7 +17,7 @@
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { TEMPLATE, isSlug, pageFile, pageIdOf, sourceIdOf } from '../../site/files.js';
-  import { pathOfId } from '../../site/routes.js';
+  import { pageTitle, pathOfId } from '../../site/routes.js';
   import { slugify } from '../../site/helpers.js';
   import { plural } from '../lib/format.js';
 
@@ -68,7 +68,7 @@
     const d = data(id);
     return (
       d.meta?.title ||
-      d.title ||
+      pageTitle(d) ||
       nameOf(id)
         .replace(/-/g, ' ')
         .replace(/^./, (c) => c.toUpperCase())

@@ -33,8 +33,8 @@ import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides, pathOfId } from '../site/routes.js';
-import { ANIMATIONS, HOME, TEMPLATE, contentFromFiles, pageFile, pageIdOf } from '../site/files.js';
-import { syncHomeSections } from './sections.js';
+import { ANIMATIONS, TEMPLATE, contentFromFiles, pageFile, pageIdOf } from '../site/files.js';
+import { previewFile, syncSections as syncPreviewSections } from './sections.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
 const store = createStore();
@@ -210,11 +210,11 @@ bridge.on('connect', () => {
 });
 
 /**
- * Keep the preview's home sections in list order (reorder, on/off, layout) after edits.
+ * Keep the preview's sections in list order (reorder, on/off, layout) after edits.
  * Returns true when data-edit pointers moved, so texts must be re-applied.
  */
 function syncSections() {
-  const r = syncHomeSections(bridge.doc, store);
+  const r = syncPreviewSections(bridge.doc, store);
   ui.staleSections = [...r.stale];
   if (r.moved) bridge.api?.ScrollTrigger?.refresh();
   return r.rewired;
@@ -248,7 +248,7 @@ store.on(({ files, source: src }) => {
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
-  const rewired = files.includes(HOME) && syncSections();
+  const rewired = files.includes(previewFile(bridge.doc)) && syncSections();
   if (textChanged) {
     pushCurtains();
     const fromPreview = src && src.nodeType === 1;

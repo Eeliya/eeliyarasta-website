@@ -31,7 +31,9 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   assert.equal(r.status, 200);
   assert.equal(r.body.id, 'people/new-one');
   assert.deepEqual(r.body.created, ['pages/people/new-one/index.json']);
-  assert.equal(read(root, 'pages/people/new-one/index.json').title, 'New one');
+  assert.deepEqual(read(root, 'pages/people/new-one/index.json').sections, [
+    { type: 'heading', crumb: 'New one', title: 'New one', intro: '', config: { enabled: true } },
+  ]);
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
   ]);
@@ -51,6 +53,9 @@ test('template: [slug].json in a page folder, one per folder, not at the root', 
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug].json']);
   assert.equal(read(root, 'pages/about/[slug].json').config.source, 'people');
+  assert.deepEqual(read(root, 'pages/about/[slug].json').sections, [
+    { type: 'album', config: { enabled: true } },
+  ]);
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'people' }).status, 400);
 });
 
