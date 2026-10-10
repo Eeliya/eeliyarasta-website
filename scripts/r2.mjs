@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import { AwsClient } from 'aws4fetch';
 import { FORMAT, loadSharp, makeVariants, uprightSize, widthsFor } from './image-variants.mjs';
 import { formatJSON } from '../src/editor/lib/json-format.js';
+import { writeFileAtomic } from './content.mjs';
 
 /** Image types an upload can be (they are stored as WebP). */
 export const IMAGE_TYPES = new Set([
@@ -147,7 +148,7 @@ export async function uploadPhoto(env, { name, type, body }, { photosFile, onWri
   // re-read: another upload may have finished meanwhile
   const now = { ...readJSON(photosFile), [key]: photo };
   onWrite();
-  fs.writeFileSync(
+  writeFileAtomic(
     photosFile,
     formatJSON(
       Object.fromEntries(

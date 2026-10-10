@@ -17,14 +17,17 @@ async function json(url, opts) {
 }
 
 export async function load() {
+  let dev;
   try {
-    const dev = await json('/__editor/content');
-    media.manifest = dev.media || {};
-    media.photos = dev.photos || {};
-    return { mode: 'dev', files: dev.files, from: 'local files' };
+    dev = await json('/__editor/content');
   } catch (err) {
+    // The dev server answered with its own error (e.g. broken JSON in a content file): show it.
+    if (err.error) throw err;
     throw new Error(`The editor only works with the dev server (npm run dev). ${err.message}`);
   }
+  media.manifest = dev.media || {};
+  media.photos = dev.photos || {};
+  return { mode: 'dev', files: dev.files, from: 'local files' };
 }
 
 export const saveDev = (files) =>

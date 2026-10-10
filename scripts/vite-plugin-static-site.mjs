@@ -104,6 +104,7 @@ export default function staticSite() {
 
     /** Content and templates changed: tell the pages (see the top of this file). */
     handleHotUpdate({ file, server }) {
+      if (file.endsWith('.tmp')) return []; // writeFileAtomic's temporary file (scripts/content.mjs)
       const rel = path.relative(config.root, file).split(path.sep).join('/');
       const content = DATA.test(rel);
       if (!content && !rel.startsWith('src/site/')) return;

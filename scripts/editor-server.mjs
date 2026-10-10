@@ -37,7 +37,8 @@ import {
 } from '../src/site/files.js';
 import { NAMED_VIEWS } from '../src/site/routes.js';
 import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
-import { walkJson } from './content.mjs';
+import { readContentFile, walkJson, writeFileAtomic } from './content.mjs';
+import { checkContent } from '../src/site/validate.js';
 
 const CONTENT_DIR = editorConfig.contentDir;
 
@@ -108,7 +109,7 @@ export function pagesOp(
   };
   const write = (file, data) => {
     fs.mkdirSync(path.dirname(abs(file)), { recursive: true });
-    fs.writeFileSync(abs(file), formatJSON(data));
+    writeFileAtomic(abs(file), formatJSON(data));
   };
 
   if (op === 'add' || op === 'template') {
@@ -165,6 +166,30 @@ export function pagesOp(
   return fail(400, `Unknown pages op "${op ?? ''}"`);
 }
 
+// ---------------------------------------------------------------- save
+
+/**
+ * Save: write the editor's files ({ "pages/index.json": data, ... }) to content/. Only existing
+ * editable files, and only when every one of them has the right shape (src/site/validate.js):
+ * nothing is written otherwise. Each file is written atomically (temp file + rename).
+ * Returns { status, body }.
+ */
+export function save(root, files, onWrite = () => {}) {
+  const names = Object.keys(files && typeof files === 'object' ? files : {});
+  const editable = editableFiles(root);
+  const bad = names.filter((n) => !editable.has(n));
+  if (!names.length || bad.length)
+    return { status: 400, body: { error: `Not writable: ${bad.join(', ') || '(nothing)'}` } };
+  const problems = names.flatMap((n) =>
+    checkContent(n, files[n]).map((p) => `${CONTENT_DIR}/${n}: ${p}`),
+  );
+  if (problems.length)
+    return { status: 400, body: { error: `Not saved. ${problems.join('; ')}`, problems } };
+  onWrite();
+  for (const n of names) writeFileAtomic(path.join(root, CONTENT_DIR, n), formatJSON(files[n]));
+  return { status: 200, body: { ok: true, written: names } };
+}
+
 const LOOPBACK = /^(?:127(?:\.\d{1,3}){3}|::1|::ffff:127(?:\.\d{1,3}){3})$/;
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -185,12 +210,13 @@ export function isLocalRequest(req) {
   return true;
 }
 
+/**
+ * Every editable file's data. Broken JSON throws, naming the file; wrong shapes don't (the
+ * editor is where they get fixed, and Save checks them).
+ */
 export const readContentFiles = (root) =>
   Object.fromEntries(
-    [...editableFiles(root)].map((f) => [
-      f,
-      JSON.parse(fs.readFileSync(path.join(root, CONTENT_DIR, f), 'utf8')),
-    ]),
+    [...editableFiles(root)].map((f) => [f, readContentFile(root, f, { check: false })]),
   );
 
 /** Local photos (.generated/media.json, scripts/images.mjs): { src, thumb } per media/ file. */
@@ -203,10 +229,8 @@ function readMedia(root) {
   );
 }
 
-const readPhotos = (root) => {
-  const file = path.join(root, CONTENT_DIR, PHOTOS);
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
-};
+const readPhotos = (root) =>
+  fs.existsSync(path.join(root, CONTENT_DIR, PHOTOS)) ? readContentFile(root, PHOTOS) : {};
 
 /** The request body as a Buffer; over `limit` bytes fails with 413. */
 function readRaw(req, limit) {
@@ -235,7 +259,11 @@ async function readJSON(req) {
     err.status = 415;
     throw err;
   }
-  return JSON.parse((await readBody(req)) || '{}');
+  try {
+    return JSON.parse((await readBody(req)) || '{}');
+  } catch {
+    throw Object.assign(new Error('The request is not valid JSON'), { status: 400 });
+  }
 }
 
 // ------------------------------------------------------------------ git (Publish)
@@ -509,19 +537,10 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
         });
 
       if (route === 'POST /save') {
-        const { files } = await readJSON(req);
-        const names = Object.keys(files || {});
-        const editable = editableFiles(root);
-        const bad = names.filter(
-          (n) => !editable.has(n) || files[n] === null || typeof files[n] !== 'object',
-        );
-        if (!names.length || bad.length)
-          return sendJSON(res, 400, { error: `Not writable: ${bad.join(', ') || '(nothing)'}` });
-        onWrite();
-        for (const n of names)
-          fs.writeFileSync(path.join(root, CONTENT_DIR, n), formatJSON(files[n]));
-        log(`editor saved ${names.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
-        return sendJSON(res, 200, { ok: true, written: names });
+        const { status, body } = save(root, (await readJSON(req)).files, onWrite);
+        if (body.ok)
+          log(`editor saved ${body.written.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
+        return sendJSON(res, status, body);
       }
 
       if (route === 'POST /upload') {
