@@ -86,11 +86,22 @@
       "trigger": "scroll",
       "start": "top 85%"
     },
-    "scrub-words": { "type": "scrub-words", "fromOpacity": 0.14, "start": "top 80%", "end": "bottom 45%" },
+    "scrub-words": {
+      "type": "scrub-words",
+      "fromOpacity": 0.14,
+      "start": "top 80%",
+      "end": "bottom 45%"
+    },
     "parallax": { "type": "parallax", "speed": 12, "scrub": true },
     "scatter-drift": {
       "type": "scatter",
-      "intro": { "duration": 1.6, "ease": "expo.out", "stagger": 0.07, "delay": 0.15, "fromScale": 0.6 },
+      "intro": {
+        "duration": 1.6,
+        "ease": "expo.out",
+        "stagger": 0.07,
+        "delay": 0.15,
+        "fromScale": 0.6
+      },
       "drift": { "amplitude": 14, "rotation": 2.5, "minDuration": 5, "maxDuration": 9 },
       "scroll": { "distance": 55 }
     },
@@ -123,9 +134,21 @@
     "page.intro": { "preset": "fade-up", "trigger": "load", "delay": 0.45 },
     "album.grid": { "preset": "grid-reveal", "trigger": "load", "delay": 0.3 },
     "album.title": { "preset": "split-chars", "trigger": "load", "delay": 0.15, "stagger": 0.03 },
-    "album.meta": { "preset": "stagger-up", "trigger": "load", "delay": 0.4, "stagger": 0.05, "duration": 0.9 },
+    "album.meta": {
+      "preset": "stagger-up",
+      "trigger": "load",
+      "delay": 0.4,
+      "stagger": 0.05,
+      "duration": 0.9
+    },
     "album.stage": { "preset": "image-reveal", "trigger": "load", "delay": 0.1 },
-    "album.thumbs": { "preset": "stagger-up", "trigger": "load", "delay": 0.6, "stagger": 0.04, "duration": 0.8 },
+    "album.thumbs": {
+      "preset": "stagger-up",
+      "trigger": "load",
+      "delay": 0.6,
+      "stagger": 0.04,
+      "duration": 0.8
+    },
     "about.image": { "preset": "image-reveal", "trigger": "load", "delay": 0.2 },
     "about.headline": { "preset": "split-lines", "trigger": "load", "delay": 0.2 },
     "about.body": { "preset": "stagger-up", "stagger": 0.1 },
