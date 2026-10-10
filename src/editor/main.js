@@ -108,8 +108,8 @@ function updatePages() {
   const routes = getRoutes(contentFromFiles(store.current));
   ui.pages = [
     ...pageEntries(routes),
-    { kind: 'component', id: 'menu', title: 'Menu' },
-    { kind: 'component', id: 'footer', title: 'Footer' },
+    { kind: 'component', id: 'menu', title: 'Menu', path: '---' },
+    { kind: 'component', id: 'footer', title: 'Footer', path: '---' },
   ];
   // Menu / Footer stay picked; otherwise follow the page shown in the preview.
   // (a template page: the template's entry)

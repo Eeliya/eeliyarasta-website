@@ -82,27 +82,29 @@
   </button>
 
   {#if open}
-    <ul class="pm__list" role="listbox">
-      {#each groups as [title, list] (title)}
-        <li class="pm__group" role="presentation">{title}</li>
-        {#each list as item (key(item))}
-          <li
-            role="option"
-            tabindex="-1"
-            class={['pm__opt', key(item) === key(value) && 'is-active']}
-            aria-selected={key(item) === key(value)}
-            onclick={() => pick(item)}
-            onkeydown={(e) => onOptionKey(e, item)}
-          >
-            <span class={['pm__badge', item.kind === 'component' && 'is-component']}>
-              {kindName(item)}
-            </span>
-            <span class="pm__opt-title">{item.title}</span>
-            {#if item.path}<span class="pm__opt-path">{item.path}</span>{/if}
-          </li>
+    <div class="pm__list">
+      <ul class="pm__list--content" role="listbox">
+        {#each groups as [title, list] (title)}
+          <li class="pm__group" role="presentation">{title}</li>
+          {#each list as item (key(item))}
+            <li
+              role="option"
+              tabindex="-1"
+              class={['pm__opt', key(item) === key(value) && 'is-active']}
+              aria-selected={key(item) === key(value)}
+              onclick={() => pick(item)}
+              onkeydown={(e) => onOptionKey(e, item)}
+            >
+              <span class={['pm__badge', item.kind === 'component' && 'is-component']}>
+                {kindName(item)}
+              </span>
+              <span class="pm__opt-title">{item.title}</span>
+              {#if item.path}<span class="pm__opt-path">{item.path}</span>{/if}
+            </li>
+          {/each}
         {/each}
-      {/each}
-    </ul>
+      </ul>
+    </div>
   {/if}
 </div>
 
@@ -110,8 +112,9 @@
   // custom page / component picker
   .pm {
     position: relative;
-    flex: 1;
+    flex: 1 0 auto;
     min-width: 0;
+    width: 100%;
   }
 
   .pm__btn {
@@ -128,15 +131,21 @@
     background: rgb(0 0 0 / 0.35);
     box-shadow: inset 0 0 0 1px var(--line);
 
-    &:hover,
+    &:hover {
+      box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+    }
+
     &[aria-expanded='true'] {
       box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
     }
   }
 
   .pm__kind {
     flex: none;
     font-size: 9px;
+    line-height: 12px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 4px 8px;
@@ -168,26 +177,31 @@
   .pm__list {
     position: absolute;
     z-index: 20;
-    top: calc(100% + 8px);
+    top: 100%;
     left: 0;
     right: 0;
+    height: 360px;
     max-height: min(360px, 50vh);
-    overflow: auto;
-    margin: 0;
+    overflow: hidden;
     padding: 8px;
-    list-style: none;
-    border-radius: 12px;
-    background: rgb(22 22 22 / 0.92);
+    border-radius: 0 0 8px 8px;
+    background: var(--bg-2);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
     backdrop-filter: blur(20px) saturate(160%);
-    box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.1),
-      0 24px 50px -20px rgb(0 0 0 / 0.9);
+    box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+
+    &--content {
+      height: 100%;
+      max-height: 100%;
+      overflow: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
   }
 
   .pm__group {
     padding: 8px 12px 4px;
-    font-size: 9.5px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--faint);
@@ -196,8 +210,8 @@
   .pm__opt {
     display: grid;
     grid-template-columns: auto 1fr;
+    align-items: start;
     gap: 4px 12px;
-    align-items: center;
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
@@ -216,6 +230,7 @@
   .pm__badge {
     grid-row: 1 / span 2;
     font-size: 9px;
+    line-height: 12px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     padding: 4px 8px;
