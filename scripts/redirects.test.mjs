@@ -205,3 +205,15 @@ test('validation: redirects.json', () => {
     ],
   );
 });
+
+test('"See all" links go to the page that shows the source, wherever it is', async () => {
+  const { sourcePage } = await import('../src/site/sections/data.js');
+  const pages = {
+    home: { sections: [{ type: 'grid', config: { source: 'people' } }] },
+    'models/[slug]': { config: { source: 'people' } },
+    work: { sections: [{ type: 'projects', config: { source: 'projects' } }] },
+  };
+  assert.equal(sourcePage({ pages }, 'people'), '/models/');
+  assert.equal(sourcePage({ pages }, 'projects'), '/work/');
+  assert.equal(sourcePage({ pages }, 'places'), '/places/');
+});

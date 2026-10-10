@@ -359,7 +359,7 @@ function followItems() {
     },
     { source: 'panel' },
   );
-  return { links: edits.length, added: moved.added, pruned };
+  return { links: edits.length, added: moved.added, pruned, moves };
 }
 
 async function save({ quiet = false } = {}) {
@@ -373,7 +373,10 @@ async function save({ quiet = false } = {}) {
     store.markSaved(dirty);
     // Re-render the preview from the saved files (new list items, site settings, a grid's new
     // source...). Only the preview reloads, at the same scroll and selection; the editor stays.
-    if (bridge.path()) bridge.reload();
+    // the preview's item page moved (its slug changed): show it at its new path
+    const moved = followed?.moves.get(ui.path);
+    if (moved) bridge.navigate(moved);
+    else if (bridge.path()) bridge.reload();
     if (!quiet) toast('Saved', { kind: 'ok', files: dirty, note: '(draft, not published)' });
     if (followed) movedToast(followed);
     ui.status = `Saved ${plural(dirty.length, 'file')} · ${new Date().toLocaleTimeString()}`;

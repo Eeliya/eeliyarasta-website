@@ -27,7 +27,8 @@
 
   const list = $derived.by(() => {
     live.version;
-    return redirectsOf(live.store.current);
+    // a copy: the store changes its objects in place, the list must look new to show it
+    return structuredClone(redirectsOf(live.store.current));
   });
   // the site's pages and item patterns, for `to` and the warnings
   const paths = $derived.by(() => {

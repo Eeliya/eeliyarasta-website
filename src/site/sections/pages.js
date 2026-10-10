@@ -4,7 +4,7 @@
  */
 import { html, esc, img, pad, lines, coverOf, creditText, firstPhotos } from '../helpers.js';
 import { albumCard } from '../templates/partials.js';
-import { sourceList } from './data.js';
+import { sourceList, sourcePage } from './data.js';
 
 /**
  * A page's heading: crumb, big title (with the item count of a source: config.count), intro,
@@ -88,7 +88,7 @@ export const panels = {
     const panel = ({ source, title, unit }, i) => {
       const list = Array.isArray(ctx.sources[source]) ? ctx.sources[source] : [];
       const cover = list.map(coverOf).find(Boolean);
-      return html` <a class="ppanel" href="/${esc(source)}/" data-anim-item>
+      return html` <a class="ppanel" href="${esc(sourcePage(ctx, source))}" data-anim-item>
       <span class="ppanel__media"
         >${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
       >

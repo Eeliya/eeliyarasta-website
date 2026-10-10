@@ -43,7 +43,6 @@
   const index = $derived(isList ? Math.max(0, Math.min(ui.explorer.index, list.length - 1)) : 0);
   const item = $derived(isList ? list[index] : undefined);
   const fields = $derived(item ? itemFields(file, item, index) : []);
-  const saved = $derived(!!item && base.some((b) => b?.slug === item.slug));
 
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   // An item is changed when it differs from the saved item with the same slug.
@@ -224,18 +223,17 @@
         </header>
 
         {#if 'slug' in item}
-          <!-- the slug is the page URL: editable until the item is saved -->
+          <!-- the slug is the page URL: once saved, a new one redirects the old (on Save) -->
           <label class="tf">
             <span class="tf__label">
               slug
               <span class="src-detail__hint">
-                {saved ? 'fixed: it is the page URL' : 'page URL, fixed after Save'}
+                the page URL: when it changes, Save redirects the old one
               </span>
             </span>
             <input
               class={['tf__input', slugBad && 'is-invalid']}
               spellcheck="false"
-              disabled={saved}
               {@attach show(item.slug)}
               oninput={onSlug}
               onblur={(e) => {

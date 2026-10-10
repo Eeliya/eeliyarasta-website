@@ -5,7 +5,7 @@
 import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed } from '../helpers.js';
 import { sourceFile } from '../files.js';
 import { sectionHead, projectList } from '../templates/partials.js';
-import { sourceList } from './data.js';
+import { sourceList, sourcePage } from './data.js';
 
 /** Images of a source item: albums have images[], projects a single image. */
 const imagesOf = (item) =>
@@ -158,7 +158,7 @@ export const grid = {
     const look = GRID_LOOKS[source] || photoTiles;
     const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
     return html` <section class="section section--${esc(source)}" ${sec.attrs}>
-      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: `/${source}/` })}
+      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: sourcePage(ctx, source) })}
       ${look(ctx, source, sourceList(ctx, source), layout)}
     </section>`;
   },
@@ -193,7 +193,7 @@ export const projects = {
         ${projectList(ctx, list, { id: `projects-${sec.at}`, source, headingLevel: 2 })}
       </section>`;
     return html` <section class="section section--projects" ${sec.attrs}>
-      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: `/${source}/` })}
+      ${sectionHead({ at: sec.ed, index: sec.number, ...s, href: sourcePage(ctx, source) })}
       ${projectList(ctx, list, { id: `projects-${sec.at}`, source })}
     </section>`;
   },
