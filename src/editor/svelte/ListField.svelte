@@ -83,7 +83,7 @@
     display: grid;
     gap: 8px;
     padding: 8px;
-    border-radius: 8px;
+    border-radius: 16px;
     border: 1px solid #222;
   }
 

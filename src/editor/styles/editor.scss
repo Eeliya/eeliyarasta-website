@@ -23,6 +23,7 @@ body {
   --faint: #4f4f4d; // was / 0.32
   --hi: #{$hi}; // highlight: links, badges, ease curves
   --ed-accent: #3cf; // focus and selection, everywhere in the editor (and the preview's outlines)
+  --ed-accent-bg: #0D222E;
   --panel-w: 400px; // the side panel
   --btn: #2a2a2a; // Button.svelte: solid, on the panel and in windows
   --btn-hover: #383838;
@@ -511,9 +512,14 @@ kbd {
 .tf {
   display: block;
   transition: box-shadow 0.6s;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 12px;
 }
 
 .tf.is-selected {
+  background: var(--ed-accent-bg);
+
   .tf__label {
     color: var(--ed-accent);
   }
