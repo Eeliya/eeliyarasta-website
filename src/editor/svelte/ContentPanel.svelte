@@ -191,6 +191,13 @@
       openMedia({ pick: `${f.edit}/${list.length}${f.photo ? `/${f.photo}` : ''}` });
   }
 
+  /** A list item's name in its bar: its label or title, else "<list> <n>". */
+  function itemName(f, fields, i) {
+    const own = fields.find((sub) => /\/(label|title)$/.test(sub.ptr));
+    const text = own && live.get(own.file, own.ptr);
+    return typeof text === 'string' && text.trim() ? text : `${f.label} ${i + 1}`;
+  }
+
   function setText(f, value) {
     live.store.set(f.file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' });
   }
@@ -432,6 +439,7 @@
             <ListField
               label={f.label}
               items={f.items}
+              name={(fields, i) => itemName(f, fields, i)}
               addLabel={f.photo === null ? 'Add' : 'Add photo'}
               onmove={(from, to) => moveItem(f, from, to)}
               onremove={(i) => removeItem(f, i)}

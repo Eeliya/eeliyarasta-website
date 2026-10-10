@@ -54,7 +54,7 @@ function answer(request, body, status, { message, page }) {
   const text =
     message || (body.ok ? 'Thank you, your message was sent.' : 'Your message could not be sent.');
   return new Response(
-    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${body.ok ? 'Sent' : 'Not sent'}</title><body style="font:16px/1.6 system-ui,sans-serif;background:#030303;color:#f2efe9;max-width:36rem;margin:20vh auto;padding:0 24px"><p>${esc(text)}</p><p><a style="color:inherit" href="${esc(back)}">← Back</a></p></body></html>`,
+    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><title>${body.ok ? 'Sent' : 'Not sent'}</title><body style="font:16px/1.6 system-ui,sans-serif;background:#030303;color:#f2efe9;max-width:36rem;margin:20vh auto;padding:0 24px"><p>${esc(text)}</p><p><a style="color:inherit" href="${esc(back)}">← Back</a></p></body></html>`,
     { status, headers: { 'content-type': 'text/html; charset=utf-8' } },
   );
 }
