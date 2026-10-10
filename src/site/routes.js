@@ -114,8 +114,8 @@ export function buildRoutes(content) {
     const meta = page.meta || {};
     const title =
       id === 'home'
-        ? (meta.title ?? site.title)
-        : fillTitle(site, meta.title ?? pageTitle(page) ?? titleCase(segments.at(-1)));
+        ? meta.title || site.title
+        : fillTitle(site, meta.title || pageTitle(page) || titleCase(segments.at(-1)));
     routes.push({
       path: pathOfId(id),
       id,

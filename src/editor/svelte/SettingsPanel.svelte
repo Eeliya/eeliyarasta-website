@@ -1,6 +1,7 @@
 <!--
-  Settings tab: what is the same on every page. The site's name, title and meta
-  (settings/site.json), smooth scrolling, the global page-transition curtain and the page
+  Settings tab: what is the same on every page. The site's name and details
+  (settings/site.json), its search and share defaults (SEO: titles, description, share image,
+  address, robots, language; a page's own are in Content > SEO), smooth scrolling, the global page-transition curtain and the page
   fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
@@ -11,14 +12,17 @@
   import Field from './Field.svelte';
   import MenuSettings from './MenuSettings.svelte';
   import Section from './Section.svelte';
+  import Select from './Select.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
-  import { SITE_SETTINGS } from './content-groups.js';
+  import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
   import { ANIMATIONS, SITE } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
+
+  const uid = $props.id();
 
   // The preview's GSAP, for the ease curves.
   const gsap = $derived.by(() => {
@@ -37,9 +41,10 @@
 </script>
 
 <section class="ed-body">
-  <Section key="settings:site" title="Site" name="Name & meta">
+  <Section key="settings:site" title="Site" name="Name & details">
     <p class="hint">
-      Used on every page: page titles, meta tags and the footer. The preview shows them after Save.
+      Used on every page: the footer, the clock and search engines' details about you. The preview
+      shows them after Save.
     </p>
     {#each SITE_SETTINGS as [key, label, type] (key)}
       <Field
@@ -51,6 +56,37 @@
         onvalue={(value) => set(key, value)}
       />
     {/each}
+  </Section>
+
+  <Section key="settings:seo" title="Site" name="SEO">
+    <p class="hint">
+      What search engines and share cards show. Pages can set their own in Content > SEO; these are
+      the defaults.
+    </p>
+    {#each SEO_SETTINGS as [key, label, type] (key)}
+      <Field
+        edit="{SITE}#/{key}"
+        {label}
+        {type}
+        value={live.get(SITE, `/${key}`)}
+        changed={live.changed(SITE, `/${key}`)}
+        onvalue={(value) => set(key, value)}
+      />
+    {/each}
+    <div class={['tf', live.changed(SITE, '/robots') && 'is-changed']}>
+      <label class="tf__label" for="{uid}-robots"
+        >Search engines<i class="dot" title="Changed"></i></label
+      >
+      <Select
+        id="{uid}-robots"
+        value={live.get(SITE, '/robots') || 'index'}
+        options={[
+          { value: 'index', label: 'Index the site' },
+          { value: 'noindex', label: 'Keep the whole site out (noindex)' },
+        ]}
+        onchange={(value) => set('robots', value)}
+      />
+    </div>
   </Section>
 
   <MenuSettings {live} />

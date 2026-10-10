@@ -3,7 +3,8 @@
   grouped by section (content-groups.js decides which texts and groups). A page is a list of
   sections (src/site/sections/): each can be moved, duplicated, deleted, turned on/off and
   configured (its type's config: source, layout, ...); Add section picks a type from the
-  registry. The Sources button on top opens the Source Explorer (SourcesModal.svelte).
+  registry. Below them, the page's SEO (SeoSection.svelte). The Sources button on top opens
+  the Source Explorer (SourcesModal.svelte).
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
   the preview, a field sets it (via the bridge) when it gets focus. This panel highlights
@@ -25,6 +26,7 @@
   import Field from './Field.svelte';
   import ListField from './ListField.svelte';
   import Section from './Section.svelte';
+  import SeoSection from './SeoSection.svelte';
   import Select from './Select.svelte';
   import SourcesModal from './SourcesModal.svelte';
   import {
@@ -439,6 +441,7 @@
           {/snippet}
         </Select>
       </div>
+      <SeoSection {live} {file} />
     {/if}
   {/if}
 

@@ -12,14 +12,20 @@ import { previewFile } from '../sections.js';
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
   ['name', 'Site name', 'text'],
-  ['title', 'Home page title', 'text'],
-  ['description', 'Description (meta tags)', 'block'],
-  ['url', 'Site URL (canonical links)', 'text'],
   ['accent', 'Accent color', 'text'],
   ['timezone', 'Time zone of the clock (e.g. Europe/Amsterdam)', 'text'],
-  ['ogImage', 'Share image (pages without a photo of their own)', 'image'],
   ['jobTitle', 'Job title (for search engines)', 'text'],
   ['country', 'Country code (for search engines, e.g. NL)', 'text'],
+];
+
+/** site.json search and share defaults (src/site/seo.js), Settings > SEO. robots is a Select. */
+export const SEO_SETTINGS = [
+  ['title', 'Home page title (in full)', 'text'],
+  ['titleTemplate', 'Title of other pages: {page} is the page, {site} the site name', 'text'],
+  ['description', 'Description (pages without their own)', 'block'],
+  ['ogImage', 'Share image (pages without their own)', 'image'],
+  ['url', 'Site URL (canonical links, og:url, sitemap.xml)', 'text'],
+  ['lang', 'Language (<html lang>, e.g. en)', 'text'],
 ];
 
 /** Lists in content/sources/ (people, places, projects, ...). */
