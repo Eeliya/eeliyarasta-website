@@ -20,11 +20,11 @@
     "@fortawesome/fontawesome-free": "^7.3.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "aws4fetch": "^1.0.20",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "prettier-plugin-svelte": "^4.1.1",
     "sass": "^1.105.1",
     "sharp": "^0.35.5",
     "svelte": "^5.57.2",
-    "vite": "^8.3.3"
+    "vite": "^8.3.4"
   }
 }

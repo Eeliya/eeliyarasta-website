@@ -45,14 +45,25 @@ export const pointer = (parts) =>
   parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
 
 /**
+ * Editor markers (data-edit, data-edit-type, data-section, data-section-kind,
+ * data-curtain-edit) are only rendered for the dev server, where the editor's preview needs
+ * them; the build leaves them out (the public site never reads them). renderRoute sets this
+ * for each page it renders (rendering is synchronous).
+ */
+export let editable = false;
+export const setEditable = (on) => (editable = !!on);
+
+/**
  * Visual-editor marker: maps an element's text to a value in a content file (content/<folder>/<name>.json).
  *   ed('pages/index.json', ['hero', 'title'])  ->  data-edit="pages/index.json#/hero/title"
  * type: 'text' (single line, default), 'block' (multi-line, \n <-> <br>), 'number', or
  * 'words' (single line rendered with words(), e.g. the hero name).
- * The editor (src/editor) finds these in its preview; the public site ignores them.
+ * The editor (src/editor) finds these in its preview; '' when not editable (the build).
  */
 export const ed = (file, parts, type = 'text') =>
-  ` data-edit="${esc(file + '#' + pointer(parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`;
+  editable
+    ? ` data-edit="${esc(file + '#' + pointer(parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`
+    : '';
 
 /** "Noor Vermeer" -> "noor-vermeer". */
 export const slugify = (text) =>
@@ -145,6 +156,14 @@ export function photoOf(ctx, src) {
 }
 
 /**
+ * Loading of the i-th photo at the top of a page (the hero, the first cards of a grid, the
+ * photography panels): the first is the likely LCP (eager + fetchpriority="high"), the next
+ * two are eager too (the rest of the first row), everything after that is lazy.
+ * img(ctx, src, { ...firstPhotos(i) }). Album slides and the About photo set their own.
+ */
+export const firstPhotos = (i) => ({ priority: i === 0, loading: i < 3 ? 'eager' : 'lazy' });
+
+/**
  * Responsive <img> for a photo (`src`: see mediaUrl): srcset, intrinsic size and blurred
  * placeholder from photoOf(), for media/ and R2 photos alike.
  */
@@ -184,7 +203,7 @@ export const isEnabled = (section) => section?.enabled !== false;
  * so the editor can turn them back on without a full page rebuild.
  */
 export const sectionAttrs = (id, enabled) =>
-  ` data-section="${esc(id)}"${enabled === false ? ' hidden' : ''}`;
+  `${editable ? ` data-section="${esc(id)}"` : ''}${enabled === false ? ' hidden' : ''}`;
 
 /* ---------- colour helpers for album accents ---------- */
 

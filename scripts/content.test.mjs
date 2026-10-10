@@ -123,3 +123,30 @@ test('site.json with only name and url builds every page', async () => {
     assert.match(body, /<footer|data-router-view/);
   }
 });
+
+test('formatJSON (what Save writes) is Prettier-clean for every content file', async () => {
+  const prettier = await import('prettier');
+  const { formatJSON } = await import('../src/editor/lib/json-format.js');
+  const { readContentDir } = await import('./content.mjs');
+  const options = await prettier.resolveConfig('content/pages/index.json');
+  for (const [file, data] of Object.entries(readContentDir('.'))) {
+    const text = formatJSON(data);
+    const pretty = await prettier.format(text, { ...options, parser: 'json' });
+    assert.equal(text, pretty, `content/${file}`);
+  }
+});
+
+test('editor markers: only when rendering for the editor (dev), never in the build', async () => {
+  const { buildRoutes } = await import('../src/site/routes.js');
+  const { renderRoute } = await import('../src/site/render.js');
+  const content = loadContent('.');
+  const home = buildRoutes(content).routes.find((r) => r.path === '/');
+  const MARKERS = /data-edit|data-section|data-curtain-edit/;
+  const built = renderRoute(home, content);
+  assert.doesNotMatch(built.head + built.body, MARKERS);
+  assert.match(built.body, /data-anim="/); // animations keep their hooks
+  const dev = renderRoute(home, content, { editable: true });
+  assert.match(dev.body, /data-edit="pages\/index\.json#\/hero\/title"/);
+  assert.match(dev.body, /data-section="s0"/);
+  assert.match(dev.body, /data-curtain-edit="/);
+});

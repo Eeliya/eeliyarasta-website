@@ -112,8 +112,8 @@
     align-items: center;
     grid-template-columns: min-content 1fr;
     grid-template-areas:
-      "button title"
-      ". path";
+      'button title'
+      '. path';
     gap: 4px 8px;
     margin-bottom: 12px;
   }

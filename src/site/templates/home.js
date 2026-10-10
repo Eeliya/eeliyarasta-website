@@ -1,4 +1,16 @@
-import { html, esc, img, pad, ed, lines, words, sectionAttrs, itemHref } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  ed,
+  lines,
+  words,
+  sectionAttrs,
+  editable,
+  itemHref,
+  firstPhotos,
+} from '../helpers.js';
 import { HOME, sourceFile } from '../files.js';
 import { sectionHead, projectList } from './partials.js';
 
@@ -14,7 +26,7 @@ const heroPhoto = (ctx, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, priority: i < 5, attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
@@ -151,7 +163,8 @@ export function home(ctx) {
       }
       const on = sectionOn(s);
       if (s.type !== 'intro' && on) number++;
-      const attrs = `${sectionAttrs(`s${at}`, on).trim()} data-section-kind="${esc(s.type === 'grid' ? `grid:${s.config?.source || 'people'}` : s.type)}"`;
+      const kind = s.type === 'grid' ? `grid:${s.config?.source || 'people'}` : s.type;
+      const attrs = `${sectionAttrs(`s${at}`, on).trim()}${editable ? ` data-section-kind="${esc(kind)}"` : ''}`;
       return render(ctx, s, { at, number, attrs });
     })}`;
 }

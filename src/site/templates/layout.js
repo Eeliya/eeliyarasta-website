@@ -1,4 +1,4 @@
-import { html, esc, isExternal, mediaUrl } from '../helpers.js';
+import { html, esc, isExternal, mediaUrl, editable } from '../helpers.js';
 import { header, mobileMenu } from './header.js';
 import { footer } from './footer.js';
 
@@ -57,7 +57,8 @@ function pageCurtains(curtains) {
 /** Full <body> contents injected at <!--ssr-body--> */
 export function body(ctx, route, accent, view) {
   const curtain = route.curtain ?? '';
-  const curtainEdit = route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : '';
+  const curtainEdit =
+    editable && route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : '';
   const page = html` <a class="skip-link" href="#main">Skip to content</a>
     <div class="backdrop" aria-hidden="true">
       <div class="backdrop__glow"></div>

@@ -20,16 +20,8 @@
       "handle": "@eeliya.rasta",
       "url": "https://www.instagram.com/eeliya.rasta/"
     },
-    {
-      "label": "YouTube",
-      "handle": "@eeliyarasta",
-      "url": "https://www.youtube.com/@eeliyarasta"
-    },
-    {
-      "label": "GitHub",
-      "handle": "Eeliya",
-      "url": "https://github.com/Eeliya"
-    }
+    { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
+    { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
   ],
   "footer": {
     "label": "Say hello",
@@ -37,40 +29,19 @@
     "note": "Shot on Fujifilm X100V. Built with Vite + GSAP.",
     "toTop": "Back to top",
     "columns": {
-      "social": {
-        "title": "Social"
-      },
+      "social": { "title": "Social" },
       "index": {
         "title": "Index",
         "links": [
-          {
-            "label": "Home",
-            "href": "/"
-          },
-          {
-            "label": "People",
-            "href": "/people/"
-          },
-          {
-            "label": "Places",
-            "href": "/places/"
-          },
-          {
-            "label": "Projects",
-            "href": "/projects/"
-          },
-          {
-            "label": "About",
-            "href": "/about/"
-          }
+          { "label": "Home", "href": "/" },
+          { "label": "People", "href": "/people/" },
+          { "label": "Places", "href": "/places/" },
+          { "label": "Projects", "href": "/projects/" },
+          { "label": "About", "href": "/about/" }
         ]
       },
-      "contact": {
-        "title": "Contact"
-      },
-      "time": {
-        "title": "Local time"
-      }
+      "contact": { "title": "Contact" },
+      "time": { "title": "Local time" }
     }
   },
   "nav": {

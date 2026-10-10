@@ -3,7 +3,8 @@
  * endpoint (Node), so every save produces the same bytes and small git diffs.
  *
  * 2-space indent; an object/array whose values are all primitives is kept on one
- * line when it fits in `width` (180) columns, e.g. "from": { "autoAlpha": 0, "y": 40 }.
+ * line when it fits in `width` (99) columns, e.g. "from": { "autoAlpha": 0, "y": 40 }.
+ * 99: Prettier's printWidth (100) less a trailing comma, so saved files are Prettier-clean.
  */
 const isObj = (v) => v !== null && typeof v === 'object';
 const flat = (v) => Object.values(v).every((x) => !isObj(x));
@@ -37,6 +38,6 @@ function fmt(value, indent, prefixLen, width) {
     .join(',\n')}\n${indent}}`;
 }
 
-export function formatJSON(value, { width = 180 } = {}) {
+export function formatJSON(value, { width = 99 } = {}) {
   return fmt(value, '', 0, width) + '\n';
 }
