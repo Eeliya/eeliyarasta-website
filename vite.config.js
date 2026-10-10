@@ -6,8 +6,13 @@ export default defineConfig({
   plugins: [
     staticSite(),
     // Svelte is editor-only (src/editor/svelte). The public site never imports it.
-    // vitePreprocess: components can use <style lang="scss">.
-    svelte({ include: ['src/editor/**/*.svelte'], preprocess: vitePreprocess() }),
+    // vitePreprocess: components can use <style lang="scss">. Runes mode everywhere (also for a
+    // component that uses none); scripts/svelte.test.mjs compiles with the same options.
+    svelte({
+      include: ['src/editor/**/*.svelte'],
+      preprocess: vitePreprocess(),
+      compilerOptions: { runes: true },
+    }),
   ],
   css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
   build: {
