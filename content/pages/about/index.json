@@ -56,7 +56,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 12,
+          "bottom": 15
+        }
+      }
     }
   ],
   "curtain": "About"

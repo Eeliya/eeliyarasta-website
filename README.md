@@ -224,20 +224,53 @@ every section is a grid of **blocks** (`src/site/layout/`):
 - **The grid:** 24 columns (with the page's gutter, `--gap`) and rows of `--grid-row`, **8px**,
   one CSS variable in `src/client/styles/_tokens.scss`. A row is at least that tall and grows
   when its content needs more (`minmax(var(--grid-row), auto)`), so text never spills out.
-- **A section:** `height` is `auto` (its `rows`, growing with content) or `screen` (at least the
-  screen's height, its content placed by `align`: `top`, `center` (default), `bottom` or
-  `stretch`, filling it); `width` is `contained` (inside the page's side margins, `--pad`) or
-  `full` (edge to edge); `spacing` is the empty rows above and below it; `enabled: false`
-  hides it. A section's rows grow to fit its lowest block.
+- **A section:** `height` is `auto` (its `rows`, growing with content), `screen` (at least the
+  screen's height) or `aspect` (at least its width × `aspect`, e.g. `"21:9"`); in the last two
+  `align` places its content: `top`, `center` (default), `bottom` or `stretch`, filling it.
+  `width` is `contained` (inside the page's side margins, `--pad`) or `full` (edge to edge);
+  `spacing` is the empty rows above and below it, and `mobile.spacing` the same on phones
+  (`{ "mobile": { "spacing": { "top": 11, "bottom": 13 } } }`, the desktop's when unset);
+  `enabled: false` hides it. A section's rows grow to fit its lowest block.
 - **A block:** its `type` and content (below), `pos` (first column 1–24, columns, first row,
-  rows; without one it is full width in row 1), `z` (its layer when blocks overlap) and an
-  optional `mobile` area. **Below 760px** a section's blocks stack full width in their order;
-  a block with a `mobile` area keeps the grid there (`.sec--mgrid`).
+  rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
+  `place` and an optional `mobile` layout (below).
+- **Size** (`size`): `rows` (default: its `pos.rows`), `aspect` (its width, from its columns,
+  × `aspect`: `1:1 4:5 3:4 2:3 3:2 16:9 21:9` or any `"w:h"`; photos fill it, cropped
+  (`object-fit: cover`)) or `auto` (as tall as its content). An aspect or auto block ignores
+  `pos.rows`: it takes **one row**, and as rows are `minmax(8px, auto)` that row grows to its
+  height, pushing the rows below (and blocks starting there) down. Blocks beside it in that row
+  start at its top. So give it its own row band, or put what follows below its first row.
+- **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
+  - `none` (default): in the grid.
+  - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
+bottom-left bottom-center bottom-right`): held on screen while its **section** scrolls by
+    (it reaches to the section's end; its rows are its minimum height), `--stick-top` (the
+    header's height + `--edge`) from the top, `--edge` from the bottom, or centred. It keeps its
+    columns: sticky only works vertically, so `-left/-center/-right` don't move it sideways.
+  - `fixed-top-left` … `fixed-bottom-right` (the same 7): fixed to that screen corner for the
+    whole page, as wide as its columns; z 20 by default (above the page, below the menu).
+  - `fullscreen`: fixed, covering the screen for the whole page, behind the page by default (z
+    -1: a background); give it a `z` to put it in front.
+  - `pinned`: pinned with GSAP ScrollTrigger from when its top reaches `--stick-top` until its
+    section's end scrolls up to its bottom (no spacing added). With `prefers-reduced-motion` it
+    stays in the flow.
+  - Its `z` still orders it among the blocks (every block is `position: relative`, so they
+    paint over a fullscreen background); sticky blocks default to z 2 so they pass over the
+    others. Desktop placements apply **above 760px** only.
+- **Phones** (below 760px): a section's blocks **stack** full width in their order, with no
+  placement (sticky, fixed, fullscreen and pinned fall back to the flow). A block's `mobile`
+  changes that: `{ "col": 1, "span": 6, "row": 1, "rows": 20, "place": "sticky-top-left" }`.
+  Its area is on a **12-column** phone grid (`.sec--mgrid`, as soon as one block of the section
+  has an area; its rows: `--mrows`). Why 12: on a 390px screen 24 columns with the gutter are
+  3px each (unusable); 12 are ~19px and still give halves, thirds, quarters and sixths. `place`
+  alone keeps the stack and only places that block on phones.
 - **Ids:** every section and block has a stable id (`s-…`, `b-…`), given once when it is made
   (`src/site/layout/ids.js`) and kept when it moves or changes. The editor finds them in the
   preview by it (`data-sec`, `data-block`, dev only).
 - **CSS:** positions are CSS variables on the elements (`--rows --pt --pb` on a section,
-  `--c --s --r --rs --z` and `--mc --ms --mr --mrs` on a block), laid out by
+  `--mpt --mpb --mrows --sar` on a section, `--c --s --r --rs --z --ar` and
+  `--mc --ms --mr --mrs` on a block), size and placement as classes (`.blk--aspect`,
+  `.blk--sticky.blk--v-top.blk--h-left`, `.blk--m-…` for the phone's), laid out by
   `src/client/styles/_layout.scss`. Blocks carry no outer spacing of their own: that is the
   section's.
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
@@ -279,7 +312,8 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
   (and its styles); the editor shows it with no editor code.
 - **Migration:** `scripts/migrate-layout.mjs` turned the old list of typed sections into this
   shape once (each old section became a section with it as one full-width block, its old
-  padding the section's spacing); kept for reference, it changes nothing on migrated content.
+  padding the section's spacing; later its old phone padding the section's `mobile.spacing`,
+  where it differs); kept for reference, it changes nothing on migrated content.
 
 ### Bindings
 
@@ -673,12 +707,13 @@ files. `&pages=/people/` in the URL reopens it on that folder. There's also a mo
 In the Content panel every **section** of the page is a box (Section 1, 2, … named by its first
 text): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
 turns it on/off, and the caret folds it. Under the bar are its settings (Height: Rows with its
-row count, or Fullscreen with where its content sits; Width; Space above and below, in rows)
+row count, Fullscreen or Aspect ratio with where its content sits; Width; Space above and
+below, in rows, and on phones; Same as desktop drops the phone's)
 and its **blocks**, in order (the order they stack in on phones), each with ↑ / ↓, Duplicate,
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**
-(column, columns, row, rows; its layer with Down / Up) and **Motion** (its animated elements;
+(see below) and **Motion** (its animated elements;
 one opens in the Motion tab). **Sections** goes back. A list field (hero photos, about
 paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ / Remove and an
 **Add** button (a new photo opens the Media window). Each of these is one undo step. Typing in
@@ -689,8 +724,17 @@ second. A field's **Source** switch binds it to an item (see "Bindings").
 (the inspector opens on Layout), dragging moves it and the handles on its edges and corners
 resize it, snapping to the section's columns and rows; the area shows while dragging, Esc
 cancels, and a drag is one undo step. **Grid** shows every section's columns and rows. Both
-live in the preview's own layer (`src/editor/overlay.js`, a Shadow DOM). The mobile preview
-stacks blocks, so there is nothing to drag there.
+live in the preview's own layer (`src/editor/overlay.js`, a Shadow DOM). In the **mobile
+preview** Arrange edits the block's phone area (12 columns): the first drag in a stacking
+section turns it into the phone grid, its other blocks keeping their places in the stack.
+
+The **Layout** tab (`LayoutTab.svelte`) has **Desktop | Mobile** (which also switches the
+preview). Desktop: **Size** (Rows, Aspect ratio with its ratio or Custom "w:h", Auto), column,
+columns, row, rows (for Rows), **Placement**, its layer with Down / Up, and **Fit rows to
+content**: it measures the block's content at the preview's width and sets its rows (only when
+you click it). Mobile: the phone area (column 1–12, columns, row, rows), **Placement on
+phones**, and **Reset to stack**, which removes every phone area and placement of the section's
+blocks.
 
 The preview follows the section and block settings, places and on/off right away (classes
 and CSS variables, `src/editor/layout-sync.js`). After a structure edit (a block or section

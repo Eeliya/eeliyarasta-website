@@ -5,6 +5,10 @@
  *
  *   node scripts/migrate-layout.mjs [content dir]    (default: content)
  *
+ * Phase 3 adds each old type's phone paddings as the section's `mobile.spacing` (they were
+ * smaller than the desktop's), also to sections migrated before, when their spacing is still
+ * the migrated one.
+ *
  * Kept for reference; running it again on migrated content changes nothing.
  */
 import fs from 'node:fs';
@@ -28,6 +32,37 @@ const LOOK = {
   form: ['auto', 'center', 'contained', 5, 5],
 };
 
+/**
+ * The old phone paddings (below 760px) in rows, measured on a 390x844 phone with its 64px
+ * header: [top, bottom], or nothing when the phone had the desktop's.
+ *   intro 14vh/14vh · grid, projects 10vh/12vh · heading header+8vh/8vh · albums, panels
+ *   -/16vh · about header+4vh/14vh · text, photo, button, form 4vh/4vh
+ */
+const PHONE = {
+  hero: [0, 0],
+  album: [0, 0],
+  intro: [15, 15],
+  grid: [11, 13],
+  projects: [11, 13],
+  heading: [16, 8],
+  albums: [0, 17],
+  panels: [0, 17],
+  about: [12, 15],
+  text: [4, 4],
+  photo: [4, 4],
+  button: [4, 4],
+  form: [4, 4],
+};
+
+/** The phone spacing of an old section ({ top, bottom }), or null when it is the desktop's. */
+export function phoneSpacingOf(old) {
+  const [, , , top, bottom] = lookOf(old);
+  let phone = PHONE[old.type] || PHONE.text;
+  if (old.type === 'heading' && old.config?.center) phone = [0, 0];
+  if (old.type === 'projects' && !old.title) phone = [0, 13];
+  return phone[0] === top && phone[1] === bottom ? null : { top: phone[0], bottom: phone[1] };
+}
+
 /** The look of an old section, with its variants (a centred heading, a page's own project list). */
 function lookOf(old) {
   if (old.type === 'heading' && old.config?.center) return ['screen', 'center', 'contained', 0, 0];
@@ -40,6 +75,7 @@ export function migrateSection(old, taken) {
   const { type, config = {}, ...fields } = old;
   const { enabled = true, ...settings } = config;
   const [height, align, width, top, bottom] = lookOf(old);
+  const phone = phoneSpacingOf(old);
   return {
     id: newId('s', taken),
     height,
@@ -47,6 +83,7 @@ export function migrateSection(old, taken) {
     rows: 1,
     width,
     spacing: { top, bottom },
+    ...(phone && { mobile: { spacing: phone } }),
     enabled: enabled !== false,
     blocks: [
       {
@@ -60,15 +97,28 @@ export function migrateSection(old, taken) {
   };
 }
 
+/**
+ * A section migrated before phase 3, with the phone spacing of its one old block, when its
+ * spacing is still the migrated one and it has no phone spacing yet (else unchanged).
+ */
+export function withPhoneSpacing(section) {
+  const block = section.blocks?.length === 1 && section.blocks[0];
+  if (!block || section.mobile?.spacing) return section;
+  const old = { ...block, config: block.config || {} };
+  const [, , , top, bottom] = lookOf(old);
+  if (section.spacing?.top !== top || section.spacing?.bottom !== bottom) return section;
+  const phone = phoneSpacingOf(old);
+  return phone ? { ...section, mobile: { ...section.mobile, spacing: phone } } : section;
+}
+
 /** A page file's content, migrated (unchanged when it already is). */
 export function migratePage(page) {
   const list = Array.isArray(page?.sections) ? page.sections : [];
-  if (!list.some((s) => s && !Array.isArray(s.blocks))) return page;
   const taken = idsOf(list);
-  return {
-    ...page,
-    sections: list.map((s) => (Array.isArray(s?.blocks) ? s : migrateSection(s, taken))),
-  };
+  const next = list.map((s) =>
+    Array.isArray(s?.blocks) ? withPhoneSpacing(s) : migrateSection(s, taken),
+  );
+  return next.some((s, i) => s !== list[i]) ? { ...page, sections: next } : page;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -20,8 +20,9 @@ import { album } from './modules/album.js';
 import { projects } from './modules/projects.js';
 import { cards, toTop, imageFade } from './modules/misc.js';
 import { contactForms } from './modules/form.js';
+import { placements } from './modules/placements.js';
 
-const pageModules = [imageFade, album, projects, cards, toTop, contactForms];
+const pageModules = [imageFade, album, projects, cards, toTop, contactForms, placements];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;

@@ -32,7 +32,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 16,
+          "bottom": 8
+        }
+      }
     },
     {
       "id": "s-ojv4",
@@ -59,7 +65,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 0,
+          "bottom": 13
+        }
+      }
     }
   ]
 }

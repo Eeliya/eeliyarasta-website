@@ -23,7 +23,7 @@ import {
 } from './files.js';
 import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
-import { COLS, HEIGHTS, WIDTHS, ALIGNS } from './layout/index.js';
+import { ALIGNS, COLS, HEIGHTS, MCOLS, PLACES, SIZES, WIDTHS, ratioOf } from './layout/index.js';
 import { isId } from './layout/ids.js';
 import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
 
@@ -211,14 +211,24 @@ const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strin
 const whole = (v, min) => Number.isInteger(v) && v >= min;
 
 /** A grid area { col, span, row, rows } of a block (pos, or its mobile area). */
-function checkArea(p, key) {
+function checkArea(p, key, cols = COLS) {
   if (!isObject(p)) return [`"${key}" must be an object { col, span, row, rows }`];
   const out = [];
   for (const k of ['col', 'span', 'row', 'rows'])
     if (!whole(p[k], 1)) out.push(`"${key}.${k}" must be a whole number from 1`);
-  if (!out.length && p.col + p.span - 1 > COLS)
-    out.push(`"${key}" must end by column ${COLS} (col ${p.col} + span ${p.span})`);
+  if (!out.length && p.col + p.span - 1 > cols)
+    out.push(`"${key}" must end by column ${cols} (col ${p.col} + span ${p.span})`);
   return out;
+}
+
+const isRatio = (v) => typeof v === 'string' && ratioOf(v) !== null;
+
+/** spacing { top, bottom } (whole rows from 0). */
+function checkSpacing(sp, key, bad) {
+  if (!isObject(sp)) return bad(key, 'an object { top, bottom }');
+  for (const k of ['top', 'bottom'])
+    if (sp[k] !== undefined && !whole(sp[k], 0))
+      bad(`${key}.${k}`, 'a whole number of rows (0 or more)');
 }
 
 /** One page section: its layout, then each block. */
@@ -228,18 +238,18 @@ function checkSection(s, at) {
   const out = [];
   const bad = (key, want) => out.push(`${where}: "${key}" must be ${want}`);
   if (!isId(s.id, 's')) bad('id', 'a section id like "s-k3x9"');
-  if (s.height !== undefined && !HEIGHTS.includes(s.height)) bad('height', HEIGHTS.join(' or '));
+  if (s.height !== undefined && !HEIGHTS.includes(s.height))
+    bad('height', `one of ${HEIGHTS.join(', ')}`);
   if (s.align !== undefined && !ALIGNS.includes(s.align))
     bad('align', `one of ${ALIGNS.join(', ')}`);
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   if (s.rows !== undefined && !whole(s.rows, 1)) bad('rows', 'a whole number from 1');
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  if (s.spacing !== undefined) {
-    if (!isObject(s.spacing)) bad('spacing', 'an object { top, bottom }');
-    else
-      for (const k of ['top', 'bottom'])
-        if (s.spacing[k] !== undefined && !whole(s.spacing[k], 0))
-          bad(`spacing.${k}`, 'a whole number of rows (0 or more)');
+  if (s.height === 'aspect' && !isRatio(s.aspect)) bad('aspect', 'a ratio like "16:9"');
+  if (s.spacing !== undefined) checkSpacing(s.spacing, 'spacing', bad);
+  if (s.mobile !== undefined) {
+    if (!isObject(s.mobile)) bad('mobile', 'an object { spacing }');
+    else if (s.mobile.spacing !== undefined) checkSpacing(s.mobile.spacing, 'mobile.spacing', bad);
   }
   if (!Array.isArray(s.blocks)) return [...out, `${where}: "blocks" must be a list`];
   return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
@@ -255,8 +265,20 @@ function checkBlock(b, where) {
   const bad = (key, want) => out.push(`${name}: "${key}" must be ${want}`);
   if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
   if (b.pos !== undefined) out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
-  if (b.mobile !== undefined)
-    out.push(...checkArea(b.mobile, 'mobile').map((p) => `${name}: ${p}`));
+  if (b.size !== undefined && !SIZES.includes(b.size)) bad('size', SIZES.join(', '));
+  if ((b.size === 'aspect' || b.aspect !== undefined) && !isRatio(b.aspect))
+    bad('aspect', 'a ratio like "4:5"');
+  if (b.place !== undefined && !PLACES.includes(b.place)) bad('place', 'a placement (see layout)');
+  if (b.mobile !== undefined) {
+    if (!isObject(b.mobile)) bad('mobile', 'an object { col, span, row, rows, place }');
+    else {
+      const { place, ...area } = b.mobile;
+      if (place !== undefined && !PLACES.includes(place))
+        bad('mobile.place', 'a placement (see layout)');
+      if (Object.keys(area).length)
+        out.push(...checkArea(area, 'mobile', MCOLS).map((p) => `${name}: ${p}`));
+    }
+  }
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
   if (!t) return out; // an unknown type only warns (render)
   if (

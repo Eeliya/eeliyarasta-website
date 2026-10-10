@@ -4,9 +4,24 @@
  * The layout engine (src/site/layout/index.js): a section is a grid of 24 columns and
  * --rows rows of --grid-row; a row grows when its content needs more. Blocks sit in it by
  * their CSS variables: --c / --s (first column / columns), --r / --rs (first row / rows),
- * --z (layer). Below 760px a section's blocks stack full width in their order, unless one
- * of them has a mobile area (--mc --ms --mr --mrs, the section is then .sec--mgrid).
+ * --z (layer), --ar (an aspect block's ratio).
+ *
+ * Phones (below 760px): a section's blocks stack full width in their order, unless one of
+ * them has a mobile area (the section is then .sec--mgrid): a grid of 12 columns (--mc --ms
+ * --mr --mrs, --mrows). Why 12 and not 24: a phone is ~390px wide, and 23 gaps of 12px
+ * between 24 columns would leave ~3px columns; 12 columns stay ~19px wide and still give
+ * halves, thirds, quarters and sixths.
+ *
+ * Placements (.blk--sticky / --fixed / --full / --pinned, with --v-* / --h-* for the corner)
+ * apply above 760px; on phones only the .blk--m-* ones (the block's mobile place), so a
+ * block without one is in the normal flow there. Offsets from the screen edge: --edge, below
+ * the header at the top (--stick-top).
  */
+:root {
+  --edge: var(--gap);
+  --stick-top: calc(var(--header-h) + var(--edge));
+}
+
 .sec {
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
@@ -18,6 +33,10 @@
   }
   &--screen {
     min-height: 100svh;
+  }
+  // at least its width × the ratio; taller when its content needs it
+  &--aspect {
+    aspect-ratio: var(--sar);
   }
   &--top {
     align-content: start;
@@ -33,24 +52,149 @@
   }
 }
 
+// position: relative so blocks paint in their order (and by --z) above a fullscreen block
 .blk {
+  position: relative;
   grid-column: var(--c) / span var(--s);
   grid-row: var(--r) / span var(--rs);
   z-index: var(--z, auto);
   min-width: 0;
 }
 
+// size: content height (its one row grows) / its columns' width × --ar
+.blk--auto,
+.blk--aspect {
+  align-self: start;
+}
+.blk--aspect {
+  aspect-ratio: var(--ar);
+  overflow: hidden;
+}
+
+// photos fill an aspect (or fullscreen) block: cover, the caption below
+@mixin fill {
+  > * {
+    height: 100%;
+  }
+  figure {
+    height: 100%;
+    max-width: none;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+  }
+}
+.blk--aspect {
+  @include fill;
+}
+
+/* Placements; $m: '' (above 760px) or 'm-' (phones) */
+@mixin placed($m) {
+  // sticky: its area runs to the section's end, so it is held while the section scrolls
+  .blk--#{$m}sticky {
+    position: sticky;
+    grid-row-end: -1;
+    align-self: start;
+    min-height: calc(var(--p-rs, var(--rs)) * var(--grid-row));
+    top: var(--stick-top);
+    z-index: var(--z, 2);
+  }
+  // centred: modules/placements.js measures its height (--bh)
+  .blk--#{$m}sticky.blk--#{$m}v-center {
+    top: calc(50svh - var(--bh, 0px) / 2);
+  }
+  .blk--#{$m}sticky.blk--#{$m}v-bottom {
+    top: auto;
+    bottom: var(--edge);
+    align-self: end;
+  }
+  // fixed: at a screen corner, as wide as its columns of the screen
+  .blk--#{$m}fixed {
+    position: fixed;
+    z-index: var(--z, 20);
+    width: calc(
+      (100vw - 2 * var(--pad) + var(--gap)) * var(--p-s, var(--s)) / var(--p-cols, 24) - var(--gap)
+    );
+    margin: 0;
+  }
+  .blk--#{$m}fixed.blk--#{$m}v-top {
+    top: var(--stick-top);
+  }
+  .blk--#{$m}fixed.blk--#{$m}v-bottom {
+    bottom: var(--edge);
+  }
+  .blk--#{$m}fixed.blk--#{$m}v-center {
+    top: 50%;
+    translate: 0 -50%;
+  }
+  .blk--#{$m}fixed.blk--#{$m}h-left {
+    left: var(--pad);
+  }
+  .blk--#{$m}fixed.blk--#{$m}h-right {
+    right: var(--pad);
+  }
+  .blk--#{$m}fixed.blk--#{$m}h-center {
+    left: 50%;
+    translate: -50% 0;
+  }
+  .blk--#{$m}fixed.blk--#{$m}h-center.blk--#{$m}v-center {
+    translate: -50% -50%;
+  }
+  // fullscreen: the whole screen, the whole time; behind the page unless its layer is set
+  .blk--#{$m}full {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    z-index: var(--z, -1);
+    @include fill;
+  }
+}
+
+@media (width > $bp-sm) {
+  @include placed('');
+}
+
 @media (width <= $bp-sm) {
+  .sec {
+    padding-top: calc(var(--mpt, var(--pt)) * var(--grid-row));
+    padding-bottom: calc(var(--mpb, var(--pb)) * var(--grid-row));
+  }
+  // the stack: a column (a flex one, so a sticky block is held through the whole section)
   .sec:not(.sec--mgrid) {
-    grid-template-rows: none;
-    row-gap: var(--gap);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
     > .blk {
-      grid-column: 1 / -1;
-      grid-row: auto;
+      align-self: stretch;
+    }
+    &.sec--center {
+      justify-content: center;
+    }
+    &.sec--bottom {
+      justify-content: flex-end;
+    }
+    &.sec--stretch > .blk {
+      flex: 1 0 auto;
     }
   }
-  .sec--mgrid > .blk {
-    grid-column: var(--mc, 1) / span var(--ms, 24);
-    grid-row: var(--mr, auto) / span var(--mrs, 1);
+  .sec--mgrid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--mrows), minmax(var(--grid-row), auto));
+    > .blk {
+      grid-column: var(--mc, 1) / span var(--ms, 12);
+      grid-row: var(--mr, auto) / span var(--mrs, 1);
+    }
   }
+  // a placed block's columns and rows: the phone's
+  .blk {
+    --p-s: var(--ms, 12);
+    --p-rs: var(--mrs, 1);
+    --p-cols: 12;
+  }
+  @include placed('m-');
 }

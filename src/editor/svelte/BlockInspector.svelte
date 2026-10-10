@@ -3,15 +3,13 @@
     Content  its item (the source item its bound fields show, src/site/layout/bindings.js; on
              a [slug] page the page's own by default), settings and texts (GroupFields.svelte)
              with each field's Source switch
-    Layout   where it sits in its section's grid: first column (1-24), columns, first row,
-             rows, and its layer (z) when blocks overlap. Below 760px blocks stack in order.
-             Dragging it in the preview (Arrange, overlay.js) writes the same values.
+    Layout   its size, where it sits in its section's grid, placement and layer, for the
+             desktop or the phone (LayoutTab.svelte)
     Motion   its animated elements: each opens in the Motion tab
   Back returns to the list of sections (SectionsList.svelte).
 -->
 <script>
   import Button from './Button.svelte';
-  import Field from './Field.svelte';
   import GroupFields from './GroupFields.svelte';
   import Select from './Select.svelte';
   import { schemaFor, itemName } from './source-items.js';
@@ -19,8 +17,7 @@
   import { itemSlug } from '../../site/helpers.js';
   import { BIND_TYPES, resolve } from '../../site/layout/bindings.js';
   import { ui } from './ui.svelte.js';
-  import { layerBlock, placeBlock } from '../layout-ops.js';
-  import { COLS, placeOf } from '../../site/layout/index.js';
+  import LayoutTab from './LayoutTab.svelte';
 
   let { g, live, bridge, sourceIds, onsource, onback, onmotion } = $props();
 
@@ -35,16 +32,6 @@
     live.version;
     return live.get(g.file, base) || {};
   });
-  const pos = $derived(placeOf(block.pos));
-  const z = $derived(Number.isInteger(block.z) ? block.z : 0);
-
-  function place(key, v) {
-    const n = Math.max(1, Math.round(v));
-    const next = { ...pos, [key]: n };
-    if (key === 'col') next.col = Math.min(n, COLS);
-    next.span = Math.min(next.span, COLS - next.col + 1);
-    placeBlock(live.store, g.file, at, j, next, `place:${g.file}#${base}/${key}`);
-  }
 
   // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
   const template = $derived(g.file.endsWith(`/${TEMPLATE}.json`));
@@ -137,39 +124,7 @@
 </div>
 
 {#if ui.blockTab === 'layout'}
-  <div class="fields">
-    {#each [['col', 'Column (1–24)'], ['span', 'Columns'], ['row', 'Row'], ['rows', 'Rows']] as [key, label] (key)}
-      <Field
-        edit="{g.file}#{base}/pos/{key}"
-        {label}
-        type="number"
-        half
-        value={pos[key]}
-        changed={live.changed(g.file, `${base}/pos/${key}`)}
-        onvalue={(v) => place(key, v)}
-      />
-    {/each}
-  </div>
-  <div class="layer">
-    <span class="tf__label">Layer <b>{z}</b></span>
-    <Button
-      size="small"
-      icon="arrow-down"
-      label="Layer down"
-      onclick={() => layerBlock(live.store, g.file, at, j, -1)}>Down</Button
-    >
-    <Button
-      size="small"
-      icon="arrow-up"
-      label="Layer up"
-      onclick={() => layerBlock(live.store, g.file, at, j, 1)}>Up</Button
-    >
-  </div>
-  <p class="hint small">
-    The section is a grid of {COLS} columns and rows of 8px; a row grows when its content needs more.
-    Turn on Arrange to drag the block and its edges in the preview. On phones (below 760px) the blocks
-    stack in their order.
-  </p>
+  <LayoutTab {g} {live} {bridge} {at} {j} {base} {block} />
 {:else if ui.blockTab === 'motion'}
   {#each anims as el, i (i)}
     <button type="button" class="anim" onclick={() => onmotion(el)}>
@@ -279,17 +234,6 @@
     line-height: 16px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .layer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-
-    .tf__label {
-      flex: 1;
-    }
   }
 
   .anim {

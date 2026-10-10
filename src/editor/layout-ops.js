@@ -5,7 +5,7 @@
  * again (src/editor/layout-sync.js); placing a block or changing a section's settings it
  * follows by itself, through the elements' classes and CSS variables.
  */
-import { newBlock, newSection, rowsOf, placeOf } from '../site/layout/index.js';
+import { MCOLS, newBlock, newSection, rowsOf, placeOf } from '../site/layout/index.js';
 import { idsOf, newId } from '../site/layout/ids.js';
 
 const listOf = (store, file) => {
@@ -66,12 +66,14 @@ export function removeSection(store, file, at) {
 }
 
 /**
- * Section `at`'s settings (height, align, rows, width, spacing, enabled) changed by `patch`;
+ * Section `at`'s settings (height, aspect, align, rows, width, spacing, mobile, enabled) changed
+ * by `patch` (a key set to undefined is removed);
  * key: see writeSection.
  */
 export function setSection(store, file, at, patch, key) {
-  const section = listOf(store, file)[at];
-  return writeSection(store, file, at, { ...section, ...patch }, key);
+  const next = { ...listOf(store, file)[at], ...patch };
+  for (const k of Object.keys(patch)) if (patch[k] === undefined) delete next[k];
+  return writeSection(store, file, at, next, key);
 }
 
 /** The first free row below every block of a section. */
@@ -136,5 +138,57 @@ export function layerBlock(store, file, at, j, dir) {
   const z = (Number.isInteger(block.z) ? block.z : 0) + dir;
   if (z) block.z = z;
   else delete block.z;
+  return writeSection(store, file, at, section);
+}
+
+/**
+ * Block `j` of section `at` changed by `patch` (size, aspect, place; a key set to undefined is
+ * removed): one undo step; key: see writeSection.
+ */
+export function setBlock(store, file, at, j, patch, key) {
+  const section = listOf(store, file)[at];
+  const block = section.blocks[j];
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) delete block[k];
+    else block[k] = v;
+  }
+  return writeSection(store, file, at, section, key);
+}
+
+/** A block's `mobile` with `patch` (area keys, place); removed when nothing is left. */
+function setMobile(block, patch) {
+  const next = { ...block.mobile, ...patch };
+  for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
+  if (Object.keys(next).length) block.mobile = next;
+  else delete block.mobile;
+}
+
+/**
+ * Block `j` of section `at` placed at `area` on the phone grid (12 columns). stack: the areas
+ * the section's other blocks had in the stack ({ id: area }), when this turns the section from
+ * a stack into a grid (they keep their places). One undo step; key: see writeSection.
+ */
+export function placeMobile(store, file, at, j, area, { stack = {}, key } = {}) {
+  const section = listOf(store, file)[at];
+  section.blocks.forEach((b, k) => {
+    if (k === j) setMobile(b, placeOf(area, MCOLS));
+    else if (stack[b.id] && !['col', 'span', 'row', 'rows'].some((x) => b.mobile?.[x]))
+      setMobile(b, placeOf(stack[b.id], MCOLS));
+  });
+  return writeSection(store, file, at, section, key);
+}
+
+/** Block `j`'s placement on phones ('none' or undefined: in the flow). */
+export function placeOnPhone(store, file, at, j, place) {
+  const section = listOf(store, file)[at];
+  setMobile(section.blocks[j], { place: place && place !== 'none' ? place : undefined });
+  return writeSection(store, file, at, section);
+}
+
+/** Section `at` stacked again on phones: its blocks' mobile areas and placements removed. */
+export function resetMobile(store, file, at) {
+  const section = listOf(store, file)[at];
+  if (!section.blocks.some((b) => b.mobile)) return false;
+  for (const b of section.blocks) delete b.mobile;
   return writeSection(store, file, at, section);
 }

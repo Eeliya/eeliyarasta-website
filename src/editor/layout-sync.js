@@ -5,12 +5,18 @@
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
  * sections' height, width, spacing, rows and on/off (their classes and CSS variables) and the
- * blocks' places, layers and on/off. What needs the site's templates (a section added or
+ * blocks' places, sizes, placements, phone areas, layers and on/off. What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
  * moved, so its editor markers point elsewhere) it reports: the editor fetches those
  * sections' HTML from the dev server (POST /__editor/render) and swaps them in (swapSections).
  */
-import { blockVars, headingNumbers, sectionClass, sectionVars } from '../site/layout/index.js';
+import {
+  blockClass,
+  blockVars,
+  headingNumbers,
+  sectionClass,
+  sectionVars,
+} from '../site/layout/index.js';
 import { kindOf } from '../site/blocks/index.js';
 
 /** The page file of the page in the preview ("pages/about/index.json"), or ''. */
@@ -39,23 +45,38 @@ export function markRendered(doc, store) {
   });
 }
 
-/** Apply a section's layout (and its blocks') to its element. */
+// placements the site's script sets up (src/client/modules/placements.js)
+const SCRIPTED = /pinned|v-center/;
+
+/**
+ * Apply a section's layout (and its blocks') to its element. True when a block's placement
+ * changed in a way the site's script handles (a pin): the view needs mounting again.
+ */
 function applyLayout(el, s) {
   el.className = sectionClass(s);
   el.style.cssText = sectionVars(s);
   el.hidden = s.enabled === false;
+  let remount = false;
   for (const b of s.blocks || []) {
-    const node = el.querySelector(`:scope > [data-block="${b?.id}"]`);
-    if (!node) continue;
-    node.style.cssText = blockVars(b);
+    // (a pinned block sits in the pin's spacer)
+    const node = el.querySelector(`[data-block="${b?.id}"]`);
+    if (!node || node.closest('[data-sec]') !== el) continue;
+    const cls = blockClass(b);
+    if (node.className !== cls && (SCRIPTED.test(node.className) || SCRIPTED.test(cls)))
+      remount = true;
+    node.className = cls;
+    const bh = node.style.getPropertyValue('--bh');
+    node.style.cssText = blockVars(b) + (bh ? `;--bh:${bh}` : '');
     node.hidden = b.config?.enabled === false;
   }
+  return remount;
 }
 
 /**
  * Sync the preview's sections with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
- * changed; otherwise only missing ones, e.g. a section added in another tab is not).
+ * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
+ * `remount` set when a pin changed (the view's modules need mounting again).
  */
 export function syncLayout(doc, store, { structure = false } = {}) {
   const view = doc?.querySelector('[data-router-view]');
@@ -77,7 +98,7 @@ export function syncLayout(doc, store, { structure = false } = {}) {
   const stale = [];
   sections.forEach((s, at) => {
     const el = els.get(s?.id);
-    if (el) applyLayout(el, s);
+    if (el && applyLayout(el, s)) stale.remount = true;
     if (!el || (structure && rendered.get(el) !== keyOf(s, at, numbers))) stale.push(s.id);
   });
   return stale;

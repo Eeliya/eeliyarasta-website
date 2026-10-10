@@ -53,7 +53,7 @@ import {
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
 import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
-import { placeBlock } from './layout-ops.js';
+import { placeBlock, placeMobile } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -68,9 +68,11 @@ const overlay = createOverlay({
     ui.block = id;
     ui.blockTab = 'layout';
   },
-  onplace(id, pos) {
+  onplace(id, pos, { mobile = false, stack = {} } = {}) {
     const b = blockAt(id);
-    if (b) placeBlock(store, b.file, b.at, b.j, pos);
+    if (!b) return;
+    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { stack });
+    else placeBlock(store, b.file, b.at, b.j, pos);
   },
   blockOf(id) {
     const b = blockAt(id);
@@ -326,6 +328,7 @@ bridge.on('connect', () => {
 let rendering = Promise.resolve();
 function syncSections({ structure = false } = {}) {
   const stale = syncLayout(bridge.doc, store, { structure });
+  if (stale.remount && !stale.length) bridge.api?.remountView();
   bridge.api?.ScrollTrigger?.refresh();
   renderSections(stale);
 }

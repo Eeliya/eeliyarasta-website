@@ -184,7 +184,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 15,
+          "bottom": 15
+        }
+      }
     },
     {
       "id": "s-rpvk",
@@ -215,7 +221,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 11,
+          "bottom": 13
+        }
+      }
     },
     {
       "id": "s-fww5",
@@ -246,7 +258,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 11,
+          "bottom": 13
+        }
+      }
     },
     {
       "id": "s-y7qx",
@@ -274,7 +292,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 11,
+          "bottom": 13
+        }
+      }
     }
   ]
 }

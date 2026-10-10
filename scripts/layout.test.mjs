@@ -164,7 +164,7 @@ test('validation: the layout, then each block against its type', () => {
     'section 1: "id" must be a section id like "s-k3x9"',
   ]);
   assert.deepEqual(problems([ok({ height: 'tall', align: 'left', width: 'wide', rows: 0 })]), [
-    'section 1: "height" must be auto or screen',
+    'section 1: "height" must be one of auto, screen, aspect',
     'section 1: "align" must be one of top, center, bottom, stretch',
     'section 1: "width" must be contained or full',
     'section 1: "rows" must be a whole number from 1',
@@ -327,7 +327,9 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   const html = r.body.html[s.id];
   assert.match(
     html,
-    new RegExp(`^<section class="sec" data-sec="${s.id}" style="--rows:1;--pt:3;--pb:4">`),
+    new RegExp(
+      `^<section class="sec" data-sec="${s.id}" style="--rows:1;--pt:3;--pb:4;--mpt:12;--mpb:15">`,
+    ),
   );
   assert.match(html, /Edited headline/);
   assert.match(html, /data-edit="pages\/about\/index\.json#\/sections\/0\/blocks\/0\/headline"/);

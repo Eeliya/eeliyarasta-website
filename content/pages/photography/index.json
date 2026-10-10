@@ -30,7 +30,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 16,
+          "bottom": 8
+        }
+      }
     },
     {
       "id": "s-oq6n",
@@ -67,7 +73,13 @@
             "rows": 1
           }
         }
-      ]
+      ],
+      "mobile": {
+        "spacing": {
+          "top": 0,
+          "bottom": 17
+        }
+      }
     }
   ]
 }

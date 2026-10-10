@@ -7,13 +7,16 @@
  *             moved by dragging and resized by the handles on their edges and corners. A
  *             drag snaps to the columns and rows and shows its area live (the block's CSS
  *             variables); on release it is one edit, one undo step (onplace). Esc cancels.
- *             Below 760px (the mobile preview) blocks stack: nothing to drag.
+ *             Below 760px (the mobile preview) a drag edits the block's phone area, on the
+ *             phone grid of 12 columns: in a section whose blocks still stack, the first drag
+ *             turns the stack into that grid, every block keeping the place it had (measured).
+ *             An aspect or auto block has no height in rows: only its sides resize.
  *
  * The overlay follows the page with a frame loop while it shows something; it reads `ui`
  * (arrange, grid, block) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
-import { COLS, placeOf } from '../site/layout/index.js';
+import { COLS, MCOLS, hasMobileArea, placeOf, sizeOf } from '../site/layout/index.js';
 
 const MOBILE = 760;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
@@ -38,7 +41,45 @@ const STYLE = `
 .handle[data-h='e'], .handle[data-h='ne'], .handle[data-h='se'] { left: 100%; }
 .handle[data-h='ne'], .handle[data-h='sw'] { cursor: nesw-resize; }
 .handle[data-h='nw'], .handle[data-h='se'] { cursor: nwse-resize; }
+.sel.is-free .handle:not([data-h='e']):not([data-h='w']) { display: none; }
 `;
+
+/**
+ * Where a stacking section's blocks are on the phone, as phone-grid areas (12 columns, rows of
+ * the row height): { id: area }. Used to turn the stack into a grid without moving anything.
+ */
+export function stackAreas(sec, win) {
+  const cs = win.getComputedStyle(sec);
+  const row = parseFloat(cs.getPropertyValue('--grid-row')) || 8;
+  const top = sec.getBoundingClientRect().top + parseFloat(cs.paddingTop);
+  const out = {};
+  for (const el of sec.querySelectorAll('[data-block]')) {
+    if (el.closest('[data-sec]') !== sec) continue;
+    const r = el.getBoundingClientRect();
+    out[el.dataset.block] = {
+      col: 1,
+      span: MCOLS,
+      row: Math.max(1, Math.round((r.top - top) / row) + 1),
+      rows: Math.max(1, Math.round(r.height / row)),
+    };
+  }
+  return out;
+}
+
+/**
+ * Rows of the row height a block's content needs (it may be stretched taller by its area):
+ * from its top to its lowest child's bottom.
+ */
+export function contentRows(el, win) {
+  const sec = el.closest('[data-sec]') || el;
+  const row = parseFloat(win.getComputedStyle(sec).getPropertyValue('--grid-row')) || 8;
+  const top = el.getBoundingClientRect().top;
+  const kids = [...el.children];
+  const bottom = kids.length
+    ? Math.max(...kids.map((k) => k.getBoundingClientRect().bottom))
+    : top + el.scrollHeight;
+  return Math.max(1, Math.ceil((bottom - top - 0.5) / row));
+}
 
 /** The page-relative rect of an element. */
 function rectOf(el, win) {
@@ -88,8 +129,9 @@ function nearest(list, v, step) {
 }
 
 /**
- * onpick(id): a block was clicked; onplace(id, pos): a drag ended with the block at `pos`;
- * blockOf(id): its stored { pos } (null when it isn't on the page).
+ * onpick(id): a block was clicked; onplace(id, pos, { mobile, stack }): a drag ended with the
+ * block at `pos` (mobile: its phone area; stack: the areas of a stacking section's blocks it
+ * turned into a grid); blockOf(id): the stored block (null when it isn't on the page).
  */
 export function createOverlay({ ui, onpick, onplace, blockOf }) {
   let doc = null;
@@ -165,18 +207,30 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     );
   }
 
-  const labelOf = (p) => `col ${p.col} · ${p.span} wide · row ${p.row} · ${p.rows} tall`;
+  const labelOf = (p, b) =>
+    `${mobile() ? 'phone · ' : ''}col ${p.col} · ${p.span} wide · row ${p.row}` +
+    (sizeOf(b) === 'rows' ? ` · ${p.rows} tall` : ` · ${sizeOf(b)}`);
+
+  /** A block's area now: its pos, or on the phone its mobile area (or where it stacks). */
+  function areaOf(id, el) {
+    const b = blockOf(id);
+    if (!mobile()) return placeOf(b?.pos);
+    if (hasMobileArea(b?.mobile)) return placeOf(b.mobile, MCOLS);
+    return el ? stackAreas(el.closest('[data-sec]'), win)[id] : placeOf({}, MCOLS);
+  }
 
   function frame() {
     raf = 0;
     if (!root?.isConnected) return;
     drawGrids();
-    const arrange = ui.arrange && !mobile();
+    const arrange = ui.arrange;
     const sel = arrange ? blockEl(ui.block) : null;
     els.sel.hidden = !sel;
     if (sel) {
       place(els.sel, rectOf(sel, win));
-      els.label.textContent = labelOf(drag?.pos || placeOf(blockOf(ui.block)?.pos));
+      const b = blockOf(ui.block);
+      els.sel.classList.toggle('is-free', sizeOf(b) !== 'rows');
+      els.label.textContent = labelOf(drag?.pos || areaOf(ui.block, sel), b);
     }
     const h = arrange && hover !== sel ? hover : null;
     els.hover.hidden = !h;
@@ -188,11 +242,28 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
   function start(e, el, h = '') {
     const id = el?.dataset.block;
     const stored = blockOf(id);
-    if (!stored || mobile()) return;
+    if (!stored) return;
     e.preventDefault();
     e.stopPropagation();
     const sec = el.closest('[data-sec]');
-    const from = placeOf(stored.pos);
+    const phone = mobile();
+    // a stacking section on the phone: shown as the grid it becomes, the blocks where they are
+    const stack = phone && !sec.classList.contains('sec--mgrid') ? stackAreas(sec, win) : null;
+    const saved = new Map(
+      [sec, ...sec.querySelectorAll('[data-block]')].map((n) => [n, n.style.cssText]),
+    );
+    const savedClass = sec.className;
+    if (stack) {
+      sec.classList.add('sec--mgrid');
+      let rows = 1;
+      for (const [bid, a] of Object.entries(stack)) {
+        const n = sec.querySelector(`[data-block="${CSS.escape(bid)}"]`);
+        setArea(n.style, a, true);
+        rows = Math.max(rows, a.row + a.rows - 1);
+      }
+      sec.style.setProperty('--mrows', rows);
+    }
+    const from = stack ? stack[id] : areaOf(id, el);
     drag = {
       id,
       el,
@@ -202,8 +273,13 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       pos: from,
       x: e.clientX,
       y: e.clientY,
+      phone,
+      stack,
+      saved,
+      savedClass,
+      cols: phone ? MCOLS : COLS,
       lines: linesOf(sec, win),
-      rows: sec.style.getPropertyValue('--rows'),
+      rows: sec.style.getPropertyValue(phone ? '--mrows' : '--rows'),
     };
     els.sel.classList.add('is-dragging');
     win.addEventListener('pointermove', move, true);
@@ -225,8 +301,9 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       rows.ends[from.row + from.rows - 2] ??
       rows.ends.at(-1) + (from.row + from.rows - 1 - rows.ends.length) * step;
     let { col, span, row: r, rows: n } = from;
+    const free = sizeOf(blockOf(drag.id)) !== 'rows';
     if (!h) {
-      col = Math.min(Math.max(1, nearest(cols.starts, colStart + dx)), COLS - span + 1);
+      col = Math.min(Math.max(1, nearest(cols.starts, colStart + dx)), drag.cols - span + 1);
       r = Math.max(1, nearest(rows.starts, rowStart + dy, step));
     }
     if (h.includes('e')) span = Math.max(1, nearest(cols.ends, colEnd + dx) - col + 1);
@@ -235,25 +312,32 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       col = Math.min(nearest(cols.starts, colStart + dx), end);
       span = end - col + 1;
     }
-    if (h.includes('s')) n = Math.max(1, nearest(rows.ends, rowEnd + dy, step) - r + 1);
-    if (h.includes('n')) {
+    if (h.includes('s') && !free) n = Math.max(1, nearest(rows.ends, rowEnd + dy, step) - r + 1);
+    if (h.includes('n') && !free) {
       const end = from.row + from.rows - 1;
       r = Math.min(Math.max(1, nearest(rows.starts, rowStart + dy, step)), end);
       n = end - r + 1;
     }
-    drag.pos = { col, span: Math.min(span, COLS - col + 1), row: r, rows: n };
+    drag.pos = { col, span: Math.min(span, drag.cols - col + 1), row: r, rows: n };
     show(drag.pos);
+  }
+
+  /** An area as a block's CSS variables (desktop, or the phone's). */
+  function setArea(s, p, phone) {
+    s.setProperty(phone ? '--mc' : '--c', p.col);
+    s.setProperty(phone ? '--ms' : '--s', p.span);
+    s.setProperty(phone ? '--mr' : '--r', p.row);
+    s.setProperty(phone ? '--mrs' : '--rs', p.rows);
   }
 
   /** Show `pos` on the block (and grow the section's rows to hold it) without storing it. */
   function show(p) {
-    const s = drag.el.style;
-    s.setProperty('--c', p.col);
-    s.setProperty('--s', p.span);
-    s.setProperty('--r', p.row);
-    s.setProperty('--rs', p.rows);
+    setArea(drag.el.style, p, drag.phone);
     const need = p.row + p.rows - 1;
-    drag.sec.style.setProperty('--rows', Math.max(Number(drag.rows) || 1, need));
+    drag.sec.style.setProperty(
+      drag.phone ? '--mrows' : '--rows',
+      Math.max(Number(drag.rows) || 1, need),
+    );
   }
 
   function stop() {
@@ -263,19 +347,26 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     els.sel.classList.remove('is-dragging');
   }
 
+  /** The section and its blocks as they were before the drag. */
+  function restore() {
+    for (const [n, css] of drag.saved) n.style.cssText = css;
+    drag.sec.className = drag.savedClass;
+  }
+
   function end() {
-    const { id, from, pos } = drag;
+    const { id, from, pos, phone, stack } = drag;
+    const moved = ['col', 'span', 'row', 'rows'].some((k) => pos[k] !== from[k]);
+    if (stack && !moved) restore(); // a click on a stacking section changes nothing
     stop();
     drag = null;
-    if (['col', 'span', 'row', 'rows'].some((k) => pos[k] !== from[k])) onplace(id, pos);
+    if (moved) onplace(id, pos, { mobile: phone, stack: stack || {} });
   }
 
   function cancel(e) {
     if (e.key !== 'Escape') return;
     e.preventDefault();
     e.stopPropagation();
-    show(drag.from);
-    drag.sec.style.setProperty('--rows', drag.rows);
+    restore();
     stop();
     drag = null;
   }
