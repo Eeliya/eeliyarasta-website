@@ -75,7 +75,7 @@
 </script>
 
 <div class="msel__head">
-  <button type="button" class="link" onclick={() => bridge.select(null)}>
+  <button type="button" class="btn btn--small" onclick={() => bridge.select(null)}>
     <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Elements
   </button>
   <h3 class="msel__title">{sel.id}</h3>
@@ -83,7 +83,7 @@
 </div>
 
 <div class="msel__actions">
-  <button type="button" class="btn-ed" onclick={() => bridge.replay(sel.el)}>
+  <button type="button" class="btn btn--small" onclick={() => bridge.replay(sel.el)}>
     <i class="fa-solid fa-play" aria-hidden="true"></i> Replay
   </button>
   <label
@@ -129,7 +129,7 @@
     {#if sel.scope === 'element' && m.own.preset}
       <button
         type="button"
-        class="f__reset"
+        class="icon-btn icon-btn--small"
         title="Use the animation of all &quot;{sel.id}&quot;"
         onclick={removePreset}
       >
@@ -139,7 +139,7 @@
     <!-- like a grid's Source edit button: the animation's own values, in the library -->
     <button
       type="button"
-      class="btn-sm btn-sm--compact"
+      class="icon-btn icon-btn--small"
       title="Edit {m.presetName} in Animations"
       aria-label="Edit {m.presetName} in Animations"
       onclick={() => onlibrary(m.presetName)}
@@ -174,10 +174,10 @@
       Move to animation copies them into {m.presetName}: every element using it changes.
     </p>
     <div class="legacy__actions">
-      <button type="button" class="btn-sm" onclick={() => settleLegacy(true)}>
+      <button type="button" class="btn btn--small" onclick={() => settleLegacy(true)}>
         <i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Move to animation
       </button>
-      <button type="button" class="btn-sm btn-sm--danger" onclick={() => settleLegacy(false)}>
+      <button type="button" class="btn btn--small btn--danger" onclick={() => settleLegacy(false)}>
         <i class="fa-solid fa-trash" aria-hidden="true"></i> Drop
       </button>
     </div>
@@ -187,7 +187,7 @@
 {#if hasOverrides}
   <button
     type="button"
-    class="link link--danger"
+    class="btn btn--small btn--danger"
     onclick={() =>
       live.store.remove(ANIMATIONS, `/elements${compile([sel.key])}`, {
         keep: 1,

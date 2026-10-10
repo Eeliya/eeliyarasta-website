@@ -125,7 +125,7 @@
             {#if props}
               <button
                 type="button"
-                class="f__reset"
+                class="icon-btn icon-btn--small"
                 title="Remove {def.label} from this animation"
                 aria-label="Remove {def.label}"
                 onclick={() => removeProp(def.path[1])}

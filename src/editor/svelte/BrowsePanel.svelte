@@ -44,7 +44,7 @@
       {question}
       <button
         type="button"
-        class="btn-sm"
+        class="btn btn--small"
         onclick={() => (confirming = null)}
         {@attach (el) => el.focus()}
       >
@@ -52,14 +52,14 @@
       </button>
       <button
         type="button"
-        class="btn-sm btn-sm--danger"
+        class="btn btn--small btn--danger"
         onclick={() => discard(what === 'all' ? undefined : [what])}
       >
         <i class="fa-solid fa-trash" aria-hidden="true"></i> Discard
       </button>
     </span>
   {:else}
-    <button type="button" class="btn-sm btn-sm--danger" onclick={() => (confirming = what)}>
+    <button type="button" class="btn btn--small btn--danger" onclick={() => (confirming = what)}>
       <i class="fa-solid fa-trash" aria-hidden="true"></i>
       {what === 'all' ? 'Discard all changes' : 'Discard'}
     </button>
@@ -129,7 +129,7 @@
       </p>
     {/if}
     {#if pubFiles.length || ahead}
-      <button type="button" class="link" onclick={onpublish}>Publish…</button>
+      <button type="button" class="btn btn--small" onclick={onpublish}>Publish…</button>
     {/if}
   </section>
 

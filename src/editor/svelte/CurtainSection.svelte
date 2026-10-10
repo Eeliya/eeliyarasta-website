@@ -128,7 +128,7 @@
     <!-- drawn at the right of the row after it, like a grid's Source edit button -->
     <button
       type="button"
-      class="btn-sm btn-sm--compact ptg__replay"
+      class="icon-btn icon-btn--small ptg__replay"
       title="Replay: play the transition over this page with these values (no navigation)"
       aria-label="Replay"
       disabled={mode === 'off'}

@@ -48,7 +48,7 @@
     {#if name}
       <button
         type="button"
-        class="lib__btn"
+        class="icon-btn icon-btn--small lib__btn"
         title="Back to the animations"
         aria-label="Back to the animations"
         onclick={() => goTo('')}
@@ -84,7 +84,7 @@
       </p>
       <button
         type="button"
-        class="btn-ed"
+        class="btn btn--small"
         title="Play the page's animations again"
         disabled={!uses.length}
         onclick={replay}
@@ -134,25 +134,6 @@
 
   .lib__btn {
     grid-area: button;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    color: var(--muted);
-    font-size: 14px;
-    cursor: pointer;
-
-    &:hover {
-      color: var(--fg);
-      background: rgb(255 255 255 / 0.06);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
   }
 
   // icon | name / type and usage

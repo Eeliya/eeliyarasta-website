@@ -168,7 +168,7 @@
       {#if isList}
         <header class="row src-list__head">
           {list.length} item{list.length === 1 ? '' : 's'}
-          <button type="button" class="btn-sm" onclick={add}>
+          <button type="button" class="btn btn--small" onclick={add}>
             <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
           </button>
         </header>
@@ -206,15 +206,15 @@
           {#if confirming}
             <span class="confirm">
               Delete {itemName(item)}?
-              <button type="button" class="btn-sm" onclick={() => (confirming = false)}>
+              <button type="button" class="btn btn--small" onclick={() => (confirming = false)}>
                 Cancel
               </button>
-              <button type="button" class="btn-sm btn-sm--danger" onclick={remove}>
+              <button type="button" class="btn btn--small btn--danger" onclick={remove}>
                 <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
               </button>
             </span>
           {:else}
-            <button type="button" class="btn-sm btn-sm--danger" onclick={askDelete}>
+            <button type="button" class="btn btn--small btn--danger" onclick={askDelete}>
               <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
             </button>
           {/if}

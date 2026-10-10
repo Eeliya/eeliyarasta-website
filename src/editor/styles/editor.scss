@@ -24,6 +24,8 @@ body {
   --hi: #{$hi}; // highlight: links, badges, ease curves
   --ed-accent: #3cf; // focus and selection, everywhere in the editor (and the preview's outlines)
   --panel-w: 400px; // the side panel
+  --btn: #2a2a2a; // buttons (.btn, .icon-btn): solid, on the panel and in windows
+  --btn-hover: #383838;
 }
 
 body {
@@ -177,10 +179,14 @@ kbd {
   }
 }
 
+// ------------------------------------------------------------ buttons
+// One pill system, after the footer's Save / Publish:
+//   .btn               40px (the footer, dialogs)   .btn--small  32px (in panels and windows)
+//   .btn--primary      the main action (light)      .btn--danger red text (Delete, Discard)
+// Icon only: .icon-btn, a 36px circle (toolbar, window headers); .icon-btn--small, 24px and
+// unfilled until hover (in rows: edit source, reset, remove, move, replay).
+.btn,
 .icon-btn {
-  width: 36px;
-  height: 36px;
-  padding: 0;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -188,149 +194,87 @@ kbd {
   border: 0;
   border-radius: 999px;
   cursor: pointer;
-  background: rgb(255 255 255 / 0.06);
-  box-shadow: inset 0 0 0 1px var(--line);
-  font-size: 15px;
-
-  &:hover:not(:disabled) {
-    background: rgb(255 255 255 / 0.12);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-}
-
-.btn-primary {
-  border: 0;
-  border-radius: 999px;
-  padding: 12px 20px;
-  cursor: pointer;
-  background: var(--fg);
-  color: #000;
-  font-size: 11px;
-  line-height: 16px; // 12 + 16 + 12 = 40px tall (the inherited 1.5 made it 40.5)
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 500;
+  color: var(--fg);
+  background: var(--btn);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px var(--line);
   transition:
-    transform 0.3s var(--ease-out),
-    opacity 0.3s;
+    background 0.2s,
+    transform 0.3s var(--ease-out);
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-}
-
-.btn-ghost {
-  border: 0;
-  border-radius: 999px;
-  padding: 12px 20px;
-  cursor: pointer;
-  white-space: nowrap;
-  background: rgb(255 255 255 / 0.08);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 0 0 1px var(--line);
-  font-size: 11px;
-  line-height: 16px; // 40px tall, like .btn-primary
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 500;
-
-  &:hover:not(:disabled) {
-    background: rgb(255 255 255 / 0.14);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-}
-
-.btn-ed {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 0;
-  border-radius: 999px;
-  padding: 8px 16px;
-  cursor: pointer;
-  white-space: nowrap;
-  background: rgb(255 255 255 / 0.08);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 0 0 1px var(--line);
-  font-size: 11px;
-  line-height: 16px; // 32px tall
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-
-  &:hover:not(:disabled) {
-    background: rgb(255 255 255 / 0.14);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-}
-
-// small text button with an icon: Edit, Delete, Discard, Cancel (Sources, Browse)
-.btn-sm {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  padding: 4px 8px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 16px; // 24px tall
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    color: var(--fg);
-    background: rgb(255 255 255 / 0.06);
+    background: var(--btn-hover);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 1px var(--ed-accent);
+    box-shadow:
+      inset 0 0 0 1px var(--ed-accent),
+      0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
   }
 
   &:disabled {
     opacity: 0.35;
     cursor: default;
+  }
+}
+
+.btn {
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 11px;
+  line-height: 16px; // 12 + 16 + 12 = 40px
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &--small {
+    padding: 8px 16px; // 32px
+  }
+
+  &--primary {
+    color: #000;
+    background: var(--fg);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      background: var(--fg);
+      transform: translateY(-1px);
+    }
   }
 
   &--danger {
     color: #ff8a7a;
 
-    &:hover {
-      color: #ffb3a8;
-      background: rgb(255 138 122 / 0.1);
+    &:hover:not(:disabled) {
+      background: #3a2421;
     }
-  }
-
-  // an icon only, 20px square
-  &--compact {
-    margin-left: auto;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    justify-content: center;
-    font-size: 10.5px;
   }
 }
 
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 15px;
+
+  &--small {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      color: var(--fg);
+    }
+  }
+}
+
+// a text link inside a sentence (hints)
 .link {
   border: 0;
   background: none;
@@ -344,10 +288,6 @@ kbd {
 
   &:hover {
     color: var(--fg);
-  }
-
-  &--danger:hover {
-    color: #ff8a7a;
   }
 }
 
@@ -440,21 +380,6 @@ kbd {
   }
 }
 
-.f__reset {
-  margin-left: auto;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 20px;
-  padding: 0 4px;
-
-  &:hover {
-    color: var(--fg);
-  }
-}
-
 // a value as text (MotionField): read-only, at the end of the top row
 .f__value {
   margin: 0 0 0 auto;
@@ -476,8 +401,13 @@ kbd {
 
 // a timing value's Custom switch, at the end of the top row; off: a faint "inherit" before it
 .f__inherit,
-.f__top > .switch {
+.f__top > .switch,
+.f__top > .icon-btn--small {
   margin-left: auto;
+}
+
+.f__top > .icon-btn--small + .icon-btn--small {
+  margin-left: 0;
 }
 
 .f__inherit {

@@ -137,7 +137,7 @@
       />
       <button
         type="button"
-        class="tf__upload"
+        class="icon-btn tf__upload"
         title="Upload a photo (or drop one on the field)"
         aria-label="Upload a photo for {label}"
         disabled={progress !== null}
@@ -193,31 +193,9 @@
     background: rgb(255 255 255 / 0.06);
   }
 
-  .tf__upload {
-    flex: none;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: rgb(0 0 0 / 0.35);
-    box-shadow: inset 0 0 0 1px var(--line);
-    color: var(--muted);
-    font-size: 12px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-      color: var(--fg);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
-
-    &:disabled {
-      cursor: progress;
-    }
+  // busy uploading
+  .tf__upload:disabled {
+    cursor: progress;
   }
 
   // a photo dragged over the field

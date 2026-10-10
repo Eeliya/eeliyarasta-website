@@ -123,7 +123,7 @@
 {#snippet editButton(file)}
   <button
     type="button"
-    class="btn-sm btn-sm--compact"
+    class="icon-btn icon-btn--small"
     title="Edit {baseName(file)}"
     aria-label="Edit {baseName(file)}"
     onclick={() => sourcesModal.open(file)}
@@ -158,7 +158,7 @@
 <section class="ed-body" bind:this={panel}>
   <button
     type="button"
-    class="btn-sm src-open"
+    class="btn btn--small src-open"
     title="People, places, projects: the lists in content/sources/"
     onclick={() => sourcesModal.open()}
   >
@@ -183,7 +183,7 @@
             {@const last = homeSections(live.store).length - 1}
             <button
               type="button"
-              class="sec__move"
+              class="icon-btn icon-btn--small"
               data-dir="up"
               title="Move up"
               aria-label="Move up: {g.title}"
@@ -194,7 +194,7 @@
             </button>
             <button
               type="button"
-              class="sec__move"
+              class="icon-btn icon-btn--small"
               data-dir="down"
               title="Move down"
               aria-label="Move down: {g.title}"
@@ -274,42 +274,6 @@
     letter-spacing: 0;
   }
 
-  // home section order (click only) and grid settings
-  .sec__move {
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    color: var(--muted);
-    font-size: 10px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-      color: var(--fg);
-      background: rgb(255 255 255 / 0.06);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
-
-    &:disabled {
-      color: var(--faint);
-      cursor: default;
-    }
-
-    // up and down touch
-    & + & {
-      margin-left: -4px;
-    }
-  }
-
   .sec__opts {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -322,7 +286,7 @@
     padding: 4px;
 
     // the edit button sits beside the label, drawn at the right of the title row
-    > .btn-sm {
+    > .icon-btn {
       position: absolute;
       top: 4px;
       right: 4px;

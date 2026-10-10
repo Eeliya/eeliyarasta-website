@@ -197,13 +197,13 @@
   {/if}
 
   <footer class="modal__actions">
-    <button type="button" class="link" onclick={() => dialog.close()}>
+    <button type="button" class="btn" onclick={() => dialog.close()}>
       {published ? 'Close' : 'Cancel'}
     </button>
     {#if pub && !published}
       <button
         type="button"
-        class="btn-primary"
+        class="btn btn--primary"
         disabled={!!phase || (!names.length && !pub.ahead)}
         onclick={publish}
       >

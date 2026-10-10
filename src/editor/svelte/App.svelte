@@ -203,7 +203,7 @@
       <span class="ed-source">dev · local files</span>
       <button
         type="button"
-        class="btn-ghost"
+        class="btn"
         title="Write the changes to content/*.json as a draft ({MOD}+S)"
         disabled={!live.changes || ui.saving || ui.publishing}
         onclick={() => actions.save()}
@@ -212,7 +212,7 @@
       </button>
       <button
         type="button"
-        class="btn-primary"
+        class="btn btn--primary"
         title="Commit all saved content changes in one commit and push to {branch}"
         disabled={ui.publishing || (!unpublished.length && !ahead && !live.changes)}
         onclick={publish}

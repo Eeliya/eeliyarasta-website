@@ -15,7 +15,12 @@
           <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
         </a>
       {/if}
-      <button type="button" class="toast__x" aria-label="Dismiss" onclick={() => dismiss(t.id)}>
+      <button
+        type="button"
+        class="icon-btn icon-btn--small toast__x"
+        aria-label="Dismiss"
+        onclick={() => dismiss(t.id)}
+      >
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </p>
@@ -74,10 +79,5 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 13px;
   }
 </style>
