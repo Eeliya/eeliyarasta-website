@@ -241,8 +241,7 @@ export function createBridge({ store, labelFor }) {
       if (el && scroll) {
         const r = el.getBoundingClientRect();
         const vh = win.innerHeight;
-        if (r.bottom < 0 || r.top > vh * 0.8)
-          api.scrollTo(el, { smooth: false });
+        if (r.bottom < 0 || r.top > vh * 0.8) api.scrollTo(el, { smooth: false });
       }
       // (api is null again if a save reloads the preview in between)
       requestAnimationFrame(() => requestAnimationFrame(() => api?.remount()));
@@ -272,8 +271,7 @@ export function createBridge({ store, labelFor }) {
     reveal(el) {
       if (!el || !api) return;
       const r = el.getBoundingClientRect();
-      if (r.bottom < 60 || r.top > win.innerHeight - 60)
-        api.scrollTo(el, { smooth: true });
+      if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true });
     },
     focusEdit(edit) {
       const el = doc?.querySelector(`[data-edit="${CSS.escape(edit)}"]`);

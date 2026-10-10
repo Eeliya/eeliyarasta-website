@@ -289,7 +289,6 @@ function blockAt(id) {
   return null;
 }
 
-
 /** Content tab: drag and resize blocks in the preview (the page's own clicks are off). */
 function arrange(on) {
   ui.arrange = on;

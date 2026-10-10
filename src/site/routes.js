@@ -62,8 +62,7 @@ export const pathOfId = (id) =>
   id === 'home' ? '/' : `/${id.replace(/(^|\/)\[slug\]$/, '')}/`.replace(/\/+$/, '/');
 
 /** A page's title: its first heading block's title (blocks/pages.js), else undefined. */
-export const pageTitle = (page) =>
-  blocksOf(page).find((b) => b?.type === 'heading')?.title;
+export const pageTitle = (page) => blocksOf(page).find((b) => b?.type === 'heading')?.title;
 
 const titleCase = (s) =>
   String(s)
