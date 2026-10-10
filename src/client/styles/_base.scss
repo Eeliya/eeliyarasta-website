@@ -83,6 +83,11 @@ sup {
   border-radius: 4px;
 }
 
+// The page view takes focus after a navigation (router.js) and from the skip link: no ring.
+#main:focus-visible {
+  outline: none;
+}
+
 html.anim-pending [data-anim] {
   visibility: hidden;
 }

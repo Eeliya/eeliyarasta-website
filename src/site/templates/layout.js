@@ -68,6 +68,7 @@ export function body(ctx, route, accent, view) {
       <div id="smooth-content">
         <main
           id="main"
+          tabindex="-1"
           class="view view--${esc(route.page)}"
           data-router-view
           data-page="${esc(route.page)}"

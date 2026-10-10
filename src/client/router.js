@@ -201,7 +201,9 @@ function swapView(oldView, { doc, incoming }, url, push) {
     'meta[name="description"]',
     'link[rel="canonical"]',
     'meta[property="og:title"]',
+    'meta[property="og:description"]',
     'meta[property="og:url"]',
+    'meta[property="og:image"]',
   ]) {
     const next = doc.head.querySelector(sel);
     const cur = document.head.querySelector(sel);
@@ -260,6 +262,11 @@ export async function navigate(href, { push = true } = {}) {
       mountView(view);
       await tl;
     }
+    // Screen readers and keyboards go on from the new page, not from the link that was
+    // clicked (after the transition: a hidden view can't take focus). Only when the page has
+    // focus: the editor's preview doesn't take it from the editor.
+    if (document.hasFocus())
+      document.querySelector('[data-router-view]')?.focus({ preventScroll: true });
   } catch (err) {
     console.warn('[router] falling back to full page load', err);
     location.href = url.href;
