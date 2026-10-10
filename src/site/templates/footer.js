@@ -4,7 +4,8 @@ import { SITE } from '../files.js';
 export function footer(ctx) {
   const { site } = ctx;
   const year = new Date().getFullYear();
-  const cols = site.footer?.columns || {};
+  const foot = site.footer || {};
+  const cols = foot.columns || {};
   const index = cols.index || { title: 'Index', links: [] };
   const social = cols.social || { title: 'Social' };
   const contact = cols.contact || { title: 'Contact' };
@@ -12,13 +13,13 @@ export function footer(ctx) {
   return html`
   <footer class="footer" data-footer>
     <div class="footer__cta">
-      <span class="label"${ed(SITE, ['footer', 'label'])}>${esc(site.footer.label)}</span>
-      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta"${ed(SITE, ['footer', 'cta'], 'block')}>${lines(site.footer.cta)}</a>
+      <span class="label"${ed(SITE, ['footer', 'label'])}>${esc(foot.label)}</span>
+      <a class="footer__big" href="mailto:${esc(site.email)}" data-anim="footer.cta"${ed(SITE, ['footer', 'cta'], 'block')}>${lines(foot.cta)}</a>
     </div>
     <div class="footer__cols" data-anim="footer.cols">
       <div class="footer__col">
         <h2 class="label"${ed(SITE, ['footer', 'columns', 'social', 'title'])}>${esc(social.title)}</h2>
-        <ul>${site.social.map((s, i) => html`<li><a href="${esc(s.url)}" target="_blank" rel="noopener"><span${ed(SITE, ['social', i, 'label'])}>${esc(s.label)}</span> <span class="muted"${ed(SITE, ['social', i, 'handle'])}>${esc(s.handle)}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a></li>`)}</ul>
+        <ul>${(site.social || []).map((s, i) => html`<li><a href="${esc(s.url)}" target="_blank" rel="noopener"><span${ed(SITE, ['social', i, 'label'])}>${esc(s.label)}</span> <span class="muted"${ed(SITE, ['social', i, 'handle'])}>${esc(s.handle)}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a></li>`)}</ul>
       </div>
       <div class="footer__col">
         <h2 class="label"${ed(SITE, ['footer', 'columns', 'index', 'title'])}>${esc(index.title)}</h2>

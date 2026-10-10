@@ -19,7 +19,7 @@ export function head(ctx, route, accent) {
             url: site.url,
             jobTitle: 'Photographer',
             address: { '@type': 'PostalAddress', addressCountry: 'NL' },
-            sameAs: site.social.map((s) => s.url),
+            sameAs: (site.social || []).map((s) => s.url),
           })}
         </script>`
       : '';

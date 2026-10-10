@@ -123,12 +123,12 @@ const SECTIONS = {
 
 export function home(ctx) {
   const { home, site } = ctx;
-  const { hero } = home;
+  const hero = home.hero || {};
   const sections = Array.isArray(home.sections) ? home.sections : [];
   let number = 0; // section numbers (01), (02), … count the visible headed sections in order
   return html` <section class="hero" data-hero${sectionAttrs('hero', hero.enabled !== false)}>
       <div class="hero__photos" data-anim="hero.photos">
-        ${hero.photos.map((p, i) => heroPhoto(ctx, p, i))}
+        ${(hero.photos || []).map((p, i) => heroPhoto(ctx, p, i))}
       </div>
       <h1 class="hero__title" data-anim="hero.title">
         <span class="hero__name" ${ed(HOME, ['hero', 'title'], 'words')}

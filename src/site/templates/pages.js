@@ -60,15 +60,15 @@ export const about = (ctx) => {
         ${esc(a.headline)}
       </h1>
       <div class="about__body" data-anim="about.body">
-        ${a.paragraphs.map((p, i) => html`<p${ed(ABOUT, ['paragraphs', i], 'block')}>${lines(p)}</p>`)}
+        ${(a.paragraphs || []).map((p, i) => html`<p${ed(ABOUT, ['paragraphs', i], 'block')}>${lines(p)}</p>`)}
         <dl class="facts">
-          ${a.facts.map((f, i) => html`<div><dt class="label"${ed(ABOUT, ['facts', i, 'label'])}>${esc(f.label)}</dt><dd${ed(ABOUT, ['facts', i, 'value'])}>${esc(f.value)}</dd></div>`)}
+          ${(a.facts || []).map((f, i) => html`<div><dt class="label"${ed(ABOUT, ['facts', i, 'label'])}>${esc(f.label)}</dt><dd${ed(ABOUT, ['facts', i, 'value'])}>${esc(f.value)}</dd></div>`)}
         </dl>
         <div class="about__links">
           <a class="btn glass" href="mailto:${esc(ctx.site.email)}"
             >Email me <span aria-hidden="true">→</span></a
           >
-          ${ctx.site.social.slice(0, 2).map((s) => html`<a class="btn glass" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} <span class="arrow-ne" aria-hidden="true">↗</span></a>`)}
+          ${(ctx.site.social || []).slice(0, 2).map((s) => html`<a class="btn glass" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} <span class="arrow-ne" aria-hidden="true">↗</span></a>`)}
         </div>
       </div>
     </div>

@@ -121,7 +121,7 @@ export function mobileMenu(ctx) {
         <a class="mmenu__big" href="/about/" data-nav="/about/" data-mm-item><span${ed(SITE, ['nav', 'about'])}>${esc(n('about', 'About'))}</span></a>
       </nav>
       <div class="mmenu__foot" data-mm-item>
-        ${site.social.slice(0, 2).map((s) => html`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} ${arrowNE}</a>`)}
+        ${(site.social || []).slice(0, 2).map((s) => html`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)} ${arrowNE}</a>`)}
       </div>
     </div>
   </div>`;

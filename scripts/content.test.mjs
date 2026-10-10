@@ -107,3 +107,19 @@ test('writeFileAtomic: replaces the file in one step; a failed write keeps the o
   assert.throws(() => writeFileAtomic(path.join(dir, 'b.json'), 'new'));
   assert.deepEqual(fs.readdirSync(dir).sort(), ['a.json', 'b.json']);
 });
+
+test('site.json with only name and url builds every page', async () => {
+  const { buildRoutes } = await import('../src/site/routes.js');
+  const { renderRoute } = await import('../src/site/render.js');
+  const files = {
+    'pages/index.json': {},
+    'pages/about/index.json': {},
+    'pages/photography/index.json': {},
+    'pages/404/index.json': {},
+  };
+  const content = loadContent(tree(files));
+  for (const route of buildRoutes(content).routes) {
+    const { body } = renderRoute(route, content);
+    assert.match(body, /<footer|data-router-view/);
+  }
+});
