@@ -140,8 +140,15 @@
 >
   <ExplorerHead
     title="Sources"
-    path="content/{file || 'sources/'}"
-    icon={file ? 'fa-file-lines' : 'fa-folder-open'}
+    icon="fa-database"
+    sep="/"
+    crumbs={file
+      ? [
+          { label: 'sources', onclick: () => goTo('') },
+          { label: baseName(file) },
+          ...(item ? [{ label: itemName(item) }] : []),
+        ]
+      : [{ label: 'sources' }]}
     back={file ? 'Back to files' : ''}
     onback={() => goTo('')}
     onclose={() => dialog.close()}

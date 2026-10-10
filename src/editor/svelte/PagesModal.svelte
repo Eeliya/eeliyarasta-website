@@ -1,8 +1,9 @@
 <!--
   Pages window: the pages in content/pages/. Every page is a folder, its URL, with its own
-  file index.json inside (src/site/routes.js); the root is home's folder. Folder-style like
-  the Source Explorer: a folder shows its own page first (the row "/people/"), then the pages
-  in it (folders: click to enter), then its [slug] page; the selected row on the right.
+  file index.json inside (src/site/routes.js); the root is home's folder. Like the Source
+  Explorer: the breadcrumb under the title is the URL of the folder shown; the list has its
+  own page first (the row "/"), then the pages in it (click to enter), then its [slug] page;
+  the selected row on the right.
   Add a page or a [slug] page (one page per item of a source) in any folder, rename or delete
   a page with its whole folder. Changes go straight to disk through the dev server
   (actions.pagesOp in main.js); the page menu and the preview follow. Where it is lives in
@@ -75,6 +76,14 @@
   const changed = (id) =>
     JSON.stringify(live.current(pageFile(id))) !== JSON.stringify(live.base(pageFile(id)));
   const urlOf = (id) => (isTemplate(id) ? `/${id}` : pathOfId(id));
+  // the breadcrumb: "/" (the root), then one crumb per folder in the URL, each going there
+  const crumbs = $derived([
+    { label: '/', onclick: () => goTo('') },
+    ...(folder ? folder.split('/') : []).map((name, i, all) => ({
+      label: `${name}/`,
+      onclick: () => goTo(all.slice(0, i + 1).join('/')),
+    })),
+  ]);
   // a page's folder in content/
   const pathOf = (id) => `content/pages/${id === 'home' ? '' : `${id}/`}`;
 
@@ -192,41 +201,39 @@
 >
   <ExplorerHead
     title="Pages"
-    path={pathOf(own)}
+    icon="fa-sitemap"
+    {crumbs}
     back={folder ? 'Up one folder' : ''}
     onback={() => goTo(parentOf(folder))}
     onclose={() => dialog.close()}
   />
 
   <nav class="pg-list" aria-label="This page and the pages in its folder">
-    <header class="row pg-list__head">
-      {plural(pages.length + (template ? 1 : 0), 'page')} in it
-      <span>
-        <button
-          type="button"
-          class="btn btn--small"
-          disabled={busy || folder === '404'}
-          onclick={() => startAdd('add')}
-        >
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
-        </button>
-        <button
-          type="button"
-          class="btn btn--small"
-          disabled={busy || !!templateBlock}
-          title={templateBlock}
-          onclick={() => startAdd('add-template')}
-        >
-          <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug]
-        </button>
-      </span>
-    </header>
+    <div class="row pg-list__head">
+      <button
+        type="button"
+        class="btn btn--small"
+        disabled={busy || folder === '404'}
+        onclick={() => startAdd('add')}
+      >
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
+      </button>
+      <button
+        type="button"
+        class="btn btn--small"
+        disabled={busy || !!templateBlock}
+        title={templateBlock}
+        onclick={() => startAdd('add-template')}
+      >
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug]
+      </button>
+    </div>
     <ul class="list pg-list__items">
       <li>
         <ExplorerRow
           icon="fa-file-lines"
-          name={urlOf(own)}
-          meta="{titleOf(own)} · index.json"
+          name="/"
+          meta="index.json · {titleOf(own)}"
           selected={sel === own}
           changed={changed(own)}
           aria-current={sel === own}
@@ -236,7 +243,8 @@
       {#each pages as id (id)}
         <li>
           <ExplorerRow
-            icon="fa-folder"
+            icon="fa-file-lines"
+            enter
             name={titleOf(id)}
             meta="{urlOf(id)}{below(id).length
               ? ` · ${plural(below(id).length, 'page')} in it`
@@ -285,7 +293,12 @@
       </p>
       <div class="row">
         <button type="button" class="btn btn--small" onclick={() => select('')}>Cancel</button>
-        <button type="button" class="btn btn--small" disabled={!slug || !!slugError || busy} onclick={add}>
+        <button
+          type="button"
+          class="btn btn--small"
+          disabled={!slug || !!slugError || busy}
+          onclick={add}
+        >
           <i class="fa-solid fa-plus" aria-hidden="true"></i> Add page
         </button>
       </div>
@@ -305,7 +318,12 @@
       </div>
       <div class="row">
         <button type="button" class="btn btn--small" onclick={() => select('')}>Cancel</button>
-        <button type="button" class="btn btn--small" disabled={!newSource || busy} onclick={addTemplate}>
+        <button
+          type="button"
+          class="btn btn--small"
+          disabled={!newSource || busy}
+          onclick={addTemplate}
+        >
           <i class="fa-solid fa-plus" aria-hidden="true"></i> Add [slug] page
         </button>
       </div>
@@ -328,9 +346,15 @@
               : ''}?
           </span>
           <span class="row">
-            <button type="button" class="btn btn--small" onclick={() => (confirming = false)}>Cancel</button
+            <button type="button" class="btn btn--small" onclick={() => (confirming = false)}
+              >Cancel</button
             >
-            <button type="button" class="btn btn--small btn--danger" disabled={busy} onclick={remove}>
+            <button
+              type="button"
+              class="btn btn--small btn--danger"
+              disabled={busy}
+              onclick={remove}
+            >
               <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
             </button>
           </span>
@@ -338,8 +362,13 @@
       {/if}
       <p class="hint small">content/{pageFile(sel)}</p>
       <div class="row">
-        <button type="button" class="btn btn--small" onclick={() => show(sel)}>
-          <i class="fa-solid fa-eye" aria-hidden="true"></i> Show {urlOf(sel)}
+        <button
+          type="button"
+          class="btn btn--small"
+          title="Show {urlOf(sel)} in the preview"
+          onclick={() => show(sel)}
+        >
+          <i class="fa-solid fa-eye" aria-hidden="true"></i> Open in preview
         </button>
       </div>
 
@@ -376,8 +405,8 @@
       {/if}
     {:else}
       <p class="hint">
-        Every page is a folder, its URL, with its own index.json inside. {urlOf(own)} is the first row;
-        click a folder to see the pages in it.
+        Every page is a folder, its URL, with its own index.json inside. The first row, /, is
+        {urlOf(own)} itself; click a page below it to see the pages in it.
       </p>
     {/if}
   </section>
@@ -406,12 +435,8 @@
   }
 
   .pg-list__head {
-    justify-content: space-between;
-    padding: 0 8px 12px;
-    color: var(--muted);
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    gap: 8px;
+    padding: 0 0 12px;
   }
 
   .pg-list__items {

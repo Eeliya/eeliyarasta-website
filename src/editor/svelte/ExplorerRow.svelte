@@ -1,7 +1,7 @@
 <!--
   One row of an explorer list (Sources, Pages): a number or an icon, the name with a meta
-  line below it, and a dot when it has unsaved changes. Other props (onclick, data-*,
-  aria-*) go on the <button>.
+  line below it, a dot when it has unsaved changes, and a chevron when it opens something
+  (enter). Other props (onclick, data-*, aria-*) go on the <button>.
 -->
 <script>
   let {
@@ -11,6 +11,7 @@
     meta = '',
     selected = false,
     changed = false,
+    enter = false,
     ...rest
   } = $props();
 </script>
@@ -28,14 +29,15 @@
   <span class="xrow__name">{name}</span>
   <span class="xrow__meta">{meta}</span>
   <i class="dot" title="Changed"></i>
+  {#if enter}<i class="fa-solid fa-chevron-right xrow__enter" aria-hidden="true"></i>{/if}
 </button>
 
 <style lang="scss">
-  // lead | name / meta | changed dot
+  // lead | name / meta | changed dot | chevron
   .xrow {
     width: 100%;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 4px 12px;
     padding: 8px 12px;
@@ -80,6 +82,13 @@
     &--icon {
       font-size: 14px;
     }
+  }
+
+  .xrow__enter {
+    grid-column: 4;
+    grid-row: 1 / 3;
+    color: var(--muted);
+    font-size: 10px;
   }
 
   .xrow__name,
