@@ -98,7 +98,6 @@ let openToggle = null;
 function dropdownFor(toggle) {
   if (!dropdowns.has(toggle)) {
     const panel = document.getElementById(toggle.getAttribute('aria-controls'));
-    console.log(toggle);
     dropdowns.set(toggle, createReveal({ toggle, el: panel, panel }));
   }
   return dropdowns.get(toggle);
