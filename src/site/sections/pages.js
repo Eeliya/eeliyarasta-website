@@ -121,7 +121,7 @@ export const about = {
   render: (a, ctx, sec) => html` <section class="about"${sec.attrs}>
     <div class="about__media">
       <figure class="about__figure" data-anim="about.image">
-        ${img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: sec.ed('image', 'image') })}
+        ${a.image ? img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: sec.ed('image', 'image') }) : ''}
       </figure>
       <figcaption class="label muted">
         ${esc(creditText(a.imageCredit))}${a.placeholder ? ' · placeholder' : ''}

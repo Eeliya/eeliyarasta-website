@@ -63,7 +63,8 @@ src/
     routes.js       ← list of pages, from the files in content/pages/
     render.js       ← renderRoute(route, content) → { head, body }
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
-    templates/      ← layout, header/menu, footer, home, album, pages, partials
+    sections/       ← the section registry: every section type (see "Sections")
+    templates/      ← layout, header/menu, footer, partials
   client/           ← browser code
     main.js         ← boot: smooth scroll, menu, router, per-page mount
     router.js       ← SPA navigation over the prerendered HTML
@@ -114,8 +115,8 @@ site settings can live side by side):
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `content/settings/site.json`       | name, SEO description, socials, email, nav labels (and the clock label `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
 | `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                               |
-| `content/pages/index.json`         | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)                                                                                                  |
-| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`, `emailLabel`; photography: `panels` `[{ source, title, unit }]`), curtain text, `meta`: `title` / `description` for `<head>`                   |
+| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                          |
+| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: `title` / `description` for `<head>`                                                                                                                                                |
 | `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
 | `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                            |
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                              |
@@ -125,23 +126,6 @@ site settings can live side by side):
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
-**Home sections** are an ordered list in `pages/index.json → sections`; the page renders them in
-that order and numbers the headed ones (01), (02), … automatically. Each item has a `type`, its
-text, and settings under `config`:
-
-```json
-{ "type": "intro", "text": "…", "config": { "enabled": true } }
-{ "type": "grid", "label": "People", "title": "Models I've worked with", "cta": "All people",
-  "config": { "enabled": true, "source": "people", "layout": "staggered" } }
-{ "type": "projects", "label": "Projects", "title": "Things I build", "cta": "All projects",
-  "config": { "enabled": true } }
-```
-
-A grid fills itself from `content/sources/<source>.json` (a top-level array) and links each
-tile to the item's page (the `[slug].json` page that shows that source, e.g. `/people/<slug>/`). `config.layout` is `"staggered"` (default: offset columns) or `"even"`
-(every row lines up). The source picks the tile look: `places` shows landscape cards, any other
-list shows photo tiles (4 photos per item). A missing or non-array source logs a build warning and renders an
-empty grid.
 Routes, menu, dropdowns, grids and sitemap update automatically.
 
 > ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and
@@ -151,6 +135,51 @@ Routes, menu, dropdowns, grids and sitemap update automatically.
 > real shoots. The email `hello@eeliyarasta.com` is a placeholder too.
 > Pages of items with `"placeholder": true` get `noindex` and are left out of `sitemap.xml`;
 > remove the flag (or set it to `false`) when the item is real.
+
+### Sections
+
+Every page is an ordered list of typed **sections**, `sections` in its file (a `[slug].json`
+too). The page renders them in that order and numbers the headed ones (01), (02), …
+automatically. A section has its `type`, its own content (texts, photos) next to it, and how it
+works under `config` (`enabled`: on/off; the source, layout, …):
+
+```json
+{ "type": "heading", "crumb": "Photography / People", "title": "People", "intro": "…",
+  "config": { "enabled": true, "count": "people" } }
+{ "type": "grid", "label": "People", "title": "Models I've worked with", "cta": "All people",
+  "config": { "enabled": true, "source": "people", "layout": "staggered" } }
+```
+
+The types live in **one registry**, `src/site/sections/` (`index.js` explains the shape): the
+build renders with it, and the editor reads it for each section's fields and settings and for
+**Add section**. A type is `{ type, label, icon, fields, config, defaults, render(section, ctx,
+sec) }`; `numbered` puts it in the (01) numbering, `item` binds it to a `[slug]` page's item.
+
+| type       | what                                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| `heading`  | page heading: `crumb`, `title`, `intro`, `cta`; config `count` (a source's item count), `href`, `center`  |
+| `text`     | paragraphs (a blank line starts one) under an optional `title`                                            |
+| `photo`    | one photo (`src`) with an optional `caption`                                                              |
+| `button`   | a button: `label`; config `href` (a path or a full URL)                                                   |
+| `hero`     | the home hero: `title` (one word per line), `eyebrow`, `subline`, scattered `photos`                      |
+| `intro`    | a statement (`text`)                                                                                      |
+| `grid`     | numbered head + tiles of a source; config `source`, `layout` (`staggered` / `even`); `places` shows cards |
+| `albums`   | album cards of a source (the people/places index); config `source`, `layout` (`portrait` / `landscape`)   |
+| `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                  |
+| `projects` | the project accordion of a source; with a `title` it gets a numbered head (home)                          |
+| `about`    | the about block: `image`, `crumb`, `headline`, `paragraphs`, `facts`, `emailLabel`                        |
+| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page                                  |
+
+- **Item pages:** a `[slug].json`'s sections render once per item. A type marked `item` (the
+  `album` section) reads the page's item, `ctx.route.album`; there is no `{{field}}`
+  interpolation, the type knows which fields of the item it shows. Other types render the same
+  on every item page. Item types are only offered on `[slug]` pages.
+- **Validation:** Save and the build check each section against its type (strings, lists,
+  config values); an unknown type isn't an error: it logs a build warning and is skipped.
+- **Animations:** sections keep their `data-anim` targets (`content/settings/animations.json`),
+  so a new section animates like the others of its type.
+- **A new type:** add it to a file in `src/site/sections/` and to `SECTION_TYPES` in `index.js`
+  (and its styles); the editor shows it with no editor code.
 
 ### Pages and URLs
 
@@ -178,10 +207,12 @@ Every page is a folder in `content/pages/`, and the folders are the URLs. A page
   the root.
 - **Fixed beats template:** `pages/people/noor-vermeer/index.json` replaces the template's page for
   that item (it is a normal page then).
-- **Views:** a page uses the view in its `view` field, else the built-in view with its name
-  (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else the plain
-  page view (its `crumb` / `title` / `intro` heading). A template uses `album`.
-- **Head:** the title is `meta.title`, else `title`, else the file name, plus `| <site name>`;
+- **Views:** a page is its sections. Its view name (`view--<name>` on `<main>`, `data-page` on
+  `<html>`, for styles and scripts) is its `view` field, else its own name for the built-in
+  pages (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else `page`.
+  A template's is `album` (no footer). New pages start with a heading section.
+- **Head:** the title is `meta.title`, else its first heading section's `title`, else the file
+  name, plus `| <site name>`;
   the description is `meta.description`, else the site's.
 - Links to an item (menu dropdowns, grids, next) come from the routes, so they follow a folder
   rename. The menu itself is still `settings/site.json` + `templates/header.js` (a nav editor is
@@ -347,11 +378,14 @@ home and 404 can't be renamed or deleted. These write to disk right away through
 deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
 files. `&pages=/people/` in the URL reopens it on that folder. There's also a mobile (390 px) preview toggle.
 
-On the home page, every section box in the Content panel has ↑ / ↓ buttons that reorder
-`pages/index.json → sections` (one undo step each) and an On/Off switch. Grid sections also show a
-**Source** dropdown (the files in `content/sources/`) and a **Layout** dropdown (Staggered, Even).
-The preview follows reorders, on/off and layout right away; a grid switched to another source
-shows up in the preview after Save.
+In the Content panel every section of the page is a box with its type's icon and name: ↑ / ↓
+move it, **Duplicate** copies it below, **Delete** asks first, the switch turns it on/off, and
+the caret folds it. Under the bar are its settings (`config`: a Source or Layout dropdown, a
+switch, a link) and its fields, both from the registry. **Add section** at the end picks a type
+and adds it with the type's defaults. Each of these is one undo step. The preview follows
+reorders, on/off and layout right away; a new section, or a grid switched to another source,
+shows in the preview after Save (it re-renders). On a `[slug]` page the **Item** dropdown next
+to the page picks which item's page the preview shows.
 
 The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
@@ -418,8 +452,9 @@ Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z*
 undo/redo, **Esc** deselects.
 
 **How text maps to JSON.** Templates mark text with the `ed()` helper, e.g.
-`<h2${ed('pages/index.json', ['hero', 'eyebrow'])}>`, which renders
-`data-edit="pages/index.json#/hero/eyebrow"` (a JSON Pointer). Use `ed(file, path, 'block')`
+`<h2${ed('pages/about/index.json', ['sections', 0, 'headline'])}>` (in a section type:
+`sec.ed('headline')`), which renders `data-edit="pages/about/index.json#/sections/0/headline"` (a
+JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
 in each page's `pages/<page>/index.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
