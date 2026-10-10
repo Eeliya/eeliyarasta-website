@@ -12,6 +12,8 @@
     selected     snippet (option) for the button's content; default: label
 -->
 <script>
+  import { untrack } from 'svelte';
+
   let {
     value = $bindable(),
     options = [],
@@ -36,13 +38,16 @@
   const current = $derived(flat.find((o) => o.value === value));
   const optionId = (i) => `${uid}-${i}`;
 
+  /** Runs once when the list opens; untrack so hovering (which changes `active`) doesn't rerun it. */
   function show(list) {
-    list.showPopover();
-    const r = button.getBoundingClientRect();
-    const below = innerHeight - r.bottom - 8;
-    up = below < Math.min(list.scrollHeight, 240) && r.top - 8 > below;
-    place(list);
-    reveal(active);
+    untrack(() => {
+      list.showPopover();
+      const r = button.getBoundingClientRect();
+      const below = innerHeight - r.bottom - 8;
+      up = below < Math.min(list.scrollHeight, 240) && r.top - 8 > below;
+      place(list);
+      reveal(active);
+    });
   }
 
   /** Under the button (over it when up), as wide, at most as tall as the room there. */
