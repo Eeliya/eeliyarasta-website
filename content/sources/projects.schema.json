@@ -1,0 +1,68 @@
+{
+  "label": "Projects",
+  "title": "title",
+  "slug": "slug",
+  "fields": [
+    {
+      "key": "slug",
+      "label": "Slug",
+      "type": "text",
+      "required": true,
+      "help": "Its spot on the projects page: /projects/#<slug>"
+    },
+    {
+      "key": "title",
+      "label": "Title",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "kind",
+      "label": "Kind",
+      "type": "text",
+      "width": "half",
+      "list": true
+    },
+    {
+      "key": "year",
+      "label": "Year",
+      "type": "number",
+      "width": "half"
+    },
+    {
+      "key": "description",
+      "label": "Description",
+      "type": "longtext"
+    },
+    {
+      "key": "image",
+      "label": "Photo",
+      "type": "photo"
+    },
+    {
+      "key": "url",
+      "label": "Link",
+      "type": "link",
+      "help": "https://…; empty: no link"
+    },
+    {
+      "key": "linkLabel",
+      "label": "Link text",
+      "type": "text",
+      "width": "half"
+    },
+    {
+      "key": "linkOut",
+      "label": "Menu links to it",
+      "type": "boolean",
+      "width": "half",
+      "help": "The menu opens the link instead of the projects page"
+    },
+    {
+      "key": "placeholder",
+      "label": "Placeholder",
+      "type": "boolean",
+      "help": "Stock photo: marked as a placeholder"
+    }
+  ]
+}

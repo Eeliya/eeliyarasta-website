@@ -1,0 +1,41 @@
+{
+  "name": "Eeliya Rasta",
+  "url": "https://eeliyarasta.com",
+  "mediaUrl": "",
+  "lang": "en",
+  "title": "Eeliya Rasta: Photography & Projects",
+  "titleTemplate": "{page} | {site}",
+  "description": "Eeliya Rasta is a portrait and editorial photographer in the Netherlands, shooting on a Fujifilm X100V, who also builds websites and DIY things.",
+  "robots": "index",
+  "tagline": "Portrait & editorial photography",
+  "location": "Netherlands",
+  "timezone": "Europe/Amsterdam",
+  "jobTitle": "Photographer",
+  "country": "NL",
+  "ogImage": "people/noor-vermeer/02.jpg",
+  "email": "hello@eeliyarasta.com",
+  "emailIsPlaceholder": true,
+  "accent": "#cfc8b8",
+  "social": [
+    {
+      "label": "Instagram",
+      "handle": "@eeliya.rasta",
+      "url": "https://www.instagram.com/eeliya.rasta/"
+    },
+    { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
+    { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
+  ],
+  "footer": {
+    "label": "Say hello",
+    "cta": "Let's make\nsomething.",
+    "note": "Shot on Fujifilm X100V. Built with Vite + GSAP.",
+    "toTop": "Back to top",
+    "columns": {
+      "social": { "title": "Social" },
+      "index": { "title": "Index" },
+      "contact": { "title": "Contact" },
+      "time": { "title": "Local time" }
+    }
+  },
+  "nav": { "menu": "Menu", "close": "Close", "clock": "NL" }
+}

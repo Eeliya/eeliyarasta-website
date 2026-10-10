@@ -1,0 +1,52 @@
+{
+  "curtain": "Projects",
+  "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." },
+  "sections": [
+    {
+      "id": "s-ncsm",
+      "height": "auto",
+      "align": "center",
+      "rows": 19,
+      "width": "contained",
+      "spacing": { "top": 23, "bottom": 9 },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-b4w8",
+          "type": "heading",
+          "crumb": "Projects",
+          "title": "Projects",
+          "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
+          "config": { "count": "projects" },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 19 },
+          "size": "auto"
+        }
+      ],
+      "mobile": {
+        "spacing": { "top": 16, "bottom": 8 }
+      }
+    },
+    {
+      "id": "s-ojv4",
+      "height": "auto",
+      "align": "center",
+      "rows": 46,
+      "width": "contained",
+      "spacing": { "top": 0, "bottom": 14 },
+      "enabled": true,
+      "blocks": [
+        {
+          "id": "b-h6t6",
+          "type": "projects",
+          "config": { "source": "projects" },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 46 },
+          "motion": { "anim": "list-up", "trigger": "load" },
+          "size": "auto"
+        }
+      ],
+      "mobile": {
+        "spacing": { "top": 0, "bottom": 13 }
+      }
+    }
+  ]
+}

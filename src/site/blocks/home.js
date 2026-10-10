@@ -1,0 +1,202 @@
+/**
+ * Block types of the home page look: the hero with its scattered photos, the big intro
+ * statement, a grid of a source's photos, the project list. See ./index.js for the shape.
+ */
+import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed } from '../helpers.js';
+import { sourceFile } from '../files.js';
+import { schemaOf } from '../schemas.js';
+import { sectionHead, projectList } from '../templates/partials.js';
+import { sourceList, sourcePage } from './data.js';
+
+/** Images of a source item: albums have images[], projects a single image. */
+const imagesOf = (item) =>
+  Array.isArray(item?.images) ? item.images : item?.image ? [{ src: item.image }] : [];
+
+const heroPhoto = (ctx, b, p, i) => {
+  const mobile = p.mx !== undefined;
+  const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${p.mx}%;--my:${p.my}%;--mw:${p.mw}vw;` : ''}`;
+  if (!p.src) return '';
+  return html` <a
+    class="scatter scatter--${p.layer === 'front' ? 'front' : 'back'}${mobile ? '' : ' scatter--desktop'}"
+    href="${esc(p.link)}"
+    style="${style}"
+    data-depth="${p.depth}"
+    aria-label="${esc(p.label)}"
+  >
+    <span class="scatter__drift"
+      ><span class="scatter__frame">
+        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
+      </span></span
+    >
+  </a>`;
+};
+
+/** The big name over scattered photos (photos: [{ src, link, label, x, y, w, mx?, my?, mw?, depth, layer }]). */
+export const hero = {
+  type: 'hero',
+  label: 'Hero',
+  icon: 'star',
+  fields: [
+    { key: 'title', label: 'Name', type: 'words', width: 'half' },
+    { key: 'eyebrow', label: 'Eyebrow', width: 'half' },
+    { key: 'subline', label: 'Subline', type: 'block' },
+    {
+      key: 'photos',
+      label: 'Photos',
+      list: { src: 'image' },
+      // a new photo: in the middle, behind the name (x / y / w in % of the hero; see heroPhoto)
+      item: { src: '', x: 40, y: 30, w: 16, depth: 1, layer: 'back' },
+    },
+  ],
+  defaults: { title: 'Your name', eyebrow: '', subline: '', photos: [] },
+  render: (s, ctx, b) =>
+    html` <div class="hero" data-hero>
+      <div class="hero__photos" data-anim="hero.photos">
+        ${(s.photos || []).map((p, i) => heroPhoto(ctx, b, p, i))}
+      </div>
+      <h1 class="hero__title" data-anim="hero.title">
+        <span class="hero__name" ${b.ed('title', 'words')}
+          >${words(s.title ?? ctx.site.name)}</span
+        >
+      </h1>
+      <div class="hero__meta" data-anim="hero.meta">
+        <span class="label" ${b.ed('eyebrow')}>${esc(s.eyebrow)}</span>
+        <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
+        <p class="hero__subline" ${b.ed('subline', 'block')}>${lines(s.subline)}</p>
+      </div>
+    </div>`,
+};
+
+/** A big statement in the display font. */
+export const intro = {
+  type: 'intro',
+  label: 'Statement',
+  icon: 'quote-left',
+  fields: [{ key: 'text', label: 'Text', type: 'block' }],
+  defaults: { text: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
+  render: (s, ctx, b) =>
+    html` <div class="intro">
+      <p class="intro__text" ${b.ed('text', 'block')}>${lines(s.text)}</p>
+    </div>`,
+};
+
+/** Interleave the first N images of each item (e.g. 4 per person) for a photo-tile grid. */
+const interleave = (items, perItem = 4) => {
+  const tiles = [];
+  for (let i = 0; i < perItem; i++)
+    items.forEach((item, at) => {
+      const image = imagesOf(item)[i];
+      if (image) tiles.push({ item, at, image, index: i });
+    });
+  return tiles;
+};
+
+/** Photo tiles (people look): the first 4 images of every item, interleaved. */
+const photoTiles = (ctx, source, items, layout) => {
+  const { title } = schemaOf(ctx, source); // the field that names an item
+  return html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}">
+    ${interleave(items).map(
+      ({ item, at, image, index }) => html`
+      <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
+        <span class="tile__media">${img(ctx, image.src, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
+        <span class="tile__cap"><span${ed(sourceFile(source), [at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
+      </a>`,
+    )}
+  </div>`;
+};
+
+/** Landscape cards (places look): cover image, name, location · year · photo count. */
+const placeCards = (ctx, source, items, layout) =>
+  html` <div
+    class="placecards${layout === 'even' ? ' placecards--even' : ''}"
+  >
+    ${items.map((p, i) => {
+      const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
+      return html`
+      <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
+        <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
+        <span class="placecard__info">
+          <span class="placecard__name"${ed(sourceFile(source), [i, 'name'])}>${esc(p.name)}</span>
+          <span class="label"><span${ed(sourceFile(source), [i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>
+        </span>
+      </a>`;
+    })}
+  </div>`;
+
+/** Which tile look a grid uses, by source. Anything not listed gets photo tiles. */
+const GRID_LOOKS = { places: placeCards };
+
+/** A head (label, title, button), then a source's photos as tiles (or place cards for places). */
+export const grid = {
+  type: 'grid',
+  label: 'Photo grid',
+  icon: 'table-cells',
+  fields: [
+    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'title', label: 'Title', width: 'half' },
+    { key: 'cta', label: 'Button' },
+  ],
+  config: [
+    { key: 'source', label: 'Source', type: 'source' },
+    {
+      key: 'layout',
+      label: 'Layout',
+      type: 'select',
+      options: [
+        ['staggered', 'Staggered'],
+        ['even', 'Even'],
+      ],
+    },
+  ],
+  defaults: {
+    label: 'People',
+    title: 'New grid',
+    cta: 'See all',
+    config: { source: 'people', layout: 'staggered' },
+    motion: { anim: 'grid-reveal' },
+  },
+  render: (s, ctx, b) => {
+    const source = s.config?.source || 'people';
+    const look = GRID_LOOKS[source] || photoTiles;
+    const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
+    return html` <div class="gridblock gridblock--${esc(source)}">
+      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
+      ${look(ctx, source, sourceList(ctx, source), layout)}
+    </div>`;
+  },
+};
+
+/**
+ * The project list (a source's items, rows that open). With a title it has a head
+ * and a link to all (the home look); without, it is a page's own list.
+ */
+export const projects = {
+  type: 'projects',
+  label: 'Project list',
+  icon: 'list',
+  fields: [
+    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'title', label: 'Title (empty: no heading)', width: 'half' },
+    { key: 'cta', label: 'Button' },
+  ],
+  config: [{ key: 'source', label: 'Source', type: 'source' }],
+  defaults: {
+    label: 'Projects',
+    title: 'Things I build',
+    cta: 'All projects',
+    config: { source: 'projects' },
+    motion: { anim: 'list-up' },
+  },
+  render: (s, ctx, b) => {
+    const source = s.config?.source || 'projects';
+    const list = sourceList(ctx, source);
+    if (!s.title)
+      return html` <div class="projectsblock">
+        ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2 })}
+      </div>`;
+    return html` <div class="projectsblock">
+      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
+      ${projectList(ctx, list, { id: `projects-${b.id}`, source })}
+    </div>`;
+  },
+};
