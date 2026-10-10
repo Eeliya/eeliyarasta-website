@@ -89,7 +89,7 @@ const byTree = (a, b) => {
  * source, items without or with duplicate slugs); those items get no page.
  */
 export function buildRoutes(content) {
-  const { site, pages = {}, sources = {} } = content;
+  const { site = {}, pages = {}, sources = {} } = content;
   const warnings = [];
   const siteNoindex = site.robots === 'noindex';
   const ids = Object.keys(pages).sort(byTree);

@@ -31,16 +31,27 @@ import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
 import {
   PHOTOS,
+  REDIRECTS,
   TEMPLATE,
   isContentFile,
   isSlug,
   pageFile,
   sourceFile,
 } from '../src/site/files.js';
-import { NAMED_VIEWS } from '../src/site/routes.js';
+import { NAMED_VIEWS, pathOfId } from '../src/site/routes.js';
 import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
-import { readContentFile, walkJson, writeFileAtomic } from './content.mjs';
+import { readContentDir, readContentFile, walkJson, writeFileAtomic } from './content.mjs';
+import { set as setAt } from '../src/editor/lib/pointer.js';
+import {
+  moveLinks,
+  moveRedirects,
+  pageMoves,
+  pathKey,
+  pruneRedirects,
+  redirectsOf,
+  sitePaths,
+} from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { newSection } from '../src/site/sections/index.js';
 
@@ -80,22 +91,31 @@ const titleCase = (s) =>
  *   add       { parent, name, title? }  the folder <parent>/<name>/ with its index.json
  *   template  { parent, source }        <parent>/[slug].json: a page per item of the source
  *   rename    { id, name }              the page's folder, with everything in it
- *   delete    { id }                    the page's folder, with everything in it ([slug]: its file)
+ *   delete    { id, redirect }          the page's folder, with everything in it ([slug]: its file);
+ *                                       its paths redirect to `redirect` (a page's path; default:
+ *                                       the parent page), or go when it is null
  *
  * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted, and there
  * is no [slug] at the root. Returns { status, body }; body.created and body.removed list the
- * content files ("pages/x/index.json") that appeared and went.
+ * content files ("pages/x/index.json") that appeared and went, body.changed the others it
+ * wrote: rename and delete keep links and redirects.json up to date (src/site/redirects.js),
+ * body.links links were changed, body.broken links point at a deleted page without a
+ * redirect, body.added and body.pruned are the redirects added and removed (from a path that
+ * is a page again).
  */
 export function pagesOp(
   root,
-  { op, id, parent = '', name, title, source } = {},
+  { op, id, parent = '', name, title, source, redirect } = {},
   onWrite = () => {},
 ) {
   const content = path.join(root, CONTENT_DIR);
   const abs = (file) => path.join(content, ...file.split('/'));
   const dirOf = (pid) => path.join(content, 'pages', ...pid.split('/'));
   const fail = (status, error) => ({ status, body: { error } });
-  const done = (body) => ({ status: 200, body: { ok: true, created: [], removed: [], ...body } });
+  const done = (body) => ({
+    status: 200,
+    body: { ok: true, created: [], removed: [], ...body, ...keepRedirects() },
+  });
   const isPage = (pid) =>
     typeof pid === 'string' && isContentFile(pageFile(pid)) && fs.existsSync(abs(pageFile(pid)));
   const filesIn = (pid) =>
@@ -114,6 +134,47 @@ export function pagesOp(
     fs.mkdirSync(path.dirname(abs(file)), { recursive: true });
     writeFileAtomic(abs(file), formatJSON(data));
   };
+
+  // rename / delete: { moves, edits, broken }; changed: the other files written
+  let plan = null;
+  const changed = new Set();
+  const writeData = (file, data) => {
+    write(file, data);
+    changed.add(file);
+  };
+  /** Write the link edits, to the files' names after the op (fileOf; null: deleted). */
+  function applyPlan(fileOf) {
+    const byFile = {};
+    for (const e of plan.edits) if (fileOf(e.file)) (byFile[fileOf(e.file)] ||= []).push(e);
+    for (const [file, edits] of Object.entries(byFile)) {
+      const data = JSON.parse(fs.readFileSync(abs(file), 'utf8'));
+      for (const e of edits) setAt(data, e.parts, e.value);
+      writeData(file, data);
+    }
+  }
+  /**
+   * After every op: redirects to moved paths follow them, moved paths get one, and redirects
+   * from a path that is a page (again) go. Returns what done() reports.
+   */
+  function keepRedirects() {
+    let after;
+    try {
+      after = readContentDir(root);
+    } catch {
+      return {}; // a broken file: the build says which
+    }
+    const old = redirectsOf(after);
+    const moved = plan ? moveRedirects(old, plan.moves) : { list: old, added: [] };
+    const { list, pruned } = pruneRedirects(moved.list, sitePaths(after));
+    if (JSON.stringify(list) !== JSON.stringify(old)) writeData(REDIRECTS, list);
+    return {
+      changed: [...changed],
+      links: plan?.edits.length ?? 0,
+      broken: plan?.broken ?? 0,
+      added: moved.added,
+      pruned,
+    };
+  }
 
   if (!['add', 'template', 'rename', 'delete'].includes(op))
     return fail(400, `Unknown pages op "${op ?? ''}"`);
@@ -150,10 +211,32 @@ export function pagesOp(
   if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed or deleted`);
   const template = id.endsWith(TEMPLATE);
 
+  if (op === 'rename' && template) return fail(400, 'A [slug] page is always called [slug]');
   if (op === 'rename') {
-    if (template) return fail(400, 'A [slug] page is always called [slug]');
     const bad = checkName(parentOf(id), name);
     if (bad) return fail(400, bad);
+  }
+  // the content before: which paths move, the links and redirects that follow them
+  let before;
+  try {
+    before = readContentDir(root);
+  } catch (err) {
+    return fail(400, `Fix the content first: ${err.message}`);
+  }
+  const target = redirect === undefined ? pathOfId(parentOf(id) || 'home') : redirect;
+  const moves = pageMoves(before, op === 'rename' ? { id, name } : { id, to: target });
+  if (op === 'delete' && target !== null) {
+    if (
+      typeof target !== 'string' ||
+      !sitePaths(before).has(pathKey(target)) ||
+      target.includes(':')
+    )
+      return fail(400, `No page "${target}" to redirect to`);
+    if (moves.has(pathKey(target))) return fail(400, `${target} is deleted too: pick another page`);
+  }
+  plan = { moves, ...moveLinks(before, moves, { hash: op === 'rename' }) };
+
+  if (op === 'rename') {
     const to = join(parentOf(id), name);
     const inside = filesIn(id);
     onWrite();
@@ -161,6 +244,8 @@ export function pagesOp(
     // A page named after a built-in view (people, about, ...) keeps that view.
     const data = JSON.parse(fs.readFileSync(abs(pageFile(to)), 'utf8'));
     if (NAMED_VIEWS[id] && !data.view) write(pageFile(to), { ...data, view: NAMED_VIEWS[id] });
+    const prefix = `pages/${id}/`;
+    applyPlan((f) => (f.startsWith(prefix) ? `pages/${to}/${f.slice(prefix.length)}` : f));
     return done({
       id: to,
       created: inside.map((f) => `pages/${to}/${f.slice(`pages/${id}/`.length)}`),
@@ -173,6 +258,7 @@ export function pagesOp(
   onWrite();
   if (template) fs.rmSync(abs(pageFile(id)));
   else fs.rmSync(dirOf(id), { recursive: true });
+  applyPlan((f) => (removed.includes(f) ? null : f));
   return done({ id, removed });
 }
 

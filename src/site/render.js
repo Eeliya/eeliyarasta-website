@@ -12,6 +12,7 @@ import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.j
 
 export { getRoutes, buildRoutes, sitemapXml };
 export { seoWarnings } from './seo.js';
+export { buildRedirects, pathsOf, redirectsText } from './redirects.js';
 
 /**
  * { head, body, lang } of a route; lang: <html lang>.

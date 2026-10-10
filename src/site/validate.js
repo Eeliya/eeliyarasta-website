@@ -6,7 +6,16 @@
  *   parseContent(text, file)   JSON.parse, with "content/<file>: invalid JSON … (line L, column C)"
  *   checkContent(file, data)   a list of problems ([] when fine), e.g. "footer must be an object"
  */
-import { ANIMATIONS, NAV, PHOTOS, SITE, TEMPLATE, pageIdOf, sourceIdOf } from './files.js';
+import {
+  ANIMATIONS,
+  NAV,
+  PHOTOS,
+  REDIRECTS,
+  SITE,
+  TEMPLATE,
+  pageIdOf,
+  sourceIdOf,
+} from './files.js';
 import { SECTION_TYPES } from './sections/index.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -115,6 +124,30 @@ function checkNav(d) {
   return out;
 }
 
+/**
+ * settings/redirects.json (src/site/redirects.js): a list of { from, to, status? }. Whether `to`
+ * is a page needs the routes: the build warns about that.
+ */
+function checkRedirects(d) {
+  if (!Array.isArray(d)) return [`must be a list (a JSON array), not ${typeOf(d)}`];
+  const out = [];
+  const seen = new Set();
+  d.forEach((r, i) => {
+    const name = `redirect ${i + 1}`;
+    if (!isObject(r)) return out.push(`${name} must be an object`);
+    if (typeof r.from !== 'string' || !r.from.startsWith('/') || r.from.startsWith('//'))
+      out.push(`${name}: "from" must be a path that starts with /`);
+    else if (/\s/.test(r.from)) out.push(`${name}: "from" can't have spaces`);
+    else if (seen.has(r.from)) out.push(`${name}: another redirect is from ${r.from}`);
+    seen.add(r.from);
+    if (typeof r.to !== 'string' || !/^(\/(?!\/)|https?:\/\/)\S*$/.test(r.to))
+      out.push(`${name}: "to" must be a path that starts with / or an http(s) URL, without spaces`);
+    if (r.status !== undefined && ![301, 302].includes(r.status))
+      out.push(`${name}: "status" is 301 (moved for good, the default) or 302 (for now)`);
+  });
+  return out;
+}
+
 /** A page's search and share meta (src/site/seo.js). */
 function checkMeta(meta) {
   if (!isObject(meta)) return [];
@@ -203,6 +236,7 @@ export function checkContent(file, data) {
     if (!Array.isArray(data)) return [`must be a list (a JSON array), not ${typeOf(data)}`];
     return data.flatMap((item, i) => (isObject(item) ? [] : [`item ${i + 1} must be an object`]));
   }
+  if (file === REDIRECTS) return checkRedirects(data);
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
   if (file === SITE) return checkSite(data);
   if (file === ANIMATIONS) return checkAnimations(data);

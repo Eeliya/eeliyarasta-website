@@ -8,7 +8,7 @@
  *                               item of a source (see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
- *                               animations.json), and photos.json:
+ *                               animations.json, redirects.json: a list), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
  *                               sizes of photos uploaded to R2; written by the editor's Media
  *                               window and the upload (not by Save), committed by Publish
@@ -36,6 +36,7 @@ export const NAV = settingsFile('nav');
 export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
 export const PHOTOS = settingsFile('photos');
+export const REDIRECTS = settingsFile('redirects');
 
 /**
  * A page file's id (pageFile backwards): "pages/index.json" -> "home",
@@ -103,5 +104,6 @@ export function contentFromFiles(files) {
     animations: files[ANIMATIONS] || {},
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
     photos: files[PHOTOS] || {},
+    redirects: Array.isArray(files[REDIRECTS]) ? files[REDIRECTS] : [],
   };
 }

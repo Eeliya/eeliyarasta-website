@@ -5,7 +5,8 @@
  *          templates in src/site (via Vite's SSR loader, so edits hot-reload).
  *  build → after Vite bundles the client (index.html → dist/index.html with hashed
  *          JS/CSS), every route is rendered into that shell and written to
- *          dist/<route>/index.html, plus 404.html, sitemap.xml and robots.txt.
+ *          dist/<route>/index.html, plus 404.html, sitemap.xml, robots.txt and _redirects
+ *          (content/settings/redirects.json, src/site/redirects.js).
  *
  * index.html is the shell; it contains two markers: <!--ssr-head--> and <!--ssr-body-->.
  *
@@ -132,9 +133,15 @@ export default function staticSite() {
       const shellFile = path.join(outDir, 'index.html');
       if (!fs.existsSync(shellFile)) return;
       const shell = fs.readFileSync(shellFile, 'utf8');
-      const { buildRoutes, renderRoute, seoWarnings, sitemapXml } = await import(
-        pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`
-      );
+      const {
+        buildRedirects,
+        buildRoutes,
+        pathsOf,
+        redirectsText,
+        renderRoute,
+        seoWarnings,
+        sitemapXml,
+      } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
       const content = loadContent(root);
       const { routes, warnings } = buildRoutes(content);
       for (const w of warnings) config.logger.warn(`\x1b[33m[routes]\x1b[0m ${w}`);
@@ -151,6 +158,11 @@ export default function staticSite() {
         path.join(outDir, 'robots.txt'),
         `User-agent: *\nAllow: /\nSitemap: ${content.site.url}/sitemap.xml\n`,
       );
+      // Cloudflare Pages / Netlify: "from to status" per line
+      const redirects = buildRedirects(content.redirects, pathsOf(content));
+      for (const w of redirects.warnings) config.logger.warn(`\x1b[33m[redirects]\x1b[0m ${w}`);
+      const text = redirectsText(redirects.list);
+      fs.writeFileSync(path.join(outDir, '_redirects'), text && `${text}\n`);
 
       // The editor is dev-only: make sure nothing of it ends up in the build.
       fs.rmSync(path.join(outDir, 'edit'), { recursive: true, force: true });
