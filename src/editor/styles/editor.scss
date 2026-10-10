@@ -26,6 +26,8 @@ body {
   --panel-w: 400px; // the side panel
   --btn: #2a2a2a; // buttons (.btn, .icon-btn): solid, on the panel and in windows
   --btn-hover: #383838;
+  --danger: #a8352c; // Delete, Discard: a solid red pill with light text
+  --danger-hover: #ba4237;
 }
 
 body {
@@ -199,9 +201,7 @@ kbd {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.12),
     inset 0 0 0 1px var(--line);
-  transition:
-    background 0.2s,
-    transform 0.3s var(--ease-out);
+  transition: background 0.2s;
 
   &:hover:not(:disabled) {
     background: var(--btn-hover);
@@ -240,16 +240,17 @@ kbd {
     box-shadow: none;
 
     &:hover:not(:disabled) {
-      background: var(--fg);
-      transform: translateY(-1px);
+      background: #fff;
     }
   }
 
   &--danger {
-    color: #ff8a7a;
+    color: #fff4f2;
+    background: var(--danger);
+    box-shadow: none;
 
     &:hover:not(:disabled) {
-      background: #3a2421;
+      background: var(--danger-hover);
     }
   }
 }
@@ -270,6 +271,7 @@ kbd {
 
     &:hover:not(:disabled) {
       color: var(--fg);
+      background: var(--btn-hover);
     }
   }
 }
