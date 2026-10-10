@@ -13,7 +13,7 @@ npm install
 npm run dev       # http://localhost:5173 – pages rendered on the fly, hot reload
 npm run build     # → dist/ (one index.html per route + 404.html, sitemap.xml, robots.txt)
 npm run preview   # serve dist/ on http://localhost:4173
-npm test          # unit tests (R2 upload against a local mock S3)
+npm test          # unit tests (R2 upload and delete against a local mock S3, ...)
 npm run lint      # ESLint + Stylelint (npm run lint:fix fixes what it can)
 ```
 
@@ -115,10 +115,11 @@ site settings can live side by side):
 | `content/settings/site.json`       | name, SEO description, socials, email, nav labels (and the clock label `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
 | `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                               |
 | `content/pages/index.json`         | hero name (`hero.title`, the big title), hero text and the **scattered hero photos** (position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front)                                                                                                  |
-| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `imageAlt`, `paragraphs`, `facts`, `emailLabel`; photography: `panels` `[{ source, title, unit }]`), curtain text, `meta`: `title` / `description` for `<head>`       |
+| `content/pages/<page>/index.json`  | the other pages: `crumb`, `title`, `intro` (404 also `cta`; about: `headline`, `image`, `paragraphs`, `facts`, `emailLabel`; photography: `panels` `[{ source, title, unit }]`), curtain text, `meta`: `title` / `description` for `<head>`                   |
 | `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
 | `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                            |
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                              |
+| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                      |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
@@ -203,24 +204,30 @@ If `sharp` is missing, originals are copied and the site still works. Both outpu
 generated, so they're git-ignored. Sizes, format and quality are in `scripts/image-variants.mjs`,
 shared with photos uploaded to R2 (below).
 
+**Alt text belongs to the photo**, not to the page using it: one entry per photo in
+`content/settings/photos.json` (`alt`), keyed by its `media/` path or R2 key, edited in the
+editor's Media window. Every `<img>` takes it from there (`altOf()` / `img()` in
+`src/site/helpers.js`); thumbnails and repeats are `decorative` (`alt=""`). A photo without
+alt text renders `alt=""` and the build warns.
+
 ### Photos on Cloudflare R2
 
-Photo fields in the editor (the About photo, the hero photos, album photos, a project's image;
-in the Content tab and the Sources window) have an **Upload** button, and take a photo dropped on
-them (JPEG, PNG, WebP, AVIF, GIF or TIFF, up to 60 MB). The dev server treats it like a photo in
+The editor's **Media window** uploads photos (its Upload button, or drop files anywhere on it,
+several at a time; JPEG, PNG, WebP, AVIF, GIF or TIFF, up to 60 MB). The dev server treats each like a photo in
 `media/`: auto-rotated from EXIF, metadata stripped (no GPS or camera data), WebP at 480, 960
 and 1600 px (never wider than the original). Each size goes to the R2 bucket as
 `photos/<name>-<hash>-<width>.webp` (the hash of the original bytes: the same photo gets the
 same keys, uploads nothing the second time, and is cached forever). The original is not kept:
-the largest size is the fallback `src`. The field gets that key (e.g.
-`photos/noor-01-3f9a0c1b2d-1600.webp`), one undo step like typing. The field shows "Uploading
-N%" then "Resizing…".
+the largest size is the fallback `src`, and the key the content stores (e.g.
+`photos/noor-01-3f9a0c1b2d-1600.webp`). Each tile shows "Uploading N%" then "Resizing…".
 
 Each upload adds an entry to **`content/settings/photos.json`**: size, the keys of its widths,
 the blurred placeholder and the accent colour. The build renders `srcset`, `width/height` and
 the placeholder from it, exactly like for `media/` photos, without downloading anything from R2.
-Publish commits it with the content (the editor itself never edits it). A key missing from it
-renders as a plain `<img>` and the build warns.
+Publish commits it with the content (Save never writes it: uploads, alt text and deletes in the
+Media window write it right away). A key missing from it renders as a plain `<img>` and the
+build warns. **Delete** in the Media window (only for photos nothing uses) removes every size
+from R2 (`deletePhoto`, a SigV4 `DELETE` per key) and the entry.
 
 The content stores keys, not URLs: `mediaUrl()` / `photoOf()` (`src/site/helpers.js`) turn a
 value into URLs when the page is rendered. A path that is in `media/` stays local, a full
@@ -229,8 +236,9 @@ Photos). So the photo domain can change in one place, and existing photos keep w
 
 The keys live in `.env.local` (git-ignored; template: `.env.example`). Only the dev server reads
 them (`loadEnv` in `scripts/vite-plugin-static-site.mjs`, R2_* only); nothing reaches the
-browser or `dist/`. Uploads: `scripts/r2.mjs` (SigV4 via `aws4fetch`, tested against a mock
-S3 by `npm test`). Without keys an upload says "R2 not configured: add keys to .env.local".
+browser or `dist/`. Uploads and deletes: `scripts/r2.mjs` (SigV4 via `aws4fetch`, tested
+against a mock S3 by `npm test`). Without keys they say "R2 not configured: add keys to
+.env.local".
 
 Setup, once:
 
@@ -347,7 +355,19 @@ shows up in the preview after Save.
 
 The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
-button, or a click on a person/place/project in the preview, opens straight into that item.
+button, or a click on a person/place/project in the preview, opens straight into that item. In
+the Content tab, a field whose value comes from a source shows its file (`people.json`) as a
+button: it opens the explorer on that item with the field highlighted (`&field=` in the URL).
+
+**Photo fields** show the photo (64 px), its file name and sizes (`1600×2000 · 3 sizes · R2`,
+`1280×1600 · local`); no text input. The thumbnail or **Change** opens the **Media window**
+(also the images button in the toolbar): every photo, R2 and local, filtered All / R2 / Local,
+with Upload (see [Photos on Cloudflare R2](#photos-on-cloudflare-r2)). The selected photo shows
+its sizes, where the content uses it (click to go there) and its alt text. Opened from a field,
+**Use this photo** puts it in the field (one undo step). **Delete** is offered only for photos
+nothing uses: an R2 photo loses all its sizes, a local one its file in `media/` (Publish only
+commits `content/`, so commit that removal yourself). `&media=<key>` (and `&pick=<field>`)
+in the URL reopens it.
 
 **Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
 Explorer item, so a shared link opens the same view:
@@ -436,7 +456,7 @@ These editor markers (`data-edit`, `data-edit-type`, `data-section`, `data-secti
   not pushed).
 
 The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/status`,
-`/upload`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
+`/upload`, `/media`, `/pages`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
 (loopback address, localhost `Host`, same-origin `Origin`), and only touch the files listed in
 `src/editor/config.js`. Git runs without a shell and never prompts in the terminal, so pushing
 needs a working git login for GitHub on the machine running `npm run dev` (e.g. `gh auth login`
@@ -446,7 +466,7 @@ All JSON is written by the same formatter (`src/editor/lib/json-format.js`), so 
 change the lines that changed.
 
 **Later:** adding, removing and reordering album photos isn't in the editor yet (replacing one is:
-upload in its field, see [Photos on Cloudflare R2](#photos-on-cloudflare-r2)). Edit
+Change in its field, see the Media window above). Edit
 `content/sources/*.json` by hand for that.
 
 ### Design notes
