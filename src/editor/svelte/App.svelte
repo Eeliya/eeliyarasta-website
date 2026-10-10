@@ -40,6 +40,26 @@
   const unpublished = $derived(ui.pub?.files || []);
   const ahead = $derived(ui.pub?.ahead || 0);
   const unpublishedChanges = $derived(unpublished.reduce((n, f) => n + (f.changes || 1), 0));
+  // the footer's status line: what is left to do (unsaved, to publish, to push) or done
+  const pending = $derived.by(() => {
+    const details = [
+      unpublished.length &&
+        `${plural(unpublishedChanges, 'saved change')} not published (${plural(unpublished.length, 'file')})`,
+      ahead && `${plural(ahead, 'commit')} not pushed`,
+      ui.pub?.error && `Publish unavailable: ${ui.pub.error}`,
+      ui.status,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const line = (kind, text) => ({ kind, text, details });
+    if (live.changes) return line('unsaved', 'Unsaved changes');
+    if (!ui.pub) return line('none', 'Checking…');
+    if (ui.pub.error) return line('none', 'Publish unavailable');
+    if (unpublished.length)
+      return line('pending', `${plural(unpublishedChanges, 'change')} to publish`);
+    if (ahead) return line('pending', `${plural(ahead, 'commit')} to push`);
+    return line('clean', 'All published');
+  });
   const branch = $derived(ui.pub?.branch ? `origin/${ui.pub.branch}` : 'GitHub');
 
   // The tab, Menu/Footer, the open Source Explorer item and library animation in the URL (persist.js).
@@ -181,28 +201,11 @@
     {/if}
 
     <footer class="ed-foot">
-      <p class="ed-pending" data-kind={unpublished.length || ahead ? 'pending' : 'clean'}>
-        {#if !ui.pub}
-          <span class="muted">Checking for unpublished changes…</span>
-        {:else if ui.pub.error}
-          <span class="muted">Publish unavailable: {ui.pub.error}</span>
-        {:else}
-          <i class="ed-pending__dot"></i>
-          {#if unpublished.length}
-            <span>
-              <b>{plural(unpublishedChanges, 'saved change')}</b>
-              not published · {plural(unpublished.length, 'file')}
-            </span>
-          {:else}
-            <span class="muted">Everything saved is published</span>
-          {/if}
-          {#if ahead}
-            <span class="muted">· {plural(ahead, 'commit')} not pushed</span>
-          {/if}
-        {/if}
+      <!-- one short line before Save / Publish; the details in its tooltip -->
+      <p class="ed-pending" data-kind={pending.kind} title={pending.details} role="status">
+        {#if pending.kind !== 'none'}<i class="ed-pending__dot"></i>{/if}
+        <span>{pending.text}</span>
       </p>
-      <p class="ed-status" role="status" aria-live="polite">{ui.status}</p>
-      <span class="ed-source">dev · local files</span>
       <Button
         title="Write the changes to content/*.json as a draft ({MOD}+S)"
         disabled={!live.changes || ui.saving || ui.publishing}
@@ -307,23 +310,6 @@
     letter-spacing: -0.01em;
   }
 
-  // where saves go, in the footer before Save / Publish; cut with … when narrow
-  .ed-source {
-    justify-self: start;
-    max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: 10px;
-    line-height: 16px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #b9f0c4;
-    padding: 4px 8px;
-    border-radius: 999px;
-    box-shadow: inset 0 0 0 1px var(--line);
-  }
-
   .ed-bar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -336,7 +322,7 @@
     display: flex;
   }
 
-  // pending line and status on their own rows, then [ source | Save | Publish ]
+  // [ status line | Save | Publish ]
   .ed-foot {
     border-top: 1px solid var(--line);
     padding: 12px 16px 16px;
@@ -347,44 +333,37 @@
   }
 
   .ed-pending {
-    grid-column: 1 / -1;
+    min-width: 0;
     margin: 0;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0 4px;
+    gap: 8px;
     font-size: 11px;
+    line-height: 16px;
     color: var(--muted);
 
-    b {
+    span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    &:is([data-kind='pending'], [data-kind='unsaved']) {
       color: var(--fg);
-      font-weight: 500;
     }
 
     &__dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      margin-right: 4px;
       background: #b9f0c4;
       flex: none;
     }
 
-    &[data-kind='pending'] .ed-pending__dot {
+    &:is([data-kind='pending'], [data-kind='unsaved']) .ed-pending__dot {
       background: #ffcf7a;
       box-shadow: 0 0 0 3px rgb(255 207 122 / 0.15);
     }
-  }
-
-  .ed-status {
-    grid-column: 1 / -1;
-    margin: 0;
-    color: var(--faint);
-    font-size: 10.5px;
-    min-height: 1.5em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   @media (width <= 900px) {
