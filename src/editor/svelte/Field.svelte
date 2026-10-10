@@ -58,7 +58,7 @@
   let failed = $state(''); // a thumbnail URL that did not load
   // the smallest size; the uploaded file itself when that doesn't load (no Photos address yet)
   const remote = $derived(type === 'image' && value ? thumbUrl(value) : '');
-  const thumb = $derived(failed === remote && local?.key === value ? local.url : remote);
+  const thumb = $derived(failed === remote && local && local.key === value ? local.url : remote);
 
   async function send(file) {
     if (!file || progress !== null) return;
