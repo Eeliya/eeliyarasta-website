@@ -270,10 +270,7 @@
     flex-direction: column;
     border-radius: 20px;
     overflow: hidden;
-    // glass: see-through and blurred over the stage
-    background: rgb(22 22 22 / 0.62);
-    -webkit-backdrop-filter: blur(24px) saturate(170%);
-    backdrop-filter: blur(24px) saturate(170%);
+    background: var(--bg-2);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.14),
       inset 0 0 0 1px rgb(255 255 255 / 0.08),
