@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { flowRows, rowsFor } from '../src/site/layout/flow.js';
-import { ROW_HEIGHT, rowHeightOf, rowsOf, sectionVars } from '../src/site/layout/index.js';
+import { rowsOf, sectionVars } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
 import { createStore } from '../src/editor/store.js';
 import { placeBlock, placeMobile, setSection } from '../src/editor/layout-ops.js';
@@ -67,17 +67,12 @@ test('flowRows: overlapping blocks (not above one another) do not push', () => {
   assert.deepEqual(at.title, { row: 5, rows: 3 });
 });
 
-test('row height: per section, 8px by default, 4-64 px', () => {
-  assert.equal(rowHeightOf({}), ROW_HEIGHT);
-  assert.equal(rowHeightOf({ rowHeight: 12 }), 12);
-  assert.equal(rowHeightOf({ rowHeight: 2 }), ROW_HEIGHT);
-  assert.equal(sectionVars({ rows: 3 }).includes('--grid-row'), false);
-  assert.match(sectionVars({ rows: 3, rowHeight: 12 }), /;--grid-row:12px$/);
+test('row height: the old per-section rowHeight is ignored (a row is one square cell)', () => {
+  assert.equal(sectionVars({ rows: 3, rowHeight: 12 }), sectionVars({ rows: 3 }));
+  assert.doesNotMatch(sectionVars({ rows: 3, rowHeight: 12 }), /--grid-row|--cell/);
   const page = (s) => ({ sections: [{ id: 's-aaaa', blocks: [], ...s }] });
   const F = 'pages/t/index.json';
-  assert.deepEqual(checkContent(F, page({ rowHeight: 16 })), []);
-  for (const bad of [3, 65, 8.5, '8'])
-    assert.match(checkContent(F, page({ rowHeight: bad })).join(), /rowHeight/);
+  for (const any of [16, 3, '8']) assert.deepEqual(checkContent(F, page({ rowHeight: any })), []);
 });
 
 test('sections count every block by its stored rows (aspect and auto too)', () => {
@@ -146,7 +141,7 @@ test("a drag stores where the section's blocks are now (their real rows), one un
     row: 7,
     rows: 3,
   });
-  // a section's row height: 8 is stored as nothing
+  // a section setting set and removed again
   setSection(store, F, 0, { rowHeight: 12 });
   assert.equal(store.current[F].sections[0].rowHeight, 12);
   setSection(store, F, 0, { rowHeight: undefined });

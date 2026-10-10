@@ -1,5 +1,5 @@
 /**
- * Real rows: a section is a grid of uniform rows (its row height, --grid-row), and every block
+ * Real rows: a section is a grid of uniform rows (one square cell, --cell, tall), and every block
  * spans a whole number of them. A block's stored area (pos, or its phone area) is where it was
  * placed; at any width a block may need another number of rows than it stores:
  *

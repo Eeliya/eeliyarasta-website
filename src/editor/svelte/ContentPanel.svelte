@@ -125,7 +125,7 @@
         icon="table-cells"
         variant={ui.grid ? 'primary' : 'default'}
         aria-pressed={ui.grid}
-        title="Show the sections' columns and rows in the preview"
+        title="Show the sections' square cells (120 columns, rows one cell) in the preview"
         onclick={() => actions.showGrid(!ui.grid)}
       >
         Grid

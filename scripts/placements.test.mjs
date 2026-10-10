@@ -64,9 +64,9 @@ test('placements: classes per kind and corner, the phone ones prefixed m-', () =
   assert.equal(PLACES.length, 1 + 7 + 7 + 2);
 });
 
-test('phone grid: 12 columns, only for sections where a block has a mobile area', () => {
-  const placed = blk({ mobile: { col: 7, span: 9, row: 3, rows: 4 } }); // span cut at column 12
-  assert.equal(blockVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:7;--ms:6;--mr:3;--mrs:4');
+test('phone grid: 24 columns, only for sections where a block has a mobile area', () => {
+  const placed = blk({ mobile: { col: 19, span: 9, row: 3, rows: 4 } }); // span cut at column 24
+  assert.equal(blockVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:19;--ms:6;--mr:3;--mrs:4');
   const s = sec([placed, { ...blk(), id: 'b-bbbb' }]);
   assert.equal(mobileRowsOf(s), 6);
   assert.match(sectionVars(s), /;--mrows:6$/);
@@ -109,8 +109,8 @@ test('validation: size, aspect, place, mobile, section aspect and phone spacing'
   assert.deepEqual(one({ mobile: { place: 'up' } }), [
     `${where}: "mobile.place" must be a placement (see layout)`,
   ]);
-  assert.deepEqual(one({ mobile: { col: 8, span: 6, row: 1, rows: 1 } }), [
-    `${where}: "mobile" must end by column 12 (col 8 + span 6)`,
+  assert.deepEqual(one({ mobile: { col: 20, span: 6, row: 1, rows: 1 } }), [
+    `${where}: "mobile" must end by column 24 (col 20 + span 6)`,
   ]);
   assert.match(one({ mobile: { col: 1 } })[0], /"mobile.span" must be a whole number/);
   assert.deepEqual(of({ height: 'aspect', aspect: '16:9', mobile: { spacing: { top: 3 } } }), []);
@@ -140,8 +140,8 @@ test('ops: block settings, phone areas from the stack, phone placement, reset; o
     'b-aaaa': { col: 1, span: 12, row: 1, rows: 10 },
     'b-bbbb': { col: 1, span: 12, row: 11, rows: 10 },
   };
-  placeMobile(store, F, 0, 1, { col: 7, span: 20, row: 1, rows: 10 }, { stack });
-  assert.deepEqual(blocks()[1].mobile, { col: 7, span: 6, row: 1, rows: 10 });
+  placeMobile(store, F, 0, 1, { col: 19, span: 20, row: 1, rows: 10 }, { stack });
+  assert.deepEqual(blocks()[1].mobile, { col: 19, span: 6, row: 1, rows: 10 });
   assert.deepEqual(blocks()[0].mobile, stack['b-aaaa']);
   assert.deepEqual(blocks()[0].pos, a.pos); // the desktop is untouched
   placeOnPhone(store, F, 0, 0, 'pinned');

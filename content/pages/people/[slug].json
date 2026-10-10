@@ -7,7 +7,7 @@
       "id": "s-2jiz",
       "height": "screen",
       "align": "stretch",
-      "rows": 112,
+      "rows": 75,
       "width": "full",
       "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
@@ -24,7 +24,7 @@
           ],
           "summary": { "bind": "summary" },
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 112 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 75 },
           "size": "auto"
         }
       ]

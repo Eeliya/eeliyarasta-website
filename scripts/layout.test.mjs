@@ -95,18 +95,18 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
   assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12">/); // rows grow to fit
   assert.match(out, /<div class="blk blk--text" style="--c:3;--s:10;--r:2;--rs:4;--z:2">/);
   assert.match(out, /<section class="sec sec--screen sec--bottom sec--full"/);
-  assert.match(out, /style="--c:1;--s:24;--r:1;--rs:1" hidden>/); // no pos: full width
+  assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1" hidden>/); // no pos: full width
   assert.match(out, /style="--rows:1;--pt:0;--pb:0" hidden>/);
   assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
   // a mobile area: the section keeps its grid on phones
-  const mobile = [section([block('text', { mobile: { col: 1, span: 12, row: 1, rows: 2 } })])];
+  const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
   assert.match(
     renderSections(ctxOf(page), page, F, mobile),
-    /class="sec sec--mgrid"[\s\S]*;--mc:1;--ms:12;--mr:1;--mrs:2"/,
+    /class="sec sec--mgrid"[\s\S]*;--mc:1;--ms:24;--mr:1;--mrs:2"/,
   );
-  // a block can't run past column 24
-  const wide = [section([block('text', { pos: { col: 20, span: 10, row: 1, rows: 1 } })])];
-  assert.match(renderSections(ctxOf(page), page, F, wide), /--c:20;--s:5;/);
+  // a block can't run past column 120
+  const wide = [section([block('text', { pos: { col: 116, span: 10, row: 1, rows: 1 } })])];
+  assert.match(renderSections(ctxOf(page), page, F, wide), /--c:116;--s:5;/);
 });
 
 test('render: no automatic numbering; a heading can be numbered, counting the ones that are on', () => {
@@ -176,8 +176,8 @@ test('validation: the layout, then each block against its type', () => {
   const one = (b) => problems([section([{ id: 'b-aaaa', ...b }])]);
   assert.deepEqual(one({ title: 'x' }), ['section 1, block 1 needs a "type"']);
   assert.deepEqual(one({ type: 'unknown-type', anything: 1 }), []);
-  assert.deepEqual(one({ type: 'text', pos: { col: 20, span: 10, row: 1, rows: 1 } }), [
-    'section 1, block 1 (Text): "pos" must end by column 24 (col 20 + span 10)',
+  assert.deepEqual(one({ type: 'text', pos: { col: 116, span: 10, row: 1, rows: 1 } }), [
+    'section 1, block 1 (Text): "pos" must end by column 120 (col 116 + span 10)',
   ]);
   assert.match(one({ type: 'text', pos: { col: 0, span: 1, row: 1, rows: 1 } })[0], /pos.col/);
   assert.match(one({ type: 'text', z: 1.5 })[0], /"z" must be a whole number/);
@@ -262,19 +262,19 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.deepEqual(types(), ['heading', 'text', 'text']);
 
   const b = addBlock(store, F, 0, 'button');
-  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 24, row: 13, rows: 12 }); // below
-  assert.equal(sections()[0].rows, 24);
+  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 }); // below
+  assert.equal(sections()[0].rows, 16);
   assert.ok(isId(b.id, 'b'));
   duplicateBlock(store, F, 0, 1);
   assert.deepEqual(types()[0], 'heading+button+button');
-  assert.equal(sections()[0].blocks[2].pos.row, 25);
+  assert.equal(sections()[0].blocks[2].pos.row, 17);
   moveBlock(store, F, 0, 2, 0);
   assert.deepEqual(types()[0], 'button+heading+button');
   removeBlock(store, F, 0, 0);
   assert.deepEqual(types()[0], 'heading+button');
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 30, rows: 4 });
   assert.deepEqual(sections()[0].blocks[1].pos, { col: 13, span: 12, row: 30, rows: 4 });
-  assert.equal(sections()[0].rows, 36); // a section grows to fit, never shrinks by itself
+  assert.equal(sections()[0].rows, 33); // a section grows to fit, never shrinks by itself
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 40, rows: 4 });
   assert.equal(sections()[0].rows, 43); // grown in the same step
   layerBlock(store, F, 0, 1, 1);
@@ -289,10 +289,10 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   store.undo(); // layer down
   store.undo(); // layer up
   store.undo(); // the second drag
-  assert.equal(sections()[0].rows, 36);
+  assert.equal(sections()[0].rows, 33);
   store.undo(); // the first drag
-  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 24, row: 13, rows: 12 });
-  assert.equal(rowsOf(sections()[0]), 36);
+  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 });
+  assert.equal(rowsOf(sections()[0]), 24);
   store.undo(); // remove
   assert.deepEqual(types()[0], 'button+heading+button');
   store.redo();

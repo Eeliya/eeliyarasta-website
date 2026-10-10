@@ -1,4 +1,9 @@
 /**
+ * The square grid's cell: every section's content width is measured and --cell (width / 120,
+ * the phone grid's / 24; floored to 1/64px, cellOf) set on it, before its rows are worked
+ * out, on load and whenever the section resizes (ResizeObserver, window resize; rAF-throttled
+ * besides the resize itself). A column and a row are both --cell: the cells are square.
+ *
  * Real rows (src/site/layout/flow.js): measures every block of the view's sections and sets
  * where it sits and how many rows it spans now, as --fr / --frs on the block and --frows on
  * the section (_layout.scss reads them over the stored --r / --rs / --rows, or on the phone
@@ -12,15 +17,15 @@
  * editor after it changed a layout). Sections stacking on phones have no rows: nothing is set.
  *
  * A screen (or aspect) section is at least so tall: a block that fits in it doesn't make it
- * taller by rounding up to a whole row, and when its rows come within a row of its height
- * they share it out (--ffill: 1fr, every row still the same height), so a screen-high block
- * fills a screen exactly.
+ * taller by rounding up to a whole row (it gets the whole rows that fit; rows stay square, so
+ * a screen-high block's rows may be up to a cell short of the screen, its content still is).
  */
 import { flowRows, rowsFor } from '../../site/layout/flow.js';
+import { COLS, MCOLS, cellOf } from '../../site/layout/grid.js';
 
 const PHONE = '(max-width: 760px)';
 const VARS = ['--fr', '--frs'];
-const SECTION_VARS = ['--frows', '--ffill'];
+const SECTION_VARS = ['--frows'];
 
 /** The blocks of a section: its children, a pinned one inside its pin's spacer. */
 const blocksOf = (sec) =>
@@ -44,14 +49,14 @@ function areaOf(el, phone) {
     if (!s.getPropertyValue('--mr')) return null;
     return {
       col: int(s.getPropertyValue('--mc'), 1),
-      span: int(s.getPropertyValue('--ms'), 12),
+      span: int(s.getPropertyValue('--ms'), MCOLS),
       row: int(s.getPropertyValue('--mr'), 1),
       rows: int(s.getPropertyValue('--mrs'), 1),
     };
   }
   return {
     col: int(s.getPropertyValue('--c'), 1),
-    span: int(s.getPropertyValue('--s'), 24),
+    span: int(s.getPropertyValue('--s'), COLS),
     row: int(s.getPropertyValue('--r'), 1),
     rows: int(s.getPropertyValue('--rs'), 1),
   };
@@ -79,6 +84,24 @@ function clear(sec) {
   return changed;
 }
 
+/**
+ * Set a section's --cell from its content width now (the phone grid's 24 columns on the
+ * phone, else 120); returns the cell in px (0 when it has no width, e.g. hidden).
+ */
+export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedStyle(sec)) {
+  let width = parseFloat(cs.width) || 0; // its used width (not transformed, not rounded)
+  if (cs.boxSizing === 'border-box')
+    width -=
+      parseFloat(cs.paddingLeft) +
+      parseFloat(cs.paddingRight) +
+      parseFloat(cs.borderLeftWidth) +
+      parseFloat(cs.borderRightWidth);
+  // on the phone the phone grid's, also for a stacking section (the editor turns it into one)
+  const cell = cellOf(width, phone ? MCOLS : COLS);
+  if (cell) set(sec, '--cell', `${cell}px`);
+  return cell;
+}
+
 /** The height a screen or aspect section has at least, inside its padding (else Infinity). */
 function minHeightOf(sec, cs) {
   const screen = sec.classList.contains('sec--screen');
@@ -93,9 +116,13 @@ function minHeightOf(sec, cs) {
 /** Flow one section; true when something moved. */
 export function flowSection(sec, phone = matchMedia(PHONE).matches) {
   if (document.documentElement.hasAttribute('data-flow-hold')) return false;
-  if (sec.hidden || (phone && !sec.classList.contains('sec--mgrid'))) return clear(sec);
+  if (sec.hidden) return clear(sec);
+  const before = sec.style.getPropertyValue('--cell');
+  const cell = measureCell(sec, phone);
+  const resized = sec.style.getPropertyValue('--cell') !== before;
+  if (phone && !sec.classList.contains('sec--mgrid')) return clear(sec) || resized;
   const cs = getComputedStyle(sec);
-  const row = parseFloat(cs.getPropertyValue('--grid-row')) || 8;
+  const row = cell || parseFloat(cs.getPropertyValue('--cell')) || 8;
   const avail = minHeightOf(sec, cs);
   const cap = Math.floor(avail / row + 0.01);
   const items = [];
@@ -124,13 +151,7 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
   sec.classList.remove('sec--measure');
   const stored = parseInt(sec.style.getPropertyValue(phone ? '--mrows' : '--rows'), 10) || 1;
   const { rows, at } = flowRows(items, stored);
-  let changed = set(sec, '--frows', rows);
-  const fill = Number.isFinite(avail) && rows * row > avail - row && rows * row <= avail + 0.5;
-  if (fill) changed = set(sec, '--ffill', '1fr') || changed;
-  else if (sec.style.getPropertyValue('--ffill')) {
-    sec.style.removeProperty('--ffill');
-    changed = true;
-  }
+  let changed = set(sec, '--frows', rows) || resized;
   for (const [id, el] of els) {
     const a = at[id];
     changed = set(el, '--fr', a.row) | set(el, '--frs', a.rows) || changed;

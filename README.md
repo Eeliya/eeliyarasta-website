@@ -64,7 +64,7 @@ src/
     routes.js       ← list of pages, from the files in content/pages/
     render.js       ← renderRoute(route, content) → { head, body }
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
-    layout/         ← sections and blocks on the 24-column grid, real rows, ids (see "Layout")
+    layout/         ← sections and blocks on the square 120-column grid, real rows, ids (see "Layout")
     blocks/         ← the block registry: every block type (see "Layout")
     templates/      ← layout, header/menu, footer, partials
   client/           ← browser code
@@ -208,33 +208,41 @@ every section is a grid of **blocks** (`src/site/layout/`):
       "crumb": "Photography / People",
       "title": "People",
       "config": { "count": "people", "numbered": true },
-      "pos": { "col": 1, "span": 24, "row": 1, "rows": 12 }
+      "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }
     },
     {
       "id": "b-2fq0",
       "type": "photo",
       "src": "people/noor/01.jpg",
-      "pos": { "col": 13, "span": 12, "row": 4, "rows": 20 },
+      "pos": { "col": 61, "span": 60, "row": 4, "rows": 20 },
       "z": 1
     }
   ]
 }
 ```
 
-- **The grid:** 24 columns (with the page's gutter, `--gap`) and **real rows**: every row of a
-  section has the same height, `--grid-row` (**8px**, `src/client/styles/_tokens.scss`, or the
-  section's `rowHeight`), and rows never grow. Every block spans a whole number of rows; when
-  its content needs more, it spans more (see Real rows below), so text never spills out.
+- **The grid (square, experiment `exp/square-grid-100`):** **120 columns** and **real rows**, all
+  one size, `--cell`, so **every cell is exactly square**, with no gaps either way (leave empty
+  cells between blocks for a gutter: 2 cells ≈ 23px at 1440px). `src/client/modules/rows.js`
+  measures each section's content width on load and sets `--cell` = width / 120 on it, floored
+  to 1/64px (the browser's layout unit, so a column and a row lay out to exactly the same size;
+  the under-2px left over is centred, `justify-content: center`); a ResizeObserver on every
+  section and the window's `resize` keep it current (rAF-throttled, the resize itself at once).
+  Before that runs (and without JS) `_layout.scss` uses `calc((100vw - 2 * var(--pad)) / 120)`
+  (`100vw / 120` full width), within a fraction of a px of the measured cell; not container
+  query units, because a size container would trap the fixed and fullscreen blocks. At 1440px
+  a cell is 11.375px (12px full width), at 800px 6.3px. Rows never grow: every block spans a
+  whole number of rows; when its content needs more, it spans more (see Real rows below), so
+  text never spills out. The old `rowHeight` is ignored.
 - **A section:** `height` is `auto` (its `rows`, as many as its blocks need), `screen` (at least the
   screen's height) or `aspect` (at least its width × `aspect`, e.g. `"21:9"`); in the last two
   `align` places its content: `top`, `center` (default), `bottom` or `stretch`, filling it.
   `width` is `contained` (inside the page's side margins, `--pad`) or `full` (edge to edge);
-  `spacing` is the empty rows above and below it, and `mobile.spacing` the same on phones
+  `spacing` is the space above and below it in steps of 8px (`--space`, not cells, so it
+  doesn't change with the width), and `mobile.spacing` the same on phones
   (`{ "mobile": { "spacing": { "top": 11, "bottom": 13 } } }`, the desktop's when unset);
-  `enabled: false` hides it. `rowHeight` (px, 4–64, default 8) is the height of its rows (a
-  taller row makes its rows-sized blocks and its spacing taller). A section's rows grow to fit
-  its lowest block.
-- **A block:** its `type` and content (below), `pos` (first column 1–24, columns, first row,
+  `enabled: false` hides it. A section's rows grow to fit its lowest block.
+- **A block:** its `type` and content (below), `pos` (first column 1–120, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
   `place`, an optional `mobile` layout (below) and an optional `motion`
   (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
@@ -253,11 +261,13 @@ every section is a grid of **blocks** (`src/site/layout/`):
   page mounts, at once on a window resize (and again on the next frame), when a block's content
   changes size (images, fonts) and when the editor changes a layout; it sets `--fr` / `--frs`
   on the blocks and `--frows` on the section, over the stored `--r` / `--rs` / `--rows` (the
-  phone grid's likewise). A screen-high block in a screen section fills it exactly: when the
-  rows come within a row of the screen they share it out evenly (`--ffill`). Without
+  phone grid's likewise). In a screen section a screen-high block gets the whole rows that fit
+  (rows stay square, so up to a cell short; its content is still screen-high), centred. Without
   JavaScript the stored areas apply as they are. Phone sections that stack have no rows.
   The site's content was moved to this once: content-sized blocks became `auto` with their
-  span at 1440px stored, so the pages look as they did (within a row, 8px, per section).
+  span at 1440px stored, so the pages look as they did (within a row, 8px, per section). The
+  square grid moved it again (`scripts/migrate-square-grid.mjs`): columns ×5 (phone areas ×2),
+  rows by their px edges over the 1440px cell, so pages look the same at 1440px (within a cell).
 - **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
   - `none` (default): in the grid.
   - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
@@ -278,9 +288,10 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
 - **Phones** (below 760px): a section's blocks **stack** full width in their order, with no
   placement (sticky, fixed, fullscreen and pinned fall back to the flow). A block's `mobile`
   changes that: `{ "col": 1, "span": 6, "row": 1, "rows": 20, "place": "sticky-top-left" }`.
-  Its area is on a **12-column** phone grid (`.sec--mgrid`, as soon as one block of the section
-  has an area; its rows: `--mrows`). Why 12: on a 390px screen 24 columns with the gutter are
-  3px each (unusable); 12 are ~19px and still give halves, thirds, quarters and sixths. `place`
+  Its area is on a **24-column** square phone grid (`.sec--mgrid`, as soon as one block of the
+  section has an area; its rows: `--mrows`; `--cell` = width / 24). Why 24: on a 390px screen
+  120 columns are 3px each (unusable); 24 are ~15px (rows close to the old 8px) and still give
+  halves, thirds, quarters, sixths and eighths. `place`
   alone keeps the stack and only places that block on phones.
 - **Ids:** every section and block has a stable id (`s-…`, `b-…`), given once when it is made
   (`src/site/layout/ids.js`) and kept when it moves or changes. The editor finds them in the
@@ -292,7 +303,7 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
   `src/client/styles/_layout.scss`. Blocks carry no outer spacing of their own: that is the
   section's.
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
-  ending by column 24, no id twice on a page) and each block against its type (strings, lists,
+  ending by column 120 (24 on the phone), no id twice on a page) and each block against its type (strings, lists,
   config values). An unknown block type isn't an error: it logs a build warning and is skipped.
 - **Bindings:** a block's field can show a source item's value instead of its own (below).
 
@@ -791,9 +802,9 @@ is what is stored. An aspect or auto block's rows follow its width: only its sid
 **double click** on a text edits it in place (until you click elsewhere, press Esc or Enter in
 a one-line text); a double click on a photo or a bound value opens its field in the panel.
 Links, buttons and forms in the preview don't act on clicks (Alt+click follows a link).
-**Grid** shows every section's columns and its rows. The canvas lives in the preview's own
+**Grid** shows every section's square cells (a line every cell, a stronger one every 5). The canvas lives in the preview's own
 layer (`src/editor/overlay.js`, a Shadow DOM). In the **mobile preview** a drag edits the
-block's phone area (12 columns): the first drag in a stacking section turns it into the phone
+block's phone area (24 columns): the first drag in a stacking section turns it into the phone
 grid, its other blocks keeping their places in the stack. The Motion tab picks animated
 elements instead (no dragging); Browse uses the site normally.
 

@@ -4,7 +4,7 @@
       "id": "s-ud3l",
       "height": "auto",
       "align": "center",
-      "rows": 116,
+      "rows": 82,
       "width": "contained",
       "spacing": { "top": 21, "bottom": 16 },
       "enabled": true,
@@ -34,7 +34,7 @@
           ],
           "emailLabel": "Email me",
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 116 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 82 },
           "size": "auto"
         }
       ],

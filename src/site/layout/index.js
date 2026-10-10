@@ -1,24 +1,32 @@
 /**
- * The layout engine: every page is a list of sections, each a 24-column grid of blocks
+ * The layout engine: every page is a list of sections, each a grid of 120 square cells wide
+ * (experiment: exp/square-grid-100), holding blocks
  * ("sections" in its file, content/pages/<page>/index.json or a template's [slug].json):
  *
  *   { "id": "s-k3x9", "height": "auto", "rows": 12, "width": "contained",
  *     "spacing": { "top": 10, "bottom": 12 }, "enabled": true,
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
- *                  "pos": { "col": 1, "span": 24, "row": 1, "rows": 12 }, "z": 0 }] }
+ *                  "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }, "z": 0 }] }
+ *
+ * The square grid: a section's content width is split into COLS (120) columns of one cell
+ * size, --cell = width / 120, and every row is one cell tall, so every cell is exactly square
+ * (no gaps either way). src/client/modules/rows.js measures the width at runtime and sets
+ * --cell on the section (a ResizeObserver and the window's resize keep it current);
+ * _layout.scss has a CSS-only first guess from 100vw. Phones (below 760px) use MCOLS (24)
+ * square cells of their own.
  *
  * A section:
- *   height   'auto': `rows` rows of its row height | 'screen': at least the screen's height |
+ *   height   'auto': `rows` rows (cells) | 'screen': at least the screen's height |
  *            'aspect': at least its width × `aspect` ("16:9"); for both, its rows are placed
  *            by `align` ('top' | 'center' | 'bottom' | 'stretch': fill it)
- *   rowHeight  optional, px (default 8, --grid-row in src/client/styles/_tokens.scss): the
- *            height of every row of the section; rows are uniform and never grow (./flow.js)
+ *            (rowHeight, from the 8px-row grid, is ignored: a row is one cell)
  *   width    'contained': inside the page's side margins | 'full': edge to edge
- *   spacing  { top, bottom }: empty rows above and below the grid
+ *   spacing  { top, bottom }: space above and below the grid, in steps of 8px (--space; not
+ *            cells, so a section's spacing doesn't change with the window's width)
  *   mobile   optional { spacing: { top, bottom } }: the phone's (below 760px), else `spacing`
  *   enabled  false: hidden (still rendered, so the editor can turn it on live)
  * A block (its content: src/site/blocks/index.js):
- *   pos      { col, span, row, rows }: its grid area, columns 1-24 and rows from 1
+ *   pos      { col, span, row, rows }: its grid area, columns 1-120 and rows (cells) from 1
  *   size     'rows' (default): its rows, more when its content needs them | 'aspect': as tall
  *            as its columns' width × `aspect` ("4:5", "16:9", any "w:h") | 'auto': as tall as
  *            its content. Every block spans whole rows: an aspect or auto block the rows its
@@ -31,7 +39,7 @@
  *            Corners: top-left, top-center, top-right, center, bottom-left, bottom-center,
  *            bottom-right
  *   z        its layer when blocks overlap (higher is in front)
- *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 12
+ *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 24
  *            columns, and { place }. Without areas a section's blocks stack full width in their
  *            order; without a phone `place` a block is in that flow (no sticky, fixed, pin)
  *   motion   optional { anim, ...timing }: its animation from the library and its own timing
@@ -45,15 +53,12 @@ import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
 import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
+import { COLS, MCOLS } from './grid.js';
 
-export const COLS = 24;
-/** Columns of the phone grid (a block's `mobile` area); see _layout.scss for why 12. */
-export const MCOLS = 12;
+export { COLS, MCOLS, OLD_COLS, OLD_MCOLS, cellOf } from './grid.js';
 export const HEIGHTS = ['auto', 'screen', 'aspect'];
-/** A section's row height in px: the default and its limits. */
-export const ROW_HEIGHT = 8;
-export const ROW_MIN = 4;
-export const ROW_MAX = 64;
+/** The step of a section's spacing (above and below its grid), px: --space in _tokens.scss. */
+export const SPACE = 8;
 export const WIDTHS = ['contained', 'full'];
 export const ALIGNS = ['top', 'center', 'bottom', 'stretch'];
 /** A block's height: its rows, its width × an aspect ratio, or its content. */
@@ -85,7 +90,7 @@ export function ratioOf(text) {
   return m && Number(m[1]) > 0 && Number(m[2]) > 0 ? [Number(m[1]), Number(m[2])] : null;
 }
 
-/** A block's grid area, completed and kept inside `cols` columns (24; the phone grid's 12). */
+/** A block's grid area, completed and kept inside `cols` columns (120; the phone grid's 24). */
 export function placeOf(pos, cols = COLS) {
   const col = Math.min(int(pos?.col, 1, 1), cols);
   return {
@@ -103,15 +108,9 @@ export const hasMobileArea = (m) =>
 /** A block's size mode ('rows' when unset or unknown). */
 export const sizeOf = (b) => (SIZES.includes(b?.size) ? b.size : 'rows');
 
-/** A section's row height in px (its rowHeight, else 8). */
-export const rowHeightOf = (s) =>
-  Number.isInteger(s?.rowHeight) && s.rowHeight >= ROW_MIN && s.rowHeight <= ROW_MAX
-    ? s.rowHeight
-    : ROW_HEIGHT;
-
 /**
- * A new block of `type`: its defaults, on, full width at `pos` (12 rows from row 1 by
- * default). taken: the ids already on the page (the new one is added).
+ * A new block of `type`: its defaults, on, full width at `pos` (8 rows, ~90px at 1440px, from
+ * row 1 by default). taken: the ids already on the page (the new one is added).
  */
 export function newBlock(type, taken, pos = {}) {
   const { config = {}, ...rest } = structuredClone(BLOCK_TYPES[type].defaults || {});
@@ -120,7 +119,7 @@ export function newBlock(type, taken, pos = {}) {
     type,
     ...rest,
     config,
-    pos: { col: 1, span: COLS, row: 1, rows: 12, ...pos },
+    pos: { col: 1, span: COLS, row: 1, rows: 8, ...pos },
   };
 }
 
@@ -130,7 +129,7 @@ export function newSection(taken, blocks = []) {
     id: newId('s', taken),
     height: 'auto',
     align: 'center',
-    rows: 12,
+    rows: 8,
     width: 'contained',
     spacing: { top: 8, bottom: 8 },
     enabled: true,
@@ -175,8 +174,7 @@ export function sectionVars(s) {
     (Number.isInteger(m?.top) && m.top >= 0 ? `;--mpt:${m.top}` : '') +
     (Number.isInteger(m?.bottom) && m.bottom >= 0 ? `;--mpb:${m.bottom}` : '') +
     (phoneGrid(s) ? `;--mrows:${mobileRowsOf(s)}` : '') +
-    (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '') +
-    (rowHeightOf(s) !== ROW_HEIGHT ? `;--grid-row:${rowHeightOf(s)}px` : '')
+    (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '')
   );
 }
 

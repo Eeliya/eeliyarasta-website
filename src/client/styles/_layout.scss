@@ -1,19 +1,24 @@
 @use 'tokens' as *;
 
 /*
- * The layout engine (src/site/layout/index.js): a section is a grid of 24 columns and
- * --rows uniform rows of --grid-row (8px, or the section's row height). Blocks sit in it by
- * their CSS variables: --c / --s (first column / columns), --r / --rs (first row / rows),
- * --z (layer), --ar (an aspect block's ratio). Rows never grow: a block whose content needs
- * more rows spans more, and modules/rows.js (src/site/layout/flow.js) sets where every block
- * sits now and how many rows it spans (--fr / --frs) and the section's rows (--frows), which
- * win over the stored ones. While it measures, a section has .sec--measure.
+ * The layout engine (src/site/layout/index.js), square grid (experiment): a section is a grid
+ * of 120 columns and --rows rows, all of one size, --cell: every cell is exactly square, with
+ * no gaps either way. modules/rows.js measures the section's content width and sets --cell
+ * (width / 120, floored to 1/64px; the few px left over are centred) on the section, and again
+ * when it resizes; the --cell below is the first guess before that runs (and without JS),
+ * from 100vw (not 100cqw: a size container would trap the fixed and fullscreen blocks).
+ * Blocks sit in it by their CSS variables: --c / --s (first column / columns), --r / --rs
+ * (first row / rows), --z (layer), --ar (an aspect block's ratio). Rows never grow: a block
+ * whose content needs more rows spans more, and modules/rows.js (src/site/layout/flow.js)
+ * sets where every block sits now and how many rows it spans (--fr / --frs) and the
+ * section's rows (--frows), which win over the stored ones. While it measures, a section has
+ * .sec--measure. A section's spacing (--pt / --pb) is in steps of --space (8px), not cells.
  *
  * Phones (below 760px): a section's blocks stack full width in their order, unless one of
- * them has a mobile area (the section is then .sec--mgrid): a grid of 12 columns (--mc --ms
- * --mr --mrs, --mrows). Why 12 and not 24: a phone is ~390px wide, and 23 gaps of 12px
- * between 24 columns would leave ~3px columns; 12 columns stay ~19px wide and still give
- * halves, thirds, quarters and sixths.
+ * them has a mobile area (the section is then .sec--mgrid): a grid of 24 square columns (--mc
+ * --ms --mr --mrs, --mrows). Why 24 and not 120: a phone is ~390px wide, and 120 columns
+ * would be ~3px cells; 24 give ~15px cells (rows close to the old 8px ones) and still halves,
+ * thirds, quarters, sixths and eighths.
  *
  * Placements (.blk--sticky / --fixed / --full / --pinned, with --v-* / --h-* for the corner)
  * apply above 760px; on phones only the .blk--m-* ones (the block's mobile place), so a
@@ -26,16 +31,17 @@
 }
 
 .sec {
+  --cell: calc((100vw - 2 * var(--pad)) / 120);
+
   display: grid;
-  grid-template-columns: repeat(24, minmax(0, 1fr));
-  // (--ffill: a screen section whose rows come within a row of its height: they fill it)
-  grid-template-rows: repeat(
-    var(--frows, var(--rows)),
-    minmax(var(--grid-row), var(--ffill, var(--grid-row)))
-  );
-  column-gap: var(--gap);
-  padding: calc(var(--pt) * var(--grid-row)) var(--pad) calc(var(--pb) * var(--grid-row));
+  grid-template-columns: repeat(120, var(--cell));
+  grid-template-rows: repeat(var(--frows, var(--rows)), var(--cell));
+  gap: 0;
+  justify-content: center;
+  padding: calc(var(--pt) * var(--space)) var(--pad) calc(var(--pb) * var(--space));
   &--full {
+    --cell: calc(100vw / 120);
+
     padding-inline: 0;
   }
   &--screen {
@@ -54,9 +60,10 @@
   &--bottom {
     align-content: end;
   }
-  // its rows (still all the same height) fill it
+  // its rows fill it as far as whole square rows go (modules/rows.js: as many as fit), centred:
+  // under a cell is left over, half above and half below
   &--stretch {
-    grid-template-rows: repeat(var(--frows, var(--rows)), minmax(var(--grid-row), 1fr));
+    align-content: center;
   }
 }
 
@@ -114,7 +121,7 @@
     position: sticky;
     grid-row-end: -1;
     align-self: start;
-    min-height: calc(var(--p-rs, var(--rs)) * var(--grid-row));
+    min-height: calc(var(--p-rs, var(--rs)) * var(--cell));
     top: var(--stick-top);
     z-index: var(--z, 2);
   }
@@ -131,9 +138,8 @@
   .blk--#{$m}fixed {
     position: fixed;
     z-index: var(--z, 20);
-    width: calc(
-      (100vw - 2 * var(--pad) + var(--gap)) * var(--p-s, var(--s)) / var(--p-cols, 24) - var(--gap)
-    );
+    // its columns' width (the section's --cell: the grid is as wide as the screen's content)
+    width: calc(var(--p-s, var(--s)) * var(--cell));
     margin: 0;
   }
   .blk--#{$m}fixed.blk--#{$m}v-top {
@@ -174,9 +180,15 @@
 }
 
 @media (width <= $bp-sm) {
+  // the phone grid's cell (a stacking section's too: the editor turns it into that grid)
   .sec {
-    padding-top: calc(var(--mpt, var(--pt)) * var(--grid-row));
-    padding-bottom: calc(var(--mpb, var(--pb)) * var(--grid-row));
+    --cell: calc((100vw - 2 * var(--pad)) / 24);
+
+    padding-top: calc(var(--mpt, var(--pt)) * var(--space));
+    padding-bottom: calc(var(--mpb, var(--pb)) * var(--space));
+  }
+  .sec--full {
+    --cell: calc(100vw / 24);
   }
   // the stack: a column (a flex one, so a sticky block is held through the whole section)
   .sec:not(.sec--mgrid) {
@@ -197,18 +209,17 @@
     }
   }
   .sec--mgrid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: repeat(var(--frows, var(--mrows)), var(--grid-row));
+    grid-template-columns: repeat(24, var(--cell));
+    grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
     > .blk {
-      grid-column: var(--mc, 1) / span var(--ms, 12);
+      grid-column: var(--mc, 1) / span var(--ms, 24);
       grid-row: var(--fr, var(--mr, auto)) / span var(--frs, var(--mrs, 1));
     }
   }
   // a placed block's columns and rows: the phone's
   .blk {
-    --p-s: var(--ms, 12);
+    --p-s: var(--ms, 24);
     --p-rs: var(--mrs, 1);
-    --p-cols: 12;
   }
   @include placed('m-');
 }

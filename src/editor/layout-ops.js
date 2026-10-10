@@ -182,7 +182,7 @@ function setMobile(block, patch) {
 }
 
 /**
- * Block `j` of section `at` placed at `area` on the phone grid (12 columns). stack: the areas
+ * Block `j` of section `at` placed at `area` on the phone grid (24 columns). stack: the areas
  * the section's other blocks had in the stack ({ id: area }), when this turns the section from
  * a stack into a grid (they keep their places). One undo step; key: see writeSection.
  */

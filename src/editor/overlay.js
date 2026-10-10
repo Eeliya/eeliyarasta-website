@@ -2,8 +2,9 @@
  * The layout overlay, drawn in the preview over the page (in its own Shadow DOM, so neither
  * the site's styles nor the editor's reach it):
  *
- *   Grid      every section's 24 columns and its rows, from the section's own computed grid
- *             (its real, uniform rows: src/site/layout/flow.js)
+ *   Grid      every section's square cells (120 columns, the phone grid's 24, and its rows,
+ *             all one --cell: src/site/layout/flow.js), from the section's own computed grid;
+ *             every 5th line (the old 24-column grid's) a little stronger
  *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
  *             a drag moves it and the handles on its edges and corners resize it; a double
  *             click edits a text in place (bridge.js), the page's own clicks are off. A drag
@@ -11,7 +12,7 @@
  *             variables); on release it is one edit, one undo step (onplace), which also stores
  *             where the section's other blocks are now (their real rows). Esc cancels.
  *             Below 760px (the mobile preview) a drag edits the block's phone area, on the
- *             phone grid of 12 columns: in a section whose blocks still stack, the first drag
+ *             phone grid of 24 columns: in a section whose blocks still stack, the first drag
  *             turns the stack into that grid, every block keeping the place it had (measured).
  *             An aspect or auto block's rows follow its width: only its sides resize.
  *
@@ -23,7 +24,7 @@
  * (mode, grid, block) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
-import { COLS, MCOLS, hasMobileArea, placeOf, sizeOf } from '../site/layout/index.js';
+import { COLS, MCOLS, cellOf, hasMobileArea, placeOf, sizeOf } from '../site/layout/index.js';
 import { rowsFor } from '../site/layout/flow.js';
 
 const MOBILE = 760;
@@ -32,9 +33,8 @@ const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 const STYLE = `
 :host { all: initial; }
 .layer { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; font: 500 10px/1 'DM Mono', ui-monospace, monospace; }
-.grid { position: absolute; display: grid; box-sizing: border-box; }
-.col { grid-row: 1 / -1; background: #3cf; opacity: .08; }
-.row { grid-column: 1 / -1; border-top: 1px solid #3cf; opacity: .25; }
+.grid { position: absolute; box-sizing: border-box; }
+.cells { position: absolute; background-image: linear-gradient(to right, rgb(51 204 255 / .55) 1px, transparent 1px), linear-gradient(to bottom, rgb(51 204 255 / .55) 1px, transparent 1px), linear-gradient(to right, rgb(51 204 255 / .22) 1px, transparent 1px), linear-gradient(to bottom, rgb(51 204 255 / .22) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(51 204 255 / .55); }
 .box { position: absolute; box-sizing: border-box; border-radius: 2px; }
 .hover { border: 1px dashed #fff; opacity: .7; }
 .sel { border: 2px solid #3cf; }
@@ -53,12 +53,15 @@ const STYLE = `
 `;
 
 /**
- * Where a stacking section's blocks are on the phone, as phone-grid areas (12 columns, rows of
- * the row height): { id: area }. Used to turn the stack into a grid without moving anything.
+ * Where a stacking section's blocks are on the phone, as phone-grid areas (24 columns, rows of
+ * one cell): { id: area }. Used to turn the stack into a grid without moving anything.
  */
 export function stackAreas(sec, win) {
   const cs = win.getComputedStyle(sec);
-  const row = parseFloat(cs.getPropertyValue('--grid-row')) || 8;
+  // the phone grid's cell (the section isn't a grid yet: its width over 24)
+  const width =
+    sec.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const row = cellOf(width, MCOLS) || 8;
   const top = sec.getBoundingClientRect().top + parseFloat(cs.paddingTop);
   const out = {};
   for (const el of sec.querySelectorAll('[data-block]')) {
@@ -114,7 +117,7 @@ function linesOf(sec, win) {
   const r = rectOf(sec, win);
   const gap = parseFloat(cs.columnGap) || 0;
   const rowGap = parseFloat(cs.rowGap) || 0;
-  const row = parseFloat(cs.getPropertyValue('--grid-row')) || 8;
+  const row = parseFloat(cs.getPropertyValue('--cell')) || 8;
   const lines = (start, sizes, g) => {
     const starts = [];
     const ends = [];
@@ -126,11 +129,40 @@ function linesOf(sec, win) {
     }
     return { starts, ends };
   };
-  const x0 = r.x + parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
-  const y0 = r.y + parseFloat(cs.paddingTop) + parseFloat(cs.borderTopWidth);
-  const cols = lines(x0, px(cs.gridTemplateColumns), gap);
-  const rows = lines(y0, px(cs.gridTemplateRows), rowGap);
+  const t = tracksOf(cs, r);
+  const cols = lines(r.x + t.x, t.cols, gap);
+  const rows = lines(r.y + t.y, t.rows, rowGap);
   return { cols, rows, row, rowGap };
+}
+
+/** Where free space goes before the tracks: 0 (start), 0.5 (center) or 1 (end). */
+const share = (v) => (/center/.test(v) ? 0.5 : /end/.test(v) ? 1 : 0);
+
+/**
+ * A section's tracks, relative to its border box: x, y their top left corner (the content box
+ * corner, moved by the free space justify-content / align-content give before them: the
+ * square grid centres its columns, a screen section its rows), w, h their size, and the sizes.
+ */
+function tracksOf(cs, r) {
+  const cols = px(cs.gridTemplateColumns);
+  const rows = px(cs.gridTemplateRows);
+  const sum = (l) => l.reduce((a, b) => a + b, 0);
+  const pl = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
+  const pr = parseFloat(cs.paddingRight) + parseFloat(cs.borderRightWidth);
+  const pt = parseFloat(cs.paddingTop) + parseFloat(cs.borderTopWidth);
+  const pb = parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth);
+  const gx = parseFloat(cs.columnGap) || 0;
+  const gy = parseFloat(cs.rowGap) || 0;
+  const w = sum(cols) + gx * Math.max(0, cols.length - 1);
+  const h = sum(rows) + gy * Math.max(0, rows.length - 1);
+  return {
+    x: pl + Math.max(0, r.w - pl - pr - w) * share(cs.justifyContent),
+    y: pt + Math.max(0, r.h - pt - pb - h) * share(cs.alignContent),
+    w,
+    h,
+    cols,
+    rows,
+  };
 }
 
 /** The 1-based index of the line in `starts` (or `ends`) nearest to `v`; past the end in steps of `step`. */
@@ -209,18 +241,15 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
         const g = doc.createElement('div');
         g.className = 'grid';
         place(g, r);
-        g.style.padding = cs.padding;
-        g.style.gridTemplateColumns = cs.gridTemplateColumns;
-        g.style.gridTemplateRows = cs.gridTemplateRows;
-        g.style.columnGap = cs.columnGap;
-        g.style.rowGap = cs.rowGap;
-        const n = px(cs.gridTemplateRows).length;
-        const cols = px(cs.gridTemplateColumns).length;
-        g.innerHTML =
-          '<i class="col"></i>'.repeat(cols) +
-          Array.from({ length: n }, (_, i) => `<i class="row" style="grid-row:${i + 1}"></i>`).join(
-            '',
-          );
+        // the cells: the tracks as they are laid out (centred in the content box: the few px
+        // a whole number of cells leaves over), a line every cell and a stronger one every 5th
+        const t = tracksOf(cs, r);
+        const cell = t.cols[0] || 8;
+        const c = doc.createElement('div');
+        c.className = 'cells';
+        place(c, t);
+        c.style.backgroundSize = `${cell * 5}px ${cell * 5}px, ${cell * 5}px ${cell * 5}px, ${cell}px ${cell}px, ${cell}px ${cell}px`;
+        g.append(c);
         return g;
       }),
     );
