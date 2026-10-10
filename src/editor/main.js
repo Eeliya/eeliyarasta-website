@@ -33,7 +33,24 @@ import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
 import { getRoutes, curtainOverrides, pathOfId } from '../site/routes.js';
-import { ANIMATIONS, TEMPLATE, contentFromFiles, pageFile, pageIdOf } from '../site/files.js';
+import {
+  ANIMATIONS,
+  REDIRECTS,
+  TEMPLATE,
+  contentFromFiles,
+  pageFile,
+  pageIdOf,
+  sourceIdOf,
+} from '../site/files.js';
+import {
+  itemMoves,
+  moveLinks,
+  moveRedirects,
+  pruneRedirects,
+  redirectsOf,
+  sitePaths,
+} from '../site/redirects.js';
+import { compile } from './lib/pointer.js';
 import { previewFile, syncSections as syncPreviewSections } from './sections.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -155,11 +172,21 @@ async function pagesOp(body) {
     res = await source.pagesOp(body);
     const { files } = await source.load();
     store.files(Object.fromEntries(res.created.map((f) => [f, files[f]])), res.removed);
+    // links and redirects.json the op kept up to date: unsaved edits there stay on top
+    const dirty = store.dirtyFiles();
+    const changed = (res.changed || []).filter((f) => !res.created.includes(f));
+    store.files(
+      Object.fromEntries(changed.filter((f) => !dirty.includes(f)).map((f) => [f, files[f]])),
+    );
+    store.rebase(
+      Object.fromEntries(changed.filter((f) => dirty.includes(f)).map((f) => [f, files[f]])),
+    );
   } catch (err) {
     toast(err.message, { kind: 'error' });
     return null;
   }
   refreshStatus();
+  movedToast(res);
   // Show the new page, follow a renamed one, leave a deleted one.
   const shown = ui.path;
   const oldPath = body.id && pathOfId(body.id);
@@ -173,6 +200,29 @@ async function pagesOp(body) {
     to = pathOfId(res.id).replace(/[^/]+\/$/, '');
   if (to) bridge.navigate(to);
   return res;
+}
+
+/**
+ * What a page op or Save did to links and redirects (src/site/redirects.js): links updated,
+ * redirects added, links left pointing at a deleted page, redirects removed because their
+ * path is a page (again).
+ */
+function movedToast({ links = 0, added = [], broken = 0, pruned = [] }) {
+  const done = [
+    links && `${plural(links, 'link')} updated`,
+    added.length && `${plural(added.length, 'redirect')} added (Settings > Redirects)`,
+  ].filter(Boolean);
+  if (done.length) toast(done.join(', '), { kind: 'ok', files: added.length ? [REDIRECTS] : [] });
+  if (broken)
+    toast(`${plural(broken, 'link')} still point at the deleted page`, {
+      kind: 'info',
+      timeout: 10000,
+    });
+  if (pruned.length)
+    toast(
+      `Removed ${plural(pruned.length, 'redirect')} from a page that exists: ${pruned.map((r) => r.from).join(', ')}`,
+      { kind: 'info', timeout: 10000, files: [REDIRECTS] },
+    );
 }
 
 /** Saved-but-unpublished content changes (ui.pub), from /__editor/status. */
@@ -291,7 +341,29 @@ store.on(({ files, source: src, structure }) => {
  * Write the changed files to content/ (a draft). quiet: no toast (the publish dialog saves
  * first and shows its own result). Returns false when it failed.
  */
+/**
+ * Before a Save: item pages whose path changed (a slug or name edited in a source) get a
+ * redirect from the old path, and links to it follow. One undo step. Returns what changed.
+ */
+function followItems() {
+  if (!store.dirtyFiles().some(sourceIdOf) || !store.current[REDIRECTS]) return null;
+  const moves = itemMoves(store.base, store.current);
+  if (!moves.size) return null;
+  const { edits } = moveLinks(store.current, moves);
+  const moved = moveRedirects(redirectsOf(store.current), moves);
+  const { list, pruned } = pruneRedirects(moved.list, sitePaths(store.current));
+  store.batch(
+    () => {
+      for (const e of edits) store.set(e.file, compile(e.parts), e.value);
+      store.set(REDIRECTS, '', list);
+    },
+    { source: 'panel' },
+  );
+  return { links: edits.length, added: moved.added, pruned };
+}
+
 async function save({ quiet = false } = {}) {
+  const followed = ui.saving ? null : followItems();
   const dirty = store.dirtyFiles();
   if (!dirty.length) return true;
   if (ui.saving) return false;
@@ -303,6 +375,7 @@ async function save({ quiet = false } = {}) {
     // source...). Only the preview reloads, at the same scroll and selection; the editor stays.
     if (bridge.path()) bridge.reload();
     if (!quiet) toast('Saved', { kind: 'ok', files: dirty, note: '(draft, not published)' });
+    if (followed) movedToast(followed);
     ui.status = `Saved ${plural(dirty.length, 'file')} · ${new Date().toLocaleTimeString()}`;
     return true;
   } catch (err) {

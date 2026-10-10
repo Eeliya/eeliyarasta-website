@@ -34,6 +34,9 @@
   let newSource = $state('');
   const uid = $props.id();
   let renameTo = $state('');
+  // Delete: where its paths redirect to (a page's path), or GONE (no redirect)
+  const GONE = '(gone)';
+  let redirectTo = $state('');
 
   // the folder shown: a page id, '' = the root (home's folder)
   const folder = $derived(ui.pagesWin.folder);
@@ -157,7 +160,22 @@
       sel === folder ? goTo(r.id).then(() => select(r.id)) : select(r.id),
     );
   const remove = () =>
-    run({ op: 'delete', id: sel }, () => (sel === folder ? goTo(parentOf(folder)) : select('')));
+    run({ op: 'delete', id: sel, redirect: redirectTo === GONE ? null : redirectTo }, () =>
+      sel === folder ? goTo(parentOf(folder)) : select(''),
+    );
+  // the pages a deleted page can redirect to: not itself or what's in it, not item pages
+  const redirectOptions = (id) => [
+    ...ui.pages
+      .filter(
+        (p) =>
+          p.kind === 'page' &&
+          !p.items &&
+          p.path !== '/404/' &&
+          (isTemplate(id) || !p.path.startsWith(pathOfId(id))),
+      )
+      .map((p) => ({ value: p.path, label: p.title, hint: p.path })),
+    { value: GONE, label: 'No redirect (the page is gone)' },
+  ];
 
   async function startAdd(kind) {
     select(kind);
@@ -166,6 +184,7 @@
   }
 
   async function askDelete() {
+    redirectTo = pathOfId(parentOf(sel) || 'home');
     confirming = true;
     await tick();
     dialog.querySelector('.confirm button')?.focus();
@@ -333,6 +352,18 @@
             Delete {urlOf(sel)}{inside.length
               ? ` and everything in it: ${inside.map(urlOf).join(', ')}`
               : ''}?
+          </span>
+          <label class="tf__label" for="{uid}-redirect">Visitors and links to it go to</label>
+          <Select
+            id="{uid}-redirect"
+            value={redirectTo}
+            options={redirectOptions(sel)}
+            onchange={(v) => (redirectTo = v)}
+          />
+          <span class="hint small">
+            {redirectTo === GONE
+              ? 'No redirect: its address shows the 404 page, and links to it are left as they are.'
+              : `A redirect (Settings > Redirects) sends its ${isTemplate(sel) ? 'item pages' : 'address'} there, and links to it are updated.`}
           </span>
           <span class="row">
             <Button size="small" onclick={() => (confirming = false)}>Cancel</Button>

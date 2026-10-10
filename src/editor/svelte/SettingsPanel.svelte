@@ -5,12 +5,14 @@
   fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
-  dropdowns) are in Menu (MenuSettings.svelte); Menu and Footer copy is also in Content: it is
+  dropdowns) are in Menu (MenuSettings.svelte), redirects.json in Redirects
+  (RedirectSettings.svelte); Menu and Footer copy is also in Content: it is
   text you click in the preview.
 -->
 <script>
   import Field from './Field.svelte';
   import MenuSettings from './MenuSettings.svelte';
+  import RedirectSettings from './RedirectSettings.svelte';
   import Section from './Section.svelte';
   import Select from './Select.svelte';
   import CurtainSection from './CurtainSection.svelte';
@@ -90,6 +92,8 @@
   </Section>
 
   <MenuSettings {live} />
+
+  <RedirectSettings {live} />
 
   <Section key="settings:media" title="Site" name="Photos">
     <p class="hint">
