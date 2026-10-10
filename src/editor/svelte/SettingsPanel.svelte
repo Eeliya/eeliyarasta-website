@@ -3,11 +3,13 @@
   (settings/site.json), smooth scrolling, the global page-transition curtain and the page
   fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
-  Global, Custom or Off, and its animations). Menu and Footer copy stays in Content: it is
+  Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
+  dropdowns) are in Menu (MenuSettings.svelte); Menu and Footer copy is also in Content: it is
   text you click in the preview.
 -->
 <script>
   import Field from './Field.svelte';
+  import MenuSettings from './MenuSettings.svelte';
   import Section from './Section.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import PageFadeSection from './PageFadeSection.svelte';
@@ -50,6 +52,8 @@
       />
     {/each}
   </Section>
+
+  <MenuSettings {live} />
 
   <Section key="settings:media" title="Site" name="Photos">
     <p class="hint">

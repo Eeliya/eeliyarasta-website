@@ -4,7 +4,7 @@
  * ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
+import { NAV, SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { SECTION_TYPES } from '../../site/sections/index.js';
 import { previewFile } from '../sections.js';
@@ -54,6 +54,16 @@ const titleCase = (s) =>
 /** A field's label: the last part of its pointer; a photo in a list (".../photos/1/src") is "photo 2". */
 function fieldLabel(store, f) {
   const parts = parse(f.ptr);
+  // a menu label: "Item 2", "Item 2 › 1" (a dropdown link), "Item 2: all link"
+  if (f.file === NAV) {
+    const [, i, key, j] = parts;
+    const item = `Item ${Number(i) + 1}`;
+    return key === 'children'
+      ? `${item} › ${Number(j) + 1}`
+      : key === 'all'
+        ? `${item}: all link`
+        : item;
+  }
   if (f.type === 'image' && parts.at(-1) === 'src' && /^\d+$/.test(parts.at(-2)))
     return `photo ${Number(parts.at(-2)) + 1}`;
   return labelFor(store, f).split(' / ').pop();
@@ -168,6 +178,10 @@ export function groupFor(store, { file, ptr }, page) {
       title: pageId.endsWith(TEMPLATE) ? 'Item pages' : titleCase(pageId),
     };
   }
+  if (file === NAV) {
+    if (parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
+    if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
+  }
   if (file === SITE) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
     if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
@@ -187,20 +201,37 @@ export function groupFor(store, { file, ptr }, page) {
   return { id: 'content', title: 'Content' };
 }
 
-/** Menu / Footer fields, known up front (the preview may not show them all). */
-const MENU = [
-  'home',
-  'photography',
-  'people',
-  'places',
-  'projects',
-  'about',
-  'allPhotography',
-  'allProjects',
-  'menu',
-  'close',
-  'clock',
-];
+/**
+ * Menu / Footer fields, known up front (the preview may not show them all): the labels of
+ * the menus in nav.json (their links and order are edited in Settings > Menu), and the
+ * header and footer texts of site.json. [file, pointer, type]
+ */
+function componentFields(store, id) {
+  const nav = store.current[NAV] || {};
+  const labels = (menu) =>
+    (Array.isArray(nav[menu]) ? nav[menu] : []).flatMap((item, i) => [
+      [NAV, `/${menu}/${i}/label`, 'text'],
+      ...(item?.all !== undefined ? [[NAV, `/${menu}/${i}/all`, 'text']] : []),
+      ...(Array.isArray(item?.children) ? item.children : []).map((_, j) => [
+        NAV,
+        `/${menu}/${i}/children/${j}/label`,
+        'text',
+      ]),
+    ]);
+  if (id === 'menu')
+    return [
+      ...labels('header'),
+      ...['menu', 'close', 'clock'].map((k) => [SITE, `/nav/${k}`, 'text']),
+    ];
+  return [
+    ...FOOTER.map(([ptr, type]) => [SITE, ptr, type]),
+    ...labels('footer'),
+    ...[0, 1, 2].flatMap((i) => [
+      [SITE, `/social/${i}/label`, 'text'],
+      [SITE, `/social/${i}/handle`, 'text'],
+    ]),
+  ];
+}
 const FOOTER = [
   ['/footer/label', 'text'],
   ['/footer/cta', 'block'],
@@ -212,19 +243,13 @@ const FOOTER = [
   ['/footer/columns/time/title', 'text'],
   ['/email', 'text'],
   ['/location', 'text'],
-  ...[0, 1, 2, 3, 4].map((i) => [`/footer/columns/index/links/${i}/label`, 'text']),
-  ...[0, 1, 2].flatMap((i) => [
-    [`/social/${i}/label`, 'text'],
-    [`/social/${i}/handle`, 'text'],
-  ]),
 ];
 
 /** The fields to edit for `target`: { edit, file, ptr, type }. */
 function fieldsOf(store, bridge, target) {
   if (target.kind === 'component') {
-    const list = target.id === 'menu' ? MENU.map((key) => [`/nav/${key}`, 'text']) : FOOTER;
-    return list
-      .map(([ptr, type]) => ({ edit: `${SITE}#${ptr}`, file: SITE, ptr, type }))
+    return componentFields(store, target.id)
+      .map(([file, ptr, type]) => ({ edit: `${file}#${ptr}`, file, ptr, type }))
       .filter(
         (f) => store.get(f.file, f.ptr) !== undefined || store.getBase(f.file, f.ptr) !== undefined,
       );
@@ -234,7 +259,7 @@ function fieldsOf(store, bridge, target) {
   return bridge
     .editFields()
     .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
-    .filter((f) => f.file !== SITE || !shared.includes(parse(f.ptr)[0]))
+    .filter((f) => f.file !== NAV && (f.file !== SITE || !shared.includes(parse(f.ptr)[0])))
     .filter((f) => !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
 }
 

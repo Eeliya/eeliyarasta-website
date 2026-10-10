@@ -111,16 +111,17 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                               | what                                                                                                                                                                                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content/settings/site.json`       | name, SEO description, socials, email, nav labels (and the clock label `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
-| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                               |
-| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                          |
-| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: `title` / `description` for `<head>`                                                                                                                                                |
-| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
-| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                            |
-| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                              |
-| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                      |
+| file                               | what                                                                                                                                                                                                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                   |
+| `content/settings/site.json`       | name, SEO description, socials, email, the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `ogImage` (share image of pages without a photo), `jobTitle` / `country` (structured data on home) |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                          |
+| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                     |
+| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: `title` / `description` for `<head>`                                                                                                                                                                           |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                     |
+| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                       |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                         |
+| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                 |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
@@ -181,6 +182,29 @@ sec) }`; `numbered` puts it in the (01) numbering, `item` binds it to a `[slug]`
 - **A new type:** add it to a file in `src/site/sections/` and to `SECTION_TYPES` in `index.js`
   (and its styles); the editor shows it with no editor code.
 
+### Menu
+
+`content/settings/nav.json` holds the menus: `header` (the nav pill, its dropdowns and the
+mobile menu) and `footer` (the footer's Index column). An item links to a page by its URL
+(`page`, checked: a page that doesn't exist gives a `[nav]` build warning, and
+`npm run check:links` fails on it) or anywhere else (`href`, opens in a new tab):
+
+```json
+{ "label": "About", "page": "/about/" }
+{ "label": "Shop", "href": "https://shop.example.com" }
+{ "label": "Photography", "page": "/photography/", "all": "All photography",
+  "children": [{ "label": "People", "page": "/people/", "items": "people" }, …] }
+{ "label": "Projects", "page": "/projects/", "all": "All projects", "items": "projects" }
+```
+
+A header item with `children` (one level deep) or `items` opens a dropdown on click; `all`
+labels the link to the item's own page at its end. `items` names a source
+(`content/sources/<id>.json`) and lists its items: with their photo and photo count when the
+source has item pages (a `[slug].json` shows it), else by title and kind, linking to their spot
+on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. Footer items are
+plain links. The menu button and clock labels stay in `site.json` (`nav`).
+`src/site/templates/header.js` renders it; `checkContent` validates its shape.
+
 ### Pages and URLs
 
 Every page is a folder in `content/pages/`, and the folders are the URLs. A page's own file is
@@ -215,8 +239,7 @@ Every page is a folder in `content/pages/`, and the folders are the URLs. A page
   name, plus `| <site name>`;
   the description is `meta.description`, else the site's.
 - Links to an item (menu dropdowns, grids, next) come from the routes, so they follow a folder
-  rename. The menu itself is still `settings/site.json` + `templates/header.js` (a nav editor is
-  planned), so add a top-level page to it by hand.
+  rename. A new page isn't in the menu by itself: add it in Settings > Menu (see "Menu").
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
@@ -382,9 +405,17 @@ In the Content panel every section of the page is a box with its type's icon and
 move it, **Duplicate** copies it below, **Delete** asks first, the switch turns it on/off, and
 the caret folds it. Under the bar are its settings (`config`: a Source or Layout dropdown, a
 switch, a link) and its fields, both from the registry. **Add section** at the end picks a type
-and adds it with the type's defaults. Each of these is one undo step. The preview follows
-reorders, on/off and layout right away; a new section, or a grid switched to another source,
-shows in the preview after Save (it re-renders). On a `[slug]` page the **Item** dropdown next
+and adds it with the type's defaults. A list field (hero photos, about paragraphs and facts,
+photography panels) has its items in boxes with ↑ / ↓ / Remove and an **Add** button (a new
+photo opens the Media window). Each of these is one undo step. The preview follows reorders,
+on/off and layout right away; for a new section or list item, or another source, it renders the
+page again from the unsaved edits: the editor sends them to the dev server (`POST
+/__editor/draft`, cleared on Save), which renders dev pages from them.
+
+**Settings > Menu** edits `nav.json`: a box per menu (Header, Footer) with its items: label,
+link (a page from the page tree, or External URL with its URL), ↑ / ↓ / Remove, **Add link**,
+and in the header a dropdown: the items of a source, or **Dropdown links** (one level) and the
+"all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[slug]` page the **Item** dropdown next
 to the page picks which item's page the preview shows.
 
 The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
