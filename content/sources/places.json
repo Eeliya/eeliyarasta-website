@@ -12,7 +12,6 @@
     "images": [
       {
         "src": "places/kasteel-de-haar/01.jpg",
-        "alt": "A castle sitting on top of a lake next to a lush green field",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -22,7 +21,6 @@
       },
       {
         "src": "places/kasteel-de-haar/02.jpg",
-        "alt": "A large castle sitting on top of a lake",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -32,7 +30,6 @@
       },
       {
         "src": "places/kasteel-de-haar/03.jpg",
-        "alt": "A black and white photo of a clock tower",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -42,7 +39,6 @@
       },
       {
         "src": "places/kasteel-de-haar/04.jpg",
-        "alt": "A large castle sitting next to a tree",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -52,7 +48,6 @@
       },
       {
         "src": "places/kasteel-de-haar/05.jpg",
-        "alt": "A room with a desk and a chair",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -62,7 +57,6 @@
       },
       {
         "src": "places/kasteel-de-haar/06.jpg",
-        "alt": "A large castle with a clock tower on top of it",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -72,7 +66,6 @@
       },
       {
         "src": "places/kasteel-de-haar/07.jpg",
-        "alt": "A large castle sitting on top of a lake",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -82,7 +75,6 @@
       },
       {
         "src": "places/kasteel-de-haar/08.jpg",
-        "alt": "A lake surrounded by lots of trees in a park",
         "credit": {
           "name": "Pourya Gohari",
           "url": "https://unsplash.com/@_pourya_",
@@ -106,7 +98,6 @@
     "images": [
       {
         "src": "places/concrete-studies/01.jpg",
-        "alt": "Gray concrete monolith",
         "credit": {
           "name": "Simone Hutsch",
           "url": "https://unsplash.com/@heysupersimi",
@@ -116,7 +107,6 @@
       },
       {
         "src": "places/concrete-studies/02.jpg",
-        "alt": "Worms eye view photography of concrete building",
         "credit": {
           "name": "Kimon Maritz",
           "url": "https://unsplash.com/@kimonmaritz",
@@ -126,7 +116,6 @@
       },
       {
         "src": "places/concrete-studies/03.jpg",
-        "alt": "A black and white photo of a tall building",
         "credit": {
           "name": "Alexander Psiuk",
           "url": "https://unsplash.com/@alexdeloy",
@@ -136,7 +125,6 @@
       },
       {
         "src": "places/concrete-studies/04.jpg",
-        "alt": "Landscape photography of gray concrete building",
         "credit": {
           "name": "Simone Hutsch",
           "url": "https://unsplash.com/@heysupersimi",
@@ -146,7 +134,6 @@
       },
       {
         "src": "places/concrete-studies/05.jpg",
-        "alt": "Geometric concrete stairs cast shadows in sunlight",
         "credit": {
           "name": "Palina Kharlanovich",
           "url": "https://unsplash.com/@polinamorf",
@@ -156,7 +143,6 @@
       },
       {
         "src": "places/concrete-studies/06.jpg",
-        "alt": "A black and white photo of a walkway",
         "credit": {
           "name": "Marek Pavlík",
           "url": "https://unsplash.com/@marpicek",
@@ -166,7 +152,6 @@
       },
       {
         "src": "places/concrete-studies/07.jpg",
-        "alt": "Gray concrete building during daytime",
         "credit": {
           "name": "Ricardo Gomez Angel",
           "url": "https://unsplash.com/@rgaleriacom",
@@ -176,7 +161,6 @@
       },
       {
         "src": "places/concrete-studies/08.jpg",
-        "alt": "Low angle photography of black high rise building",
         "credit": {
           "name": "Irina Iriser",
           "url": "https://unsplash.com/@iriser",

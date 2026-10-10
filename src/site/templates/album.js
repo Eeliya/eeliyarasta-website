@@ -54,7 +54,7 @@ export function album(ctx, route) {
             aria-label="${i + 1} of ${n}"
             ${i === 0 ? '' : ' aria-hidden="true"'}
           >
-            ${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
+            ${img(ctx, im.src, { sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
           </figure>`,
       )}
       <button
@@ -99,7 +99,7 @@ export function album(ctx, route) {
                 aria-label="Show photo ${i + 1}"
               >
                 <span class="thumb__num">${pad(i + 1)}</span
-                >${img(ctx, im.src, { alt: '', sizes: '80px', attrs: photo(i) })}
+                >${img(ctx, im.src, { decorative: true, sizes: '80px', attrs: photo(i) })}
               </button>
             </li>`,
         )}
@@ -117,7 +117,7 @@ export function album(ctx, route) {
           >
             <span class="gcell__num">${pad(i + 1)}</span>
             <span class="gcell__media"
-              >${img(ctx, im.src, { alt: im.alt, sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
+              >${img(ctx, im.src, { sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
             >
           </button>`,
       )}

@@ -91,6 +91,17 @@ function checkPage(file, d) {
   return out;
 }
 
+/** photos.json: { alt?, and for R2 photos srcset: [{ key, w }], width, height, ... } per photo. */
+function checkPhotos(d) {
+  return Object.entries(d).flatMap(([k, v]) => {
+    if (!isObject(v)) return [`photo "${k}" must be an object`];
+    const out = optional(v, { alt: 'string', srcset: 'array' }).map((p) => `photo "${k}": ${p}`);
+    if (Array.isArray(v.srcset) && !v.srcset.every((s) => isObject(s) && typeof s.key === 'string'))
+      out.push(`photo "${k}": every size in "srcset" needs a "key"`);
+    return out;
+  });
+}
+
 /** Problems with one content file's data, [] when it's fine. file: "settings/site.json", … */
 export function checkContent(file, data) {
   const sourceId = sourceIdOf(file);
@@ -101,10 +112,7 @@ export function checkContent(file, data) {
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
   if (file === SITE) return checkSite(data);
   if (file === ANIMATIONS) return checkAnimations(data);
-  if (file === PHOTOS)
-    return Object.entries(data)
-      .filter(([, v]) => !isObject(v))
-      .map(([k]) => `photo "${k}" must be an object`);
+  if (file === PHOTOS) return checkPhotos(data);
   if (pageIdOf(file)) return checkPage(file, data);
   return [];
 }

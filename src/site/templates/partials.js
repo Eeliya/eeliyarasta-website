@@ -43,7 +43,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
     data-card-cycle
   >
     <div class="acard__media">
-      ${first.map((im, i) => img(ctx, im.src, { alt: i === 0 ? im.alt : '', sizes, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
+      ${first.map((im, i) => img(ctx, im.src, { decorative: i > 0, sizes, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
       <span class="acard__count">${pad(imagesOf(album).length)}</span>
     </div>
     <div class="acard__info">
@@ -72,7 +72,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
-          <div class="prow__media">${p.image ? img(ctx, p.image, { alt: p.title, sizes: '(max-width: 760px) 100vw, 30vw', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : ''}</div>
+          <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: '(max-width: 760px) 100vw, 30vw', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
             <p${ed(PROJECTS, [i, 'description'], 'block')}>${lines(p.description)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
@@ -91,7 +91,7 @@ export const projectList = (ctx, projects, { id = 'projects', headingLevel = 3 }
       aria-hidden="true"
     >
       <div class="preview__frame">
-        ${projects.map((p, i) => (p.image ? img(ctx, p.image, { alt: '', sizes: '360px', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : '<img alt="" />'))}
+        ${projects.map((p, i) => (p.image ? img(ctx, p.image, { decorative: true, sizes: '360px', attrs: ed(PROJECTS, [i, 'image'], 'image') }) : '<img alt="" />'))}
       </div>
     </div>`;
 };

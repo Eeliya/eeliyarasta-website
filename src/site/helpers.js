@@ -140,7 +140,7 @@ export function photoOf(ctx, src) {
   const local = ctx.media?.[src];
   if (local) return local;
   const r2 = ctx.photos?.[src];
-  if (!r2) {
+  if (!r2?.srcset) {
     warnOnce(`"${src}" is not in media/ or content/settings/photos.json: plain <img>, no sizes`);
     return null;
   }
@@ -164,14 +164,38 @@ export function photoOf(ctx, src) {
 export const firstPhotos = (i) => ({ priority: i === 0, loading: i < 3 ? 'eager' : 'lazy' });
 
 /**
+ * A photo's alt text: it belongs to the photo, in content/settings/photos.json ({ alt } per
+ * media/ path or R2 key), not to the page using it. Missing: '' and a build warning.
+ */
+export function altOf(ctx, src) {
+  const alt = ctx.photos?.[src]?.alt;
+  if (typeof alt === 'string' && alt.trim()) return alt;
+  if (src && !isExternal(src))
+    warnOnce(
+      `"${src}" has no alt text (Media window in the editor, content/settings/photos.json)`,
+      'alt',
+    );
+  return '';
+}
+
+/**
  * Responsive <img> for a photo (`src`: see mediaUrl): srcset, intrinsic size and blurred
- * placeholder from photoOf(), for media/ and R2 photos alike.
+ * placeholder from photoOf(), for media/ and R2 photos alike. The alt text is the photo's own
+ * (altOf); `decorative` photos (thumbnails next to their text, repeats) get alt="".
  */
 export function img(
   ctx,
   src,
-  { alt = '', sizes = '100vw', cls = '', loading = 'lazy', attrs = '', priority = false } = {},
+  {
+    decorative = false,
+    sizes = '100vw',
+    cls = '',
+    loading = 'lazy',
+    attrs = '',
+    priority = false,
+  } = {},
 ) {
+  const alt = decorative ? '' : altOf(ctx, src);
   const m = photoOf(ctx, src);
   const url = m?.src || mediaUrl(ctx, src);
   const srcset = m && m.srcset.length > 1 ? m.srcset.map((s) => `${s.url} ${s.w}w`).join(', ') : '';

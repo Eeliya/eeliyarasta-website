@@ -150,3 +150,57 @@ test('editor markers: only when rendering for the editor (dev), never in the bui
   assert.match(dev.body, /data-section="s0"/);
   assert.match(dev.body, /data-curtain-edit="/);
 });
+
+test('photos.json: alt per photo, sizes for R2 photos', () => {
+  const PH = 'settings/photos.json';
+  assert.deepEqual(
+    checkContent(PH, {
+      'a/b.jpg': { alt: 'A' },
+      'photos/x-1600.webp': { srcset: [{ key: 'k', w: 480 }] },
+    }),
+    [],
+  );
+  assert.deepEqual(checkContent(PH, { 'a/b.jpg': 'A' }), ['photo "a/b.jpg" must be an object']);
+  assert.match(
+    checkContent(PH, { 'a/b.jpg': { alt: 3 } })[0],
+    /photo "a\/b\.jpg": "alt" must be a string/,
+  );
+  assert.match(checkContent(PH, { k: { srcset: [{ w: 1 }] } })[0], /needs a "key"/);
+});
+
+test('alt text comes from photos.json; decorative photos and missing alts are empty', async () => {
+  const { img, altOf } = await import('../src/site/helpers.js');
+  const ctx = { photos: { 'a.jpg': { alt: 'A "cat"' } }, media: {}, site: {} };
+  assert.match(img(ctx, 'a.jpg'), /alt="A &quot;cat&quot;"/);
+  assert.match(img(ctx, 'a.jpg', { decorative: true }), /alt=""/);
+  const warn = console.warn;
+  const warned = [];
+  console.warn = (m) => warned.push(m);
+  try {
+    assert.equal(altOf(ctx, 'missing.jpg'), '');
+  } finally {
+    console.warn = warn;
+  }
+  assert.match(warned.join('\n'), /"missing\.jpg" has no alt text/);
+});
+
+test('alt migration: no alt in pages or sources, every photo they use has one in photos.json', () => {
+  const content = loadContent(process.cwd());
+  const photos = content.photos;
+  const used = [];
+  const walk = (v, where) => {
+    if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${where}/${i}`));
+    else if (v && typeof v === 'object')
+      for (const [k, x] of Object.entries(v)) {
+        assert.ok(k !== 'alt' && k !== 'imageAlt', `${where}/${k}: alt belongs in photos.json`);
+        if (['src', 'image'].includes(k) && typeof x === 'string' && x) used.push(x);
+        walk(x, `${where}/${k}`);
+      }
+  };
+  for (const dir of ['pages', 'sources'])
+    for (const f of fs.readdirSync(path.join('content', dir), { recursive: true }))
+      if (f.endsWith('.json'))
+        walk(JSON.parse(fs.readFileSync(path.join('content', dir, f), 'utf8')), `${dir}/${f}`);
+  assert.ok(used.length > 20);
+  for (const src of used) assert.ok(photos[src]?.alt, `${src} has no alt in photos.json`);
+});

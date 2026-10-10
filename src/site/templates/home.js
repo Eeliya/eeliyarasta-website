@@ -26,7 +26,7 @@ const heroPhoto = (ctx, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
@@ -34,11 +34,7 @@ const heroPhoto = (ctx, p, i) => {
 
 /** Images of a source item: albums have images[], projects a single image. */
 const imagesOf = (item) =>
-  Array.isArray(item?.images)
-    ? item.images
-    : item?.image
-      ? [{ src: item.image, alt: item.title || item.name || '' }]
-      : [];
+  Array.isArray(item?.images) ? item.images : item?.image ? [{ src: item.image }] : [];
 
 /** Interleave the first N images of each item (e.g. 4 per person) for a photo-tile grid. */
 const interleave = (items, perItem = 4) => {
@@ -75,7 +71,7 @@ const photoTiles = (ctx, source, items, layout) =>
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
-        <span class="tile__media">${img(ctx, image.src, { alt: image.alt, sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
+        <span class="tile__media">${img(ctx, image.src, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
         <span class="tile__cap"><span${ed(sourceFile(source), [at, item.name !== undefined ? 'name' : 'title'])}>${esc(item.name ?? item.title)}</span><span>${pad(index + 1)}</span></span>
       </a>`,
     )}
@@ -91,7 +87,7 @@ const placeCards = (ctx, source, items, layout) =>
       const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
       return html`
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
-        <span class="placecard__media">${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
+        <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
         <span class="placecard__info">
           <span class="placecard__name"${ed(sourceFile(source), [i, 'name'])}>${esc(p.name)}</span>
           <span class="label"><span${ed(sourceFile(source), [i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>

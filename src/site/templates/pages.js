@@ -26,7 +26,7 @@ export const photography = (ctx) => {
     const cover = list.map(coverOf).find(Boolean);
     return html` <a class="ppanel" href="/${esc(source)}/" data-anim-item>
       <span class="ppanel__media"
-        >${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
+        >${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
       >
       <span class="ppanel__info"
         ><span class="ppanel__title"${ed(PHOTOGRAPHY, ['panels', i, 'title'])}>${esc(title)}</span
@@ -49,7 +49,7 @@ export const about = (ctx) => {
   return html` <section class="about">
     <div class="about__media">
       <figure class="about__figure" data-anim="about.image">
-        ${img(ctx, a.image, { alt: a.imageAlt, sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: ed(ABOUT, ['image'], 'image') })}
+        ${img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: ed(ABOUT, ['image'], 'image') })}
       </figure>
       <figcaption class="label muted">
         ${esc(creditText(a.imageCredit))}${a.placeholder ? ' · placeholder' : ''}

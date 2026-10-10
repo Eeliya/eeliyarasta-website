@@ -23,9 +23,9 @@ export const imageUrl = (src) =>
 
 /** srcset of an R2 photo ('' for others: media/ photos keep the one they were rendered with). */
 export const imageSrcset = (src) =>
-  media.photos[src]?.srcset.map((s) => `${imageUrl(s.key)} ${s.w}w`).join(', ') || '';
+  media.photos[src]?.srcset?.map((s) => `${imageUrl(s.key)} ${s.w}w`).join(', ') || '';
 
 /** A small version for a field's thumbnail: the smallest size, else the photo itself. */
 export const thumbUrl = (src) =>
   media.manifest[src]?.thumb ||
-  (media.photos[src] ? imageUrl(media.photos[src].srcset[0].key) : imageUrl(src));
+  (media.photos[src]?.srcset ? imageUrl(media.photos[src].srcset[0].key) : imageUrl(src));

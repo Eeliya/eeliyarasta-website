@@ -22,7 +22,7 @@ const albumLinks = (ctx, kind, list) =>
       html` <li>
         <a class="dd-link" href="${esc(itemHref(ctx, kind, a))}">
           <span class="dd-link__thumb"
-            >${coverOf(a) ? img(ctx, coverOf(a).src, { alt: '', sizes: '48px' }) : ''}</span
+            >${coverOf(a) ? img(ctx, coverOf(a).src, { decorative: true, sizes: '48px' }) : ''}</span
           >
           <span class="dd-link__name">${esc(a.name)}</span>
           <span class="dd-link__count">${pad(imagesOf(a).length)}</span>

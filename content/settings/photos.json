@@ -1,1 +1,41 @@
-{}
+{
+  "about/x100v.jpg": { "alt": "Fujifilm X100V camera on a wooden table" },
+  "people/daan-okafor/01.jpg": { "alt": "Man in long coat and ripped jeans walks outside" },
+  "people/daan-okafor/02.jpg": { "alt": "Man with glasses looking out window" },
+  "people/daan-okafor/03.jpg": { "alt": "Man in sunglasses and tank top posing outdoors" },
+  "people/daan-okafor/04.jpg": { "alt": "Man in striped sweater sits in car" },
+  "people/daan-okafor/05.jpg": {
+    "alt": "A man with glasses sitting down in a black and white photo"
+  },
+  "people/daan-okafor/06.jpg": { "alt": "A man in a suit standing on a sidewalk" },
+  "people/daan-okafor/07.jpg": { "alt": "Man playing guitar on stage with sunglasses" },
+  "people/noor-vermeer/01.jpg": { "alt": "A woman sitting on the ground next to a window" },
+  "people/noor-vermeer/02.jpg": { "alt": "A woman in a cowboy hat poses for a picture" },
+  "people/noor-vermeer/03.jpg": { "alt": "A woman sitting on a ledge with her hand on her head" },
+  "people/noor-vermeer/04.jpg": { "alt": "A woman in a black top and a brown hat" },
+  "people/noor-vermeer/05.jpg": { "alt": "A woman in a white top and blue jeans" },
+  "people/noor-vermeer/06.jpg": { "alt": "A woman in a white shirt posing for a picture" },
+  "people/noor-vermeer/07.jpg": { "alt": "A woman sitting on top of a cement block" },
+  "people/noor-vermeer/08.jpg": { "alt": "A woman standing on a balcony next to a street" },
+  "places/concrete-studies/01.jpg": { "alt": "Gray concrete monolith" },
+  "places/concrete-studies/02.jpg": { "alt": "Worms eye view photography of concrete building" },
+  "places/concrete-studies/03.jpg": { "alt": "A black and white photo of a tall building" },
+  "places/concrete-studies/04.jpg": { "alt": "Landscape photography of gray concrete building" },
+  "places/concrete-studies/05.jpg": { "alt": "Geometric concrete stairs cast shadows in sunlight" },
+  "places/concrete-studies/06.jpg": { "alt": "A black and white photo of a walkway" },
+  "places/concrete-studies/07.jpg": { "alt": "Gray concrete building during daytime" },
+  "places/concrete-studies/08.jpg": { "alt": "Low angle photography of black high rise building" },
+  "places/kasteel-de-haar/01.jpg": {
+    "alt": "A castle sitting on top of a lake next to a lush green field"
+  },
+  "places/kasteel-de-haar/02.jpg": { "alt": "A large castle sitting on top of a lake" },
+  "places/kasteel-de-haar/03.jpg": { "alt": "A black and white photo of a clock tower" },
+  "places/kasteel-de-haar/04.jpg": { "alt": "A large castle sitting next to a tree" },
+  "places/kasteel-de-haar/05.jpg": { "alt": "A room with a desk and a chair" },
+  "places/kasteel-de-haar/06.jpg": { "alt": "A large castle with a clock tower on top of it" },
+  "places/kasteel-de-haar/07.jpg": { "alt": "A large castle sitting on top of a lake" },
+  "places/kasteel-de-haar/08.jpg": { "alt": "A lake surrounded by lots of trees in a park" },
+  "projects/arduino.jpg": { "alt": "Desk Controller" },
+  "projects/film-scanner.jpg": { "alt": "Film Scan Rig" },
+  "projects/grok-observatory.jpg": { "alt": "Grok Observatory" }
+}

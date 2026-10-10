@@ -8,8 +8,9 @@
  *                               item of a source (see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/settings/<id>.json  site-wide settings (site.json, animations.json), and photos.json:
- *                               the sizes of photos uploaded to R2, written by the upload (not
- *                               edited in the editor, committed by Publish)
+ *                               every photo's alt text (media/ paths and R2 keys) plus the
+ *                               sizes of photos uploaded to R2; written by the editor's Media
+ *                               window and the upload (not by Save), committed by Publish
  *
  * Paths are relative to content/ and are also the keys the editor uses
  * (data-edit="pages/index.json#/hero/title").
@@ -98,6 +99,7 @@ export function contentFromFiles(files) {
     places: list('places'),
     projects: list('projects'),
     animations: files[ANIMATIONS] || {},
-    photos: files[PHOTOS] || {}, // R2 photos: { key: { width, height, srcset, color, lqip } }
+    // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
+    photos: files[PHOTOS] || {},
   };
 }
