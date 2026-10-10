@@ -79,7 +79,11 @@ export const panels = {
     {
       key: 'panels',
       label: 'Panels',
-      list: { source: 'source', title: 'text', unit: 'text' },
+      list: {
+        source: { type: 'source', label: 'Source' },
+        title: { type: 'text', label: 'Title', width: 'half' },
+        unit: { type: 'text', label: 'Unit (after the count)', width: 'half' },
+      },
       item: { source: 'people', title: 'People', unit: 'items' },
     },
   ],
@@ -114,7 +118,14 @@ export const about = {
     { key: 'crumb', label: 'Crumb' },
     { key: 'headline', label: 'Headline' },
     { key: 'paragraphs', label: 'Paragraphs', list: 'block' },
-    { key: 'facts', label: 'Facts', list: { label: 'text', value: 'text' } },
+    {
+      key: 'facts',
+      label: 'Facts',
+      list: {
+        label: { type: 'text', label: 'Label', width: 'half' },
+        value: { type: 'text', label: 'Value', width: 'half' },
+      },
+    },
     { key: 'emailLabel', label: 'Email button' },
   ],
   defaults: {

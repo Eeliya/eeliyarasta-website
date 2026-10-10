@@ -15,6 +15,8 @@
     off       dimmed: the section is turned off
     class     extra class on the section
     bar       snippet: controls at the right of the bar (count, buttons, a switch), each 20px tall
+              (24px for a file button). A panel's own sections keep their bar on top while
+              scrolling through them (sticky).
     children  the section body
 -->
 <script>
@@ -101,6 +103,17 @@
     > :global(.dot) {
       margin: calc((1lh - 8px) / 2) 0;
     }
+  }
+
+  // a panel's own sections (not nested ones): the bar stays on top of the scroll area while
+  // its section scrolls by, on the panel's color so the fields pass under it
+  :global(.ed-body) > .sec > .sec__bar {
+    position: sticky;
+    top: -16px; // the scroll area's top edge, over its padding
+    z-index: 1;
+    margin: -8px 0;
+    padding: 8px 0;
+    background: var(--bg-2);
   }
 
   // caret | title, with the name under the title

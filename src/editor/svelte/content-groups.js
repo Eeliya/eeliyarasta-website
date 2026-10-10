@@ -6,8 +6,10 @@
 import { parse } from '../lib/pointer.js';
 import { NAV, SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
+import { labelOf } from '../../site/schemas.js';
 import { SECTION_TYPES } from '../../site/sections/index.js';
 import { previewFile } from '../sections.js';
+import { WIDGETS, itemName, schemaFor } from './source-items.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
@@ -41,23 +43,42 @@ export function splitEdit(edit) {
 export const previewPage = (bridge) =>
   bridge.doc?.querySelector('[data-router-view]')?.dataset.page;
 
-/** Human label for a pointer, e.g. sources/people.json#/0/name -> "Noor Vermeer / name". */
+/**
+ * Human label for a pointer, e.g. sources/people.json#/0/name -> "Noor Vermeer / Name": a
+ * source item by its name and its field by the schema's label.
+ */
 export function labelFor(store, { file, ptr }) {
   const parts = parse(ptr);
   if (isSource(file) && /^\d+$/.test(parts[0])) {
+    const schema = schemaFor(store, file);
     const item = store.current[file]?.[parts[0]];
-    const name = item?.name || item?.title || `#${Number(parts[0]) + 1}`;
-    return [name, ...parts.slice(1)].join(' / ');
+    const name = item ? itemName(item, schema) : `#${Number(parts[0]) + 1}`;
+    const field = schema.fields.find((f) => f.key === parts[1]);
+    return [name, field?.label ?? parts[1], ...parts.slice(2)].filter(Boolean).join(' / ');
   }
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-const titleCase = (s) =>
-  String(s || '')
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+/** Labels of the texts outside sections: a template's shared labels, the footer, the menu. */
+const LABELS = {
+  section: 'Back link',
+  next: 'Next link',
+  label: 'Label',
+  cta: 'Call to action',
+  note: 'Note',
+  toTop: 'Back to top',
+  email: 'Email',
+  location: 'Location',
+  menu: 'Menu button',
+  close: 'Close button',
+  clock: 'Clock label',
+  handle: 'Handle',
+};
 
-/** A field's label: the last part of its pointer; a photo in a list (".../photos/1/src") is "photo 2". */
+/**
+ * A field's label: a source field's from its schema, else a known text's (LABELS), else its
+ * key made readable; a photo in a list (".../photos/1/src") is "Photo 2".
+ */
 function fieldLabel(store, f) {
   const parts = parse(f.ptr);
   // a menu label: "Item 2", "Item 2 › 1" (a dropdown link), "Item 2: all link"
@@ -71,8 +92,30 @@ function fieldLabel(store, f) {
         : item;
   }
   if (f.type === 'image' && parts.at(-1) === 'src' && /^\d+$/.test(parts.at(-2)))
-    return `photo ${Number(parts.at(-2)) + 1}`;
-  return labelFor(store, f).split(' / ').pop();
+    return `Photo ${Number(parts.at(-2)) + 1}`;
+  const key = parts.at(-1);
+  if (f.file === SITE && parts[0] === 'social') return `Social ${Number(parts[1]) + 1} ${key}`;
+  if (parts.at(-3) === 'columns') return `${labelOf(parts.at(-2))} column title`;
+  return LABELS[key] ?? labelOf(key);
+}
+
+/**
+ * A preview field as the panel shows it: its label, and for a source item's field what its
+ * schema says (widget, half width, help, choices).
+ */
+function described(store, f) {
+  const parts = parse(f.ptr);
+  const own = isSource(f.file) && parts.length === 2 && /^\d+$/.test(parts[0]);
+  const sf = own && schemaFor(store, f.file).fields.find((x) => x.key === parts[1]);
+  if (!sf) return { ...f, label: fieldLabel(store, f) };
+  return {
+    ...f,
+    label: sf.label || labelOf(sf.key),
+    type: WIDGETS[sf.type] || f.type,
+    half: sf.width === 'half',
+    help: sf.help || '',
+    ...(sf.options ? { options: sf.options.map((o) => [o, o]) } : {}),
+  };
 }
 
 const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
@@ -111,11 +154,12 @@ function registryFields(file, at, s, t) {
       ptr,
       type: def.type || 'text',
       label: def.label || label,
+      half: def.width === 'half',
       ...(def.options ? { options: def.options } : {}),
     };
   };
   return (t.fields || []).map((f) => {
-    if (!f.list) return field([f.key], f.type, f.label);
+    if (!f.list) return field([f.key], f, f.label);
     const items = Array.isArray(s[f.key]) ? s[f.key] : [];
     const subs = typeof f.list === 'string' ? null : Object.entries(f.list);
     const ptr = pointer(['sections', at, f.key]);
@@ -134,12 +178,26 @@ function registryFields(file, at, s, t) {
       items: items.map((_, j) =>
         subs
           ? subs.map(([sub, type]) =>
-              field([f.key, j, sub], type, sub === 'src' ? 'Photo' : titleCase(sub)),
+              field([f.key, j, sub], type, sub === 'src' ? 'Photo' : labelOf(sub)),
             )
           : [field([f.key, j], f.list, `${f.label} ${j + 1}`)],
       ),
     };
   });
+}
+
+/**
+ * A group's fields in panel order, the plain ones in runs (a run is laid out in rows) between
+ * the lists: [{ list: field } | { fields: [field, ...] }].
+ */
+export function runsOf(fields) {
+  const out = [];
+  for (const f of fields) {
+    if (f.list) out.push({ list: f });
+    else if (out.at(-1)?.fields) out.at(-1).fields.push(f);
+    else out.push({ fields: [f] });
+  }
+  return out;
 }
 
 /** Every field of a group, list items included. */
@@ -190,7 +248,7 @@ export function groupFor(store, { file, ptr }, page) {
     // people/[slug]: the labels every item page shares (section, next)
     return {
       id: 'page-body',
-      title: pageId.endsWith(TEMPLATE) ? 'Item pages' : titleCase(pageId),
+      title: pageId.endsWith(TEMPLATE) ? 'Item pages' : labelOf(pageId),
     };
   }
   if (file === NAV) {
@@ -210,7 +268,7 @@ export function groupFor(store, { file, ptr }, page) {
     const item = store.current[file]?.[parts[0]];
     return {
       id: `${file}-${parts[0]}`,
-      title: item?.name || item?.title || `#${Number(parts[0]) + 1}`,
+      title: item ? itemName(item, schemaFor(store, file)) : `#${Number(parts[0]) + 1}`,
     };
   }
   return { id: 'content', title: 'Content' };
@@ -299,12 +357,12 @@ export function contentGroups(store, bridge, target) {
   for (const f of fieldsOf(store, bridge, target)) {
     const group = groupFor(store, f, page);
     if (group?.id.startsWith('source:')) continue;
-    if (group) add(group).fields.push({ ...f, label: fieldLabel(store, f) });
+    if (group) add(group).fields.push(described(store, f));
     else {
       // a section's text its type doesn't list (e.g. a photo credit): added to its group
       const g = groups.get(`s${parse(f.ptr)[1]}`);
       if (g && f.file === g.file && !allFields(g).some((x) => x.edit === f.edit))
-        g.fields.push({ ...f, label: fieldLabel(store, f) });
+        g.fields.push(described(store, f));
     }
   }
 
@@ -318,6 +376,12 @@ export function contentGroups(store, bridge, target) {
       label: 'Curtain text',
       placeholder: 'Leave empty to hide the label',
     });
+  }
+  // A group whose fields all come from one source file names it once, in its bar.
+  for (const g of groups.values()) {
+    const files = new Set(allFields(g).map((f) => f.file));
+    const [only] = files;
+    if (files.size === 1 && isSource(only)) g.source = only;
   }
   return [...groups.values()];
 }

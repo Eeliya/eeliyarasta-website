@@ -37,8 +37,8 @@ export const hero = {
   label: 'Hero',
   icon: 'star',
   fields: [
-    { key: 'title', label: 'Name', type: 'words' },
-    { key: 'eyebrow', label: 'Eyebrow' },
+    { key: 'title', label: 'Name', type: 'words', width: 'half' },
+    { key: 'eyebrow', label: 'Eyebrow', width: 'half' },
     { key: 'subline', label: 'Subline', type: 'block' },
     {
       key: 'photos',
@@ -134,8 +134,8 @@ export const grid = {
   icon: 'table-cells',
   numbered: true,
   fields: [
-    { key: 'label', label: 'Label' },
-    { key: 'title', label: 'Title' },
+    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'title', label: 'Title', width: 'half' },
     { key: 'cta', label: 'Button' },
   ],
   config: [
@@ -177,8 +177,8 @@ export const projects = {
   icon: 'list',
   numbered: (s) => !!s.title,
   fields: [
-    { key: 'label', label: 'Label' },
-    { key: 'title', label: 'Title (empty: no heading)' },
+    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'title', label: 'Title (empty: no heading)', width: 'half' },
     { key: 'cta', label: 'Button' },
   ],
   config: [{ key: 'source', label: 'Source', type: 'source' }],

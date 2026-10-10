@@ -229,3 +229,33 @@ test('save: a source that breaks its schema is not written', () => {
   r = save(root, { 'sources/people.json': [{ slug: 'a', name: 'Ann', year: 2025 }] });
   assert.equal(r.status, 200);
 });
+
+test('editor: half fields pair with the next half; a lone half takes the row', async () => {
+  const { pairedHalves, itemFields } = await import('../src/editor/svelte/source-items.js');
+  const f = (edit, half) => ({ edit, half });
+  const set = pairedHalves([
+    f('a', true),
+    f('b', true),
+    f('c', true),
+    f('d'),
+    f('e', true),
+    f('f', true),
+  ]);
+  assert.deepEqual([...set], ['a', 'b', 'e', 'f']);
+  // fields from the schema: no slug (its own input), a photo per photos item
+  const fields = itemFields('sources/people.json', { images: [{ src: 'x.jpg' }] }, 0, PEOPLE);
+  assert.deepEqual(
+    fields.map((x) => [x.key, x.label, x.type, x.half]),
+    [
+      ['name', 'Name', 'text', false],
+      ['year', 'Year', 'number', true],
+      ['kind', 'Kind', 'select', false],
+      ['url', 'Link', 'text', false],
+      ['shot', 'Shot on', 'date', false],
+      ['image', 'Photo', 'image', false],
+      ['images.0.src', 'Photo 1', 'image', false],
+      ['placeholder', 'Placeholder', 'boolean', false],
+    ],
+  );
+  assert.equal(fields[6].edit, 'sources/people.json#/0/images/0/src');
+});

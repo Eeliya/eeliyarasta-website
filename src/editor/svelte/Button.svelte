@@ -1,6 +1,7 @@
 <!--
   The editor's button: a pill after the footer's Save / Publish, or a round icon button.
     variant   'default' | 'primary' (the main action, light) | 'danger' (red: Delete, Discard)
+              | 'file' (a file name as written, e.g. people.json: not uppercase, 24px)
     size      'default' (40px; icon only 32px) | 'small' (32px; icon only 24px, unfilled)
     icon      Font Awesome name without the prefix, e.g. 'trash'
     iconOnly  round, just the icon; label is its aria-label and title
@@ -119,6 +120,13 @@
     &:hover:not(:disabled, [aria-disabled]) {
       background: var(--danger-hover);
     }
+  }
+
+  // a file name: as written, 24px
+  .btn--file {
+    padding: 4px 12px;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   // round, just the icon

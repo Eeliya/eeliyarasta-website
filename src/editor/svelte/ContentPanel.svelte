@@ -4,7 +4,9 @@
   sections (src/site/sections/): each can be moved, duplicated, deleted, turned on/off and
   configured (its type's config: source, layout, ...); Add section picks a type from the
   registry. Below them, the page's SEO (SeoSection.svelte). The Sources button on top opens
-  the Source Explorer (SourcesModal.svelte).
+  the Source Explorer (SourcesModal.svelte); so does the file button (people.json) in the
+  bar of a group whose texts come from one source, or beside a field when a group mixes.
+  Fields are in rows (.fields): two half fields share one (pairedHalves).
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
   the preview, a field sets it (via the bridge) when it gets focus. This panel highlights
@@ -33,6 +35,7 @@
     allFields,
     contentGroups,
     groupFor,
+    runsOf,
     isSource,
     previewPage,
     sectionsOf,
@@ -41,6 +44,7 @@
   import { parse } from '../lib/pointer.js';
   import { previewFile } from '../sections.js';
   import { openMedia } from './media.svelte.js';
+  import { pairedHalves } from './source-items.js';
   import { addSection, duplicateSection, moveSection, removeSection } from '../section-ops.js';
   import { SECTION_TYPES } from '../../site/sections/index.js';
   import { TEMPLATE, baseName, pageIdOf, sourceIdOf } from '../../site/files.js';
@@ -198,9 +202,16 @@
     return typeof text === 'string' && text.trim() ? text : `${f.label} ${i + 1}`;
   }
 
-  function setText(f, value) {
-    live.store.set(f.file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' });
+  // a switch or a choice can change what the section shows: rendered again
+  function setValue(f, value) {
+    const structure = f.type === 'boolean' || f.type === 'select';
+    live.store.set(f.file, f.ptr, value, {
+      source: 'panel',
+      ...(structure ? { structure } : { key: `text:${f.edit}` }),
+    });
   }
+
+  const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
 
   /** Open the group holding `edit` and scroll to it; list items open the Sources modal. */
   async function reveal(edit) {
@@ -210,7 +221,7 @@
       const { file, ptr } = splitEdit(edit);
       // A list item shown on the home page (a person's name): edit it in the modal.
       if (groupFor(live.store, { file, ptr }, previewPage(bridge))?.id.startsWith('source:'))
-        sourcesModal.open(file, Number(parse(ptr)[0]) || 0, edit);
+        sourcesModal.open(file, itemOf({ ptr }), edit);
       return;
     }
     ui.sections[keyOf(group)] = true;
@@ -226,8 +237,9 @@
   });
 </script>
 
-<!-- one field: a text / photo Field, or a source Select (a list item's source) -->
-{#snippet field(f)}
+<!-- one field: a Field (text, photo, switch, choice), or a source Select (a list item's
+     source); `own` = the group names the source file, so the field doesn't -->
+{#snippet field(f, half, own)}
   {#if f.type === 'source'}
     {@const value = live.get(f.file, f.ptr)}
     <div class={['sec__opt', live.changed(f.file, f.ptr) && 'is-changed']}>
@@ -242,49 +254,27 @@
         onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
       />
     </div>
-  {:else if f.type === 'select'}
-    {@const value = live.get(f.file, f.ptr)}
-    <div class={['sec__opt', live.changed(f.file, f.ptr) && 'is-changed']}>
-      <label class="tf__label" for="{uid}-{f.edit}"
-        >{f.label}<i class="dot" title="Changed"></i></label
-      >
-      <Select
-        id="{uid}-{f.edit}"
-        value={value ?? ''}
-        placeholder="Pick…"
-        options={f.options.map(([v, label]) => ({ value: v, label }))}
-        onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
-      />
-    </div>
-  {:else if f.type === 'boolean'}
-    <label class={['tf', live.changed(f.file, f.ptr) && 'is-changed']}>
-      <span class="tf__label"
-        >{f.label}<i class="dot" title="Changed"></i>
-        <input
-          type="checkbox"
-          class="switch"
-          aria-label={f.label}
-          checked={!!live.get(f.file, f.ptr)}
-          onchange={(e) =>
-            live.store.set(f.file, f.ptr, e.currentTarget.checked, {
-              source: 'panel',
-              structure: true,
-            })}
-        />
-      </span>
-    </label>
   {:else}
     <Field
       {...f}
+      {half}
       value={live.get(f.file, f.ptr)}
       changed={live.changed(f.file, f.ptr)}
       selected={ui.selection?.edit === f.edit}
-      source={isSource(f.file) ? f.file : ''}
-      onsource={() => sourcesModal.open(f.file, Number(parse(f.ptr)[0]) || 0, f.edit)}
+      source={!own && isSource(f.file) ? f.file : ''}
+      onsource={() => sourcesModal.open(f.file, itemOf(f), f.edit)}
       onfocus={() => bridge.focusEdit(f.edit)}
-      onvalue={(value) => setText(f, value)}
+      onvalue={(value) => setValue(f, value)}
     />
   {/if}
+{/snippet}
+
+<!-- fields in rows: a half field shares its row with the next half -->
+{#snippet rows(fields, own)}
+  {@const halves = pairedHalves(fields)}
+  <div class="fields">
+    {#each fields as f (f.edit)}{@render field(f, halves.has(f.edit), own)}{/each}
+  </div>
 {/snippet}
 
 <!-- opens the Source Explorer at a source file -->
@@ -355,6 +345,17 @@
         off={!isOn(g)}
       >
         {#snippet bar()}
+          {#if g.source}
+            {@const first = allFields(g)[0]}
+            <Button
+              size="small"
+              variant="file"
+              title="Edit in the Source Explorer: content/{g.source}"
+              onclick={() => sourcesModal.open(g.source, itemOf(first), first.edit)}
+            >
+              {baseName(g.source)}
+            </Button>
+          {/if}
           {#if !g.toggle}<span class="sec__count">{g.fields.length}</span>{/if}
           {#if g.index !== undefined}
             <Button
@@ -434,8 +435,11 @@
           <p class="hint small">Updating the preview…</p>
         {/if}
 
-        {#each g.fields as f (f.edit)}
-          {#if f.list}
+        {#each runsOf(g.fields) as run (run.list?.edit ?? run.fields[0].edit)}
+          {#if run.fields}
+            {@render rows(run.fields, !!g.source)}
+          {:else}
+            {@const f = run.list}
             <ListField
               label={f.label}
               items={f.items}
@@ -445,22 +449,17 @@
               onremove={(i) => removeItem(f, i)}
               onadd={() => addItem(f)}
             >
-              {#snippet item(fields)}
-                {#each fields as sub (sub.edit)}{@render field(sub)}{/each}
-              {/snippet}
+              {#snippet item(fields)}{@render rows(fields, !!g.source)}{/snippet}
             </ListField>
-          {:else}
-            {@render field(f)}
-          {/if}
-        {:else}
-          {#if !g.config?.length}
-            <p class="hint small">
-              {isOn(g)
-                ? 'No text fields in this section.'
-                : 'Section is off. Turn it on to show it on the page.'}
-            </p>
           {/if}
         {/each}
+        {#if !g.fields.length && !g.config?.length}
+          <p class="hint small">
+            {isOn(g)
+              ? 'No text fields in this section.'
+              : 'Section is off. Turn it on to show it on the page.'}
+          </p>
+        {/if}
       </Section>
     {:else}
       <p class="hint">No editable content here.</p>
