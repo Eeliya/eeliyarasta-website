@@ -107,7 +107,6 @@ kbd {
 // fields below (8px corners). The editor's main tabs are pills: .seg--pill.
 .seg {
   display: flex;
-  gap: 4px;
   border-radius: 8px;
   background: rgb(0 0 0 / 0.35);
   box-shadow: inset 0 0 0 1px var(--line);
@@ -119,7 +118,7 @@ kbd {
     border: 0;
     background: none;
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 10px;
     border-radius: 0;
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -131,6 +130,7 @@ kbd {
     transition:
       background 0.3s,
       color 0.3s;
+    line-height: 16px;
 
     &:hover {
       color: var(--fg);
@@ -149,10 +149,10 @@ kbd {
   }
 
   &--small &__btn {
-    padding: 8px;
-    font-size: 10px;
-    text-transform: none;
-    letter-spacing: 0.02em;
+    //padding: 8px;
+    //font-size: 10px;
+    //text-transform: none;
+    //letter-spacing: 0.02em;
   }
 
   // the main tabs (Browse, Content, Motion, Settings): round, with a gap around the buttons
@@ -174,9 +174,10 @@ select,
   border: 0;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--line);
-  padding: 8px 12px;
+  padding: 10px;
   outline: none;
   transition: box-shadow 0.2s;
+  line-height: 16px;
 
   &:focus {
     box-shadow:
@@ -487,6 +488,13 @@ select {
   margin: 0 0 0 auto;
   color: var(--fg);
   text-align: right;
+
+  &--inherited {
+    margin: 0;
+    color: var(--muted);
+    text-align: left;
+    height: 36px;
+  }
 }
 
 // an inherited timing value: the field's control, dimmed and inert (no clicks, no focus)
@@ -699,13 +707,19 @@ select {
 // text fields (Field.svelte, also used by the curtain timeline)
 .tf {
   display: block;
-  border-radius: 12px;
   transition: box-shadow 0.6s;
-  padding: 4px;
 }
 
 .tf.is-selected {
-  background: color-mix(in srgb, var(--ed-accent) 20%, transparent);
+  .tf__label {
+    color: var(--ed-accent);
+  }
+
+  .tf__input {
+    box-shadow:
+      inset 0 0 0 1px var(--ed-accent),
+      0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
+  }
 }
 
 .tf__label {
@@ -716,6 +730,7 @@ select {
   min-height: 24px; // as tall with or without a .tf__file pill
   color: var(--muted);
   font-size: 11px;
+  line-height: 16px;
 }
 
 .tf .dot {
@@ -778,7 +793,6 @@ select {
 .tf__input {
   width: 100%;
   resize: vertical;
-  line-height: 1.5;
   display: block;
 
   &.is-invalid {

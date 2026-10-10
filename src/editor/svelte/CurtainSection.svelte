@@ -135,11 +135,12 @@
       onclick={() => bridge.api?.replayCurtain?.(undefined, edit.get(edit.base) ?? true)}
     >
       <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+      Replay
     </button>
     {#if page}
       <div class={['tf', modeChanged && 'is-changed']}>
         <span class="tf__label">Curtain for this page<i class="dot" title="Changed"></i></span>
-        <div class="seg seg--small" role="group" aria-label="Curtain for this page">
+        <div class="seg" role="group" aria-label="Curtain for this page">
           {#each CURTAIN_MODES as m (m)}
             <button
               type="button"

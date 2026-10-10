@@ -108,7 +108,7 @@
           </datalist>
         {/if}
       {:else if def.kind === 'segment'}
-        <div class="seg seg--small">
+        <div class="seg">
           {#each def.options as [v, text] (text)}
             <button
               type="button"
