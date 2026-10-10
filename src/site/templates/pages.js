@@ -1,4 +1,4 @@
-import { html, esc, img, pad, coverOf, creditText, ed, lines } from '../helpers.js';
+import { html, esc, img, pad, coverOf, creditText, ed, lines, firstPhotos } from '../helpers.js';
 import { pageFile } from '../files.js';
 
 const ABOUT = pageFile('about');
@@ -26,7 +26,7 @@ export const photography = (ctx) => {
     const cover = list.map(coverOf).find(Boolean);
     return html` <a class="ppanel" href="/${esc(source)}/" data-anim-item>
       <span class="ppanel__media"
-        >${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span
+        >${cover ? img(ctx, cover.src, { alt: cover.alt, sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
       >
       <span class="ppanel__info"
         ><span class="ppanel__title"${ed(PHOTOGRAPHY, ['panels', i, 'title'])}>${esc(title)}</span

@@ -145,6 +145,14 @@ export function photoOf(ctx, src) {
 }
 
 /**
+ * Loading of the i-th photo at the top of a page (the hero, the first cards of a grid, the
+ * photography panels): the first is the likely LCP (eager + fetchpriority="high"), the next
+ * two are eager too (the rest of the first row), everything after that is lazy.
+ * img(ctx, src, { ...firstPhotos(i) }). Album slides and the About photo set their own.
+ */
+export const firstPhotos = (i) => ({ priority: i === 0, loading: i < 3 ? 'eager' : 'lazy' });
+
+/**
  * Responsive <img> for a photo (`src`: see mediaUrl): srcset, intrinsic size and blurred
  * placeholder from photoOf(), for media/ and R2 photos alike.
  */

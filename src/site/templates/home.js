@@ -1,4 +1,15 @@
-import { html, esc, img, pad, ed, lines, words, sectionAttrs, itemHref } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  ed,
+  lines,
+  words,
+  sectionAttrs,
+  itemHref,
+  firstPhotos,
+} from '../helpers.js';
 import { HOME, sourceFile } from '../files.js';
 import { sectionHead, projectList } from './partials.js';
 
@@ -14,7 +25,7 @@ const heroPhoto = (ctx, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, priority: i < 5, attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { alt: '', sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: ed(HOME, ['hero', 'photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
