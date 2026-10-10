@@ -139,17 +139,9 @@
         {/each}
       </nav>
 
+      <!-- [ page / component | Pages | Media ], then the item of a [slug] page on its own row -->
       <div class="ed-bar">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
-        {#if ui.target?.items}
-          <!-- a [slug] page: which item's page the preview shows -->
-          <Select
-            aria-label="Item"
-            value={ui.path}
-            options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
-            onchange={(path) => actions.pickTarget(ui.target, path)}
-          />
-        {/if}
         <Button
           icon="sitemap"
           iconOnly
@@ -164,6 +156,17 @@
           title="Media: every photo, upload, alt text"
           onclick={() => openMedia({ key: ui.media.key })}
         />
+        {#if ui.target?.items}
+          <!-- a [slug] page: which item's page the preview shows -->
+          <div class="ed-bar__item">
+            <Select
+              aria-label="Item"
+              value={ui.path}
+              options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
+              onchange={(path) => actions.pickTarget(ui.target, path)}
+            />
+          </div>
+        {/if}
       </div>
     </header>
 
@@ -322,10 +325,15 @@
   }
 
   .ed-bar {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .ed-bar__item {
+    grid-column: 1 / -1;
+    display: flex;
   }
 
   // pending line and status on their own rows, then [ source | Save | Publish ]
