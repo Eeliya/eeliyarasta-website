@@ -23,7 +23,9 @@ export async function load() {
   } catch (err) {
     // The dev server answered with its own error (e.g. broken JSON in a content file): show it.
     if (err.error) throw err;
-    throw new Error(`The editor only works with the dev server (npm run dev). ${err.message}`);
+    throw new Error(`The editor only works with the dev server (npm run dev). ${err.message}`, {
+      cause: err,
+    });
   }
   media.manifest = dev.media || {};
   media.photos = dev.photos || {};

@@ -19,15 +19,11 @@
   const kindName = (item) =>
     item?.kind === 'component' ? 'Component' : item?.items ? 'Template' : 'Page';
   // Pages by folder (item.group: "Pages" or "/people/"), then Components
-  const groups = $derived.by(() => {
-    const byGroup = new Map();
-    for (const i of items) {
-      const group = i.kind === 'component' ? 'Components' : i.group || 'Pages';
-      if (!byGroup.has(group)) byGroup.set(group, []);
-      byGroup.get(group).push(i);
-    }
-    return [...byGroup];
-  });
+  const groups = $derived(
+    Object.entries(
+      Object.groupBy(items, (i) => (i.kind === 'component' ? 'Components' : i.group || 'Pages')),
+    ),
+  );
 
   async function toggle() {
     open = !open;

@@ -32,6 +32,7 @@ export function parseContent(text, file) {
     }
     throw new Error(
       `content/${file}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
+      { cause: err },
     );
   }
 }

@@ -60,9 +60,8 @@ export function resolve(id, el) {
       /* ignore */
     }
   }
-  const { preset: _p, ...overrides } = target;
-  const { preset: _q, ...ownOverrides } = own;
-  return merge(preset, overrides, ownOverrides, inline, {
+  // target and own may name a preset: that was resolved above, the rest overrides it
+  return merge(preset, target, own, inline, {
     id,
     key,
     preset: presetName,

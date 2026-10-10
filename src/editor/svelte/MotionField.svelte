@@ -16,17 +16,14 @@
     onvalue  (path, value) on an edit
     actions  snippet for the end of the top row
 -->
-<script module>
-  let lists = 0;
-</script>
-
 <script>
   import EasePicker from './EasePicker.svelte';
   import { formatValue } from './motion.js';
 
   let { def, value, gsap, view = 'edit', onvalue, actions } = $props();
 
-  const list = `dl-motion-${++lists}`;
+  const uid = $props.id();
+  const list = `dl-motion-${uid}`;
 
   /** Show the stored value, except in the input the user is typing in or dragging. */
   const show = (v) => (el) => {

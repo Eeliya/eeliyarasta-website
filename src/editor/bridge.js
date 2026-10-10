@@ -96,7 +96,7 @@ export function createBridge({ store, labelFor }) {
     /** Reload the preview page (a fresh render from disk) at the same scroll and selection. */
     reload() {
       if (!api) {
-        iframe.src = iframe.src; // not connected yet: load it again
+        iframe.contentWindow?.location.reload(); // not connected yet: load it again
         return;
       }
       const y = api.scrollTop();

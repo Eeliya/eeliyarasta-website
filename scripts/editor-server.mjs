@@ -56,7 +56,6 @@ export function editableFiles(root) {
 }
 
 // ---------------------------------------------------------------- pages
-const PAGE_NAME = /^[a-z0-9][a-z0-9_-]*$/i;
 // Root names that are not pages: the editor, Vite's assets, the photos, and the two specials.
 const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
 const PROTECTED = new Set(['home', '404']); // no rename or delete
@@ -453,7 +452,6 @@ export async function publish(root, message) {
       body: { error: 'Nothing to publish: no saved content changes and no unpushed commits.' },
     };
 
-  let hash = null;
   let committed = false;
   const steps = [];
   if (s.files.length) {
@@ -479,7 +477,7 @@ export async function publish(root, message) {
       return { status: 500, body: { error: 'git commit failed', output: commit.output, steps } };
     committed = true;
   }
-  hash = (await git(root, ['rev-parse', 'HEAD'])).stdout.trim();
+  const hash = (await git(root, ['rev-parse', 'HEAD'])).stdout.trim();
   const url = `${s.repoUrl}/commit/${hash}`;
   const push = await git(root, ['push', 'origin', s.branch], { timeout: 120_000 });
   steps.push({ cmd: `git push origin ${s.branch}`, ...push });

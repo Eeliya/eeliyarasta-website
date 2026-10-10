@@ -64,7 +64,7 @@ export function body(ctx, route, accent, view) {
       <div class="backdrop__glow"></div>
       <div class="backdrop__grain"></div>
     </div>
-    ${header(ctx, route)} ${mobileMenu(ctx, route)}
+    ${header(ctx)} ${mobileMenu(ctx)}
     <div id="smooth-wrapper">
       <div id="smooth-content">
         <main

@@ -44,7 +44,7 @@ const projectLink = (p) => {
 };
 
 /** Persistent header: logo, glass nav pill with click-to-open dropdowns, local time, mobile menu toggle. */
-export function header(ctx, route) {
+export function header(ctx) {
   const { site, people, places, projects } = ctx;
   const nav = site.nav || {};
   const n = (key, fallback) => nav[key] ?? fallback;
