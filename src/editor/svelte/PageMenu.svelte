@@ -1,229 +1,52 @@
 <!--
   Page picker in the toolbar. A page navigates the preview; a component (Menu, Footer)
-  keeps the page and switches the Content tab to its fields. Opens on click.
+  keeps the page and switches the Content tab to its fields. A Select with the kind as a badge
+  and the path under the title.
 -->
 <script>
-  import { tick } from 'svelte';
+  import Select from './Select.svelte';
 
   // items: [{ kind: 'page', path, title, group, items? } | { kind: 'component', id, title }]
   // (a [slug] template has items: its pages)
   // value: the current item; onchange(item): an item was picked
   let { items, value, onchange } = $props();
 
-  let open = $state(false);
-  let menu = $state();
-  let button = $state();
-
   const key = (item) =>
     item?.kind === 'component' ? `component:${item.id}` : `page:${item?.path}`;
   const kindName = (item) =>
     item?.kind === 'component' ? 'Component' : item?.items ? 'Template' : 'Page';
   // Pages by folder (item.group: "Pages" or "/people/"), then Components
-  const groups = $derived(
+  const options = $derived(
     Object.entries(
       Object.groupBy(items, (i) => (i.kind === 'component' ? 'Components' : i.group || 'Pages')),
-    ),
+    ).map(([group, list]) => ({
+      group,
+      options: list.map((item) => ({ value: key(item), label: item.title, item })),
+    })),
   );
-
-  async function toggle() {
-    open = !open;
-    if (!open) return;
-    await tick();
-    const options = menu.querySelectorAll('[role="option"]');
-    (menu.querySelector('[aria-selected="true"]') || options[0])?.focus();
-  }
-
-  function close() {
-    open = false;
-    button.focus();
-  }
-
-  function pick(item) {
-    open = false;
-    onchange(item);
-  }
-
-  /** Arrow keys, Home and End move between options; Enter or Space picks one. */
-  function onOptionKey(e, item) {
-    const options = [...menu.querySelectorAll('[role="option"]')];
-    const i = options.indexOf(e.currentTarget);
-    const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: options.length - 1 }[e.key];
-    if (to !== undefined) {
-      e.preventDefault();
-      options.at(to % options.length).focus();
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      pick(item);
-    }
-  }
 </script>
 
-<svelte:document
-  onclick={(e) => open && !menu.contains(e.target) && (open = false)}
-  onkeydown={(e) => open && e.key === 'Escape' && close()}
-/>
+{#snippet badge(item)}
+  <span class={['pm__badge', item.kind === 'component' && 'is-component']}>{kindName(item)}</span>
+{/snippet}
 
-<div class="pm" bind:this={menu}>
-  <button
-    type="button"
-    class="pm__btn"
-    aria-haspopup="listbox"
-    aria-expanded={open}
-    bind:this={button}
-    onclick={toggle}
-  >
-    <span class="pm__kind" data-kind={value?.kind}>{kindName(value)}</span>
-    <span class="pm__label">{value?.title}</span>
-    <i class="fa-solid fa-chevron-down pm__caret" aria-hidden="true"></i>
-  </button>
-
-  {#if open}
-    <div class="pm__list">
-      <ul class="pm__list--content" role="listbox">
-        {#each groups as [title, list] (title)}
-          <li class="pm__group" role="presentation">{title}</li>
-          {#each list as item (key(item))}
-            <li
-              role="option"
-              tabindex="-1"
-              class={['pm__opt', key(item) === key(value) && 'is-active']}
-              aria-selected={key(item) === key(value)}
-              onclick={() => pick(item)}
-              onkeydown={(e) => onOptionKey(e, item)}
-            >
-              <span class={['pm__badge', item.kind === 'component' && 'is-component']}>
-                {kindName(item)}
-              </span>
-              <span class="pm__opt-title">{item.title}</span>
-              {#if item.path}<span class="pm__opt-path">{item.path}</span>{/if}
-            </li>
-          {/each}
-        {/each}
-      </ul>
-    </div>
-  {/if}
-</div>
+<Select aria-label="Page" value={key(value)} {options} onchange={(_, o) => onchange(o.item)}>
+  {#snippet selected(o)}{@render badge(o.item)}{o.label}{/snippet}
+  {#snippet option(o)}
+    {@render badge(o.item)}
+    <span class="pm__title">
+      {o.label}
+      {#if o.item.path}<span class="pm__path">{o.item.path}</span>{/if}
+    </span>
+  {/snippet}
+</Select>
 
 <style lang="scss">
-  // custom page / component picker
-  .pm {
-    position: relative;
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .pm__btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    padding: 8px 12px;
-    border: 0;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: left;
-    background: rgb(0 0 0 / 0.35);
-    box-shadow: inset 0 0 0 1px var(--line);
-
-    &:hover {
-      box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
-    }
-
-    &[aria-expanded='true'] {
-      box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
-      border-bottom-right-radius: 0;
-      border-bottom-left-radius: 0;
-    }
-  }
-
-  .pm__kind {
-    flex: none;
-    font-size: 9px;
-    line-height: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 4px 8px;
-    border-radius: 999px;
-    color: var(--faint);
-    box-shadow: inset 0 0 0 1px var(--line);
-
-    &[data-kind='component'] {
-      color: #e6dcc4;
-      box-shadow: inset 0 0 0 1px rgb(230 220 196 / 0.35);
-    }
-  }
-
-  .pm__label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--fg);
-  }
-
-  .pm__caret {
-    flex: none;
-    color: var(--muted);
-    font-size: 10px;
-  }
-
-  .pm__list {
-    position: absolute;
-    z-index: 20;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 360px;
-    max-height: min(360px, 50vh);
-    overflow: hidden;
-    padding: 8px;
-    border-radius: 0 0 8px 8px;
-    background: var(--bg-2);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    backdrop-filter: blur(20px) saturate(160%);
-    box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
-
-    &--content {
-      height: 100%;
-      max-height: 100%;
-      overflow: auto;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-  }
-
-  .pm__group {
-    padding: 8px 12px 4px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--faint);
-  }
-
-  .pm__opt {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    gap: 4px 12px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    outline: none;
-
-    &:hover,
-    &:focus-visible {
-      background: rgb(255 255 255 / 0.08);
-    }
-
-    &.is-active {
-      background: color-mix(in srgb, var(--ed-accent) 12%, transparent);
-    }
-  }
-
   .pm__badge {
-    grid-row: 1 / span 2;
+    flex: none;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 8px;
     font-size: 9px;
     line-height: 12px;
     letter-spacing: 0.05em;
@@ -239,12 +62,18 @@
     }
   }
 
-  .pm__opt-title {
-    color: var(--fg);
+  // the gap between badge and title: margin in the button, the option row's gap in the list
+  :global(.sel__opt) > .pm__badge {
+    margin-right: 0;
   }
 
-  .pm__opt-path {
-    grid-column: 2;
+  .pm__title {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .pm__path {
     font-size: 10.5px;
     color: var(--muted);
   }
