@@ -6,15 +6,11 @@
     Motion tab    `page` = where the page's "transition" is stored ({ file, ptr }): Global /
                   Custom / Off on top; Custom edits the page's own curtain.
 -->
-<script module>
-  // Advanced open/closed, kept while switching tabs.
-  let advanced = $state(false);
-</script>
-
 <script>
   import CurtainTimeline from './CurtainTimeline.svelte';
   import EasePicker from './EasePicker.svelte';
   import Section from './Section.svelte';
+  import { ui } from './ui.svelte.js';
   import {
     CURTAIN,
     CURTAIN_ROWS,
@@ -63,6 +59,10 @@
     live.version;
     return !!page && live.changed(page.file, page.ptr);
   });
+
+  // Advanced open/closed: kept while switching tabs and across a refresh, like the sections.
+  const advanced = $derived(ui.sections['curtain:advanced'] ?? false);
+  const advancedId = $props.id();
 
   // Fields with input that is not a number (red outline), by rel.
   let invalid = $state({});
@@ -193,13 +193,18 @@
         </p>
       </div>
 
-      <details class="ptg__advanced" bind:open={advanced}>
-        <summary>
-          <i class="fa-solid fa-chevron-right ptg__caret ptg__caret--closed" aria-hidden="true"></i>
-          <i class="fa-solid fa-chevron-down ptg__caret ptg__caret--open" aria-hidden="true"></i>
+      <div class="ptg__advanced">
+        <button
+          type="button"
+          class="ptg__toggle"
+          aria-expanded={advanced}
+          aria-controls="{advancedId}-advanced"
+          onclick={() => (ui.sections['curtain:advanced'] = !advanced)}
+        >
+          <i class="fa-solid fa-chevron-right ptg__caret" aria-hidden="true"></i>
           Advanced
-        </summary>
-        <div class="ptg__advanced-body">
+        </button>
+        <div class="ptg__advanced-body" id="{advancedId}-advanced" hidden={!advanced}>
           {#each CURTAIN_ROWS as row (row.label)}
             {#if row.pair}
               {@const ease = row.pair + '/ease'}
@@ -233,7 +238,7 @@
             {/if}
           {/each}
         </div>
-      </details>
+      </div>
     {/if}
   </div>
 </Section>
@@ -285,45 +290,45 @@
     border-radius: 0 0 12px 12px;
     box-shadow: inset 0 1px 0 var(--line);
     background: rgb(0 0 0 / 0.18);
+  }
 
-    summary {
-      padding: 12px 12px 12px;
-      cursor: pointer;
-      list-style: none;
-      font-size: 11px;
-      line-height: 16px; // 40px tall
-      letter-spacing: 0.04em;
-      color: var(--muted);
-      user-select: none;
+  // caret + "Advanced", 40px tall; the caret turns down when open
+  .ptg__toggle {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: 0;
+    border-radius: 0 0 12px 12px;
+    background: none;
+    font: inherit;
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 0.04em;
+    text-align: left;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
 
-      &::-webkit-details-marker {
-        display: none;
-      }
-
-      // Real FA icons in the summary markup (not CSS content — needs fontawesome.css).
-      .ptg__caret {
-        width: 1em;
-        margin-right: 4px;
-        color: var(--faint);
-        font-size: 0.95em;
-      }
-
-      .ptg__caret--open {
-        display: none;
-      }
-    }
-
-    &[open] > summary {
+    &[aria-expanded='true'] {
       margin-bottom: 8px;
       color: var(--fg);
+    }
 
-      .ptg__caret--closed {
-        display: none;
-      }
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
+    }
+  }
 
-      .ptg__caret--open {
-        display: inline-block;
-      }
+  .ptg__caret {
+    width: 1em;
+    margin-right: 4px;
+    color: var(--faint);
+    font-size: 0.95em;
+    transition: rotate 0.15s;
+
+    [aria-expanded='true'] > & {
+      rotate: 90deg;
     }
   }
 
