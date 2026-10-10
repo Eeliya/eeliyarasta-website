@@ -2,7 +2,7 @@
   "hero": {
     "title": "Eeliya Rasta",
     "eyebrow": "Portrait & editorial photography",
-    "subline": "Based in the Netherlands. Shot on a Fujifilm X100V. Also builds websites and things.",
+    "subline": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
     "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
     "photos": [
       {
@@ -88,7 +88,7 @@
       "label": "People",
       "title": "Models I've worked with",
       "cta": "All people",
-      "config": { "enabled": true, "source": "people", "layout": "staggered" }
+      "config": { "enabled": true, "source": "people", "layout": "even" }
     },
     {
       "type": "grid",
