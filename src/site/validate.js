@@ -30,7 +30,9 @@ export function parseContent(text, file) {
       const before = text.slice(0, Number(at[1])).split('\n');
       where = ` (line ${before.length}, column ${before.at(-1).length + 1})`;
     }
-    throw new Error(`content/${file}: invalid JSON, ${msg}${where}`);
+    throw new Error(
+      `content/${file}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
+    );
   }
 }
 
