@@ -121,6 +121,7 @@ site settings can live side by side):
 | `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                                                                 |
 | `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                                   |
 | `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                                                                     |
+| `content/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                                                  |
 | `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                                                             |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
@@ -237,11 +238,42 @@ Every page is a folder in `content/pages/`, and the folders are the URLs. A page
   A template's is `album` (no footer). New pages start with a heading section.
 - **Head:** title, description, share image and robots come from the page's `meta` and the
   site's defaults; see "SEO".
-- Links to an item (menu dropdowns, grids, next) come from the routes, so they follow a folder
-  rename. A new page isn't in the menu by itself: add it in Settings > Menu (see "Menu").
+- Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"
+  goes to the page that shows its source (the folder of its `[slug]` page, else the first page
+  with a section of it), so they follow a folder rename. A new page isn't in the menu by itself: add it in Settings > Menu (see "Menu").
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
+
+### Redirects
+
+`content/settings/redirects.json` is a list of `{ "from": "/old/", "to": "/new/", "status": 302 }`
+(`status` 301, moved for good, is the default and left out). `from` is a path, or a pattern for
+item pages (`/old/:slug/` -> `/new/:slug/`); `to` is a page of the site or an `https://` URL.
+The build writes them to `dist/_redirects` (Cloudflare Pages and Netlify read it: one
+`from to status` line, plus the same without the trailing slash); the dev server ignores them.
+It warns (`[redirects]`) about a redirect to no page, and leaves out one from a path that is a
+page (it would hide it). `checkContent` checks the shape: `from` starts with `/`, no two from
+the same path, `to` a path or URL, status 301 or 302. `npm run check:links` stays strict: links
+in the site must point at pages, not at redirects.
+
+The editor keeps them up to date by itself (`src/site/redirects.js`):
+
+- **Rename a page** (Pages window): every path of its folder redirects to the new one, its
+  item pages with one pattern (`/people/:slug/` -> `/models/:slug/`). Links in all content to
+  those paths (menus, buttons, hero photo links, any string that is such a path) are updated
+  too; the toast says how many.
+- **Delete a page**: its paths redirect to its parent page (the default), another page, or
+  nowhere ("No redirect": the 404 page; links to it stay and the toast counts them). Links go
+  to the page picked.
+- **Change an item's slug** (Source Explorer; or its name, when it has no slug): Save adds a
+  redirect from its old page and updates links to it, one undo step.
+- No chains: a redirect to a moved path follows it (A -> B, B renamed C: A -> C). A redirect to
+  itself goes, and one from a path that is a page again (a new page, a rename back) is
+  removed, with a note.
+
+**Settings > Redirects** lists them: from, to (a page, or External URL), status; add, move,
+remove, every change one undo step.
 
 ### SEO
 
@@ -435,7 +467,8 @@ people), then a folder row per page in it (click to go in), then its `[slug]` pa
 folder has **Add page** (title -> URL name: a new folder with its `index.json`) and **Add
 [slug]** (a template with a source; one per folder, none at the root). Select a folder's own row
 to show it in the preview, rename it (the whole folder moves) or delete it (asks first, listing
-everything inside). Names are slugs (a-z, 0-9, dashes);
+everything inside, and where its address should redirect). Both keep links and redirects up
+to date (see "Redirects") and say so in a toast. Names are slugs (a-z, 0-9, dashes);
 home and 404 can't be renamed or deleted. These write to disk right away through the dev server
 (`POST /__editor/pages`), and the dropdown and preview follow without a reload. Renaming or
 deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
