@@ -68,6 +68,11 @@
     gap: 12px;
     padding: 12px 0;
     border-top: 1px solid var(--line);
+
+    &:first-of-type {
+      border-top-color: transparent;
+      padding-top: 0;
+    }
   }
 
   // the toggle, then on the right whatever the `bar` snippet adds; every item is 20px tall

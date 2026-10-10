@@ -108,13 +108,18 @@
 <style lang="scss">
   // Back | name | file
   .lib__head {
-    display: flex;
+    display: grid;
     align-items: center;
-    gap: 8px;
+    grid-template-columns: min-content 1fr;
+    grid-template-areas:
+      "button title"
+      ". path";
+    gap: 4px 8px;
     margin-bottom: 12px;
   }
 
   .lib__title {
+    grid-area: title;
     margin: 0;
     font-size: 16px;
     font-weight: 500;
@@ -122,12 +127,13 @@
   }
 
   .lib__path {
-    margin-left: auto;
+    grid-area: path;
     color: var(--muted);
     font-size: 10.5px;
   }
 
   .lib__btn {
+    grid-area: button;
     width: 24px;
     height: 24px;
     padding: 0;
