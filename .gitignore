@@ -10,3 +10,5 @@ public/media
 .env
 .env.local
 .env*.local
+# Cloudflare wrangler: local secrets for functions/
+.dev.vars

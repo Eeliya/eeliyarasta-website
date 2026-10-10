@@ -111,18 +111,18 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                               | what                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `content/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                                                               |
-| `content/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), socials, email, the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `jobTitle` / `country` (structured data on home) |
-| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                                      |
-| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                                                                 |
-| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                                                                                      |
-| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                                                                 |
-| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                                   |
-| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                                                                     |
-| `content/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                                                  |
-| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                                                             |
+| file                               | what                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                                                                                                                       |
+| `content/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.note`, `footer.toTop`), `timezone` of the clock, `jobTitle` / `country` (structured data on home) |
+| `content/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                                                                                              |
+| `content/pages/index.json`         | home: its `sections` (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                                                                                                                         |
+| `content/pages/<page>/index.json`  | the other pages: their `sections` (see "Sections"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                                                                                                                                              |
+| `content/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                                                                                                                                         |
+| `content/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                                                                                           |
+| `content/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                                                                                                                             |
+| `content/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                                                                                                          |
+| `content/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                                                                                                                                                     |
 
 | `content/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
@@ -244,6 +244,59 @@ Every page is a folder in `content/pages/`, and the folders are the URLs. A page
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
+
+### Contact form
+
+A **Contact form** section (Add section > Contact form; `src/site/sections/form.js`): title,
+intro, its fields, the button and the messages are content, edited in the Content panel. Each
+field: label, placeholder, name (what the email calls it; `name`, `email` and `phone` get the
+browser's autofill), type (text, email, phone, long text, choice), required, and a choice's
+options (comma-separated). A form needs a field named `email` of type email: replies go
+there. `checkContent` checks the fields.
+
+**Where it sends** (Settings > Forms, `site.json` `forms`; a form can pick its own under
+"Sends to"):
+
+| target                        | how                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `function` (default)          | POST `/api/contact`: the Cloudflare Pages Function `functions/api/contact.js`, which emails it (Resend) |
+| `endpoint` + `forms.endpoint` | POST to a form service's URL (Formspree and the like)                                                   |
+| `email`                       | the visitor's mail app (`mailto:` the site `email`); also used when `endpoint` has no URL               |
+
+The page works without JavaScript (a plain `<form method="post">`; the function answers with a
+small page and a link back). With it (`src/client/modules/form.js`): messages under each field
+(the section's "required" / "invalid" texts), the button disabled with a spinner while sending,
+and the section's success or error message in a live region that gets the focus.
+
+**The function** checks the email address and lengths, drops spam without telling (a hidden
+`website` field people leave empty, and less than 3 s between showing the form and sending),
+checks Cloudflare Turnstile when `TURNSTILE_SECRET_KEY` is set, then sends through Resend's
+HTTP API. Nothing secret is in the site or the content: the keys and the recipient live in the
+Cloudflare project's variables. Without them it answers 500 and logs which ones are missing.
+
+**In `npm run dev`** the dev server answers `/api/contact` with the same function, but only
+logs the message in the terminal (`[contact] would send: …`); add `?contact-fail` to the page's
+URL to see the error message. Nothing is sent, no keys needed.
+
+**Setup, once hosting is on Cloudflare Pages:**
+
+1. Resend (resend.com): create an account, **Domains > Add domain** (e.g. `eeliyarasta.com`),
+   add the DNS records it shows (in Cloudflare DNS) and wait for "Verified".
+2. Resend **API Keys > Create API key**, permission "Sending access", that domain.
+3. Cloudflare dashboard > Workers & Pages > the site's project > **Settings > Variables and
+   Secrets**, for Production (and Preview if wanted):
+   - `RESEND_API_KEY`: the key (type Secret)
+   - `CONTACT_TO`: the address that receives messages (comma-separated for several)
+   - `CONTACT_FROM`: e.g. `Website <contact@eeliyarasta.com>`, on the verified domain
+4. Redeploy (variables apply to new deployments). Pages finds `functions/` in the repo by
+   itself; the build output stays `dist`.
+5. Send a test message from the live site. Problems show in the project's **Functions > Logs**
+   (`[contact] …`).
+6. Optional spam check: Cloudflare **Turnstile > Add widget** for the domain; its site key goes
+   in Settings > Forms (public), its secret key in the variable `TURNSTILE_SECRET_KEY`.
+
+Another host: pick "External endpoint" (e.g. a Formspree form's URL) or "Email link" in
+Settings > Forms; `functions/` is then simply unused.
 
 ### Redirects
 
@@ -625,6 +678,10 @@ Change in its field, see the Media window above). Edit
 ## Deploy
 
 Any static host works: upload `dist/`.
+
+**Cloudflare Pages** (likely): connect the repo, Build command `npm run build`, Output directory
+`dist`. It reads `dist/_redirects` and runs `functions/` (the contact form: set its variables,
+see "Contact form").
 
 **Vercel**: import the repo, Framework preset **Other**, Build command `npm run build`,
 Output directory `dist`. Unknown URLs get `404.html` automatically. Pushes from the
