@@ -164,7 +164,7 @@
     line-height: 1.06;
     letter-spacing: -0.005em;
     text-indent: 18%;
-    div {
+    .split-word {
       text-indent: 0;
     } // SplitText word wrappers must not inherit the indent
   }

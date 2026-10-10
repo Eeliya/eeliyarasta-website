@@ -48,6 +48,16 @@ const splitClasses = {
   charsClass: 'split-char',
 };
 
+/**
+ * Spans, not divs (text sits in <p> and headings), and an aria-label only where one is allowed:
+ * headings get the text as their label; a <p> keeps its words readable as they are.
+ */
+const splitOpts = (el) => ({
+  ...splitClasses,
+  tag: 'span',
+  aria: /^H[1-6]$/.test(el.tagName) ? 'auto' : 'none',
+});
+
 /** SplitText into chars / words / lines (masked) and reveal them. Re-splits on resize. */
 function split(el, spec, { reduce, onCleanup }) {
   if (reduce) return;
@@ -55,7 +65,7 @@ function split(el, spec, { reduce, onCleanup }) {
   const s = SplitText.create(el, {
     type,
     mask: spec.mask,
-    ...splitClasses,
+    ...splitOpts(el),
     autoSplit: spec.split === 'lines',
     onSplit: (self) =>
       gsap.fromTo(
@@ -72,6 +82,7 @@ function scrubWords(el, spec, { reduce, onCleanup }) {
   if (reduce) return;
   const s = SplitText.create(el, {
     type: 'words',
+    ...splitOpts(el),
     autoSplit: true,
     onSplit: (self) =>
       gsap.fromTo(
@@ -169,7 +180,7 @@ function scatter(el, spec, { reduce }) {
 /** Big hero name: masked chars rise in; on scroll it shrinks and fades. */
 function heroTitle(el, spec, { reduce, onCleanup }) {
   if (reduce) return;
-  const s = SplitText.create(el, { type: 'chars,words', mask: 'words', ...splitClasses });
+  const s = SplitText.create(el, { type: 'chars,words', mask: 'words', ...splitOpts(el) });
   onCleanup(() => s.revert());
   gsap.fromTo(s.chars, spec.from, tweenVars(spec, spec.to));
   const hero = el.closest('[data-hero]') || el;
