@@ -6,6 +6,9 @@
  *
  * Every change is { file, ptr, before, after } (after === undefined removes the value).
  * Rapid changes with the same `key` (typing in one field) coalesce into one undo step.
+ * A change marked `structure` (a section or list item added or removed, a menu item moved)
+ * needs the preview rendered again: listeners get { structure: true } for it, and for its
+ * undo and redo.
  */
 import { get, set, remove } from './lib/pointer.js';
 import { clone, equal, diff, patch } from './lib/diff.js';
@@ -19,8 +22,8 @@ export function createStore() {
   let future = [];
   let batchEntry = null;
 
-  const emit = (files, source) =>
-    listeners.forEach((fn) => fn({ files: [...new Set(files)], source }));
+  const emit = (files, source, structure = false) =>
+    listeners.forEach((fn) => fn({ files: [...new Set(files)], source, structure }));
 
   const write = (c, value) => {
     // ptr "" is the whole file (e.g. a source list after adding or deleting an item).
@@ -47,6 +50,7 @@ export function createStore() {
     emit(
       entry.changes.map((c) => c.file),
       source,
+      entry.structure,
     );
   }
 
@@ -66,13 +70,15 @@ export function createStore() {
     getBase: (file, ptr) => get(base[file], ptr),
 
     /** Set (or with value === undefined, remove) a value. */
-    set(file, ptr, value, { key, keep = 0, source } = {}) {
+    set(file, ptr, value, { key, keep = 0, source, structure = false } = {}) {
       const before = clone(get(current[file], ptr));
       if (equal(before, value)) return false;
       const change = { file, ptr, before, after: clone(value), keep };
       write(change, value);
-      if (batchEntry) batchEntry.changes.push(change);
-      else commitEntry({ changes: [change], key, t: Date.now() }, { source });
+      if (batchEntry) {
+        batchEntry.changes.push(change);
+        batchEntry.structure ||= structure;
+      } else commitEntry({ changes: [change], key, t: Date.now(), structure }, { source });
       return true;
     },
     remove(file, ptr, opts) {
@@ -97,6 +103,7 @@ export function createStore() {
       emit(
         entry.changes.map((c) => c.file),
         'undo',
+        entry.structure,
       );
       return true;
     },
@@ -108,6 +115,7 @@ export function createStore() {
       emit(
         entry.changes.map((c) => c.file),
         'redo',
+        entry.structure,
       );
       return true;
     },

@@ -23,10 +23,12 @@
   import Button from './Button.svelte';
   import { tick } from 'svelte';
   import Field from './Field.svelte';
+  import ListField from './ListField.svelte';
   import Section from './Section.svelte';
   import Select from './Select.svelte';
   import SourcesModal from './SourcesModal.svelte';
   import {
+    allFields,
     contentGroups,
     groupFor,
     isSource,
@@ -36,9 +38,10 @@
   } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
   import { previewFile } from '../sections.js';
+  import { openMedia } from './media.svelte.js';
   import { addSection, duplicateSection, moveSection, removeSection } from '../section-ops.js';
   import { SECTION_TYPES } from '../../site/sections/index.js';
-  import { TEMPLATE, baseName, pageIdOf } from '../../site/files.js';
+  import { TEMPLATE, baseName, pageIdOf, sourceIdOf } from '../../site/files.js';
 
   const uid = $props.id();
 
@@ -73,6 +76,11 @@
   const types = $derived(
     Object.values(SECTION_TYPES).filter((t) => !t.item || pageIdOf(file)?.endsWith(TEMPLATE)),
   );
+  // the files in content/sources/, for a list item's source
+  const sourceIds = $derived.by(() => {
+    live.version;
+    return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
+  });
   const hint = $derived(
     ui.target.kind === 'page'
       ? 'Click any outlined text in the preview to edit it in place, or use the fields below. Turn a section Off to hide it on the public page.'
@@ -145,8 +153,40 @@
     ui.sections[keyOf(g)] = true;
   }
 
+  // on/off and layout the preview applies itself; other settings render the section again
+  const LIVE_CONFIG = ['enabled', 'layout'];
+
   function setConfig(g, c, value) {
-    live.store.set(g.file, c.ptr, value, { key: `config:${g.file}${c.ptr}`, source: 'panel' });
+    live.store.set(g.file, c.ptr, value, {
+      key: `config:${g.file}${c.ptr}`,
+      source: 'panel',
+      structure: !LIVE_CONFIG.includes(c.key),
+    });
+  }
+
+  // ---- list fields (ListField.svelte): the whole list in one change, one undo step
+  const listOf = (f) => [...(live.get(f.file, f.ptr) || [])];
+  const setList = (f, list) =>
+    live.store.set(f.file, f.ptr, list, { source: 'panel', structure: true });
+
+  function moveItem(f, from, to) {
+    const list = listOf(f);
+    list.splice(to, 0, ...list.splice(from, 1));
+    setList(f, list);
+  }
+
+  function removeItem(f, i) {
+    const list = listOf(f);
+    list.splice(i, 1);
+    setList(f, list);
+  }
+
+  /** A new item at the end; a photo item opens the Media window to pick its photo. */
+  function addItem(f) {
+    const list = listOf(f);
+    setList(f, [...list, structuredClone(f.item)]);
+    if (f.photo !== null)
+      openMedia({ pick: `${f.edit}/${list.length}${f.photo ? `/${f.photo}` : ''}` });
   }
 
   function setText(f, value) {
@@ -156,7 +196,7 @@
   /** Open the group holding `edit` and scroll to it; list items open the Sources modal. */
   async function reveal(edit) {
     await tick(); // not inside the effect below: the modal renders synchronously when opened
-    const group = groups.find((g) => g.fields.some((f) => f.edit === edit));
+    const group = groups.find((g) => allFields(g).some((f) => f.edit === edit));
     if (!group) {
       const { file, ptr } = splitEdit(edit);
       // A list item shown on the home page (a person's name): edit it in the modal.
@@ -176,6 +216,36 @@
     if (edit && !quiet) reveal(edit);
   });
 </script>
+
+<!-- one field: a text / photo Field, or a source Select (a list item's source) -->
+{#snippet field(f)}
+  {#if f.type === 'source'}
+    {@const value = live.get(f.file, f.ptr)}
+    <div class={['sec__opt', live.changed(f.file, f.ptr) && 'is-changed']}>
+      <label class="tf__label" for="{uid}-{f.edit}"
+        >{f.label}<i class="dot" title="Changed"></i></label
+      >
+      <Select
+        id="{uid}-{f.edit}"
+        value={value ?? ''}
+        placeholder="Pick…"
+        options={sourceIds.map((id) => ({ value: id, label: `${id}.json` }))}
+        onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
+      />
+    </div>
+  {:else}
+    <Field
+      {...f}
+      value={live.get(f.file, f.ptr)}
+      changed={live.changed(f.file, f.ptr)}
+      selected={ui.selection?.edit === f.edit}
+      source={isSource(f.file) ? f.file : ''}
+      onsource={() => sourcesModal.open(f.file, Number(parse(f.ptr)[0]) || 0, f.edit)}
+      onfocus={() => bridge.focusEdit(f.edit)}
+      onvalue={(value) => setText(f, value)}
+    />
+  {/if}
+{/snippet}
 
 <!-- opens the Source Explorer at a source file -->
 {#snippet editButton(file)}
@@ -321,20 +391,26 @@
           />
         {/each}
         {#if ui.staleSections.includes(g.index)}
-          <p class="hint small">The preview shows this section after Save.</p>
+          <p class="hint small">Updating the preview…</p>
         {/if}
 
         {#each g.fields as f (f.edit)}
-          <Field
-            {...f}
-            value={live.get(f.file, f.ptr)}
-            changed={live.changed(f.file, f.ptr)}
-            selected={ui.selection?.edit === f.edit}
-            source={isSource(f.file) ? f.file : ''}
-            onsource={() => sourcesModal.open(f.file, Number(parse(f.ptr)[0]) || 0, f.edit)}
-            onfocus={() => bridge.focusEdit(f.edit)}
-            onvalue={(value) => setText(f, value)}
-          />
+          {#if f.list}
+            <ListField
+              label={f.label}
+              items={f.items}
+              addLabel={f.photo === null ? 'Add' : 'Add photo'}
+              onmove={(from, to) => moveItem(f, from, to)}
+              onremove={(i) => removeItem(f, i)}
+              onadd={() => addItem(f)}
+            >
+              {#snippet item(fields)}
+                {#each fields as sub (sub.edit)}{@render field(sub)}{/each}
+              {/snippet}
+            </ListField>
+          {:else}
+            {@render field(f)}
+          {/if}
         {:else}
           {#if !g.config?.length}
             <p class="hint small">

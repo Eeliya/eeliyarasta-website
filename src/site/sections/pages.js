@@ -75,7 +75,14 @@ export const panels = {
   type: 'panels',
   label: 'Photo panels',
   icon: 'table-columns',
-  fields: [{ key: 'panels', label: 'panel', list: { title: 'text', unit: 'text' } }],
+  fields: [
+    {
+      key: 'panels',
+      label: 'Panels',
+      list: { source: 'source', title: 'text', unit: 'text' },
+      item: { source: 'people', title: 'People', unit: 'items' },
+    },
+  ],
   defaults: { panels: [{ source: 'people', title: 'People', unit: 'models' }] },
   render: (s, ctx, sec) => {
     const panel = ({ source, title, unit }, i) => {
@@ -106,8 +113,8 @@ export const about = {
     { key: 'image', label: 'Photo', type: 'image' },
     { key: 'crumb', label: 'Crumb' },
     { key: 'headline', label: 'Headline' },
-    { key: 'paragraphs', label: 'paragraph', list: 'block' },
-    { key: 'facts', label: 'fact', list: { label: 'text', value: 'text' } },
+    { key: 'paragraphs', label: 'Paragraphs', list: 'block' },
+    { key: 'facts', label: 'Facts', list: { label: 'text', value: 'text' } },
     { key: 'emailLabel', label: 'Email button' },
   ],
   defaults: {

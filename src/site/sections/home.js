@@ -14,6 +14,7 @@ const imagesOf = (item) =>
 const heroPhoto = (ctx, sec, p, i) => {
   const mobile = p.mx !== undefined;
   const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${p.mx}%;--my:${p.my}%;--mw:${p.mw}vw;` : ''}`;
+  if (!p.src) return '';
   return html` <a
     class="scatter scatter--${p.layer === 'front' ? 'front' : 'back'}${mobile ? '' : ' scatter--desktop'}"
     href="${esc(p.link)}"
@@ -38,7 +39,13 @@ export const hero = {
     { key: 'title', label: 'Name', type: 'words' },
     { key: 'eyebrow', label: 'Eyebrow' },
     { key: 'subline', label: 'Subline', type: 'block' },
-    { key: 'photos', label: 'photo', list: { src: 'image' } },
+    {
+      key: 'photos',
+      label: 'Photos',
+      list: { src: 'image' },
+      // a new photo: in the middle, behind the name (x / y / w in % of the hero; see heroPhoto)
+      item: { src: '', x: 40, y: 30, w: 16, depth: 1, layer: 'back' },
+    },
   ],
   defaults: { title: 'Your name', eyebrow: '', subline: '', photos: [] },
   render: (s, ctx, sec) =>

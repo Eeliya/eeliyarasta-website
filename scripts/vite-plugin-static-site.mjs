@@ -49,6 +49,8 @@ export default function staticSite() {
 
     configureServer(server) {
       const root = config.root;
+      // The editor's unsaved edits: dev pages render from them (POST /__editor/draft)
+      const drafts = {};
       // Content and media manifest changes re-render pages (see handleHotUpdate).
       server.watcher.add([path.join(root, 'content'), path.join(root, '.generated')]);
 
@@ -60,6 +62,7 @@ export default function staticSite() {
           logger: config.logger,
           // R2_* only (Node side): Vite exposes nothing but VITE_* to client code
           env: loadEnv(config.mode, config.envDir || root, 'R2_'),
+          drafts,
           onWrite: () => (editorWriteUntil = Date.now() + 2000),
         }),
       );
@@ -80,7 +83,7 @@ export default function staticSite() {
         if (url.pathname.startsWith('/edit/')) return next(); // editor app (edit/index.html)
         try {
           const { getRoutes, renderRoute } = await server.ssrLoadModule(RENDER_MODULE);
-          const content = loadContent(root);
+          const content = loadContent(root, drafts);
           const routes = getRoutes(content);
           let pathname = url.pathname.replace(/index\.html$/, '');
           if (!pathname.endsWith('/')) pathname += '/';

@@ -609,6 +609,26 @@ export async function publish(root, message) {
   };
 }
 
+/**
+ * The editor's unsaved edits, for the preview: `drafts` (the plugin's, shared with its page
+ * renderer, scripts/vite-plugin-static-site.mjs) becomes `files`, { "pages/index.json": data }.
+ * Dev pages then render from them instead of the files on disk, so a new section or menu item
+ * shows without Save. Only existing content files with a valid shape are kept; {} clears it
+ * (after a save, or when the editor opens).
+ */
+export function draftOp(root, drafts, files) {
+  if (!files || typeof files !== 'object' || Array.isArray(files))
+    return { status: 400, body: { error: 'No files' } };
+  const known = new Set(Object.keys(readContentFiles(root)));
+  const kept = Object.entries(files).filter(
+    ([f, data]) => known.has(f) && checkContent(f, data).length === 0,
+  );
+  for (const f of Object.keys(drafts)) delete drafts[f];
+  Object.assign(drafts, Object.fromEntries(kept));
+  const skipped = Object.keys(files).filter((f) => !(f in drafts));
+  return { status: 200, body: { ok: true, files: Object.keys(drafts), skipped } };
+}
+
 const sendJSON = (res, status, data) => {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -617,11 +637,12 @@ const sendJSON = (res, status, data) => {
 };
 
 /**
- * @param {{ root: string, logger: import('vite').Logger, env?: object, onWrite?: () => void }} opts
- * env: the R2_* variables for uploads (Node side only). onWrite runs right before files are
- * written (used to keep the editor from reloading itself).
+ * @param {{ root: string, logger: import('vite').Logger, env?: object, drafts?: object, onWrite?: () => void }} opts
+ * env: the R2_* variables for uploads (Node side only). drafts: the unsaved edits pages render
+ * from (draftOp). onWrite runs right before files are written (used to keep the editor from
+ * reloading itself).
  */
-export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} }) {
+export function editorMiddleware({ root, logger, env = {}, drafts = {}, onWrite = () => {} }) {
   const log = (msg) => logger.info(`\x1b[32m✓\x1b[0m ${msg}`, { timestamp: true });
 
   return async (req, res) => {
@@ -642,6 +663,11 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
         const { status, body } = save(root, (await readJSON(req)).files, onWrite);
         if (body.ok)
           log(`editor saved ${body.written.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
+        return sendJSON(res, status, body);
+      }
+
+      if (route === 'POST /draft') {
+        const { status, body } = draftOp(root, drafts, (await readJSON(req)).files);
         return sendJSON(res, status, body);
       }
 

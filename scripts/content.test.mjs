@@ -204,3 +204,22 @@ test('alt migration: no alt in pages or sources, every photo they use has one in
   assert.ok(used.length > 20);
   for (const src of used) assert.ok(photos[src]?.alt, `${src} has no alt in photos.json`);
 });
+
+test('draft: pages render the unsaved edits; only existing, valid files; {} clears', async () => {
+  const { draftOp } = await import('./editor-server.mjs');
+  const root = tree();
+  const drafts = {};
+  const r = draftOp(root, drafts, {
+    'pages/index.json': { sections: [{ type: 'text', text: 'Draft' }] },
+    'settings/animations.json': [],
+    'pages/nope/index.json': {},
+  });
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.body.files, ['pages/index.json']);
+  assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
+  assert.equal(loadContent(root, drafts).pages.home.sections[0].text, 'Draft');
+  assert.deepEqual(loadContent(root).pages.home, {});
+  draftOp(root, drafts, {});
+  assert.deepEqual(drafts, {});
+  assert.equal(draftOp(root, drafts, null).status, 400);
+});

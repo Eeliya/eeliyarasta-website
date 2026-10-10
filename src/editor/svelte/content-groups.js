@@ -80,30 +80,45 @@ function nameOf(s) {
 
 /**
  * The fields of section `at` from its type's registry entry: [{ edit, file, ptr, type, label }].
- * A list field gives one field per item ("Photos 2"; "Facts 2: value" for lists of objects).
+ * A list field is one entry { list: true, edit, file, ptr, label, item, photo, items }: items
+ * holds each item's fields ([[field, ...], ...]), item a new item, photo the subkey of a
+ * photo item ('' for a list of photos, null for none) so Add can open the Media window.
  */
 function registryFields(file, at, s, t) {
   const field = (path, type, label) => {
     const ptr = pointer(['sections', at, ...path]);
     return { edit: `${file}#${ptr}`, file, ptr, type: type || 'text', label };
   };
-  return (t.fields || []).flatMap((f) => {
-    if (!f.list) return [field([f.key], f.type, f.label)];
+  return (t.fields || []).map((f) => {
+    if (!f.list) return field([f.key], f.type, f.label);
     const items = Array.isArray(s[f.key]) ? s[f.key] : [];
-    if (typeof f.list === 'string')
-      return items.map((_, j) => field([f.key, j], f.list, `${f.label} ${j + 1}`));
-    const subs = Object.entries(f.list);
-    return items.flatMap((_, j) =>
-      subs.map(([sub, type]) =>
-        field(
-          [f.key, j, sub],
-          type,
-          subs.length > 1 ? `${f.label} ${j + 1}: ${sub}` : `${f.label} ${j + 1}`,
-        ),
+    const subs = typeof f.list === 'string' ? null : Object.entries(f.list);
+    const ptr = pointer(['sections', at, f.key]);
+    return {
+      list: true,
+      edit: `${file}#${ptr}`,
+      file,
+      ptr,
+      label: f.label,
+      item: f.item ?? (subs ? Object.fromEntries(subs.map(([k]) => [k, ''])) : ''),
+      photo: subs
+        ? (subs.find(([, type]) => type === 'image')?.[0] ?? null)
+        : f.list === 'image'
+          ? ''
+          : null,
+      items: items.map((_, j) =>
+        subs
+          ? subs.map(([sub, type]) =>
+              field([f.key, j, sub], type, sub === 'src' ? 'Photo' : titleCase(sub)),
+            )
+          : [field([f.key, j], f.list, `${f.label} ${j + 1}`)],
       ),
-    );
+    };
   });
 }
+
+/** Every field of a group, list items included. */
+export const allFields = (g) => g.fields.flatMap((f) => (f.list ? f.items.flat() : [f]));
 
 /**
  * Group for section `at` of page file `file`: id "s<at>", titled by its type, named by its
@@ -248,7 +263,7 @@ export function contentGroups(store, bridge, target) {
     else {
       // a section's text its type doesn't list (e.g. a photo credit): added to its group
       const g = groups.get(`s${parse(f.ptr)[1]}`);
-      if (g && f.file === g.file && !g.fields.some((x) => x.edit === f.edit))
+      if (g && f.file === g.file && !allFields(g).some((x) => x.edit === f.edit))
         g.fields.push({ ...f, label: fieldLabel(store, f) });
     }
   }

@@ -40,6 +40,17 @@ export const saveDev = (files) =>
   });
 
 /**
+ * The unsaved edits the preview renders from (POST /__editor/draft, draftOp in
+ * scripts/editor-server.mjs): { "pages/index.json": data, ... }; {} after a save.
+ */
+export const draft = (files) =>
+  json('/__editor/draft', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files }),
+  });
+
+/**
  * Add, rename or delete pages and folders in content/pages/ (POST /__editor/pages, see
  * pagesOp in scripts/editor-server.mjs): { op: 'add', parent, name, title }, ...
  * Resolves to { id, created, removed } (content file names).

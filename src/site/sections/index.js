@@ -11,10 +11,12 @@
  *
  *   type      its name in the content
  *   label     its name in the editor; icon: a Font Awesome icon name (no "fa-")
- *   fields    its content fields for the editor: [{ key, label, type?, list? }]
+ *   fields    its content fields for the editor: [{ key, label, type?, list?, item? }]
  *               type: 'text' (default) | 'block' (multi-line) | 'words' | 'number' | 'image'
  *               list: the field is a list: a type for a list of values ('block'), or
- *                     { subkey: type } for a list of objects ({ title: 'text' })
+ *                     { subkey: type } for a list of objects ({ title: 'text' }; a subkey
+ *                     can also be 'source', a content/sources file)
+ *               item: a new item of the list (default: '' or the subkeys empty)
  *   config    its settings: [{ key, label, type, options?, empty? }]
  *               type: 'source' (a content/sources file) | 'select' (options [[value, label]])
  *                     | 'text' | 'boolean'; every section also has config.enabled (on/off)

@@ -243,8 +243,30 @@ bridge.on('textFocus', (edit) => (ui.selection = { edit }));
 bridge.on('navigate', restorePlace);
 
 // ---------------------------------------------------------------- store events
+// The preview renders the unsaved edits: the dev server gets them after every change
+// (POST /__editor/draft; {} once saved), so pages the preview loads show them. A structure
+// change (a section or list item added or removed, a menu item moved) renders the preview
+// again right away, at the same scroll and selection.
+let draftTimer = 0;
+let refreshPending = false;
+function pushDraft({ refresh = false } = {}) {
+  refreshPending ||= refresh;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(async () => {
+    const reload = refreshPending;
+    refreshPending = false;
+    try {
+      await source.draft(Object.fromEntries(store.dirtyFiles().map((f) => [f, store.current[f]])));
+    } catch (err) {
+      toast(`Preview: ${err.message}`, { kind: 'error' });
+    }
+    if (reload && bridge.path()) bridge.reload();
+  }, 250);
+}
+
 let animTimer = 0;
-store.on(({ files, source: src }) => {
+store.on(({ files, source: src, structure }) => {
+  if (files.some((f) => f !== ANIMATIONS)) pushDraft({ refresh: structure });
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);

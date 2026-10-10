@@ -60,9 +60,9 @@ export function readContentDir(root) {
   return files;
 }
 
-export function loadContent(root) {
+export function loadContent(root, drafts = {}) {
   return {
-    ...contentFromFiles(readContentDir(root)),
+    ...contentFromFiles({ ...readContentDir(root), ...drafts }),
     media: read(path.join(root, '.generated', 'media.json'), {}),
   };
 }
