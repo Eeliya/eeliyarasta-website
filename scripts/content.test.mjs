@@ -123,3 +123,15 @@ test('site.json with only name and url builds every page', async () => {
     assert.match(body, /<footer|data-router-view/);
   }
 });
+
+test('formatJSON (what Save writes) is Prettier-clean for every content file', async () => {
+  const prettier = await import('prettier');
+  const { formatJSON } = await import('../src/editor/lib/json-format.js');
+  const { readContentDir } = await import('./content.mjs');
+  const options = await prettier.resolveConfig('content/pages/index.json');
+  for (const [file, data] of Object.entries(readContentDir('.'))) {
+    const text = formatJSON(data);
+    const pretty = await prettier.format(text, { ...options, parser: 'json' });
+    assert.equal(text, pretty, `content/${file}`);
+  }
+});
