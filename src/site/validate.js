@@ -25,6 +25,7 @@ import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
 import { ALIGNS, COLS, HEIGHTS, MCOLS, PLACES, SIZES, WIDTHS, ratioOf } from './layout/index.js';
 import { isId } from './layout/ids.js';
+import { checkMotion } from './layout/motion.js';
 import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -280,6 +281,7 @@ function checkBlock(b, where) {
     }
   }
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
+  if (b.motion !== undefined) out.push(...checkMotion(b.motion).map((p) => `${name}: ${p}`));
   if (!t) return out; // an unknown type only warns (render)
   if (
     b.item !== undefined &&

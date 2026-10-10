@@ -1,7 +1,9 @@
 /**
  * The Motion tab's model: which fields each animation type has, and where a value comes from.
  * In the editor an "animation" is what animations.json (and the code here) calls a preset.
- * Every value lives at one of these layers of content/settings/animations.json:
+ * A block's values (blockModel): its `motion` in its page file (the animation and its own
+ * timing, src/site/layout/motion.js), then the animation's in the library.
+ * A data-anim element's values live at one of these layers of content/settings/animations.json:
  *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
  *   target  -> targets["<target>"]               (every element with that data-anim, "All")
  *   preset  -> presets["<animation>"]            (the animation's own values: the library)
@@ -11,9 +13,11 @@
  * the Animations sub-tab (AnimLibrary.svelte) writes the preset, every value.
  * Shown with MotionField.svelte. No DOM here.
  */ import { compile } from '../lib/pointer.js';
+import { BLOCK_ANIM_TYPES, TIMING_KEYS as TIMING_LIST } from '../../site/layout/motion.js';
 
-// Presets that work on any element; special ones (scatter, hero-title, hover-preview) need their markup.
-export const GENERIC_TYPES = new Set(['reveal', 'split', 'scrub-words']);
+// Presets that work on any element or block; special ones (scatter, hero-title,
+// hover-preview) need their markup.
+export const GENERIC_TYPES = new Set(BLOCK_ANIM_TYPES);
 
 const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
 const merge = (...objs) => {
@@ -181,9 +185,34 @@ export const PROPS = {
 
 export const TIMING = ['Timing', [F.timing, F.delay, F.stagger]];
 const TRIGGER = ['Trigger', [F.trigger, F.start, F.scrub, F.end]];
+/** What a block's animation moves (a CSS selector inside it; empty: the block's content). */
+const CHILDREN = {
+  path: ['children'],
+  label: 'Moves (selector)',
+  kind: 'text',
+  suggestions: ['h1, h2, h3, p', '[data-anim-item]', '[data-prow]', 'img', 'figure'],
+  hint: 'In a block: what inside it moves; empty: all of it',
+};
+const SCROLLED = [
+  'Scroll',
+  [
+    { ...F.start, when: null },
+    { ...F.end, when: null },
+    {
+      ...F.scrub,
+      options: [
+        [true, 'On'],
+        [0.5, 'Smooth .5'],
+        [1, 'Smooth 1'],
+      ],
+      when: null,
+    },
+  ],
+];
 export const GROUPS = {
-  reveal: [TIMING, TRIGGER, 'from', 'to'],
-  split: [['Split', [F.split, F.mask]], TIMING, TRIGGER, 'from', 'to'],
+  reveal: [['Target', [CHILDREN]], TIMING, TRIGGER, 'from', 'to'],
+  scroll: [['Target', [CHILDREN]], SCROLLED, ['Timing', [F.ease, F.stagger]], 'from', 'to'],
+  split: [['Split', [F.split, F.mask, CHILDREN]], TIMING, TRIGGER, 'from', 'to'],
   'scrub-words': [
     [
       'Scroll',
@@ -272,16 +301,7 @@ export const GROUPS = {
  * read-only in the element view, edited in the Animations library only.
  * Add or remove a key here to move fields between the two.
  */
-export const TIMING_KEYS = new Set([
-  'duration',
-  'ease',
-  'delay',
-  'stagger',
-  'trigger',
-  'start',
-  'end',
-  'scrub',
-]);
+export const TIMING_KEYS = new Set(TIMING_LIST);
 export const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
 export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.path);
 
@@ -298,6 +318,18 @@ export function animModel(cfg, sel) {
   const layers = { element: strip(own), target: strip(target), preset };
   const spec = merge(layers.preset, layers.target, layers.element);
   return { target, own, presetName, preset, layers, spec, type: preset.type };
+}
+
+/**
+ * A block's animation: `motion` is its { anim, ...timing } (or undefined). Its own timing is
+ * the 'block' layer, over the animation's values.
+ */
+export function blockModel(cfg, motion) {
+  const { anim: presetName, ...own } = motion || {};
+  const preset = cfg.presets[presetName] || {};
+  const layers = { element: {}, target: {}, block: own, preset };
+  const spec = merge(preset, own);
+  return { target: {}, own, presetName, preset, layers, spec, type: preset.type };
 }
 
 /** One animation (preset) on its own, for the Animations library. */
@@ -320,11 +352,14 @@ export const layerPtr = (m, sel, scope) =>
       ? `/targets${compile([sel.id])}`
       : `/presets${compile([m.presetName])}`;
 
-/** How many path levels store.remove keeps when a scope's object gets empty. */
-export const keepFor = (scope) => (scope === 'element' ? 1 : 2);
+/**
+ * How many path levels store.remove keeps when a scope's object gets empty (a block's motion,
+ * /sections/<i>/blocks/<j>/motion, keeps its `anim`: never empty).
+ */
+export const keepFor = (scope) => (scope === 'element' ? 1 : scope === 'block' ? 5 : 2);
 
 // The layers a scope inherits from, nearest first.
-const BELOW = { element: ['target', 'preset'], target: ['preset'], preset: [] };
+const BELOW = { element: ['target', 'preset'], target: ['preset'], block: ['preset'], preset: [] };
 /** What a scope gets without a value of its own: [value, the layer it comes from or null]. */
 export function inherited(m, scope, path) {
   const layer = BELOW[scope].find((l) => dig(m.layers[l], path) !== undefined) || null;

@@ -31,6 +31,8 @@
  *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 12
  *            columns, and { place }. Without areas a section's blocks stack full width in their
  *            order; without a phone `place` a block is in that flow (no sticky, fixed, pin)
+ *   motion   optional { anim, ...timing }: its animation from the library and its own timing
+ *            (./motion.js)
  *   item     optional { source, slug }: the source item its bound fields show (./bindings.js;
  *            on a [slug] page they show the page's item without one)
  * Positions become CSS variables on the elements; src/client/styles/_layout.scss lays them out.
@@ -38,6 +40,7 @@
 import { esc, ed, editable, pointer, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
+import { motionAttrs } from './motion.js';
 import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
 
 export const COLS = 24;
@@ -263,7 +266,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
   const data = resolveBlock(block, t, { item, source, ctx, at: where, placeholders: editable });
   const marker = editable ? ` data-block="${esc(block.id)}"` : '';
   const hidden = block.config?.enabled === false ? ' hidden' : '';
-  return `<div class="${blockClass(block)}"${marker} style="${blockVars(block)}"${hidden}>${t.render(data, ctx, b)}</div>`;
+  return `<div class="${blockClass(block)}"${marker} style="${blockVars(block)}"${motionAttrs(block)}${hidden}>${t.render(data, ctx, b)}</div>`;
 }
 
 /**

@@ -1,10 +1,10 @@
 <!--
   Motion tab, Animations: the animations in content/settings/animations.json ("presets"
   there), inline in the panel so the preview stays in view while editing. It starts on the
-  list of animations, each with its type and how many elements use it; click one to edit its
-  own values, Back returns to the list. The only place that defines what an animation does
-  (its properties, added and removed here); an element or its data-anim name can only set its
-  own timing (TIMING_KEYS). Edits show in the preview at once; Replay plays them again.
+  list of animations, each with its type and how many blocks and elements use it; click one to
+  edit its own values, Back returns to the list. The only place that defines what an animation
+  does (its properties, added and removed here); a block, an element or its data-anim name can
+  only set its own timing (TIMING_KEYS). Edits show in the preview at once; Replay plays them again.
   The animation shown is ui.library.name ('' = the list), kept by persist.js.
 -->
 <script>
@@ -15,8 +15,9 @@
   import { animationOf, layerPtr, presetModel } from './motion.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
-  // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's
-  let { live, bridge, cfg, items, gsap } = $props();
+  // cfg: animations.json as edited; items: the page's animated elements; sections: the page's
+  // blocks (MotionPanel); gsap: the preview's
+  let { live, bridge, cfg, items, sections = [], gsap } = $props();
 
   let root = $state();
   const names = $derived(Object.keys(cfg.presets));
@@ -26,9 +27,12 @@
 
   // Who uses an animation: elements on this page, and data-anim names anywhere on the site
   // (targets in animations.json; how many elements each has on other pages isn't known here).
-  const onPage = (n) => items.filter((it) => animationOf(cfg, it) === n);
+  const onPage = (n) => [
+    ...sections.flatMap((s) => s.blocks).filter((b) => b.anim === n && b.el),
+    ...items.filter((it) => animationOf(cfg, it) === n),
+  ];
   const targets = (n) => Object.keys(cfg.targets).filter((t) => cfg.targets[t].preset === n);
-  const count = (n, what) => `${n} ${what}${n === 1 ? '' : 's'}`;
+  const count = (n, what, many = `${what}s`) => `${n} ${n === 1 ? what : many}`;
   const uses = $derived(name ? onPage(name) : []);
 
   /** Enter an animation ('' = back to the list); back on the list, focus the one left. */
@@ -67,7 +71,7 @@
             <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
             <span>{n}</span>
             <span class="lib__meta">
-              {cfg.presets[n].type} &middot; {count(onPage(n).length, 'element')} on this page &middot;
+              {cfg.presets[n].type} &middot; {count(onPage(n).length, 'use')} on this page &middot;
               {count(targets(n).length, 'data-anim name')}
             </span>
           </button>
@@ -77,9 +81,9 @@
   {:else}
     <div class="lib__info">
       <p class="hint">
-        Type {m.type}. Used by {count(uses.length, 'element')} on this page and by
-        {targets(name).join(', ') || 'no data-anim name'} on the site. Elements and names can set their
-        own timing only.
+        Type {m.type}. Used by {count(uses.length, 'block or element', 'blocks or elements')} on this
+        page and by {targets(name).join(', ') || 'no data-anim name'} on the site. Blocks, elements and
+        names can set their own timing only.
       </p>
       <Button
         size="small"

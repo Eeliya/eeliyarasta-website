@@ -1,6 +1,8 @@
 /**
- * Animation types. Each receives (el, spec, { reduce, onCleanup }).
- * `spec` is the fully merged config for that element (see engine.js).
+ * Animation types. Each receives (el, spec, { reduce, onCleanup, targets, trigger }).
+ * `spec` is the fully merged config for that element or block (see engine.js). For a block,
+ * `targets` are what it moves and `trigger` what scroll positions are measured on; for a
+ * data-anim element they are the element (or its `children`) and the element itself.
  * Add a new effect by adding a function here and a preset in settings/animations.json.
  */
 import { gsap, ScrollTrigger, SplitText, finePointer } from '../lib/env.js';
@@ -33,12 +35,45 @@ const scrollVars = (spec, trigger) => {
   };
 };
 
+/** What a type moves: a block's targets, else the element's `children`, else the element. */
+const targetsOf = (el, spec, ctx) =>
+  ctx.targets || (spec.children ? [...el.querySelectorAll(spec.children)] : [el]);
+
 /** from → to tween, optionally on children, played on load or when scrolled into view. */
-function reveal(el, spec, { reduce }) {
-  const targets = spec.children ? [...el.querySelectorAll(spec.children)] : [el];
+function reveal(el, spec, ctx) {
+  const targets = targetsOf(el, spec, ctx);
   if (!targets.length) return;
-  if (reduce) return gsap.set(targets, { ...spec.to, clearProps: 'clipPath,transform' });
-  gsap.fromTo(targets, spec.from, tweenVars(spec, { ...spec.to, ...scrollVars(spec, el) }));
+  if (ctx.reduce) return gsap.set(targets, { ...spec.to, clearProps: 'clipPath,transform' });
+  gsap.fromTo(
+    targets,
+    spec.from,
+    tweenVars(spec, {
+      ...spec.to,
+      ...scrollVars(spec, ctx.trigger || (ctx.targets ? targets[0] : el)),
+    }),
+  );
+}
+
+/**
+ * Scroll-linked: from → to as the page scrolls from `start` to `end` (always scrubbed; `scrub`
+ * a number smooths it). With reduced motion the content stays as it is.
+ */
+function scroll(el, spec, ctx) {
+  const targets = targetsOf(el, spec, ctx);
+  if (ctx.reduce || !targets.length) return;
+  const scrub = typeof spec.scrub === 'number' && spec.scrub > 0 ? spec.scrub : true;
+  gsap.fromTo(targets, spec.from || {}, {
+    ...spec.to,
+    ease: spec.ease || 'none',
+    stagger: spec.stagger || 0,
+    scrollTrigger: {
+      trigger: ctx.trigger || el,
+      start: spec.start || 'top bottom',
+      end: spec.end || 'bottom top',
+      scrub,
+      invalidateOnRefresh: true,
+    },
+  });
 }
 
 // Classes let CSS pad masked lines/words so descenders (g, j, y) aren't clipped.
@@ -58,67 +93,80 @@ const splitOpts = (el) => ({
   aria: /^H[1-6]$/.test(el.tagName) ? 'auto' : 'none',
 });
 
-/** SplitText into chars / words / lines (masked) and reveal them. Re-splits on resize. */
-function split(el, spec, { reduce, onCleanup }) {
-  if (reduce) return;
+/**
+ * SplitText into chars / words / lines (masked) and reveal them. Re-splits on resize. Each
+ * target is split on its own (a block's paragraphs each play as they scroll in).
+ */
+function split(el, spec, ctx) {
+  if (ctx.reduce) return;
   const type = spec.split === 'chars' ? 'chars,words' : spec.split === 'lines' ? 'lines' : 'words';
-  const s = SplitText.create(el, {
-    type,
-    mask: spec.mask,
-    ...splitOpts(el),
-    autoSplit: spec.split === 'lines',
-    onSplit: (self) =>
-      gsap.fromTo(
-        self[spec.split],
-        spec.from,
-        tweenVars(spec, { ...spec.to, ...scrollVars(spec, el) }),
-      ),
-  });
-  onCleanup(() => s.revert());
+  for (const t of targetsOf(el, spec, ctx)) {
+    const s = SplitText.create(t, {
+      type,
+      mask: spec.mask,
+      ...splitOpts(t),
+      autoSplit: spec.split === 'lines',
+      onSplit: (self) =>
+        gsap.fromTo(
+          self[spec.split],
+          spec.from,
+          tweenVars(spec, { ...spec.to, ...scrollVars(spec, ctx.trigger || t) }),
+        ),
+    });
+    ctx.onCleanup(() => s.revert());
+  }
 }
 
 /** Words go from dim to bright as the paragraph scrolls through the viewport. */
-function scrubWords(el, spec, { reduce, onCleanup }) {
-  if (reduce) return;
-  const s = SplitText.create(el, {
-    type: 'words',
-    ...splitOpts(el),
-    autoSplit: true,
-    onSplit: (self) =>
-      gsap.fromTo(
-        self.words,
-        { opacity: spec.fromOpacity },
-        {
-          opacity: 1,
-          ease: 'none',
-          stagger: 0.1,
-          scrollTrigger: { trigger: el, start: spec.start, end: spec.end, scrub: true },
-        },
-      ),
-  });
-  onCleanup(() => s.revert());
+function scrubWords(el, spec, ctx) {
+  if (ctx.reduce) return;
+  for (const t of targetsOf(el, spec, ctx)) {
+    const s = SplitText.create(t, {
+      type: 'words',
+      ...splitOpts(t),
+      autoSplit: true,
+      onSplit: (self) =>
+        gsap.fromTo(
+          self.words,
+          { opacity: spec.fromOpacity },
+          {
+            opacity: 1,
+            ease: 'none',
+            stagger: 0.1,
+            scrollTrigger: {
+              trigger: ctx.trigger || t,
+              start: spec.start,
+              end: spec.end,
+              scrub: spec.scrub === undefined || spec.scrub === false ? true : spec.scrub,
+            },
+          },
+        ),
+    });
+    ctx.onCleanup(() => s.revert());
+  }
 }
 
 /** Scroll-scrubbed vertical parallax of an image inside an overflow:hidden box. */
-function parallax(el, spec, { reduce }) {
-  if (reduce) return;
+function parallax(el, spec, ctx) {
+  if (ctx.reduce) return;
   const speed = Number(spec.speed) || 10;
-  const box = el.parentElement;
-  gsap.set(el, { scale: 1 + (speed * 2.2) / 100 });
-  gsap.fromTo(
-    el,
-    { yPercent: -speed },
-    {
-      yPercent: speed,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: box,
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: spec.scrub === true ? true : Number(spec.scrub) || true,
+  for (const t of targetsOf(el, spec, ctx)) {
+    gsap.set(t, { scale: 1 + (speed * 2.2) / 100 });
+    gsap.fromTo(
+      t,
+      { yPercent: -speed },
+      {
+        yPercent: speed,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: ctx.trigger || t.parentElement,
+          start: spec.start || 'top bottom',
+          end: spec.end || 'bottom top',
+          scrub: spec.scrub === true ? true : Number(spec.scrub) || true,
+        },
       },
-    },
-  );
+    );
+  }
 }
 
 /**
@@ -294,6 +342,7 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
 
 export const types = {
   reveal,
+  scroll,
   split,
   'scrub-words': scrubWords,
   parallax,

@@ -1,6 +1,17 @@
 /**
  * Animation engine: reads content/settings/animations.json (the single source of truth)
- * and wires every [data-anim="<target id>"] element in a view.
+ * and wires every block with motion ([data-motion], src/site/layout/motion.js) and every
+ * [data-anim="<target id>"] element in a view.
+ *
+ * A block: spec = presets[data-motion] ⟵ data-motion-options (the block's own timing). It
+ * plays on the block's content: its children, or the animation's `children` inside it, never
+ * on the block's element itself (that one may be sticky, fixed or pinned). Scroll positions
+ * are measured on what moves (a reveal: its first target; a split: each target; scroll: the
+ * block), or on the block's section when the block is placed (sticky / fixed / fullscreen /
+ * pinned: its own box doesn't scroll by).
+ *
+ * An element (parts of a block type with their own markup: the hero's photos and title,
+ * album parts, the project preview; and the footer):
  *
  *   spec = presets[preset] ⟵ targets[id] ⟵ elements[key] ⟵ data-anim-options (JSON, optional)
  *
@@ -68,6 +79,43 @@ export function resolve(id, el) {
   });
 }
 
+const parse = (json) => {
+  try {
+    return json ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+};
+
+/** A block's animation spec: its animation, then its own timing; null when unknown. */
+export function resolveBlock(el) {
+  const name = el.dataset.motion;
+  const preset = config.presets[name];
+  if (!preset) {
+    console.warn(`[anim] a block uses unknown animation "${name}"`);
+    return null;
+  }
+  return merge(preset, parse(el.dataset.motionOptions), { id: name, preset: name, block: true });
+}
+
+/** Is a block held in place (its own box doesn't scroll with the page)? */
+function isPlaced(el) {
+  const pos = getComputedStyle(el).position;
+  return (
+    pos === 'sticky' ||
+    pos === 'fixed' ||
+    el.matches('.blk--pinned, .blk--m-pinned') ||
+    !!el.closest('.pin-spacer')
+  );
+}
+
+/** What a block's animation moves, and what its scroll positions are measured on. */
+function blockTargets(el, spec) {
+  const targets = spec.children ? [...el.querySelectorAll(spec.children)] : [...el.children];
+  // placed: its section; else each type measures its targets (or the block)
+  return { targets, trigger: isPlaced(el) ? el.closest('.sec') || el : undefined };
+}
+
 /** Stamp every [data-anim] element with its stable key (see header). */
 export function assignKeys(els, page = pageKey()) {
   const seen = {};
@@ -94,38 +142,59 @@ export function setConfig(next) {
   assign(config, next);
 }
 
-/**
- * Mount all animations inside `root` (and optional extra roots such as the portal layer).
- * Returns { ctx, revert() }; revert() undoes every tween, trigger, split and listener.
- */
-export function mount(root, { extraRoots = [] } = {}) {
-  const reduce = reducedMotion();
-  const els = [root, ...extraRoots].flatMap((r) => [...r.querySelectorAll('[data-anim]')]);
-  assignKeys(els);
+/** Run one element's (or block's) animation in its own context: { el, revert() }. */
+function play(el, reduce) {
+  const block = el.dataset.motion !== undefined;
+  if (!block && el.dataset.anim === undefined) return { el, revert() {} }; // its motion is gone
+  const spec = block ? resolveBlock(el) : resolve(el.dataset.anim, el);
+  const run = spec && types[spec.type];
+  // Un-hide first (html.anim-pending hides [data-anim]); the type's from-state
+  // renders synchronously in the same frame, so nothing flashes.
+  const visibility = el.style.visibility;
+  if (!block) el.style.visibility = 'inherit';
   const cleanups = [];
   const onCleanup = (fn) => cleanups.push(fn);
-  const visibility = els.map((el) => [el, el.style.visibility]);
   const ctx = gsap.context(() => {
-    for (const el of els) {
-      const spec = resolve(el.dataset.anim, el);
-      const run = spec && types[spec.type];
-      // Un-hide first (html.anim-pending hides [data-anim]); the type's from-state
-      // renders synchronously in the same frame, so nothing flashes.
-      el.style.visibility = 'inherit';
-      if (!run) continue;
-      try {
-        run(el, spec, { reduce, onCleanup });
-      } catch (err) {
-        console.error(`[anim] ${spec.id} failed`, err);
-      }
+    if (!run) return;
+    try {
+      run(el, spec, { reduce, onCleanup, ...(block && blockTargets(el, spec)) });
+    } catch (err) {
+      console.error(`[anim] ${spec.id} failed`, err);
     }
-  }, root);
+  }, el);
   return {
-    ctx,
+    el,
     revert() {
       cleanups.splice(0).forEach((fn) => fn());
       ctx.revert();
-      visibility.forEach(([el, v]) => (el.style.visibility = v));
+      if (!block) el.style.visibility = visibility;
+    },
+  };
+}
+
+/**
+ * Mount all animations inside `root` (and optional extra roots such as the portal layer).
+ * Returns { revert(), replay(el) }: revert() undoes every tween, trigger, split and listener;
+ * replay(el) plays one block's or element's animation again (false when it has none).
+ */
+export function mount(root, { extraRoots = [] } = {}) {
+  const reduce = reducedMotion();
+  const roots = [root, ...extraRoots];
+  const els = roots.flatMap((r) => [...r.querySelectorAll('[data-anim]')]);
+  assignKeys(els);
+  const blocks = roots.flatMap((r) => [...r.querySelectorAll('[data-motion]')]);
+  // blocks first: a part inside a block is measured with the block's from-state in place
+  const running = [...blocks, ...els].map((el) => play(el, reduce));
+  return {
+    revert() {
+      running.splice(0).forEach((r) => r.revert());
+    },
+    replay(el) {
+      const at = running.findIndex((r) => r.el === el);
+      if (at < 0) return false;
+      running[at].revert();
+      running[at] = play(el, reduce);
+      return true;
     },
   };
 }

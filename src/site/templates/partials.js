@@ -64,7 +64,7 @@ export const projectList = (
 ) => {
   const PROJECTS = sourceFile(source);
   const h = `h${headingLevel}`;
-  return html` <div class="plist" data-anim="projects.list" data-project-list="${id}">
+  return html` <div class="plist" data-project-list="${id}">
       ${projects.map(
         (p, i) => html`
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">

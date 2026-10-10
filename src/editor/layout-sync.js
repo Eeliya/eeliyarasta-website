@@ -5,7 +5,8 @@
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
  * sections' height, width, spacing, rows and on/off (their classes and CSS variables) and the
- * blocks' places, sizes, placements, phone areas, layers and on/off. What needs the site's templates (a section added or
+ * blocks' places, sizes, placements, phone areas, layers, on/off and motion (data-motion,
+ * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
  * moved, so its editor markers point elsewhere) it reports: the editor fetches those
  * sections' HTML from the dev server (POST /__editor/render) and swaps them in (swapSections).
@@ -18,6 +19,22 @@ import {
   sectionVars,
 } from '../site/layout/index.js';
 import { kindOf } from '../site/blocks/index.js';
+
+/** A block's motion attributes as the site renders them: [data-motion, data-motion-options]. */
+function motionOf(b) {
+  const m = b?.motion;
+  if (!m || typeof m !== 'object' || typeof m.anim !== 'string') return [null, null];
+  const { anim, ...timing } = m;
+  return [anim, Object.keys(timing).length ? JSON.stringify(timing) : null];
+}
+
+/** Set (or remove) an attribute; true when it changed. */
+function setAttr(node, name, value) {
+  if (node.getAttribute(name) === value) return false;
+  if (value === null) node.removeAttribute(name);
+  else node.setAttribute(name, value);
+  return true;
+}
 
 /** The page file of the page in the preview ("pages/about/index.json"), or ''. */
 export const previewFile = (doc) =>
@@ -50,9 +67,10 @@ const SCRIPTED = /pinned|v-center/;
 
 /**
  * Apply a section's layout (and its blocks') to its element. True when a block's placement
- * changed in a way the site's script handles (a pin): the view needs mounting again.
+ * changed in a way the site's script handles (a pin): the view needs mounting again. Blocks
+ * whose motion changed are added to `moved` (their animation plays again).
  */
-function applyLayout(el, s) {
+function applyLayout(el, s, moved = []) {
   el.className = sectionClass(s);
   el.style.cssText = sectionVars(s);
   el.hidden = s.enabled === false;
@@ -68,6 +86,9 @@ function applyLayout(el, s) {
     const bh = node.style.getPropertyValue('--bh');
     node.style.cssText = blockVars(b) + (bh ? `;--bh:${bh}` : '');
     node.hidden = b.config?.enabled === false;
+    const [anim, options] = motionOf(b);
+    const a = setAttr(node, 'data-motion', anim);
+    if (setAttr(node, 'data-motion-options', options) || a) moved.push(node);
   }
   return remount;
 }
@@ -76,7 +97,8 @@ function applyLayout(el, s) {
  * Sync the preview's sections with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
  * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
- * `remount` set when a pin changed (the view's modules need mounting again).
+ * `remount` set when a pin changed (the view's modules need mounting again) and `motion`: the
+ * block elements whose motion changed.
  */
 export function syncLayout(doc, store, { structure = false } = {}) {
   const view = doc?.querySelector('[data-router-view]');
@@ -96,9 +118,10 @@ export function syncLayout(doc, store, { structure = false } = {}) {
 
   const numbers = headingNumbers(sections);
   const stale = [];
+  stale.motion = [];
   sections.forEach((s, at) => {
     const el = els.get(s?.id);
-    if (el && applyLayout(el, s)) stale.remount = true;
+    if (el && applyLayout(el, s, stale.motion)) stale.remount = true;
     if (!el || (structure && rendered.get(el) !== keyOf(s, at, numbers))) stale.push(s.id);
   });
   return stale;

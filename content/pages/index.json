@@ -3,22 +3,11 @@
   "transition": {
     "mode": "custom",
     "label": true,
-    "in": {
-      "duration": 0.3,
-      "ease": "power4.out"
-    },
+    "in": { "duration": 0.3, "ease": "power4.out" },
     "textDelay": 0.15,
-    "labelIn": {
-      "duration": 0.3,
-      "ease": "expo.out"
-    },
-    "labelOut": {
-      "duration": 0.3,
-      "ease": "power2.in"
-    },
-    "out": {
-      "ease": "power3.in"
-    },
+    "labelIn": { "duration": 0.3, "ease": "expo.out" },
+    "labelOut": { "duration": 0.3, "ease": "power2.in" },
+    "out": { "ease": "power3.in" },
     "outStart": 0.75,
     "textOutStart": 0.6,
     "total": 1.1
@@ -30,10 +19,7 @@
       "align": "stretch",
       "rows": 1,
       "width": "full",
-      "spacing": {
-        "top": 0,
-        "bottom": 0
-      },
+      "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
       "blocks": [
         {
@@ -151,12 +137,7 @@
           ],
           "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 }
         }
       ]
     },
@@ -166,10 +147,7 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 25,
-        "bottom": 22
-      },
+      "spacing": { "top": 25, "bottom": 22 },
       "enabled": true,
       "blocks": [
         {
@@ -177,19 +155,12 @@
           "type": "intro",
           "text": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
+          "motion": { "anim": "scrub-words" }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 15,
-          "bottom": 15
-        }
+        "spacing": { "top": 15, "bottom": 15 }
       }
     },
     {
@@ -198,10 +169,7 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 11,
-        "bottom": 14
-      },
+      "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
       "blocks": [
         {
@@ -210,23 +178,13 @@
           "label": "People",
           "title": "Models I've worked with",
           "cta": "All people",
-          "config": {
-            "source": "people",
-            "layout": "even"
-          },
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "config": { "source": "people", "layout": "even" },
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
+          "motion": { "anim": "grid-reveal" }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 11,
-          "bottom": 13
-        }
+        "spacing": { "top": 11, "bottom": 13 }
       }
     },
     {
@@ -235,10 +193,7 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 11,
-        "bottom": 14
-      },
+      "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
       "blocks": [
         {
@@ -247,23 +202,13 @@
           "label": "Places",
           "title": "Buildings, streets & castles",
           "cta": "All places",
-          "config": {
-            "source": "places",
-            "layout": "staggered"
-          },
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "config": { "source": "places", "layout": "staggered" },
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
+          "motion": { "anim": "grid-reveal", "stagger": 0.15 }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 11,
-          "bottom": 13
-        }
+        "spacing": { "top": 11, "bottom": 13 }
       }
     },
     {
@@ -272,10 +217,7 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 11,
-        "bottom": 14
-      },
+      "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
       "blocks": [
         {
@@ -285,19 +227,12 @@
           "title": "Things I build",
           "cta": "All projects",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
+          "motion": { "anim": "list-up", "trigger": "load" }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 11,
-          "bottom": 13
-        }
+        "spacing": { "top": 11, "bottom": 13 }
       }
     }
   ]

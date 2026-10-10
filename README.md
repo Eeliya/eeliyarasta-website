@@ -233,7 +233,9 @@ every section is a grid of **blocks** (`src/site/layout/`):
   `enabled: false` hides it. A section's rows grow to fit its lowest block.
 - **A block:** its `type` and content (below), `pos` (first column 1–24, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
-  `place` and an optional `mobile` layout (below).
+  `place`, an optional `mobile` layout (below) and an optional `motion`
+  (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
+  timing, see Animations).
 - **Size** (`size`): `rows` (default: its `pos.rows`), `aspect` (its width, from its columns,
   × `aspect`: `1:1 4:5 3:4 2:3 3:2 16:9 21:9` or any `"w:h"`; photos fill it, cropped
   (`object-fit: cover`)) or `auto` (as tall as its content). An aspect or auto block ignores
@@ -306,8 +308,10 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
   `album` block) reads the page's item, `ctx.route.album`, for its photos; its texts, like any
   block's, are bindings to the item (below), so every block shows the page's item through them.
   Item types are only offered on `[slug]` pages.
-- **Animations:** blocks keep their `data-anim` targets (`content/settings/animations.json`),
-  so a new block animates like the others of its type.
+- **Animations:** a block's `motion` picks its animation (a new block gets its type's default
+  from the registry, e.g. text `lines-up`, photo `image-reveal`, grid `grid-reveal`). Composite
+  blocks (hero, heading, about, album, section heads) keep `data-anim` **parts** inside them
+  for their own pieces (see Animations).
 - **A new type:** add it to a file in `src/site/blocks/` and to `BLOCK_TYPES` in `index.js`
   (and its styles); the editor shows it with no editor code.
 - **Migration:** `scripts/migrate-layout.mjs` turned the old list of typed sections into this
@@ -670,10 +674,52 @@ The final spec for an element is
 `"trigger": "scroll"`, reveals play once at `start`, or follow the scrollbar between `start` and
 `end` when `"scrub"` is `true` or a number (seconds of smoothing).
 Types (`src/client/anim/types.js`): `reveal`, `split` (SplitText chars/words/lines, masked),
-`scrub-words`, `parallax`, `scatter` (hero photo burst + endless drift + scroll depth), `hero-title`, `hover-preview`. New effect = new type function + preset.
+`scroll` (from → to tied to the scrollbar between `start` and `end`, always scrubbed, linear by
+default), `scrub-words`, `parallax`, `scatter` (hero photo burst + endless drift + scroll depth),
+`hero-title`, `hover-preview`. New effect = new type function + preset. Entrance animations
+(reveal/split, played once on load or when scrolled to) and scroll-linked ones (scroll,
+scrub-words, parallax, or any reveal with `scrub`) are all just presets: the library has e.g.
+`fade-up`, `lines-up`, `grid-reveal`, `list-up`, and for scroll motion `parallax-y` (y 80 → -80
+while it crosses the screen), `fade-scrub` (fades in from `top 95%` to `top 55%`) and
+`scale-scrub` (0.85 → 1).
 
-`prefers-reduced-motion` is respected everywhere: no drift/parallax/splits,
-instant album slides, a quick crossfade between pages.
+**Block motion.** A block (Layout, above) picks its animation in its own content:
+
+```json
+{ "id": "b-2fq0", "type": "photo", "motion": { "anim": "parallax-y", "end": "bottom 20%" } }
+```
+
+`anim` is a preset id; every other key is a timing override (`TIMING_KEYS` in
+`src/site/layout/motion.js`: duration, ease, delay, stagger, trigger, start, end, scrub). What
+the animation does (type, from/to, split, …) only comes from the library. The block renders
+`data-motion="parallax-y"` and `data-motion-options` (its timing), and the engine
+(`src/client/anim/engine.js`) builds it as `preset ← motion`. It animates the block's
+**content** (its children, or the preset's `children` selector, e.g. `[data-prow]` for
+`list-up`), never the block element itself, so placements keep working: a sticky, fixed or
+pinned block (desktop or phone) is triggered by its section, the others by their own content.
+Only the types that work on any markup can go on a block (`BLOCK_ANIM_TYPES`: reveal, split,
+scroll, scrub-words, parallax); `scatter`, `hero-title` and `hover-preview` stay on their
+`data-anim` parts.
+
+`data-anim` is still used for what is not a block (curtain, header, menu, footer) and for the
+**parts** of composite blocks (hero photos/title/meta, a heading's title and intro, about,
+album, section heads). The old per-element hooks blocks replace (text, photo, form title,
+intro, grids, album grids/panels, projects list) are gone: their targets were removed from
+`animations.json`.
+
+**Validation.** A block's `motion` must have that shape (`checkMotion`); an animation id that
+isn't in the library (or a markup-only type) is a **Save error** in the editor and fails the
+build (`motionProblems`). Saving `animations.json` checks every page, so removing an animation
+that blocks still use is refused.
+
+**Migration.** `scripts/migrate-motion.mjs` moved the old hooks once: it gave intro, grid,
+albums, panels and projects blocks the `motion` that matches how they moved before (e.g.
+projects `{ "anim": "list-up", "trigger": "load" }`), added the new presets and removed the
+moved targets. It is idempotent and kept for reference.
+
+`prefers-reduced-motion` is respected everywhere: no block motion, drift/parallax/splits or
+scroll scrubs (content is simply shown), no pinning, instant album slides, a quick crossfade
+between pages.
 
 ### Visual editor (`/edit/`, dev only)
 
@@ -713,8 +759,8 @@ and its **blocks**, in order (the order they stack in on phones), each with ↑ 
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**
-(see below) and **Motion** (its animated elements;
-one opens in the Motion tab). **Sections** goes back. A list field (hero photos, about
+(see below) and **Motion** (the block's animation and timing, the same view as in the Motion
+tab). **Sections** goes back. A list field (hero photos, about
 paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ / Remove and an
 **Add** button (a new photo opens the Media window). Each of these is one undo step. Typing in
 a field (a number in Layout too) is one undo step until you leave it, press Enter or pause for a
@@ -781,17 +827,24 @@ motion, settings; `view`: menu, footer; `motion=animations`: the Motion tab's An
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
-| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                  |
-| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                  |
-| **Motion** | Click an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs the page again, and the **Scroll** slider moves the page through the element. |
+| mode       | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Browse** | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                    |
+| **Text**   | Animations pause. Every editable text gets an outline: click it and type (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                                                                                                    |
+| **Motion** | Click a block or an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs that block (or the page) again, and the **Scroll** slider moves the page through it. |
 
 In the edit modes, clicks on editable or animated elements select them instead of following
 links. Hold **Alt** to click through.
 
 In the editor a preset is called an **animation** (`presets` in `animations.json`). The
-Motion tab lists the page's animated **Elements**; pick one and choose where its edits go:
+Motion tab's **Elements** list is the page's **blocks**, grouped by section (each with its
+animation or "none", and the `data-anim` parts inside it nested below), then **Outside the
+blocks** (curtain, header, footer…). Selecting a block in the preview selects it in the list
+and the other way round; a block selected in the Content tab is the one shown when you switch
+to Motion. A **block** shows its Animation (none or any block animation; the edit button opens
+it in the library), its timing (Custom switches, stored in the block's `motion`) and **Use the
+animation's timing** (drops all its overrides); **Replay** plays just that block. A **part**
+or global element is edited as before; choose where its edits go:
 
 - **This element**: `elements["<path>|<target>|<n>"]`, e.g. `"/about/|about.headline|0"`.
   Only this element on this page. This is how you give one element a different animation
@@ -812,7 +865,7 @@ does: pick an animation to edit `presets["fade-up"]`, every value including timi
 or remove from/to properties. There is no global default layer: each animation carries every
 value it uses, so what you see in the library is what it does. Edits play in the preview at
 once; **Replay** runs them again. Seconds are in the labels: `Duration (s) / ease`,
-`Delay (s)`, like the curtain's rows. The list shows how many elements on this page use each animation and which `data-anim` names
+`Delay (s)`, like the curtain's rows. The list shows how many blocks and elements on this page use each animation and which `data-anim` names
 use it on the site.
 
 Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `speed` in

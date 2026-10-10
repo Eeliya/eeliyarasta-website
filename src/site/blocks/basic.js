@@ -12,14 +12,14 @@ export const text = {
     { key: 'title', label: 'Title (empty: none)' },
     { key: 'text', label: 'Text (a blank line starts a paragraph)', type: 'block' },
   ],
-  defaults: { title: '', text: 'Some text.' },
+  defaults: { title: '', text: 'Some text.', motion: { anim: 'lines-up' } },
   render: (s, ctx, b) => {
     const paragraphs = String(s.text ?? '')
       .split(/\n\s*\n/)
       .filter((p) => p.trim());
     return html` <div class="textblock">
-      ${s.title ? html`<h2 class="section__title" data-anim="section.title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
-      <div class="textblock__body" data-anim="about.body" ${b.ed('text', 'block')}>
+      ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
+      <div class="textblock__body" ${b.ed('text', 'block')}>
         ${paragraphs.map((p) => html`<p>${esc(p.trim()).replace(/\r?\n/g, '<br>')}</p>`)}
       </div>
     </div>`;
@@ -35,10 +35,10 @@ export const photo = {
     { key: 'src', label: 'Photo', type: 'image' },
     { key: 'caption', label: 'Caption (empty: none)' },
   ],
-  defaults: { src: '', caption: '' },
+  defaults: { src: '', caption: '', motion: { anim: 'image-reveal' } },
   render: (s, ctx, b) =>
     html` <div class="photoblock">
-      <figure class="photoblock__figure" data-anim="about.image">
+      <figure class="photoblock__figure">
         ${s.src ? img(ctx, s.src, { sizes: '(max-width: 760px) 100vw, 60vw', attrs: b.ed('src', 'image') }) : ''}
         ${s.caption ? html`<figcaption class="label muted" ${b.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
       </figure>
@@ -52,7 +52,7 @@ export const button = {
   icon: 'arrow-right',
   fields: [{ key: 'label', label: 'Label' }],
   config: [{ key: 'href', label: 'Link (/path/ or https://…)', type: 'text' }],
-  defaults: { label: 'Get in touch', config: { href: '/about/' } },
+  defaults: { label: 'Get in touch', config: { href: '/about/' }, motion: { anim: 'fade-in' } },
   render: (s, ctx, b) => {
     const href = s.config?.href || '/';
     return html` <div class="buttonblock">

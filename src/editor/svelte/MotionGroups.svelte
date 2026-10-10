@@ -8,9 +8,10 @@
   before it): the field's control shows the inherited value, dimmed and inert, and nothing is
   stored. On: the value is stored at the scope (switching on copies the inherited value there,
   off removes it again).
-    m      the model: animModel() or presetModel() (motion.js)
-    scope  the layer edits go to: 'element' | 'target' | 'preset'
-    ptr    that layer's pointer in animations.json (layerPtr)
+    m      the model: animModel(), blockModel() or presetModel() (motion.js)
+    scope  the layer edits go to: 'element' | 'target' | 'preset' | 'block' (a block's motion)
+    file   the file of that layer: animations.json, or the block's page file
+    ptr    that layer's pointer in the file (layerPtr; a block's: …/blocks/<j>/motion)
     key    prefix of the sections' open/closed keys, e.g. 'motion' or 'library'
 -->
 <script>
@@ -33,7 +34,7 @@
   import { ANIMATIONS } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); gsap: the preview's (for the ease curves)
-  let { live, gsap, m, scope, ptr, key = 'motion' } = $props();
+  let { live, gsap, m, scope, ptr, file = ANIMATIONS, key = 'motion' } = $props();
 
   const library = $derived(scope === 'preset');
 
@@ -56,14 +57,14 @@
   const each = (def, fn) => (def.paths ? def.paths.map(fn) : fn(def.path));
 
   function setValue(path, value) {
-    live.store.set(ANIMATIONS, ptr + compile(path), value, {
+    live.store.set(file, ptr + compile(path), value, {
       key: `anim:${ptr}:${path.join('.')}`, // one undo step while dragging
       keep: keepFor(scope),
       source: 'motion',
     });
   }
   const resetValue = (path) =>
-    live.store.remove(ANIMATIONS, ptr + compile(path), { keep: keepFor(scope), source: 'motion' });
+    live.store.remove(file, ptr + compile(path), { keep: keepFor(scope), source: 'motion' });
   const resetAll = (def, source = 'motion') =>
     live.store.batch(() => pathsOf(def).forEach(resetValue), { source });
 
@@ -108,7 +109,7 @@
       () =>
         pathsOf(def).forEach((p) => {
           if (dig(m.layers[scope], p) !== undefined) return;
-          live.store.set(ANIMATIONS, ptr + compile(p), inherited(m, scope, p)[0] ?? blank(def), {
+          live.store.set(file, ptr + compile(p), inherited(m, scope, p)[0] ?? blank(def), {
             keep: keepFor(scope),
           });
         }),

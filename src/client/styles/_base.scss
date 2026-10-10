@@ -88,7 +88,8 @@ sup {
   outline: none;
 }
 
-html.anim-pending [data-anim] {
+html.anim-pending [data-anim],
+html.anim-pending [data-motion] > * {
   visibility: hidden;
 }
 

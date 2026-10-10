@@ -7,7 +7,8 @@
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
  *  - turns [data-edit] elements into inline editors (Text mode); a photo
  *    (data-edit-type="image") is picked with a click and edited in the panel,
- *  - lets you hover/click [data-anim] elements to select them (Motion mode),
+ *  - lets you hover/click blocks ([data-block]) and [data-anim] parts to select them (Motion
+ *    mode: the innermost one under the pointer),
  *  - selects a bound value ([data-bound], src/site/layout/bindings.js) with a click: not
  *    typed in the preview, its field in the panel shows the binding.
  */
@@ -27,7 +28,7 @@ html.__ed-text [data-bound] { outline: 1px dotted rgb(255 255 255 / .3); outline
 html.__ed-text [data-bound]:hover { outline-color: rgb(255 255 255 / .6); }
 [data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
-html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !important; }
+html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-block], html.__ed-motion [data-block] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
 .__ed-box--hover { border: 1px dashed rgb(255 255 255 / .6); }
@@ -37,6 +38,9 @@ html.__ed-motion [data-anim], html.__ed-motion [data-anim] * { cursor: pointer !
 .__ed-box--sel span { background: var(--ed-accent); color: #000; }
 .__ed-box.is-low span { bottom: auto; top: 100%; margin: 5px 0 0; }
 `;
+
+/** What Motion mode picks under the pointer: a data-anim part, else its block. */
+const MOTION_PICK = '[data-anim], [data-block]';
 
 const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export const parseEdit = (attr) => {
@@ -110,6 +114,7 @@ export function createBridge({ store, labelFor }) {
         kind: selected.kind,
         edit: selected.el.dataset.edit ?? selected.el.dataset.bound,
         anim: [...view.querySelectorAll('[data-anim]')].indexOf(selected.el),
+        block: selected.el.dataset.block,
       };
       restore = () => {
         api.scrollTop(y);
@@ -118,7 +123,9 @@ export function createBridge({ store, labelFor }) {
           ? doc.querySelector(
               `[data-edit="${CSS.escape(sel.edit)}"], [data-bound="${CSS.escape(sel.edit)}"]`,
             )
-          : doc.querySelectorAll('[data-router-view] [data-anim]')[sel.anim];
+          : sel.block
+            ? doc.querySelector(`[data-block="${CSS.escape(sel.block)}"]`)
+            : doc.querySelectorAll('[data-router-view] [data-anim]')[sel.anim];
         if (el) bridge.select(el, sel.kind);
       };
       win.location.reload();
@@ -242,6 +249,21 @@ export function createBridge({ store, labelFor }) {
         bridge.replay(selected?.kind === 'anim' ? selected.el : null, { scroll: false });
     },
 
+    /**
+     * Play one block's (or data-anim element's) animation again, bringing it into view first;
+     * every animation of the page when it has none of its own.
+     */
+    replayOne(el) {
+      if (!api || !el) return;
+      const r = el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > win.innerHeight * 0.8) api.scrollTo(el, { smooth: false });
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!api?.replay(el)) api?.remount();
+        }),
+      );
+    },
+
     /** Re-run the page's animations, optionally bringing `el` into view first. */
     replay(el, { scroll = true } = {}) {
       if (!api) return;
@@ -325,6 +347,10 @@ export function createBridge({ store, labelFor }) {
       const label = labelFor?.(parseEdit(edit)) || edit;
       return el.dataset.bound ? `${label} · from the item` : label;
     }
+    if (el.dataset.anim === undefined) {
+      const type = [...el.classList].find((c) => c.startsWith('blk--'))?.slice(5) || 'block';
+      return `${type} · ${el.dataset.motion || 'no motion'}`;
+    }
     return `${el.dataset.anim} · ${api?.resolve(el.dataset.anim, el)?.preset || '?'}`;
   }
 
@@ -386,7 +412,7 @@ export function createBridge({ store, labelFor }) {
       (e) => {
         if (mode === 'browse') return;
         const t = e.target instanceof win.Element ? e.target : null;
-        hoverEl = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : '[data-anim]') || null;
+        hoverEl = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : MOTION_PICK) || null;
       },
       { passive: true },
     );
@@ -399,7 +425,7 @@ export function createBridge({ store, labelFor }) {
       (e) => {
         if (mode === 'browse' || e.altKey) return;
         const t = e.target instanceof win.Element ? e.target : null;
-        const hit = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : '[data-anim]');
+        const hit = t?.closest(mode === 'text' ? '[data-edit], [data-bound]' : MOTION_PICK);
         if (!hit) return;
         e.preventDefault();
         e.stopPropagation();

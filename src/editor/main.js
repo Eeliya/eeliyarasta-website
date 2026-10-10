@@ -258,10 +258,18 @@ async function refreshStatus() {
   }
 }
 
-/** A pick in the preview (bridge 'select') -> ui.anim for the Motion tab. */
+/**
+ * A pick in the preview (bridge 'select') -> ui.anim for the Motion tab: a block
+ * ({ el, block }) or a data-anim part ({ el, id, key, scope }). The block (or the part's) is
+ * also the Content tab's block (ui.block), so both tabs show the same one.
+ */
 function pickAnim(sel) {
   if (sel?.kind !== 'anim') return null;
   const { el } = sel;
+  const owner = el.closest('[data-block]')?.dataset.block;
+  if (owner) ui.block = owner;
+  if (el.dataset.anim === undefined)
+    return el.dataset.block ? { el, block: el.dataset.block } : null;
   const key = el.dataset.animKey;
   // Edits go to the element if it already has overrides, otherwise to every element of its target.
   const scope = store.current[ANIMATIONS].elements?.[key] ? 'element' : 'target';
@@ -277,7 +285,12 @@ function setMode(mode) {
   if (mode !== 'text') ui.arrange = false;
   bridge.setMode(previewMode());
   overlay.refresh();
-  if (mode === 'motion') ui.anim = null;
+  if (mode === 'motion') {
+    ui.anim = null;
+    // the block open in the Content tab is the one picked here
+    const el = ui.block && bridge.doc?.querySelector(`[data-block="${CSS.escape(ui.block)}"]`);
+    if (el) bridge.select(el, 'anim');
+  }
 }
 
 // ---------------------------------------------------------------- layout overlay
@@ -329,6 +342,8 @@ let rendering = Promise.resolve();
 function syncSections({ structure = false } = {}) {
   const stale = syncLayout(bridge.doc, store, { structure });
   if (stale.remount && !stale.length) bridge.api?.remountView();
+  // a block's motion changed: its animation plays again (the whole page's when it lost it)
+  else if (!stale.length) for (const el of stale.motion) bridge.replayOne(el);
   bridge.api?.ScrollTrigger?.refresh();
   renderSections(stale);
 }

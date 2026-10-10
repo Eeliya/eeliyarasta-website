@@ -58,11 +58,11 @@ export const albums = {
       ],
     },
   ],
-  defaults: { config: { source: 'people', layout: 'portrait' } },
+  defaults: { config: { source: 'people', layout: 'portrait' }, motion: { anim: 'grid-reveal' } },
   render: (s, ctx) => {
     const source = s.config?.source || 'people';
     const landscape = s.config?.layout === 'landscape';
-    return html` <div class="agrid${landscape ? ' agrid--landscape' : ''}" data-anim="album.grid">
+    return html` <div class="agrid${landscape ? ' agrid--landscape' : ''}">
       ${sourceList(ctx, source).map((p, index) => albumCard(ctx, source, p, { landscape, index }))}
     </div>`;
   },
@@ -85,7 +85,10 @@ export const panels = {
       item: { source: 'people', title: 'People', unit: 'items' },
     },
   ],
-  defaults: { panels: [{ source: 'people', title: 'People', unit: 'models' }] },
+  defaults: {
+    panels: [{ source: 'people', title: 'People', unit: 'models' }],
+    motion: { anim: 'grid-reveal' },
+  },
   render: (s, ctx, b) => {
     const panel = ({ source, title, unit }, i) => {
       const list = Array.isArray(ctx.sources[source]) ? ctx.sources[source] : [];
@@ -100,7 +103,7 @@ export const panels = {
       >
     </a>`;
     };
-    return html` <div class="ppanels" data-anim="album.grid">
+    return html` <div class="ppanels">
       ${(s.panels || []).map(panel)}
     </div>`;
   },

@@ -30,6 +30,7 @@ import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
 import {
+  ANIMATIONS,
   PHOTOS,
   REDIRECTS,
   TEMPLATE,
@@ -65,6 +66,7 @@ import {
 import { checkContent } from '../src/site/validate.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
+import { motionProblems } from '../src/site/layout/motion.js';
 import { BLOCK_TYPES } from '../src/site/blocks/index.js';
 
 const CONTENT_DIR = editorConfig.contentDir;
@@ -339,6 +341,19 @@ function albumBlock(root, source, ids) {
 }
 
 /**
+ * Blocks of the saved pages whose animation isn't in the library (src/site/layout/motion.js):
+ * an unknown animation id is a save error. A saved animations.json can break any page.
+ */
+function motionErrors(root, files) {
+  const names = Object.keys(files);
+  const content = loadContent(root, files);
+  return motionProblems(content, {
+    pageFile,
+    files: names.includes(ANIMATIONS) ? null : new Set(names),
+  }).map((p) => p.message);
+}
+
+/**
  * Bindings of the saved pages that don't fit their sources' schemas (src/site/layout/bindings.js;
  * the 'error' level: an unknown source or field, a type that doesn't fit). A saved schema or
  * source can break any page's bindings, so then every page is checked.
@@ -373,7 +388,7 @@ export function save(root, files, onWrite = () => {}) {
   );
   const problems = shape.length
     ? shape
-    : [...sourceProblems(root, files), ...bindingErrors(root, files)];
+    : [...sourceProblems(root, files), ...bindingErrors(root, files), ...motionErrors(root, files)];
   if (problems.length)
     return { status: 400, body: { error: `Not saved. ${problems.join('; ')}`, problems } };
   onWrite();

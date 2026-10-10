@@ -1,8 +1,6 @@
 {
   "curtain": "People",
-  "meta": {
-    "description": "Models photographed by Eeliya Rasta."
-  },
+  "meta": { "description": "Models photographed by Eeliya Rasta." },
   "sections": [
     {
       "id": "s-8gt2",
@@ -10,10 +8,7 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 23,
-        "bottom": 9
-      },
+      "spacing": { "top": 23, "bottom": 9 },
       "enabled": true,
       "blocks": [
         {
@@ -22,22 +17,12 @@
           "crumb": "Photography / People",
           "title": "People",
           "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
-          "config": {
-            "count": "people"
-          },
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "config": { "count": "people" },
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 16,
-          "bottom": 8
-        }
+        "spacing": { "top": 16, "bottom": 8 }
       }
     },
     {
@@ -46,32 +31,19 @@
       "align": "center",
       "rows": 1,
       "width": "contained",
-      "spacing": {
-        "top": 0,
-        "bottom": 18
-      },
+      "spacing": { "top": 0, "bottom": 18 },
       "enabled": true,
       "blocks": [
         {
           "id": "b-grz4",
           "type": "albums",
-          "config": {
-            "source": "people",
-            "layout": "portrait"
-          },
-          "pos": {
-            "col": 1,
-            "span": 24,
-            "row": 1,
-            "rows": 1
-          }
+          "config": { "source": "people", "layout": "portrait" },
+          "pos": { "col": 1, "span": 24, "row": 1, "rows": 1 },
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ],
       "mobile": {
-        "spacing": {
-          "top": 0,
-          "bottom": 17
-        }
+        "spacing": { "top": 0, "bottom": 17 }
       }
     }
   ]

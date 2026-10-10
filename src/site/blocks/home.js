@@ -73,10 +73,10 @@ export const intro = {
   label: 'Statement',
   icon: 'quote-left',
   fields: [{ key: 'text', label: 'Text', type: 'block' }],
-  defaults: { text: 'A sentence about your work.' },
+  defaults: { text: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
   render: (s, ctx, b) =>
     html` <div class="intro">
-      <p class="intro__text" data-anim="home.intro" ${b.ed('text', 'block')}>${lines(s.text)}</p>
+      <p class="intro__text" ${b.ed('text', 'block')}>${lines(s.text)}</p>
     </div>`,
 };
 
@@ -94,7 +94,7 @@ const interleave = (items, perItem = 4) => {
 /** Photo tiles (people look): the first 4 images of every item, interleaved. */
 const photoTiles = (ctx, source, items, layout) => {
   const { title } = schemaOf(ctx, source); // the field that names an item
-  return html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}" data-anim="home.people.grid">
+  return html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}">
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
@@ -109,7 +109,6 @@ const photoTiles = (ctx, source, items, layout) => {
 const placeCards = (ctx, source, items, layout) =>
   html` <div
     class="placecards${layout === 'even' ? ' placecards--even' : ''}"
-    data-anim="home.places.grid"
   >
     ${items.map((p, i) => {
       const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
@@ -154,6 +153,7 @@ export const grid = {
     title: 'New grid',
     cta: 'See all',
     config: { source: 'people', layout: 'staggered' },
+    motion: { anim: 'grid-reveal' },
   },
   render: (s, ctx, b) => {
     const source = s.config?.source || 'people';
@@ -185,6 +185,7 @@ export const projects = {
     title: 'Things I build',
     cta: 'All projects',
     config: { source: 'projects' },
+    motion: { anim: 'list-up' },
   },
   render: (s, ctx, b) => {
     const source = s.config?.source || 'projects';

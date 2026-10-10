@@ -109,6 +109,7 @@ export const form = {
     },
   ],
   defaults: {
+    motion: { anim: 'fade-in' },
     title: 'Get in touch',
     intro: 'Shoots, collaborations or just hello: I read everything.',
     fields: [
@@ -164,7 +165,7 @@ export const form = {
     const turnstile = mode === 'function' && ctx.site?.forms?.turnstileSiteKey;
     const msg = (key) => ` data-${key}="${esc(s[key] ?? '')}"`;
     return html` <div class="formblock">
-      ${s.title ? html`<h2 class="section__title" data-anim="section.title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
+      ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
       ${s.intro ? html`<p class="formblock__intro" ${b.ed('intro', 'block')}>${esc(s.intro)}</p>` : ''}
       <form class="cform" id="${id}" method="post" action="${esc(action)}"${mode === 'email' ? ' enctype="text/plain"' : ''} data-contact="${mode}"${msg('success')}${msg('error')}${msg('required')}${msg('invalid')}${msg('sending')}>
         ${fields.map(

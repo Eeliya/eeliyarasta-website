@@ -5,7 +5,8 @@
              with each field's Source switch
     Layout   its size, where it sits in its section's grid, placement and layer, for the
              desktop or the phone (LayoutTab.svelte)
-    Motion   its animated elements: each opens in the Motion tab
+    Motion   its motion: its animation and own timing, and its parts with their own animation,
+             which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   Back returns to the list of sections (SectionsList.svelte).
 -->
 <script>
@@ -18,8 +19,11 @@
   import { BIND_TYPES, resolve } from '../../site/layout/bindings.js';
   import { ui } from './ui.svelte.js';
   import LayoutTab from './LayoutTab.svelte';
+  import BlockMotion from './BlockMotion.svelte';
+  import { ANIMATIONS } from '../../site/files.js';
 
-  let { g, live, bridge, sourceIds, onsource, onback, onmotion } = $props();
+  // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
+  let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
 
   const TABS = [
     ['content', 'Content'],
@@ -93,12 +97,11 @@
     setItem({ source: id, slug: first });
   }
 
-  // the block's animated elements in the preview, read again after every edit
-  const anims = $derived.by(() => {
+  // the block's element in the preview, read again after every edit
+  const blockEl = $derived.by(() => {
     live.version;
     ui.previewVersion;
-    const el = bridge.doc?.querySelector(`[data-block="${CSS.escape(g.id)}"]`);
-    return el ? [...el.querySelectorAll('[data-anim]')] : [];
+    return bridge.doc?.querySelector(`[data-block="${CSS.escape(g.id)}"]`) || null;
   });
 </script>
 
@@ -126,15 +129,20 @@
 {#if ui.blockTab === 'layout'}
   <LayoutTab {g} {live} {bridge} {at} {j} {base} {block} />
 {:else if ui.blockTab === 'motion'}
-  {#each anims as el, i (i)}
-    <button type="button" class="anim" onclick={() => onmotion(el)}>
-      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-      <span>{el.dataset.anim}</span>
-      <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-    </button>
-  {:else}
-    <p class="hint small">This block has no animated elements.</p>
-  {/each}
+  {#key blockEl}
+    <BlockMotion
+      {live}
+      {bridge}
+      gsap={bridge.api?.gsap}
+      cfg={live.current(ANIMATIONS)}
+      file={g.file}
+      {at}
+      {j}
+      el={blockEl}
+      {onlibrary}
+      onpart={onmotion}
+    />
+  {/key}
 {:else}
   {#if g.fields.length || g.config?.some((c) => c.type === 'text')}
     <div class={['opts', live.changed(g.file, `${base}/item`) && 'is-changed']}>
@@ -234,38 +242,5 @@
     line-height: 16px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .anim {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    height: 32px;
-    padding: 0 8px;
-    border: 0;
-    border-radius: 8px;
-    background: #141414;
-    color: var(--fg);
-    font: inherit;
-    font-size: 12px;
-    cursor: pointer;
-
-    span {
-      flex: 1;
-      text-align: left;
-    }
-
-    i {
-      color: var(--muted);
-    }
-
-    &:hover {
-      background: #1c1c1c;
-    }
-
-    & + & {
-      margin-top: 4px;
-    }
   }
 </style>

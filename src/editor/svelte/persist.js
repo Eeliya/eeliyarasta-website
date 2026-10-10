@@ -112,7 +112,7 @@ export function restoreUi(preview, content) {
         media: ui.media,
         path: bridge.path(),
         edit: ui.selection?.edit,
-        anim: ui.anim?.key,
+        anim: ui.anim?.block ? `block:${ui.anim.block}` : ui.anim?.key,
         panelY: document.querySelector('.ed-body')?.scrollTop || 0,
         previewY: bridge.api?.scrollTop() || 0,
       }),
@@ -143,7 +143,10 @@ export async function restorePlace() {
   const motion = ui.mode === 'motion';
   if (motion && ui.library.open) return;
   const sel = motion
-    ? anim && `[data-anim-key="${CSS.escape(anim)}"]`
+    ? anim &&
+      (anim.startsWith('block:')
+        ? `[data-block="${CSS.escape(anim.slice(6))}"]`
+        : `[data-anim-key="${CSS.escape(anim)}"]`)
     : edit && `[data-edit="${CSS.escape(edit)}"]`;
   const el = sel && bridge.doc.querySelector(sel);
   if (el && (motion || ui.mode === 'text')) bridge.select(el, motion ? 'anim' : 'text');

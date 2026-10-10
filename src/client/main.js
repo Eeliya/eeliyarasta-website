@@ -8,6 +8,7 @@ import {
   mount as mountAnimations,
   config as animationConfig,
   resolve as resolveAnimation,
+  resolveBlock as resolveBlockAnimation,
   setConfig,
   pageKey,
 } from './anim/engine.js';
@@ -99,6 +100,13 @@ function connectEditor() {
     /** Replace the animation config (in place) with an edited copy. */
     setAnimations: (next) => setConfig(next),
     remount: remountAnimations,
+    resolveBlock: resolveBlockAnimation,
+    /** Play one block's (or data-anim element's) animation again; false when it has none. */
+    replay(el) {
+      if (frozen || !current?.anim.replay?.(el)) return false;
+      ScrollTrigger.refresh();
+      return true;
+    },
     /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
     remountView() {
       if (!current) return;

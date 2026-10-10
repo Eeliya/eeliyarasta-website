@@ -151,6 +151,10 @@
       {onsource}
       onback={() => (ui.block = null)}
       onmotion={(el) => actions.editMotion(el)}
+      onlibrary={(name) => {
+        ui.library = { open: true, name };
+        actions.setMode('motion');
+      }}
     />
   {:else}
     <p class="hint">{hint}</p>

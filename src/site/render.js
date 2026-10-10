@@ -9,6 +9,7 @@ import { head, body } from './templates/layout.js';
 import { renderSections, renderSection, headingNumbers } from './layout/index.js';
 import { pageFile } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
+import { motionProblems } from './layout/motion.js';
 import { BLOCK_TYPES } from './blocks/index.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
@@ -19,6 +20,10 @@ export { buildRedirects, pathsOf, redirectsText } from './redirects.js';
 /** Schema-aware checks of the pages' bindings: [{ level, message }] (layout/bindings.js). */
 export const bindingChecks = (content, files = null) =>
   bindingProblems(content, { types: BLOCK_TYPES, pageFile, files });
+
+/** Blocks whose animation isn't in the library (or can't play on a block): messages. */
+export const motionChecks = (content, files = null) =>
+  motionProblems(content, { pageFile, files }).map((p) => p.message);
 
 /**
  * { head, body, lang } of a route; lang: <html lang>.

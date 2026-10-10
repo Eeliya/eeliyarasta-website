@@ -56,15 +56,26 @@ export const BLOCK_TYPES = Object.fromEntries(
 );
 
 /** Keys of a block that belong to the layout, not to its type's content. */
-export const LAYOUT_KEYS = ['id', 'type', 'config', 'pos', 'z', 'mobile'];
+export const LAYOUT_KEYS = [
+  'id',
+  'type',
+  'config',
+  'pos',
+  'z',
+  'mobile',
+  'size',
+  'aspect',
+  'place',
+  'motion',
+];
 
 /**
  * What the preview can't show without rendering the block again: its type, content and
- * config, but not on/off, where it sits, its size or placement (the editor applies those).
+ * config, but not on/off, where it sits, its size, placement or motion (the editor applies those).
  */
 export function kindOf(block) {
   // eslint-disable-next-line no-unused-vars
-  const { pos, z, mobile, size, aspect, place, config, ...rest } = block || {};
+  const { pos, z, mobile, size, aspect, place, motion, config, ...rest } = block || {};
   const { enabled, ...settings } = config || {}; // eslint-disable-line no-unused-vars
   return JSON.stringify([rest, settings]);
 }
