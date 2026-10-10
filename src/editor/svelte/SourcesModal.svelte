@@ -5,6 +5,8 @@
   open() from its Sources button (the files), and from a grid's Source edit button or a click
   on a list item in the preview (straight into that file, item or field).
   Where it is lives in ui.explorer, so persist.js can bring it back after a refresh.
+  What an item has comes from its source's schema (sources/<id>.schema.json, else inferred:
+  src/site/schemas.js): the fields, their labels, widgets, widths and help, its name and slug.
 -->
 <script>
   import Button from './Button.svelte';
@@ -19,6 +21,8 @@
     itemName,
     itemMeta,
     pad,
+    pairedHalves,
+    schemaFor,
     slugify,
     itemFields,
     newItem,
@@ -42,14 +46,21 @@
   const isList = $derived(Array.isArray(list));
   const index = $derived(isList ? Math.max(0, Math.min(ui.explorer.index, list.length - 1)) : 0);
   const item = $derived(isList ? list[index] : undefined);
-  const fields = $derived(item ? itemFields(file, item, index) : []);
+  const schema = $derived.by(() => {
+    live.version;
+    return file ? schemaFor(live.store, file) : { fields: [] };
+  });
+  const slugField = $derived(schema.fields.find((f) => f.key === schema.slug));
+  const fields = $derived(item ? itemFields(file, item, index, schema) : []);
+  const halves = $derived(pairedHalves(fields));
 
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   // An item is changed when it differs from the saved item with the same slug.
+  const slugOf = (it) => it?.[schema.slug || 'slug'];
   const isChanged = (it) =>
     !same(
       it,
-      base.find((b) => b?.slug === it?.slug),
+      base.find((b) => slugOf(b) === slugOf(it)),
     );
   const fieldChanged = (f) => !same(valueAt(item, f.path), valueAt(base[index], f.path));
   const fileChanged = (f) => !same(live.current(f), live.base(f));
@@ -70,7 +81,7 @@
   async function add() {
     const now = live.store.current[file];
     select(now.length);
-    live.store.set(file, '', [...now, newItem(now)], { source: 'panel' });
+    live.store.set(file, '', [...now, newItem(now, schema)], { source: 'panel' });
     await tick();
     dialog.querySelector('.tf__input:not([disabled])')?.focus();
   }
@@ -92,9 +103,12 @@
   function onSlug(e) {
     const slug = slugify(e.currentTarget.value);
     const at = index;
-    slugBad = !slug || live.store.current[file].some((it, k) => k !== at && it?.slug === slug);
+    slugBad = !slug || live.store.current[file].some((it, k) => k !== at && slugOf(it) === slug);
     if (!slugBad)
-      live.store.set(file, `/${at}/slug`, slug, { key: `slug:${file}#${at}`, source: 'panel' });
+      live.store.set(file, `/${at}/${schema.slug}`, slug, {
+        key: `slug:${file}#${at}`,
+        source: 'panel',
+      });
   }
 
   /** Enter a file ('' = back to the list of files), keeping the keyboard focus in the modal. */
@@ -149,7 +163,7 @@
       ? [
           { label: 'sources', onclick: () => goTo('') },
           { label: baseName(file) },
-          ...(item ? [{ label: itemName(item) }] : []),
+          ...(item ? [{ label: itemName(item, schema) }] : []),
         ]
       : [{ label: 'sources' }]}
     back={file ? 'Back to files' : ''}
@@ -185,8 +199,8 @@
             <li>
               <ExplorerRow
                 lead={pad(i)}
-                name={itemName(it)}
-                meta={itemMeta(it)}
+                name={itemName(it, schema)}
+                meta={itemMeta(it, schema)}
                 selected={i === index}
                 changed={isChanged(it)}
                 aria-current={i === index}
@@ -210,10 +224,10 @@
         <p class="hint">No items yet. Add one on the left.</p>
       {:else}
         <header class="src-detail__head">
-          <h4 class="src-item__title">{itemName(item)}</h4>
+          <h4 class="src-item__title">{itemName(item, schema)}</h4>
           {#if confirming}
             <span class="confirm">
-              Delete {itemName(item)}?
+              Delete {itemName(item, schema)}?
               <Button size="small" onclick={() => (confirming = false)}>Cancel</Button>
               <Button variant="danger" size="small" icon="trash" onclick={remove}>Delete</Button>
             </span>
@@ -222,44 +236,41 @@
           {/if}
         </header>
 
-        {#if 'slug' in item}
-          <!-- the slug is the page URL: once saved, a new one redirects the old (on Save) -->
-          <label class="tf">
-            <span class="tf__label">
-              slug
-              <span class="src-detail__hint">
-                the page URL: when it changes, Save redirects the old one
-              </span>
-            </span>
-            <input
-              class={['tf__input', slugBad && 'is-invalid']}
-              spellcheck="false"
-              {@attach show(item.slug)}
-              oninput={onSlug}
-              onblur={(e) => {
-                e.currentTarget.value = item.slug;
-                slugBad = false;
-              }}
-            />
-          </label>
-        {/if}
+        <div class="fields">
+          {#if slugField}
+            <!-- the slug is the page URL: once saved, a new one redirects the old (on Save) -->
+            <label class="tf">
+              <span class="tf__label">{slugField.label}</span>
+              <input
+                class={['tf__input', slugBad && 'is-invalid']}
+                spellcheck="false"
+                {@attach show(slugOf(item))}
+                oninput={onSlug}
+                onblur={(e) => {
+                  e.currentTarget.value = slugOf(item) ?? '';
+                  slugBad = false;
+                }}
+              />
+              {#if slugField.help}<span class="tf__help">{slugField.help}</span>{/if}
+            </label>
+          {/if}
 
-        {#each fields as f (f.edit)}
-          <Field
-            edit={f.edit}
-            label={f.label}
-            type={f.type}
-            value={valueAt(item, f.path)}
-            changed={fieldChanged(f)}
-            selected={ui.explorer.field === f.key}
-            onfocus={() => {
-              ui.explorer.field = f.key;
-              bridge.focusEdit(f.edit);
-            }}
-            onvalue={(value) =>
-              live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' })}
-          />
-        {/each}
+          {#each fields as f (f.edit)}
+            <Field
+              {...f}
+              half={halves.has(f.edit)}
+              value={valueAt(item, f.path)}
+              changed={fieldChanged(f)}
+              selected={ui.explorer.field === f.key}
+              onfocus={() => {
+                ui.explorer.field = f.key;
+                bridge.focusEdit(f.edit);
+              }}
+              onvalue={(value) =>
+                live.store.set(file, f.ptr, value, { key: `text:${f.edit}`, source: 'panel' })}
+            />
+          {/each}
+        </div>
       {/if}
     </section>
   {/if}
@@ -317,6 +328,7 @@
 
   // right: the selected item
   .src-detail {
+    container-type: inline-size;
     overflow: auto;
     padding: 16px 24px 24px;
     display: grid;
@@ -335,12 +347,6 @@
       flex: 1;
       min-width: 0;
     }
-  }
-
-  .src-detail__hint {
-    margin-left: auto;
-    color: var(--muted);
-    font-size: 10px;
   }
 
   .src-detail :global(.tf__input:disabled) {

@@ -1,7 +1,8 @@
 <!--
   One field: a label (name, changed dot and, for a value from a source list, a button naming
   its file, e.g. people.json, that opens it in the Source Explorer) with an input, or a
-  textarea for longer text.
+  textarea for longer text, a switch (boolean) or a Select (select, options [[value, label]]).
+  help: a hint under it; half: it shares a row with the next field (the parent's grid).
   type 'image': a photo (its media/ path or R2 key) as a thumbnail with its file name and
   sizes; the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
   stores the photo picked there in this field: one undo step. No text input.
@@ -22,11 +23,13 @@
 
 <script>
   import Button from './Button.svelte';
+  import Select from './Select.svelte';
   import { baseName } from '../../site/files.js';
   import { fallback, openMedia, photoInfo, photoLine, thumbUrl } from './media.svelte.js';
 
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
-  // type: 'text' | 'words' | 'number' | 'block' | 'image'. onvalue(value) gets every valid input.
+  // type: 'text' | 'words' | 'number' | 'date' | 'block' | 'image' | 'boolean' | 'select'.
+  // onvalue(value) gets every valid input.
   // source: the content/sources/ file the value comes from ('' for the page's own), with
   // onsource() opening it.
   let {
@@ -37,6 +40,9 @@
     source = '',
     onsource,
     placeholder = '',
+    help = '',
+    half = false,
+    options = [],
     changed = false,
     selected = false,
     onfocus,
@@ -46,6 +52,8 @@
   const uid = $props.id();
   let invalid = $state(false);
   const photo = $derived(type === 'image');
+  // a label element around an input, a switch; photos and Selects label their own buttons
+  const tag = $derived(photo || type === 'select' ? 'div' : 'label');
 
   /** Show the stored value, except while the user is typing in the field. */
   const show = (value) => (el) => {
@@ -67,13 +75,22 @@
 
 <!-- a photo has no input to label: a div, its buttons say what they do -->
 <svelte:element
-  this={photo ? 'div' : 'label'}
-  for={photo ? undefined : uid}
-  class={['tf', changed && 'is-changed', selected && 'is-selected']}
+  this={tag}
+  for={tag === 'label' && type !== 'boolean' ? uid : undefined}
+  class={['tf', changed && 'is-changed', selected && 'is-selected', half && 'is-half']}
   data-edit={edit}
 >
   <span class="tf__label">
     {label}<i class="dot" title="Changed"></i>
+    {#if type === 'boolean'}
+      <input
+        type="checkbox"
+        class="switch"
+        checked={!!value}
+        {onfocus}
+        onchange={(e) => onvalue(e.currentTarget.checked)}
+      />
+    {/if}
     {#if source}
       <Button size="small" title="Edit in the Source Explorer: content/{source}" onclick={onsource}>
         {baseName(source)}
@@ -100,6 +117,17 @@
       </span>
       <Button size="small" onclick={change}>{value ? 'Change' : 'Choose'}</Button>
     </div>
+  {:else if type === 'select'}
+    <Select
+      id={uid}
+      aria-label={label}
+      value={value ?? ''}
+      placeholder="Pick…"
+      options={options.map(([v, text]) => ({ value: v, label: text }))}
+      onchange={(v) => onvalue(v)}
+    />
+  {:else if type === 'boolean'}
+    <!-- the switch is in the label row -->
   {:else if type === 'block'}
     <textarea
       id={uid}
@@ -112,7 +140,7 @@
     <input
       id={uid}
       class={['tf__input', invalid && 'is-invalid']}
-      type={type === 'number' ? 'number' : 'text'}
+      type={type === 'number' || type === 'date' ? type : 'text'}
       spellcheck={type !== 'number'}
       {placeholder}
       {@attach show(value)}
@@ -120,6 +148,7 @@
       {oninput}
     />
   {/if}
+  {#if help}<span class="tf__help">{help}</span>{/if}
 </svelte:element>
 
 <style lang="scss">

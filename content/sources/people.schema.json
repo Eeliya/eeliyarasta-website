@@ -33,7 +33,8 @@
       "key": "location",
       "label": "Location",
       "type": "text",
-      "width": "half"
+      "width": "half",
+      "list": true
     },
     {
       "key": "year",

@@ -103,8 +103,7 @@ function pageEntries(routes) {
     return templates.get(id);
   };
   for (const r of routes) {
-    if (r.template)
-      template(r.id, r.section).items.push({ path: r.path, title: r.name });
+    if (r.template) template(r.id, r.section).items.push({ path: r.path, title: r.name });
     else
       entries.push({
         kind: 'page',
