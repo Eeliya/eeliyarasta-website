@@ -6,7 +6,7 @@
  *   parseContent(text, file)   JSON.parse, with "content/<file>: invalid JSON … (line L, column C)"
  *   checkContent(file, data)   a list of problems ([] when fine), e.g. "footer must be an object"
  */
-import { ANIMATIONS, PHOTOS, SITE, TEMPLATE, pageIdOf, sourceIdOf } from './files.js';
+import { ANIMATIONS, NAV, PHOTOS, SITE, TEMPLATE, pageIdOf, sourceIdOf } from './files.js';
 import { SECTION_TYPES } from './sections/index.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -72,6 +72,41 @@ function checkSite(d) {
       labels: 'object',
     }),
   ];
+}
+
+/**
+ * nav.json: { header: [items], footer: [items] }, item { label, page | href, all?, items?,
+ * children? }. Header items can have one level of children; footer items are plain links.
+ * Whether a page exists needs the routes: the templates warn about that (header.js linkOf).
+ */
+function checkNav(d) {
+  const out = optional(d, { header: 'array', footer: 'array' });
+  const check = (item, where, { nest, menu }) => {
+    if (!isObject(item)) return out.push(`${where} must be an object`);
+    const name = `${where}${typeof item.label === 'string' ? ` ("${item.label}")` : ''}`;
+    const bad = (msg) => out.push(`${name}: ${msg}`);
+    if (typeof item.label !== 'string') bad('needs a "label"');
+    if ((item.page === undefined) === (item.href === undefined))
+      bad('needs a "page" (a path like /about/) or an "href" (a link), one of them');
+    else if (item.page !== undefined && !/^\/([\w-]+\/)*$/.test(String(item.page)))
+      bad(`"page" must be a page path like /about/, not "${item.page}"`);
+    else if (item.href !== undefined && typeof item.href !== 'string')
+      bad('"href" must be a string');
+    out.push(...optional(item, { all: 'string', items: 'string' }).map((p) => `${name}: ${p}`));
+    if (menu === 'footer' && ['children', 'items', 'all'].some((k) => item[k] !== undefined))
+      bad('footer links are plain links (no "children", "items" or "all")');
+    if (item.children === undefined) return;
+    if (!nest) return bad('"children" go one level deep');
+    if (!Array.isArray(item.children)) return bad('"children" must be a list');
+    if (item.items !== undefined) bad('has "children" or "items", not both');
+    item.children.forEach((c, j) => check(c, `${name} child ${j + 1}`, { nest: false, menu }));
+  };
+  for (const menu of ['header', 'footer'])
+    if (Array.isArray(d[menu]))
+      d[menu].forEach((item, i) =>
+        check(item, `${menu} item ${i + 1}`, { nest: menu === 'header', menu }),
+      );
+  return out;
 }
 
 function checkAnimations(d) {
@@ -153,6 +188,7 @@ export function checkContent(file, data) {
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
   if (file === SITE) return checkSite(data);
   if (file === ANIMATIONS) return checkAnimations(data);
+  if (file === NAV) return checkNav(data);
   if (file === PHOTOS) return checkPhotos(data);
   if (pageIdOf(file)) return checkPage(file, data);
   return [];

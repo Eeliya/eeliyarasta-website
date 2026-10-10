@@ -30,31 +30,10 @@
     "toTop": "Back to top",
     "columns": {
       "social": { "title": "Social" },
-      "index": {
-        "title": "Index",
-        "links": [
-          { "label": "Home", "href": "/" },
-          { "label": "People", "href": "/people/" },
-          { "label": "Places", "href": "/places/" },
-          { "label": "Projects", "href": "/projects/" },
-          { "label": "About", "href": "/about/" }
-        ]
-      },
+      "index": { "title": "Index" },
       "contact": { "title": "Contact" },
       "time": { "title": "Local time" }
     }
   },
-  "nav": {
-    "home": "Home",
-    "photography": "Photography",
-    "people": "People",
-    "places": "Places",
-    "projects": "Projects",
-    "about": "About",
-    "allPhotography": "All photography",
-    "allProjects": "All projects",
-    "menu": "Menu",
-    "close": "Close",
-    "clock": "NL"
-  }
+  "nav": { "menu": "Menu", "close": "Close", "clock": "NL" }
 }

@@ -7,7 +7,8 @@
  *                               /people/), plus maybe [slug].json, a template page for every
  *                               item of a source (see src/site/routes.js)
  *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
- *   content/settings/<id>.json  site-wide settings (site.json, animations.json), and photos.json:
+ *   content/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
+ *                               animations.json), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
  *                               sizes of photos uploaded to R2; written by the editor's Media
  *                               window and the upload (not by Save), committed by Publish
@@ -31,6 +32,7 @@ export const sourceFile = (id) => `sources/${id}.json`;
 export const settingsFile = (id) => `settings/${id}.json`;
 
 export const SITE = settingsFile('site');
+export const NAV = settingsFile('nav');
 export const ANIMATIONS = settingsFile('animations');
 export const HOME = pageFile('home');
 export const PHOTOS = settingsFile('photos');
@@ -88,6 +90,7 @@ export function contentFromFiles(files) {
   const list = (id) => (Array.isArray(sources[id]) ? sources[id] : []);
   return {
     site: files[SITE],
+    nav: files[NAV] || {},
     pages: Object.fromEntries(
       Object.entries(files)
         .map(([f, data]) => [pageIdOf(f), data])

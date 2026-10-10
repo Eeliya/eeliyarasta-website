@@ -1,12 +1,15 @@
-import { html, esc, ed, lines } from '../helpers.js';
-import { SITE } from '../files.js';
+import { html, esc, ed, extAttrs, lines } from '../helpers.js';
+import { NAV, SITE } from '../files.js';
+import { linkOf } from './header.js';
 
+/** The footer; its Index column lists content/settings/nav.json "footer" (see header.js). */
 export function footer(ctx) {
   const { site } = ctx;
   const year = new Date().getFullYear();
   const foot = site.footer || {};
   const cols = foot.columns || {};
-  const index = cols.index || { title: 'Index', links: [] };
+  const index = cols.index || { title: 'Index' };
+  const links = Array.isArray(ctx.nav?.footer) ? ctx.nav.footer : [];
   const social = cols.social || { title: 'Social' };
   const contact = cols.contact || { title: 'Contact' };
   const time = cols.time || { title: 'Local time' };
@@ -24,7 +27,7 @@ export function footer(ctx) {
       <div class="footer__col">
         <h2 class="label"${ed(SITE, ['footer', 'columns', 'index', 'title'])}>${esc(index.title)}</h2>
         <ul>
-          ${(index.links || []).map((link, i) => html`<li><a href="${esc(link.href)}"><span${ed(SITE, ['footer', 'columns', 'index', 'links', i, 'label'])}>${esc(link.label)}</span></a></li>`)}
+          ${links.map((link, i) => html`<li><a href="${esc(linkOf(ctx, link))}"${extAttrs(linkOf(ctx, link))}><span${ed(NAV, ['footer', i, 'label'])}>${esc(link.label)}</span></a></li>`)}
         </ul>
       </div>
       <div class="footer__col">

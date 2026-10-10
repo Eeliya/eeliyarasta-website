@@ -1,0 +1,23 @@
+{
+  "header": [
+    { "label": "Home", "page": "/" },
+    {
+      "label": "Photography",
+      "page": "/photography/",
+      "all": "All photography",
+      "children": [
+        { "label": "People", "page": "/people/", "items": "people" },
+        { "label": "Places", "page": "/places/", "items": "places" }
+      ]
+    },
+    { "label": "Projects", "page": "/projects/", "all": "All projects", "items": "projects" },
+    { "label": "About", "page": "/about/" }
+  ],
+  "footer": [
+    { "label": "Home", "page": "/" },
+    { "label": "People", "page": "/people/" },
+    { "label": "Places", "page": "/places/" },
+    { "label": "Projects", "page": "/projects/" },
+    { "label": "About", "page": "/about/" }
+  ]
+}
