@@ -32,18 +32,25 @@ function site(redirects = []) {
     footer: [{ label: 'Noor', page: '/people/noor/' }],
   });
   put('settings/redirects.json', redirects);
-  put('pages/index.json', {
-    sections: [{ type: 'button', label: 'Team', config: { href: '/people/team/#join' } }],
-  });
+  put(
+    'pages/index.json',
+    page({ type: 'button', label: 'Team', config: { href: '/people/team/#join' } }),
+  );
   put('pages/404/index.json', {});
-  put('pages/about/index.json', {
-    sections: [{ type: 'button', label: 'x', config: { href: '/peoples/' } }],
-  });
+  put(
+    'pages/about/index.json',
+    page({ type: 'button', label: 'x', config: { href: '/peoples/' } }),
+  );
   put('pages/people/index.json', {});
   put('pages/people/[slug].json', { config: { source: 'people' } });
   put('pages/people/team/index.json', {});
   put('sources/people.json', [{ slug: 'noor', name: 'Noor' }, { name: 'Daan' }]);
   return root;
+}
+/** A page with one section holding `block`. */
+function page(block) {
+  const pos = { col: 1, span: 24, row: 1, rows: 1 };
+  return { sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }] };
 }
 const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content', f), 'utf8'));
 
@@ -59,8 +66,11 @@ test('rename: every path of the folder redirects (items by pattern), links follo
   assert.equal(nav.header[0].page, '/models/');
   assert.equal(nav.header[0].children[0].page, '/models/team/');
   assert.equal(nav.footer[0].page, '/models/noor/');
-  assert.equal(read(root, 'pages/index.json').sections[0].config.href, '/models/team/#join');
-  assert.equal(read(root, 'pages/about/index.json').sections[0].config.href, '/peoples/'); // not a match
+  assert.equal(
+    read(root, 'pages/index.json').sections[0].blocks[0].config.href,
+    '/models/team/#join',
+  );
+  assert.equal(read(root, 'pages/about/index.json').sections[0].blocks[0].config.href, '/peoples/'); // not a match
   assert.equal(r.body.links, 4);
   assert.deepEqual(r.body.changed.sort(), [
     'pages/index.json',
@@ -103,7 +113,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
     { from: '/people/team/', to: '/people/' },
   ]);
   // links to it go to the target, without the #hash
-  assert.equal(read(root, 'pages/index.json').sections[0].config.href, '/people/');
+  assert.equal(read(root, 'pages/index.json').sections[0].blocks[0].config.href, '/people/');
   assert.equal(read(root, 'settings/nav.json').header[0].children[0].page, '/people/');
 
   root = site();
@@ -207,11 +217,11 @@ test('validation: redirects.json', () => {
 });
 
 test('"See all" links go to the page that shows the source, wherever it is', async () => {
-  const { sourcePage } = await import('../src/site/sections/data.js');
+  const { sourcePage } = await import('../src/site/blocks/data.js');
   const pages = {
-    home: { sections: [{ type: 'grid', config: { source: 'people' } }] },
+    home: page({ type: 'grid', config: { source: 'people' } }),
     'models/[slug]': { config: { source: 'people' } },
-    work: { sections: [{ type: 'projects', config: { source: 'projects' } }] },
+    work: page({ type: 'projects', config: { source: 'projects' } }),
   };
   assert.equal(sourcePage({ pages }, 'people'), '/models/');
   assert.equal(sourcePage({ pages }, 'projects'), '/work/');

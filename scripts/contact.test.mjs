@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { handleContact } from '../functions/api/contact.js';
-import { formTarget, form } from '../src/site/sections/form.js';
-import { newSection } from '../src/site/sections/index.js';
+import { formTarget, form } from '../src/site/blocks/form.js';
+import { newBlock } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
 
 const ENV = {
@@ -166,8 +166,8 @@ test('Turnstile: checked when its secret is set', async () => {
   assert.equal(calls.filter((u) => u.includes('resend')).length, 1);
 });
 
-test('the section: where it sends, its form, its validation', () => {
-  const s = newSection('form');
+test('the block: where it sends, its form, its validation', () => {
+  const s = newBlock('form', new Set());
   const site = { email: 'hi@example.com' };
   assert.deepEqual(formTarget(site, s), { mode: 'function', action: '/api/contact' });
   assert.deepEqual(
@@ -181,16 +181,16 @@ test('the section: where it sends, its form, its validation', () => {
   assert.equal(formTarget({ ...site, forms: { target: 'endpoint' } }, s).mode, 'email');
   assert.equal(formTarget(site, { config: { target: 'email' } }).action, 'mailto:hi@example.com');
 
-  const sec = { at: 2, attrs: '', ed: () => '' };
+  const sec = { id: 'b-2', ed: () => '' };
   const html = form.render(s, { site, route: { path: '/about/' } }, sec);
-  assert.match(html, /<form class="cform" id="contact-2" method="post" action="\/api\/contact"/);
+  assert.match(html, /<form class="cform" id="contact-b-2" method="post" action="\/api\/contact"/);
   assert.match(
     html,
-    /<input type="email" id="contact-2-email" name="email" class="cform__input" required/,
+    /<input type="email" id="contact-b-2-email" name="email" class="cform__input" required/,
   );
   assert.match(html, /autocomplete="email"/);
-  assert.match(html, /<textarea id="contact-2-message"[^>]*required/);
-  assert.match(html, /<label class="cform__label" for="contact-2-name">/);
+  assert.match(html, /<textarea id="contact-b-2-message"[^>]*required/);
+  assert.match(html, /<label class="cform__label" for="contact-b-2-name">/);
   assert.match(html, /name="website" tabindex="-1"/);
   assert.match(html, /name="_page" value="\/about\/"/);
   assert.match(html, /role="status" aria-live="polite"/);
@@ -202,7 +202,10 @@ test('the section: where it sends, its form, its validation', () => {
   );
   assert.match(withKey, /<div class="cf-turnstile" data-sitekey="k">/);
 
-  const page = (fields) => ({ sections: [{ type: 'form', fields }] });
+  const pos = { col: 1, span: 24, row: 1, rows: 1 };
+  const page = (fields) => ({
+    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, pos }] }],
+  });
   assert.deepEqual(checkContent('pages/contact/index.json', page(s.fields)), []);
   assert.deepEqual(
     checkContent(
@@ -214,12 +217,12 @@ test('the section: where it sends, its form, its validation', () => {
       ]),
     ),
     [
-      'section 1 (Contact form): field 1: "name" must be lowercase letters, digits, - or _ (e.g. "phone")',
-      'section 1 (Contact form): field 2: a Choice field needs "options" (comma-separated)',
-      'section 1 (Contact form): field 3: another field is called "topic"',
-      'section 1 (Contact form): field 3: "type" must be one of text, email, tel, textarea, select',
-      'section 1 (Contact form): field 3: "required" must be true or false',
-      'section 1 (Contact form): needs a field named "email" of type email: replies go there',
+      'section 1, block 1 (Contact form): field 1: "name" must be lowercase letters, digits, - or _ (e.g. "phone")',
+      'section 1, block 1 (Contact form): field 2: a Choice field needs "options" (comma-separated)',
+      'section 1, block 1 (Contact form): field 3: another field is called "topic"',
+      'section 1, block 1 (Contact form): field 3: "type" must be one of text, email, tel, textarea, select',
+      'section 1, block 1 (Contact form): field 3: "required" must be true or false',
+      'section 1, block 1 (Contact form): needs a field named "email" of type email: replies go there',
     ],
   );
   assert.deepEqual(

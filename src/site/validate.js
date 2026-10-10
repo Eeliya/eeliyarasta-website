@@ -252,7 +252,7 @@ function checkBlock(b, where) {
   const out = [];
   const bad = (key, want) => out.push(`${name}: "${key}" must be ${want}`);
   if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
-  out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
+  if (b.pos !== undefined) out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
   if (b.mobile !== undefined)
     out.push(...checkArea(b.mobile, 'mobile').map((p) => `${name}: ${p}`));
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');

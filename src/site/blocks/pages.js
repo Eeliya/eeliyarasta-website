@@ -59,7 +59,7 @@ export const albums = {
     },
   ],
   defaults: { config: { source: 'people', layout: 'portrait' } },
-  render: (s, ctx, b) => {
+  render: (s, ctx) => {
     const source = s.config?.source || 'people';
     const landscape = s.config?.layout === 'landscape';
     return html` <div class="agrid${landscape ? ' agrid--landscape' : ''}" data-anim="album.grid">

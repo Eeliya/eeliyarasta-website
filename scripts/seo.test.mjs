@@ -31,7 +31,9 @@ const routeOf = (c, path) => buildRoutes(c).routes.find((r) => r.path === path);
 test('titles: the site template around the page title; home in full', () => {
   const files = {
     'pages/index.json': {},
-    'pages/about/index.json': { sections: [{ type: 'heading', title: 'About me' }] },
+    'pages/about/index.json': {
+      sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'heading', title: 'About me' }] }],
+    },
     'pages/work/index.json': { meta: { title: 'My work' } },
   };
   assert.equal(routeOf(content(files), '/').title, 'Site home');

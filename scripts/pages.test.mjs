@@ -31,9 +31,22 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   assert.equal(r.status, 200);
   assert.equal(r.body.id, 'people/new-one');
   assert.deepEqual(r.body.created, ['pages/people/new-one/index.json']);
-  assert.deepEqual(read(root, 'pages/people/new-one/index.json').sections, [
-    { type: 'heading', crumb: 'New one', title: 'New one', intro: '', config: { enabled: true } },
-  ]);
+  const [heading] = read(root, 'pages/people/new-one/index.json').sections;
+  assert.deepEqual(
+    heading.blocks.map(({ id: _id, ...b }) => b),
+    [
+      {
+        type: 'heading',
+        crumb: 'New one',
+        title: 'New one',
+        intro: '',
+        config: {},
+        pos: { col: 1, span: 24, row: 1, rows: 1 },
+      },
+    ],
+  );
+  assert.match(heading.id, /^s-/);
+  assert.deepEqual(heading.spacing, { top: 23, bottom: 9 });
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
   ]);
@@ -53,9 +66,12 @@ test('template: [slug].json in a page folder, one per folder, not at the root', 
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug].json']);
   assert.equal(read(root, 'pages/about/[slug].json').config.source, 'people');
-  assert.deepEqual(read(root, 'pages/about/[slug].json').sections, [
-    { type: 'album', config: { enabled: true } },
-  ]);
+  const [album] = read(root, 'pages/about/[slug].json').sections;
+  assert.deepEqual(
+    album.blocks.map((b) => b.type),
+    ['album'],
+  );
+  assert.equal(album.height, 'screen');
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'people' }).status, 400);
 });
 

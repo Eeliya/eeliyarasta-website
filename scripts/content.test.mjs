@@ -141,13 +141,14 @@ test('editor markers: only when rendering for the editor (dev), never in the bui
   const { renderRoute } = await import('../src/site/render.js');
   const content = loadContent('.');
   const home = buildRoutes(content).routes.find((r) => r.path === '/');
-  const MARKERS = /data-edit|data-section|data-curtain-edit/;
+  const MARKERS = /data-edit|data-sec|data-block|data-curtain-edit/;
   const built = renderRoute(home, content);
   assert.doesNotMatch(built.head + built.body, MARKERS);
   assert.match(built.body, /data-anim="/); // animations keep their hooks
   const dev = renderRoute(home, content, { editable: true });
-  assert.match(dev.body, /data-edit="pages\/index\.json#\/sections\/0\/title"/);
-  assert.match(dev.body, /data-section="s0"/);
+  assert.match(dev.body, /data-edit="pages\/index\.json#\/sections\/0\/blocks\/0\/title"/);
+  assert.match(dev.body, /data-sec="s-[a-z0-9]+"/);
+  assert.match(dev.body, /data-block="b-[a-z0-9]+"/);
   assert.match(dev.body, /data-curtain-edit="/);
 });
 
@@ -210,14 +211,28 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   const root = tree();
   const drafts = {};
   const r = draftOp(root, drafts, {
-    'pages/index.json': { sections: [{ type: 'text', text: 'Draft' }] },
+    'pages/index.json': {
+      sections: [
+        {
+          id: 's-aaaa',
+          blocks: [
+            {
+              id: 'b-aaaa',
+              type: 'text',
+              text: 'Draft',
+              pos: { col: 1, span: 24, row: 1, rows: 1 },
+            },
+          ],
+        },
+      ],
+    },
     'settings/animations.json': [],
     'pages/nope/index.json': {},
   });
   assert.equal(r.status, 200);
   assert.deepEqual(r.body.files, ['pages/index.json']);
   assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
-  assert.equal(loadContent(root, drafts).pages.home.sections[0].text, 'Draft');
+  assert.equal(loadContent(root, drafts).pages.home.sections[0].blocks[0].text, 'Draft');
   assert.deepEqual(loadContent(root).pages.home, {});
   draftOp(root, drafts, {});
   assert.deepEqual(drafts, {});

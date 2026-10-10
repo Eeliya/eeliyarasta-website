@@ -12,10 +12,10 @@ export const album = {
   icon: 'film',
   item: true,
   defaults: {},
-  render: (s, ctx, b) => albumOf(ctx, ctx.route, b),
+  render: (s, ctx) => albumOf(ctx, ctx.route),
 };
 
-function albumOf(ctx, route, b) {
+function albumOf(ctx, route) {
   const a = route.album;
   const images = imagesOf(a);
   const n = images.length;
