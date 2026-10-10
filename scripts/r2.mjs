@@ -15,6 +15,9 @@
  * photo always gets the same keys, and the objects can be cached forever. The original itself
  * is not kept: the largest size is the fallback src, and it is the key the content stores.
  *
+ * deletePhoto removes every size of an uploaded photo from R2 and its photos.json entry (the
+ * Media window's Delete, only for photos nothing uses).
+ *
  * Sizes, placeholder and colour go into content/settings/photos.json (PHOTOS, files.js), keyed by
  * that key, so the build renders srcset, width/height and the blurred placeholder without
  * downloading anything from R2. Publish commits it with the content.
@@ -74,32 +77,63 @@ const sizeKey = (base, w) => `${base}-${w}.${FORMAT.ext}`;
 
 const readJSON = (file) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
 
-/**
- * PUT one object, signed with SigV4 (region "auto") including the hash of the bytes, so R2
- * rejects a body that changed on the way. Throws with R2's error code when it fails.
- */
-export async function putObject(cfg, { key, body, type }) {
-  const client = new AwsClient({
+const client = (cfg) =>
+  new AwsClient({
     accessKeyId: cfg.accessKeyId,
     secretAccessKey: cfg.secretAccessKey,
     service: 's3',
     region: 'auto',
   });
-  const path = [cfg.bucket, ...key.split('/')].map(encodeURIComponent).join('/');
-  const res = await client.fetch(`${cfg.endpoint}/${path}`, {
+const objectUrl = (cfg, key) =>
+  `${cfg.endpoint}/${[cfg.bucket, ...key.split('/')].map(encodeURIComponent).join('/')}`;
+const sha256 = (body) => crypto.createHash('sha256').update(body).digest('hex');
+
+/** Throws "R2 <what> failed: <status> <R2 error code>" for a failed answer. */
+async function check(res, what) {
+  if (res.ok) return;
+  const code = /<Code>([^<]+)<\/Code>/.exec(await res.text())?.[1];
+  throw new Error(`R2 ${what} failed: ${res.status}${code ? ` ${code}` : ''}`);
+}
+
+/**
+ * PUT one object, signed with SigV4 (region "auto") including the hash of the bytes, so R2
+ * rejects a body that changed on the way. Throws with R2's error code when it fails.
+ */
+export async function putObject(cfg, { key, body, type }) {
+  const res = await client(cfg).fetch(objectUrl(cfg, key), {
     method: 'PUT',
     body,
     headers: {
       'Content-Type': type,
       'Cache-Control': 'public, max-age=31536000, immutable',
-      'X-Amz-Content-Sha256': crypto.createHash('sha256').update(body).digest('hex'),
+      'X-Amz-Content-Sha256': sha256(body),
     },
   });
-  if (!res.ok) {
-    const text = await res.text();
-    const code = /<Code>([^<]+)<\/Code>/.exec(text)?.[1];
-    throw new Error(`R2 upload failed: ${res.status}${code ? ` ${code}` : ''}`);
-  }
+  await check(res, 'upload');
+}
+
+/** DELETE one object (SigV4 like putObject). A key that is already gone is fine (S3: 204). */
+export async function deleteObject(cfg, key) {
+  const res = await client(cfg).fetch(objectUrl(cfg, key), {
+    method: 'DELETE',
+    headers: { 'X-Amz-Content-Sha256': sha256('') },
+  });
+  await check(res, 'delete');
+}
+
+/** Write photos.json sorted by key (formatted like Save), right after onWrite(). */
+export function writePhotos(photosFile, photos, onWrite = () => {}) {
+  onWrite();
+  writeFileAtomic(
+    photosFile,
+    formatJSON(
+      Object.fromEntries(
+        Object.keys(photos)
+          .sort()
+          .map((k) => [k, photos[k]]),
+      ),
+    ),
+  );
 }
 
 /**
@@ -146,18 +180,24 @@ export async function uploadPhoto(env, { name, type, body }, { photosFile, onWri
   );
   const photo = { width: v.width, height: v.height, srcset, color: v.color, lqip: v.lqip };
   // re-read: another upload may have finished meanwhile
-  const now = { ...readJSON(photosFile), [key]: photo };
-  onWrite();
-  writeFileAtomic(
-    photosFile,
-    formatJSON(
-      Object.fromEntries(
-        Object.keys(now)
-          .sort()
-          .map((k) => [k, now[k]]),
-      ),
-    ),
-  );
+  writePhotos(photosFile, { ...readJSON(photosFile), [key]: photo }, onWrite);
   const bytes = v.sizes.reduce((n, s) => n + s.buffer.length, 0);
   return { status: 200, body: { ok: true, key, photo, size: body.length, stored: bytes } };
+}
+
+/**
+ * Delete an uploaded photo: every size in R2, then its photos.json entry (alt included).
+ * { status, body } like uploadPhoto. The caller checks that nothing uses it.
+ */
+export async function deletePhoto(env, key, { photosFile, onWrite = () => {} }) {
+  const cfg = r2Config(env);
+  if (cfg.missing) return { status: 503, body: { error: NOT_CONFIGURED, missing: cfg.missing } };
+  const photo = readJSON(photosFile)[key];
+  if (!Array.isArray(photo?.srcset))
+    return { status: 404, body: { error: `No R2 photo "${key}"` } };
+  await Promise.all(photo.srcset.map((s) => deleteObject(cfg, s.key)));
+  const now = readJSON(photosFile); // re-read, like the upload
+  delete now[key];
+  writePhotos(photosFile, now, onWrite);
+  return { status: 200, body: { ok: true, key, deleted: photo.srcset.map((s) => s.key) } };
 }

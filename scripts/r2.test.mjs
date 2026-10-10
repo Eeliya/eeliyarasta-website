@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
-import { NOT_CONFIGURED, photoBase, r2Config, uploadPhoto } from './r2.mjs';
+import { NOT_CONFIGURED, deletePhoto, photoBase, r2Config, uploadPhoto } from './r2.mjs';
 
 const SECRET = 'test-secret-key';
 const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
@@ -240,4 +240,43 @@ test('upload: no keys, not an image, empty or broken file', async () => {
   assert.equal(broken.status, 415);
   assert.match(broken.body.error, /Could not read a\.jpg/);
   assert.equal(puts.length, 0, 'nothing was sent');
+});
+
+test('delete: every size of the photo, signed, then its photos.json entry', async () => {
+  const up = await uploadPhoto(
+    env(),
+    { name: 'gone.jpg', type: 'image/jpeg', body: await jpeg(1200, 900) },
+    opts(),
+  );
+  const sizes = up.body.photo.srcset.map((s) => s.key);
+  // the alt text set in the Media window goes with it
+  fs.writeFileSync(
+    photosFile,
+    JSON.stringify({ ...photos(), [up.body.key]: { ...up.body.photo, alt: 'Gone' } }),
+  );
+  const others = Object.keys(photos()).filter((k) => k !== up.body.key);
+  puts = [];
+  const r = await deletePhoto(env(), up.body.key, opts());
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.body.deleted, sizes);
+  assert.deepEqual(
+    puts.map((p) => `${p.method} ${p.url}`).sort(),
+    sizes.map((k) => `DELETE /photos-bucket/${k}`).sort(),
+  );
+  assert.ok(puts.every((p) => p.valid, 'SigV4 signature checks out'));
+  assert.equal(photos()[up.body.key], undefined);
+  assert.deepEqual(Object.keys(photos()), others, 'the other photos stay');
+});
+
+test('delete: an unknown key, no keys, or a failing R2 keeps photos.json', async () => {
+  const before = photos();
+  const key = Object.keys(before)[0];
+  puts = [];
+  assert.equal((await deletePhoto(env(), 'photos/nope-1600.webp', opts())).status, 404);
+  assert.equal((await deletePhoto({}, key, opts())).status, 503);
+  assert.equal(puts.length, 0);
+  reply = { status: 403, body: '<Error><Code>AccessDenied</Code></Error>' };
+  await assert.rejects(deletePhoto(env(), key, opts()), /R2 delete failed: 403 AccessDenied/);
+  reply = null;
+  assert.deepEqual(photos(), before);
 });

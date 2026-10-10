@@ -14,6 +14,8 @@
  *   POST /__editor/publish  → { message }: git add + commit ONLY the changed content files in
  *                             one commit, then git push origin <current branch>
  *   POST /__editor/pages    → { op, ... }: add, rename or delete pages (pagesOp)
+ *   POST /__editor/media    → { op, key, alt? }: a photo's alt text, or delete an unused photo
+ *                             (mediaOp), answers the photos and media lists afresh
  *
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
@@ -36,7 +38,8 @@ import {
   sourceFile,
 } from '../src/site/files.js';
 import { NAMED_VIEWS } from '../src/site/routes.js';
-import { MAX_UPLOAD, uploadPhoto } from './r2.mjs';
+import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
+import { photoUses } from '../src/editor/lib/photo-uses.js';
 import { readContentFile, walkJson, writeFileAtomic } from './content.mjs';
 import { checkContent } from '../src/site/validate.js';
 
@@ -218,18 +221,102 @@ export const readContentFiles = (root) =>
     [...editableFiles(root)].map((f) => [f, readContentFile(root, f, { check: false })]),
   );
 
-/** Local photos (.generated/media.json, scripts/images.mjs): { src, thumb } per media/ file. */
+const mediaFile = (root) => path.join(root, '.generated', 'media.json');
+const readMediaManifest = (root) =>
+  fs.existsSync(mediaFile(root)) ? JSON.parse(fs.readFileSync(mediaFile(root), 'utf8')) : {};
+
+/**
+ * Local photos (.generated/media.json, scripts/images.mjs): { src, thumb, width, height,
+ * sizes } per media/ file.
+ */
 function readMedia(root) {
-  const file = path.join(root, '.generated', 'media.json');
-  if (!fs.existsSync(file)) return {};
-  const all = JSON.parse(fs.readFileSync(file, 'utf8'));
   return Object.fromEntries(
-    Object.entries(all).map(([k, m]) => [k, { src: m.src, thumb: m.srcset?.[0]?.url || m.src }]),
+    Object.entries(readMediaManifest(root)).map(([k, m]) => [
+      k,
+      {
+        src: m.src,
+        thumb: m.srcset?.[0]?.url || m.src,
+        width: m.width,
+        height: m.height,
+        sizes: m.srcset?.length || 1,
+      },
+    ]),
   );
 }
 
 const readPhotos = (root) =>
   fs.existsSync(path.join(root, CONTENT_DIR, PHOTOS)) ? readContentFile(root, PHOTOS) : {};
+
+/**
+ * The Media window (src/editor/svelte/MediaModal.svelte): a photo's alt text, or delete it.
+ * `key` is a media/ path (a local photo, in .generated/media.json) or an R2 key (in photos.json
+ * with its sizes). Both write straight to disk, like the upload; Publish commits photos.json.
+ *
+ *   alt     { key, alt }  the alt text in photos.json ('' removes it)
+ *   delete  { key }       only when no content file on disk uses it: an R2 photo loses every
+ *                         size in R2 and its photos.json entry (deletePhoto, scripts/r2.mjs); a
+ *                         local one its file in media/, its sizes in public/media/, its manifest
+ *                         entry and alt
+ *
+ * Returns { status, body }; body has the photos and media lists afresh.
+ */
+export async function mediaOp(root, env, { op, key, alt } = {}, onWrite = () => {}) {
+  const photosFile = path.join(root, CONTENT_DIR, PHOTOS);
+  const photos = readPhotos(root);
+  const manifest = readMediaManifest(root);
+  const isR2 = typeof key === 'string' && Array.isArray(photos[key]?.srcset);
+  const isLocal = typeof key === 'string' && Object.hasOwn(manifest, key);
+  const fail = (status, error, extra) => ({ status, body: { error, ...extra } });
+  const done = (extra) => ({
+    status: 200,
+    body: { ok: true, ...extra, photos: readPhotos(root), media: readMedia(root) },
+  });
+
+  if (!['alt', 'delete'].includes(op)) return fail(400, `Unknown media op "${op ?? ''}"`);
+  if (!isR2 && !isLocal) return fail(404, `No photo "${key ?? ''}"`);
+
+  if (op === 'alt') {
+    const text = String(alt ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const entry = { ...photos[key], alt: text };
+    if (!text) delete entry.alt;
+    if (Object.keys(entry).length) photos[key] = entry;
+    else delete photos[key];
+    writePhotos(photosFile, photos, onWrite);
+    return done({ key });
+  }
+
+  const uses = photoUses(readContentFiles(root), key);
+  if (uses.length)
+    return fail(409, `${key} is used in ${uses.map((u) => `${u.file}#${u.ptr}`).join(', ')}`, {
+      uses,
+    });
+  if (isR2) {
+    const r = await deletePhoto(env, key, { photosFile, onWrite });
+    return r.body.ok ? done(r.body) : r;
+  }
+  // local: the original in media/ and its generated sizes in public/ (URLs /media/...)
+  const m = manifest[key];
+  const files = [
+    path.join(root, 'media', key),
+    ...[m.src, ...(m.srcset || []).map((s) => s.url)].map((u) => path.join(root, 'public', u)),
+  ];
+  const inside = (f) =>
+    [path.join(root, 'media'), path.join(root, 'public', 'media')].some((d) =>
+      path.resolve(f).startsWith(d + path.sep),
+    );
+  if (!files.every(inside)) return fail(400, `Not a media/ photo: "${key}"`);
+  onWrite();
+  for (const f of new Set(files)) fs.rmSync(f, { force: true });
+  delete manifest[key];
+  writeFileAtomic(mediaFile(root), `${JSON.stringify(manifest, null, 2)}\n`);
+  if (photos[key]) {
+    delete photos[key];
+    writePhotos(photosFile, photos);
+  }
+  return done({ key, deleted: [...new Set(files)].map((f) => path.relative(root, f)) });
+}
 
 /** The request body as a Buffer; over `limit` bytes fails with 413. */
 function readRaw(req, limit) {
@@ -567,6 +654,13 @@ export function editorMiddleware({ root, logger, env = {}, onWrite = () => {} })
               ? `editor upload: ${out.key} is already in R2`
               : `editor uploaded ${out.photo.srcset.length} sizes of ${name} to R2 (${out.key})`,
           );
+        return sendJSON(res, status, out);
+      }
+
+      if (route === 'POST /media') {
+        const body = await readJSON(req);
+        const { status, body: out } = await mediaOp(root, env, body, onWrite);
+        if (out.ok) log(`editor media: ${body.op} ${body.key}`);
         return sendJSON(res, status, out);
       }
 
