@@ -14,11 +14,33 @@ npm run dev       # http://localhost:5173 – pages rendered on the fly, hot rel
 npm run build     # → dist/ (one index.html per route + 404.html, sitemap.xml, robots.txt)
 npm run preview   # serve dist/ on http://localhost:4173
 npm test          # unit tests (R2 upload against a local mock S3)
+npm run lint      # ESLint + Stylelint (npm run lint:fix fixes what it can)
 ```
 
 Visual editor (dev only): `http://localhost:5173/edit/` while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
 
 Requires Node 20.19+ (Vite 8).
+
+### Linting
+
+- **ESLint** (`eslint.config.js`): JS recommended + Svelte recommended (Svelte 5, a11y checks),
+  browser globals in `src/`, Node globals in `scripts/` and configs. `console.log` warns in `src/`
+  (`console.warn`/`error` are fine), anything goes in `scripts/`.
+- **Stylelint** (`stylelint.config.mjs`): standard SCSS rules, relaxed (blank lines, alpha notation
+  and vendor prefixes are free), BEM class names (`block__elem--mod`), Svelte `<style>` blocks too.
+- **Editor-only rules** (`scripts/stylelint-4px.mjs`, for `src/editor/**`):
+  `local/grid-4px`: padding, margin, gap, sizes, radius, offsets, inset and translate in multiples
+  of 4px (0, 1px and 999px pills are fine; font sizes, line heights, borders and %/em/vw are not
+  checked). `local/no-alpha-text-color`: no transparent text colors (`rgb(… / .5)`, `#rrggbbaa`);
+  it can't see `opacity` on text or colors behind variables.
+- Prettier owns formatting; neither linter checks style.
+- Disable a rule only inline, for one line, with the reason:
+  `// eslint-disable-next-line no-console -- why` or `/* stylelint-disable-next-line local/grid-4px -- why */`.
+
+**Pre-push hook:** `.githooks/pre-push` runs `npm run lint && npm test` before every `git push`.
+`npm install` turns it on (the `prepare` script sets `git config core.hooksPath .githooks`), so
+run `npm install` after pulling this. It works in Git for Windows' sh. Skip it once with
+`git push --no-verify`.
 
 ---
 

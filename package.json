@@ -10,7 +10,10 @@
     "build": "node scripts/images.mjs && vite build",
     "preview": "vite preview --port 4173",
     "test": "node --test scripts/*.test.mjs",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "lint": "eslint . && stylelint \"src/**/*.{scss,svelte}\"",
+    "lint:fix": "eslint . --fix && stylelint \"src/**/*.{scss,svelte}\" --fix",
+    "prepare": "git config core.hooksPath .githooks || exit 0"
   },
   "license": "MIT",
   "dependencies": {

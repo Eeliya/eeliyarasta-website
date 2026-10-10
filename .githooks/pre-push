@@ -1,0 +1,4 @@
+#!/bin/sh
+# Before every push: lint and tests (enabled by `npm install`, see README "Linting").
+# Skip once with git push --no-verify.
+npm run lint && npm test
