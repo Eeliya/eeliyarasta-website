@@ -2,10 +2,14 @@
  * The layout overlay, drawn in the preview over the page (in its own Shadow DOM, so neither
  * the site's styles nor the editor's reach it):
  *
- *   Grid      every section's square cells (120 columns, the phone grid's 60, and its rows,
- *             all one --cell: src/site/layout/flow.js), from the section's own computed grid;
- *             every 5th line a little stronger
+ *   Grid      the square cells (120 columns, the phone grid's 60, and its rows, all one
+ *             --cell: src/site/layout/flow.js) of the selected block's section only, while a
+ *             block is selected (and so while it is dragged or resized), from the section's
+ *             own computed grid: faint white lines, every 5th a little stronger. Nothing
+ *             selected: no grid
  *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
+ *             a click on empty space (no block, handle, circle or link line) or Esc (main /
+ *             App.svelte) drops the selection (the panel shows the sections again),
  *             a drag moves it and the handles on its edges and corners resize it; a double
  *             click edits a text in place (bridge.js), the page's own clicks are off. A drag
  *             snaps to the cells and shows its area live (the block's CSS variables, and the
@@ -30,7 +34,7 @@
  * page holds its rows (data-flow-hold on <html>).
  *
  * The overlay follows the page with a frame loop while it shows something; it reads `ui`
- * (mode, grid, block, link) every frame, and the section metrics once per drag, so the grid
+ * (mode, block, link) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
 import { COLS, MCOLS, makesLoop, phoneAreaOf, placeOf, sizeOf } from '../site/layout/index.js';
@@ -48,7 +52,7 @@ const STYLE = `
 :host { all: initial; }
 .layer { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; font: 500 10px/1 'DM Mono', ui-monospace, monospace; }
 .grid { position: absolute; box-sizing: border-box; }
-.cells { position: absolute; background-image: linear-gradient(to right, rgb(51 204 255 / .55) 1px, transparent 1px), linear-gradient(to bottom, rgb(51 204 255 / .55) 1px, transparent 1px), linear-gradient(to right, rgb(51 204 255 / .22) 1px, transparent 1px), linear-gradient(to bottom, rgb(51 204 255 / .22) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(51 204 255 / .55); }
+.cells { position: absolute; background-image: linear-gradient(to right, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(255 255 255 / .12); }
 .box { position: absolute; box-sizing: border-box; border-radius: 2px; }
 .hover { border: 1px dashed #fff; opacity: .7; }
 .sel { border: 2px solid #3cf; }
@@ -193,7 +197,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
   const els = {};
 
   const arranging = () => ui.mode === 'text';
-  const shown = () => doc && (arranging() || ui.grid);
+  const shown = () => doc && arranging();
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
   const secOf = (el) => el?.closest('[data-sec]');
@@ -253,18 +257,24 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     box.style.height = `${r.h}px`;
   };
 
-  /** The sections' grids: rebuilt when a section's size or tracks change. */
+  /**
+   * The grid of the selected (or dragged) block's section, none without one: rebuilt when that
+   * section, its size or its tracks change.
+   */
   function drawGrids() {
-    const secs = ui.grid ? [...doc.querySelectorAll('[data-sec]:not([hidden])')] : [];
+    const sec = arranging() ? drag?.sec || secOf(blockEl(ui.block)) : null;
+    const secs = sec && !sec.hidden ? [sec] : [];
     const info = secs.map((sec) => {
       const cs = win.getComputedStyle(sec);
       return { sec, cs, r: rectOf(sec, win) };
     });
     const key = info
-      .map(({ cs, r }) => [r.x, r.y, r.w, r.h, cs.gridTemplateColumns, cs.gridTemplateRows].join())
+      .map(({ sec, cs, r }) =>
+        [sec.dataset.sec, r.x, r.y, r.w, r.h, cs.gridTemplateColumns, cs.gridTemplateRows].join(),
+      )
       .join('|');
-    if (key === gridKey) return;
-    gridKey = key;
+    if (`${secs.length}:${key}` === gridKey) return;
+    gridKey = `${secs.length}:${key}`;
     els.grids.replaceChildren(
       ...info.map(({ cs, r }) => {
         const g = doc.createElement('div');
@@ -605,7 +615,8 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     if (!arranging() || e.button !== 0 || e.altKey || editing(e.target)) return;
     ui.link = null;
     const el = e.target.closest?.('[data-block]');
-    if (!el) return;
+    // empty space: nothing selected (the panel shows the sections, the grid hides)
+    if (!el) return void (ui.block && onpick(null));
     if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
     onpick(el.dataset.block);
     start(e, el);
@@ -636,11 +647,11 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
       doc.addEventListener('keydown', onkeydown, true);
       this.refresh();
     },
-    /** ui.mode, ui.grid, ui.block or ui.link changed: show or hide what they ask for. */
+    /** ui.mode, ui.block or ui.link changed: show or hide what they ask for. */
     refresh() {
       if (!doc || !root) return;
       gridKey = '';
-      if (!ui.grid) els.grids.replaceChildren();
+      if (!shown()) els.grids.replaceChildren();
       if (!raf) raf = win.requestAnimationFrame(frame);
     },
     /** The editor's Delete with a link selected (its focus outside the preview). */

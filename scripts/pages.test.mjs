@@ -41,12 +41,14 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
         title: 'New one',
         intro: '',
         config: {},
-        pos: { col: 1, span: 120, row: 1, rows: 1 },
+        pos: { col: 1, span: 120, row: 17, rows: 1 },
       },
     ],
   );
   assert.match(heading.id, /^s-/);
-  assert.deepEqual(heading.spacing, { top: 23, bottom: 9 });
+  // below the header: the rows above it empty (sections have no space above)
+  assert.equal(heading.spacing, undefined);
+  assert.equal(heading.rows, 17);
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
   ]);

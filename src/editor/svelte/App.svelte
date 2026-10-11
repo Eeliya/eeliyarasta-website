@@ -100,9 +100,20 @@
       else live.store.undo();
     } else if (e.key === 'Escape') {
       // A dialog closes itself on Esc; this also covers Esc pressed in the preview.
+      // Content tab: then the selected link, else the selected block (the panel shows the
+      // sections again, the grid hides); not while typing in a field of the panel.
       const open = document.querySelector('dialog[open]');
       if (open) open.close();
-      else if (bridge.selected) bridge.select(null);
+      else {
+        if (bridge.selected) bridge.select(null);
+        if (ui.mode === 'text' && !inField) {
+          if (ui.link) ui.link = null;
+          else if (ui.block) {
+            ui.selection = null;
+            ui.block = null;
+          }
+        }
+      }
     }
   }
   $effect(() => bridge.on('key', onKey)); // once: the bridge never changes

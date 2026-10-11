@@ -6,6 +6,7 @@ import path from 'node:path';
 import { loadContent } from './content.mjs';
 import { save, renderOp } from './editor-server.mjs';
 import { migratePage } from './migrate-layout.mjs';
+import { migratePage as migrateSections } from './migrate-sections.mjs';
 import * as render from '../src/site/render.js';
 import { buildRoutes } from '../src/site/routes.js';
 import { setEditable } from '../src/site/helpers.js';
@@ -82,7 +83,6 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
   const list = [
     section([block('text', { text: 'One', pos: { col: 3, span: 10, row: 2, rows: 4 }, z: 2 })], {
       rows: 3,
-      spacing: { top: 10, bottom: 12 },
     }),
     section([block('text', { text: 'Two', config: { enabled: false } })], {
       height: 'screen',
@@ -93,14 +93,15 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
   ];
   const out = renderSections(ctxOf(page), page, F, list);
   // rows grow to fit; the phone grid's rows: its blocks' halved areas
-  assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12;--mrows:3">/);
+  // no space above or below (no --pt / --pb): the rows between sections are the space
+  assert.match(out, /<section class="sec" style="--rows:5;--mrows:3">/);
   assert.match(
     out,
     /<div class="blk blk--text blk--auto" style="--c:3;--s:10;--r:2;--rs:4;--z:2;--mc:2;--ms:5;--mr:1;--mrs:2">/,
   );
   assert.match(out, /<section class="sec sec--screen sec--bottom sec--full"/);
   assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1;--mc:1;--ms:60;--mr:1;--mrs:1" hidden>/); // no pos: full width
-  assert.match(out, /style="--rows:1;--pt:0;--pb:0;--mrows:1" hidden>/);
+  assert.match(out, /style="--rows:1;--mrows:1" hidden>/);
   assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
   // a phone area of its own: on the 60-column phone grid
   const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
@@ -184,14 +185,14 @@ test('validation: the layout, then each block against its type', () => {
     'section 1: "id" must be a section id like "s-k3x9"',
   ]);
   assert.deepEqual(problems([ok({ height: 'tall', align: 'left', width: 'wide', rows: 0 })]), [
-    'section 1: "height" must be one of auto, screen, aspect',
+    'section 1: "height" must be one of auto, screen',
     'section 1: "align" must be one of top, center, bottom, stretch',
     'section 1: "width" must be contained or full',
     'section 1: "rows" must be a whole number from 1',
   ]);
-  assert.deepEqual(problems([ok({ spacing: { top: -1 }, enabled: 'yes' })]), [
+  assert.deepEqual(problems([ok({ spacing: { top: 1 }, enabled: 'yes' })]), [
     'section 1: "enabled" must be true or false',
-    'section 1: "spacing.top" must be a whole number of rows (0 or more)',
+    'section 1: "spacing" is no longer a section setting (node scripts/migrate-sections.mjs)',
   ]);
   const one = (b) => problems([section([{ id: 'b-aaaa', ...b }])]);
   assert.deepEqual(one({ title: 'x' }), ['section 1, block 1 needs a "type"']);
@@ -250,7 +251,8 @@ test('migration: each old section becomes a section with it as one full-width bl
   assert.deepEqual([heading.height, heading.align], ['screen', 'center']);
   assert.equal(idsOf(next.sections).size, 6);
   assert.equal(migratePage(next), next); // once only
-  assert.deepEqual(checkContent('pages/x/index.json', next), []);
+  // (its spacing: then dropped by the later migrate-sections.mjs)
+  assert.deepEqual(checkContent('pages/x/index.json', migrateSections(next)), []);
   // the site's own content is migrated and valid
   for (const [pid, p] of Object.entries(content.pages)) {
     assert.ok(
@@ -340,7 +342,6 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   const data = structuredClone(content.pages.about);
   const [s] = data.sections;
   s.blocks[0].headline = 'Edited headline';
-  s.spacing = { top: 3, bottom: 4 };
   const r = renderOp(render, '.', {}, { path: '/about/', file, data, ids: [s.id] });
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(r.body.html), [s.id]);
@@ -348,7 +349,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(
     html,
     new RegExp(
-      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15;--mrows:${Math.ceil(s.rows / 2)}">`,
+      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--mrows:${Math.ceil(s.rows / 2)}">`,
     ),
   );
   assert.match(html, /Edited headline/);

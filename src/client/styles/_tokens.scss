@@ -16,8 +16,6 @@
   --pad: clamp(16px, 2.6vw, 40px);
   --gap: clamp(12px, 1.4vw, 22px);
   --header-h: 76px;
-  // the step of a section's spacing above and below its grid (src/site/layout/index.js SPACE)
-  --space: 8px;
   --radius: 6px;
   // text styles for scaled text (src/site/layout/type.js TEXT_STYLES; site.json typography)
   --ts-title: 19;

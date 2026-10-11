@@ -199,7 +199,6 @@ every section is a grid of **blocks** (`src/site/layout/`):
   "height": "auto",
   "rows": 12,
   "width": "contained",
-  "spacing": { "top": 10, "bottom": 12 },
   "enabled": true,
   "blocks": [
     {
@@ -229,7 +228,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
 }
 ```
 
-- **The grid (square, experiment `exp/square-grid-120`):** **120 columns** and **real rows**, all
+- **The grid (square):** **120 columns** and **real rows**, all
   one size, `--cell`, so **every cell is exactly square**, with no gaps either way (leave empty
   cells between blocks for a gutter: 2 cells ≈ 23px at 1440px). `src/client/modules/rows.js`
   measures each section's content width on load and sets `--cell` = width / 120 on it, floored
@@ -243,14 +242,13 @@ every section is a grid of **blocks** (`src/site/layout/`):
   whole number of rows; when its content needs more, it spans more (see Real rows below), so
   text never spills out. The old `rowHeight` is ignored. On phones the grid has **60 columns**
   (below).
-- **A section:** `height` is `auto` (its `rows`, as many as its blocks need), `screen` (at least the
-  screen's height) or `aspect` (at least its width × `aspect`, e.g. `"21:9"`); in the last two
-  `align` places its content: `top`, `center` (default), `bottom` or `stretch`, filling it.
-  `width` is `contained` (inside the page's side margins, `--pad`) or `full` (edge to edge);
-  `spacing` is the space above and below it in steps of 8px (`--space`, not cells, so it
-  doesn't change with the width), and `mobile.spacing` the same on phones
-  (`{ "mobile": { "spacing": { "top": 11, "bottom": 13 } } }`, the desktop's when unset);
-  `enabled: false` hides it. A section's rows grow to fit its lowest block.
+- **A section:** `height` is `auto` (**Rows**: its `rows`, as many as its blocks need) or
+  `screen` (**Fullscreen**: at least the screen's height, `align` placing its content: `top`,
+  `center` (default), `bottom` or `stretch`, filling it). `width` is `contained` (inside the
+  page's side margins, `--pad`) or `full` (edge to edge); `enabled: false` hides it. A
+  section's rows grow to fit its lowest block. A section has **no space above or below**: the
+  space between sections is empty rows (cells), so it scales with the width like everything
+  else (the side margins, `--pad`, stay).
 - **A block:** its `type` and content (below), `pos` (first column 1–120, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
   an optional `link` (below), `scale` (text blocks, below), `place`, an optional `mobile`
@@ -335,16 +333,17 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
 - **Ids:** every section and block has a stable id (`s-…`, `b-…`), given once when it is made
   (`src/site/layout/ids.js`) and kept when it moves or changes. The editor finds them in the
   preview by it (`data-sec`, `data-block`, dev only).
-- **CSS:** positions are CSS variables on the elements (`--rows --pt --pb` on a section,
-  `--mpt --mpb --mrows --sar` on a section, `--c --s --r --rs --z --ar --tk` and
+- **CSS:** positions are CSS variables on the elements (`--rows --mrows` on a section,
+  `--c --s --r --rs --z --ar --tk` and
   `--mc --ms --mr --mrs` on a block), links as `data-link` / `data-mlink`, size, scaled text and
   placement as classes (`.blk--aspect`, `.blk--auto`, `.blk--scale`,
   `.blk--sticky.blk--v-top.blk--h-left`, `.blk--m-…` for the phone's), laid out by
-  `src/client/styles/_layout.scss`. Blocks carry no outer spacing of their own: that is the
-  section's.
+  `src/client/styles/_layout.scss`. Blocks carry no outer spacing of their own, and neither do
+  sections (above and below): empty rows are the space.
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
   ending by column 120 (60 on the phone), links within their section to a block that is
-  there and without loops, `scale` on text blocks only, `typography` styles, no id twice on a page) and each block against its type (strings, lists,
+  there and without loops, `scale` on text blocks only, `typography` styles, no id twice on a page,
+  no section `aspect` / `spacing` / `mobile`, which are gone) and each block against its type (strings, lists,
   config values). An unknown block type isn't an error: it logs a build warning and is skipped.
 - **Bindings:** a block's field can show a source item's value instead of its own (below).
 
@@ -386,6 +385,9 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
   shape once (each old section became a section with it as one full-width block, its old
   padding the section's spacing; later its old phone padding the section's `mobile.spacing`,
   where it differs); kept for reference, it changes nothing on migrated content.
+  `scripts/migrate-sections.mjs` then made sections Rows or Fullscreen only (an `aspect` height
+  became Rows, its ratio dropped) and dropped their space above and below (`spacing`,
+  `mobile.spacing`), without compensating: the space is set by hand as empty rows.
 
 ### Bindings
 
@@ -820,24 +822,23 @@ files. `&pages=/people/` in the URL reopens it on that folder. There's also a ph
 
 In the Content panel every **section** of the page is a box (Section 1, 2, … named by its first
 text): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
-turns it on/off, and the caret folds it. Under the bar are its settings (Height: Rows with its
-row count, Fullscreen or Aspect ratio with where its content sits; Width; Space above and
-below, in rows, and on phones; Same as desktop drops the phone's)
-and its **blocks**, in order, each with ↑ / ↓, Duplicate,
+turns it on/off, and the caret folds it. Under the bar are its settings (**Height** as buttons,
+Rows | Fullscreen, like a block's Size: Rows with its row count, Fullscreen with where its
+content sits; Width) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**
 (see below) and **Motion** (the block's animation and timing, the same view as in the Motion
-tab). Its head row is the quiet ← (back to the sections), the block's name and, at the far
-right, the Grid lines toggle (in the list of sections it sits at the far right of the hint's
-row). A list field (hero photos, about
+tab). Its head row is the quiet ← (back to the sections) and the block's name. A list field (hero photos, about
 paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ / Remove and an
 **Add** button (a new photo opens the Media window). Each of these is one undo step. Typing in
 a field (a number in Layout too) is one undo step until you leave it, press Enter or pause for a
 second. A field's **Source** switch binds it to an item (see "Bindings").
 
 While the **Content** tab is open the preview is a layout canvas (always; there is no toggle):
-a **click** picks a block (its inspector opens), **dragging** moves it and the **handles** on
+a **click** picks a block (its inspector opens; a click on another block switches to it), a
+**click on empty space** (no block, handle, circle or link line) or **Esc** drops the
+selection (the panel shows the sections again), **dragging** moves it and the **handles** on
 its edges and corners resize it, snapping to the section's columns and its real rows; Esc
 cancels, and a drag is one undo step. A drag starts from where the block is shown and also
 stores where the section's other blocks are now (their real rows, see Layout), so what you see
@@ -855,8 +856,9 @@ line joins each leader's bottom to its followers' tops (with the gap next to the
 block's); click a line to select that link and press **Delete** (or Backspace) to remove it.
 Dragging a linked block up or down keeps the link and changes its gap (its label shows it), and
 the blocks that follow it move along live. A filled top circle marks a block that follows one.
-**Grid lines** (the grid icon, a toggle) shows every section's square cells (a line every cell,
-a stronger one every 5). The canvas lives in the preview's own layer (`src/editor/overlay.js`,
+**The grid** shows by itself, only while a block is selected (or dragged or resized), and only
+for that block's section: its square cells as faint white lines (6%, every 5th 12%; the accent
+is for the selection, the circles and the link lines). Nothing selected: no grid. The canvas lives in the preview's own layer (`src/editor/overlay.js`,
 a Shadow DOM). In the **phone preview** a drag edits the block's phone area on the 60-column
 grid, snapping to its cells, and links are the phone's: a block without a phone area starts
 from its desktop area halved, and its first phone drag or link gives it its own (its desktop
@@ -876,7 +878,7 @@ link and placement of the section's blocks (they show their desktop layout halve
 tracking; the preview follows as you type).
 
 **Buttons:** action buttons (Save, Publish, Delete, Add, …) are pills. Utility toggles and tools
-(Grid lines, phone view, undo / redo, back, close, and Sources / Pages / Media beside the page
+(phone view, undo / redo, back, close, and Sources / Pages / Media beside the page
 menu, each with its tooltip) are the quiet icon-only variant of
 `Button.svelte` (`iconOnly`): no pill, a little dim, brighter on hover (nothing moves), the
 accent (`--ed-accent`, #33ccff) while a toggle is on (`aria-pressed`), the focus ring kept.
@@ -972,7 +974,7 @@ Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `s
 the animation (which changes it for every element using it), **Drop** removes them.
 
 Shortcuts: **Ctrl/⌘+E** toggles edit mode, **Ctrl/⌘+S** saves, **Ctrl/⌘+Z** / **Shift+Ctrl/⌘+Z**
-undo/redo, **Esc** deselects.
+undo/redo, **Esc** deselects (a dialog first, then the selected link, then the block).
 
 **How text maps to JSON.** Templates mark text with the `ed()` helper, e.g.
 `<h2${ed('pages/about/index.json', ['sections', 0, 'blocks', 0, 'headline'])}>` (in a block type:

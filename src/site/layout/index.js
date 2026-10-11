@@ -1,10 +1,9 @@
 /**
- * The layout engine: every page is a list of sections, each a grid of 120 square cells wide
- * (experiment: exp/square-grid-120), holding blocks
+ * The layout engine: every page is a list of sections, each a grid of 120 square cells wide,
+ * holding blocks
  * ("sections" in its file, content/pages/<page>/index.json or a template's [slug].json):
  *
- *   { "id": "s-k3x9", "height": "auto", "rows": 12, "width": "contained",
- *     "spacing": { "top": 10, "bottom": 12 }, "enabled": true,
+ *   { "id": "s-k3x9", "height": "auto", "rows": 12, "width": "contained", "enabled": true,
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
  *                  "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }, "z": 0 }] }
  *
@@ -17,14 +16,11 @@
  * its desktop area halved (grid.js phoneAreaOf; nothing stacks).
  *
  * A section:
- *   height   'auto': `rows` rows (cells) | 'screen': at least the screen's height |
- *            'aspect': at least its width × `aspect` ("16:9"); for both, its rows are placed
- *            by `align` ('top' | 'center' | 'bottom' | 'stretch': fill it)
- *            (rowHeight, from the 8px-row grid, is ignored: a row is one cell)
+ *   height   'auto' (Rows): `rows` rows (cells), or down to its lowest block | 'screen'
+ *            (Fullscreen): at least the screen's height, its rows placed by `align` ('top' |
+ *            'center' | 'bottom' | 'stretch': fill it). No space above or below it: the space
+ *            between sections is empty rows (rowHeight, from the 8px-row grid, is ignored)
  *   width    'contained': inside the page's side margins | 'full': edge to edge
- *   spacing  { top, bottom }: space above and below the grid, in steps of 8px (--space; not
- *            cells, so a section's spacing doesn't change with the window's width)
- *   mobile   optional { spacing: { top, bottom } }: the phone's (below 760px), else `spacing`
  *   enabled  false: hidden (still rendered, so the editor can turn it on live)
  * A block (its content: src/site/blocks/index.js):
  *   pos      { col, span, row, rows }: its grid area, columns 1-120 and rows (cells) from 1
@@ -75,9 +71,8 @@ export {
   placeOf,
 } from './grid.js';
 export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
-export const HEIGHTS = ['auto', 'screen', 'aspect'];
-/** The step of a section's spacing (above and below its grid), px: --space in _tokens.scss. */
-export const SPACE = 8;
+/** A section's height: its rows (Rows) or at least the screen's (Fullscreen). */
+export const HEIGHTS = ['auto', 'screen'];
 export const WIDTHS = ['contained', 'full'];
 export const ALIGNS = ['top', 'center', 'bottom', 'stretch'];
 /** A block's height: its content (the default), its width × an aspect ratio, or fixed rows. */
@@ -128,7 +123,7 @@ export function newBlock(type, taken, pos = {}) {
   };
 }
 
-/** A new section holding `blocks`: auto height, contained, a little space around. */
+/** A new section holding `blocks`: Rows (auto height), contained. */
 export function newSection(taken, blocks = []) {
   const section = {
     id: newId('s', taken),
@@ -136,7 +131,6 @@ export function newSection(taken, blocks = []) {
     align: 'center',
     rows: 8,
     width: 'contained',
-    spacing: { top: 8, bottom: 8 },
     enabled: true,
     blocks,
   };
@@ -170,24 +164,15 @@ export function mobileRowsOf(section) {
 
 /** The CSS variables of a section's element. */
 export function sectionVars(s) {
-  const m = s?.mobile?.spacing;
-  const ratio = s?.height === 'aspect' ? ratioOf(s.aspect) : null;
-  return (
-    `--rows:${rowsOf(s)};--pt:${int(s?.spacing?.top, 0, 0)};--pb:${int(s?.spacing?.bottom, 0, 0)}` +
-    (Number.isInteger(m?.top) && m.top >= 0 ? `;--mpt:${m.top}` : '') +
-    (Number.isInteger(m?.bottom) && m.bottom >= 0 ? `;--mpb:${m.bottom}` : '') +
-    `;--mrows:${mobileRowsOf(s)}` +
-    (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '')
-  );
+  return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
 }
 
-/** The classes of a section's element: its height, width and alignment. */
+/** The classes of a section's element: its height (Fullscreen), width and alignment. */
 export function sectionClass(s) {
-  const tall = s?.height === 'screen' || (s?.height === 'aspect' && ratioOf(s.aspect));
   const align = ALIGNS.includes(s?.align) ? s.align : 'center';
   return (
     'sec' +
-    (tall ? ` sec--${s.height === 'screen' ? 'screen' : 'aspect'} sec--${align}` : '') +
+    (s?.height === 'screen' ? ` sec--screen sec--${align}` : '') +
     (s?.width === 'full' ? ' sec--full' : '')
   );
 }

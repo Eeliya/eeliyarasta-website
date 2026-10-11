@@ -70,6 +70,9 @@ import { bindingProblems } from '../src/site/layout/bindings.js';
 import { motionProblems } from '../src/site/layout/motion.js';
 import { BLOCK_TYPES } from '../src/site/blocks/index.js';
 
+/** A new page's heading row: below the header (16 empty rows, ~180px at 1440 wide). */
+const HEAD_ROW = 17;
+
 const CONTENT_DIR = editorConfig.contentDir;
 
 /** Editable content files that exist on disk, e.g. "pages/index.json" (paths relative to content/). */
@@ -202,10 +205,15 @@ export function pagesOp(
       const t = String(title || '').trim() || titleCase(name);
       const file = pageFile(join(parent, name));
       onWrite();
-      // a new page starts with its heading (src/site/layout/), below the header
+      // a new page starts with its heading (src/site/layout/), below the header: sections have
+      // no space above, so the rows above it are empty (HEAD_ROW)
       const ids = new Set();
-      const heading = { ...newBlock('heading', ids, { rows: 1 }), crumb: t, title: t };
-      const section = { ...newSection(ids, [heading]), spacing: { top: 23, bottom: 9 } };
+      const heading = {
+        ...newBlock('heading', ids, { row: HEAD_ROW, rows: 1 }),
+        crumb: t,
+        title: t,
+      };
+      const section = newSection(ids, [heading]);
       write(file, { curtain: t, sections: [section] });
       return done({ id: join(parent, name), created: [file] });
     }
@@ -227,7 +235,6 @@ export function pagesOp(
           height: 'screen',
           align: 'stretch',
           width: 'full',
-          spacing: { top: 0, bottom: 0 },
         },
       ],
     });

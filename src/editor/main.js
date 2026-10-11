@@ -97,7 +97,7 @@ mount(App, {
   props: {
     live,
     bridge,
-    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, showGrid, editMotion },
+    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, editMotion },
   },
 });
 
@@ -310,12 +310,6 @@ function blockAt(id) {
     if (j >= 0) return { file, at, j };
   }
   return null;
-}
-
-/** Content tab: show the sections' columns and rows in the preview. */
-function showGrid(on) {
-  ui.grid = on;
-  overlay.refresh();
 }
 
 /** Open an animated element of the preview in the Motion tab. */

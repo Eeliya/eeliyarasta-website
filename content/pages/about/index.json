@@ -6,7 +6,6 @@
       "align": "center",
       "rows": 82,
       "width": "contained",
-      "spacing": { "top": 21, "bottom": 16 },
       "enabled": true,
       "blocks": [
         {
@@ -37,10 +36,7 @@
           "pos": { "col": 1, "span": 120, "row": 1, "rows": 82 },
           "size": "auto"
         }
-      ],
-      "mobile": {
-        "spacing": { "top": 12, "bottom": 15 }
-      }
+      ]
     }
   ],
   "curtain": "About"

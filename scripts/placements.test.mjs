@@ -16,6 +16,7 @@ import {
   sectionVars,
 } from '../src/site/layout/index.js';
 import { createStore } from '../src/editor/store.js';
+import { migratePage as migrateSections } from './migrate-sections.mjs';
 import {
   placeMobile,
   placeOnPhone,
@@ -103,16 +104,35 @@ test('phone grid: 60 columns; a block without a phone area shows its desktop are
   assert.equal(MCOLS, 60);
 });
 
-test('sections: aspect height and phone spacing', () => {
-  const s = sec([], { height: 'aspect', aspect: '21:9', align: 'bottom', spacing: { top: 4 } });
-  assert.equal(sectionClass(s), 'sec sec--aspect sec--bottom');
-  assert.equal(sectionVars(s), '--rows:1;--pt:4;--pb:0;--mrows:1;--sar:21 / 9');
-  assert.equal(sectionClass({ ...s, aspect: 'x' }), 'sec'); // no ratio: auto
-  const m = sec([], { mobile: { spacing: { top: 2, bottom: 0 } } });
-  assert.equal(sectionVars(m), '--rows:1;--pt:0;--pb:0;--mpt:2;--mpb:0;--mrows:1');
+test('sections: Rows or Fullscreen; no aspect, no space above / below', () => {
+  const s = sec([], { height: 'screen', align: 'bottom' });
+  assert.equal(sectionClass(s), 'sec sec--screen sec--bottom');
+  assert.equal(sectionVars(s), '--rows:1;--mrows:1');
+  // an old aspect section (not migrated yet) renders as Rows; spacing is ignored
+  const old = sec([], { height: 'aspect', aspect: '21:9', spacing: { top: 4 } });
+  assert.equal(sectionClass(old), 'sec');
+  assert.equal(sectionVars(old), '--rows:1;--mrows:1');
 });
 
-test('validation: size, aspect, place, mobile, section aspect and phone spacing', () => {
+test('migrate-sections: aspect -> Rows, space above / below dropped (phone too); once', () => {
+  const s = sec([], {
+    height: 'aspect',
+    aspect: '16:9',
+    align: 'bottom',
+    spacing: { top: 4, bottom: 2 },
+    mobile: { spacing: { top: 1 } },
+  });
+  const page = { curtain: 'x', sections: [s, sec([], { id: 's-bbbb', height: 'screen' })] };
+  const next = migrateSections(page);
+  const { id: _id, ...rest } = next.sections[0]; // eslint-disable-line no-unused-vars
+  assert.deepEqual(rest, { height: 'auto', align: 'bottom', blocks: [] });
+  assert.equal(next.sections[1], page.sections[1]); // nothing to change: the same object
+  assert.equal(next.curtain, 'x');
+  assert.equal(migrateSections(next), next);
+  assert.deepEqual(checkContent(F, next), []);
+});
+
+test('validation: size, aspect, place, mobile; no section aspect or spacing', () => {
   const one = (b) => checkContent(F, { sections: [sec([blk(b)])] });
   const of = (s) => checkContent(F, { sections: [sec([], s)] });
   assert.deepEqual(
@@ -138,11 +158,15 @@ test('validation: size, aspect, place, mobile, section aspect and phone spacing'
     `${where}: "mobile" must end by column 60 (col 56 + span 6)`,
   ]);
   assert.match(one({ mobile: { col: 1 } })[0], /"mobile.span" must be a whole number/);
-  assert.deepEqual(of({ height: 'aspect', aspect: '16:9', mobile: { spacing: { top: 3 } } }), []);
-  assert.deepEqual(of({ height: 'aspect' }), ['section 1: "aspect" must be a ratio like "16:9"']);
-  assert.deepEqual(of({ mobile: { spacing: { bottom: -2 } } }), [
-    'section 1: "mobile.spacing.bottom" must be a whole number of rows (0 or more)',
+  const gone = (k) =>
+    `section 1: "${k}" is no longer a section setting (node scripts/migrate-sections.mjs)`;
+  assert.deepEqual(of({ height: 'screen' }), []);
+  assert.deepEqual(of({ height: 'aspect', aspect: '16:9', mobile: { spacing: { top: 3 } } }), [
+    'section 1: "height" must be one of auto, screen',
+    gone('aspect'),
+    gone('mobile'),
   ]);
+  assert.deepEqual(of({ spacing: { top: 1 } }), [gone('spacing')]);
 });
 
 test('ops: block settings, a phone area of its own, phone placement, reset; one undo each', () => {

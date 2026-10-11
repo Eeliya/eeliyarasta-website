@@ -1,8 +1,7 @@
 <!--
   The page's sections in the Content tab (src/site/layout/): each a panel Section with its
-  settings (height in rows or fullscreen with its alignment, width, space above and
-  below) and
-  its blocks, in order (the order they stack in on phones). Sections and blocks can be added,
+  settings (Height as buttons, Rows | Fullscreen, like a block's Size; its row count, or where
+  a fullscreen section's content sits; its width) and its blocks, in order (the order they stack in on phones). Sections and blocks can be added,
   moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
   opens in the block inspector (BlockInspector.svelte, onopen).
 -->
@@ -25,7 +24,7 @@
     setSection,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { ASPECTS, rowsOf } from '../../site/layout/index.js';
+  import { rowsOf } from '../../site/layout/index.js';
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, file, onopen } = $props();
@@ -45,12 +44,11 @@
       .map((t) => ({ value: t.type, label: t.label, icon: t.icon })),
   );
 
+  // [value, label, tooltip]
   const HEIGHTS = [
-    ['auto', 'Rows'],
-    ['screen', 'Fullscreen'],
-    ['aspect', 'Aspect ratio'],
+    ['auto', 'Rows', 'Its rows (down to its lowest block)'],
+    ['screen', 'Fullscreen', 'At least the screen’s height'],
   ];
-  const RATIOS = ASPECTS.map((a) => [a, a]);
   const ALIGNS = [
     ['top', 'Top'],
     ['center', 'Center'],
@@ -67,27 +65,10 @@
   const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   const whole = (v, min) => Math.max(min, Math.round(v));
-  const spacing = (s, key, v) => {
-    const at = sections.indexOf(s);
-    set(at, { spacing: { ...s.spacing, [key]: whole(v, 0) } }, `section:${file}#${at}/${key}`);
+  const heightOf = (s) => (s.height === 'screen' ? 'screen' : 'auto');
+  const setHeight = (at, height) => {
+    if (height !== heightOf(sections[at])) set(at, { height });
   };
-  // the phone's spacing (below 760px): the desktop's until set
-  const phoneSpacing = (s, key, v) => {
-    const at = sections.indexOf(s);
-    const now = { top: s.spacing?.top ?? 0, bottom: s.spacing?.bottom ?? 0, ...s.mobile?.spacing };
-    set(
-      at,
-      { mobile: { ...s.mobile, spacing: { ...now, [key]: whole(v, 0) } } },
-      `section:${file}#${at}/mobile/${key}`,
-    );
-  };
-  function sameOnPhone(s) {
-    const at = sections.indexOf(s);
-    const { spacing: _, ...rest } = s.mobile || {}; // eslint-disable-line no-unused-vars
-    set(at, { mobile: Object.keys(rest).length ? rest : undefined });
-  }
-  const setHeight = (at, height) =>
-    set(at, { height, aspect: height === 'aspect' ? sections[at].aspect || '16:9' : undefined });
 
   function setBlockOn(at, j, on) {
     const b = sections[at].blocks[j];
@@ -183,30 +164,27 @@
         removeSection(live.store, file, at),
       )}{/if}
 
+    <!-- Height: a button group, like a block's Size (LayoutTab.svelte) -->
+    <div
+      class={['height', changed(at, 'height') && 'is-changed']}
+      data-edit="{file}#/sections/{at}/height"
+    >
+      <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
+      <div class="seg" role="radiogroup" aria-labelledby="{s.id}-height">
+        {#each HEIGHTS as [id, label, title] (id)}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={heightOf(s) === id}
+            {title}
+            class={['seg__btn', heightOf(s) === id && 'is-active']}
+            onclick={() => setHeight(at, id)}>{label}</button
+          >
+        {/each}
+      </div>
+    </div>
     <div class="fields">
-      <Field
-        edit="{file}#/sections/{at}/height"
-        label="Height"
-        type="select"
-        half
-        options={HEIGHTS}
-        value={s.height || 'auto'}
-        changed={changed(at, 'height')}
-        onvalue={(height) => setHeight(at, height)}
-      />
-      {#if s.height === 'aspect'}
-        <Field
-          edit="{file}#/sections/{at}/aspect"
-          label="Ratio"
-          type="select"
-          half
-          options={ASPECTS.includes(s.aspect) ? RATIOS : [...RATIOS, [s.aspect, s.aspect]]}
-          value={s.aspect || '16:9'}
-          changed={changed(at, 'aspect')}
-          onvalue={(aspect) => set(at, { aspect })}
-        />
-      {/if}
-      {#if s.height === 'screen' || s.height === 'aspect'}
+      {#if heightOf(s) === 'screen'}
         <Field
           edit="{file}#/sections/{at}/align"
           label="Content at"
@@ -238,49 +216,7 @@
         changed={changed(at, 'width')}
         onvalue={(width) => set(at, { width })}
       />
-      <Field
-        edit="{file}#/sections/{at}/spacing/top"
-        label="Space above (×8px)"
-        type="number"
-        half
-        value={s.spacing?.top ?? 0}
-        changed={changed(at, 'spacing/top')}
-        onvalue={(v) => spacing(s, 'top', v)}
-      />
-      <Field
-        edit="{file}#/sections/{at}/spacing/bottom"
-        label="Space below (×8px)"
-        type="number"
-        half
-        value={s.spacing?.bottom ?? 0}
-        changed={changed(at, 'spacing/bottom')}
-        onvalue={(v) => spacing(s, 'bottom', v)}
-      />
-      <Field
-        edit="{file}#/sections/{at}/mobile/spacing/top"
-        label="Phone: above"
-        type="number"
-        half
-        value={s.mobile?.spacing?.top ?? s.spacing?.top ?? 0}
-        changed={changed(at, 'mobile/spacing/top')}
-        onvalue={(v) => phoneSpacing(s, 'top', v)}
-      />
-      <Field
-        edit="{file}#/sections/{at}/mobile/spacing/bottom"
-        label="Phone: below"
-        type="number"
-        half
-        value={s.mobile?.spacing?.bottom ?? s.spacing?.bottom ?? 0}
-        changed={changed(at, 'mobile/spacing/bottom')}
-        onvalue={(v) => phoneSpacing(s, 'bottom', v)}
-      />
     </div>
-    {#if s.mobile?.spacing}
-      <p class="hint small phone">
-        Phones have their own spacing.
-        <button type="button" class="link" onclick={() => sameOnPhone(s)}>Same as desktop</button>
-      </p>
-    {/if}
 
     <ul class="blocks" aria-label="Blocks of section {at + 1}">
       {#each s.blocks || [] as b, j (b.id)}
@@ -372,18 +308,28 @@
 </div>
 
 <style lang="scss">
-  .phone {
-    margin-top: 8px;
+  // Height: its label above the button group (like a block's Size)
+  .height {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .tf__label {
+      margin: 0;
+    }
+
+    .dot {
+      display: none;
+    }
+
+    &.is-changed .dot {
+      display: inline-block;
+    }
   }
 
-  .link {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ed-accent);
-    font: inherit;
-    cursor: pointer;
-    text-decoration: underline;
+  // the settings, then the blocks
+  .fields {
+    margin-bottom: 12px;
   }
 
   .blocks {

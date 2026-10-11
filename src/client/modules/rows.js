@@ -19,7 +19,7 @@
  * content changes size (images, fonts, the editor's edits; on the next frame) and on reflow()
  * (the editor after it changed a layout).
  *
- * A screen (or aspect) section is at least so tall: a block that fits in it doesn't make it
+ * A screen (Fullscreen) section is at least so tall: a block that fits in it doesn't make it
  * taller by rounding up to a whole row (it gets the whole rows that fit; rows stay square, so
  * a screen-high block's rows may be up to a cell short of the screen, its content still is).
  */
@@ -110,15 +110,10 @@ export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComp
   return cell;
 }
 
-/** The height a screen or aspect section has at least, inside its padding (else Infinity). */
+/** The height a screen (Fullscreen) section has at least, inside its padding (else Infinity). */
 function minHeightOf(sec, cs) {
-  const screen = sec.classList.contains('sec--screen');
-  const ratio = sec.classList.contains('sec--aspect')
-    ? sec.style.getPropertyValue('--sar').split('/').map(Number)
-    : null;
-  if (!screen && !(ratio?.[0] > 0 && ratio[1] > 0)) return Infinity;
-  const min = screen ? parseFloat(cs.minHeight) || 0 : (sec.clientWidth * ratio[1]) / ratio[0];
-  return min - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  if (!sec.classList.contains('sec--screen')) return Infinity;
+  return (parseFloat(cs.minHeight) || 0) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 }
 
 /** Flow one section; true when something moved. */

@@ -1,7 +1,7 @@
 @use 'tokens' as *;
 
 /*
- * The layout engine (src/site/layout/index.js), square grid (experiment): a section is a grid
+ * The layout engine (src/site/layout/index.js), the square grid: a section is a grid
  * of 120 columns and --rows rows, all of one size, --cell: every cell is exactly square, with
  * no gaps either way. modules/rows.js measures the section's content width and sets --cell
  * (width / 120, floored to 1/64px; the few px left over are centred) on the section, and again
@@ -12,8 +12,8 @@
  * whose content needs more rows spans more, and modules/rows.js (src/site/layout/flow.js)
  * sets where every block sits now (a linked block below its leader) and how many rows it
  * spans (--fr / --frs) and the section's rows (--frows), which win over the stored ones.
- * While it measures, a section has .sec--measure. A section's spacing (--pt / --pb) is in
- * steps of --space (8px), not cells.
+ * While it measures, a section has .sec--measure. A section has no padding above or below
+ * (the space between sections is empty rows); at the sides the page's --pad.
  *
  * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a block
  * without a phone area of its own has its desktop area halved there), so a phone shows the
@@ -43,7 +43,7 @@
   grid-template-rows: repeat(var(--frows, var(--rows)), var(--cell));
   gap: 0;
   justify-content: center;
-  padding: calc(var(--pt) * var(--space)) var(--pad) calc(var(--pb) * var(--space));
+  padding: 0 var(--pad);
   &--full {
     --cell: calc(100vw / 120);
 
@@ -51,10 +51,6 @@
   }
   &--screen {
     min-height: 100svh;
-  }
-  // at least its width × the ratio; taller when its content needs it
-  &--aspect {
-    aspect-ratio: var(--sar);
   }
   &--top {
     align-content: start;
@@ -192,8 +188,6 @@
 
     grid-template-columns: repeat(60, var(--cell));
     grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
-    padding-top: calc(var(--mpt, var(--pt)) * var(--space));
-    padding-bottom: calc(var(--mpb, var(--pb)) * var(--space));
     > .blk {
       grid-column: var(--mc, 1) / span var(--ms, 60);
       grid-row: var(--fr, var(--mr, 1)) / span var(--frs, var(--mrs, 1));

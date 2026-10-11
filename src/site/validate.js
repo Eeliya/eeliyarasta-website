@@ -235,14 +235,6 @@ function checkArea(p, key, cols = COLS) {
 
 const isRatio = (v) => typeof v === 'string' && ratioOf(v) !== null;
 
-/** spacing { top, bottom } (whole rows from 0). */
-function checkSpacing(sp, key, bad) {
-  if (!isObject(sp)) return bad(key, 'an object { top, bottom }');
-  for (const k of ['top', 'bottom'])
-    if (sp[k] !== undefined && !whole(sp[k], 0))
-      bad(`${key}.${k}`, 'a whole number of rows (0 or more)');
-}
-
 /** One page section: its layout, then each block. */
 function checkSection(s, at) {
   const where = `section ${at + 1}`;
@@ -258,12 +250,12 @@ function checkSection(s, at) {
   if (s.rows !== undefined && !whole(s.rows, 1)) bad('rows', 'a whole number from 1');
   // rowHeight (the 8px-row grid's) is ignored on the square grid: a row is one cell
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  if (s.height === 'aspect' && !isRatio(s.aspect)) bad('aspect', 'a ratio like "16:9"');
-  if (s.spacing !== undefined) checkSpacing(s.spacing, 'spacing', bad);
-  if (s.mobile !== undefined) {
-    if (!isObject(s.mobile)) bad('mobile', 'an object { spacing }');
-    else if (s.mobile.spacing !== undefined) checkSpacing(s.mobile.spacing, 'mobile.spacing', bad);
-  }
+  // removed: a section's aspect height and its space above / below (scripts/migrate-sections.mjs)
+  for (const key of ['aspect', 'spacing', 'mobile'])
+    if (s[key] !== undefined)
+      out.push(
+        `${where}: "${key}" is no longer a section setting (node scripts/migrate-sections.mjs)`,
+      );
   if (!Array.isArray(s.blocks)) return [...out, `${where}: "blocks" must be a list`];
   return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
 }

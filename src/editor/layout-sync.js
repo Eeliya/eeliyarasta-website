@@ -4,7 +4,7 @@
  * (data-sec) and every block element its id (data-block): src/site/layout/index.js.
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
- * sections' height, width, spacing, rows and on/off (their classes and CSS variables) and the
+ * sections' height, width, rows and on/off (their classes and CSS variables) and the
  * blocks' places, sizes, links, text scale, placements, phone areas, layers, on/off and motion (data-motion,
  * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
