@@ -843,7 +843,8 @@ turns it on/off, and the caret folds it. Under the bar are its settings (**Name*
 default, with the `#anchor` it makes shown under it, or what's wrong with it: taken by another
 section on the page, …; then side by side **Height**, four quiet icon buttons with tooltips: fit
 content, 1/3, 1/2 or the full screen, each icon the screen with that share filled (the content
-is always centred), and **Width**) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
+is always centred), and **Width**, two such buttons: contained (a centred band in the screen)
+or full width (a band edge to edge)) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**

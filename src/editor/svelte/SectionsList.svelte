@@ -2,7 +2,8 @@
   The page's sections in the Content tab (src/site/layout/): each a panel Section ("Section N",
   and its name when it has one) with its settings (its name, the whole row, its #anchor shown
   under it; then side by side its minimum height as four quiet icon buttons: fit content, 1/3,
-  1/2 or the full screen, its content always centred, and its width) and its blocks, in order (the order they stack in on
+  1/2 or the full screen, its content always centred, and its width as two: contained or full
+  width) and its blocks, in order (the order they stack in on
   phones). Sections and blocks can be added,
   moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
   opens in the block inspector (BlockInspector.svelte, onopen).
@@ -53,16 +54,19 @@
     ['half', 'At least 1/2 of the screen', 1 / 2],
     ['full', 'At least the full screen', 1],
   ];
+  // [value, label (its tooltip and aria-label), its icon's band: inside the frame or edge to edge]
   const WIDTHS = [
-    ['contained', 'Contained'],
-    ['full', 'Full width'],
+    ['contained', 'Contained: inside the page margins', 'inside'],
+    ['full', 'Full width: edge to edge', 'edge'],
   ];
+  const widthOf = (s) => (s.width === 'full' ? 'full' : 'contained');
 
   const typeOf = (b) => BLOCK_TYPES[b?.type];
   const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
-  const setHeight = (at, height) => {
-    if (height !== heightOf(sections[at])) set(at, { height });
+  // Height and Width: one picked of a group (only a change is written: one undo step)
+  const pick = (at, key, value, now) => {
+    if (value !== now) set(at, { [key]: value });
   };
   // its name: empty removes it (no anchor)
   const setName = (at, name) =>
@@ -119,6 +123,46 @@
 
 <!-- a height's icon: the screen (a frame) and the share of it the section is at least (filled,
      from the top); fit: a bar hugged by two lines (as tall as its content) -->
+<!-- a width's icon: the screen (a frame) and a band across its middle, narrower and centred
+     (contained: inside the page margins) or from edge to edge (full width) -->
+{#snippet widthIcon(band)}
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
+    {#if band === 'edge'}
+      <rect x="1" y="5.5" width="14" height="5" rx="0.5" />
+    {:else}
+      <rect x="5.5" y="5.5" width="5" height="5" rx="0.5" />
+    {/if}
+  </svg>
+{/snippet}
+
+<!-- a setting as a half field (.tf: the same label row as a Field) of quiet icon buttons, one
+     picked: Height and Width. options: [value, label, its icon's argument] -->
+{#snippet choices(at, key, title, options, now, icon)}
+  {@const id = `${sections[at].id}-${key}`}
+  <div
+    class={['tf', 'is-half', changed(at, key) && 'is-changed']}
+    data-edit="{file}#/sections/{at}/{key}"
+  >
+    <span class="tf__label" {id}>{title}<i class="dot" title="Changed"></i></span>
+    <div class="hset" role="radiogroup" aria-labelledby={id}>
+      {#each options as [value, label, arg] (value)}
+        <button
+          type="button"
+          role="radio"
+          aria-checked={now === value}
+          aria-label={label}
+          title={label}
+          class={['hset__btn', now === value && 'is-active']}
+          onclick={() => pick(at, key, value, now)}
+        >
+          {@render icon(arg)}
+        </button>
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
 {#snippet heightIcon(share)}
   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
     {#if share}
@@ -198,39 +242,9 @@
         changed={changed(at, 'name')}
         onvalue={(name) => setName(at, name)}
       />
-      <!-- Height (a minimum; its content always centred): quiet icon buttons, one picked; a
-           half field like Width (.tf: the same label row) -->
-      <div
-        class={['tf', 'is-half', changed(at, 'height') && 'is-changed']}
-        data-edit="{file}#/sections/{at}/height"
-      >
-        <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
-        <div class="hset" role="radiogroup" aria-labelledby="{s.id}-height">
-          {#each HEIGHTS as [id, label, share] (id)}
-            <button
-              type="button"
-              role="radio"
-              aria-checked={heightOf(s) === id}
-              aria-label={label}
-              title={label}
-              class={['hset__btn', heightOf(s) === id && 'is-active']}
-              onclick={() => setHeight(at, id)}
-            >
-              {@render heightIcon(share)}
-            </button>
-          {/each}
-        </div>
-      </div>
-      <Field
-        edit="{file}#/sections/{at}/width"
-        label="Width"
-        type="select"
-        half
-        options={WIDTHS}
-        value={s.width || 'contained'}
-        changed={changed(at, 'width')}
-        onvalue={(width) => set(at, { width })}
-      />
+      <!-- Height (a minimum; its content always centred) | Width: icon buttons, one picked -->
+      {@render choices(at, 'height', 'Height', HEIGHTS, heightOf(s), heightIcon)}
+      {@render choices(at, 'width', 'Width', WIDTHS, widthOf(s), widthIcon)}
     </div>
 
     <ul class="blocks" aria-label="Blocks of section {at + 1}">
