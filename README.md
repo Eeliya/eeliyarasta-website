@@ -839,11 +839,11 @@ files. `&pages=/people/` in the URL reopens it on that folder. There's also a ph
 
 In the Content panel every **section** of the page is a box (Section 1, 2, …, with its name
 under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
-turns it on/off, and the caret folds it. Under the bar are its settings (**Name**, empty by default, with
-the `#anchor` it makes shown under it, or what's wrong with it: taken by another section on the
-page, …; **Width**; **Height** as four quiet icon buttons with tooltips: fit content, 1/3, 1/2
-or the full screen, each icon the screen with that share filled; the content is always
-centred) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
+turns it on/off, and the caret folds it. Under the bar are its settings (**Name**, the whole row, empty by
+default, with the `#anchor` it makes shown under it, or what's wrong with it: taken by another
+section on the page, …; then side by side **Height**, four quiet icon buttons with tooltips: fit
+content, 1/3, 1/2 or the full screen, each icon the screen with that share filled (the content
+is always centred), and **Width**) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**

@@ -1,8 +1,8 @@
 <!--
   The page's sections in the Content tab (src/site/layout/): each a panel Section ("Section N",
-  and its name when it has one) with its settings (its name: its #anchor, shown under it; its
-  minimum height as four quiet icon buttons: fit content, 1/3, 1/2 or the full screen, its
-  content always centred; its width) and its blocks, in order (the order they stack in on
+  and its name when it has one) with its settings (its name, the whole row, its #anchor shown
+  under it; then side by side its minimum height as four quiet icon buttons: fit content, 1/3,
+  1/2 or the full screen, its content always centred, and its width) and its blocks, in order (the order they stack in on
   phones). Sections and blocks can be added,
   moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
   opens in the block inspector (BlockInspector.svelte, onopen).
@@ -187,17 +187,40 @@
         removeSection(live.store, file, at),
       )}{/if}
 
+    <!-- Name (its #anchor under it) the whole row; then Height | Width, two halves -->
     <div class="fields">
       <Field
         edit="{file}#/sections/{at}/name"
         label="Name"
-        half
         placeholder="e.g. Our people"
         value={s.name ?? ''}
         help={hintOf(s, at)}
         changed={changed(at, 'name')}
         onvalue={(name) => setName(at, name)}
       />
+      <!-- Height (a minimum; its content always centred): quiet icon buttons, one picked; a
+           half field like Width (.tf: the same label row) -->
+      <div
+        class={['tf', 'is-half', changed(at, 'height') && 'is-changed']}
+        data-edit="{file}#/sections/{at}/height"
+      >
+        <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
+        <div class="hset" role="radiogroup" aria-labelledby="{s.id}-height">
+          {#each HEIGHTS as [id, label, share] (id)}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={heightOf(s) === id}
+              aria-label={label}
+              title={label}
+              class={['hset__btn', heightOf(s) === id && 'is-active']}
+              onclick={() => setHeight(at, id)}
+            >
+              {@render heightIcon(share)}
+            </button>
+          {/each}
+        </div>
+      </div>
       <Field
         edit="{file}#/sections/{at}/width"
         label="Width"
@@ -208,28 +231,6 @@
         changed={changed(at, 'width')}
         onvalue={(width) => set(at, { width })}
       />
-    </div>
-    <!-- Height (a minimum; its content always centred): quiet icon buttons, one picked -->
-    <div
-      class={['height', changed(at, 'height') && 'is-changed']}
-      data-edit="{file}#/sections/{at}/height"
-    >
-      <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
-      <div class="hset" role="radiogroup" aria-labelledby="{s.id}-height">
-        {#each HEIGHTS as [id, label, share] (id)}
-          <button
-            type="button"
-            role="radio"
-            aria-checked={heightOf(s) === id}
-            aria-label={label}
-            title={label}
-            class={['hset__btn', heightOf(s) === id && 'is-active']}
-            onclick={() => setHeight(at, id)}
-          >
-            {@render heightIcon(share)}
-          </button>
-        {/each}
-      </div>
     </div>
 
     <ul class="blocks" aria-label="Blocks of section {at + 1}">
@@ -322,35 +323,17 @@
 </div>
 
 <style lang="scss">
-  // Height: its label above the quiet icon buttons
-  .height {
-    display: grid;
-    justify-items: start;
-    gap: 4px;
-    margin-bottom: 12px;
-
-    .tf__label {
-      margin: 0;
-    }
-
-    .dot {
-      display: none;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
-    }
-  }
-
   // the settings, then the blocks
   .fields {
     margin-bottom: 12px;
   }
 
   // a utility group: icon-only, no fill; the picked one in the accent, on a faint ground
+  // 32px tall, like the inputs (4 + 24 + 4), its buttons sharing the half's width
   .hset {
     display: flex;
     gap: 4px;
+    height: 32px;
     padding: 4px;
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px var(--line);
@@ -358,8 +341,9 @@
 
   .hset__btn {
     display: grid;
+    flex: 1;
     place-items: center;
-    width: 32px;
+    min-width: 0;
     height: 24px;
     padding: 0;
     border: 0;
