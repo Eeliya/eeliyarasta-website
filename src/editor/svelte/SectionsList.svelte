@@ -12,7 +12,7 @@
   import Section from './Section.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { nameOf, sectionsOf } from './content-groups.js';
+  import { nameOf } from './content-groups.js';
   import {
     addBlock,
     addSection,
@@ -31,9 +31,12 @@
   let { live, file, onopen } = $props();
   let deleting = $state(''); // the id of the section or block asking "Delete?"
 
+  // A copy, new after every edit, undo and redo: the store changes a section in place (its
+  // `sections` array stays the same object), so the store's own array would leave the fields
+  // below showing the old values (a Height picked: the preview changed, the select didn't).
   const sections = $derived.by(() => {
-    live.version;
-    return sectionsOf(live.store, file);
+    const list = live.current(file)?.sections;
+    return Array.isArray(list) ? list : [];
   });
   // the block types on offer: item types (the item of a [slug] page) only there
   const types = $derived(
