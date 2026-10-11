@@ -4,9 +4,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { useTestEnv } from './git-env.mjs';
 import { contentStatus, publish } from './editor-server.mjs';
 
+// Run from a git hook (pre-push), GIT_DIR & co. point at the real repo: every git here (and the
+// editor's, which inherits this process's environment) must only see the temp repos.
+useTestEnv();
+
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+const real = (p) => fs.realpathSync(p);
 
 /** A repo with content/pages/a/index.json and c/index.json, pushed to a bare "origin". */
 function repo() {
@@ -15,8 +21,9 @@ function repo() {
   const root = path.join(dir, 'site');
   git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
   git(dir, 'init', '-q', '-b', 'main', root);
-  git(root, 'config', 'user.email', 'test@example.com');
-  git(root, 'config', 'user.name', 'Test');
+  // before any write: git sees the temp repo, nothing else
+  assert.equal(real(git(root, 'rev-parse', '--show-toplevel')), real(root));
+  assert.equal(real(path.resolve(root, git(root, 'rev-parse', '--git-dir'))), real(`${root}/.git`));
   for (const f of ['a/index.json', 'c/index.json', 'index.json']) {
     const file = path.join(root, 'content/pages', f);
     fs.mkdirSync(path.dirname(file), { recursive: true });

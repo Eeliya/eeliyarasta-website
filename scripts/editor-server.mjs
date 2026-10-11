@@ -26,6 +26,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
+import { repoEnv } from './git-env.mjs';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
@@ -561,7 +562,11 @@ async function readJSON(req) {
 
 // ------------------------------------------------------------------ git (Publish)
 
-/** Run git without a shell. Never prompts in the terminal (a missing login fails fast). */
+/**
+ * Run git without a shell, on the repo at `root` only (repoEnv: a GIT_DIR or GIT_INDEX_FILE a
+ * hook exported can't send it to another repo). Never prompts in the terminal (a missing login
+ * fails fast).
+ */
 function git(root, args, { timeout = 30_000 } = {}) {
   return new Promise((resolve) => {
     execFile(
@@ -571,7 +576,7 @@ function git(root, args, { timeout = 30_000 } = {}) {
         cwd: root,
         timeout,
         maxBuffer: 10 * 1024 * 1024,
-        env: { ...process.env, GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' },
+        env: repoEnv(process.env, { GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' }),
       },
       (err, stdout, stderr) => {
         resolve({
