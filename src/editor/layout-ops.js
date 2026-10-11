@@ -221,7 +221,7 @@ export function placeBlock(store, file, at, j, pos, key, { flow, rows } = {}) {
  * On the phone, a block without a phone area of its own gets one (its desktop area halved,
  * where it shows now), so its phone link is its own.
  */
-export function linkBlock(store, file, at, j, to, gap = 0, { phone = false } = {}) {
+export function linkBlock(store, file, at, j, to, gap = 0, { phone = false, row } = {}) {
   const section = listOf(store, file)[at];
   const b = section.blocks[j];
   if (!b) return null;
@@ -230,11 +230,17 @@ export function linkBlock(store, file, at, j, to, gap = 0, { phone = false } = {
     if (!Number.isInteger(gap)) return null;
   }
   const next = to === null ? undefined : { to, gap };
+  // unlinked: it stays on the row it shows (`row`), not the one stored with its old leader's
+  // stored rows (an auto leader's content may span more)
+  const stay = !next && Number.isInteger(row) && row > 0 ? { row } : {};
   if (phone) {
     if (!hasMobileArea(b.mobile)) setMobile(b, phoneAreaOf(b));
-    setMobile(b, { link: next });
+    setMobile(b, { link: next, ...stay });
   } else if (next) b.link = next;
-  else delete b.link;
+  else {
+    delete b.link;
+    if (stay.row && b.pos) b.pos = { ...b.pos, row: stay.row };
+  }
   if (next && makesLoop(section.blocks, b.id, to, phone)) return null;
   return writeSection(store, file, at, section);
 }

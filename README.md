@@ -828,7 +828,9 @@ Delete and on/off; **Add block** adds one below the others, **Add section** at t
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**
 (see below) and **Motion** (the block's animation and timing, the same view as in the Motion
-tab). **Sections** goes back. A list field (hero photos, about
+tab). Its head row is the quiet ← (back to the sections), the block's name and, at the far
+right, the Grid lines toggle (in the list of sections it sits at the far right of the hint's
+row). A list field (hero photos, about
 paragraphs and facts, photography panels) has its items in boxes with ↑ / ↓ / Remove and an
 **Add** button (a new photo opens the Media window). Each of these is one undo step. Typing in
 a field (a number in Layout too) is one undo step until you leave it, press Enter or pause for a
@@ -847,7 +849,8 @@ Links, buttons and forms in the preview don't act on clicks (Alt+click follows a
 below their bottom edge. Drag a block's **top circle onto another block's bottom circle** (the
 blocks it may follow show theirs while you drag: its section's, none that would make a loop)
 to link it: it follows that block from then on, staying where it is (the gap is the rows
-between them now, negative when they overlap). Drop the circle anywhere else to unlink it. A
+between them now, negative when they overlap). Drop the circle anywhere else to unlink it (it
+stays on the row it shows). A
 line joins each leader's bottom to its followers' tops (with the gap next to the selected
 block's); click a line to select that link and press **Delete** (or Backspace) to remove it.
 Dragging a linked block up or down keeps the link and changes its gap (its label shows it), and
@@ -861,17 +864,20 @@ link comes along, the gap halved). The Motion tab picks animated elements instea
 dragging); Browse uses the site normally.
 
 The **Layout** tab (`LayoutTab.svelte`) holds only what can't be dragged, for the layout the
-preview shows (switch it with the phone toggle in the panel's head): **Size** as buttons (Auto |
-Aspect | Rows; with Aspect its ratio as buttons: 1:1 … 21:9 or Custom "w:h"), the block's
-**link** (Follows … with its **gap** in cells, or Free; **Unlink**), for text blocks **Scale
+preview shows (switch it with the phone toggle in the panel's head). At the top, read only,
+where it is in cells (`col 61 · row 12 · 40 × 18`: its column, the row it shows, its width and
+the rows it spans, the phone's in the phone preview) and its link (`follows <block>, gap -10`,
+or free); links and gaps are dragged in the preview. Then **Size** as buttons (Auto | Aspect |
+Rows; with Aspect its ratio as buttons: 1:1 … 21:9 or Custom "w:h"), for text blocks **Scale
 text with the grid** and its **Text size (%)**, **Placement** (on phones: Placement on phones),
 the layer with Down / Up (desktop) and **Reset phone** (phone), which removes every phone area,
 link and placement of the section's blocks (they show their desktop layout halved again).
 **Settings › Typography** sets the text styles of scaled text (size and minimum, line height,
 tracking; the preview follows as you type).
 
-**Buttons:** action buttons (Save, Publish, Delete, Add, Sources, …) are pills. Utility toggles
-and tools (Grid lines, phone view, undo / redo, close) are the quiet icon-only variant of
+**Buttons:** action buttons (Save, Publish, Delete, Add, …) are pills. Utility toggles and tools
+(Grid lines, phone view, undo / redo, back, close, and Sources / Pages / Media beside the page
+menu, each with its tooltip) are the quiet icon-only variant of
 `Button.svelte` (`iconOnly`): no pill, a little dim, brighter on hover (nothing moves), the
 accent (`--ed-accent`, #33ccff) while a toggle is on (`aria-pressed`), the focus ring kept.
 
@@ -889,7 +895,7 @@ and in the header a dropdown: the items of a source, or **Dropdown links** (one 
 "all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[slug]` page the **Item** dropdown next
 to the page picks which item's page the preview shows.
 
-The **Sources** button opens the Source Explorer on the files in `content/sources/` (with their
+The **Sources** button (the database icon next to the page dropdown, before Pages and Media) opens the Source Explorer on the files in `content/sources/` (with their
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit
 button, or a click on a person/place/project in the preview, opens straight into that item. In
 the Content tab, a group whose texts come from a source (a person on their page) shows its file

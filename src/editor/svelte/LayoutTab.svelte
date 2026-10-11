@@ -2,12 +2,14 @@
   A block's Layout tab (BlockInspector.svelte). Where a block is and how big is set in the
   preview (overlay.js: drag it, drag its handles); here only what can't be dragged. It edits
   the layout the preview shows (the desktop's, or the phone's in the mobile preview):
+    At the top, read only: where it is and how big in cells (its columns as stored, its rows as
+    the preview resolved them: --fr / --frs, src/client/modules/rows.js), and the block it
+    follows with the gap. Linking and unlinking are dragged in the preview (overlay.js: its top
+    circle onto another block's bottom circle; dragged off, or the line picked + Delete), the
+    gap by dragging the block up or down.
     Size              Auto (its content, the default) | Aspect (its width × a ratio: a preset
                       or a custom "w:h") | Rows (fixed); every block spans whole rows
                       (src/site/layout/flow.js)
-    Link              free, or the block it follows and the gap (cells, negative overlaps);
-                      Unlink. Linking is dragged in the preview (its top circle onto another
-                      block's bottom circle)
     Scale text        (text blocks) its text in cells, relative to its styles (Settings >
                       Typography), and its % of them (src/site/layout/type.js)
     Placement         in the grid, sticky, fixed, fullscreen or pinned (desktop, or on phones)
@@ -19,12 +21,22 @@
   import Field from './Field.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { layerBlock, linkBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
-  import { ASPECTS, PLACES, linkOf, ratioOf, sizeOf } from '../../site/layout/index.js';
+  import { layerBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
+  import {
+    ASPECTS,
+    PLACES,
+    linkOf,
+    phoneAreaOf,
+    placeOf,
+    ratioOf,
+    sizeOf,
+  } from '../../site/layout/index.js';
   import { SCALE_TYPES, adjustOf } from '../../site/layout/type.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { nameOf } from './content-groups.js';
 
-  let { g, live, at, j, base, block } = $props();
+  // el: the block's element in the preview (its resolved rows), or null
+  let { g, live, at, j, base, block, el = null } = $props();
 
   const phone = $derived(ui.viewport === 'mobile');
   const size = $derived(sizeOf(block));
@@ -36,8 +48,31 @@
   const link = $derived(linkOf(block, phone));
   const leader = $derived(link && (section.blocks || []).find((b) => b?.id === link.to));
   const leaderName = $derived(
-    leader ? `${BLOCK_TYPES[leader.type]?.label || leader.type} (${leader.id})` : '',
+    leader ? nameOf(leader) || BLOCK_TYPES[leader.type]?.label || leader.id : link?.to || '',
   );
+  // its rows as the preview shows them (rows.js rewrites --fr / --frs as content and links
+  // move it): read again whenever the element's style changes
+  let shown = $state(null);
+  $effect(() => {
+    if (!el) return void (shown = null);
+    const read = () => {
+      const v = (k) => parseInt(el.style.getPropertyValue(k), 10);
+      shown = { row: v('--fr'), rows: v('--frs') };
+    };
+    read();
+    const watch = new MutationObserver(read);
+    watch.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => watch.disconnect();
+  });
+  const area = $derived.by(() => {
+    const a = phone ? phoneAreaOf(block) : placeOf(block.pos);
+    const ok = (n) => Number.isInteger(n) && n > 0;
+    return {
+      ...a,
+      row: ok(shown?.row) ? shown.row : a.row,
+      rows: ok(shown?.rows) ? shown.rows : a.rows,
+    };
+  });
   const scalable = $derived(SCALE_TYPES.includes(block.type));
 
   const SIZES = [
@@ -99,11 +134,6 @@
       aspect: next === 'aspect' ? block.aspect || '4:5' : undefined,
     });
   }
-  // the gap typed: a whole number of cells (negative overlaps)
-  function setGap(v) {
-    if (link && Number.isInteger(v)) linkBlock(live.store, g.file, at, j, link.to, v, { phone });
-  }
-  const unlink = () => linkBlock(live.store, g.file, at, j, null, 0, { phone });
   function setScale(patch, k) {
     const next = { on: block.scale?.on === true, ...block.scale, ...patch };
     if (next.adjust === 100) delete next.adjust;
@@ -120,7 +150,17 @@
   }
 </script>
 
-<p class="hint small">{phone ? 'Phone layout (60 columns)' : 'Desktop layout (120 columns)'}</p>
+<div class="where">
+  <span
+    class="tf__label"
+    title={phone ? 'Phone layout (60 columns)' : 'Desktop layout (120 columns)'}
+  >
+    col {area.col} · row {area.row} · {area.span} × {area.rows}
+  </span>
+  <span class="tf__label">
+    {#if link}follows {leaderName}, gap {link.gap}{:else}free (not linked){/if}
+  </span>
+</div>
 
 <div class="opt">
   <span class="tf__label">Size</span>
@@ -163,24 +203,6 @@
       />
     </div>
   {/if}
-{/if}
-
-<div class="line">
-  <span class="tf__label">
-    {#if link}Follows {leaderName || link.to}{:else}Free (not linked){/if}
-  </span>
-  <Button size="small" icon="link-slash" disabled={!link} onclick={unlink}>Unlink</Button>
-</div>
-{#if link}
-  <div class="opt">
-    <Field
-      edit="{g.file}#{base}/{phone ? 'mobile/link' : 'link'}/gap"
-      label="Gap below it (cells, negative overlaps)"
-      type="number"
-      value={link.gap}
-      onvalue={setGap}
-    />
-  </div>
 {/if}
 
 {#if scalable}
@@ -254,10 +276,23 @@
 {/if}
 <p class="hint small">
   Drag the block in the preview to move it, its handles to resize it, its top circle onto another
-  block's bottom circle to link it.
+  block's bottom circle to link it. Drag the circle off, or pick the line and press Delete, to
+  unlink it.
 </p>
 
 <style lang="scss">
+  // where it is: two small read-only lines
+  .where {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .tf__label {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
   // label above its control
   .opt {
     display: grid;
@@ -267,6 +302,11 @@
     .tf__label {
       margin: 0;
     }
+  }
+
+  // the closing hint, apart from the last row
+  .hint:last-of-type {
+    margin-top: 16px;
   }
 
   // the ratios: four to a row, in one box

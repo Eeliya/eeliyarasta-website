@@ -568,8 +568,11 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
       const b = flow[id];
       if (a && b && (was?.to !== near.id || was.gap !== b.row - (a.row + a.rows)))
         onlink(id, near.id, b.row - (a.row + a.rows), { mobile: phone });
-    } else if (was) onlink(id, null, 0, { mobile: phone }); // dropped off: free
+    } else if (was) onlink(id, null, 0, { mobile: phone, row: shownRow(el) }); // dropped off: free
   }
+
+  // the row a block shows now (rows.js: --fr): an unlinked block stays there
+  const shownRow = (el) => parseInt(el.style.getPropertyValue('--fr'), 10) || undefined;
 
   function cancelLink(e) {
     if (e.key !== 'Escape') return;
@@ -584,7 +587,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     if (!id) return false;
     ui.link = null;
     const el = blockEl(id);
-    if (el && linkOfEl(el)) onlink(id, null, 0, { mobile: mobile() });
+    if (el && linkOfEl(el)) onlink(id, null, 0, { mobile: mobile(), row: shownRow(el) });
     return true;
   }
   function onkeydown(e) {

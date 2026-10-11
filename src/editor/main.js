@@ -76,10 +76,10 @@ const overlay = createOverlay({
     else placeBlock(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
   },
   // a block linked to another (its top circle dropped on that one's bottom circle) or freed
-  onlink(id, to, gap, { mobile = false } = {}) {
+  onlink(id, to, gap, { mobile = false, row } = {}) {
     const b = blockAt(id);
     if (!b) return;
-    if (linkBlock(store, b.file, b.at, b.j, to, gap, { phone: mobile }) === null)
+    if (linkBlock(store, b.file, b.at, b.j, to, gap, { phone: mobile, row }) === null)
       toast("Can't link those blocks (another section's, or a loop)", { kind: 'error' });
   },
   blockOf(id) {

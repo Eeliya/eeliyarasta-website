@@ -216,6 +216,13 @@ test('editor: phone links are separate; the first phone move brings the desktop 
   assert.deepEqual(b().link, to('b-aaaa', 4)); // the desktop's unchanged
   linkBlock(store, F, 0, 1, null, 0, { phone: true });
   assert.ok(!('link' in b().mobile) && b().link);
+  store.undo();
+  // unlinked where the preview shows it (an auto leader grew): it stays on that row
+  linkBlock(store, F, 0, 1, null, 0, { phone: true, row: 14 });
+  assert.equal(b().mobile.row, 14);
+  linkBlock(store, F, 0, 1, null, 0, { row: 30 });
+  assert.ok(!('link' in b()));
+  assert.equal(b().pos.row, 30);
 });
 
 test('scaled text: per block, by its styles; site typography over the defaults', () => {
