@@ -4,9 +4,7 @@
   "sections": [
     {
       "id": "s-a58t",
-      "height": "auto",
-      "align": "center",
-      "rows": 21,
+      "height": "fit",
       "width": "contained",
       "enabled": true,
       "blocks": [
@@ -24,9 +22,7 @@
     },
     {
       "id": "s-oq6n",
-      "height": "auto",
-      "align": "center",
-      "rows": 75,
+      "height": "fit",
       "width": "contained",
       "enabled": true,
       "blocks": [

@@ -146,7 +146,6 @@ test('editor: link, drag a follower (its gap changes), unlink; new blocks are fr
       sections: [
         {
           id: 's-aaaa',
-          rows: 30,
           blocks: [
             { id: 'b-aaaa', type: 'text', pos: pos(1, 10) },
             { id: 'b-bbbb', type: 'text', pos: pos(14, 4) },

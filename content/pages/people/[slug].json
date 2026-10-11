@@ -5,9 +5,7 @@
   "sections": [
     {
       "id": "s-2jiz",
-      "height": "screen",
-      "align": "stretch",
-      "rows": 75,
+      "height": "full",
       "width": "full",
       "enabled": true,
       "blocks": [

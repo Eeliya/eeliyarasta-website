@@ -23,7 +23,16 @@ import {
 } from './files.js';
 import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
-import { ALIGNS, COLS, HEIGHTS, MCOLS, PLACES, SIZES, WIDTHS, ratioOf } from './layout/index.js';
+import {
+  COLS,
+  HEIGHTS,
+  MCOLS,
+  PLACES,
+  SIZES,
+  WIDTHS,
+  nameProblems,
+  ratioOf,
+} from './layout/index.js';
 import { linkProblems } from './layout/links.js';
 import { checkScale, checkTypography } from './layout/type.js';
 import { isId } from './layout/ids.js';
@@ -203,6 +212,8 @@ function checkPage(file, d) {
     out.push('"config.source" must name a source (a [slug] page makes a page per item)');
   if (!Array.isArray(d.sections)) return out;
   out.push(...d.sections.flatMap(checkSection));
+  // names: their anchors (ids) unique on the page, and ids at all
+  nameProblems(d.sections).forEach((p, at) => p && out.push(`section ${at + 1}: "name" ${p}`));
   // links: within their section, to a block that is there, no loops (layout/links.js)
   const all = new Set(
     d.sections.flatMap((s) => (Array.isArray(s?.blocks) ? s.blocks.map((b) => b?.id) : [])),
@@ -243,15 +254,17 @@ function checkSection(s, at) {
   const bad = (key, want) => out.push(`${where}: "${key}" must be ${want}`);
   if (!isId(s.id, 's')) bad('id', 'a section id like "s-k3x9"');
   if (s.height !== undefined && !HEIGHTS.includes(s.height))
-    bad('height', `one of ${HEIGHTS.join(', ')}`);
-  if (s.align !== undefined && !ALIGNS.includes(s.align))
-    bad('align', `one of ${ALIGNS.join(', ')}`);
+    bad(
+      'height',
+      `one of ${HEIGHTS.join(', ')}` +
+        (['auto', 'screen'].includes(s.height) ? ' (node scripts/migrate-sections.mjs)' : ''),
+    );
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
-  if (s.rows !== undefined && !whole(s.rows, 1)) bad('rows', 'a whole number from 1');
   // rowHeight (the 8px-row grid's) is ignored on the square grid: a row is one cell
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  // removed: a section's aspect height and its space above / below (scripts/migrate-sections.mjs)
-  for (const key of ['aspect', 'spacing', 'mobile'])
+  // removed: a section's aspect height, its space above / below, its own row count and where
+  // its content sits (always centred) (scripts/migrate-sections.mjs)
+  for (const key of ['aspect', 'spacing', 'mobile', 'rows', 'align'])
     if (s[key] !== undefined)
       out.push(
         `${where}: "${key}" is no longer a section setting (node scripts/migrate-sections.mjs)`,

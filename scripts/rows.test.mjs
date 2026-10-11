@@ -58,8 +58,10 @@ test('sections count every block by its stored rows (aspect and auto too)', () =
     size,
     pos: { col: 1, span: 24, row, rows },
   });
-  assert.equal(rowsOf({ rows: 1, blocks: [blk('auto', 3, 40)] }), 42);
-  assert.equal(rowsOf({ rows: 1, blocks: [blk('aspect', 1, 12)] }), 12);
+  assert.equal(rowsOf({ blocks: [blk('auto', 3, 40)] }), 42);
+  assert.equal(rowsOf({ blocks: [blk('aspect', 1, 12)] }), 12);
+  assert.equal(rowsOf({ rows: 30, blocks: [blk('aspect', 1, 12)] }), 12); // an old count: ignored
+  assert.equal(rowsOf({ blocks: [] }), 1);
 });
 
 test("a drag stores where the section's blocks are now (their real rows), one undo step", () => {
@@ -69,7 +71,6 @@ test("a drag stores where the section's blocks are now (their real rows), one un
     sections: [
       {
         id: 's-aaaa',
-        rows: 20,
         blocks: [
           { id: 'b-aaaa', type: 'text', size: 'auto', pos: pos(1, 4) },
           { id: 'b-bbbb', type: 'text', pos: pos(6, 4) },
@@ -87,7 +88,7 @@ test("a drag stores where the section's blocks are now (their real rows), one un
   store.load({ [F]: structuredClone(page) });
   // where rows.js showed them (a needs 10 rows now); c is dragged to row 30
   const flow = { 'b-aaaa': pos(1, 10), 'b-bbbb': pos(12, 4), 'b-cccc': pos(18, 2) };
-  placeBlock(store, F, 0, 2, pos(30, 2), undefined, { flow, rows: 26 });
+  placeBlock(store, F, 0, 2, pos(30, 2), undefined, { flow });
   const s = store.current[F].sections[0];
   assert.deepEqual(
     s.blocks.map((x) => [x.pos.row, x.pos.rows]),
@@ -97,7 +98,8 @@ test("a drag stores where the section's blocks are now (their real rows), one un
       [30, 2],
     ],
   );
-  assert.equal(s.rows, 31);
+  assert.equal(rowsOf(s), 31); // down to its lowest block (no rows stored)
+  assert.equal(s.rows, undefined);
   store.undo();
   assert.deepEqual(store.current[F], page);
   // on the phone: the other blocks' mobile rows

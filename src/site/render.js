@@ -4,9 +4,9 @@
  * Every page is its file's list of sections of blocks (layout/index.js); a [slug] page's are
  * in its template file, rendered for the route's item.
  */
-import { accentOf, setEditable } from './helpers.js';
+import { accentOf, setEditable, warnOnce } from './helpers.js';
 import { head, body } from './templates/layout.js';
-import { renderSections, renderSection, headingNumbers } from './layout/index.js';
+import { renderSections, renderSection, headingNumbers, sectionAnchor } from './layout/index.js';
 import { pageFile } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
 import { motionProblems } from './layout/motion.js';
@@ -34,11 +34,25 @@ export function renderRoute(route, content, { editable = false } = {}) {
   const file = pageFile(route.id);
   const view = renderSections(ctx, route, file, content.pages[route.id]?.sections);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
-  return {
-    head: head(ctx, route, accent),
-    body: body(ctx, route, accent, view, file),
-    lang: content.site.lang || 'en',
-  };
+  const html = body(ctx, route, accent, view, file);
+  anchorClashes(route, content.pages[route.id]?.sections, html);
+  return { head: head(ctx, route, accent), body: html, lang: content.site.lang || 'en' };
+}
+
+/**
+ * Warns about a section anchor (its name's id) that another element on the rendered page
+ * also uses (a project row's slug, a form): its link would scroll to the first of them.
+ * Two sections named alike are a validation error (src/site/validate.js).
+ */
+function anchorClashes(route, sections, html) {
+  for (const s of Array.isArray(sections) ? sections : []) {
+    const a = sectionAnchor(s);
+    if (a && html.split(` id="${a}"`).length > 2)
+      warnOnce(
+        `${route.path}: section "${s.name}" (#${a}) shares its id with another element on the page`,
+        'anchors',
+      );
+  }
 }
 
 /** What a page's blocks render with. */

@@ -196,8 +196,8 @@ every section is a grid of **blocks** (`src/site/layout/`):
 ```json
 {
   "id": "s-k3x9",
-  "height": "auto",
-  "rows": 12,
+  "name": "Our people",
+  "height": "fit",
   "width": "contained",
   "enabled": true,
   "blocks": [
@@ -242,13 +242,25 @@ every section is a grid of **blocks** (`src/site/layout/`):
   whole number of rows; when its content needs more, it spans more (see Real rows below), so
   text never spills out. The old `rowHeight` is ignored. On phones the grid has **60 columns**
   (below).
-- **A section:** `height` is `auto` (**Rows**: its `rows`, as many as its blocks need) or
-  `screen` (**Fullscreen**: at least the screen's height, `align` placing its content: `top`,
-  `center` (default), `bottom` or `stretch`, filling it). `width` is `contained` (inside the
-  page's side margins, `--pad`) or `full` (edge to edge); `enabled: false` hides it. A
-  section's rows grow to fit its lowest block. A section has **no space above or below**: the
-  space between sections is empty rows (cells), so it scales with the width like everything
-  else (the side margins, `--pad`, stay).
+- **A section:** `height` is a **minimum**: `fit` (default: its content, i.e. its rows),
+  `third`, `half` or `full` (at least 1/3, 1/2 or all of the screen's height: `min-height`
+  33.333svh / 50svh / 100svh). Its rows are always down to its lowest block (uniform square
+  cells, no row count of its own); when the section is taller than them they are **centred
+  vertically** (`align-content: center`), and content taller than the minimum makes the
+  section taller. `width` is `contained` (inside the page's side margins, `--pad`) or `full`
+  (edge to edge); `enabled: false` hides it. A section has **no space above or below**: the
+  space between sections is empty rows (cells: a block placed lower leaves rows above it), so
+  it scales with the width like everything else (the side margins, `--pad`, stay).
+- **A section's name (its anchor):** optional `name`, slugified into the section's HTML `id`
+  (`"Our People"` → `id="our-people"`), so `/page/#our-people` links to it. It lands just below
+  the fixed header (`scroll-margin-top: var(--header-h)`), with native scrolling, on a link on
+  the same page (the router's `router:hash`: a smooth scroll, a jump with reduced motion) and
+  when the page opens with the hash: `src/client/modules/anchors.js` keeps the section in place
+  for a moment while `rows.js`, fonts and images settle the layout above it (until you scroll).
+  Validation: the name's slug must start with a letter (a number is an album photo's hash), not
+  be one of the page's own ids (`main`, `portal`, `page-curtains`, `accent-init`,
+  `mobile-menu`), and be unique on the page; a clash with another id on the rendered page (a
+  project row's slug, say) is a build warning (`[anchors]`). Without a name: no id.
 - **A block:** its `type` and content (below), `pos` (first column 1–120, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
   an optional `link` (below), `scale` (text blocks, below), `place`, an optional `mobile`
@@ -274,13 +286,13 @@ every section is a grid of **blocks** (`src/site/layout/`):
   whole rows that needs (a fixed-rows block keeps its rows). Then the links are resolved in their
   order (a leader before its followers): a follower's first row is its leader's last row now + 1
   - its gap (at least row 1); free blocks stay at their stored row. The section has the rows its
-    lowest block reaches now, plus the empty rows it had below its lowest block. This runs in the
+    lowest block reaches now. This runs in the
     same measure pass as `--cell`: when the page mounts, at once on a window resize (and again on
     the next frame), when a block's content changes size (ResizeObserver: images, fonts) and when
     the editor changes a layout; it sets `--fr` / `--frs` on the blocks and `--frows` on the
     section, over the stored `--r` / `--rs` / `--rows` (the phone grid's likewise). Links reach the
-    page as `data-link="<id> <gap>"` and `data-mlink` (the phone's) on the block. In a screen
-    section a screen-high block gets the whole rows that fit (rows stay square, so up to a cell
+    page as `data-link="<id> <gap>"` and `data-mlink` (the phone's) on the block. In a section
+    with a minimum height a block that fits in it gets the whole rows that fit (rows stay square, so up to a cell
     short; its content is still screen-high), centred. Without JavaScript the stored areas apply
     as they are (the editor keeps a follower's stored row at its leader's stored bottom + gap).
 - **Scaled text** (`src/site/layout/type.js`): a text block (`heading`, `text`, `button`) with
@@ -333,7 +345,8 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
 - **Ids:** every section and block has a stable id (`s-…`, `b-…`), given once when it is made
   (`src/site/layout/ids.js`) and kept when it moves or changes. The editor finds them in the
   preview by it (`data-sec`, `data-block`, dev only).
-- **CSS:** positions are CSS variables on the elements (`--rows --mrows` on a section,
+- **CSS:** positions are CSS variables on the elements (`--rows --mrows` on a section, its
+  height preset a class: `.sec--h-third`, `.sec--h-half`, `.sec--h-full`,
   `--c --s --r --rs --z --ar --tk` and
   `--mc --ms --mr --mrs` on a block), links as `data-link` / `data-mlink`, size, scaled text and
   placement as classes (`.blk--aspect`, `.blk--auto`, `.blk--scale`,
@@ -343,7 +356,8 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
   ending by column 120 (60 on the phone), links within their section to a block that is
   there and without loops, `scale` on text blocks only, `typography` styles, no id twice on a page,
-  no section `aspect` / `spacing` / `mobile`, which are gone) and each block against its type (strings, lists,
+  section names unique on their page and valid anchors (above), no section `aspect` /
+  `spacing` / `mobile` / `rows` / `align`, which are gone) and each block against its type (strings, lists,
   config values). An unknown block type isn't an error: it logs a build warning and is skipped.
 - **Bindings:** a block's field can show a source item's value instead of its own (below).
 
@@ -385,9 +399,12 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
   shape once (each old section became a section with it as one full-width block, its old
   padding the section's spacing; later its old phone padding the section's `mobile.spacing`,
   where it differs); kept for reference, it changes nothing on migrated content.
-  `scripts/migrate-sections.mjs` then made sections Rows or Fullscreen only (an `aspect` height
-  became Rows, its ratio dropped) and dropped their space above and below (`spacing`,
-  `mobile.spacing`), without compensating: the space is set by hand as empty rows.
+  `scripts/migrate-sections.mjs` then dropped sections' space above and below (`spacing`,
+  `mobile.spacing`, without compensating: the space is set by hand as empty rows) and made
+  their height a minimum preset: `screen` (Fullscreen) → `full`, `auto` (Rows) / `aspect` →
+  `fit` (an `aspect` ratio dropped), and dropped `align` (content is always centred; `stretch`
+  was centred too) and `rows` (a section's rows are down to its lowest block; the site's
+  content had no empty rows below its blocks, so nothing moved).
 
 ### Bindings
 
@@ -820,11 +837,13 @@ home and 404 can't be renamed or deleted. These write to disk right away through
 deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
 files. `&pages=/people/` in the URL reopens it on that folder. There's also a phone (390 px) preview toggle.
 
-In the Content panel every **section** of the page is a box (Section 1, 2, … named by its first
-text): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
-turns it on/off, and the caret folds it. Under the bar are its settings (**Height** as buttons,
-Rows | Fullscreen, like a block's Size: Rows with its row count, Fullscreen with where its
-content sits; Width) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
+In the Content panel every **section** of the page is a box (Section 1, 2, …, with its name
+under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
+turns it on/off, and the caret folds it. Under the bar are its settings (**Name**, empty by default, with
+the `#anchor` it makes shown under it, or what's wrong with it: taken by another section on the
+page, …; **Width**; **Height** as four quiet icon buttons with tooltips: fit content, 1/3, 1/2
+or the full screen, each icon the screen with that share filled; the content is always
+centred) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
 Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**

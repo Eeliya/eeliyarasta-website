@@ -1,7 +1,9 @@
 <!--
-  The page's sections in the Content tab (src/site/layout/): each a panel Section with its
-  settings (Height as buttons, Rows | Fullscreen, like a block's Size; its row count, or where
-  a fullscreen section's content sits; its width) and its blocks, in order (the order they stack in on phones). Sections and blocks can be added,
+  The page's sections in the Content tab (src/site/layout/): each a panel Section ("Section N",
+  and its name when it has one) with its settings (its name: its #anchor, shown under it; its
+  minimum height as four quiet icon buttons: fit content, 1/3, 1/2 or the full screen, its
+  content always centred; its width) and its blocks, in order (the order they stack in on
+  phones). Sections and blocks can be added,
   moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
   opens in the block inspector (BlockInspector.svelte, onopen).
 -->
@@ -24,7 +26,7 @@
     setSection,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { rowsOf } from '../../site/layout/index.js';
+  import { anchorOf, heightOf, nameProblems } from '../../site/layout/index.js';
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, file, onopen } = $props();
@@ -44,16 +46,12 @@
       .map((t) => ({ value: t.type, label: t.label, icon: t.icon })),
   );
 
-  // [value, label, tooltip]
+  // [value, label (its tooltip and aria-label), the share of the screen its icon fills]
   const HEIGHTS = [
-    ['auto', 'Rows', 'Its rows (down to its lowest block)'],
-    ['screen', 'Fullscreen', 'At least the screen’s height'],
-  ];
-  const ALIGNS = [
-    ['top', 'Top'],
-    ['center', 'Center'],
-    ['bottom', 'Bottom'],
-    ['stretch', 'Fill'],
+    ['fit', 'Fit content: as tall as its blocks', 0],
+    ['third', 'At least 1/3 of the screen', 1 / 3],
+    ['half', 'At least 1/2 of the screen', 1 / 2],
+    ['full', 'At least the full screen', 1],
   ];
   const WIDTHS = [
     ['contained', 'Contained'],
@@ -61,13 +59,24 @@
   ];
 
   const typeOf = (b) => BLOCK_TYPES[b?.type];
-  const nameOfSection = (s) => (s.blocks || []).map(nameOf).find(Boolean) || '';
   const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
-  const whole = (v, min) => Math.max(min, Math.round(v));
-  const heightOf = (s) => (s.height === 'screen' ? 'screen' : 'auto');
   const setHeight = (at, height) => {
     if (height !== heightOf(sections[at])) set(at, { height });
+  };
+  // its name: empty removes it (no anchor)
+  const setName = (at, name) =>
+    set(at, { name: String(name ?? '').trim() ? name : undefined }, `section:${file}#${at}/name`);
+  // what is wrong with each name (unique on the page, a letter first …), as the site checks it
+  const problems = $derived(nameProblems(sections));
+  const anchors = $derived(sections.map((s) => anchorOf(s.name)));
+  const hintOf = (s, at) => {
+    if (problems[at]) return `⚠ ${problems[at]}`;
+    const a = anchors[at];
+    // the first of two alike (the site flags the later one): flagged here too
+    const twin = a ? anchors.findIndex((b, i) => i !== at && b === a) : -1;
+    if (twin >= 0) return `⚠ #${a} is also section ${twin + 1}'s anchor`;
+    return a ? `#${a}` : 'Optional: a #link to this section';
   };
 
   function setBlockOn(at, j, on) {
@@ -108,6 +117,20 @@
   </div>
 {/snippet}
 
+<!-- a height's icon: the screen (a frame) and the share of it the section is at least (filled,
+     from the top); fit: a bar hugged by two lines (as tall as its content) -->
+{#snippet heightIcon(share)}
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    {#if share}
+      <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
+      <rect x="4" y="3" width="8" height={10 * share} rx="0.5" />
+    {:else}
+      <rect x="4" y="6.5" width="8" height="3" rx="0.5" />
+      <path class="frame" d="M2.5 4.5h11M2.5 11.5h11" />
+    {/if}
+  </svg>
+{/snippet}
+
 {#each sections as s, at (s.id)}
   {@const last = at === sections.length - 1}
   <Section
@@ -115,7 +138,7 @@
     key="text:{file}#{s.id}"
     icon="layer-group"
     title="Section {at + 1}"
-    name={nameOfSection(s)}
+    name={typeof s.name === 'string' ? s.name.trim() : ''}
     off={s.enabled === false}
   >
     {#snippet bar()}
@@ -164,48 +187,17 @@
         removeSection(live.store, file, at),
       )}{/if}
 
-    <!-- Height: a button group, like a block's Size (LayoutTab.svelte) -->
-    <div
-      class={['height', changed(at, 'height') && 'is-changed']}
-      data-edit="{file}#/sections/{at}/height"
-    >
-      <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
-      <div class="seg" role="radiogroup" aria-labelledby="{s.id}-height">
-        {#each HEIGHTS as [id, label, title] (id)}
-          <button
-            type="button"
-            role="radio"
-            aria-checked={heightOf(s) === id}
-            {title}
-            class={['seg__btn', heightOf(s) === id && 'is-active']}
-            onclick={() => setHeight(at, id)}>{label}</button
-          >
-        {/each}
-      </div>
-    </div>
     <div class="fields">
-      {#if heightOf(s) === 'screen'}
-        <Field
-          edit="{file}#/sections/{at}/align"
-          label="Content at"
-          type="select"
-          half
-          options={ALIGNS}
-          value={s.align || 'center'}
-          changed={changed(at, 'align')}
-          onvalue={(align) => set(at, { align })}
-        />
-      {:else}
-        <Field
-          edit="{file}#/sections/{at}/rows"
-          label="Rows"
-          type="number"
-          half
-          value={rowsOf(s)}
-          changed={changed(at, 'rows')}
-          onvalue={(rows) => set(at, { rows: whole(rows, 1) }, `section:${file}#${at}/rows`)}
-        />
-      {/if}
+      <Field
+        edit="{file}#/sections/{at}/name"
+        label="Name"
+        half
+        placeholder="e.g. Our people"
+        value={s.name ?? ''}
+        help={hintOf(s, at)}
+        changed={changed(at, 'name')}
+        onvalue={(name) => setName(at, name)}
+      />
       <Field
         edit="{file}#/sections/{at}/width"
         label="Width"
@@ -216,6 +208,28 @@
         changed={changed(at, 'width')}
         onvalue={(width) => set(at, { width })}
       />
+    </div>
+    <!-- Height (a minimum; its content always centred): quiet icon buttons, one picked -->
+    <div
+      class={['height', changed(at, 'height') && 'is-changed']}
+      data-edit="{file}#/sections/{at}/height"
+    >
+      <span class="tf__label" id="{s.id}-height">Height<i class="dot" title="Changed"></i></span>
+      <div class="hset" role="radiogroup" aria-labelledby="{s.id}-height">
+        {#each HEIGHTS as [id, label, share] (id)}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={heightOf(s) === id}
+            aria-label={label}
+            title={label}
+            class={['hset__btn', heightOf(s) === id && 'is-active']}
+            onclick={() => setHeight(at, id)}
+          >
+            {@render heightIcon(share)}
+          </button>
+        {/each}
+      </div>
     </div>
 
     <ul class="blocks" aria-label="Blocks of section {at + 1}">
@@ -308,9 +322,10 @@
 </div>
 
 <style lang="scss">
-  // Height: its label above the button group (like a block's Size)
+  // Height: its label above the quiet icon buttons
   .height {
     display: grid;
+    justify-items: start;
     gap: 4px;
     margin-bottom: 12px;
 
@@ -330,6 +345,56 @@
   // the settings, then the blocks
   .fields {
     margin-bottom: 12px;
+  }
+
+  // a utility group: icon-only, no fill; the picked one in the accent, on a faint ground
+  .hset {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .hset__btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      background 0.2s;
+
+    &:hover {
+      color: var(--fg);
+    }
+
+    &.is-active {
+      background: rgb(255 255 255 / 0.08);
+      color: var(--ed-accent);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
+    }
+
+    svg {
+      fill: currentcolor;
+    }
+
+    .frame {
+      fill: none;
+      stroke: currentcolor;
+      stroke-width: 1;
+      opacity: 0.55;
+    }
   }
 
   .blocks {

@@ -13,7 +13,10 @@
  * sets where every block sits now (a linked block below its leader) and how many rows it
  * spans (--fr / --frs) and the section's rows (--frows), which win over the stored ones.
  * While it measures, a section has .sec--measure. A section has no padding above or below
- * (the space between sections is empty rows); at the sides the page's --pad.
+ * (the space between sections is empty rows); at the sides the page's --pad. Its height is at
+ * least its rows, or its preset's (.sec--h-third / -half / -full: that much of the screen),
+ * its rows always centred in it. A named section has an id (its anchor): a link to it lands
+ * below the fixed header (scroll-margin-top; modules/anchors.js).
  *
  * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a block
  * without a phone area of its own has its desktop area halved there), so a phone shows the
@@ -42,29 +45,25 @@
   grid-template-columns: repeat(120, var(--cell));
   grid-template-rows: repeat(var(--frows, var(--rows)), var(--cell));
   gap: 0;
-  justify-content: center;
+  // its columns centred (the few px left over); its rows centred when it is taller than them
+  // (a min-height below; modules/rows.js fits a block that fits to the whole rows the minimum
+  // holds: under a cell is left over)
+  place-content: center;
   padding: 0 var(--pad);
+  scroll-margin-top: var(--header-h);
   &--full {
     --cell: calc(100vw / 120);
 
     padding-inline: 0;
   }
-  &--screen {
+  &--h-third {
+    min-height: 33.333svh;
+  }
+  &--h-half {
+    min-height: 50svh;
+  }
+  &--h-full {
     min-height: 100svh;
-  }
-  &--top {
-    align-content: start;
-  }
-  &--center {
-    align-content: center;
-  }
-  &--bottom {
-    align-content: end;
-  }
-  // its rows fill it as far as whole square rows go (modules/rows.js: as many as fit), centred:
-  // under a cell is left over, half above and half below
-  &--stretch {
-    align-content: center;
   }
 }
 

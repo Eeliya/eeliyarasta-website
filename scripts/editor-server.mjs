@@ -232,8 +232,7 @@ export function pagesOp(
       sections: [
         {
           ...newSection(ids, [albumBlock(root, source, ids)]),
-          height: 'screen',
-          align: 'stretch',
+          height: 'full',
           width: 'full',
         },
       ],

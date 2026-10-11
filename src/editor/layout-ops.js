@@ -13,7 +13,6 @@ import {
   newBlock,
   newSection,
   phoneAreaOf,
-  rowsOf,
   placeOf,
 } from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
@@ -50,17 +49,12 @@ export function settleLinks(section) {
 }
 
 /**
- * Section `at` replaced by `section` (its links settled, its rows grown to fit its blocks): no
- * new render. key: typing in one field (a number) coalesces into one undo step (store.js).
+ * Section `at` replaced by `section` (its links settled; its rows are down to its lowest block,
+ * so none are stored): no new render. key: typing in one field (a number) coalesces into one undo step (store.js).
  */
 const writeSection = (store, file, at, section, key) => {
   settleLinks(section);
-  return store.set(
-    file,
-    `/sections/${at}`,
-    { ...section, rows: rowsOf(section) },
-    { source: 'panel', key },
-  );
+  return store.set(file, `/sections/${at}`, section, { source: 'panel', key });
 };
 
 /** A copy of a section ('s') or block ('b') with new ids (taken: the page's ids, the new ones added). */
@@ -103,7 +97,7 @@ export function removeSection(store, file, at) {
 }
 
 /**
- * Section `at`'s settings (height, align, rows, width, enabled) changed
+ * Section `at`'s settings (name, height, width, enabled) changed
  * by `patch` (a key set to undefined is removed);
  * key: see writeSection.
  */
@@ -125,7 +119,6 @@ export function addBlock(store, file, at, type) {
   const first = !section.blocks?.length;
   const block = newBlock(type, idsOf(list), { row: first ? 1 : below(section) });
   section.blocks = [...(section.blocks || []), block];
-  section.rows = rowsOf(section);
   write(store, file, list);
   return block;
 }
@@ -143,7 +136,6 @@ export function duplicateBlock(store, file, at, j) {
     if (!hasMobileArea(copy.mobile) && !copy.mobile.place) delete copy.mobile;
   }
   section.blocks.splice(j + 1, 0, copy);
-  section.rows = rowsOf(section);
   write(store, file, list);
   return copy;
 }
@@ -170,11 +162,10 @@ export function removeBlock(store, file, at, j) {
 
 /**
  * The rows the page shows (src/site/layout/flow.js) stored: flow { id: area } where the
- * section's other blocks are now (their row and rows; `phone`: their mobile areas), rows the
- * section's rows now. Blocks that grew or shrank (content, an aspect at this width) and the
+ * section's other blocks are now (their row and rows; `phone`: their mobile areas). Blocks that grew or shrank (content, an aspect at this width) and the
  * blocks they pushed are stored as they are seen.
  */
-function storeFlow(section, j, flow = {}, rows = 0, phone = false) {
+function storeFlow(section, j, flow = {}, phone = false) {
   section.blocks.forEach((b, k) => {
     const a = k !== j && flow[b.id];
     if (!a) return;
@@ -183,7 +174,6 @@ function storeFlow(section, j, flow = {}, rows = 0, phone = false) {
       if (hasMobileArea(b.mobile)) b.mobile = { ...b.mobile, row: a.row, rows: a.rows };
     } else b.pos = { ...placeOf(b.pos), row: a.row, rows: a.rows };
   });
-  if (!phone && Number.isInteger(rows) && rows > 0) section.rows = rows;
 }
 
 /**
@@ -199,12 +189,12 @@ function gapAt(section, link, row, flow = {}, phone = false) {
 
 /**
  * Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
- * drag); key: typing in a number field coalesces (see writeSection). flow, rows: where the
- * other blocks are now and the section's rows (storeFlow).
+ * drag); key: typing in a number field coalesces (see writeSection). flow: where the other
+ * blocks are now (storeFlow).
  */
-export function placeBlock(store, file, at, j, pos, key, { flow, rows } = {}) {
+export function placeBlock(store, file, at, j, pos, key, { flow } = {}) {
   const section = listOf(store, file)[at];
-  storeFlow(section, j, flow, rows);
+  storeFlow(section, j, flow);
   const b = section.blocks[j];
   b.pos = placeOf(pos);
   // a linked block moved: its gap changes, it keeps following its leader
@@ -284,7 +274,7 @@ function setMobile(block, patch) {
  */
 export function placeMobile(store, file, at, j, area, { key, flow } = {}) {
   const section = listOf(store, file)[at];
-  storeFlow(section, j, flow, 0, true);
+  storeFlow(section, j, flow, true);
   const b = section.blocks[j];
   const inherited = !hasMobileArea(b.mobile) ? linkOf(b, true) : null;
   setMobile(b, placeOf(area, MCOLS));

@@ -4,7 +4,7 @@
  * (data-sec) and every block element its id (data-block): src/site/layout/index.js.
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
- * sections' height, width, rows and on/off (their classes and CSS variables) and the
+ * sections' name (their id), height, width, rows and on/off (their classes and CSS variables) and the
  * blocks' places, sizes, links, text scale, placements, phone areas, layers, on/off and motion (data-motion,
  * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
@@ -16,6 +16,7 @@ import {
   blockLinks,
   blockVars,
   headingNumbers,
+  sectionAnchor,
   sectionClass,
   sectionVars,
 } from '../site/layout/index.js';
@@ -73,6 +74,10 @@ const SCRIPTED = /pinned|v-center/;
  */
 function applyLayout(el, s, moved = []) {
   el.className = sectionClass(s);
+  // its anchor: its name's slug (a name changed: the id with it)
+  const anchor = sectionAnchor(s);
+  if (anchor) el.id = anchor;
+  else el.removeAttribute('id');
   // (the rows the site's rows.js worked out stay until it flows the section again)
   const kept = ['--frows', '--ffill']
     .map((v) => [v, el.style.getPropertyValue(v)])

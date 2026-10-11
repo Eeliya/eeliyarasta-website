@@ -3,7 +3,7 @@
  * holding blocks
  * ("sections" in its file, content/pages/<page>/index.json or a template's [slug].json):
  *
- *   { "id": "s-k3x9", "height": "auto", "rows": 12, "width": "contained", "enabled": true,
+ *   { "id": "s-k3x9", "name": "Our people", "height": "fit", "width": "contained", "enabled": true,
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
  *                  "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }, "z": 0 }] }
  *
@@ -16,10 +16,13 @@
  * its desktop area halved (grid.js phoneAreaOf; nothing stacks).
  *
  * A section:
- *   height   'auto' (Rows): `rows` rows (cells), or down to its lowest block | 'screen'
- *            (Fullscreen): at least the screen's height, its rows placed by `align` ('top' |
- *            'center' | 'bottom' | 'stretch': fill it). No space above or below it: the space
- *            between sections is empty rows (rowHeight, from the 8px-row grid, is ignored)
+ *   name     optional: its anchor, slugified into its HTML id ("Our people" -> id="our-people",
+ *            so /page/#our-people scrolls to it, below the header); unique on its page
+ *   height   a minimum: 'fit' (its content: its rows) | 'third' | 'half' | 'full' (a third, half
+ *            or all of the screen's height, svh). Its rows are always down to its lowest block
+ *            (uniform square cells); a taller section centres them vertically, and content
+ *            taller than the minimum makes it taller. No space above or below it: the space
+ *            between sections is empty rows (rows above its first block)
  *   width    'contained': inside the page's side margins | 'full': edge to edge
  *   enabled  false: hidden (still rendered, so the editor can turn it on live)
  * A block (its content: src/site/blocks/index.js):
@@ -50,7 +53,7 @@
  *            on a [slug] page they show the page's item without one)
  * Positions become CSS variables on the elements; src/client/styles/_layout.scss lays them out.
  */
-import { esc, ed, editable, pointer, warnOnce } from '../helpers.js';
+import { esc, ed, editable, pointer, slugify, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
@@ -71,10 +74,19 @@ export {
   placeOf,
 } from './grid.js';
 export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
-/** A section's height: its rows (Rows) or at least the screen's (Fullscreen). */
-export const HEIGHTS = ['auto', 'screen'];
+/** A section's minimum height: its content, or a third, a half or all of the screen's. */
+export const HEIGHTS = ['fit', 'third', 'half', 'full'];
 export const WIDTHS = ['contained', 'full'];
-export const ALIGNS = ['top', 'center', 'bottom', 'stretch'];
+/** Ids the page's own templates use: no section is named one of them. */
+export const RESERVED_IDS = ['main', 'portal', 'page-curtains', 'accent-init', 'mobile-menu'];
+
+/** A section's height preset ('fit' when unset or unknown). */
+export const heightOf = (s) => (HEIGHTS.includes(s?.height) ? s.height : 'fit');
+
+/** A section name's anchor: "Our People" -> "our-people" ('' when it has no letters or digits). */
+export const anchorOf = (name) => slugify(typeof name === 'string' ? name : '');
+/** Whether an anchor can be a section's id: a letter first (a number is an album photo's hash). */
+export const isAnchor = (a) => /^[a-z][a-z0-9-]*$/.test(a) && !RESERVED_IDS.includes(a);
 /** A block's height: its content (the default), its width × an aspect ratio, or fixed rows. */
 export const SIZES = ['auto', 'aspect', 'rows'];
 export const ASPECTS = ['1:1', '4:5', '3:4', '2:3', '3:2', '16:9', '21:9'];
@@ -95,8 +107,6 @@ export const PLACES = [
   'fullscreen',
   'pinned',
 ];
-
-const int = (v, min, fallback) => (Number.isInteger(v) && v >= min ? v : fallback);
 
 /** "16:9" -> [16, 9]; null unless two positive numbers. */
 export function ratioOf(text) {
@@ -123,28 +133,15 @@ export function newBlock(type, taken, pos = {}) {
   };
 }
 
-/** A new section holding `blocks`: Rows (auto height), contained. */
+/** A new section holding `blocks`: its content's height (fit), contained, no name. */
 export function newSection(taken, blocks = []) {
-  const section = {
-    id: newId('s', taken),
-    height: 'auto',
-    align: 'center',
-    rows: 8,
-    width: 'contained',
-    enabled: true,
-    blocks,
-  };
-  section.rows = rowsOf(section);
-  return section;
+  return { id: newId('s', taken), height: 'fit', width: 'contained', enabled: true, blocks };
 }
 
-/** The rows a section has: its own count, or more when a block reaches further down. */
+/** The rows a section has: down to its lowest block (1 when it has none). */
 export function rowsOf(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
-  return Math.max(
-    int(section?.rows, 1, 1),
-    ...blocks.map((b) => placeOf(b?.pos).row + placeOf(b?.pos).rows - 1),
-  );
+  return Math.max(1, ...blocks.map((b) => placeOf(b?.pos).row + placeOf(b?.pos).rows - 1));
 }
 
 /**
@@ -167,14 +164,38 @@ export function sectionVars(s) {
   return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
 }
 
-/** The classes of a section's element: its height (Fullscreen), width and alignment. */
+/** The classes of a section's element: its minimum height (sec--h-third …) and width. */
 export function sectionClass(s) {
-  const align = ALIGNS.includes(s?.align) ? s.align : 'center';
-  return (
-    'sec' +
-    (s?.height === 'screen' ? ` sec--screen sec--${align}` : '') +
-    (s?.width === 'full' ? ' sec--full' : '')
-  );
+  const h = heightOf(s);
+  return 'sec' + (h !== 'fit' ? ` sec--h-${h}` : '') + (s?.width === 'full' ? ' sec--full' : '');
+}
+
+/**
+ * What is wrong with each section's name, by index ('' when nothing, or no name): text whose
+ * anchor starts with a letter, isn't one of the page's own ids, and no other section on the
+ * page has (src/site/validate.js; the editor's name field shows it as you type).
+ */
+export function nameProblems(sections) {
+  const list = Array.isArray(sections) ? sections : [];
+  const first = new Map();
+  return list.map((s, at) => {
+    const name = s?.name;
+    if (name === undefined || name === '') return '';
+    if (typeof name !== 'string') return 'must be text';
+    const a = anchorOf(name);
+    if (!a) return "needs a letter or a digit (it becomes the section's #anchor)";
+    if (!/^[a-z]/.test(a)) return `#${a} must start with a letter (a number is a photo's link)`;
+    if (RESERVED_IDS.includes(a)) return `#${a} is taken by the page itself`;
+    if (first.has(a)) return `#${a} is already section ${first.get(a) + 1}'s anchor`;
+    first.set(a, at);
+    return '';
+  });
+}
+
+/** A section's anchor id, or '' (no name, or one that can't be an id). */
+export function sectionAnchor(s) {
+  const a = anchorOf(s?.name);
+  return isAnchor(a) ? a : '';
 }
 
 /** A placement's classes: kind (sticky, fixed, full, pinned) and corner, `m` for the phone's. */
@@ -302,8 +323,9 @@ export function renderSection(ctx, route, file, section, at, numbers = {}) {
     .map((b, j) => renderBlock(ctx, route, file, at, j, b, numbers))
     .join('');
   const marker = editable ? ` data-sec="${esc(section?.id ?? '')}"` : '';
+  const anchor = sectionAnchor(section);
   const hidden = section?.enabled === false ? ' hidden' : '';
-  return `<section class="${sectionClass(section)}"${marker} style="${sectionVars(section)}"${hidden}>${blocks}</section>`;
+  return `<section${anchor ? ` id="${anchor}"` : ''} class="${sectionClass(section)}"${marker} style="${sectionVars(section)}"${hidden}>${blocks}</section>`;
 }
 
 /** The sections of a page file, rendered in order. route: the page's route (route.album on [slug] pages). */

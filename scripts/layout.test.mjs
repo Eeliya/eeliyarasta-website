@@ -81,25 +81,24 @@ test('registry: every block type has a label, an icon and renders its defaults',
 
 test('render: sections are grids, blocks carry their area; off is hidden', () => {
   const list = [
-    section([block('text', { text: 'One', pos: { col: 3, span: 10, row: 2, rows: 4 }, z: 2 })], {
-      rows: 3,
-    }),
+    section([block('text', { text: 'One', pos: { col: 3, span: 10, row: 2, rows: 4 }, z: 2 })]),
     section([block('text', { text: 'Two', config: { enabled: false } })], {
-      height: 'screen',
-      align: 'bottom',
+      name: 'Our People',
+      height: 'full',
       width: 'full',
     }),
     section([block('text', { text: 'Three' })], { enabled: false }),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
-  // rows grow to fit; the phone grid's rows: its blocks' halved areas
+  // rows: down to the lowest block; the phone grid's rows: its blocks' halved areas
   // no space above or below (no --pt / --pb): the rows between sections are the space
   assert.match(out, /<section class="sec" style="--rows:5;--mrows:3">/);
   assert.match(
     out,
     /<div class="blk blk--text blk--auto" style="--c:3;--s:10;--r:2;--rs:4;--z:2;--mc:2;--ms:5;--mr:1;--mrs:2">/,
   );
-  assert.match(out, /<section class="sec sec--screen sec--bottom sec--full"/);
+  // a name: its anchor (id); a height preset: its min-height class
+  assert.match(out, /<section id="our-people" class="sec sec--h-full sec--full"/);
   assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1;--mc:1;--ms:60;--mr:1;--mrs:1" hidden>/); // no pos: full width
   assert.match(out, /style="--rows:1;--mrows:1" hidden>/);
   assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
@@ -184,11 +183,17 @@ test('validation: the layout, then each block against its type', () => {
   assert.deepEqual(problems([{ id: 'x', blocks: [] }]), [
     'section 1: "id" must be a section id like "s-k3x9"',
   ]);
-  assert.deepEqual(problems([ok({ height: 'tall', align: 'left', width: 'wide', rows: 0 })]), [
-    'section 1: "height" must be one of auto, screen',
-    'section 1: "align" must be one of top, center, bottom, stretch',
+  assert.deepEqual(problems([ok({ height: 'tall', width: 'wide' })]), [
+    'section 1: "height" must be one of fit, third, half, full',
     'section 1: "width" must be contained or full',
-    'section 1: "rows" must be a whole number from 1',
+  ]);
+  for (const height of ['fit', 'third', 'half', 'full'])
+    assert.deepEqual(problems([ok({ height })]), [], height);
+  // the old ones: migrate (scripts/migrate-sections.mjs); its own rows and alignment are gone
+  assert.deepEqual(problems([ok({ height: 'screen', align: 'center', rows: 8 })]), [
+    'section 1: "height" must be one of fit, third, half, full (node scripts/migrate-sections.mjs)',
+    'section 1: "rows" is no longer a section setting (node scripts/migrate-sections.mjs)',
+    'section 1: "align" is no longer a section setting (node scripts/migrate-sections.mjs)',
   ]);
   assert.deepEqual(problems([ok({ spacing: { top: 1 }, enabled: 'yes' })]), [
     'section 1: "enabled" must be true or false',
@@ -210,6 +215,22 @@ test('validation: the layout, then each block against its type', () => {
   const twice = section([block('text'), block('text')]);
   twice.blocks[1].id = twice.blocks[0].id;
   assert.deepEqual(problems([twice]), [`the id "${twice.blocks[0].id}" is used twice`]);
+});
+
+test('anchors: a named section renders its id; a clash with another id on the page warns', () => {
+  const projects = routes.find((r) => r.path === '/projects/');
+  const data = structuredClone(content);
+  const list = data.pages[projects.id].sections;
+  list[0].name = 'Film scan rig'; // a project row's id (its slug) on this page
+  list[1].name = 'All work';
+  const [{ body }, seen] = warnings(() => render.renderRoute(projects, data));
+  assert.match(body, /<section id="film-scan-rig" class="sec"/);
+  assert.match(body, /<section id="all-work" class="sec"/);
+  assert.match(
+    seen.join('\n'),
+    /\[anchors\] \/projects\/: section "Film scan rig" \(#film-scan-rig\) shares its id/,
+  );
+  assert.doesNotMatch(seen.join('\n'), /all-work/);
 });
 
 test('migration: each old section becomes a section with it as one full-width block', () => {
@@ -285,7 +306,8 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
 
   const b = addBlock(store, F, 0, 'button');
   assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 }); // below
-  assert.equal(sections()[0].rows, 16);
+  assert.equal(rowsOf(sections()[0]), 16);
+  assert.equal(sections()[0].rows, undefined); // its rows: down to its lowest block, not stored
   assert.ok(isId(b.id, 'b'));
   duplicateBlock(store, F, 0, 1);
   assert.deepEqual(types()[0], 'heading+button+button');
@@ -296,25 +318,25 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.deepEqual(types()[0], 'heading+button');
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 30, rows: 4 });
   assert.deepEqual(sections()[0].blocks[1].pos, { col: 13, span: 12, row: 30, rows: 4 });
-  assert.equal(sections()[0].rows, 33); // a section grows to fit, never shrinks by itself
+  assert.equal(rowsOf(sections()[0]), 33); // a section grows to fit
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 40, rows: 4 });
-  assert.equal(sections()[0].rows, 43); // grown in the same step
+  assert.equal(rowsOf(sections()[0]), 43); // grown in the same step
   layerBlock(store, F, 0, 1, 1);
   assert.equal(sections()[0].blocks[1].z, 1);
   layerBlock(store, F, 0, 1, -1);
   assert.equal(sections()[0].blocks[1].z, undefined);
-  setSection(store, F, 1, { height: 'screen', align: 'top' });
-  assert.deepEqual([sections()[1].height, sections()[1].align], ['screen', 'top']);
+  setSection(store, F, 1, { height: 'half', name: 'Our people' });
+  assert.deepEqual([sections()[1].height, sections()[1].name], ['half', 'Our people']);
   assert.deepEqual(checkContent(F, store.current[F]), []);
 
   store.undo(); // section settings
   store.undo(); // layer down
   store.undo(); // layer up
   store.undo(); // the second drag
-  assert.equal(sections()[0].rows, 33);
+  assert.equal(rowsOf(sections()[0]), 33);
   store.undo(); // the first drag
   assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 });
-  assert.equal(rowsOf(sections()[0]), 24);
+  assert.equal(rowsOf(sections()[0]), 16); // down to its lowest block again
   store.undo(); // remove
   assert.deepEqual(types()[0], 'button+heading+button');
   store.redo();
@@ -349,7 +371,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(
     html,
     new RegExp(
-      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--mrows:${Math.ceil(s.rows / 2)}">`,
+      `^<section class="sec" data-sec="${s.id}" style="--rows:${rowsOf(s)};--mrows:${Math.ceil(rowsOf(s) / 2)}">`,
     ),
   );
   assert.match(html, /Edited headline/);

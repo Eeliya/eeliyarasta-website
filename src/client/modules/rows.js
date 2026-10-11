@@ -19,9 +19,10 @@
  * content changes size (images, fonts, the editor's edits; on the next frame) and on reflow()
  * (the editor after it changed a layout).
  *
- * A screen (Fullscreen) section is at least so tall: a block that fits in it doesn't make it
- * taller by rounding up to a whole row (it gets the whole rows that fit; rows stay square, so
- * a screen-high block's rows may be up to a cell short of the screen, its content still is).
+ * A section with a minimum height (a third, half or all of the screen: sec--h-*) is at least so
+ * tall: a block that fits in it doesn't make it taller by rounding up to a whole row (it gets
+ * the whole rows that fit; rows stay square, so a screen-high block's rows may be up to a cell
+ * short of the screen, its content still is).
  */
 import { resolveRows, rowsFor } from '../../site/layout/flow.js';
 import { COLS, MCOLS, cellOf } from '../../site/layout/grid.js';
@@ -110,10 +111,11 @@ export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComp
   return cell;
 }
 
-/** The height a screen (Fullscreen) section has at least, inside its padding (else Infinity). */
+/** The height a section has at least (its min-height), inside its padding (else Infinity). */
 function minHeightOf(sec, cs) {
-  if (!sec.classList.contains('sec--screen')) return Infinity;
-  return (parseFloat(cs.minHeight) || 0) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const min = parseFloat(cs.minHeight); // 'auto' (fit): NaN
+  if (!(min > 0)) return Infinity;
+  return min - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 }
 
 /** Flow one section; true when something moved. */
@@ -144,7 +146,7 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
     // a sticky block reaches to its section's end: it keeps its rows
     const h = pos === 'sticky' ? null : el.getBoundingClientRect().height;
     let fit = h === null ? null : rowsFor(h, row);
-    // it fits the screen (section): not taller than the rows the screen holds
+    // it fits the section's minimum height: not taller than the rows that holds
     if (fit !== null && h <= avail + 0.5) fit = Math.min(fit, Math.max(1, cap - area.row + 1));
     // fixed rows: its own, whatever its content
     const need = fit === null || kind === 'rows' ? null : fit;

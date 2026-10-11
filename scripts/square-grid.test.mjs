@@ -9,6 +9,7 @@ import {
   migratePage,
   migrateSection,
 } from './migrate-square-grid.mjs';
+import { migratePage as migrateSections } from './migrate-sections.mjs';
 import { checkContent } from '../src/site/validate.js';
 
 test('grid: 120 columns, 60 on the phone; new blocks full width', () => {
@@ -63,5 +64,6 @@ test('migration: columns ×5 (phone ×2, onto the 24-column phone grid of then),
   assert.equal(s.rows, 35);
   const page = { sections: [s] };
   assert.equal(migratePage(page), page); // already migrated: left alone
-  assert.deepEqual(checkContent('pages/t/index.json', page), []);
+  // (its rows: then dropped by the later migrate-sections.mjs)
+  assert.deepEqual(checkContent('pages/t/index.json', migrateSections(page)), []);
 });

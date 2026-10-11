@@ -4,9 +4,7 @@
   "sections": [
     {
       "id": "s-yzyj",
-      "height": "screen",
-      "align": "center",
-      "rows": 63,
+      "height": "full",
       "width": "contained",
       "enabled": true,
       "blocks": [

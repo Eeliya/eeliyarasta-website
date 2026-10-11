@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pagesOp, editableFiles } from './editor-server.mjs';
+import { rowsOf } from '../src/site/layout/index.js';
 
 /** content/ in a temp dir: home, 404, about, people (+ [slug] and team) and a people source. */
 function site() {
@@ -48,7 +49,8 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   assert.match(heading.id, /^s-/);
   // below the header: the rows above it empty (sections have no space above)
   assert.equal(heading.spacing, undefined);
-  assert.equal(heading.rows, 17);
+  assert.equal(rowsOf(heading), 17); // down to its block: no rows stored
+  assert.deepEqual([heading.rows, heading.height], [undefined, 'fit']);
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
   ]);
@@ -73,7 +75,7 @@ test('template: [slug].json in a page folder, one per folder, not at the root', 
     album.blocks.map((b) => b.type),
     ['album'],
   );
-  assert.equal(album.height, 'screen');
+  assert.deepEqual([album.height, album.width, album.align], ['full', 'full', undefined]);
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'people' }).status, 400);
 });
 
