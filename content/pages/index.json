@@ -17,7 +17,7 @@
       "id": "s-hjhf",
       "height": "screen",
       "align": "stretch",
-      "rows": 112,
+      "rows": 75,
       "width": "full",
       "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
@@ -137,7 +137,7 @@
           ],
           "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 112 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 75 },
           "size": "auto"
         }
       ]
@@ -146,7 +146,7 @@
       "id": "s-rzxb",
       "height": "auto",
       "align": "center",
-      "rows": 25,
+      "rows": 18,
       "width": "contained",
       "spacing": { "top": 25, "bottom": 22 },
       "enabled": true,
@@ -156,7 +156,7 @@
           "type": "intro",
           "text": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 25 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 18 },
           "motion": { "anim": "scrub-words" },
           "size": "auto"
         }
@@ -169,7 +169,7 @@
       "id": "s-rpvk",
       "height": "auto",
       "align": "center",
-      "rows": 290,
+      "rows": 204,
       "width": "contained",
       "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
@@ -181,7 +181,7 @@
           "title": "Models I've worked with",
           "cta": "All people",
           "config": { "source": "people", "layout": "even" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 290 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 204 },
           "motion": { "anim": "grid-reveal" },
           "size": "auto"
         }
@@ -194,7 +194,7 @@
       "id": "s-fww5",
       "height": "auto",
       "align": "center",
-      "rows": 122,
+      "rows": 86,
       "width": "contained",
       "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
@@ -206,7 +206,7 @@
           "title": "Buildings, streets & castles",
           "cta": "All places",
           "config": { "source": "places", "layout": "staggered" },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 122 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 86 },
           "motion": { "anim": "grid-reveal", "stagger": 0.15 },
           "size": "auto"
         }
@@ -219,7 +219,7 @@
       "id": "s-y7qx",
       "height": "auto",
       "align": "center",
-      "rows": 89,
+      "rows": 63,
       "width": "contained",
       "spacing": { "top": 11, "bottom": 14 },
       "enabled": true,
@@ -231,7 +231,7 @@
           "title": "Things I build",
           "cta": "All projects",
           "config": {},
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 89 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 63 },
           "motion": { "anim": "list-up", "trigger": "load" },
           "size": "auto"
         }

@@ -42,6 +42,8 @@ export const ui = $state({
   block: null,
   /** 'content' | 'layout' | 'motion' */
   blockTab: 'content',
+  /** Content tab: the link selected in the preview (its follower's block id), or null. */
+  link: null,
   /** Content tab: show the sections' columns and rows in the preview. */
   grid: false,
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */

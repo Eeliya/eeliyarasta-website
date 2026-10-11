@@ -28,6 +28,12 @@
   let publishDialog = $state();
   let pagesModal = $state();
   const publish = () => publishDialog.open();
+  // The Source Explorer lives in the Content tab (ContentPanel.svelte); it opens itself when
+  // ui.explorer.open is set (SourcesModal.svelte), on the list of files.
+  function openSources() {
+    ui.explorer = { open: true, file: '', index: 0, field: '' };
+    if (ui.mode !== 'text') actions.setMode('text');
+  }
 
   // [mode, label, icon]: a tab with an icon shows only the icon
   const TABS = [
@@ -123,11 +129,12 @@
     <header class="ed-head">
       <!-- Editor | mobile view, undo, redo -->
       <h1 class="ed-brand">Editor</h1>
-      <!-- the icon shows the view a click switches to -->
+      <!-- a toggle: the phone view, on (the accent) or off -->
       <Button
-        icon={mobile ? 'desktop' : 'mobile-screen-button'}
+        icon="mobile-screen-button"
         iconOnly
-        label={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
+        label="Phone view"
+        aria-pressed={mobile}
         onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
       />
       <Button
@@ -159,9 +166,17 @@
         {/each}
       </nav>
 
-      <!-- [ page / component | Pages | Media ], then the item of a [slug] page on its own row -->
+      <!-- [ page / component | Sources | Pages | Media ] (quiet icon buttons), then the item of
+           a [slug] page on its own row -->
       <div class="ed-bar">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
+        <Button
+          icon="database"
+          iconOnly
+          label="Sources"
+          title="Sources: people, places, projects (the lists in content/sources/)"
+          onclick={openSources}
+        />
         <Button
           icon="sitemap"
           iconOnly
@@ -312,9 +327,9 @@
 
   .ed-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
     align-items: center;
-    gap: 8px;
+    gap: 4px;
   }
 
   .ed-bar__item {

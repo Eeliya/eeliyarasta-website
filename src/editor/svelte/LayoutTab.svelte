@@ -1,13 +1,20 @@
 <!--
   A block's Layout tab (BlockInspector.svelte). Where a block is and how big is set in the
-  preview (overlay.js: drag it, drag its handles); here only what can't be dragged:
-    Desktop | Mobile  which layout it edits; it also switches the preview (ui.viewport)
-    Size              Rows (its rows, more when its content needs them) | Aspect (its width ×
-                      a ratio: a preset or a custom "w:h") | Auto (its content); every block
-                      spans whole rows (src/site/layout/flow.js)
+  preview (overlay.js: drag it, drag its handles); here only what can't be dragged. It edits
+  the layout the preview shows (the desktop's, or the phone's in the mobile preview):
+    At the top, read only: where it is and how big in cells (its columns as stored, its rows as
+    the preview resolved them: --fr / --frs, src/client/modules/rows.js), and the block it
+    follows with the gap. Linking and unlinking are dragged in the preview (overlay.js: its top
+    circle onto another block's bottom circle; dragged off, or the line picked + Delete), the
+    gap by dragging the block up or down.
+    Size              Auto (its content, the default) | Aspect (its width × a ratio: a preset
+                      or a custom "w:h") | Rows (fixed); every block spans whole rows
+                      (src/site/layout/flow.js)
+    Scale text        (text blocks) its text in cells, relative to its styles (Settings >
+                      Typography), and its % of them (src/site/layout/type.js)
     Placement         in the grid, sticky, fixed, fullscreen or pinned (desktop, or on phones)
     Layer             down / up, for blocks that overlap (desktop)
-    Reset to stack    (Mobile) the section's blocks stack again on phones
+    Reset phone       (phone) the section's blocks show their desktop layout halved again
 -->
 <script>
   import Button from './Button.svelte';
@@ -15,9 +22,21 @@
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { layerBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
-  import { ASPECTS, PLACES, ratioOf, sizeOf } from '../../site/layout/index.js';
+  import {
+    ASPECTS,
+    PLACES,
+    linkOf,
+    phoneAreaOf,
+    placeOf,
+    ratioOf,
+    sizeOf,
+  } from '../../site/layout/index.js';
+  import { SCALE_TYPES, adjustOf } from '../../site/layout/type.js';
+  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { nameOf } from './content-groups.js';
 
-  let { g, live, at, j, base, block } = $props();
+  // el: the block's element in the preview (its resolved rows), or null
+  let { g, live, at, j, base, block, el = null } = $props();
 
   const phone = $derived(ui.viewport === 'mobile');
   const size = $derived(sizeOf(block));
@@ -26,11 +45,40 @@
     return live.get(g.file, `/sections/${at}`) || {};
   });
   const phoneSet = $derived((section.blocks || []).some((b) => b?.mobile));
+  const link = $derived(linkOf(block, phone));
+  const leader = $derived(link && (section.blocks || []).find((b) => b?.id === link.to));
+  const leaderName = $derived(
+    leader ? nameOf(leader) || BLOCK_TYPES[leader.type]?.label || leader.id : link?.to || '',
+  );
+  // its rows as the preview shows them (rows.js rewrites --fr / --frs as content and links
+  // move it): read again whenever the element's style changes
+  let shown = $state(null);
+  $effect(() => {
+    if (!el) return void (shown = null);
+    const read = () => {
+      const v = (k) => parseInt(el.style.getPropertyValue(k), 10);
+      shown = { row: v('--fr'), rows: v('--frs') };
+    };
+    read();
+    const watch = new MutationObserver(read);
+    watch.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => watch.disconnect();
+  });
+  const area = $derived.by(() => {
+    const a = phone ? phoneAreaOf(block) : placeOf(block.pos);
+    const ok = (n) => Number.isInteger(n) && n > 0;
+    return {
+      ...a,
+      row: ok(shown?.row) ? shown.row : a.row,
+      rows: ok(shown?.rows) ? shown.rows : a.rows,
+    };
+  });
+  const scalable = $derived(SCALE_TYPES.includes(block.type));
 
   const SIZES = [
-    ['rows', 'Rows', 'Its rows, more when its content needs them'],
-    ['aspect', 'Aspect', 'Its width × a ratio'],
     ['auto', 'Auto', 'As tall as its content'],
+    ['aspect', 'Aspect', 'Its width × a ratio'],
+    ['rows', 'Rows', 'Its rows, fixed'],
   ];
   const CUSTOM = 'custom';
   let custom = $state(false);
@@ -82,9 +130,15 @@
     custom = false;
     if (next === size) return;
     setBlock(live.store, g.file, at, j, {
-      size: next === 'rows' ? undefined : next,
+      size: next === 'auto' ? undefined : next,
       aspect: next === 'aspect' ? block.aspect || '4:5' : undefined,
     });
+  }
+  function setScale(patch, k) {
+    const next = { on: block.scale?.on === true, ...block.scale, ...patch };
+    if (next.adjust === 100) delete next.adjust;
+    const keep = next.on || next.adjust !== undefined;
+    setBlock(live.store, g.file, at, j, { scale: keep ? next : undefined }, k);
   }
   function setRatio(v) {
     custom = v === CUSTOM;
@@ -96,16 +150,16 @@
   }
 </script>
 
-<div class="seg tabs" role="tablist" aria-label="Layout for">
-  {#each [['desktop', 'Desktop'], ['mobile', 'Mobile']] as [id, label] (id)}
-    <button
-      type="button"
-      role="tab"
-      aria-selected={ui.viewport === id}
-      class={['seg__btn', ui.viewport === id && 'is-active']}
-      onclick={() => (ui.viewport = id)}>{label}</button
-    >
-  {/each}
+<div class="where">
+  <span
+    class="tf__label"
+    title={phone ? 'Phone layout (60 columns)' : 'Desktop layout (120 columns)'}
+  >
+    col {area.col} · row {area.row} · {area.span} × {area.rows}
+  </span>
+  <span class="tf__label">
+    {#if link}follows {leaderName}, gap {link.gap}{:else}free (not linked){/if}
+  </span>
 </div>
 
 <div class="opt">
@@ -151,6 +205,30 @@
   {/if}
 {/if}
 
+{#if scalable}
+  <div class="opt">
+    <Field
+      edit="{g.file}#{base}/scale/on"
+      label="Scale text with the grid"
+      type="boolean"
+      value={block.scale?.on === true}
+      help="Its text in cells, by its styles (Settings › Typography), never under their minimum"
+      onvalue={(v) => setScale({ on: v === true })}
+    />
+  </div>
+  {#if block.scale?.on}
+    <div class="opt">
+      <Field
+        edit="{g.file}#{base}/scale/adjust"
+        label="Text size (% of its styles)"
+        type="number"
+        value={Math.round(adjustOf(block) * 100)}
+        onvalue={(v) => v >= 10 && v <= 1000 && setScale({ adjust: v }, key('scale'))}
+      />
+    </div>
+  {/if}
+{/if}
+
 {#if !phone}
   <div class="opt">
     <span class="tf__label">Placement</span>
@@ -187,20 +265,32 @@
     />
   </div>
   <div class="line">
-    <span class="tf__label">{phoneSet ? 'Phone layout set' : 'Stacks on phones'}</span>
+    <span class="tf__label">{phoneSet ? 'Phone layout set' : 'Desktop layout, halved'}</span>
     <Button
       size="small"
-      icon="layer-group"
+      icon="rotate-left"
       disabled={!phoneSet}
-      onclick={() => resetMobile(live.store, g.file, at)}>Reset to stack</Button
+      onclick={() => resetMobile(live.store, g.file, at)}>Reset phone</Button
     >
   </div>
 {/if}
-<p class="hint small">Drag the block in the preview to move it, its handles to resize it.</p>
+<p class="hint small">
+  Drag the block in the preview to move it, its handles to resize it, its top circle onto another
+  block's bottom circle to link it. Drag the circle off, or pick the line and press Delete, to
+  unlink it.
+</p>
 
 <style lang="scss">
-  .tabs {
-    margin-bottom: 16px;
+  // where it is: two small read-only lines
+  .where {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .tf__label {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
   }
 
   // label above its control
@@ -212,6 +302,11 @@
     .tf__label {
       margin: 0;
     }
+  }
+
+  // the closing hint, apart from the last row
+  .hint:last-of-type {
+    margin-top: 16px;
   }
 
   // the ratios: four to a row, in one box

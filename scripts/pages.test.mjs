@@ -41,7 +41,7 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
         title: 'New one',
         intro: '',
         config: {},
-        pos: { col: 1, span: 24, row: 1, rows: 1 },
+        pos: { col: 1, span: 120, row: 1, rows: 1 },
       },
     ],
   );

@@ -1,6 +1,7 @@
 import { html, esc, editable } from '../helpers.js';
 import { seoOf } from '../seo.js';
 import { header, mobileMenu } from './header.js';
+import { typographyVars } from '../layout/type.js';
 import { footer } from './footer.js';
 
 /** <head> contents injected into index.html at <!--ssr-head--> (meta: src/site/seo.js) */
@@ -8,6 +9,8 @@ export function head(ctx, route, accent) {
   const { site } = ctx;
   const seo = seoOf(ctx, route);
   const image = seo.image;
+  // site.json typography: the text styles scaled text uses (layout/type.js), where they differ
+  const type = typographyVars(site);
   const ld =
     route.page === 'home'
       ? html`<script type="application/ld+json">
@@ -52,7 +55,12 @@ export function head(ctx, route, accent) {
     <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}" />
     <style id="accent-init">
       :root {
-        --accent: ${esc(accent)};
+        --accent: ${esc(accent)};${
+          type
+            ? `
+        ${esc(type)};`
+            : ''
+        }
       }
     </style>
     ${ld}`;

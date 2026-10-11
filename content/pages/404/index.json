@@ -6,7 +6,7 @@
       "id": "s-yzyj",
       "height": "screen",
       "align": "center",
-      "rows": 90,
+      "rows": 63,
       "width": "contained",
       "spacing": { "top": 0, "bottom": 0 },
       "enabled": true,
@@ -19,7 +19,7 @@
           "intro": "This page doesn't exist (yet).",
           "cta": "Back home",
           "config": { "href": "/", "center": true },
-          "pos": { "col": 1, "span": 24, "row": 1, "rows": 90 },
+          "pos": { "col": 1, "span": 120, "row": 1, "rows": 63 },
           "size": "auto"
         }
       ]

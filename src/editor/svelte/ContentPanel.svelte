@@ -6,9 +6,11 @@
   content-groups.js) and its SEO (SeoSection.svelte). While this tab is open the preview is a
   layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
   a double click edits a text in place (bridge.js); links and buttons don't follow. Grid shows
-  the sections' columns and rows. The Sources
-  button opens the Source Explorer (SourcesModal.svelte); so does the file button (people.json)
-  of a group whose texts come from one source, or beside a field when a group mixes.
+  the sections' columns and rows: a quiet toggle at the far right of the first row (beside the
+  hint in the list of sections, beside the block's name in a block). The Sources button beside
+  the page menu (App.svelte) opens the Source Explorer (SourcesModal.svelte); so does the file
+  button (people.json) of a group whose texts come from one source, or beside a field when a
+  group mixes.
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
   the preview, a field sets it (via the bridge) when it gets focus. This panel opens the block
@@ -110,28 +112,18 @@
 </script>
 
 <section class="ed-body" bind:this={panel}>
-  <div class="tools">
-    <Button
-      size="small"
-      icon="database"
-      title="People, places, projects: the lists in content/sources/"
-      onclick={() => sourcesModal.open()}
-    >
-      Sources
-    </Button>
+  {#snippet grid()}
     {#if file}
       <Button
-        size="small"
         icon="table-cells"
-        variant={ui.grid ? 'primary' : 'default'}
+        iconOnly
+        label="Grid lines"
         aria-pressed={ui.grid}
-        title="Show the sections' columns and rows in the preview"
+        title="Grid lines: the sections' square cells in the preview (120 columns, 60 on phones)"
         onclick={() => actions.showGrid(!ui.grid)}
-      >
-        Grid
-      </Button>
+      />
     {/if}
-  </div>
+  {/snippet}
   {#if waiting}
     <p class="hint">Waiting for the preview…</p>
   {:else if open}
@@ -142,6 +134,7 @@
       {sourceIds}
       {onsource}
       onback={() => (ui.block = null)}
+      tools={grid}
       onmotion={(el) => actions.editMotion(el)}
       onlibrary={(name) => {
         ui.library = { open: true, name };
@@ -149,7 +142,10 @@
       }}
     />
   {:else}
-    <p class="hint">{hint}</p>
+    <div class="tools">
+      <p class="hint">{hint}</p>
+      {@render grid()}
+    </div>
     {#if file}<SectionsList {live} {file} onopen={openBlock} />{/if}
     {#each others as g (g.id)}
       <Section id={g.id} key={keyOf(g)} title={g.title} name={g.name} open={isOpen(g)}>
@@ -179,10 +175,17 @@
 </section>
 
 <style lang="scss">
+  // [ hint | Grid ]: the toggle at the far right of the row
   .tools {
     display: flex;
+    align-items: flex-start;
     gap: 8px;
     margin-bottom: 12px;
+
+    .hint {
+      flex: 1;
+      margin: 0;
+    }
   }
 
   .count {

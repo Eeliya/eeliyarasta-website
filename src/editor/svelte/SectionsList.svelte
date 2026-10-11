@@ -1,6 +1,6 @@
 <!--
   The page's sections in the Content tab (src/site/layout/): each a panel Section with its
-  settings (height in rows or fullscreen with its alignment, width, row height, space above and
+  settings (height in rows or fullscreen with its alignment, width, space above and
   below) and
   its blocks, in order (the order they stack in on phones). Sections and blocks can be added,
   moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
@@ -25,14 +25,7 @@
     setSection,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import {
-    ASPECTS,
-    ROW_HEIGHT,
-    ROW_MAX,
-    ROW_MIN,
-    rowHeightOf,
-    rowsOf,
-  } from '../../site/layout/index.js';
+  import { ASPECTS, rowsOf } from '../../site/layout/index.js';
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, file, onopen } = $props();
@@ -74,11 +67,6 @@
   const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   const whole = (v, min) => Math.max(min, Math.round(v));
-  // the height of the section's rows, in px (8 is stored as nothing)
-  const rowHeight = (at, v) => {
-    const px = Math.min(ROW_MAX, whole(v, ROW_MIN));
-    set(at, { rowHeight: px === ROW_HEIGHT ? undefined : px }, `section:${file}#${at}/rowHeight`);
-  };
   const spacing = (s, key, v) => {
     const at = sections.indexOf(s);
     set(at, { spacing: { ...s.spacing, [key]: whole(v, 0) } }, `section:${file}#${at}/${key}`);
@@ -251,17 +239,8 @@
         onvalue={(width) => set(at, { width })}
       />
       <Field
-        edit="{file}#/sections/{at}/rowHeight"
-        label="Row height (px)"
-        type="number"
-        half
-        value={rowHeightOf(s)}
-        changed={changed(at, 'rowHeight')}
-        onvalue={(v) => rowHeight(at, v)}
-      />
-      <Field
         edit="{file}#/sections/{at}/spacing/top"
-        label="Space above (rows)"
+        label="Space above (×8px)"
         type="number"
         half
         value={s.spacing?.top ?? 0}
@@ -270,7 +249,7 @@
       />
       <Field
         edit="{file}#/sections/{at}/spacing/bottom"
-        label="Space below (rows)"
+        label="Space below (×8px)"
         type="number"
         half
         value={s.spacing?.bottom ?? 0}

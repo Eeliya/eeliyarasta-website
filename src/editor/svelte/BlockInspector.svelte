@@ -7,7 +7,8 @@
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
-  Back returns to the list of sections (SectionsList.svelte).
+  The head row: Back (a quiet arrow: to the list of sections, SectionsList.svelte), the block's
+  name, and the `tools` snippet at the far right (the Grid lines toggle, ContentPanel.svelte).
 -->
 <script>
   import Button from './Button.svelte';
@@ -23,7 +24,7 @@
   import { ANIMATIONS } from '../../site/files.js';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
-  let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
+  let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary, tools } = $props();
 
   const TABS = [
     ['content', 'Content'],
@@ -106,12 +107,19 @@
 </script>
 
 <div class="head">
-  <Button size="small" icon="arrow-left" onclick={onback}>Sections</Button>
+  <Button
+    icon="arrow-left"
+    iconOnly
+    label="Back to sections"
+    title="Back to sections"
+    onclick={onback}
+  />
   <span class="title">
     <i class="fa-solid fa-{g.icon}" aria-hidden="true"></i>
     {g.title}
     {#if g.name}<strong>{g.name}</strong>{/if}
   </span>
+  {#if tools}<span class="tools">{@render tools()}</span>{/if}
 </div>
 
 <div class="seg tabs" role="tablist" aria-label="Block">
@@ -127,7 +135,7 @@
 </div>
 
 {#if ui.blockTab === 'layout'}
-  <LayoutTab {g} {live} {at} {j} {base} {block} />
+  <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
 {:else if ui.blockTab === 'motion'}
   {#key blockEl}
     <BlockMotion
@@ -181,11 +189,17 @@
 {/if}
 
 <style lang="scss">
+  // [ ← | icon Type name | … | Grid ]
   .head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 12px;
+  }
+
+  .tools {
+    display: flex;
+    margin-left: auto;
   }
 
   .title {

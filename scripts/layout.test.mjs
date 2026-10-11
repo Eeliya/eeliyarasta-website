@@ -73,7 +73,7 @@ test('registry: every block type has a label, an icon and renders its defaults',
     const ids = new Set();
     const list = [newSection(ids, [newBlock(type, ids)])];
     const out = renderSections(ctxOf(route), route, F, list);
-    assert.match(out, new RegExp(`<div class="blk blk--${type}"`), type);
+    assert.match(out, new RegExp(`<div class="blk blk--${type} blk--auto"`), type); // auto: the default
     assert.deepEqual(checkContent(F, { sections: list }), [], type);
   }
 });
@@ -92,21 +92,41 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
     section([block('text', { text: 'Three' })], { enabled: false }),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
-  assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12">/); // rows grow to fit
-  assert.match(out, /<div class="blk blk--text" style="--c:3;--s:10;--r:2;--rs:4;--z:2">/);
+  // rows grow to fit; the phone grid's rows: its blocks' halved areas
+  assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12;--mrows:3">/);
+  assert.match(
+    out,
+    /<div class="blk blk--text blk--auto" style="--c:3;--s:10;--r:2;--rs:4;--z:2;--mc:2;--ms:5;--mr:1;--mrs:2">/,
+  );
   assert.match(out, /<section class="sec sec--screen sec--bottom sec--full"/);
-  assert.match(out, /style="--c:1;--s:24;--r:1;--rs:1" hidden>/); // no pos: full width
-  assert.match(out, /style="--rows:1;--pt:0;--pb:0" hidden>/);
+  assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1;--mc:1;--ms:60;--mr:1;--mrs:1" hidden>/); // no pos: full width
+  assert.match(out, /style="--rows:1;--pt:0;--pb:0;--mrows:1" hidden>/);
   assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
-  // a mobile area: the section keeps its grid on phones
-  const mobile = [section([block('text', { mobile: { col: 1, span: 12, row: 1, rows: 2 } })])];
+  // a phone area of its own: on the 60-column phone grid
+  const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
   assert.match(
     renderSections(ctxOf(page), page, F, mobile),
-    /class="sec sec--mgrid"[\s\S]*;--mc:1;--ms:12;--mr:1;--mrs:2"/,
+    /class="sec"[\s\S]*;--mc:1;--ms:24;--mr:1;--mrs:2"/,
   );
-  // a block can't run past column 24
-  const wide = [section([block('text', { pos: { col: 20, span: 10, row: 1, rows: 1 } })])];
-  assert.match(renderSections(ctxOf(page), page, F, wide), /--c:20;--s:5;/);
+  // links and scaled text on the element
+  const linked = [
+    section([
+      block('text', { id: 'b-lead' }),
+      block('text', {
+        id: 'b-foll',
+        link: { to: 'b-lead', gap: -3 },
+        scale: { on: true, adjust: 120 },
+      }),
+    ]),
+  ];
+  const lo = renderSections(ctxOf(page), page, F, linked);
+  assert.match(
+    lo,
+    /class="blk blk--text blk--auto blk--scale"[^>]*;--tk:1.2" data-link="b-lead -3" data-mlink="b-lead -2"/,
+  );
+  // a block can't run past column 120
+  const wide = [section([block('text', { pos: { col: 116, span: 10, row: 1, rows: 1 } })])];
+  assert.match(renderSections(ctxOf(page), page, F, wide), /--c:116;--s:5;/);
 });
 
 test('render: no automatic numbering; a heading can be numbered, counting the ones that are on', () => {
@@ -176,8 +196,8 @@ test('validation: the layout, then each block against its type', () => {
   const one = (b) => problems([section([{ id: 'b-aaaa', ...b }])]);
   assert.deepEqual(one({ title: 'x' }), ['section 1, block 1 needs a "type"']);
   assert.deepEqual(one({ type: 'unknown-type', anything: 1 }), []);
-  assert.deepEqual(one({ type: 'text', pos: { col: 20, span: 10, row: 1, rows: 1 } }), [
-    'section 1, block 1 (Text): "pos" must end by column 24 (col 20 + span 10)',
+  assert.deepEqual(one({ type: 'text', pos: { col: 116, span: 10, row: 1, rows: 1 } }), [
+    'section 1, block 1 (Text): "pos" must end by column 120 (col 116 + span 10)',
   ]);
   assert.match(one({ type: 'text', pos: { col: 0, span: 1, row: 1, rows: 1 } })[0], /pos.col/);
   assert.match(one({ type: 'text', z: 1.5 })[0], /"z" must be a whole number/);
@@ -262,19 +282,19 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.deepEqual(types(), ['heading', 'text', 'text']);
 
   const b = addBlock(store, F, 0, 'button');
-  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 24, row: 13, rows: 12 }); // below
-  assert.equal(sections()[0].rows, 24);
+  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 }); // below
+  assert.equal(sections()[0].rows, 16);
   assert.ok(isId(b.id, 'b'));
   duplicateBlock(store, F, 0, 1);
   assert.deepEqual(types()[0], 'heading+button+button');
-  assert.equal(sections()[0].blocks[2].pos.row, 25);
+  assert.equal(sections()[0].blocks[2].pos.row, 17);
   moveBlock(store, F, 0, 2, 0);
   assert.deepEqual(types()[0], 'button+heading+button');
   removeBlock(store, F, 0, 0);
   assert.deepEqual(types()[0], 'heading+button');
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 30, rows: 4 });
   assert.deepEqual(sections()[0].blocks[1].pos, { col: 13, span: 12, row: 30, rows: 4 });
-  assert.equal(sections()[0].rows, 36); // a section grows to fit, never shrinks by itself
+  assert.equal(sections()[0].rows, 33); // a section grows to fit, never shrinks by itself
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 40, rows: 4 });
   assert.equal(sections()[0].rows, 43); // grown in the same step
   layerBlock(store, F, 0, 1, 1);
@@ -289,10 +309,10 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   store.undo(); // layer down
   store.undo(); // layer up
   store.undo(); // the second drag
-  assert.equal(sections()[0].rows, 36);
+  assert.equal(sections()[0].rows, 33);
   store.undo(); // the first drag
-  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 24, row: 13, rows: 12 });
-  assert.equal(rowsOf(sections()[0]), 36);
+  assert.deepEqual(sections()[0].blocks[1].pos, { col: 1, span: 120, row: 9, rows: 8 });
+  assert.equal(rowsOf(sections()[0]), 24);
   store.undo(); // remove
   assert.deepEqual(types()[0], 'button+heading+button');
   store.redo();
@@ -328,7 +348,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(
     html,
     new RegExp(
-      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15">`,
+      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15;--mrows:${Math.ceil(s.rows / 2)}">`,
     ),
   );
   assert.match(html, /Edited headline/);

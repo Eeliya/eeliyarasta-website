@@ -5,7 +5,7 @@
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
  * sections' height, width, spacing, rows and on/off (their classes and CSS variables) and the
- * blocks' places, sizes, placements, phone areas, layers, on/off and motion (data-motion,
+ * blocks' places, sizes, links, text scale, placements, phone areas, layers, on/off and motion (data-motion,
  * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
  * moved, so its editor markers point elsewhere) it reports: the editor fetches those
@@ -13,6 +13,7 @@
  */
 import {
   blockClass,
+  blockLinks,
   blockVars,
   headingNumbers,
   sectionClass,
@@ -96,6 +97,7 @@ function applyLayout(el, s, moved = []) {
       .join('');
     node.style.cssText = blockVars(b) + kept;
     node.hidden = b.config?.enabled === false;
+    for (const [name, value] of Object.entries(blockLinks(b))) setAttr(node, name, value);
     const [anim, options] = motionOf(b);
     const a = setAttr(node, 'data-motion', anim);
     if (setAttr(node, 'data-motion-options', options) || a) moved.push(node);
