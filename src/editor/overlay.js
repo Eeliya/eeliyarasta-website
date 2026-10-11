@@ -2,33 +2,47 @@
  * The layout overlay, drawn in the preview over the page (in its own Shadow DOM, so neither
  * the site's styles nor the editor's reach it):
  *
- *   Grid      every section's square cells (120 columns, the phone grid's 24, and its rows,
+ *   Grid      every section's square cells (120 columns, the phone grid's 60, and its rows,
  *             all one --cell: src/site/layout/flow.js), from the section's own computed grid;
- *             every 5th line (the old 24-column grid's) a little stronger
+ *             every 5th line a little stronger
  *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
  *             a drag moves it and the handles on its edges and corners resize it; a double
  *             click edits a text in place (bridge.js), the page's own clicks are off. A drag
- *             snaps to the columns and rows and shows its area live (the block's CSS
- *             variables); on release it is one edit, one undo step (onplace), which also stores
- *             where the section's other blocks are now (their real rows). Esc cancels.
- *             Below 760px (the mobile preview) a drag edits the block's phone area, on the
- *             phone grid of 24 columns: in a section whose blocks still stack, the first drag
- *             turns the stack into that grid, every block keeping the place it had (measured).
- *             An aspect or auto block's rows follow its width: only its sides resize.
+ *             snaps to the cells and shows its area live (the block's CSS variables, and the
+ *             blocks that follow it move along); on release it is one edit, one undo step
+ *             (onplace), which also stores where the section's other blocks are now (their
+ *             real rows). A linked block dragged up or down keeps its link: its gap changes.
+ *             Esc cancels. Below 760px (the mobile preview) a drag edits the block's phone
+ *             area, on the phone grid of 60 columns (a block without one shows its desktop
+ *             area halved: that is where the drag starts). An aspect or auto block's rows
+ *             follow its width: only its sides resize.
+ *   Links     the selected and the hovered block show a circle above their top edge and one
+ *             below their bottom edge. Dragging a block's top circle onto another block's
+ *             bottom circle (in its section; blocks that would make a loop show none) links
+ *             it: it follows that block, keeping where it is (the gap: the rows between them
+ *             now, negative when they overlap); dropped anywhere else, a linked block is free
+ *             again (onlink). A line joins every leader's bottom to its followers' tops; a
+ *             click on one selects that link, Delete or Backspace removes it. The phone
+ *             preview shows and edits the phone links.
  *
- * A block is where the site's rows.js put it (--fr / --frs: its stored row moved by the
- * blocks above that grew or shrank), so a drag starts from there; while it runs the page
- * holds its rows (data-flow-hold on <html>).
+ * A block is where the site's rows.js put it (--fr / --frs: a linked block below its leader,
+ * auto and aspect blocks the rows they need), so a drag starts from there; while it runs the
+ * page holds its rows (data-flow-hold on <html>).
  *
  * The overlay follows the page with a frame loop while it shows something; it reads `ui`
- * (mode, grid, block) every frame, and the section metrics once per drag, so the grid
+ * (mode, grid, block, link) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
-import { COLS, MCOLS, cellOf, hasMobileArea, placeOf, sizeOf } from '../site/layout/index.js';
-import { rowsFor } from '../site/layout/flow.js';
+import { COLS, MCOLS, makesLoop, phoneAreaOf, placeOf, sizeOf } from '../site/layout/index.js';
+import { resolveRows } from '../site/layout/flow.js';
 
 const MOBILE = 760;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+/** How far a link circle sits outside its block's edge, px (clear of the n / s handles). */
+const DOT = 12;
+/** How near the pointer must come to a bottom circle to drop a link on it, px. */
+const REACH = 24;
+const SVG = 'http://www.w3.org/2000/svg';
 
 const STYLE = `
 :host { all: initial; }
@@ -50,36 +64,25 @@ const STYLE = `
 .handle[data-h='ne'], .handle[data-h='sw'] { cursor: nesw-resize; }
 .handle[data-h='nw'], .handle[data-h='se'] { cursor: nwse-resize; }
 .sel.is-free .handle:not([data-h='e']):not([data-h='w']) { display: none; }
+.dot { position: absolute; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 50%; background: #000; pointer-events: auto; }
+.dot[data-dot='top'] { top: -${DOT}px; cursor: grab; }
+.dot[data-dot='bottom'] { top: calc(100% + ${DOT}px); }
+.dot.is-linked { background: #3cf; }
+.hover .dot { opacity: 1; }
+.sel.is-dragging .dot, .is-linking .box .dot { display: none; }
+.target { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 50%; background: #000; }
+.target.is-near { background: #3cf; box-shadow: 0 0 0 4px rgb(51 204 255 / .35); }
+svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.link { fill: none; stroke: #3cf; stroke-width: 2; }
+.link.is-sel { stroke: #fff; stroke-width: 3; }
+.link.is-temp { stroke-dasharray: 4 4; }
+.hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.gap { fill: #3cf; font: 500 10px 'DM Mono', ui-monospace, monospace; paint-order: stroke; stroke: #000; stroke-width: 3px; }
 `;
 
 /**
- * Where a stacking section's blocks are on the phone, as phone-grid areas (24 columns, rows of
- * one cell): { id: area }. Used to turn the stack into a grid without moving anything.
- */
-export function stackAreas(sec, win) {
-  const cs = win.getComputedStyle(sec);
-  // the phone grid's cell (the section isn't a grid yet: its width over 24)
-  const width =
-    sec.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const row = cellOf(width, MCOLS) || 8;
-  const top = sec.getBoundingClientRect().top + parseFloat(cs.paddingTop);
-  const out = {};
-  for (const el of sec.querySelectorAll('[data-block]')) {
-    if (el.closest('[data-sec]') !== sec) continue;
-    const r = el.getBoundingClientRect();
-    out[el.dataset.block] = {
-      col: 1,
-      span: MCOLS,
-      row: Math.max(1, Math.round((r.top - top) / row) + 1),
-      rows: rowsFor(r.height, row), // as the site's rows.js counts them
-    };
-  }
-  return out;
-}
-
-/**
  * Where the blocks of a section are now, as the site's rows.js placed them: { id: area }
- * (the phone grid's on the phone; blocks it didn't place keep their stored area).
+ * (the phone grid's on the phone: a block's own phone area, or its desktop area halved).
  */
 export function flowAreas(sec, phone, blockOf) {
   const out = {};
@@ -87,12 +90,7 @@ export function flowAreas(sec, phone, blockOf) {
     if (el.closest('[data-sec]') !== sec) continue;
     const b = blockOf(el.dataset.block);
     if (!b) continue;
-    const stored = phone
-      ? hasMobileArea(b.mobile)
-        ? placeOf(b.mobile, MCOLS)
-        : null
-      : placeOf(b.pos);
-    if (!stored) continue;
+    const stored = phone ? phoneAreaOf(b) : placeOf(b.pos);
     const row = parseInt(el.style.getPropertyValue('--fr'), 10);
     const rows = parseInt(el.style.getPropertyValue('--frs'), 10);
     out[el.dataset.block] = { ...stored, ...(row > 0 && rows > 0 ? { row, rows } : {}) };
@@ -177,18 +175,19 @@ function nearest(list, v, step) {
 }
 
 /**
- * onpick(id): a block was clicked; onplace(id, pos, { mobile, stack, flow, rows }): a drag
- * ended with the block at `pos` (mobile: its phone area; stack: the areas of a stacking
- * section's blocks it turned into a grid; flow: where the section's blocks are now, { id:
- * area }, and rows: its rows now); blockOf(id): the stored block (null when it isn't on the
- * page).
+ * onpick(id): a block was clicked; onplace(id, pos, { mobile, flow, rows }): a drag ended with
+ * the block at `pos` (mobile: its phone area; flow: where the section's blocks are now, { id:
+ * area }, and rows: its rows now); onlink(id, to, gap, { mobile }): block `id` follows `to`
+ * with `gap` cells between them (to null: it is free again); blockOf(id): the stored block
+ * (null when it isn't on the page).
  */
-export function createOverlay({ ui, onpick, onplace, blockOf }) {
+export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf }) {
   let doc = null;
   let win = null;
   let root = null; // the shadow root's layer
   let raf = 0;
   let drag = null;
+  let linking = null;
   let hover = null;
   let gridKey = '';
   const els = {};
@@ -197,21 +196,51 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
   const shown = () => doc && (arranging() || ui.grid);
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
+  const secOf = (el) => el?.closest('[data-sec]');
+  /** The block elements of a section (not a nested section's). */
+  const blocksIn = (sec) =>
+    [...sec.querySelectorAll('[data-block]')].filter((n) => secOf(n) === sec);
+  /** The link a block element follows on the grid shown: { to, gap } or null. */
+  const linkOfEl = (el) => {
+    const v = mobile() ? el.dataset.mlink : el.dataset.link;
+    const m = v && /^(\S+)\s+(-?\d+)$/.exec(v);
+    return m ? { to: m[1], gap: Number(m[2]) } : null;
+  };
 
   function build() {
     const host = doc.createElement('div');
     host.id = '__ed-layout';
     host.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483645;';
     const shadow = host.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><div class="box hover" hidden></div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}</div></div>`;
+    const dots = '<i class="dot" data-dot="top"></i><i class="dot" data-dot="bottom"></i>';
+    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
     root = shadow.querySelector('.layer');
     els.grids = root.querySelector('.grids');
+    els.links = root.querySelector('.links');
     els.hover = root.querySelector('.hover');
     els.sel = root.querySelector('.sel');
     els.label = root.querySelector('.label');
+    els.targets = root.querySelector('.targets');
     shadow.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
       const h = e.target.dataset?.h;
-      if (h && ui.block) start(e, blockEl(ui.block), h);
+      if (h && ui.block) return start(e, blockEl(ui.block), h);
+      const dot = e.target.dataset?.dot;
+      if (dot === 'top') {
+        const el = e.target.closest('.sel') ? blockEl(ui.block) : hover;
+        if (el) {
+          onpick(el.dataset.block);
+          startLink(e, el);
+        }
+        return;
+      }
+      const link = e.target.dataset?.link;
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        ui.link = link;
+        if (!raf) raf = win.requestAnimationFrame(frame);
+      }
     });
     doc.body.appendChild(host);
     return host;
@@ -255,24 +284,78 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     );
   }
 
-  const labelOf = (b) => `${mobile() ? 'phone · ' : ''}${b?.type || 'block'}`;
+  /** A link's line from a leader's bottom circle to a follower's top circle (page px). */
+  const curve = (x1, y1, x2, y2) => {
+    const k = Math.max(16, Math.abs(y2 - y1) / 2);
+    return `M${x1} ${y1}C${x1} ${y1 + k} ${x2} ${y2 - k} ${x2} ${y2}`;
+  };
+  const bottomDot = (r) => [r.x + r.w / 2, r.y + r.h + DOT];
+  const topDot = (r) => [r.x + r.w / 2, r.y - DOT];
+
+  /** The links of the shown sections as lines (and the one being dragged). */
+  function drawLinks() {
+    const parts = [];
+    const h = doc.documentElement;
+    els.links.setAttribute('width', h.scrollWidth);
+    els.links.setAttribute('height', h.scrollHeight);
+    if (arranging())
+      for (const sec of doc.querySelectorAll('[data-sec]:not([hidden])'))
+        for (const el of blocksIn(sec)) {
+          const l = linkOfEl(el);
+          if (!l || el.hidden || linking?.el === el) continue;
+          const lead = blocksIn(sec).find((n) => n.dataset.block === l.to);
+          if (!lead || lead.hidden) continue;
+          const [x1, y1] = bottomDot(rectOf(lead, win));
+          const [x2, y2] = topDot(rectOf(el, win));
+          const id = el.dataset.block;
+          const d = curve(x1, y1, x2, y2);
+          const near = [ui.block, ui.link].includes(id) || ui.block === l.to;
+          parts.push(
+            `<path class="link${ui.link === id ? ' is-sel' : ''}" d="${d}"/>` +
+              `<path class="hit" data-link="${id}" d="${d}"/>` +
+              (near
+                ? `<text class="gap" x="${(x1 + x2) / 2 + 6}" y="${(y1 + y2) / 2 + 3}">gap ${l.gap}</text>`
+                : ''),
+          );
+        }
+    if (linking?.to)
+      parts.push(`<path class="link is-temp" d="${curve(...linking.to, ...linking.from)}"/>`);
+    const html = parts.join('');
+    if (els.links.innerHTML !== html) els.links.innerHTML = html;
+  }
+
+  const labelOf = (b, el) => {
+    const l = el && linkOfEl(el);
+    return `${mobile() ? 'phone · ' : ''}${b?.type || 'block'}${l ? ` · follows, gap ${l.gap}` : ''}`;
+  };
+
+  /** The top circle shows filled when the block follows another. */
+  function dotsOf(box, el) {
+    box.querySelector('[data-dot="top"]').classList.toggle('is-linked', !!(el && linkOfEl(el)));
+  }
 
   function frame() {
     raf = 0;
     if (!root?.isConnected) return;
     drawGrids();
+    drawLinks();
     const arrange = arranging();
+    root.classList.toggle('is-linking', !!linking);
     const sel = arrange ? blockEl(ui.block) : null;
     els.sel.hidden = !sel;
     if (sel) {
       place(els.sel, rectOf(sel, win));
       const b = blockOf(ui.block);
       els.sel.classList.toggle('is-free', sizeOf(b) !== 'rows');
-      els.label.textContent = labelOf(b);
+      els.label.textContent = drag?.label ?? labelOf(b, sel);
+      dotsOf(els.sel, sel);
     }
-    const h = arrange && hover !== sel ? hover : null;
+    const h = arrange && hover !== sel && !drag ? hover : null;
     els.hover.hidden = !h;
-    if (h) place(els.hover, rectOf(h, win));
+    if (h) {
+      place(els.hover, rectOf(h, win));
+      dotsOf(els.hover, h);
+    }
     if (shown()) raf = win.requestAnimationFrame(frame);
   }
 
@@ -283,29 +366,24 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     if (!stored) return;
     e.preventDefault();
     e.stopPropagation();
-    const sec = el.closest('[data-sec]');
+    ui.link = null;
+    const sec = secOf(el);
     const phone = mobile();
-    // a stacking section on the phone: shown as the grid it becomes, the blocks where they are
-    const stack = phone && !sec.classList.contains('sec--mgrid') ? stackAreas(sec, win) : null;
-    const saved = new Map(
-      [sec, ...sec.querySelectorAll('[data-block]')].map((n) => [n, n.style.cssText]),
-    );
+    const saved = new Map([sec, ...blocksIn(sec)].map((n) => [n, n.style.cssText]));
     // where the section's blocks are now (stored with the drag), then hold them there
-    const flow = stack ? null : flowAreas(sec, phone, blockOf);
+    const flow = flowAreas(sec, phone, blockOf);
     const rows = Number(sec.style.getPropertyValue('--frows')) || 0;
     doc.documentElement.setAttribute('data-flow-hold', '');
-    const savedClass = sec.className;
-    if (stack) {
-      sec.classList.add('sec--mgrid');
-      let rows = 1;
-      for (const [bid, a] of Object.entries(stack)) {
-        const n = sec.querySelector(`[data-block="${CSS.escape(bid)}"]`);
-        setArea(n.style, a, true);
-        rows = Math.max(rows, a.row + a.rows - 1);
-      }
-      sec.style.setProperty('--mrows', rows);
-    }
-    const from = stack ? stack[id] : flow[id];
+    const from = flow[id];
+    // the section's blocks and links, to move the blocks that follow this one along
+    const items = blocksIn(sec)
+      .filter((n) => flow[n.dataset.block])
+      .map((n) => ({
+        id: n.dataset.block,
+        el: n,
+        ...flow[n.dataset.block],
+        link: n === el ? null : linkOfEl(n),
+      }));
     drag = {
       id,
       el,
@@ -316,12 +394,13 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       x: e.clientX,
       y: e.clientY,
       phone,
-      stack,
       saved,
-      savedClass,
       cols: phone ? MCOLS : COLS,
       lines: linesOf(sec, win),
       flow,
+      items,
+      link: linkOfEl(el),
+      label: null,
       rows: rows || Number(sec.style.getPropertyValue(phone ? '--mrows' : '--rows')) || 1,
     };
     els.sel.classList.add('is-dragging');
@@ -375,10 +454,21 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     s.setProperty('--frs', p.rows);
   }
 
-  /** Show `pos` on the block (and grow the section's rows to hold it) without storing it. */
+  /**
+   * Show `pos` on the block without storing it: the blocks that follow it move along, the
+   * section's rows grow to hold them, and a linked block's label shows its gap.
+   */
   function show(p) {
     setArea(drag.el.style, p, drag.phone);
-    drag.sec.style.setProperty('--frows', Math.max(drag.rows, p.row + p.rows - 1));
+    const items = drag.items.map((it) => (it.id === drag.id ? { ...it, ...p } : it));
+    const { rows, at } = resolveRows(items, drag.rows);
+    for (const it of drag.items)
+      if (it.id !== drag.id && at[it.id]) it.el.style.setProperty('--fr', at[it.id].row);
+    drag.sec.style.setProperty('--frows', Math.max(drag.rows, rows, p.row + p.rows - 1));
+    if (drag.link) {
+      const lead = at[drag.link.to];
+      if (lead) drag.label = `${drag.phone ? 'phone · ' : ''}gap ${p.row - (lead.row + lead.rows)}`;
+    }
   }
 
   function stop() {
@@ -392,16 +482,15 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
   /** The section and its blocks as they were before the drag. */
   function restore() {
     for (const [n, css] of drag.saved) n.style.cssText = css;
-    drag.sec.className = drag.savedClass;
   }
 
   function end() {
-    const { id, from, pos, phone, stack, flow, rows } = drag;
+    const { id, from, pos, phone, flow, rows } = drag;
     const moved = ['col', 'span', 'row', 'rows'].some((k) => pos[k] !== from[k]);
     if (!moved) restore(); // a click changes nothing
     stop();
     drag = null;
-    if (moved) onplace(id, pos, { mobile: phone, stack: stack || {}, flow: flow || {}, rows });
+    if (moved) onplace(id, pos, { mobile: phone, flow, rows });
   }
 
   function cancel(e) {
@@ -413,11 +502,105 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     drag = null;
   }
 
+  // ---- links: a drag from a block's top circle to another block's bottom circle
+
+  /** Start dragging block `el`'s top circle: the blocks it may follow show bottom circles. */
+  function startLink(e, el) {
+    e.preventDefault();
+    e.stopPropagation();
+    ui.link = null;
+    const id = el.dataset.block;
+    const sec = secOf(el);
+    const phone = mobile();
+    const blocks = blocksIn(sec)
+      .map((n) => blockOf(n.dataset.block))
+      .filter(Boolean);
+    const targets = blocksIn(sec)
+      .filter((n) => n !== el && !n.hidden && !makesLoop(blocks, id, n.dataset.block, phone))
+      .map((n) => {
+        const [x, y] = bottomDot(rectOf(n, win));
+        const dot = doc.createElement('i');
+        dot.className = 'target';
+        dot.style.left = `${x}px`;
+        dot.style.top = `${y}px`;
+        return { id: n.dataset.block, x, y, dot };
+      });
+    els.targets.replaceChildren(...targets.map((t) => t.dot));
+    linking = { el, id, sec, phone, targets, near: null, from: topDot(rectOf(el, win)), to: null };
+    win.addEventListener('pointermove', moveLink, true);
+    win.addEventListener('pointerup', endLink, true);
+    win.addEventListener('keydown', cancelLink, true);
+    if (!raf) raf = win.requestAnimationFrame(frame);
+  }
+
+  function moveLink(e) {
+    const p = [e.clientX + win.scrollX, e.clientY + win.scrollY];
+    let near = null;
+    let best = REACH;
+    for (const t of linking.targets) {
+      const d = Math.hypot(t.x - p[0], t.y - p[1]);
+      if (d <= best) {
+        best = d;
+        near = t;
+      }
+    }
+    for (const t of linking.targets) t.dot.classList.toggle('is-near', t === near);
+    linking.near = near;
+    linking.to = near ? [near.x, near.y] : p;
+  }
+
+  function stopLink() {
+    win.removeEventListener('pointermove', moveLink, true);
+    win.removeEventListener('pointerup', endLink, true);
+    win.removeEventListener('keydown', cancelLink, true);
+    els.targets.replaceChildren();
+    linking = null;
+  }
+
+  function endLink() {
+    const { el, id, sec, phone, near } = linking;
+    const was = linkOfEl(el);
+    stopLink();
+    if (near) {
+      // it stays where it is: the gap is the rows between them now
+      const flow = flowAreas(sec, phone, blockOf);
+      const a = flow[near.id];
+      const b = flow[id];
+      if (a && b && (was?.to !== near.id || was.gap !== b.row - (a.row + a.rows)))
+        onlink(id, near.id, b.row - (a.row + a.rows), { mobile: phone });
+    } else if (was) onlink(id, null, 0, { mobile: phone }); // dropped off: free
+  }
+
+  function cancelLink(e) {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation();
+    stopLink();
+  }
+
+  /** Delete or Backspace with a link selected: that link removed. */
+  function deleteLink() {
+    const id = ui.link;
+    if (!id) return false;
+    ui.link = null;
+    const el = blockEl(id);
+    if (el && linkOfEl(el)) onlink(id, null, 0, { mobile: mobile() });
+    return true;
+  }
+  function onkeydown(e) {
+    if (!['Delete', 'Backspace'].includes(e.key) || !ui.link || editing(e.target)) return;
+    if (e.target.closest?.('input, textarea, select')) return;
+    e.preventDefault();
+    deleteLink();
+  }
+
   // Arrange: clicks pick and drag blocks; the page's own clicks (links, buttons) are off. A
   // text being edited in place (contenteditable, bridge.js) keeps its clicks (the caret).
   const editing = (t) => !!t.closest?.('[contenteditable]');
   function onpointerdown(e) {
+    if (e.target.id === '__ed-layout') return; // the overlay's own (its shadow root handles it)
     if (!arranging() || e.button !== 0 || e.altKey || editing(e.target)) return;
+    ui.link = null;
     const el = e.target.closest?.('[data-block]');
     if (!el) return;
     if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
@@ -432,6 +615,7 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
     }
   };
   function onpointerover(e) {
+    if (e.target.id === '__ed-layout') return; // over its circles: the block stays hovered
     hover = arranging() ? e.target.closest?.('[data-block]') || null : null;
   }
 
@@ -446,14 +630,17 @@ export function createOverlay({ ui, onpick, onplace, blockOf }) {
       doc.addEventListener('mousedown', swallow, true);
       doc.addEventListener('click', swallow, true);
       doc.addEventListener('pointerover', onpointerover, true);
+      doc.addEventListener('keydown', onkeydown, true);
       this.refresh();
     },
-    /** ui.mode, ui.grid or ui.block changed: show or hide what they ask for. */
+    /** ui.mode, ui.grid, ui.block or ui.link changed: show or hide what they ask for. */
     refresh() {
       if (!doc || !root) return;
       gridKey = '';
       if (!ui.grid) els.grids.replaceChildren();
       if (!raf) raf = win.requestAnimationFrame(frame);
     },
+    /** The editor's Delete with a link selected (its focus outside the preview). */
+    deleteLink,
   };
 }

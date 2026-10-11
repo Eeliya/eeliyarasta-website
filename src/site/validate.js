@@ -24,6 +24,8 @@ import {
 import { checkSchema } from './schemas.js';
 import { BLOCK_TYPES } from './blocks/index.js';
 import { ALIGNS, COLS, HEIGHTS, MCOLS, PLACES, SIZES, WIDTHS, ratioOf } from './layout/index.js';
+import { linkProblems } from './layout/links.js';
+import { checkScale, checkTypography } from './layout/type.js';
 import { isId } from './layout/ids.js';
 import { checkMotion } from './layout/motion.js';
 import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
@@ -95,6 +97,7 @@ function checkSite(d) {
       forms: 'object',
     }),
     ...checkForms(d.forms),
+    ...checkTypography(d.typography),
     ...(d.robots === undefined || ['index', 'noindex'].includes(d.robots)
       ? []
       : ['"robots" must be "index" or "noindex"']),
@@ -200,6 +203,14 @@ function checkPage(file, d) {
     out.push('"config.source" must name a source (a [slug] page makes a page per item)');
   if (!Array.isArray(d.sections)) return out;
   out.push(...d.sections.flatMap(checkSection));
+  // links: within their section, to a block that is there, no loops (layout/links.js)
+  const all = new Set(
+    d.sections.flatMap((s) => (Array.isArray(s?.blocks) ? s.blocks.map((b) => b?.id) : [])),
+  );
+  d.sections.forEach((s, at) => {
+    if (!Array.isArray(s?.blocks)) return;
+    out.push(...linkProblems(s.blocks, all).map((p) => `section ${at + 1}: ${p}`));
+  });
   const seen = new Set();
   for (const id of d.sections.flatMap((s) => [s?.id, ...(s?.blocks || []).map((b) => b?.id)]))
     if (typeof id === 'string' && seen.has(id)) out.push(`the id "${id}" is used twice`);
@@ -272,9 +283,9 @@ function checkBlock(b, where) {
     bad('aspect', 'a ratio like "4:5"');
   if (b.place !== undefined && !PLACES.includes(b.place)) bad('place', 'a placement (see layout)');
   if (b.mobile !== undefined) {
-    if (!isObject(b.mobile)) bad('mobile', 'an object { col, span, row, rows, place }');
+    if (!isObject(b.mobile)) bad('mobile', 'an object { col, span, row, rows, place, link }');
     else {
-      const { place, ...area } = b.mobile;
+      const { place, link, ...area } = b.mobile; // eslint-disable-line no-unused-vars
       if (place !== undefined && !PLACES.includes(place))
         bad('mobile.place', 'a placement (see layout)');
       if (Object.keys(area).length)
@@ -282,6 +293,7 @@ function checkBlock(b, where) {
     }
   }
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
+  out.push(...checkScale(b).map((p) => `${name}: ${p}`));
   if (b.motion !== undefined) out.push(...checkMotion(b.motion).map((p) => `${name}: ${p}`));
   if (!t) return out; // an unknown type only warns (render)
   if (

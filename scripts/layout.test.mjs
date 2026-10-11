@@ -73,7 +73,7 @@ test('registry: every block type has a label, an icon and renders its defaults',
     const ids = new Set();
     const list = [newSection(ids, [newBlock(type, ids)])];
     const out = renderSections(ctxOf(route), route, F, list);
-    assert.match(out, new RegExp(`<div class="blk blk--${type}"`), type);
+    assert.match(out, new RegExp(`<div class="blk blk--${type} blk--auto"`), type); // auto: the default
     assert.deepEqual(checkContent(F, { sections: list }), [], type);
   }
 });
@@ -92,17 +92,37 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
     section([block('text', { text: 'Three' })], { enabled: false }),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
-  assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12">/); // rows grow to fit
-  assert.match(out, /<div class="blk blk--text" style="--c:3;--s:10;--r:2;--rs:4;--z:2">/);
+  // rows grow to fit; the phone grid's rows: its blocks' halved areas
+  assert.match(out, /<section class="sec" style="--rows:5;--pt:10;--pb:12;--mrows:3">/);
+  assert.match(
+    out,
+    /<div class="blk blk--text blk--auto" style="--c:3;--s:10;--r:2;--rs:4;--z:2;--mc:2;--ms:5;--mr:1;--mrs:2">/,
+  );
   assert.match(out, /<section class="sec sec--screen sec--bottom sec--full"/);
-  assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1" hidden>/); // no pos: full width
-  assert.match(out, /style="--rows:1;--pt:0;--pb:0" hidden>/);
+  assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1;--mc:1;--ms:60;--mr:1;--mrs:1" hidden>/); // no pos: full width
+  assert.match(out, /style="--rows:1;--pt:0;--pb:0;--mrows:1" hidden>/);
   assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
-  // a mobile area: the section keeps its grid on phones
+  // a phone area of its own: on the 60-column phone grid
   const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
   assert.match(
     renderSections(ctxOf(page), page, F, mobile),
-    /class="sec sec--mgrid"[\s\S]*;--mc:1;--ms:24;--mr:1;--mrs:2"/,
+    /class="sec"[\s\S]*;--mc:1;--ms:24;--mr:1;--mrs:2"/,
+  );
+  // links and scaled text on the element
+  const linked = [
+    section([
+      block('text', { id: 'b-lead' }),
+      block('text', {
+        id: 'b-foll',
+        link: { to: 'b-lead', gap: -3 },
+        scale: { on: true, adjust: 120 },
+      }),
+    ]),
+  ];
+  const lo = renderSections(ctxOf(page), page, F, linked);
+  assert.match(
+    lo,
+    /class="blk blk--text blk--auto blk--scale"[^>]*;--tk:1.2" data-link="b-lead -3" data-mlink="b-lead -2"/,
   );
   // a block can't run past column 120
   const wide = [section([block('text', { pos: { col: 116, span: 10, row: 1, rows: 1 } })])];
@@ -328,7 +348,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(
     html,
     new RegExp(
-      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15">`,
+      `^<section class="sec" data-sec="${s.id}" style="--rows:${s.rows};--pt:3;--pb:4;--mpt:12;--mpb:15;--mrows:${Math.ceil(s.rows / 2)}">`,
     ),
   );
   assert.match(html, /Edited headline/);

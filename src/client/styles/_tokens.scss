@@ -19,6 +19,23 @@
   // the step of a section's spacing above and below its grid (src/site/layout/index.js SPACE)
   --space: 8px;
   --radius: 6px;
+  // text styles for scaled text (src/site/layout/type.js TEXT_STYLES; site.json typography)
+  --ts-title: 19;
+  --ts-title-lh: 0.82;
+  --ts-title-tr: -0.02em;
+  --ts-title-min: 40px;
+  --ts-heading: 3;
+  --ts-heading-lh: 1.1;
+  --ts-heading-tr: -0.01em;
+  --ts-heading-min: 20px;
+  --ts-paragraph: 1.4;
+  --ts-paragraph-lh: 1.75;
+  --ts-paragraph-tr: 0;
+  --ts-paragraph-min: 14px;
+  --ts-label: 1;
+  --ts-label-lh: 1.3;
+  --ts-label-tr: 0.08em;
+  --ts-label-min: 10px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   @media (width <= 760px) {

@@ -53,7 +53,7 @@ import {
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
 import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
-import { placeBlock, placeMobile } from './layout-ops.js';
+import { linkBlock, placeBlock, placeMobile } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -69,11 +69,18 @@ const overlay = createOverlay({
     if (ui.block !== id) ui.selection = null;
     ui.block = id;
   },
-  onplace(id, pos, { mobile = false, stack = {}, flow = {}, rows = 0 } = {}) {
+  onplace(id, pos, { mobile = false, flow = {}, rows = 0 } = {}) {
     const b = blockAt(id);
     if (!b) return;
-    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { stack, flow });
+    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { flow });
     else placeBlock(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
+  },
+  // a block linked to another (its top circle dropped on that one's bottom circle) or freed
+  onlink(id, to, gap, { mobile = false } = {}) {
+    const b = blockAt(id);
+    if (!b) return;
+    if (linkBlock(store, b.file, b.at, b.j, to, gap, { phone: mobile }) === null)
+      toast("Can't link those blocks (another section's, or a loop)", { kind: 'error' });
   },
   blockOf(id) {
     const b = blockAt(id);
@@ -404,6 +411,13 @@ document.addEventListener(
   (e) => e.key === 'Enter' && e.target.matches?.('input') && store.seal(),
   true,
 );
+// a link selected in the preview (overlay.js) and Delete pressed here: the link is removed
+document.addEventListener('keydown', (e) => {
+  if (!['Delete', 'Backspace'].includes(e.key) || !ui.link) return;
+  if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+  e.preventDefault();
+  overlay.deleteLink();
+});
 // The preview renders the unsaved edits: the dev server gets them after every change
 // (POST /__editor/draft; {} once saved), so pages the preview loads show them. A structure
 // change (a list item added or removed, a menu item moved) renders the preview again right

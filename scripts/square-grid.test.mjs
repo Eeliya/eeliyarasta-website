@@ -1,4 +1,4 @@
-/** The square grid (exp/square-grid-100): 120 columns, rows one cell, the migration from 24. */
+/** The square grid (exp/square-grid-120): 120 columns (60 on phones), rows one cell, the migration from 24. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { COLS, MCOLS, cellOf, newBlock, placeOf } from '../src/site/layout/index.js';
@@ -11,9 +11,9 @@ import {
 } from './migrate-square-grid.mjs';
 import { checkContent } from '../src/site/validate.js';
 
-test('grid: 120 columns, 24 on the phone; new blocks full width', () => {
+test('grid: 120 columns, 60 on the phone; new blocks full width', () => {
   assert.equal(COLS, 120);
-  assert.equal(MCOLS, 24);
+  assert.equal(MCOLS, 60);
   assert.deepEqual(placeOf({}), { col: 1, span: 120, row: 1, rows: 1 });
   assert.deepEqual(newBlock('text', new Set()).pos, { col: 1, span: 120, row: 1, rows: 8 });
 });
@@ -21,7 +21,8 @@ test('grid: 120 columns, 24 on the phone; new blocks full width', () => {
 test('cellOf: width over the columns, floored to 1/64px, never wider than the width', () => {
   assert.equal(cellOf(1200), 10);
   assert.equal(cellOf(1365.12), 11.375); // 1440 wide, contained
-  assert.equal(cellOf(358, MCOLS), 14.90625); // 390 wide phone
+  assert.equal(cellOf(358, MCOLS), 5.953125); // 390 wide phone
+  assert.equal(cellOf(358, 24), 14.90625); // (the 24-column phone grid before)
   assert.equal(cellOf(0), 0);
   for (const w of [1440, 1365.12, 1100, 1042.8, 800, 758.4, 358, 390, 333.3]) {
     const c = cellOf(w);
@@ -30,7 +31,7 @@ test('cellOf: width over the columns, floored to 1/64px, never wider than the wi
   }
 });
 
-test('migration: columns ×5 (phone ×2), rows by their px edges at 1440', () => {
+test('migration: columns ×5 (phone ×2, onto the 24-column phone grid of then), rows by their px edges at 1440', () => {
   const cell = cellAt(1440, false, COLS);
   assert.equal(cell, 11.375);
   assert.equal(cellAt(1440, true, COLS), 12);

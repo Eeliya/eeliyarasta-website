@@ -123,11 +123,12 @@
     <header class="ed-head">
       <!-- Editor | mobile view, undo, redo -->
       <h1 class="ed-brand">Editor</h1>
-      <!-- the icon shows the view a click switches to -->
+      <!-- a toggle: the phone view, on (the accent) or off -->
       <Button
-        icon={mobile ? 'desktop' : 'mobile-screen-button'}
+        icon="mobile-screen-button"
         iconOnly
-        label={mobile ? 'Switch to desktop view' : 'Switch to mobile view'}
+        label="Phone view"
+        aria-pressed={mobile}
         onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
       />
       <Button

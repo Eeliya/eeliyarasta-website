@@ -121,15 +121,13 @@
     </Button>
     {#if file}
       <Button
-        size="small"
         icon="table-cells"
-        variant={ui.grid ? 'primary' : 'default'}
+        iconOnly
+        label="Grid lines"
         aria-pressed={ui.grid}
-        title="Show the sections' square cells (120 columns, rows one cell) in the preview"
+        title="Grid lines: the sections' square cells in the preview (120 columns, 60 on phones)"
         onclick={() => actions.showGrid(!ui.grid)}
-      >
-        Grid
-      </Button>
+      />
     {/if}
   </div>
   {#if waiting}

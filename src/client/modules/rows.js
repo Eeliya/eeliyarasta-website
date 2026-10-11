@@ -1,6 +1,6 @@
 /**
  * The square grid's cell: every section's content width is measured and --cell (width / 120,
- * the phone grid's / 24; floored to 1/64px, cellOf) set on it, before its rows are worked
+ * the phone grid's / 60; floored to 1/64px, cellOf) set on it, before its rows are worked
  * out, on load and whenever the section resizes (ResizeObserver, window resize; rAF-throttled
  * besides the resize itself). A column and a row are both --cell: the cells are square.
  *
@@ -10,17 +10,20 @@
  * grid --mr / --mrs / --mrows). The stored area is what the page renders with before this
  * runs (and without JS).
  *
- * Measured: a block's height as its content makes it (`.sec--measure` lets every block be as
- * tall as its content for that read), or an aspect block's width × ratio. Run again when the
- * window resizes (at once, so the new layout is in the same frame), when a block's content
- * changes size (images, fonts, the editor's edits; on the next frame) and on reflow() (the
- * editor after it changed a layout). Sections stacking on phones have no rows: nothing is set.
+ * Measured: an auto block's height as its content makes it (`.sec--measure` lets every block
+ * be as tall as its content for that read), or an aspect block's width × ratio; a fixed-rows
+ * block keeps its rows. Then the links (src/site/layout/links.js, data-link / data-mlink on
+ * the block: "<leader id> <gap>") are resolved in their order: a follower's first row is its
+ * leader's last row now + 1 + its gap; a free block stays at its stored row. Run again when
+ * the window resizes (at once, so the new layout is in the same frame), when a block's
+ * content changes size (images, fonts, the editor's edits; on the next frame) and on reflow()
+ * (the editor after it changed a layout).
  *
  * A screen (or aspect) section is at least so tall: a block that fits in it doesn't make it
  * taller by rounding up to a whole row (it gets the whole rows that fit; rows stay square, so
  * a screen-high block's rows may be up to a cell short of the screen, its content still is).
  */
-import { flowRows, rowsFor } from '../../site/layout/flow.js';
+import { resolveRows, rowsFor } from '../../site/layout/flow.js';
 import { COLS, MCOLS, cellOf } from '../../site/layout/grid.js';
 
 const PHONE = '(max-width: 760px)';
@@ -42,11 +45,10 @@ const int = (v, fallback) => {
   return Number.isInteger(n) && n > 0 ? n : fallback;
 };
 
-/** A block's stored area on the layout that applies (the phone's: null when it has none). */
+/** A block's stored area on the layout that applies (the phone grid's, or the desktop's). */
 function areaOf(el, phone) {
   const s = el.style;
   if (phone) {
-    if (!s.getPropertyValue('--mr')) return null;
     return {
       col: int(s.getPropertyValue('--mc'), 1),
       span: int(s.getPropertyValue('--ms'), MCOLS),
@@ -84,8 +86,15 @@ function clear(sec) {
   return changed;
 }
 
+/** The link a block's element follows on this grid: { to, gap } or null (free). */
+function linkOfEl(el, phone) {
+  const v = phone ? el.dataset.mlink : el.dataset.link;
+  const m = v && /^(\S+)\s+(-?\d+)$/.exec(v);
+  return m ? { to: m[1], gap: Number(m[2]) } : null;
+}
+
 /**
- * Set a section's --cell from its content width now (the phone grid's 24 columns on the
+ * Set a section's --cell from its content width now (the phone grid's 60 columns on the
  * phone, else 120); returns the cell in px (0 when it has no width, e.g. hidden).
  */
 export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedStyle(sec)) {
@@ -96,7 +105,6 @@ export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComp
       parseFloat(cs.paddingRight) +
       parseFloat(cs.borderLeftWidth) +
       parseFloat(cs.borderRightWidth);
-  // on the phone the phone grid's, also for a stacking section (the editor turns it into one)
   const cell = cellOf(width, phone ? MCOLS : COLS);
   if (cell) set(sec, '--cell', `${cell}px`);
   return cell;
@@ -120,7 +128,6 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
   const before = sec.style.getPropertyValue('--cell');
   const cell = measureCell(sec, phone);
   const resized = sec.style.getPropertyValue('--cell') !== before;
-  if (phone && !sec.classList.contains('sec--mgrid')) return clear(sec) || resized;
   const cs = getComputedStyle(sec);
   const row = cell || parseFloat(cs.getPropertyValue('--cell')) || 8;
   const avail = minHeightOf(sec, cs);
@@ -144,13 +151,14 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
     let fit = h === null ? null : rowsFor(h, row);
     // it fits the screen (section): not taller than the rows the screen holds
     if (fit !== null && h <= avail + 0.5) fit = Math.min(fit, Math.max(1, cap - area.row + 1));
-    const need = fit === null ? null : kind === 'rows' ? Math.max(area.rows, fit) : fit;
-    items.push({ id, ...area, need });
+    // fixed rows: its own, whatever its content
+    const need = fit === null || kind === 'rows' ? null : fit;
+    items.push({ id, ...area, need, link: linkOfEl(el, phone) });
     els.set(id, el);
   }
   sec.classList.remove('sec--measure');
   const stored = parseInt(sec.style.getPropertyValue(phone ? '--mrows' : '--rows'), 10) || 1;
-  const { rows, at } = flowRows(items, stored);
+  const { rows, at } = resolveRows(items, stored);
   let changed = set(sec, '--frows', rows) || resized;
   for (const [id, el] of els) {
     const a = at[id];

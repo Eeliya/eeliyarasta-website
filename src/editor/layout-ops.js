@@ -5,7 +5,18 @@
  * again (src/editor/layout-sync.js); placing a block or changing a section's settings it
  * follows by itself, through the elements' classes and CSS variables.
  */
-import { MCOLS, newBlock, newSection, rowsOf, placeOf } from '../site/layout/index.js';
+import {
+  MCOLS,
+  hasMobileArea,
+  linkOf,
+  makesLoop,
+  newBlock,
+  newSection,
+  phoneAreaOf,
+  rowsOf,
+  placeOf,
+} from '../site/layout/index.js';
+import { resolveRows } from '../site/layout/flow.js';
 import { idsOf, newId } from '../site/layout/ids.js';
 
 const listOf = (store, file) => {
@@ -15,16 +26,42 @@ const listOf = (store, file) => {
 const write = (store, file, list, structure = true) =>
   store.set(file, '/sections', list, { source: 'panel', structure });
 /**
- * Section `at` replaced by `section` (its rows grown to fit its blocks): no new render.
- * key: typing in one field (a number) coalesces into one undo step (store.js).
+ * A section's stored rows made to agree with its links (src/site/layout/links.js): a linked
+ * block's stored row is its leader's stored bottom + 1 + its gap (desktop; on the phone grid
+ * for blocks with a phone area and link of their own), so the page's first render (before
+ * rows.js measures, or without JS) already has every follower below its leader.
  */
-const writeSection = (store, file, at, section, key) =>
-  store.set(
+export function settleLinks(section) {
+  const blocks = section.blocks || [];
+  const desk = resolveRows(
+    blocks.map((b) => ({ id: b.id, ...placeOf(b.pos), link: linkOf(b) })),
+    1,
+  ).at;
+  const own = blocks.filter((b) => hasMobileArea(b.mobile));
+  const phone = resolveRows(
+    own.map((b) => ({ id: b.id, ...placeOf(b.mobile, MCOLS), link: linkOf(b, true) })),
+    1,
+  ).at;
+  for (const b of blocks) {
+    if (linkOf(b) && desk[b.id]) b.pos = { ...placeOf(b.pos), row: desk[b.id].row };
+    if (linkOf(b, true) && phone[b.id]) b.mobile = { ...b.mobile, row: phone[b.id].row };
+  }
+  return section;
+}
+
+/**
+ * Section `at` replaced by `section` (its links settled, its rows grown to fit its blocks): no
+ * new render. key: typing in one field (a number) coalesces into one undo step (store.js).
+ */
+const writeSection = (store, file, at, section, key) => {
+  settleLinks(section);
+  return store.set(
     file,
     `/sections/${at}`,
     { ...section, rows: rowsOf(section) },
     { source: 'panel', key },
   );
+};
 
 /** A copy of a section ('s') or block ('b') with new ids (taken: the page's ids, the new ones added). */
 function copyOf(item, kind, taken) {
@@ -81,7 +118,7 @@ const below = (section) =>
   Math.max(0, ...(section.blocks || []).map((b) => placeOf(b.pos).row + placeOf(b.pos).rows - 1)) +
   1;
 
-/** A new full-width block of `type` in section `at`, below its other blocks. */
+/** A new full-width block of `type` in section `at`, below its other blocks (free: no link). */
 export function addBlock(store, file, at, type) {
   const list = listOf(store, file);
   const section = list[at];
@@ -99,13 +136,19 @@ export function duplicateBlock(store, file, at, j) {
   const section = list[at];
   const copy = copyOf(section.blocks[j], 'b', idsOf(list));
   copy.pos = { ...placeOf(copy.pos), row: below(section) };
+  // a copy is free (its links were the original's place)
+  delete copy.link;
+  if (copy.mobile) {
+    delete copy.mobile.link;
+    if (!hasMobileArea(copy.mobile) && !copy.mobile.place) delete copy.mobile;
+  }
   section.blocks.splice(j + 1, 0, copy);
   section.rows = rowsOf(section);
   write(store, file, list);
   return copy;
 }
 
-/** Block `from` of section `at` moved to index `to` in its order (the mobile stacking order). */
+/** Block `from` of section `at` moved to index `to` in its order (its paint order among blocks of the same layer). */
 export function moveBlock(store, file, at, from, to) {
   const list = listOf(store, file);
   const blocks = list[at].blocks;
@@ -114,10 +157,14 @@ export function moveBlock(store, file, at, from, to) {
   return write(store, file, list);
 }
 
-/** Block `j` of section `at` removed. */
+/** Block `j` of section `at` removed (the blocks that followed it are free from then on). */
 export function removeBlock(store, file, at, j) {
   const list = listOf(store, file);
-  list[at].blocks.splice(j, 1);
+  const [gone] = list[at].blocks.splice(j, 1);
+  for (const b of list[at].blocks) {
+    if (b.link?.to === gone?.id) delete b.link;
+    if (b.mobile?.link?.to === gone?.id) delete b.mobile.link;
+  }
   return write(store, file, list);
 }
 
@@ -131,10 +178,23 @@ function storeFlow(section, j, flow = {}, rows = 0, phone = false) {
   section.blocks.forEach((b, k) => {
     const a = k !== j && flow[b.id];
     if (!a) return;
-    if (phone) b.mobile = { ...b.mobile, row: a.row, rows: a.rows };
-    else b.pos = { ...placeOf(b.pos), row: a.row, rows: a.rows };
+    // on the phone only a block's own phone area (one without shows its desktop area halved)
+    if (phone) {
+      if (hasMobileArea(b.mobile)) b.mobile = { ...b.mobile, row: a.row, rows: a.rows };
+    } else b.pos = { ...placeOf(b.pos), row: a.row, rows: a.rows };
   });
   if (!phone && Number.isInteger(rows) && rows > 0) section.rows = rows;
+}
+
+/**
+ * The gap a linked block has when its first row is `row`, its leader where `flow` says it is
+ * now (or its stored area): rows between the leader's bottom and it (negative: overlapping).
+ */
+function gapAt(section, link, row, flow = {}, phone = false) {
+  const lead = section.blocks.find((b) => b.id === link.to);
+  if (!lead) return link.gap;
+  const a = flow[lead.id] || (phone ? phoneAreaOf(lead) : placeOf(lead.pos));
+  return row - (a.row + a.rows);
 }
 
 /**
@@ -145,8 +205,38 @@ function storeFlow(section, j, flow = {}, rows = 0, phone = false) {
 export function placeBlock(store, file, at, j, pos, key, { flow, rows } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow, rows);
-  section.blocks[j].pos = placeOf(pos);
+  const b = section.blocks[j];
+  b.pos = placeOf(pos);
+  // a linked block moved: its gap changes, it keeps following its leader
+  const l = linkOf(b);
+  if (l) b.link = { to: l.to, gap: gapAt(section, l, b.pos.row, flow) };
   return writeSection(store, file, at, section, key);
+}
+
+/**
+ * Block `j` of section `at` follows block `to` (its id, in the same section) with `gap` cells
+ * between them, on the desktop grid or the phone grid (`phone`); to null: it is free again.
+ * Refused (null) when `to` isn't in the section or the link makes a loop; false when nothing
+ * changed. One undo step.
+ * On the phone, a block without a phone area of its own gets one (its desktop area halved,
+ * where it shows now), so its phone link is its own.
+ */
+export function linkBlock(store, file, at, j, to, gap = 0, { phone = false } = {}) {
+  const section = listOf(store, file)[at];
+  const b = section.blocks[j];
+  if (!b) return null;
+  if (to !== null) {
+    if (to === b.id || !section.blocks.some((x) => x.id === to)) return null;
+    if (!Number.isInteger(gap)) return null;
+  }
+  const next = to === null ? undefined : { to, gap };
+  if (phone) {
+    if (!hasMobileArea(b.mobile)) setMobile(b, phoneAreaOf(b));
+    setMobile(b, { link: next });
+  } else if (next) b.link = next;
+  else delete b.link;
+  if (next && makesLoop(section.blocks, b.id, to, phone)) return null;
+  return writeSection(store, file, at, section);
 }
 
 /** Block `j` of section `at` one layer up (dir 1) or down (-1). */
@@ -182,18 +272,19 @@ function setMobile(block, patch) {
 }
 
 /**
- * Block `j` of section `at` placed at `area` on the phone grid (24 columns). stack: the areas
- * the section's other blocks had in the stack ({ id: area }), when this turns the section from
- * a stack into a grid (they keep their places). One undo step; key: see writeSection.
+ * Block `j` of section `at` placed at `area` on the phone grid (60 columns): its own phone area
+ * from then on (the first time, its desktop link comes along as its phone link, the gap
+ * halved). A linked block's gap follows where it was put. One undo step; key: see writeSection.
  */
-export function placeMobile(store, file, at, j, area, { stack = {}, key, flow } = {}) {
+export function placeMobile(store, file, at, j, area, { key, flow } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow, 0, true);
-  section.blocks.forEach((b, k) => {
-    if (k === j) setMobile(b, placeOf(area, MCOLS));
-    else if (stack[b.id] && !['col', 'span', 'row', 'rows'].some((x) => b.mobile?.[x]))
-      setMobile(b, placeOf(stack[b.id], MCOLS));
-  });
+  const b = section.blocks[j];
+  const inherited = !hasMobileArea(b.mobile) ? linkOf(b, true) : null;
+  setMobile(b, placeOf(area, MCOLS));
+  if (inherited) setMobile(b, { link: inherited });
+  const l = linkOf(b, true);
+  if (l) setMobile(b, { link: { to: l.to, gap: gapAt(section, l, b.mobile.row, flow, true) } });
   return writeSection(store, file, at, section, key);
 }
 
@@ -204,7 +295,10 @@ export function placeOnPhone(store, file, at, j, place) {
   return writeSection(store, file, at, section);
 }
 
-/** Section `at` stacked again on phones: its blocks' mobile areas and placements removed. */
+/**
+ * Section `at` back to its desktop layout on phones (halved): its blocks' phone areas, phone
+ * links and phone placements removed.
+ */
 export function resetMobile(store, file, at) {
   const section = listOf(store, file)[at];
   if (!section.blocks.some((b) => b.mobile)) return false;

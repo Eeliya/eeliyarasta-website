@@ -4,7 +4,9 @@
               | 'file' (a file name as written, e.g. people.json: not uppercase, 24px)
     size      'default' (40px; icon only 32px) | 'small' (32px; icon only 24px, unfilled)
     icon      Font Awesome name without the prefix, e.g. 'trash'
-    iconOnly  round, just the icon; label is its aria-label and title
+    iconOnly  just the icon, quiet: a utility (Grid, the phone view, undo / redo, close): no
+              background, a little dim, brighter on hover; with aria-pressed it is a toggle,
+              --ed-accent while on. label is its aria-label and title
     label     the text when there are no children
     href      renders an <a> instead of a <button>
   Also disabled, type ('button'), title, onclick; anything else (aria-*, data-*, attachments)
@@ -129,12 +131,26 @@
     text-transform: none;
   }
 
-  // round, just the icon
+  // just the icon: a quiet utility, no pill; a toggle (aria-pressed) is the accent while on
   .btn--icon {
     width: 32px;
     height: 32px;
     padding: 0;
     font-size: 15px;
+    color: var(--muted);
+    background: none;
+    box-shadow: none;
+    transition: color 0.2s;
+
+    &:hover:not(:disabled, [aria-disabled]) {
+      color: var(--fg);
+      background: none;
+    }
+
+    &[aria-pressed='true'],
+    &[aria-pressed='true']:hover:not(:disabled, [aria-disabled]) {
+      color: var(--ed-accent);
+    }
   }
 
   // small and round: unfilled until hover (in rows: edit, reset, remove, move, replay)
@@ -149,6 +165,10 @@
     &:hover:not(:disabled, [aria-disabled]) {
       color: var(--fg);
       background: var(--btn-hover);
+    }
+
+    &[aria-pressed='true'] {
+      color: var(--ed-accent);
     }
   }
 

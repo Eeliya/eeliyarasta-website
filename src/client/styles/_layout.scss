@@ -10,15 +10,19 @@
  * Blocks sit in it by their CSS variables: --c / --s (first column / columns), --r / --rs
  * (first row / rows), --z (layer), --ar (an aspect block's ratio). Rows never grow: a block
  * whose content needs more rows spans more, and modules/rows.js (src/site/layout/flow.js)
- * sets where every block sits now and how many rows it spans (--fr / --frs) and the
- * section's rows (--frows), which win over the stored ones. While it measures, a section has
- * .sec--measure. A section's spacing (--pt / --pb) is in steps of --space (8px), not cells.
+ * sets where every block sits now (a linked block below its leader) and how many rows it
+ * spans (--fr / --frs) and the section's rows (--frows), which win over the stored ones.
+ * While it measures, a section has .sec--measure. A section's spacing (--pt / --pb) is in
+ * steps of --space (8px), not cells.
  *
- * Phones (below 760px): a section's blocks stack full width in their order, unless one of
- * them has a mobile area (the section is then .sec--mgrid): a grid of 24 square columns (--mc
- * --ms --mr --mrs, --mrows). Why 24 and not 120: a phone is ~390px wide, and 120 columns
- * would be ~3px cells; 24 give ~15px cells (rows close to the old 8px ones) and still halves,
- * thirds, quarters, sixths and eighths.
+ * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a block
+ * without a phone area of its own has its desktop area halved there), so a phone shows the
+ * desktop layout scaled down until its blocks are placed for it. Why 60 and not 120: a phone
+ * is ~390px wide, and 120 columns would be ~3px cells; 60 give ~6px.
+ *
+ * Scaled text (.blk--scale, src/site/layout/type.js): sizes in --tcell, the 120-column grid's
+ * cell (on the phone grid half a cell), × the style's size (--ts-<style>) × the block's
+ * adjust (--tk), never under the style's min.
  *
  * Placements (.blk--sticky / --fixed / --full / --pinned, with --v-* / --h-* for the corner)
  * apply above 760px; on phones only the .blk--m-* ones (the block's mobile place), so a
@@ -32,6 +36,7 @@
 
 .sec {
   --cell: calc((100vw - 2 * var(--pad)) / 120);
+  --tcell: var(--cell);
 
   display: grid;
   grid-template-columns: repeat(120, var(--cell));
@@ -180,46 +185,56 @@
 }
 
 @media (width <= $bp-sm) {
-  // the phone grid's cell (a stacking section's too: the editor turns it into that grid)
+  // the phone grid: 60 square columns; text scales by the 120-column cell (half of one)
   .sec {
-    --cell: calc((100vw - 2 * var(--pad)) / 24);
+    --cell: calc((100vw - 2 * var(--pad)) / 60);
+    --tcell: calc(var(--cell) / 2);
 
+    grid-template-columns: repeat(60, var(--cell));
+    grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
     padding-top: calc(var(--mpt, var(--pt)) * var(--space));
     padding-bottom: calc(var(--mpb, var(--pb)) * var(--space));
+    > .blk {
+      grid-column: var(--mc, 1) / span var(--ms, 60);
+      grid-row: var(--fr, var(--mr, 1)) / span var(--frs, var(--mrs, 1));
+    }
   }
   .sec--full {
-    --cell: calc(100vw / 24);
-  }
-  // the stack: a column (a flex one, so a sticky block is held through the whole section)
-  .sec:not(.sec--mgrid) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
-    > .blk {
-      align-self: stretch;
-    }
-    &.sec--center {
-      justify-content: center;
-    }
-    &.sec--bottom {
-      justify-content: flex-end;
-    }
-    &.sec--stretch > .blk {
-      flex: 1 0 auto;
-    }
-  }
-  .sec--mgrid {
-    grid-template-columns: repeat(24, var(--cell));
-    grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
-    > .blk {
-      grid-column: var(--mc, 1) / span var(--ms, 24);
-      grid-row: var(--fr, var(--mr, auto)) / span var(--frs, var(--mrs, 1));
-    }
+    --cell: calc(100vw / 60);
   }
   // a placed block's columns and rows: the phone's
   .blk {
-    --p-s: var(--ms, 24);
+    --p-s: var(--ms, 60);
     --p-rs: var(--mrs, 1);
   }
   @include placed('m-');
+}
+
+/*
+ * Scaled text (.blk--scale): its texts by style, in cells. A style's size, line height
+ * (× the size), tracking (em) and min (px) are --ts-<style>, -lh, -tr, -min (defaults in
+ * _tokens.scss, site.json typography in the page's head).
+ */
+@mixin scaled($style) {
+  font-size: max(var(--ts-#{$style}-min), calc(var(--tcell) * var(--ts-#{$style}) * var(--tk, 1)));
+  line-height: var(--ts-#{$style}-lh);
+  letter-spacing: var(--ts-#{$style}-tr);
+}
+.blk--scale {
+  .page-title {
+    @include scaled('title');
+  }
+  .section__title {
+    @include scaled('heading');
+  }
+  // (the body too: the editor's preview has its text without <p> while it is edited)
+  .page-intro,
+  .textblock__body,
+  .textblock__body p {
+    @include scaled('paragraph');
+  }
+  .page-head__crumb,
+  .btn {
+    @include scaled('label');
+  }
 }

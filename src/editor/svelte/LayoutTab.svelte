@@ -1,21 +1,28 @@
 <!--
   A block's Layout tab (BlockInspector.svelte). Where a block is and how big is set in the
-  preview (overlay.js: drag it, drag its handles); here only what can't be dragged:
-    Desktop | Mobile  which layout it edits; it also switches the preview (ui.viewport)
-    Size              Rows (its rows, more when its content needs them) | Aspect (its width ×
-                      a ratio: a preset or a custom "w:h") | Auto (its content); every block
-                      spans whole rows (src/site/layout/flow.js)
+  preview (overlay.js: drag it, drag its handles); here only what can't be dragged. It edits
+  the layout the preview shows (the desktop's, or the phone's in the mobile preview):
+    Size              Auto (its content, the default) | Aspect (its width × a ratio: a preset
+                      or a custom "w:h") | Rows (fixed); every block spans whole rows
+                      (src/site/layout/flow.js)
+    Link              free, or the block it follows and the gap (cells, negative overlaps);
+                      Unlink. Linking is dragged in the preview (its top circle onto another
+                      block's bottom circle)
+    Scale text        (text blocks) its text in cells, relative to its styles (Settings >
+                      Typography), and its % of them (src/site/layout/type.js)
     Placement         in the grid, sticky, fixed, fullscreen or pinned (desktop, or on phones)
     Layer             down / up, for blocks that overlap (desktop)
-    Reset to stack    (Mobile) the section's blocks stack again on phones
+    Reset phone       (phone) the section's blocks show their desktop layout halved again
 -->
 <script>
   import Button from './Button.svelte';
   import Field from './Field.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { layerBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
-  import { ASPECTS, PLACES, ratioOf, sizeOf } from '../../site/layout/index.js';
+  import { layerBlock, linkBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
+  import { ASPECTS, PLACES, linkOf, ratioOf, sizeOf } from '../../site/layout/index.js';
+  import { SCALE_TYPES, adjustOf } from '../../site/layout/type.js';
+  import { BLOCK_TYPES } from '../../site/blocks/index.js';
 
   let { g, live, at, j, base, block } = $props();
 
@@ -26,11 +33,17 @@
     return live.get(g.file, `/sections/${at}`) || {};
   });
   const phoneSet = $derived((section.blocks || []).some((b) => b?.mobile));
+  const link = $derived(linkOf(block, phone));
+  const leader = $derived(link && (section.blocks || []).find((b) => b?.id === link.to));
+  const leaderName = $derived(
+    leader ? `${BLOCK_TYPES[leader.type]?.label || leader.type} (${leader.id})` : '',
+  );
+  const scalable = $derived(SCALE_TYPES.includes(block.type));
 
   const SIZES = [
-    ['rows', 'Rows', 'Its rows, more when its content needs them'],
-    ['aspect', 'Aspect', 'Its width × a ratio'],
     ['auto', 'Auto', 'As tall as its content'],
+    ['aspect', 'Aspect', 'Its width × a ratio'],
+    ['rows', 'Rows', 'Its rows, fixed'],
   ];
   const CUSTOM = 'custom';
   let custom = $state(false);
@@ -82,9 +95,20 @@
     custom = false;
     if (next === size) return;
     setBlock(live.store, g.file, at, j, {
-      size: next === 'rows' ? undefined : next,
+      size: next === 'auto' ? undefined : next,
       aspect: next === 'aspect' ? block.aspect || '4:5' : undefined,
     });
+  }
+  // the gap typed: a whole number of cells (negative overlaps)
+  function setGap(v) {
+    if (link && Number.isInteger(v)) linkBlock(live.store, g.file, at, j, link.to, v, { phone });
+  }
+  const unlink = () => linkBlock(live.store, g.file, at, j, null, 0, { phone });
+  function setScale(patch, k) {
+    const next = { on: block.scale?.on === true, ...block.scale, ...patch };
+    if (next.adjust === 100) delete next.adjust;
+    const keep = next.on || next.adjust !== undefined;
+    setBlock(live.store, g.file, at, j, { scale: keep ? next : undefined }, k);
   }
   function setRatio(v) {
     custom = v === CUSTOM;
@@ -96,17 +120,7 @@
   }
 </script>
 
-<div class="seg tabs" role="tablist" aria-label="Layout for">
-  {#each [['desktop', 'Desktop'], ['mobile', 'Mobile']] as [id, label] (id)}
-    <button
-      type="button"
-      role="tab"
-      aria-selected={ui.viewport === id}
-      class={['seg__btn', ui.viewport === id && 'is-active']}
-      onclick={() => (ui.viewport = id)}>{label}</button
-    >
-  {/each}
-</div>
+<p class="hint small">{phone ? 'Phone layout (60 columns)' : 'Desktop layout (120 columns)'}</p>
 
 <div class="opt">
   <span class="tf__label">Size</span>
@@ -151,6 +165,48 @@
   {/if}
 {/if}
 
+<div class="line">
+  <span class="tf__label">
+    {#if link}Follows {leaderName || link.to}{:else}Free (not linked){/if}
+  </span>
+  <Button size="small" icon="link-slash" disabled={!link} onclick={unlink}>Unlink</Button>
+</div>
+{#if link}
+  <div class="opt">
+    <Field
+      edit="{g.file}#{base}/{phone ? 'mobile/link' : 'link'}/gap"
+      label="Gap below it (cells, negative overlaps)"
+      type="number"
+      value={link.gap}
+      onvalue={setGap}
+    />
+  </div>
+{/if}
+
+{#if scalable}
+  <div class="opt">
+    <Field
+      edit="{g.file}#{base}/scale/on"
+      label="Scale text with the grid"
+      type="boolean"
+      value={block.scale?.on === true}
+      help="Its text in cells, by its styles (Settings › Typography), never under their minimum"
+      onvalue={(v) => setScale({ on: v === true })}
+    />
+  </div>
+  {#if block.scale?.on}
+    <div class="opt">
+      <Field
+        edit="{g.file}#{base}/scale/adjust"
+        label="Text size (% of its styles)"
+        type="number"
+        value={Math.round(adjustOf(block) * 100)}
+        onvalue={(v) => v >= 10 && v <= 1000 && setScale({ adjust: v }, key('scale'))}
+      />
+    </div>
+  {/if}
+{/if}
+
 {#if !phone}
   <div class="opt">
     <span class="tf__label">Placement</span>
@@ -187,22 +243,21 @@
     />
   </div>
   <div class="line">
-    <span class="tf__label">{phoneSet ? 'Phone layout set' : 'Stacks on phones'}</span>
+    <span class="tf__label">{phoneSet ? 'Phone layout set' : 'Desktop layout, halved'}</span>
     <Button
       size="small"
-      icon="layer-group"
+      icon="rotate-left"
       disabled={!phoneSet}
-      onclick={() => resetMobile(live.store, g.file, at)}>Reset to stack</Button
+      onclick={() => resetMobile(live.store, g.file, at)}>Reset phone</Button
     >
   </div>
 {/if}
-<p class="hint small">Drag the block in the preview to move it, its handles to resize it.</p>
+<p class="hint small">
+  Drag the block in the preview to move it, its handles to resize it, its top circle onto another
+  block's bottom circle to link it.
+</p>
 
 <style lang="scss">
-  .tabs {
-    margin-bottom: 16px;
-  }
-
   // label above its control
   .opt {
     display: grid;

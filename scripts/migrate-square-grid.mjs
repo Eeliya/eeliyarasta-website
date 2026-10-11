@@ -1,5 +1,5 @@
 /**
- * One-off migration (experiment exp/square-grid-100): the 24-column grid with rows of 8px (or
+ * One-off migration (experiment exp/square-grid-120, then named exp/square-grid-100): the 24-column grid with rows of 8px (or
  * a section's rowHeight) becomes the square grid of 120 columns whose rows are one cell
  * (src/site/layout/grid.js), so a page looks about the same at 1440px wide:
  *
@@ -12,11 +12,18 @@
  *
  *   node scripts/migrate-square-grid.mjs [content dir]    (default: content)
  *
- * A page whose blocks already reach past column 24 counts as migrated and is left alone.
+ * A page whose blocks already reach past column 24 counts as migrated and is left alone. (Its
+ * phone grid was 24 columns; scripts/migrate-links.mjs takes it to 60.)
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { COLS, MCOLS, OLD_COLS, OLD_MCOLS, cellOf } from '../src/site/layout/grid.js';
+import {
+  COLS,
+  OLD_SQUARE_MCOLS as MCOLS,
+  OLD_COLS,
+  OLD_MCOLS,
+  cellOf,
+} from '../src/site/layout/grid.js';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 
 const OLD_ROW = 8;

@@ -1,6 +1,6 @@
 /**
  * The layout engine: every page is a list of sections, each a grid of 120 square cells wide
- * (experiment: exp/square-grid-100), holding blocks
+ * (experiment: exp/square-grid-120), holding blocks
  * ("sections" in its file, content/pages/<page>/index.json or a template's [slug].json):
  *
  *   { "id": "s-k3x9", "height": "auto", "rows": 12, "width": "contained",
@@ -12,8 +12,9 @@
  * size, --cell = width / 120, and every row is one cell tall, so every cell is exactly square
  * (no gaps either way). src/client/modules/rows.js measures the width at runtime and sets
  * --cell on the section (a ResizeObserver and the window's resize keep it current);
- * _layout.scss has a CSS-only first guess from 100vw. Phones (below 760px) use MCOLS (24)
- * square cells of their own.
+ * _layout.scss has a CSS-only first guess from 100vw. Phones (below 760px) use MCOLS (60)
+ * square cells of their own: every block is on that grid, at its own phone area or else at
+ * its desktop area halved (grid.js phoneAreaOf; nothing stacks).
  *
  * A section:
  *   height   'auto': `rows` rows (cells) | 'screen': at least the screen's height |
@@ -27,11 +28,15 @@
  *   enabled  false: hidden (still rendered, so the editor can turn it on live)
  * A block (its content: src/site/blocks/index.js):
  *   pos      { col, span, row, rows }: its grid area, columns 1-120 and rows (cells) from 1
- *   size     'rows' (default): its rows, more when its content needs them | 'aspect': as tall
- *            as its columns' width × `aspect` ("4:5", "16:9", any "w:h") | 'auto': as tall as
- *            its content. Every block spans whole rows: an aspect or auto block the rows its
- *            height needs at the page's width, rows.js on the page works them out (./flow.js);
- *            its pos.rows is that span where it was last placed (the page's first render)
+ *   size     'auto' (default): as tall as its content | 'aspect': as tall as its columns'
+ *            width × `aspect` ("4:5", "16:9", any "w:h") | 'rows': exactly its pos.rows (fixed).
+ *            Every block spans whole rows: an aspect or auto block the rows its height needs at
+ *            the page's width, rows.js on the page works them out (./flow.js); its pos.rows is
+ *            that span where it was last placed (the page's first render)
+ *   link     optional { to, gap }: it follows block `to` of its section, its top `gap` cells
+ *            below that block's bottom (negative: overlapping); without one it is free, at its
+ *            row whatever the blocks above do (./links.js)
+ *   scale    optional { on, adjust }: a text block's text in cells (./type.js)
  *   place    'none' (default) | 'sticky-<corner>': held at a screen edge while its section
  *            scrolls by | 'fixed-<corner>': at a screen corner the whole time | 'fullscreen':
  *            covers the screen the whole time (behind the page unless its z is set: a
@@ -39,9 +44,10 @@
  *            Corners: top-left, top-center, top-right, center, bottom-left, bottom-center,
  *            bottom-right
  *   z        its layer when blocks overlap (higher is in front)
- *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 24
- *            columns, and { place }. Without areas a section's blocks stack full width in their
- *            order; without a phone `place` a block is in that flow (no sticky, fixed, pin)
+ *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 60
+ *            columns (without one: its desktop area halved), { link } its phone link (without a
+ *            phone area: its desktop link, the gap halved) and { place } (without one it is in
+ *            its area: no sticky, fixed, pin)
  *   motion   optional { anim, ...timing }: its animation from the library and its own timing
  *            (./motion.js)
  *   item     optional { source, slug }: the source item its bound fields show (./bindings.js;
@@ -53,16 +59,29 @@ import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
 import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
-import { COLS, MCOLS } from './grid.js';
+import { COLS, phoneAreaOf, placeOf } from './grid.js';
+import { linkOf } from './links.js';
+import { adjustOf, scaled } from './type.js';
 
-export { COLS, MCOLS, OLD_COLS, OLD_MCOLS, cellOf } from './grid.js';
+export {
+  COLS,
+  MCOLS,
+  OLD_COLS,
+  OLD_MCOLS,
+  cellOf,
+  halfArea,
+  hasMobileArea,
+  phoneAreaOf,
+  placeOf,
+} from './grid.js';
+export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
 export const HEIGHTS = ['auto', 'screen', 'aspect'];
 /** The step of a section's spacing (above and below its grid), px: --space in _tokens.scss. */
 export const SPACE = 8;
 export const WIDTHS = ['contained', 'full'];
 export const ALIGNS = ['top', 'center', 'bottom', 'stretch'];
-/** A block's height: its rows, its width × an aspect ratio, or its content. */
-export const SIZES = ['rows', 'aspect', 'auto'];
+/** A block's height: its content (the default), its width × an aspect ratio, or fixed rows. */
+export const SIZES = ['auto', 'aspect', 'rows'];
 export const ASPECTS = ['1:1', '4:5', '3:4', '2:3', '3:2', '16:9', '21:9'];
 const CORNERS = [
   'top-left',
@@ -90,27 +109,13 @@ export function ratioOf(text) {
   return m && Number(m[1]) > 0 && Number(m[2]) > 0 ? [Number(m[1]), Number(m[2])] : null;
 }
 
-/** A block's grid area, completed and kept inside `cols` columns (120; the phone grid's 24). */
-export function placeOf(pos, cols = COLS) {
-  const col = Math.min(int(pos?.col, 1, 1), cols);
-  return {
-    col,
-    span: Math.min(int(pos?.span, 1, cols), cols - col + 1),
-    row: int(pos?.row, 1, 1),
-    rows: int(pos?.rows, 1, 1),
-  };
-}
-
-/** Does a block's `mobile` hold an area (it can hold only a placement)? */
-export const hasMobileArea = (m) =>
-  !!m && ['col', 'span', 'row', 'rows'].some((k) => m[k] !== undefined);
-
-/** A block's size mode ('rows' when unset or unknown). */
-export const sizeOf = (b) => (SIZES.includes(b?.size) ? b.size : 'rows');
+/** A block's size mode ('auto' when unset or unknown). */
+export const sizeOf = (b) => (SIZES.includes(b?.size) ? b.size : 'auto');
 
 /**
  * A new block of `type`: its defaults, on, full width at `pos` (8 rows, ~90px at 1440px, from
- * row 1 by default). taken: the ids already on the page (the new one is added).
+ * row 1 by default), auto height, free (no link). taken: the ids already on the page (the new
+ * one is added).
  */
 export function newBlock(type, taken, pos = {}) {
   const { config = {}, ...rest } = structuredClone(BLOCK_TYPES[type].defaults || {});
@@ -148,22 +153,20 @@ export function rowsOf(section) {
   );
 }
 
-/** The rows of a section's phone grid: as far down as its blocks' mobile areas reach. */
+/**
+ * The rows of a section's phone grid: as far down as its blocks' phone areas reach, and its
+ * desktop rows halved (the empty rows below its blocks scale with it).
+ */
 export function mobileRowsOf(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
   return Math.max(
-    1,
-    ...blocks
-      .filter((b) => hasMobileArea(b?.mobile))
-      .map((b) => {
-        const m = placeOf(b.mobile, MCOLS);
-        return m.row + m.rows - 1;
-      }),
+    Math.ceil(rowsOf(section) / 2),
+    ...blocks.map((b) => {
+      const m = phoneAreaOf(b);
+      return m.row + m.rows - 1;
+    }),
   );
 }
-
-/** Does a section lay its blocks out on the phone grid (one of them has a mobile area)? */
-const phoneGrid = (s) => (s?.blocks || []).some((b) => hasMobileArea(b?.mobile));
 
 /** The CSS variables of a section's element. */
 export function sectionVars(s) {
@@ -173,7 +176,7 @@ export function sectionVars(s) {
     `--rows:${rowsOf(s)};--pt:${int(s?.spacing?.top, 0, 0)};--pb:${int(s?.spacing?.bottom, 0, 0)}` +
     (Number.isInteger(m?.top) && m.top >= 0 ? `;--mpt:${m.top}` : '') +
     (Number.isInteger(m?.bottom) && m.bottom >= 0 ? `;--mpb:${m.bottom}` : '') +
-    (phoneGrid(s) ? `;--mrows:${mobileRowsOf(s)}` : '') +
+    `;--mrows:${mobileRowsOf(s)}` +
     (ratio ? `;--sar:${ratio[0]} / ${ratio[1]}` : '')
   );
 }
@@ -185,8 +188,7 @@ export function sectionClass(s) {
   return (
     'sec' +
     (tall ? ` sec--${s.height === 'screen' ? 'screen' : 'aspect'} sec--${align}` : '') +
-    (s?.width === 'full' ? ' sec--full' : '') +
-    (phoneGrid(s) ? ' sec--mgrid' : '')
+    (s?.width === 'full' ? ' sec--full' : '')
   );
 }
 
@@ -200,30 +202,58 @@ function placeClass(place, m = '') {
   return ` blk--${m}${kind} blk--${m}v-${v} blk--${m}h-${h}`;
 }
 
-/** The classes of a block's element: its type, size mode and placements (desktop, phone). */
+/**
+ * The classes of a block's element: its type, size mode (blk--aspect, blk--auto; fixed rows:
+ * neither), scaled text and placements (desktop, phone).
+ */
 export function blockClass(b) {
   const size = sizeOf(b);
   const aspect = size === 'aspect' && ratioOf(b?.aspect);
   return (
     `blk blk--${b?.type}` +
     (aspect ? ' blk--aspect' : size === 'auto' || size === 'aspect' ? ' blk--auto' : '') +
+    (scaled(b) ? ' blk--scale' : '') +
     placeClass(b?.place) +
     placeClass(b?.mobile?.place, 'm-')
   );
 }
 
-/** The CSS variables of a block's element: its grid area, layer and mobile area. */
+/**
+ * The CSS variables of a block's element: its grid area, layer, phone area (its own, or its
+ * desktop area halved) and its text's scale.
+ */
 export function blockVars(b) {
   const p = placeOf(b?.pos);
-  const m = hasMobileArea(b?.mobile) ? placeOf(b.mobile, MCOLS) : null;
+  const m = phoneAreaOf(b);
   const ratio = sizeOf(b) === 'aspect' ? ratioOf(b?.aspect) : null;
+  const k = scaled(b) ? adjustOf(b) : 1;
   return (
     `--c:${p.col};--s:${p.span};--r:${p.row};--rs:${p.rows}` +
     (Number.isInteger(b?.z) && b.z !== 0 ? `;--z:${b.z}` : '') +
     (ratio ? `;--ar:${ratio[0]} / ${ratio[1]}` : '') +
-    (m ? `;--mc:${m.col};--ms:${m.span};--mr:${m.row};--mrs:${m.rows}` : '')
+    `;--mc:${m.col};--ms:${m.span};--mr:${m.row};--mrs:${m.rows}` +
+    (k !== 1 ? `;--tk:${k}` : '')
   );
 }
+
+/**
+ * A block's links as attributes of its element (src/client/modules/rows.js reads them):
+ * data-link="<id> <gap>" (desktop), data-mlink (the phone grid's; ./links.js linkOf).
+ */
+export function blockLinks(b) {
+  const d = linkOf(b);
+  const m = linkOf(b, true);
+  return {
+    'data-link': d ? `${d.to} ${d.gap}` : null,
+    'data-mlink': m ? `${m.to} ${m.gap}` : null,
+  };
+}
+
+const linkAttrs = (b) =>
+  Object.entries(blockLinks(b))
+    .filter(([, v]) => v !== null)
+    .map(([k, v]) => ` ${k}="${esc(v)}"`)
+    .join('');
 
 /** The number (1, 2, ...) of each numbered heading block on the page, by block id. */
 export function headingNumbers(sections) {
@@ -275,7 +305,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
   const data = resolveBlock(block, t, { item, source, ctx, at: where, placeholders: editable });
   const marker = editable ? ` data-block="${esc(block.id)}"` : '';
   const hidden = block.config?.enabled === false ? ' hidden' : '';
-  return `<div class="${blockClass(block)}"${marker} style="${blockVars(block)}"${motionAttrs(block)}${hidden}>${t.render(data, ctx, b)}</div>`;
+  return `<div class="${blockClass(block)}"${marker} style="${blockVars(block)}"${linkAttrs(block)}${motionAttrs(block)}${hidden}>${t.render(data, ctx, b)}</div>`;
 }
 
 /**

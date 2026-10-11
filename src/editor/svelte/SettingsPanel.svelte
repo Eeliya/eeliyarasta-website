@@ -3,7 +3,9 @@
   name and details
   (settings/site.json), its search and share defaults (SEO: titles, description, share image,
   address, robots, language; a page's own are in Content > SEO), the global page-transition curtain and the page
-  fade (settings/animations.json), and where uploaded photos are served from (site.json mediaUrl).
+  fade (settings/animations.json), where uploaded photos are served from (site.json mediaUrl)
+  and the text styles scaled text uses (Typography: site.json typography, in cells,
+  src/site/layout/type.js; the preview follows them as they are typed).
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
   dropdowns) are in Menu (MenuSettings.svelte), redirects.json in Redirects
@@ -22,6 +24,7 @@
   import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
   import { TARGETS } from '../../site/blocks/form.js';
   import { SITE } from '../../site/files.js';
+  import { TEXT_STYLES, typographyOf } from '../../site/layout/type.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
@@ -36,6 +39,34 @@
 
   function set(key, value) {
     live.store.set(SITE, `/${key}`, value, { key: `text:${SITE}#/${key}`, source: 'panel' });
+  }
+
+  const TYPE_FIELDS = [
+    ['size', 'Size (cells)'],
+    ['min', 'Minimum (px)'],
+    ['line', 'Line height (× size)'],
+    ['tracking', 'Tracking (em)'],
+  ];
+  const typography = $derived.by(() => {
+    live.version;
+    return typographyOf(live.get(SITE, '') || {});
+  });
+  // the preview's scaled text follows the styles as they are typed (the page's head has them
+  // after Save)
+  $effect(() => {
+    ui.previewVersion;
+    const root = bridge.doc?.documentElement;
+    if (!root) return;
+    for (const [k, t] of Object.entries(typography)) {
+      root.style.setProperty(`--ts-${k}`, t.size);
+      root.style.setProperty(`--ts-${k}-lh`, t.line);
+      root.style.setProperty(`--ts-${k}-tr`, `${t.tracking}em`);
+      root.style.setProperty(`--ts-${k}-min`, `${t.min}px`);
+    }
+  });
+  function setStyle(k, key, value) {
+    if (typeof value !== 'number' || (key !== 'tracking' && value <= 0)) return;
+    set(`typography/${k}/${key}`, value);
   }
 </script>
 
@@ -124,6 +155,30 @@
       Email link: the visitor's mail app, to the site email ({live.get(SITE, '/email') ||
         'not set'}).
     </p>
+  </Section>
+
+  <Section key="settings:type" title="Site" name="Typography">
+    <p class="hint">
+      The text styles of scaled text (a text block's Layout › Scale text), in cells of the
+      120-column grid (~11px at 1440px wide; on phones half a 60-column cell), so the text grows and
+      shrinks with the page. Text that doesn't scale keeps its normal size.
+    </p>
+    {#each Object.entries(TEXT_STYLES) as [k, style] (k)}
+      <p class="tf__label">{style.label}</p>
+      <div class="fields">
+        {#each TYPE_FIELDS as [key, label] (key)}
+          <Field
+            edit="{SITE}#/typography/{k}/{key}"
+            {label}
+            type="number"
+            half
+            value={typography[k][key]}
+            changed={live.changed(SITE, `/typography/${k}/${key}`)}
+            onvalue={(value) => setStyle(k, key, value)}
+          />
+        {/each}
+      </div>
+    {/each}
   </Section>
 
   <MenuSettings {live} />
