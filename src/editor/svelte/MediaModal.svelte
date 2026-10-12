@@ -234,8 +234,8 @@
       ui.explorer = {
         open: true,
         file: u.file,
-        index: Number(parts[0]) || 0,
-        field: parts.slice(1).join('.'),
+        index: Number(parts[1]) || 0,
+        field: parts.slice(2).join('.'),
       };
       return;
     }

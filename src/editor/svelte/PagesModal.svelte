@@ -280,7 +280,7 @@
           <ExplorerRow
             icon="fa-layer-group"
             name="[slug]"
-            meta="a page per item of {data(template).config?.source || '?'}"
+            meta="a page per item of {data(template).template?.source || '?'}"
             selected={sel === template}
             changed={changed(template)}
             aria-current={sel === template}
@@ -387,7 +387,7 @@
 
       {#if isTemplate(sel)}
         <p class="hint small">
-          A page per item of sources/{data(sel).config?.source}.json, at /{parentOf(
+          A page per item of sources/{data(sel).template?.source}.json, at /{parentOf(
             sel,
           )}/&lt;slug&gt;/ (the item's slug, else its name). Its labels are in the Content tab.
         </p>

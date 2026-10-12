@@ -1,6 +1,10 @@
 {
+  "version": 1,
   "curtain": "Not found",
-  "meta": { "title": "Not found", "description": "Page not found." },
+  "meta": {
+    "title": "Not found",
+    "description": "Page not found."
+  },
   "sections": [
     {
       "id": "s-yzyj",
@@ -15,8 +19,16 @@
           "title": "Lost frame",
           "intro": "This page doesn't exist (yet).",
           "cta": "Back home",
-          "config": { "href": "/", "center": true },
-          "pos": { "col": 1, "span": 120, "row": 1, "rows": 63 },
+          "config": {
+            "href": "/",
+            "center": true
+          },
+          "pos": {
+            "col": 1,
+            "span": 120,
+            "row": 1,
+            "rows": 63
+          },
           "size": "auto"
         }
       ]

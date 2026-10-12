@@ -41,8 +41,8 @@
     live.version;
     return Object.keys(live.store.current).filter(isSource).sort();
   });
-  const list = $derived(live.current(file));
-  const base = $derived(live.base(file) || []);
+  const list = $derived(live.current(file)?.items);
+  const base = $derived(live.base(file)?.items || []);
   const isList = $derived(Array.isArray(list));
   const index = $derived(isList ? Math.max(0, Math.min(ui.explorer.index, list.length - 1)) : 0);
   const item = $derived(isList ? list[index] : undefined);
@@ -79,19 +79,19 @@
   }
 
   async function add() {
-    const now = live.store.current[file];
+    const now = live.store.current[file].items;
     select(now.length);
-    live.store.set(file, '', [...now, newItem(now, schema)], { source: 'panel' });
+    live.store.set(file, '/items', [...now, newItem(now, schema)], { source: 'panel' });
     await tick();
     dialog.querySelector('.tf__input:not([disabled])')?.focus();
   }
 
   function remove() {
-    const now = live.store.current[file];
+    const now = live.store.current[file].items;
     const at = index;
     select(Math.max(0, Math.min(at, now.length - 2)));
     const rest = now.filter((_, i) => i !== at);
-    live.store.set(file, '', rest, { source: 'panel' });
+    live.store.set(file, '/items', rest, { source: 'panel' });
   }
 
   async function askDelete() {
@@ -103,9 +103,10 @@
   function onSlug(e) {
     const slug = slugify(e.currentTarget.value);
     const at = index;
-    slugBad = !slug || live.store.current[file].some((it, k) => k !== at && slugOf(it) === slug);
+    slugBad =
+      !slug || live.store.current[file].items.some((it, k) => k !== at && slugOf(it) === slug);
     if (!slugBad)
-      live.store.set(file, `/${at}/${schema.slug}`, slug, {
+      live.store.set(file, `/items/${at}/${schema.slug}`, slug, {
         key: `slug:${file}#${at}`,
         source: 'panel',
       });
@@ -174,7 +175,7 @@
   {#if !file}
     <ul class="list src-files" aria-label="Source files">
       {#each files as f (f)}
-        {@const items = live.current(f)}
+        {@const items = live.current(f)?.items}
         <li>
           <ExplorerRow
             icon="fa-file-lines"

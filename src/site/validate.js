@@ -16,6 +16,7 @@ import {
   REDIRECTS,
   SITE,
   STRINGS,
+  VERSION,
   TEMPLATE,
   isSlug,
   pageIdOf,
@@ -166,7 +167,7 @@ function checkNav(d) {
  * is a page needs the routes: the build warns about that.
  */
 function checkRedirects(d) {
-  if (!Array.isArray(d)) return [`must be a list (a JSON array), not ${typeOf(d)}`];
+  if (!Array.isArray(d)) return [`"redirects" must be a list (a JSON array), not ${typeOf(d)}`];
   const out = [];
   const seen = new Set();
   d.forEach((r, i) => {
@@ -210,8 +211,10 @@ function checkAnimations(d) {
 
 function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
-  if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.config?.source !== 'string')
-    out.push('"config.source" must name a source (a [slug] page makes a page per item)');
+  if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
+    out.push('"template.source" must name a source (a [slug] page makes a page per item)');
+  if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
+    out.push('"template" is only for [slug] pages');
   if (!Array.isArray(d.sections)) return out;
   out.push(...d.sections.flatMap(checkSection));
   // names: their anchors (ids) unique on the page, and ids at all
@@ -376,22 +379,32 @@ function checkPhotos(d) {
   });
 }
 
-/** Problems with one content file's data, [] when it's fine. file: "settings/site.json", … */
+/**
+ * Problems with one content file's data, [] when it's fine. file: "settings/site.json", …
+ * Every file is an object with "version": 1 (VERSION, src/site/files.js) first; a source's
+ * list is its "items", redirects.json's "redirects", photos.json's map "photos".
+ */
 export function checkContent(file, data) {
-  const sourceId = sourceIdOf(file);
-  if (sourceId) {
-    if (!Array.isArray(data)) return [`must be a list (a JSON array), not ${typeOf(data)}`];
-    return data.flatMap((item, i) => (isObject(item) ? [] : [`item ${i + 1} must be an object`]));
-  }
-  if (schemaIdOf(file)) return checkSchema(data);
-  if (file === REDIRECTS) return checkRedirects(data);
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
-  if (file === SITE) return checkSite(data);
-  if (file === ANIMATIONS) return checkAnimations(data);
-  if (file === NAV) return checkNav(data);
-  if (file === STRINGS) return optional(data, { footer: 'object', nav: 'object' });
-  if (file === PHOTOS) return checkPhotos(data);
-  if (pageIdOf(file)) return checkPage(file, data);
+  if (data.version !== VERSION) return [`"version" must be ${VERSION} (the content's shape)`];
+  const { version: _v, ...d } = data; // eslint-disable-line no-unused-vars
+  if (sourceIdOf(file)) {
+    if (d.items === undefined) return ['"items" is missing (a list, a JSON array)'];
+    if (!Array.isArray(d.items))
+      return [`"items" must be a list (a JSON array), not ${typeOf(d.items)}`];
+    return d.items.flatMap((item, i) =>
+      isObject(item) ? [] : [`item ${i + 1} must be an object`],
+    );
+  }
+  if (schemaIdOf(file)) return checkSchema(d);
+  if (file === REDIRECTS) return checkRedirects(d.redirects);
+  if (file === SITE) return checkSite(d);
+  if (file === ANIMATIONS) return checkAnimations(d);
+  if (file === NAV) return checkNav(d);
+  if (file === STRINGS) return optional(d, { footer: 'object', nav: 'object' });
+  if (file === PHOTOS)
+    return isObject(d.photos) ? checkPhotos(d.photos) : ['"photos" must be an object'];
+  if (pageIdOf(file)) return checkPage(file, d);
   return [];
 }
 

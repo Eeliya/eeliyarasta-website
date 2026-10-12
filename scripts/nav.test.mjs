@@ -31,7 +31,7 @@ test('nav.json: the shipped menus are valid', () => {
 });
 
 test('nav.json validation: links, nesting depth, footer links are plain', () => {
-  const problems = (nav) => checkContent(NAV, nav);
+  const problems = (nav) => checkContent(NAV, { version: 1, ...nav });
   assert.deepEqual(problems({ header: [{ label: 'A', page: '/a/' }], footer: [] }), []);
   assert.match(problems({ header: {} })[0], /"header" must be an array/);
   assert.match(problems({ header: [{ label: 'A' }] })[0], /needs a "page".*or an "href"/);

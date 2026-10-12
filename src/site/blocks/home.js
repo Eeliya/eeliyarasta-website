@@ -99,7 +99,7 @@ const photoTiles = (ctx, source, items, layout) => {
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
         <span class="tile__media">${img(ctx, image.src, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
-        <span class="tile__cap"><span${ed(sourceFile(source), [at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
+        <span class="tile__cap"><span${ed(sourceFile(source), ['items', at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
       </a>`,
     )}
   </div>`;
@@ -116,8 +116,8 @@ const placeCards = (ctx, source, items, layout) =>
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
         <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
         <span class="placecard__info">
-          <span class="placecard__name"${ed(sourceFile(source), [i, 'name'])}>${esc(p.name)}</span>
-          <span class="label"><span${ed(sourceFile(source), [i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), [i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>
+          <span class="placecard__name"${ed(sourceFile(source), ['items', i, 'name'])}>${esc(p.name)}</span>
+          <span class="label"><span${ed(sourceFile(source), ['items', i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), ['items', i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>
         </span>
       </a>`;
     })}

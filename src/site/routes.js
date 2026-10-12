@@ -8,7 +8,7 @@
  *   pages/index.json                   /                  home (pages/404/index.json is 404.html)
  *   pages/people/index.json            /people/
  *   pages/people/[slug].json           /people/<slug>/    a template: one page per item of its
- *                                                         source ({ "config": { "source": "people" } })
+ *                                                         source ({ "template": { "source": "people" } })
  *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
  *                                                         slug, this one wins over the template
  *
@@ -141,10 +141,10 @@ export function buildRoutes(content) {
     const file = pageFile(id);
     const parent = pathOfId(id);
     const folder = id.slice(0, -TEMPLATE.length); // "people/"
-    const source = tpl.config?.source;
+    const source = tpl.template?.source;
     const list = sources[source];
     if (!Array.isArray(list)) {
-      warnings.push(`${file}: config.source "${source ?? ''}" is not a source list`);
+      warnings.push(`${file}: template.source "${source ?? ''}" is not a source list`);
       return [];
     }
     const section = tpl.section ?? titleCase(source);
@@ -199,9 +199,9 @@ export function buildRoutes(content) {
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
           curtain: curtainOf(item.curtain, title),
-          curtainEdit: curtainEditOf(sourceFile(source), [index, 'curtain']),
+          curtainEdit: curtainEditOf(sourceFile(source), ['items', index, 'curtain']),
           transition: item.transition,
-          transitionEdit: curtainEditOf(sourceFile(source), [index, 'transition']),
+          transitionEdit: curtainEditOf(sourceFile(source), ['items', index, 'transition']),
         };
       });
   }

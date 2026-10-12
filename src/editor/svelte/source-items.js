@@ -4,7 +4,7 @@
  * for the editor, a new item, the slug format.
  */
 import { pointer } from '../../site/helpers.js';
-import { schemaFile, sourceIdOf } from '../../site/files.js';
+import { itemsOf, schemaFile, sourceIdOf } from '../../site/files.js';
 import { itemTitle, newItemOf, schemaOf } from '../../site/schemas.js';
 
 /** The editor's field widget (Field.svelte type) for a schema field type. */
@@ -23,7 +23,10 @@ export const WIDGETS = {
 export function schemaFor(store, file) {
   const id = sourceIdOf(file);
   const data = (f) => store.current[f];
-  return schemaOf({ sources: { [id]: data(file) }, schemas: { [id]: data(schemaFile(id)) } }, id);
+  return schemaOf(
+    { sources: { [id]: itemsOf(data(file)) }, schemas: { [id]: data(schemaFile(id)) } },
+    id,
+  );
 }
 
 export const itemName = (item, schema) => itemTitle(item, schema) || 'Untitled';
@@ -52,7 +55,7 @@ export const slugify = (s) =>
  * { key, label, path, edit, ptr, type (a widget), half, help, options ([[value, label]]) }.
  */
 function fieldOf(file, i, path, f, label = f.label) {
-  const ptr = pointer([i, ...path]);
+  const ptr = pointer(['items', i, ...path]);
   return {
     key: path.join('.'),
     label,

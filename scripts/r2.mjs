@@ -28,6 +28,7 @@ import { AwsClient } from 'aws4fetch';
 import { FORMAT, loadSharp, makeVariants, uprightSize, widthsFor } from './image-variants.mjs';
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import { writeFileAtomic } from './content.mjs';
+import { VERSION } from '../src/site/files.js';
 
 /** Image types an upload can be (they are stored as WebP). */
 const IMAGE_TYPES = new Set([
@@ -121,18 +122,22 @@ async function deleteObject(cfg, key) {
   await check(res, 'delete');
 }
 
-/** Write photos.json sorted by key (formatted like Save), right after onWrite(). */
+/** photos.json's photos ({ key: entry }); {} when there is no file. */
+const readPhotoMap = (file) => readJSON(file)?.photos || {};
+
+/** Write photos.json ({ version, photos }) sorted by key (formatted like Save), right after onWrite(). */
 export function writePhotos(photosFile, photos, onWrite = () => {}) {
   onWrite();
   writeFileAtomic(
     photosFile,
-    formatJSON(
-      Object.fromEntries(
+    formatJSON({
+      version: VERSION,
+      photos: Object.fromEntries(
         Object.keys(photos)
           .sort()
           .map((k) => [k, photos[k]]),
       ),
-    ),
+    }),
   );
 }
 
@@ -167,7 +172,7 @@ export async function uploadPhoto(env, { name, type, body }, { photosFile, onWri
   }
   const base = photoBase(name, body);
   const key = sizeKey(base, widthsFor(width).at(-1));
-  const photos = readJSON(photosFile);
+  const photos = readPhotoMap(photosFile);
   if (photos[key])
     return { status: 200, body: { ok: true, key, photo: photos[key], existing: true } };
 
@@ -180,7 +185,7 @@ export async function uploadPhoto(env, { name, type, body }, { photosFile, onWri
   );
   const photo = { width: v.width, height: v.height, srcset, color: v.color, lqip: v.lqip };
   // re-read: another upload may have finished meanwhile
-  writePhotos(photosFile, { ...readJSON(photosFile), [key]: photo }, onWrite);
+  writePhotos(photosFile, { ...readPhotoMap(photosFile), [key]: photo }, onWrite);
   const bytes = v.sizes.reduce((n, s) => n + s.buffer.length, 0);
   return { status: 200, body: { ok: true, key, photo, size: body.length, stored: bytes } };
 }
@@ -192,11 +197,11 @@ export async function uploadPhoto(env, { name, type, body }, { photosFile, onWri
 export async function deletePhoto(env, key, { photosFile, onWrite = () => {} }) {
   const cfg = r2Config(env);
   if (cfg.missing) return { status: 503, body: { error: NOT_CONFIGURED, missing: cfg.missing } };
-  const photo = readJSON(photosFile)[key];
+  const photo = readPhotoMap(photosFile)[key];
   if (!Array.isArray(photo?.srcset))
     return { status: 404, body: { error: `No R2 photo "${key}"` } };
   await Promise.all(photo.srcset.map((s) => deleteObject(cfg, s.key)));
-  const now = readJSON(photosFile); // re-read, like the upload
+  const now = readPhotoMap(photosFile); // re-read, like the upload
   delete now[key];
   writePhotos(photosFile, now, onWrite);
   return { status: 200, body: { ok: true, key, deleted: photo.srcset.map((s) => s.key) } };

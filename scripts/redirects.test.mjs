@@ -23,34 +23,38 @@ function site(redirects = []) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
-  put('settings/site.json', { name: 'Test', url: 'https://test.example' });
+  put('settings/site.json', { version: 1, name: 'Test', url: 'https://test.example' });
   put('settings/nav.json', {
+    version: 1,
     header: [
       { label: 'People', page: '/people/', children: [{ label: 'Team', page: '/people/team/' }] },
       { label: 'About', page: '/about/' },
     ],
     footer: [{ label: 'Noor', page: '/people/noor/' }],
   });
-  put('settings/redirects.json', redirects);
+  put('settings/redirects.json', { version: 1, redirects });
   put(
     'pages/index.json',
     page({ type: 'button', label: 'Team', config: { href: '/people/team/#join' } }),
   );
-  put('pages/404/index.json', {});
+  put('pages/404/index.json', { version: 1 });
   put(
     'pages/about/index.json',
     page({ type: 'button', label: 'x', config: { href: '/peoples/' } }),
   );
-  put('pages/people/index.json', {});
-  put('pages/people/[slug].json', { config: { source: 'people' } });
-  put('pages/people/team/index.json', {});
-  put('sources/people.json', [{ slug: 'noor', name: 'Noor' }, { name: 'Daan' }]);
+  put('pages/people/index.json', { version: 1 });
+  put('pages/people/[slug].json', { version: 1, template: { source: 'people' } });
+  put('pages/people/team/index.json', { version: 1 });
+  put('sources/people.json', {
+    version: 1,
+    items: [{ slug: 'noor', name: 'Noor' }, { name: 'Daan' }],
+  });
   return root;
 }
 /** A page with one section holding `block`. */
 function page(block) {
   const pos = { col: 1, span: 24, row: 1, rows: 1 };
-  return { sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }] };
+  return { version: 1, sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }] };
 }
 const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 
@@ -58,7 +62,7 @@ test('rename: every path of the folder redirects (items by pattern), links follo
   const root = site();
   const r = pagesOp(root, { op: 'rename', id: 'people', name: 'models' });
   assert.equal(r.status, 200, r.body.error);
-  assert.deepEqual(read(root, 'settings/redirects.json'), [
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/people/', to: '/models/' },
     { from: '/people/:slug/', to: '/models/:slug/' }, // also /people/team/ (one segment)
   ]);
@@ -86,12 +90,12 @@ test('chain collapse, self-loops and a redirect from a page again', () => {
   ]);
   const first = pagesOp(root, { op: 'rename', id: 'people', name: 'models' });
   assert.deepEqual(first.body.pruned, [{ from: '/models/', to: '/elsewhere/' }]); // a page now
-  const list = read(root, 'settings/redirects.json');
+  const list = read(root, 'settings/redirects.json').redirects;
   assert.deepEqual(list[0], { from: '/team/', to: '/models/team/', status: 302 }); // no chain
   // back again: /people/ -> /models/ -> /people/ would loop: those go
   const r = pagesOp(root, { op: 'rename', id: 'models', name: 'people' });
   assert.deepEqual(r.body.pruned, []);
-  assert.deepEqual(read(root, 'settings/redirects.json'), [
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/team/', to: '/people/team/', status: 302 },
     { from: '/models/', to: '/people/' },
     { from: '/models/:slug/', to: '/people/:slug/' },
@@ -108,7 +112,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
   let root = site([{ from: '/crew/', to: '/people/team/' }]);
   let r = pagesOp(root, { op: 'delete', id: 'people/team' });
   assert.equal(r.status, 200, r.body.error);
-  assert.deepEqual(read(root, 'settings/redirects.json'), [
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/crew/', to: '/people/' },
     { from: '/people/team/', to: '/people/' },
   ]);
@@ -119,7 +123,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
   root = site();
   r = pagesOp(root, { op: 'delete', id: 'people/[slug]', redirect: '/about/' });
   assert.deepEqual(r.body.removed, ['pages/people/[slug].json']);
-  assert.deepEqual(read(root, 'settings/redirects.json'), [
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/people/:slug/', to: '/about/' },
   ]);
   assert.equal(read(root, 'settings/nav.json').footer[0].page, '/about/');
@@ -131,7 +135,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
 
   root = site([{ from: '/crew/', to: '/people/team/' }]);
   r = pagesOp(root, { op: 'delete', id: 'people', redirect: null });
-  assert.deepEqual(read(root, 'settings/redirects.json'), []); // gone: no redirect to it either
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, []); // gone: no redirect to it either
   assert.equal(r.body.broken, 4); // links to it stay (the build's link check finds them)
   assert.equal(r.body.links, 0);
 });
@@ -147,8 +151,8 @@ test('an item slug change: its page redirects, links follow', () => {
     ].map((f) => [f, read(root, f)]),
   );
   const after = structuredClone(before);
-  after['sources/people.json'][0].slug = 'noor-v';
-  after['sources/people.json'][1].name = 'Daan O'; // slug from the name: daan -> daan-o
+  after['sources/people.json'].items[0].slug = 'noor-v';
+  after['sources/people.json'].items[1].name = 'Daan O'; // slug from the name: daan -> daan-o
   const moves = itemMoves(before, after);
   assert.deepEqual(
     [...moves],
@@ -197,16 +201,20 @@ test('_redirects: one line per path, with and without its slash; build warnings'
 });
 
 test('validation: redirects.json', () => {
-  assert.deepEqual(checkContent('settings/redirects.json', []), []);
-  assert.deepEqual(checkContent('settings/redirects.json', {}), [
-    'must be a list (a JSON array), not an object',
+  const R = 'settings/redirects.json';
+  assert.deepEqual(checkContent(R, { version: 1, redirects: [] }), []);
+  assert.deepEqual(checkContent(R, { version: 1, redirects: {} }), [
+    '"redirects" must be a list (a JSON array), not an object',
   ]);
   assert.deepEqual(
-    checkContent('settings/redirects.json', [
-      { from: 'old', to: '/new/' },
-      { from: '/a/', to: 'new' },
-      { from: '/a/', to: '/b/', status: 307 },
-    ]),
+    checkContent(R, {
+      version: 1,
+      redirects: [
+        { from: 'old', to: '/new/' },
+        { from: '/a/', to: 'new' },
+        { from: '/a/', to: '/b/', status: 307 },
+      ],
+    }),
     [
       'redirect 1: "from" must be a path that starts with /',
       'redirect 2: "to" must be a path that starts with / or an http(s) URL, without spaces',
@@ -220,7 +228,7 @@ test('"See all" links go to the page that shows the source, wherever it is', asy
   const { sourcePage } = await import('../src/site/blocks/data.js');
   const pages = {
     home: page({ type: 'grid', config: { source: 'people' } }),
-    'models/[slug]': { config: { source: 'people' } },
+    'models/[slug]': { template: { source: 'people' } },
     work: page({ type: 'projects', config: { source: 'projects' } }),
   };
   assert.equal(sourcePage({ pages }, 'people'), '/models/');

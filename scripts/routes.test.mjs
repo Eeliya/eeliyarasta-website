@@ -36,8 +36,11 @@ test('folders mirror URLs, in tree order', () => {
 test('[slug] template: a page per item, slug field or slugified name', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[slug].json': { config: { source: 'people' }, section: 'People' },
-    'sources/people.json': [{ slug: 'noor', name: 'Noor' }, { name: 'Daan Ökafor' }],
+    'pages/people/[slug].json': { template: { source: 'people' }, section: 'People' },
+    'sources/people.json': {
+      version: 1,
+      items: [{ slug: 'noor', name: 'Noor' }, { name: 'Daan Ökafor' }],
+    },
   });
   const r = buildRoutes(c).routes;
   assert.deepEqual(
@@ -55,12 +58,15 @@ test('[slug] template: a page per item, slug field or slugified name', () => {
 
 test('a fixed page beats the template for the same slug', () => {
   const c = content({
-    'pages/people/[slug].json': { config: { source: 'people' } },
+    'pages/people/[slug].json': { template: { source: 'people' } },
     'pages/people/noor/index.json': { title: 'Mine' },
-    'sources/people.json': [
-      { slug: 'noor', name: 'Noor' },
-      { slug: 'daan', name: 'Daan' },
-    ],
+    'sources/people.json': {
+      version: 1,
+      items: [
+        { slug: 'noor', name: 'Noor' },
+        { slug: 'daan', name: 'Daan' },
+      ],
+    },
   });
   const r = buildRoutes(c).routes;
   assert.deepEqual(
@@ -75,9 +81,12 @@ test('a fixed page beats the template for the same slug', () => {
 
 test('missing, invalid and duplicate slugs warn and get no page', () => {
   const c = content({
-    'pages/people/[slug].json': { config: { source: 'people' } },
-    'pages/places/[slug].json': { config: { source: 'nope' } },
-    'sources/people.json': [{ slug: 'a' }, { slug: 'a' }, {}, { slug: 'Not Valid' }],
+    'pages/people/[slug].json': { template: { source: 'people' } },
+    'pages/places/[slug].json': { template: { source: 'nope' } },
+    'sources/people.json': {
+      version: 1,
+      items: [{ slug: 'a' }, { slug: 'a' }, {}, { slug: 'Not Valid' }],
+    },
   });
   const { routes, warnings } = buildRoutes(c);
   assert.deepEqual(
@@ -88,7 +97,7 @@ test('missing, invalid and duplicate slugs warn and get no page', () => {
   assert.match(warnings.join('\n'), /duplicate slug "a"/);
   assert.match(warnings.join('\n'), /no slug or name/);
   assert.match(warnings.join('\n'), /"Not Valid" is not valid/);
-  assert.match(warnings.join('\n'), /config.source "nope"/);
+  assert.match(warnings.join('\n'), /template.source "nope"/);
 });
 
 test('content file names', () => {
@@ -110,8 +119,11 @@ test('content file names', () => {
 test('placeholder items: noindex, so not in the sitemap', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[slug].json': { config: { source: 'people' } },
-    'sources/people.json': [{ name: 'Real' }, { name: 'Stock', placeholder: true }],
+    'pages/people/[slug].json': { template: { source: 'people' } },
+    'sources/people.json': {
+      version: 1,
+      items: [{ name: 'Real' }, { name: 'Stock', placeholder: true }],
+    },
   });
   const r = buildRoutes(c).routes;
   assert.equal(r.find((x) => x.path === '/people/real/').noindex, false);
@@ -123,8 +135,8 @@ test('placeholder items: noindex, so not in the sitemap', () => {
 
 test('a name that makes no slug says so', () => {
   const c = content({
-    'pages/people/[slug].json': { config: { source: 'people' } },
-    'sources/people.json': [{ name: '??? //' }, {}],
+    'pages/people/[slug].json': { template: { source: 'people' } },
+    'sources/people.json': { version: 1, items: [{ name: '??? //' }, {}] },
   });
   assert.deepEqual(buildRoutes(c).warnings, [
     'sources/people.json item 1: name "??? //" makes no slug, add a "slug": no page',

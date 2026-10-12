@@ -37,6 +37,8 @@ import {
   TEMPLATE,
   isContentFile,
   ROOT_FILES,
+  VERSION,
+  itemsOf,
   isSlug,
   pageFile,
   schemaFile,
@@ -187,7 +189,8 @@ export function pagesOp(
     const old = redirectsOf(after);
     const moved = plan ? moveRedirects(old, plan.moves) : { list: old, added: [] };
     const { list, pruned } = pruneRedirects(moved.list, sitePaths(after));
-    if (JSON.stringify(list) !== JSON.stringify(old)) writeData(REDIRECTS, list);
+    if (JSON.stringify(list) !== JSON.stringify(old))
+      writeData(REDIRECTS, { version: VERSION, redirects: list });
     return {
       changed: [...changed],
       links: plan?.edits.length ?? 0,
@@ -217,7 +220,7 @@ export function pagesOp(
         title: t,
       };
       const section = newSection(ids, [heading]);
-      write(file, { curtain: t, sections: [section] });
+      write(file, { version: VERSION, curtain: t, sections: [section] });
       return done({ id: join(parent, name), created: [file] });
     }
     if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
@@ -228,7 +231,8 @@ export function pagesOp(
     onWrite();
     const ids = new Set();
     write(pageFile(pid), {
-      config: { source },
+      version: VERSION,
+      template: { source },
       section: titleCase(source),
       next: 'Next',
       // the item's album, filling the screen
@@ -314,10 +318,10 @@ function sourceProblems(root, files) {
       : fs.existsSync(path.join(root, CONTENT_DIR, file))
         ? readContentFile(root, file, { check: false })
         : undefined;
-  const photos = read(PHOTOS) || {};
+  const photos = read(PHOTOS)?.photos || {};
   const photoExists = photoChecker(readMediaManifest(root), photos);
   return [...ids].flatMap((id) => {
-    const list = read(sourceFile(id));
+    const list = itemsOf(read(sourceFile(id)));
     const schema = schemaOf(
       { sources: { [id]: list }, schemas: { [id]: read(schemaFile(id)) } },
       id,
@@ -333,7 +337,7 @@ function sourceProblems(root, files) {
  * title field, the fields shown in item lists as facts ("{{role}}"), the first long text.
  */
 function albumBlock(root, source, ids) {
-  const list = readContentFile(root, sourceFile(source), { check: false });
+  const list = itemsOf(readContentFile(root, sourceFile(source), { check: false }));
   const own = fs.existsSync(path.join(root, CONTENT_DIR, schemaFile(source)))
     ? readContentFile(root, schemaFile(source), { check: false })
     : undefined;
@@ -459,7 +463,9 @@ function readMedia(root) {
 }
 
 const readPhotos = (root) =>
-  fs.existsSync(path.join(root, CONTENT_DIR, PHOTOS)) ? readContentFile(root, PHOTOS) : {};
+  fs.existsSync(path.join(root, CONTENT_DIR, PHOTOS))
+    ? readContentFile(root, PHOTOS).photos || {}
+    : {};
 
 /**
  * The Media window (src/editor/svelte/MediaModal.svelte): a photo's alt text, or delete it.

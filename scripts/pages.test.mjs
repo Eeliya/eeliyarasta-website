@@ -14,13 +14,13 @@ function site() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
-  put('pages/index.json', {});
-  put('pages/404/index.json', {});
-  put('pages/about/index.json', { title: 'About' });
-  put('pages/people/index.json', { title: 'People' });
-  put('pages/people/[slug].json', { config: { source: 'people' } });
-  put('pages/people/team/index.json', { title: 'Team' });
-  put('sources/people.json', [{ slug: 'noor' }]);
+  put('pages/index.json', { version: 1 });
+  put('pages/404/index.json', { version: 1 });
+  put('pages/about/index.json', { version: 1, title: 'About' });
+  put('pages/people/index.json', { version: 1, title: 'People' });
+  put('pages/people/[slug].json', { version: 1, template: { source: 'people' } });
+  put('pages/people/team/index.json', { version: 1, title: 'Team' });
+  put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
   return root;
 }
 const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
@@ -69,7 +69,7 @@ test('template: [slug].json in a page folder, one per folder, not at the root', 
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'nope' }).status, 400);
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug].json']);
-  assert.equal(read(root, 'pages/about/[slug].json').config.source, 'people');
+  assert.equal(read(root, 'pages/about/[slug].json').template.source, 'people');
   const [album] = read(root, 'pages/about/[slug].json').sections;
   assert.deepEqual(
     album.blocks.map((b) => b.type),

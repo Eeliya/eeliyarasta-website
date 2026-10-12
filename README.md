@@ -50,7 +50,7 @@ run `npm install` after pulling this. It works in Git for Windows' sh. Skip it o
 content/            ← all text, albums, projects, animation config (JSON)
  en/                ← one folder per language (only en so far; the site's lang is site.json "lang")
   pages/            ← one folder per page (its URL) with index.json in it (see "Pages and URLs")
-  sources/          ← lists that grids pull from (people, places, projects): top level is an array,
+  sources/          ← lists that grids pull from (people, places, projects): { version, items: [...] },
                       plus <id>.schema.json: the fields of its items (see "Sources & schemas")
   settings/         ← site-wide settings (site.json, nav.json, animations.json, photos.json, redirects.json)
   strings.json      ← UI text of the templates: footer labels, the menu's Menu / Close / clock label
@@ -86,6 +86,12 @@ src/
 index.html          ← HTML shell with <!--ssr-head--> / <!--ssr-body--> markers
 edit/index.html     ← editor entry (served by `npm run dev` only)
 ```
+
+**Content shape.** Every content file is a JSON object whose first key is `"version": 1`, the
+shape version (`VERSION` in `src/site/files.js`; the build and Save refuse anything else). A file
+whose data is a list or a map keeps it under one key next to it: a source's `"items"`,
+redirects.json's `"redirects"`, photos.json's `"photos"`. A change of shape bumps the version and
+converts the content in the same commit.
 
 ### Build / prerender ("SSR but static")
 
@@ -129,7 +135,7 @@ site settings can live side by side):
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                    |
 | `content/en/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                               |
 
-| `content/en/pages/people/[slug].json` | the people pages: `config.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
+| `content/en/pages/people/[slug].json` | the people pages: `template.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
@@ -502,7 +508,7 @@ Every page is a folder in `content/en/pages/`, and the folders are the URLs. A p
 - **Ids:** code names a page by its folder path: `home`, `people`, `people/whatever`,
   `people/[slug]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
   page file: `pages/about.json` or `pages/people/x.json` are ignored.
-- **Templates:** `[slug].json` says which list it shows, `{ "config": { "source": "people" } }`,
+- **Templates:** `[slug].json` says which list it shows, `{ "template": { "source": "people" } }`,
   plus the labels its pages share (`"section": "People"`, the back link; `"next": "Next person"`).
   An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
   `noor-vermeer`). Items without one, with an invalid one or with a duplicate get no page and a

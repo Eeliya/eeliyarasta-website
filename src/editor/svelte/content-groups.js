@@ -34,6 +34,9 @@ export const SEO_SETTINGS = [
 /** Lists in content/en/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 
+/** Pointer parts into an item of a source file: ["items", "2", ...]. */
+const isItemPtr = (file, parts) => isSource(file) && parts[0] === 'items' && /^\d+$/.test(parts[1]);
+
 /** "pages/index.json#/sections/0/blocks/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/blocks/0/title' } */
 export function splitEdit(edit) {
   const i = edit.indexOf('#');
@@ -45,17 +48,17 @@ export const previewPage = (bridge) =>
   bridge.doc?.querySelector('[data-router-view]')?.dataset.page;
 
 /**
- * Human label for a pointer, e.g. sources/people.json#/0/name -> "Noor Vermeer / Name": a
+ * Human label for a pointer, e.g. sources/people.json#/items/0/name -> "Noor Vermeer / Name": a
  * source item by its name and its field by the schema's label.
  */
 export function labelFor(store, { file, ptr }) {
   const parts = parse(ptr);
-  if (isSource(file) && /^\d+$/.test(parts[0])) {
+  if (isItemPtr(file, parts)) {
     const schema = schemaFor(store, file);
-    const item = store.current[file]?.[parts[0]];
-    const name = item ? itemName(item, schema) : `#${Number(parts[0]) + 1}`;
-    const field = schema.fields.find((f) => f.key === parts[1]);
-    return [name, field?.label ?? parts[1], ...parts.slice(2)].filter(Boolean).join(' / ');
+    const item = store.current[file]?.items?.[parts[1]];
+    const name = item ? itemName(item, schema) : `#${Number(parts[1]) + 1}`;
+    const field = schema.fields.find((f) => f.key === parts[2]);
+    return [name, field?.label ?? parts[2], ...parts.slice(3)].filter(Boolean).join(' / ');
   }
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
@@ -106,8 +109,8 @@ function fieldLabel(store, f) {
  */
 function described(store, f) {
   const parts = parse(f.ptr);
-  const own = isSource(f.file) && parts.length === 2 && /^\d+$/.test(parts[0]);
-  const sf = own && schemaFor(store, f.file).fields.find((x) => x.key === parts[1]);
+  const own = isItemPtr(f.file, parts) && parts.length === 3;
+  const sf = own && schemaFor(store, f.file).fields.find((x) => x.key === parts[2]);
   if (!sf) return { ...f, label: fieldLabel(store, f) };
   return {
     ...f,
@@ -271,14 +274,14 @@ export function groupFor(store, { file, ptr }, page) {
     if (parts[0] === 'social') return { id: 'social', title: 'Social links' };
     if (parts[0] === 'email' || parts[0] === 'location') return { id: 'footer', title: 'Footer' };
   }
-  if (isSource(file) && /^\d+$/.test(parts[0])) {
+  if (isItemPtr(file, parts)) {
     // List items shown on the home page are edited in the Sources modal, not in a group.
     if (page === 'home')
       return { id: `source:${sourceIdOf(file)}`, title: `${sourceIdOf(file)}.json` };
-    const item = store.current[file]?.[parts[0]];
+    const item = store.current[file]?.items?.[parts[1]];
     return {
-      id: `${file}-${parts[0]}`,
-      title: item ? itemName(item, schemaFor(store, file)) : `#${Number(parts[0]) + 1}`,
+      id: `${file}-${parts[1]}`,
+      title: item ? itemName(item, schemaFor(store, file)) : `#${Number(parts[1]) + 1}`,
     };
   }
   return { id: 'content', title: 'Content' };

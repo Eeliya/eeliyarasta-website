@@ -85,7 +85,7 @@ const env = () => ({
   R2_BUCKET: 'photos-bucket',
 });
 const opts = () => ({ photosFile });
-const photos = () => JSON.parse(fs.readFileSync(photosFile, 'utf8'));
+const photos = () => JSON.parse(fs.readFileSync(photosFile, 'utf8')).photos;
 
 /** A width x height JPEG; orientation 6 = shot in portrait (stored sideways), with GPS-like EXIF. */
 const jpeg = (width, height, orientation = 1) =>
@@ -252,7 +252,10 @@ test('delete: every size of the photo, signed, then its photos.json entry', asyn
   // the alt text set in the Media window goes with it
   fs.writeFileSync(
     photosFile,
-    JSON.stringify({ ...photos(), [up.body.key]: { ...up.body.photo, alt: 'Gone' } }),
+    JSON.stringify({
+      version: 1,
+      photos: { ...photos(), [up.body.key]: { ...up.body.photo, alt: 'Gone' } },
+    }),
   );
   const others = Object.keys(photos()).filter((k) => k !== up.body.key);
   puts = [];

@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "sections": [
     {
       "id": "s-ud3l",
@@ -24,14 +25,31 @@
             "Want to shoot together, or have a project in mind? Send me a message."
           ],
           "facts": [
-            { "label": "Based in", "value": "Netherlands" },
-            { "label": "Camera", "value": "Fujifilm X100V" },
-            { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
-            { "label": "Builds", "value": "Websites, Dev tools, DIY" }
+            {
+              "label": "Based in",
+              "value": "Netherlands"
+            },
+            {
+              "label": "Camera",
+              "value": "Fujifilm X100V"
+            },
+            {
+              "label": "Shoots",
+              "value": "Portrait, Editorial, Fashion, Architecture"
+            },
+            {
+              "label": "Builds",
+              "value": "Websites, Dev tools, DIY"
+            }
           ],
           "emailLabel": "Email me",
           "config": {},
-          "pos": { "col": 1, "span": 120, "row": 1, "rows": 82 },
+          "pos": {
+            "col": 1,
+            "span": 120,
+            "row": 1,
+            "rows": 82
+          },
           "size": "auto"
         }
       ]

@@ -1,5 +1,8 @@
 {
-  "config": { "source": "places" },
+  "version": 1,
+  "template": {
+    "source": "places"
+  },
   "section": "Places",
   "next": "Next place",
   "sections": [
@@ -12,14 +15,29 @@
         {
           "id": "b-gbxt",
           "type": "album",
-          "title": { "bind": "name" },
+          "title": {
+            "bind": "name"
+          },
           "meta": [
-            { "label": "Location", "value": "{{location}}" },
-            { "label": "Year", "value": "{{year}}" }
+            {
+              "label": "Location",
+              "value": "{{location}}"
+            },
+            {
+              "label": "Year",
+              "value": "{{year}}"
+            }
           ],
-          "summary": { "bind": "summary" },
+          "summary": {
+            "bind": "summary"
+          },
           "config": {},
-          "pos": { "col": 1, "span": 120, "row": 1, "rows": 75 },
+          "pos": {
+            "col": 1,
+            "span": 120,
+            "row": 1,
+            "rows": 75
+          },
           "size": "auto"
         }
       ]

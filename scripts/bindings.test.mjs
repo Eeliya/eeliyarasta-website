@@ -215,6 +215,7 @@ test('bindingProblems: schema-aware errors and warnings', () => {
 test('validation: the shape of bindings and items', () => {
   const ids = new Set();
   const page = (patch, type = 'heading') => ({
+    version: 1,
     sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
   });
   const F = 'pages/x/index.json';
@@ -246,9 +247,10 @@ test('Save refuses bindings that do not fit the schema', () => {
   }
   const F = 'pages/x/index.json';
   fs.mkdirSync(path.join(root, 'content/en/pages/x'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'content/en', F), '{}');
+  fs.writeFileSync(path.join(root, 'content/en', F), '{ "version": 1 }');
   const ids = new Set();
   const page = (title) => ({
+    version: 1,
     sections: [
       newSection(ids, [
         { ...newBlock('heading', ids), title, item: { source: 'people', slug: 'noor-vermeer' } },
@@ -263,7 +265,9 @@ test('Save refuses bindings that do not fit the schema', () => {
   // a {{name}} the source doesn't have only warns (the build), so it saves
   assert.equal(save(root, { [F]: page('{{nope}}') }).status, 200);
   // a schema change that breaks a saved page's binding is refused too
-  const schema = JSON.parse(fs.readFileSync(path.join(root, 'content/en/sources/people.schema.json')));
+  const schema = JSON.parse(
+    fs.readFileSync(path.join(root, 'content/en/sources/people.schema.json')),
+  );
   fs.writeFileSync(path.join(root, 'content/en', F), JSON.stringify(page({ bind: 'role' })));
   const without = { ...schema, fields: schema.fields.filter((f) => f.key !== 'role') };
   assert.equal(save(root, { 'sources/people.schema.json': without }).status, 400);

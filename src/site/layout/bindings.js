@@ -195,7 +195,7 @@ export function bindingProblems(content, { types, pageFile, files = null }) {
   for (const [id, page] of Object.entries(content?.pages || {})) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
-    const pageSource = id.endsWith('[slug]') ? page?.config?.source : null;
+    const pageSource = id.endsWith('[slug]') ? page?.template?.source : null;
     (Array.isArray(page?.sections) ? page.sections : []).forEach((s, at) =>
       (Array.isArray(s?.blocks) ? s.blocks : []).forEach((b, j) => {
         const t = types[b?.type];

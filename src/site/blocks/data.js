@@ -26,7 +26,7 @@ export function sourceList(ctx, source) {
 export function sourcePage(ctx, source) {
   const ids = Object.keys(ctx.pages || {}).sort();
   const page = (id) => ctx.pages[id];
-  const tpl = ids.find((id) => id.endsWith(TEMPLATE) && page(id)?.config?.source === source);
+  const tpl = ids.find((id) => id.endsWith(TEMPLATE) && page(id)?.template?.source === source);
   if (tpl) return pathOfId(tpl);
   const lists = ids.find(
     (id) =>

@@ -88,7 +88,7 @@
 
   // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
   const template = $derived(g.file.endsWith(`/${TEMPLATE}.json`));
-  const pageSource = $derived(template ? live.get(g.file, '/config/source') : null);
+  const pageSource = $derived(template ? live.get(g.file, '/template/source') : null);
   // (read on its own: the store changes a value in place, so `block` stays the same object)
   const ref = $derived.by(() => {
     live.version;
@@ -102,7 +102,7 @@
   });
   const items = $derived.by(() => {
     live.version;
-    const list = itemSource ? live.get(sourceFile(itemSource), '') : null;
+    const list = itemSource ? live.get(sourceFile(itemSource), '/items') : null;
     return Array.isArray(list) ? list : [];
   });
   const slugOf = (it) => itemSlug(it, schema);
@@ -140,7 +140,7 @@
     live.store.set(g.file, `${base}/item`, next, { source: 'panel', structure: true });
   function pickSource(id) {
     if (!id) return setItem(undefined);
-    const list = live.get(sourceFile(id), '');
+    const list = live.get(sourceFile(id), '/items');
     const sc = schemaFor(live.store, sourceFile(id));
     const first = Array.isArray(list) && list.length ? itemSlug(list[0], sc) : '';
     setItem({ source: id, slug: first });

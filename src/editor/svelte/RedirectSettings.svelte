@@ -41,11 +41,11 @@
   function change(fn) {
     const next = structuredClone(list);
     fn(next);
-    live.store.set(REDIRECTS, '', next, { source: 'panel' });
+    live.store.set(REDIRECTS, '/redirects', next, { source: 'panel' });
   }
   const setKey = (i, key, value) =>
-    live.store.set(REDIRECTS, `/${i}/${key}`, value, {
-      key: `text:${REDIRECTS}#/${i}/${key}`,
+    live.store.set(REDIRECTS, `/redirects/${i}/${key}`, value, {
+      key: `text:${REDIRECTS}#/redirects/${i}/${key}`,
       source: 'panel',
     });
 
@@ -75,13 +75,13 @@
   >
     {#snippet item(r, i)}
       <Field
-        edit="{REDIRECTS}#/{i}/from"
+        edit="{REDIRECTS}#/redirects/{i}/from"
         label="From (a path on this site)"
         value={r.from}
-        changed={live.changed(REDIRECTS, `/${i}/from`)}
+        changed={live.changed(REDIRECTS, `/redirects/${i}/from`)}
         onvalue={(v) => setKey(i, 'from', v.trim())}
       />
-      <div class={['tf', live.changed(REDIRECTS, `/${i}/to`) && 'is-changed']}>
+      <div class={['tf', live.changed(REDIRECTS, `/redirects/${i}/to`) && 'is-changed']}>
         <label class="tf__label" for="{uid}-to-{i}">To<i class="dot" title="Changed"></i></label>
         <Select
           id="{uid}-to-{i}"
@@ -92,14 +92,14 @@
       </div>
       {#if isExternal(r.to)}
         <Field
-          edit="{REDIRECTS}#/{i}/to"
+          edit="{REDIRECTS}#/redirects/{i}/to"
           label="URL"
           value={r.to}
-          changed={live.changed(REDIRECTS, `/${i}/to`)}
+          changed={live.changed(REDIRECTS, `/redirects/${i}/to`)}
           onvalue={(v) => setKey(i, 'to', v.trim())}
         />
       {/if}
-      <div class={['tf', live.changed(REDIRECTS, `/${i}/status`) && 'is-changed']}>
+      <div class={['tf', live.changed(REDIRECTS, `/redirects/${i}/status`) && 'is-changed']}>
         <label class="tf__label" for="{uid}-status-{i}"
           >Status<i class="dot" title="Changed"></i></label
         >

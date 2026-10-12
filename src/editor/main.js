@@ -490,7 +490,7 @@ function followItems() {
   store.batch(
     () => {
       for (const e of edits) store.set(e.file, compile(e.parts), e.value);
-      store.set(REDIRECTS, '', list);
+      store.set(REDIRECTS, '/redirects', list);
     },
     { source: 'panel' },
   );

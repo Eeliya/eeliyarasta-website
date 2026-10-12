@@ -22,8 +22,10 @@ import { isExternal } from './helpers.js';
 const itemPattern = (id) => `${pathOfId(id)}:slug/`;
 
 /** The redirect list of `files` (empty when there is none). */
-export const redirectsOf = (files) =>
-  Array.isArray(files[REDIRECTS]) ? files[REDIRECTS].filter((r) => r && typeof r === 'object') : [];
+export const redirectsOf = (files) => {
+  const list = files[REDIRECTS]?.redirects;
+  return Array.isArray(list) ? list.filter((r) => r && typeof r === 'object') : [];
+};
 
 /** "/about#team" -> "/about/": a path as a key, without its #hash or ?query, ending in "/". */
 export function pathKey(s) {

@@ -1,1 +1,9 @@
-[{ "from": "/people/noor-vermeer/:slug/", "to": "/people/" }]
+{
+  "version": 1,
+  "redirects": [
+    {
+      "from": "/people/noor-vermeer/:slug/",
+      "to": "/people/"
+    }
+  ]
+}

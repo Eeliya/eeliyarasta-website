@@ -7,8 +7,8 @@ import { loadContent, writeFileAtomic } from './content.mjs';
 import { readContentFiles, save } from './editor-server.mjs';
 import { checkContent, parseContent } from '../src/site/validate.js';
 
-const site = { name: 'Site', url: 'https://example.com' };
-const animations = { presets: {}, targets: {}, transitions: {} };
+const site = { version: 1, name: 'Site', url: 'https://example.com' };
+const animations = { version: 1, presets: {}, targets: {}, transitions: {} };
 
 /** content/ in a temp dir; files as { "settings/site.json": data or raw text }. */
 function tree(files = {}) {
@@ -16,8 +16,8 @@ function tree(files = {}) {
   const all = {
     'settings/site.json': site,
     'settings/animations.json': animations,
-    'pages/index.json': {},
-    'sources/people.json': [{ name: 'Noor' }],
+    'pages/index.json': { version: 1 },
+    'sources/people.json': { version: 1, items: [{ name: 'Noor' }] },
     ...files,
   };
   for (const [f, data] of Object.entries(all)) {
@@ -34,7 +34,7 @@ test('broken JSON: the error names the file, line and column', () => {
     () => parseContent('{\n  "a": 1\n  "b": 2\n}', 'pages/about/index.json'),
     /^Error: content\/en\/pages\/about\/index\.json: invalid JSON, .* \(line 3, column 3\)$/,
   );
-  const root = tree({ 'sources/places.json': '[{ "name": "A" },\n]' });
+  const root = tree({ 'sources/places.json': '{ "version": 1, "items": [{ "name": "A" },\n] }' });
   assert.throws(() => loadContent(root), /content\/en\/sources\/places\.json: invalid JSON/);
   // the editor's GET /content too
   assert.throws(() => readContentFiles(root), /content\/en\/sources\/places\.json: invalid JSON/);
@@ -46,7 +46,7 @@ test('shapes: the build stops on a wrong shape and names the file', () => {
     /content\/en\/settings\/animations\.json: must be an object, not an array/,
   );
   assert.throws(
-    () => loadContent(tree({ 'strings.json': { footer: 'x' } })),
+    () => loadContent(tree({ 'strings.json': { version: 1, footer: 'x' } })),
     /content\/en\/strings\.json: "footer" must be an object, not a string/,
   );
   // optional keys may be missing
@@ -55,26 +55,45 @@ test('shapes: the build stops on a wrong shape and names the file', () => {
 
 test('checkContent per kind', () => {
   assert.deepEqual(checkContent('settings/site.json', site), []);
-  assert.deepEqual(checkContent('settings/site.json', { url: 'u' }), ['"name" must be a string']);
-  assert.deepEqual(checkContent('settings/animations.json', { ...animations, presets: [] }), [
-    '"presets" must be an object',
+  assert.deepEqual(checkContent('settings/site.json', { version: 1, url: 'u' }), [
+    '"name" must be a string',
   ]);
-  assert.deepEqual(checkContent('settings/photos.json', { a: 1 }), ['photo "a" must be an object']);
-  assert.deepEqual(checkContent('sources/people.json', {}), [
-    'must be a list (a JSON array), not an object',
+  assert.deepEqual(
+    checkContent('settings/animations.json', { version: 1, ...animations, presets: [] }),
+    ['"presets" must be an object'],
+  );
+  assert.deepEqual(checkContent('settings/photos.json', { version: 1, photos: { a: 1 } }), [
+    'photo "a" must be an object',
   ]);
-  assert.deepEqual(checkContent('sources/people.json', [{}, 'x']), ['item 2 must be an object']);
-  assert.deepEqual(checkContent('pages/about/index.json', { sections: {} }), [
+  assert.deepEqual(checkContent('sources/people.json', { version: 1 }), [
+    '"items" is missing (a list, a JSON array)',
+  ]);
+  assert.deepEqual(checkContent('sources/people.json', { version: 1, items: [{}, 'x'] }), [
+    'item 2 must be an object',
+  ]);
+  // every file says its shape's version
+  assert.deepEqual(checkContent('sources/people.json', []), ['must be an object, not an array']);
+  assert.deepEqual(checkContent('settings/site.json', { name: 'S', url: 'u' }), [
+    '"version" must be 1 (the content\'s shape)',
+  ]);
+  assert.deepEqual(checkContent('pages/about/index.json', { version: 1, sections: {} }), [
     '"sections" must be an array, not an object',
   ]);
-  assert.equal(checkContent('pages/people/[slug].json', {}).length, 1);
-  assert.deepEqual(checkContent('pages/people/[slug].json', { config: { source: 'people' } }), []);
+  assert.equal(checkContent('pages/people/[slug].json', { version: 1 }).length, 1);
+  assert.deepEqual(
+    checkContent('pages/people/[slug].json', { version: 1, template: { source: 'people' } }),
+    [],
+  );
+  assert.equal(checkContent('pages/about/index.json', { version: 1, template: {} }).length, 1);
 });
 
 test('save: rejects bad shapes and writes nothing', () => {
   const root = tree();
   const before = read(root, 'pages/index.json');
-  const r = save(root, { 'pages/index.json': { title: 'New' }, 'settings/animations.json': [] });
+  const r = save(root, {
+    'pages/index.json': { version: 1, title: 'New' },
+    'settings/animations.json': [],
+  });
   assert.equal(r.status, 400);
   assert.match(r.body.error, /content\/en\/settings\/animations\.json: must be an object/);
   assert.equal(read(root, 'pages/index.json'), before);
@@ -87,11 +106,11 @@ test('save: rejects bad shapes and writes nothing', () => {
 test('save: writes every file, formatted, with no temporary files left', () => {
   const root = tree();
   let writes = 0;
-  const r = save(root, { 'pages/index.json': { title: 'New' } }, () => writes++);
+  const r = save(root, { 'pages/index.json': { version: 1, title: 'New' } }, () => writes++);
   assert.equal(r.status, 200);
   assert.deepEqual(r.body.written, ['pages/index.json']);
   assert.equal(writes, 1);
-  assert.equal(read(root, 'pages/index.json'), '{ "title": "New" }\n');
+  assert.equal(read(root, 'pages/index.json'), '{ "version": 1, "title": "New" }\n');
   assert.deepEqual(fs.readdirSync(path.join(root, 'content/en', 'pages')), ['index.json']);
 });
 
@@ -112,10 +131,10 @@ test('site.json with only name and url builds every page', async () => {
   const { buildRoutes } = await import('../src/site/routes.js');
   const { renderRoute } = await import('../src/site/render.js');
   const files = {
-    'pages/index.json': {},
-    'pages/about/index.json': {},
-    'pages/photography/index.json': {},
-    'pages/404/index.json': {},
+    'pages/index.json': { version: 1 },
+    'pages/about/index.json': { version: 1 },
+    'pages/photography/index.json': { version: 1 },
+    'pages/404/index.json': { version: 1 },
   };
   const content = loadContent(tree(files));
   for (const route of buildRoutes(content).routes) {
@@ -152,6 +171,12 @@ test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async 
   }
 });
 
+test('every content file starts with its shape version', async () => {
+  const { readContentDir } = await import('./content.mjs');
+  for (const [file, data] of Object.entries(readContentDir('.')))
+    assert.equal(Object.keys(data)[0] === 'version' && data.version, 1, file);
+});
+
 test('formatJSON (what Save writes) is Prettier-clean for every content file', async () => {
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
@@ -184,17 +209,25 @@ test('photos.json: alt per photo, sizes for R2 photos', () => {
   const PH = 'settings/photos.json';
   assert.deepEqual(
     checkContent(PH, {
-      'a/b.jpg': { alt: 'A' },
-      'photos/x-1600.webp': { srcset: [{ key: 'k', w: 480 }] },
+      version: 1,
+      photos: {
+        'a/b.jpg': { alt: 'A' },
+        'photos/x-1600.webp': { srcset: [{ key: 'k', w: 480 }] },
+      },
     }),
     [],
   );
-  assert.deepEqual(checkContent(PH, { 'a/b.jpg': 'A' }), ['photo "a/b.jpg" must be an object']);
+  assert.deepEqual(checkContent(PH, { version: 1, photos: { 'a/b.jpg': 'A' } }), [
+    'photo "a/b.jpg" must be an object',
+  ]);
   assert.match(
-    checkContent(PH, { 'a/b.jpg': { alt: 3 } })[0],
+    checkContent(PH, { version: 1, photos: { 'a/b.jpg': { alt: 3 } } })[0],
     /photo "a\/b\.jpg": "alt" must be a string/,
   );
-  assert.match(checkContent(PH, { k: { srcset: [{ w: 1 }] } })[0], /needs a "key"/);
+  assert.match(
+    checkContent(PH, { version: 1, photos: { k: { srcset: [{ w: 1 }] } } })[0],
+    /needs a "key"/,
+  );
 });
 
 test('alt text comes from photos.json; decorative photos and missing alts are empty', async () => {
@@ -240,6 +273,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   const drafts = {};
   const r = draftOp(root, drafts, {
     'pages/index.json': {
+      version: 1,
       sections: [
         {
           id: 's-aaaa',
@@ -261,7 +295,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   assert.deepEqual(r.body.files, ['pages/index.json']);
   assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
   assert.equal(loadContent(root, drafts).pages.home.sections[0].blocks[0].text, 'Draft');
-  assert.deepEqual(loadContent(root).pages.home, {});
+  assert.deepEqual(loadContent(root).pages.home, { version: 1 });
   draftOp(root, drafts, {});
   assert.deepEqual(drafts, {});
   assert.equal(draftOp(root, drafts, null).status, 400);

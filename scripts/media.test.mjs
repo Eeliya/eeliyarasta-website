@@ -47,14 +47,20 @@ function project() {
     fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true });
     fs.writeFileSync(path.join(root, f), typeof data === 'string' ? data : JSON.stringify(data));
   };
-  write('content/en/settings/site.json', { name: 'S', url: 'https://x.com' });
-  write('content/en/pages/index.json', { hero: { photos: [{ src: 'a/used.jpg' }] } });
-  write('content/en/sources/people.json', [{ name: 'N', images: [{ src: 'photos/used-1600.webp' }] }]);
+  write('content/en/settings/site.json', { version: 1, name: 'S', url: 'https://x.com' });
+  write('content/en/pages/index.json', { version: 1, hero: { photos: [{ src: 'a/used.jpg' }] } });
+  write('content/en/sources/people.json', {
+    version: 1,
+    items: [{ name: 'N', images: [{ src: 'photos/used-1600.webp' }] }],
+  });
   write('content/en/settings/photos.json', {
-    'a/used.jpg': { alt: 'Used' },
-    'a/free.jpg': { alt: 'Free' },
-    [R2]: { ...r2Photo, alt: 'Cat' },
-    'photos/used-1600.webp': { srcset: [{ key: 'photos/used-1600.webp', w: 1600 }] },
+    version: 1,
+    photos: {
+      'a/used.jpg': { alt: 'Used' },
+      'a/free.jpg': { alt: 'Free' },
+      [R2]: { ...r2Photo, alt: 'Cat' },
+      'photos/used-1600.webp': { srcset: [{ key: 'photos/used-1600.webp', w: 1600 }] },
+    },
   });
   const local = (k) => ({
     width: 960,
@@ -74,17 +80,17 @@ function project() {
   return root;
 }
 const photosOf = (root) =>
-  JSON.parse(fs.readFileSync(path.join(root, 'content/en/settings/photos.json'), 'utf8'));
+  JSON.parse(fs.readFileSync(path.join(root, 'content/en/settings/photos.json'), 'utf8')).photos;
 
 test('photoUses: every place a key is stored, as file + pointer', () => {
   const files = {
     'pages/index.json': { hero: { photos: [{ src: 'k' }, { src: 'x' }] } },
-    'sources/p.json': [{ image: 'k', 'a/b': 'k' }],
+    'sources/p.json': { version: 1, items: [{ image: 'k', 'a/b': 'k' }] },
   };
   assert.deepEqual(photoUses(files, 'k'), [
     { file: 'pages/index.json', ptr: '/hero/photos/0/src' },
-    { file: 'sources/p.json', ptr: '/0/image' },
-    { file: 'sources/p.json', ptr: '/0/a~1b' },
+    { file: 'sources/p.json', ptr: '/items/0/image' },
+    { file: 'sources/p.json', ptr: '/items/0/a~1b' },
   ]);
   assert.deepEqual(photoUses(files, ''), []);
 });
@@ -114,7 +120,7 @@ test('delete: a used photo is refused and names where it is used', async () => {
   assert.deepEqual(local.body.uses, [{ file: 'pages/index.json', ptr: '/hero/photos/0/src' }]);
   const r2 = await mediaOp(root, env, { op: 'delete', key: 'photos/used-1600.webp' });
   assert.equal(r2.status, 409);
-  assert.match(r2.body.error, /sources\/people\.json#\/0\/images\/0\/src/);
+  assert.match(r2.body.error, /sources\/people\.json#\/items\/0\/images\/0\/src/);
   assert.ok(fs.existsSync(path.join(root, 'media/a/used.jpg')));
   assert.deepEqual(photosOf(root), before);
   assert.equal(deletes.length, 0);

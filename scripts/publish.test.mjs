@@ -52,7 +52,11 @@ test('publish: a git mv rename commits the new path and the removal of the old o
   const r = await publish(root, 'Rename a to b');
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const files = git(origin, 'ls-tree', '-r', '--name-only', 'main').split('\n');
-  assert.deepEqual(files, ['content/en/pages/b/index.json', 'content/en/pages/index.json', 'notes.txt']);
+  assert.deepEqual(files, [
+    'content/en/pages/b/index.json',
+    'content/en/pages/index.json',
+    'notes.txt',
+  ]);
   // the staged non-content change stays staged, out of the commit
   assert.equal(git(root, 'status', '--porcelain'), 'M  notes.txt');
 });

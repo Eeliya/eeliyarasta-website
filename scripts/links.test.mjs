@@ -102,6 +102,7 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
   assert.deepEqual(linkProblems(blocks), []);
   const F = 'pages/t/index.json';
   const page = (s1, s2 = []) => ({
+    version: 1,
     sections: [
       { id: 's-aaaa', blocks: s1 },
       { id: 's-bbbb', blocks: s2 },
@@ -142,6 +143,7 @@ test('editor: link, drag a follower (its gap changes), unlink; new blocks are fr
   const store = createStore();
   store.load({
     [F]: {
+      version: 1,
       sections: [
         {
           id: 's-aaaa',
@@ -191,6 +193,7 @@ test('editor: phone links are separate; the first phone move brings the desktop 
   const store = createStore();
   store.load({
     [F]: {
+      version: 1,
       sections: [
         {
           id: 's-aaaa',
@@ -259,7 +262,7 @@ test('scaled text: per block, by its styles; site typography over the defaults',
     'typography.paragraph: unknown key "x"',
   ]);
   assert.match(
-    checkContent('settings/site.json', { name: 'x', url: 'y', typography: 3 })[0],
+    checkContent('settings/site.json', { version: 1, name: 'x', url: 'y', typography: 3 })[0],
     /typography/,
   );
 });

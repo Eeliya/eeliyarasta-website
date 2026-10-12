@@ -131,7 +131,7 @@ export async function restorePlace() {
 
   // The explorer lives in the Content tab; SourcesModal opens itself when ui.explorer.open is set.
   if (explorer?.open && ui.mode === 'text') {
-    const list = live.current(explorer.file);
+    const list = live.current(explorer.file)?.items;
     const at = Array.isArray(list) ? list.findIndex((it, i) => itemId(it, i) === item) : -1;
     ui.explorer = { ...explorer, index: at >= 0 ? at : explorer.index };
   }
@@ -173,7 +173,7 @@ export function writeUrl() {
   );
   set('view', ui.target?.kind === 'component' && ui.target.id);
   const { open, file, index } = ui.explorer;
-  const list = open && file ? live.current(file) : null;
+  const list = open && file ? live.current(file)?.items : null;
   set('source', list && sourceIdOf(file));
   set('item', Array.isArray(list) && list[index] && itemId(list[index], index));
   set('field', Array.isArray(list) && list[index] && ui.explorer.field);

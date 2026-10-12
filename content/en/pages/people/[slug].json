@@ -1,5 +1,8 @@
 {
-  "config": { "source": "people" },
+  "version": 1,
+  "template": {
+    "source": "people"
+  },
   "section": "People",
   "next": "Next person",
   "sections": [
@@ -12,16 +15,37 @@
         {
           "id": "b-j8hg",
           "type": "album",
-          "title": { "bind": "name" },
+          "title": {
+            "bind": "name"
+          },
           "meta": [
-            { "label": "Role", "value": "{{role}}" },
-            { "label": "Agency", "value": "{{agency}}" },
-            { "label": "Location", "value": "{{location}}" },
-            { "label": "Year", "value": "{{year}}" }
+            {
+              "label": "Role",
+              "value": "{{role}}"
+            },
+            {
+              "label": "Agency",
+              "value": "{{agency}}"
+            },
+            {
+              "label": "Location",
+              "value": "{{location}}"
+            },
+            {
+              "label": "Year",
+              "value": "{{year}}"
+            }
           ],
-          "summary": { "bind": "summary" },
+          "summary": {
+            "bind": "summary"
+          },
           "config": {},
-          "pos": { "col": 1, "span": 120, "row": 1, "rows": 75 },
+          "pos": {
+            "col": 1,
+            "span": 120,
+            "row": 1,
+            "rows": 75
+          },
           "size": "auto"
         }
       ]

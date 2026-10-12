@@ -41,9 +41,9 @@ function albumOf(s, ctx, route, b) {
   const a = route.album;
   const images = imagesOf(a);
   const n = images.length;
-  const at = (field, type) => ed(route.file, [route.index, field], type);
+  const at = (field, type) => ed(route.file, ['items', route.index, field], type);
   // a photo's src, edited (and uploaded) in the editor
-  const photo = (i) => ed(route.file, [route.index, 'images', i, 'src'], 'image');
+  const photo = (i) => ed(route.file, ['items', route.index, 'images', i, 'src'], 'image');
   const title = String(s.title ?? '');
   const summary = String(s.summary ?? '');
   const meta = [

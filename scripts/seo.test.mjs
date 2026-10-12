@@ -71,14 +71,14 @@ test('[slug] pages: the item name, summary and cover, then the template meta', (
   const c = content({
     'pages/people/index.json': {},
     'pages/people/[slug].json': {
-      config: { source: 'people' },
+      template: { source: 'people' },
       section: 'People',
       meta: { description: 'A person.', image: 'p.jpg' },
     },
-    'sources/people.json': [
-      { name: 'Noor', summary: 'Noor.', images: [{ src: 'n.jpg' }] },
-      { name: 'Daan' },
-    ],
+    'sources/people.json': {
+      version: 1,
+      items: [{ name: 'Noor', summary: 'Noor.', images: [{ src: 'n.jpg' }] }, { name: 'Daan' }],
+    },
   });
   const noor = routeOf(c, '/people/noor/');
   assert.equal(noor.title, 'Noor | People | Site');
@@ -88,8 +88,8 @@ test('[slug] pages: the item name, summary and cover, then the template meta', (
   assert.equal(daan.description, 'A person.');
   assert.equal(daan.image, 'p.jpg');
   const off = content({
-    'pages/people/[slug].json': { config: { source: 'people' }, meta: { noindex: true } },
-    'sources/people.json': [{ name: 'Noor' }],
+    'pages/people/[slug].json': { template: { source: 'people' }, meta: { noindex: true } },
+    'sources/people.json': { version: 1, items: [{ name: 'Noor' }] },
   });
   assert.equal(routeOf(off, '/people/noor/').noindex, true);
 });
@@ -158,11 +158,15 @@ test('warnings: indexable pages without a description, long titles and descripti
 });
 
 test('validation: page meta and site defaults', () => {
-  assert.deepEqual(checkContent('pages/a/index.json', { meta: { noindex: true, title: 'A' } }), []);
-  assert.deepEqual(checkContent('pages/a/index.json', { meta: { noindex: 'yes' } }), [
+  assert.deepEqual(
+    checkContent('pages/a/index.json', { version: 1, meta: { noindex: true, title: 'A' } }),
+    [],
+  );
+  assert.deepEqual(checkContent('pages/a/index.json', { version: 1, meta: { noindex: 'yes' } }), [
     'meta: "noindex" must be a boolean, not a string',
   ]);
-  const s = (more) => checkContent('settings/site.json', { name: 'S', url: 'u', ...more });
+  const s = (more) =>
+    checkContent('settings/site.json', { version: 1, name: 'S', url: 'u', ...more });
   assert.deepEqual(s({ robots: 'index', titleTemplate: '{page}', lang: 'en' }), []);
   assert.deepEqual(s({ robots: 'nofollow' }), ['"robots" must be "index" or "noindex"']);
 });

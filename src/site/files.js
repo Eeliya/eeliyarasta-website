@@ -18,6 +18,17 @@
  * (data-edit="pages/index.json#/hero/title").
  */
 export const FOLDERS = ['pages', 'sources', 'settings'];
+/**
+ * The shape version of every content file: its first key, "version": 1. A file whose top level
+ * is a list or a map keeps it under one key next to it: a source's "items", redirects.json
+ * "redirects", photos.json "photos".
+ */
+export const VERSION = 1;
+
+/** A source file's list (its "items"); anything else as it is, for the warnings. */
+export const itemsOf = (data) =>
+  data && typeof data === 'object' && !Array.isArray(data) && 'items' in data ? data.items : data;
+
 /** Content files at the top of the locale's folder (content/en/strings.json: UI text). */
 export const ROOT_FILES = ['strings.json'];
 
@@ -92,13 +103,13 @@ export const baseName = (file) => String(file || '').replace(/^(pages|sources|se
  * empty).
  */
 export function contentFromFiles(files) {
-  const byId = (idOf) =>
+  const byId = (idOf, of = (d) => d) =>
     Object.fromEntries(
       Object.entries(files)
-        .map(([f, data]) => [idOf(f), data])
+        .map(([f, data]) => [idOf(f), of(data)])
         .filter(([id]) => id),
     );
-  const sources = byId(sourceIdOf);
+  const sources = byId(sourceIdOf, itemsOf);
   const list = (id) => (Array.isArray(sources[id]) ? sources[id] : []);
   return {
     site: files[SITE],
@@ -111,8 +122,8 @@ export function contentFromFiles(files) {
     projects: list('projects'),
     animations: files[ANIMATIONS] || {},
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
-    photos: files[PHOTOS] || {},
-    redirects: Array.isArray(files[REDIRECTS]) ? files[REDIRECTS] : [],
+    photos: files[PHOTOS]?.photos || {},
+    redirects: Array.isArray(files[REDIRECTS]?.redirects) ? files[REDIRECTS].redirects : [],
     // UI text of the templates (footer, menu): { footer: {...}, nav: {...} }
     strings: files[STRINGS] || {},
   };

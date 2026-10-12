@@ -130,7 +130,7 @@ test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always ce
   );
   assert.equal(cls({ height: 'custom' }), 'sec'); // no rows: as fit
   assert.equal(sectionVars(sec([], { height: 'fit', minRows: 9 })), '--rows:1;--mrows:1');
-  const of = (more) => checkContent(F, { sections: [sec([], more)] });
+  const of = (more) => checkContent(F, { version: 1, sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', minRows: 30 }), []);
   assert.deepEqual(of({ height: 'custom' }), [
     'section 1: "minRows" must be a whole number of rows from 1 (a custom height)',
@@ -159,7 +159,7 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
   assert.equal(sectionAnchor(sec([], { name: 'Main' })), ''); // the page's own id
   const named = (...names) => names.map((name, i) => sec([], { id: `s-n${i}00`, name }));
   assert.deepEqual(nameProblems(named('Our people', '', undefined, 'Work')), ['', '', '', '']);
-  const of = (...names) => checkContent(F, { sections: named(...names) });
+  const of = (...names) => checkContent(F, { version: 1, sections: named(...names) });
   assert.deepEqual(of('Our people', 'Work'), []);
   assert.deepEqual(of('Our People', 'our  people!'), [
     'section 2: "name" #our-people is already section 1\'s anchor',
@@ -171,14 +171,14 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
     'section 1: "name" #3-rooms must start with a letter (a number is a photo\'s link)',
   ]);
   assert.deepEqual(of('portal'), ['section 1: "name" #portal is taken by the page itself']);
-  assert.deepEqual(checkContent(F, { sections: [sec([], { name: 4 })] }), [
+  assert.deepEqual(checkContent(F, { version: 1, sections: [sec([], { name: 4 })] }), [
     'section 1: "name" must be text',
   ]);
 });
 
 test('validation: size, aspect, place, mobile', () => {
-  const one = (b) => checkContent(F, { sections: [sec([blk(b)])] });
-  const of = (s) => checkContent(F, { sections: [sec([], s)] });
+  const one = (b) => checkContent(F, { version: 1, sections: [sec([blk(b)])] });
+  const of = (s) => checkContent(F, { version: 1, sections: [sec([], s)] });
   assert.deepEqual(
     one({
       size: 'aspect',
@@ -213,7 +213,7 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
   const b = { id: 'b-bbbb', type: 'text', pos: { col: 1, span: 24, row: 11, rows: 10 } };
-  store.load({ [F]: { sections: [sec([a, b])] } });
+  store.load({ [F]: { version: 1, sections: [sec([a, b])] } });
   const blocks = () => store.current[F].sections[0].blocks;
 
   setBlock(store, F, 0, 0, { size: 'aspect', aspect: '3:2', place: 'sticky-center' });
@@ -256,7 +256,7 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
 test('custom rows: block moves only grow them; the bottom edge sets them; phone rows own', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
-  store.load({ [F]: { sections: [sec([a], { height: 'custom', minRows: 50 })] } });
+  store.load({ [F]: { version: 1, sections: [sec([a], { height: 'custom', minRows: 50 })] } });
   const s = () => store.current[F].sections[0];
   const vars = '--rows:50;--mrows:25;--minrows:50;--mminrows:25';
   // moved inside its rows (desktop, phone): still 50 rows, not its content's
@@ -315,7 +315,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
 });
 
 test('phone height: validation', () => {
-  const of = (more) => checkContent(F, { sections: [sec([], more)] });
+  const of = (more) => checkContent(F, { version: 1, sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { minRows: 12 } }), []);
   assert.deepEqual(of({ height: 'fit', mobile: { height: 'half' } }), []);
   assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom', minRows: 9 } }), []);
@@ -341,7 +341,7 @@ test('phone height: validation', () => {
 test('phone height: its own, the desktop untouched; reset; rows, line and growth follow it', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
-  store.load({ [F]: { sections: [sec([a], { height: 'custom', minRows: 40 })] } });
+  store.load({ [F]: { version: 1, sections: [sec([a], { height: 'custom', minRows: 40 })] } });
   const s = () => store.current[F].sections[0];
   // unset: the desktop's (custom: half its rows)
   assert.equal(phoneHeightOf(s()), 'custom');
