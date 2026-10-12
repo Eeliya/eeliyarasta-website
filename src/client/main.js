@@ -50,7 +50,7 @@ function mount(view, { first = false } = {}) {
   updateClocks();
   document.documentElement.dataset.page = view.dataset.page;
   // real rows first (modules/rows.js): animations and pins measure the page as it is laid out
-  const rows = watchRows(view, { onchange: () => ScrollTrigger.refresh() });
+  const rows = watchRows(view, { onchange: () => keepScroll(() => ScrollTrigger.refresh()) });
   const anim = startAnimations(view, portal);
   const cleanups = pageModules.map((m) => m(view)).filter(Boolean);
   current = {
@@ -65,7 +65,7 @@ function mount(view, { first = false } = {}) {
       portal.replaceChildren();
     },
   };
-  requestAnimationFrame(() => ScrollTrigger.refresh());
+  requestAnimationFrame(() => keepScroll(() => ScrollTrigger.refresh()));
   hooks.afterMount.forEach((fn) => fn(view));
   window.dispatchEvent(new Event('router:navigated'));
 }
@@ -83,12 +83,6 @@ function remountAnimations() {
   ScrollTrigger.refresh();
 }
 
-/**
- * Dev only (`npm run dev`): connect to the visual editor (src/editor), which loads
- * the site in a same-origin iframe at /edit/. `import.meta.env.DEV` is false in
- * production builds, so this function, the window.__site API and the editor
- * shortcut are dropped from the public bundle entirely.
- */
 /** Run fn, then put the window back where it was scrolled (dev: the editor's refreshes). */
 function keepScroll(fn) {
   const y = window.scrollY;
@@ -96,6 +90,12 @@ function keepScroll(fn) {
   if (window.scrollY !== y) window.scrollTo(0, y);
 }
 
+/**
+ * Dev only (`npm run dev`): connect to the visual editor (src/editor), which loads
+ * the site in a same-origin iframe at /edit/. `import.meta.env.DEV` is false in
+ * production builds, so this function, the window.__site API and the editor
+ * shortcut are dropped from the public bundle entirely.
+ */
 function connectEditor() {
   const api = {
     gsap,
