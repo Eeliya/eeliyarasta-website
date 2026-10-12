@@ -212,33 +212,36 @@ kbd {
   }
 }
 
-// Unsaved changes: a 2px accent bar on the left edge, drawn by ::before (absolute, so it never
-// moves anything). A field's sits in the card's gutter, 8px left of it, and its label turns
-// white; a section card's and an explorer row's are inset by the corner radius (no uneven
-// rounded end). (A Motion part: has its own values.)
-:is(.tf, .opt, .sec, .xrow, .mlist__part).is-changed {
+// Unsaved changes: a 6px accent dot before the label (a field, a picker) or the title (a
+// section card: its switch or content changed), drawn by an absolute ::before in the left
+// padding, so it never moves anything; centered on the first line. Explorer rows and Motion
+// parts (has its own values) get it in their left padding.
+:is(.tf, .opt).is-changed > .tf__label,
+.sec.is-changed > .sec__bar > .sec__toggle,
+:is(.xrow, .mlist__part).is-changed {
   position: relative;
 
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(-1 * var(--space-2));
-    width: 2px; /* stylelint-disable-line local/grid-4px -- the approved 2px marker (mock B) */
+    top: calc(50% - var(--size-changed) / 2);
+    left: calc(-1 * var(--size-changed) - 1px);
+    width: var(--size-changed);
+    height: var(--size-changed);
+    border-radius: var(--radius-round);
     background: var(--c-accent);
     pointer-events: none;
   }
 }
 
-:is(.sec, .xrow, .mlist__part).is-changed::before {
-  top: var(--radius-lg);
-  bottom: var(--radius-lg);
-  left: 0;
+// a section's title line is its first 20px
+.sec.is-changed > .sec__bar > .sec__toggle::before {
+  top: calc((20px - var(--size-changed)) / 2);
 }
 
-:is(.tf, .opt).is-changed > .tf__label {
-  color: var(--c-text);
+// inside their own padding
+:is(.xrow, .mlist__part).is-changed::before {
+  left: calc((var(--space-3) - var(--size-changed)) / 2);
 }
 
 // ------------------------------------------------------------ groups & fields

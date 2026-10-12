@@ -13,7 +13,7 @@
     open      open when nothing is remembered yet (default true)
     id        data-section, to find the section (e.g. scroll to it)
     off       dimmed: the section is turned off
-    changed   unsaved changes in it: a 2px accent bar on the card's left edge (no layout shift)
+    changed   unsaved changes in it: an accent dot before the title (no layout shift)
     dim       the title is a default ("Section 1", no name yet): very dim
     class     extra class on the section
     bar       snippet: controls at the right of the bar (count, buttons, a switch), each 20px tall

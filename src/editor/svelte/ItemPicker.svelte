@@ -6,7 +6,7 @@
                        it shows "people.json · Eeliya Rasta" and opens on that source's items
               'source' a source id ('' or null: none): it stops at the sources, the current
                        one highlighted; it shows "people.json"
-    value, changed (its changed bar), none (the label of no value, null: none can't be
+    value, changed (its changed dot), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
     onpick(value | undefined); store: the editor's store (the sources' schemas: a list's name, an
     item's photo)

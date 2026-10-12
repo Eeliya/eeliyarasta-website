@@ -1,6 +1,6 @@
 <!--
   One row of an explorer list (Sources, Pages): a number or an icon, the name with a meta
-  line below it, a bar at its left edge when it has unsaved changes, and a chevron when it opens something
+  line below it, a dot in its left padding when it has unsaved changes, and a chevron when it opens something
   (enter). Other props (onclick, data-*, aria-*) go on the <button>.
 -->
 <script>
@@ -33,7 +33,7 @@
 </button>
 
 <style lang="scss">
-  // lead | name / meta | chevron; changed: a bar at the left edge (.is-changed, editor.scss)
+  // lead | name / meta | chevron; changed: a dot in the left padding (.is-changed, editor.scss)
   .xrow {
     width: 100%;
     display: grid;

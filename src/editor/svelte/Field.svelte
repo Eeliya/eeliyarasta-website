@@ -1,5 +1,5 @@
 <!--
-  One field: a label (name, and, changed, a bar at its left edge;, for a value from a source list, a button naming
+  One field: a label (name, and, changed, a dot before it;, for a value from a source list, a button naming
   its file, e.g. people.json, that opens it in the Source Explorer) with an input, or a
   textarea for longer text, a switch (boolean) or a Select (select, options [[value, label]]).
   bare: no label row (label is the input's aria-label; say it in the placeholder); help: a hint under it; half: it shares a row with the next field (the parent's grid).
