@@ -1,5 +1,6 @@
-// Entry stylesheet. Fonts come from Google Fonts (index.html):
+// Entry stylesheet. Fonts are self-hosted (_fonts.scss, public/fonts):
 // 'Momo Trust Display' for display type, 'DM Mono' for everything else.
+@use 'fonts';
 @use 'tokens';
 @use 'base';
 @use 'glass';

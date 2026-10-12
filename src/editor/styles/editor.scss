@@ -1,6 +1,7 @@
 // Visual editor UI: black, glass, DM Mono. Shares the site's design tokens.
 // This file has the base and what several components share (buttons, fields, dialogs,
 // the ease picker); styles of one component are in its <style> block (svelte/*.svelte).
+@use '../../client/styles/fonts';
 @use '../../client/styles/tokens';
 @use 'tokens' as editor-tokens;
 
