@@ -15,7 +15,7 @@
 <script>
   import Button from './Button.svelte';
   import GroupFields from './GroupFields.svelte';
-  import Select from './Select.svelte';
+  import ItemPicker from './ItemPicker.svelte';
   import { schemaFor, itemName } from './source-items.js';
   import { TEMPLATE, sourceFile } from '../../site/files.js';
   import { itemSlug } from '../../site/helpers.js';
@@ -132,12 +132,6 @@
 
   const setItem = (next) =>
     live.store.set(g.file, `${base}/item`, next, { source: 'panel', structure: true });
-  function pickSource(id) {
-    if (!id) return setItem(undefined);
-    const list = live.get(sourceFile(id), '/items');
-    const first = Array.isArray(list) && list.length ? list[0].id : '';
-    setItem({ source: id, id: first });
-  }
 
   // the block's element in the preview, read again after every edit
   const blockEl = $derived.by(() => {
@@ -214,30 +208,19 @@
   {#if g.fields.length || g.config?.some((c) => c.type === 'text')}
     <div class={['opts', live.changed(g.file, `${base}/item`) && 'is-changed']}>
       <div class="opt">
-        <span class="tf__label" id="{g.id}-isrc">Item from<i class="dot" title="Changed"></i></span>
-        <Select
-          aria-label="Item source"
-          value={ref?.source ?? ''}
-          options={[
-            { value: '', label: template ? "This page's item" : 'None' },
-            ...sourceIds.map((id) => ({ value: id, label: `${id}.json` })),
-          ]}
-          onchange={pickSource}
+        <span class="tf__label">Item<i class="dot" title="Changed"></i></span>
+        <ItemPicker
+          value={ref}
+          {sourceIds}
+          none={template ? "This page's item" : 'None'}
+          itemsOf={(id) => {
+            live.version;
+            const list = live.get(sourceFile(id), '/items');
+            return Array.isArray(list) ? list : [];
+          }}
+          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
+          onpick={setItem}
         />
-      </div>
-      <div class="opt">
-        <span class="tf__label">Item</span>
-        {#if ref}
-          <Select
-            aria-label="Item"
-            value={ref.id}
-            placeholder="Pick…"
-            options={items.map((it) => ({ value: it.id, label: itemName(it, schema) }))}
-            onchange={(id) => setItem({ source: ref.source, id })}
-          />
-        {:else}
-          <span class="item-name">{item ? itemName(item, schema) : '—'}</span>
-        {/if}
       </div>
     </div>
   {/if}
@@ -328,11 +311,9 @@
     margin-bottom: var(--space-4);
   }
 
-  // the item picker: two columns, like the block's settings (GroupFields.svelte)
+  // the item: one button opening the item window (ItemPicker.svelte)
   .opts {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
     margin-bottom: var(--space-4);
 
     .dot {
@@ -347,16 +328,5 @@
   .opt {
     min-width: 0;
     padding: var(--space-1);
-  }
-
-  .item-name {
-    display: block;
-    padding: var(--space-2) 0;
-    overflow: hidden;
-    color: var(--c-text-muted);
-    font-size: var(--fs-base);
-    line-height: 16px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 </style>
