@@ -13,6 +13,7 @@
     open      open when nothing is remembered yet (default true)
     id        data-section, to find the section (e.g. scroll to it)
     off       dimmed: the section is turned off
+    dim       the title is a default ("Section 1", no name yet): very dim
     class     extra class on the section
     bar       snippet: controls at the right of the bar (count, buttons, a switch), each 20px tall
               (24px for a file button). A panel's own sections keep their bar on top while
@@ -34,6 +35,7 @@
     open = true,
     id = null,
     off = false,
+    dim = false,
     class: cls = '',
     bar,
     children,
@@ -120,7 +122,7 @@
       onclick={toggle}
     >
       <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-      <span>
+      <span class={[dim && 'sec__title--dim']}>
         {#if icon}<i class="fa-solid fa-{icon} sec__icon" aria-hidden="true"></i>{/if}
         {title}
       </span>
@@ -233,6 +235,10 @@
     [aria-expanded='true'] > & {
       rotate: 90deg;
     }
+  }
+
+  .sec__title--dim {
+    color: var(--c-text-faint);
   }
 
   .sec__icon {

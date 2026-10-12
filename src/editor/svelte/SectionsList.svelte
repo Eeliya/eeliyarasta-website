@@ -234,8 +234,8 @@
   <Section
     id={s.id}
     key="text:{file}#{s.id}"
-    title="Section {at + 1}"
-    name={typeof s.name === 'string' ? s.name.trim() : ''}
+    title={(typeof s.name === 'string' && s.name.trim()) || `Section ${at + 1}`}
+    dim={!(typeof s.name === 'string' && s.name.trim())}
     off={s.enabled === false}
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
   >
