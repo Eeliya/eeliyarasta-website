@@ -1,8 +1,8 @@
 /**
  * The square grid's cell: every section's content width is measured and --cell (width / 120,
  * the phone grid's / 60; floored to 1/64px, cellOf) set on it, before its rows are worked
- * out, on load and whenever the section resizes (ResizeObserver, window resize; rAF-throttled
- * besides the resize itself). A column and a row are both --cell: the cells are square.
+ * out, on load and whenever the section resizes (ResizeObserver, window resize; both
+ * rAF-throttled: at most one flow per frame). A column and a row are both --cell: the cells are square.
  *
  * Real rows (src/site/layout/flow.js): measures every block of the view's sections and sets
  * where it sits and how many rows it spans now, as --fr / --frs on the block and --frows on
@@ -15,7 +15,7 @@
  * block keeps its rows. Then the links (src/site/layout/links.js, data-link / data-mlink on
  * the block: "<leader id> <gap>") are resolved in their order: a follower's first row is its
  * leader's last row now + 1 + its gap; a free block stays at its stored row. Run again when
- * the window resizes (at once, so the new layout is in the same frame), when a block's
+ * the window resizes (on the next frame, at most once a frame while dragging), when a block's
  * content changes size (images, fonts, the editor's edits; on the next frame) and on reflow()
  * (the editor after it changed a layout).
  *
@@ -203,12 +203,9 @@ export function watchRows(view, { onchange = () => {} } = {}) {
       for (const el of blocksOf(sec)) for (const k of el.children) ro.observe(k);
     }
   };
-  // at once (the new layout in the same frame), and again on the next frame, after any
-  // viewport-relative size has settled
-  const onresize = () => {
-    flowAll(view);
-    later();
-  };
+  // throttled: at most one flow per frame while the window is resized; the last resize event's
+  // frame flows the final size
+  const onresize = later;
   flowAll(view);
   observe();
   window.addEventListener('resize', onresize);
