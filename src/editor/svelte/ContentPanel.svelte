@@ -130,7 +130,7 @@
     />
   {:else}
     <p class="hint">{hint}</p>
-    {#if file}<SectionsList {live} {file} onopen={openBlock} />{/if}
+    {#if file}<SectionsList {live} {bridge} {file} onopen={openBlock} />{/if}
     {#each others as g (g.id)}
       <Section id={g.id} key={keyOf(g)} title={g.title} name={g.name} open={isOpen(g)}>
         {#snippet bar()}

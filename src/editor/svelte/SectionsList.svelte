@@ -40,7 +40,22 @@
   } from '../../site/layout/index.js';
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
-  let { live, file, onopen } = $props();
+  let { live, bridge, file, onopen } = $props();
+  // Locate: the preview scrolls (smoothly) to the section's top; nothing opens or is selected
+  function locate(id) {
+    const el = bridge?.doc?.querySelector(`[data-sec="${CSS.escape(id)}"]`);
+    const win = el?.ownerDocument.defaultView;
+    if (!win) return;
+    // (below the site's fixed header, so the section's top isn't under it)
+    const head = [...el.ownerDocument.querySelectorAll('body > header, .site-header')].find((h) =>
+      ['fixed', 'sticky'].includes(win.getComputedStyle(h).position),
+    );
+    const still = win.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    win.scrollTo({
+      top: el.getBoundingClientRect().top + win.scrollY - (head?.offsetHeight || 0),
+      behavior: still ? 'instant' : 'smooth',
+    });
+  }
   let deleting = $state(''); // the id of the section or block asking "Delete?"
 
   // A copy, new after every edit, undo and redo: the store changes a section in place (its
@@ -240,6 +255,14 @@
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
   >
     {#snippet bar()}
+      <Button
+        size="small"
+        icon="location-crosshairs"
+        iconOnly
+        label="Show section {at + 1} in the preview"
+        title="Show in preview"
+        onclick={() => locate(s.id)}
+      />
       <Button
         size="small"
         icon="arrow-up"
