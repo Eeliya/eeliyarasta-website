@@ -167,9 +167,7 @@ kbd {
   line-height: 16px;
 
   &:focus {
-    box-shadow:
-      inset 0 0 0 1px var(--c-accent),
-      0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -329,7 +327,7 @@ kbd {
 
 // an inherited timing value: the field's control, dimmed and inert (no clicks, no focus)
 .f__ctrl.is-inherited {
-  opacity: 0.4;
+  opacity: var(--o-disabled);
 }
 
 // a timing value's Custom switch, at the end of the top row; off: a faint "inherit" before it
@@ -548,9 +546,7 @@ kbd {
   }
 
   .tf__input {
-    box-shadow:
-      inset 0 0 0 1px var(--c-accent),
-      0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -760,11 +756,11 @@ dialog.modal__box {
 
 .ease.is-empty .curve__line {
   stroke-dasharray: 4 3;
-  opacity: 0.55;
+  opacity: var(--o-dim);
 }
 
 .ptg .tf.is-ease-inactive .ease {
-  opacity: 0.45;
+  opacity: var(--o-dim);
 }
 
 .ptg .tf.is-ease-inactive .ease__toggle {

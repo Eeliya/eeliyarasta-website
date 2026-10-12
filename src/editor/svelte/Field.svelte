@@ -281,9 +281,7 @@
     &:focus-visible,
     .is-selected & {
       outline: none;
-      box-shadow:
-        inset 0 0 0 1px var(--c-accent),
-        0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
+      box-shadow: var(--focus-ring);
     }
 
     img {

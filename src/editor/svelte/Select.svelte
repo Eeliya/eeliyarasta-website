@@ -251,9 +251,7 @@
     }
 
     &:focus-visible {
-      box-shadow:
-        inset 0 0 0 1px var(--c-accent),
-        0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
+      box-shadow: var(--focus-ring);
     }
 
     &.is-down {
@@ -335,7 +333,7 @@
     }
 
     &[aria-disabled='true'] {
-      opacity: 0.35;
+      opacity: var(--o-disabled);
       cursor: default;
     }
   }

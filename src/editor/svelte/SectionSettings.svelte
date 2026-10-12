@@ -224,7 +224,7 @@
     }
 
     &:disabled {
-      opacity: 0.35;
+      opacity: var(--o-disabled);
       cursor: default;
     }
 

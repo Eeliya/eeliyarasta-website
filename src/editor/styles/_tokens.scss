@@ -152,4 +152,11 @@
   --size-control-sm: 24px;
   --size-icon: 16px;
   --panel-w: 400px; // the side panel
+
+  // ---- semantic: states
+  // a focused control (keyboard) or a selected field: its accent line and a 4px glow
+  --focus-ring:
+    inset 0 0 0 1px var(--c-accent), 0 0 0 4px color-mix(in srgb, var(--c-accent) 12%, transparent);
+  --o-disabled: 0.35; // a control that can't be used now (disabled, or inherited and inert)
+  --o-dim: 0.55; // something that is off or inactive but still readable
 }

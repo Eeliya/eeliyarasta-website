@@ -388,7 +388,7 @@
 
     &:is([data-kind='pending'], [data-kind='unsaved']) .ed-pending__dot {
       background: var(--c-warning);
-      box-shadow: 0 0 0 3px var(--amber-300-a15);
+      box-shadow: 0 0 0 4px var(--amber-300-a15);
     }
   }
 

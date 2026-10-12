@@ -95,7 +95,7 @@
 
     &:disabled,
     &[aria-disabled] {
-      opacity: 0.35;
+      opacity: var(--o-disabled);
       cursor: default;
     }
   }
@@ -175,8 +175,6 @@
   // last: the focus ring wins over every variant's shadow
   .btn:focus-visible {
     outline: none;
-    box-shadow:
-      inset 0 0 0 1px var(--c-accent),
-      0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
+    box-shadow: var(--focus-ring);
   }
 </style>

@@ -256,7 +256,7 @@
     }
 
     .sec__body {
-      opacity: 0.55;
+      opacity: var(--o-dim);
     }
   }
 </style>
