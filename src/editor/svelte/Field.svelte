@@ -11,8 +11,8 @@
     binds     the item's fields this one can show, [{ value, label }] (null: it can't bind).
               A Source switch in the label row: on stores { "bind": "<first>" } and shows a
               Select of them; off stores `resolved` (what it showed) as the field's own text
-    names     the item's fields for {{name}} in the text: typing {{ lists them under the
-              input (↑ ↓ Enter / Tab, Esc), styled like a Select's list
+    formats   a text field: when bound, a Format input under the Select ("{value} photos");
+              empty or just {value} stores { "bind" } alone
 -->
 <script module>
   /** Input text -> stored value. undefined means invalid: the value is not stored. */
@@ -54,7 +54,7 @@
     onfocus,
     onvalue,
     binds = null,
-    names = null,
+    formats = false,
     resolved = '',
   } = $props();
 
@@ -89,58 +89,16 @@
     else onvalue(typeof resolved === 'string' ? resolved : '');
   }
 
-  // ---- {{name}} suggestions while typing
-  let suggest = $state(null); // { query, start, end, active }
-  let input = $state();
-  const matches = $derived(
-    suggest && names
-      ? names.filter((n) => n.key.toLowerCase().startsWith(suggest.query.toLowerCase()))
-      : [],
-  );
-  /** An open {{ before the caret: the list of names starting with what follows it. */
-  function findSuggest(el) {
-    if (!names?.length || el.selectionStart !== el.selectionEnd) return (suggest = null);
-    const before = el.value.slice(0, el.selectionStart);
-    const m = /\{\{\s*([\w-]*)$/.exec(before);
-    if (!m) return (suggest = null);
-    suggest = { query: m[1], start: m.index, end: el.selectionStart, active: 0 };
+  // ---- a bound text's format: {value} is the item's value
+  const fmtShow = $derived(bound && typeof value.format === 'string' ? value.format : '');
+  function setFormat(raw) {
+    const format = raw.replace(/\s*\n\s*/g, ' ');
+    onvalue(
+      format.trim() && format.trim() !== '{value}'
+        ? { bind: value.bind, format }
+        : { bind: value.bind },
+    );
   }
-  function pickName(n) {
-    const el = input;
-    const after = el.value.slice(suggest.end).replace(/^[\w-]*\s*(\}\})?/, '');
-    const text = `${el.value.slice(0, suggest.start)}{{${n.key}}}`;
-    el.value = text + after;
-    el.setSelectionRange(text.length, text.length);
-    suggest = null;
-    oninput({ currentTarget: el });
-  }
-  function onkeydown(e) {
-    if (!suggest || !matches.length) return;
-    const n = matches.length;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      suggest.active = (suggest.active + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-      e.preventDefault();
-      pickName(matches[Math.min(suggest.active, n - 1)]);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      suggest = null;
-    }
-  }
-  /** The list in the top layer, under the input. */
-  const placeList = (el) => {
-    el.showPopover?.();
-    const r = input.getBoundingClientRect();
-    el.style.left = `${r.left}px`;
-    el.style.top = `${r.bottom}px`;
-    el.style.width = `${r.width}px`;
-  };
-  const typed = (e) => {
-    oninput(e);
-    findSuggest(e.currentTarget);
-  };
 
   function change() {
     onfocus?.();
@@ -197,8 +155,19 @@
       value={value.bind}
       placeholder="Pick a field…"
       options={bindOptions}
-      onchange={(v) => onvalue({ bind: v })}
+      onchange={(v) => onvalue(value.format ? { bind: v, format: value.format } : { bind: v })}
     />
+    {#if formats}
+      <input
+        class="tf__input tf__format"
+        aria-label="{label}: format"
+        title="Text around the item's value: {'{value}'} is the value"
+        placeholder={'{value}'}
+        {@attach show(fmtShow)}
+        {onfocus}
+        oninput={(e) => setFormat(e.currentTarget.value)}
+      />
+    {/if}
   {:else if photo}
     <div class="photo">
       <button
@@ -235,13 +204,9 @@
       id={uid}
       class={['tf__input', invalid && 'is-invalid']}
       {placeholder}
-      bind:this={input}
       {@attach show(value)}
       {onfocus}
-      {onkeydown}
-      onblur={() => (suggest = null)}
-      onclick={(e) => findSuggest(e.currentTarget)}
-      oninput={typed}></textarea>
+      {oninput}></textarea>
   {:else}
     <input
       id={uid}
@@ -249,38 +214,10 @@
       type={type === 'number' || type === 'date' ? type : 'text'}
       spellcheck={type !== 'number'}
       {placeholder}
-      bind:this={input}
       {@attach show(value)}
       {onfocus}
-      {onkeydown}
-      onblur={() => (suggest = null)}
-      onclick={(e) => findSuggest(e.currentTarget)}
-      oninput={typed}
+      {oninput}
     />
-  {/if}
-  {#if suggest && matches.length}
-    <!-- the input keeps the focus and the keys; a press on the list doesn't take it -->
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <ul
-      class="sug"
-      role="listbox"
-      aria-label="Item fields"
-      popover="manual"
-      {@attach placeList}
-      onpointerdown={(e) => e.preventDefault()}
-    >
-      {#each matches as n, i (n.key)}
-        <li
-          role="option"
-          aria-selected={i === suggest.active}
-          class={['sug__opt', i === suggest.active && 'is-active']}
-          onpointermove={() => (suggest.active = i)}
-          onclick={() => pickName(n)}
-        >
-          {`{{${n.key}}}`}<span class="sug__hint">{n.label}</span>
-        </li>
-      {/each}
-    </ul>
   {/if}
   {#if help}<span class="tf__help">{help}</span>{/if}
 </svelte:element>
@@ -300,43 +237,8 @@
     }
   }
 
-  // {{name}} suggestions: a Select's list (Select.svelte), under the input
-  .sug {
-    position: fixed;
-    inset: auto;
-    margin: 0;
-    padding: var(--space-2);
-    border: 0;
-    list-style: none;
-    max-height: 240px;
-    overflow: auto;
-    color: var(--c-text);
-    background: var(--c-surface);
-    box-shadow: inset 0 0 0 1px var(--c-focus-ring);
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-    font-family: var(--f-mono);
-    font-size: var(--fs-base);
-    font-weight: 400;
-    line-height: 16px;
-  }
-
-  .sug__opt {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-
-    &.is-active {
-      background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
-      box-shadow: inset 0 0 0 1px var(--c-accent);
-    }
-  }
-
-  .sug__hint {
-    margin-left: auto;
-    color: var(--c-text-muted);
+  .tf__format {
+    margin-top: var(--space-2);
   }
 
   // a photo: 64px thumbnail (or a + tile), its file name and sizes, Change

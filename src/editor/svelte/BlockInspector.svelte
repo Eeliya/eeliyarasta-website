@@ -116,7 +116,7 @@
       .at(-1);
     return items.find((it) => slugOf(it) === last) ?? items[0] ?? null;
   });
-  // for the fields (Field.svelte): the item's fields per bind type, {{name}}s, what one shows
+  // for the fields (Field.svelte): the item's fields per bind type, what one shows
   const bindings = $derived({
     // the title field first: what switching Source on binds
     binds: (type) =>
@@ -124,12 +124,6 @@
         .filter((f) => (BIND_TYPES[type] || []).includes(f.type))
         .sort((a, b) => (b.key === schema.title) - (a.key === schema.title))
         .map((f) => ({ value: f.key, label: f.label || f.key, hint: f.type })),
-    // {{name}}: the fields with one value that reads as text
-    names: schema
-      ? (schema.fields || [])
-          .filter((f) => !['photo', 'photos', 'boolean'].includes(f.type))
-          .map((f) => ({ key: f.key, label: f.label || f.key }))
-      : null,
     resolved: (f) => {
       const v = resolve(live.get(f.file, f.ptr), { item, def: { type: f.type } });
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';

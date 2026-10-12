@@ -256,7 +256,9 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
 test('custom rows: block moves only grow them; the bottom edge sets them; phone rows own', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
-  store.load({ [F]: { version: 1, sections: [sec([a], { height: 'custom', rows: { min: 50 } })] } });
+  store.load({
+    [F]: { version: 1, sections: [sec([a], { height: 'custom', rows: { min: 50 } })] },
+  });
   const s = () => store.current[F].sections[0];
   const vars = '--rows:50;--mrows:25;--minrows:50;--mminrows:25';
   // moved inside its rows (desktop, phone): still 50 rows, not its content's
@@ -323,9 +325,10 @@ test('phone height: validation', () => {
   assert.deepEqual(of({ height: 'fit', mobile: { rows: { min: 12 } } }), [
     'section 1: "mobile.rows" must be left out unless the phone height is custom',
   ]);
-  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'fit', rows: { min: 4 } } }), [
-    'section 1: "mobile.rows" must be left out unless the phone height is custom',
-  ]);
+  assert.deepEqual(
+    of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'fit', rows: { min: 4 } } }),
+    ['section 1: "mobile.rows" must be left out unless the phone height is custom'],
+  );
   assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom' } }), [
     'section 1: "mobile.rows.min" must be a whole number of rows from 1 (a custom phone height)',
   ]);
@@ -341,7 +344,9 @@ test('phone height: validation', () => {
 test('phone height: its own, the desktop untouched; reset; rows, line and growth follow it', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
-  store.load({ [F]: { version: 1, sections: [sec([a], { height: 'custom', rows: { min: 40 } })] } });
+  store.load({
+    [F]: { version: 1, sections: [sec([a], { height: 'custom', rows: { min: 40 } })] },
+  });
   const s = () => store.current[F].sections[0];
   // unset: the desktop's (custom: half its rows)
   assert.equal(phoneHeightOf(s()), 'custom');

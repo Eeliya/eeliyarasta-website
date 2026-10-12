@@ -432,7 +432,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   "type": "heading",
   "eyebrow": "Featured",
   "title": { "bind": "title" },
-  "body": "{{role}} in {{location}}",
+  "body": { "bind": "role", "format": "{value} in Amsterdam" },
   "item": { "source": "people", "slug": "noor-vermeer" }
 }
 ```
@@ -441,8 +441,9 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **`{ "bind": "<field>" }`:** the item's whole value. Its type must fit the field's (a text field
   takes `text`, `choice`, `number`, `date`, `link`; a long text also `longtext`; a photo
   `photo`; a link `link`; a list of photos (`[{ src }]`) `photos`; see `BIND_TYPES`).
-- **`{{field}}` in a text:** the item's values in the text, e.g. `"{{title}}, {{role}}"` (text
-  fields only, also in a list's texts like the album's facts).
+- **`"format"`** (text fields only, also a list's texts like the album's facts): text around
+  the value, `{value}` marks where it goes, e.g. `"{value} photos"`. An empty value leaves the
+  whole field empty. There is no `{{field}}` syntax: one field, one binding.
 - **The item:** a block's own `item: { source, slug }`, else, on a `[slug]` page, the page's
   item. Without one its bound fields render empty (a build warning).
 - **Rendering:** one resolver, `resolveBlock()`, swaps the values in before every block renders
@@ -451,19 +452,18 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **Checks:** Save and the build check their shape (`validate.js`) and, against the sources'
   schemas, `bindingProblems()`: a `{ bind }` to a field the source doesn't have or of a type
   that doesn't fit, or an item from a source that isn't one, is an error (Save refuses, the
-  build stops; a changed schema that breaks a page's binding too). A `{{title}}` the source
-  doesn't have, a binding without an item and an item that isn't in its source are build
+  build stops; a changed schema that breaks a page's binding too). A binding without an item and an item that isn't in its source are build
   warnings (`[bindings] …`) and render empty.
 - **The `[slug]` pages** are built this way: the album block's title is `{ "bind": "title" }`, its
-  facts are `{ "label": "Role", "value": "{{role}}" }`, … (a fact whose value is empty is left
+  facts are `{ "label": "Role", "value": { "bind": "role" } }`, … (a fact whose value is empty is left
   out; the photo count comes last), its body `{ "bind": "body" }`. Their output is the
   same as before. A new `[slug]` page binds the source's title field, its list fields as facts
   and its first long text.
 - **In the editor:** bound values aren't typed in the preview; a click selects them and opens
   their block on the field. Each bindable field has a **Source** switch in its label row: on,
   it shows a Select of the item's fields that fit (the title field first); off, the field
-  gets what it showed as its own text. Typing `{{` in a text lists the item's fields (↑ ↓,
-  Enter or Tab, Esc). The block's Content tab starts with **Item from** (a source, or none /
+  gets what it showed as its own text. A bound text has a **format** input under it
+  (`{value}` and the text around it). The block's Content tab starts with **Item from** (a source, or none /
   this page's item) and **Item**. The preview shows the values of the item it shows; what can't
   be filled shows dimmed as `{{title}}` there (only there). Editing a source renders the
   sections that show it again.

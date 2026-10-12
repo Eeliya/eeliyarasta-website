@@ -21,11 +21,11 @@
           "meta": [
             {
               "label": "Location",
-              "value": "{{location}}"
+              "value": { "bind": "location" }
             },
             {
               "label": "Year",
-              "value": "{{year}}"
+              "value": { "bind": "year" }
             }
           ],
           "body": {

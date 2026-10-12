@@ -4,7 +4,9 @@
  *   "title": "Models"                       custom: the block's own value
  *   "title": { "bind": "name" }             the item's whole value (any field type: a photo,
  *                                           a link, a list of photos), when the types fit
- *   "title": "{{name}}, {{role}}"           text with the item's values in it (text only)
+ *   "title": { "bind": "count", "format": "{value} photos" }
+ *                                           a text around the value ({value}; text fields only,
+ *                                           an empty value leaves the whole field empty)
  *
  * The item: a block's own `item: { source, slug }`, else the item of a [slug] page
  * (route.album). A binding without an item, or to a field the item's source doesn't have,
@@ -13,7 +15,7 @@
  *
  * Which fields can bind: every field of a block type (src/site/blocks/index.js) and its
  * config's text fields (links); a list of { src } binds to a photos field as a whole; in a list
- * of objects, each subkey's text can hold {{field}}. BIND_TYPES says which
+ * of objects, each text subkey can be bound. BIND_TYPES says which
  * source field types (src/site/schemas.js) fit each block field type.
  */
 import { itemSlug } from '../helpers.js';
@@ -24,12 +26,8 @@ const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 /** { "bind": "<field>" } */
 export const isBinding = (v) => isObject(v) && typeof v.bind === 'string';
 
-/** {{field}} in a text */
-export const TEMPLATE = /\{\{\s*([\w-]+)\s*\}\}/g;
-export const hasTemplate = (v) => typeof v === 'string' && /\{\{\s*[\w-]+\s*\}\}/.test(v);
-
-/** A value that comes from the item: a binding or a text with {{field}} in it. */
-export const isBound = (v) => isBinding(v) || hasTemplate(v);
+/** A value that comes from the item: { bind }. */
+export const isBound = isBinding;
 
 /** Block field types -> the source field types (schemas.js) that fit a { bind }. */
 export const BIND_TYPES = {
@@ -41,8 +39,14 @@ export const BIND_TYPES = {
   link: ['link'],
   photos: ['photos'],
 };
-/** Block field types whose custom text can hold {{field}}. */
-export const TEMPLATE_TYPES = ['text', 'words', 'block', 'link'];
+/** Block field types whose binding can have a format. */
+export const FORMAT_TYPES = ['text', 'words', 'block', 'link'];
+
+/** The bound value in its format ("{value} photos"); empty stays empty. */
+const formatted = (v, format) =>
+  typeof format !== 'string' || v === undefined || v === null || v === ''
+    ? v
+    : format.replaceAll('{value}', typeof v === 'object' ? '' : String(v));
 
 /**
  * The bind type of a field definition: its type, 'link' for a config text field (an href),
@@ -94,19 +98,7 @@ export function resolve(
       return (warn(`{ "bind": "${value.bind}" } has no item to show`), missing(value.bind));
     if (keys && !keys.has(value.bind) && !(value.bind in item))
       return (warn(`the item has no field "${value.bind}"`), missing(value.bind));
-    return item[value.bind] ?? empty(def);
-  }
-  if (hasTemplate(value)) {
-    if (!item) warn('{{…}} has no item to show');
-    return value.replace(TEMPLATE, (_, k) => {
-      if (!item) return placeholders ? `{{${k}}}` : '';
-      if (keys && !keys.has(k) && !(k in item)) {
-        warn(`the item has no field "${k}"`);
-        return placeholders ? `{{${k}}}` : '';
-      }
-      const v = item[k];
-      return v === undefined || v === null || typeof v === 'object' ? '' : String(v);
-    });
+    return formatted(item[value.bind], value.format) ?? empty(def);
   }
   if (Array.isArray(value) && isObject(def?.list))
     return value.map((entry) =>
@@ -157,15 +149,13 @@ export function resolveBlock(block, t, { item, source, ctx, at, placeholders = f
 }
 
 /**
- * The bound values of a block: [{ path, bind } | { path, names }] with each one's bind type
+ * The bound values of a block: [{ path, bind }] with each one's bind type
  * (bindTypeOf); path: from the block, e.g. ['title'] or ['config', 'href'] or ['meta', 0, 'value'].
  */
 function bindingsOf(block, t) {
   const out = [];
   const add = (path, v, type) => {
     if (isBinding(v)) out.push({ path, bind: v.bind, type });
-    else if (hasTemplate(v))
-      out.push({ path, names: [...v.matchAll(TEMPLATE)].map((m) => m[1]), type });
   };
   for (const f of t?.fields || []) {
     const v = block?.[f.key];
@@ -188,7 +178,7 @@ function bindingsOf(block, t) {
  * [{ level, message }]. 'error' (Save refuses, the build stops): a block's item source that
  * isn't a source, a { bind } to a field its source doesn't have or of a type that doesn't fit.
  * 'warn': a block's item that isn't in its source, a binding without an item (it renders
- * empty), a {{name}} its source doesn't have. files: only pages of these files (all: null).
+ * empty). files: only pages of these files (all: null).
  */
 export function bindingProblems(content, { types, pageFile, files = null }) {
   const out = [];
@@ -224,18 +214,13 @@ export function bindingProblems(content, { types, pageFile, files = null }) {
         const fields = schemaOf(content, source)?.fields || [];
         for (const u of uses) {
           const name = u.path.join('.');
-          if (u.bind !== undefined) {
-            const f = fields.find((x) => x.key === u.bind);
-            if (!f) problem('error', `${name}: ${source} has no field "${u.bind}"`);
-            else if (!(BIND_TYPES[u.type] || []).includes(f.type))
-              problem(
-                'error',
-                `${name}: ${source}.${u.bind} (${f.type}) doesn't fit a ${u.type || 'list'} field`,
-              );
-          } else
-            for (const n of u.names)
-              if (!fields.some((x) => x.key === n))
-                problem('warn', `${name}: ${source} has no field "${n}" for {{${n}}}: empty`);
+          const f = fields.find((x) => x.key === u.bind);
+          if (!f) problem('error', `${name}: ${source} has no field "${u.bind}"`);
+          else if (!(BIND_TYPES[u.type] || []).includes(f.type))
+            problem(
+              'error',
+              `${name}: ${source}.${u.bind} (${f.type}) doesn't fit a ${u.type || 'list'} field`,
+            );
         }
       }),
     );

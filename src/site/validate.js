@@ -41,7 +41,7 @@ import { checkScale, checkTypography } from './layout/type.js';
 import { checkLayout } from './layout/contain.js';
 import { isId } from './layout/ids.js';
 import { checkMotion } from './layout/motion.js';
-import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
+import { bindTypeOf, FORMAT_TYPES, isBinding } from './layout/bindings.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const typeOf = (v) =>
@@ -263,7 +263,7 @@ function checkSection(s, at) {
   // custom: its minimum rows (only there)
   const min = s.rows?.min;
   if (s.rows !== undefined && (!isObject(s.rows) || Object.keys(s.rows).some((k) => k !== 'min')))
-    bad('rows', 'an object { min } (a custom height\'s rows)');
+    bad('rows', "an object { min } (a custom height's rows)");
   else if (s.height === 'custom' && !whole(min, 1))
     bad('rows.min', 'a whole number of rows from 1 (a custom height)');
   else if (min !== undefined && !(whole(min, 1) && min <= MAX_MIN_ROWS))
@@ -329,16 +329,20 @@ function checkBlock(b, where) {
     !(isObject(b.item) && isSlug(b.item.source) && typeof b.item.slug === 'string')
   )
     bad('item', '{ "source": "<source>", "slug": "<item slug>" }');
-  // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>" }, {{field}}
+  // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>", "format"? }
   const bindShape = (key, v, type) => {
-    if (Object.keys(v).length !== 1 || !/^[\w-]+$/.test(v.bind))
-      bad(key, '{ "bind": "<field>" } (one field name)');
+    const extra = Object.keys(v).filter((k) => k !== 'bind' && k !== 'format');
+    if (extra.length || !/^[\w-]+$/.test(v.bind))
+      bad(key, '{ "bind": "<field>", "format": "… {value} …" } (one field name)');
     else if (!type) bad(key, "a list of its own (it can't be bound)");
+    else if (v.format !== undefined && !FORMAT_TYPES.includes(type))
+      bad(`${key}.format`, 'left out (only a text can have a format)');
+    else if (
+      v.format !== undefined &&
+      !(typeof v.format === 'string' && v.format.includes('{value}'))
+    )
+      bad(`${key}.format`, 'a text with {value} in it');
   };
-  const templateIn = (key, v, type) =>
-    hasTemplate(v) &&
-    !TEMPLATE_TYPES.includes(type) &&
-    bad(key, 'its own value ({{…}} is for text)');
   for (const c of t.config || []) {
     const v = b.config?.[c.key];
     if (isBinding(v)) bindShape(`config.${c.key}`, v, bindTypeOf(c, { config: true }));
@@ -350,7 +354,15 @@ function checkBlock(b, where) {
       bindShape(f.key, v, bindTypeOf(f));
       continue;
     }
-    templateIn(f.key, v, bindTypeOf(f));
+    if (Array.isArray(v) && isObject(f.list))
+      v.forEach((e, i) =>
+        Object.entries(isObject(e) ? e : {}).forEach(([k, sv]) => {
+          const sub = f.list[k];
+          const type = (isObject(sub) ? sub.type : sub) || 'text';
+          if (isBinding(sv))
+            bindShape(`${f.key}.${i}.${k}`, sv, FORMAT_TYPES.includes(type) ? type : null);
+        }),
+      );
     if (!f.list) {
       if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
         bad(f.key, `a ${FIELD_TYPES[f.type] || 'string'}`);

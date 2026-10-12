@@ -21,19 +21,19 @@
           "meta": [
             {
               "label": "Role",
-              "value": "{{role}}"
+              "value": { "bind": "role" }
             },
             {
               "label": "Agency",
-              "value": "{{agency}}"
+              "value": { "bind": "agency" }
             },
             {
               "label": "Location",
-              "value": "{{location}}"
+              "value": { "bind": "location" }
             },
             {
               "label": "Year",
-              "value": "{{year}}"
+              "value": { "bind": "year" }
             }
           ],
           "body": {

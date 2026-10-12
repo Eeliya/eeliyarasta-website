@@ -7,8 +7,8 @@
     live      reactive store (live.svelte.js); bridge: the preview (../bridge.js)
     sourceIds the files in content/en/sources/, for a list item's source
     onsource  (file, item?, edit?): open the Source Explorer
-    bindings  a block's: { binds(type), names, resolved(f) } for its fields' Source switch and
-              {{name}} suggestions (BlockInspector.svelte, Field.svelte); null: none
+    bindings  a block's: { binds(type), resolved(f) } for its fields' Source switch and a
+              bound text's format (BlockInspector.svelte, Field.svelte); null: none
 -->
 <script>
   import Button from './Button.svelte';
@@ -68,7 +68,7 @@
   }
 
   // a switch or a choice can change what the block shows: rendered again
-  // a bound value (an object, or text with {{name}}) shows the item's: rendered again too
+  // a bound value ({ bind }) shows the item's: rendered again too
   function setValue(f, value) {
     const structure =
       f.type === 'boolean' ||
@@ -117,7 +117,7 @@
       onfocus={() => bridge.focusEdit(f.edit)}
       onvalue={(value) => setValue(f, value)}
       binds={bindings && f.bindType && f.type !== 'boolean' ? bindings.binds(f.bindType) : null}
-      names={bindings && f.textual ? bindings.names : null}
+      formats={!!bindings && f.textual}
       resolved={bindings?.resolved(f) ?? ''}
     />
   {/if}
@@ -185,7 +185,6 @@
     changed={live.changed(g.file, c.ptr)}
     onvalue={(value) => setConfig(c, value)}
     binds={bindings ? bindings.binds('link') : null}
-    names={bindings?.names ?? null}
     resolved={bindings?.resolved({ file: g.file, ptr: c.ptr, type: 'link' }) ?? ''}
   />
 {/each}

@@ -334,7 +334,7 @@ function sourceProblems(root, files) {
 
 /**
  * A new [slug] page's album block, its texts bound to the source's fields (its schema): the
- * title field, the fields shown in item lists as facts ("{{role}}"), the first long text.
+ * title field, the fields shown in item lists as facts ({ "bind": "role" }), the first long text.
  */
 function albumBlock(root, source, ids) {
   const list = itemsOf(readContentFile(root, sourceFile(source), { check: false }));
@@ -349,7 +349,7 @@ function albumBlock(root, source, ids) {
     title: schema.title ? { bind: schema.title } : '',
     meta: fields
       .filter((f) => f.list && ['text', 'choice', 'number', 'date'].includes(f.type))
-      .map((f) => ({ label: f.label, value: `{{${f.key}}}` })),
+      .map((f) => ({ label: f.label, value: { bind: f.key } })),
     body: long ? { bind: long.key } : '',
   };
 }

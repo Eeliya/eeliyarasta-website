@@ -151,8 +151,9 @@ export function nameOf(s) {
 function registryFields(file, base, s, t) {
   // a list item's subkey type can be { type, label, options } (src/site/blocks/index.js).
   // bindType: what it can show of an item as a whole (src/site/layout/bindings.js; a list
-  // item's subkey can't, null); textual: its text can hold {{name}}
-  const field = (path, type, label, whole = false) => {
+  // item's text subkey binds as text, other list items can't, null); textual: a bound one
+  // can have a format ("{value} photos")
+  const field = (path, type, label, whole = false, sub = false) => {
     const ptr = pointer([...base, ...path]);
     const def = type && typeof type === 'object' ? type : { type };
     return {
@@ -163,7 +164,11 @@ function registryFields(file, base, s, t) {
       label: def.label || label,
       half: def.width === 'half',
       ...(def.options ? { options: def.options } : {}),
-      bindType: whole ? bindTypeOf(def) : null,
+      bindType: whole
+        ? bindTypeOf(def)
+        : sub && TEXT_TYPES.includes(def.type || 'text')
+          ? def.type || 'text'
+          : null,
       textual: TEXT_TYPES.includes(def.type || 'text'),
     };
   };
@@ -187,7 +192,7 @@ function registryFields(file, base, s, t) {
       items: items.map((_, j) =>
         subs
           ? subs.map(([sub, type]) =>
-              field([f.key, j, sub], type, sub === 'src' ? 'Photo' : labelOf(sub)),
+              field([f.key, j, sub], type, sub === 'src' ? 'Photo' : labelOf(sub), false, true),
             )
           : [field([f.key, j], f.list, `${f.label} ${j + 1}`)],
       ),
