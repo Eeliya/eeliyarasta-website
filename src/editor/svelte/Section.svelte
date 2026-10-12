@@ -73,12 +73,15 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 12px 0;
-    border-top: 1px solid var(--line);
+    padding: 12px 8px;
+    margin-inline: -8px;
+    border: 1px solid transparent;
+    background: var(--solid-card);
+    border-radius: 12px;
 
     &:first-of-type {
-      border-top-color: transparent;
-      padding-top: 0;
+      //border-top-color: transparent;
+      //padding-top: 0;
     }
   }
 
@@ -113,7 +116,7 @@
     z-index: 1;
     margin: -8px 0;
     padding: 8px 0;
-    background: var(--bg-2);
+    //background: var(--bg-2);
   }
 
   // caret | title, with the name under the title

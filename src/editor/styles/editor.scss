@@ -207,6 +207,9 @@ kbd {
   padding: 16px 16px 24px;
   overscroll-behavior: contain;
   container-type: inline-size; // .fields go one column when narrow
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .hint {
@@ -796,8 +799,10 @@ dialog.modal__box {
 // a section row whose section the pointer is over in the preview (SectionsList.svelte): faint
 // white, not the accent (that is the selection's)
 [data-section].is-peek {
-  border-radius: 8px;
-  outline: 1px solid rgb(255 255 255 / 0.2);
-  outline-offset: 4px;
-  background: rgb(255 255 255 / 0.03);
+  //border-radius: 8px;
+  //outline: 1px solid rgb(255 255 255 / 0.2);
+  //outline-offset: 4px;
+  background: var(--solid-card-peek) !important;
+  //border-color: var(--solid-faint) !important;
+  //box-shadow: 0 0 2px 1px  var(--solid-faint);
 }
