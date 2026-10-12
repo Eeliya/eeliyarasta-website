@@ -1,10 +1,13 @@
 <!--
-  A block's item (BlockInspector.svelte): one button naming it ("people.json · Eeliya Rasta",
-  or None / This page's item) that opens a window listing the sources, then a source's items,
-  with a search over what is listed. None clears it.
-    value     the block's { source, id } or null
-    sourceIds the content/en/sources/ ids; itemsOf(id) its items; nameOf(id, item) a name
-    none      the label of no item; onpick({ source, id } | undefined)
+  A source field: its label, what it is set to (read only) and a button that opens a window to
+  pick it. Every source-using block has one (BlockInspector.svelte, GroupFields.svelte).
+    mode      'item'   a block's item, { source, id } or null: a source, then one of its items;
+                       it shows "people.json · Eeliya Rasta" and opens on that source's items
+              'source' a source id ('' or null: none): it stops at the sources, the current
+                       one highlighted; it shows "people.json"
+    value, label, changed (its changed dot), none (the label of no value, null: none can't be
+    picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
+    onpick(value | undefined)
 -->
 <script>
   import { tick } from 'svelte';
@@ -12,16 +15,30 @@
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
 
-  let { value, sourceIds, itemsOf, nameOf, none = 'None', onpick } = $props();
+  let {
+    mode = 'item',
+    value,
+    label = 'Item',
+    changed = false,
+    none = 'None',
+    sourceIds,
+    itemsOf,
+    nameOf = () => '',
+    onpick,
+  } = $props();
 
+  const items_ = $derived(mode === 'item');
+  const current = $derived(items_ ? value?.source || '' : value || '');
+  const uid = $props.id();
   let dialog = $state();
   let source = $state(''); // the source open in the list ('' = the list of sources)
   let query = $state('');
 
-  const current = $derived.by(() => {
-    if (!value?.source) return none;
-    const it = itemsOf(value.source).find((i) => i?.id === value.id);
-    return `${value.source}.json · ${it ? nameOf(value.source, it) : '—'}`;
+  const shown = $derived.by(() => {
+    if (!current) return none ?? '—';
+    if (!items_) return `${current}.json`;
+    const it = itemsOf(current).find((i) => i?.id === value.id);
+    return `${current}.json · ${it ? nameOf(current, it) : '—'}`;
   });
   const q = $derived(query.trim().toLowerCase());
   const sources = $derived(sourceIds.filter((id) => !q || id.toLowerCase().includes(q)));
@@ -33,20 +50,26 @@
       : [],
   );
 
-  async function focusFirst() {
+  async function focus(id = '') {
     await tick();
-    (dialog.querySelector('.xrow.is-selected') || dialog.querySelector('.ip-search'))?.focus();
+    const row = id && dialog.querySelector(`[data-pick="${CSS.escape(id)}"]`);
+    (
+      row ||
+      dialog.querySelector('.xrow.is-selected') ||
+      dialog.querySelector('.ip-search')
+    )?.focus();
   }
-  function open() {
-    source = value?.source || '';
+  /** Open on the current source's items (a block's item), else on the sources. */
+  export function open(at = items_ ? current : '', id = '') {
+    source = items_ ? at : '';
     query = '';
-    dialog.showModal();
-    focusFirst();
+    if (!dialog.open) dialog.showModal();
+    focus(id || (!items_ ? at : ''));
   }
   function enter(id) {
     source = id;
     query = '';
-    focusFirst();
+    focus();
   }
   function pick(next) {
     onpick(next);
@@ -54,18 +77,28 @@
   }
 </script>
 
-<Button size="small" title="Pick the item this block shows" aria-haspopup="dialog" onclick={open}>
-  <span class="ip-current">{current}</span>
-</Button>
+<div class={['opt', changed && 'is-changed']}>
+  <span class="tf__label" id="{uid}-label">{label}<i class="dot" title="Changed"></i></span>
+  <div class="ip-field">
+    <span class={['ip-value', !current && 'is-none']} title={shown}>{shown}</span>
+    <Button
+      size="small"
+      aria-haspopup="dialog"
+      aria-describedby="{uid}-label"
+      title={items_ ? 'Pick the item this block shows' : 'Pick the source'}
+      onclick={() => open()}>Change</Button
+    >
+  </div>
+</div>
 
 <dialog
   class="modal__box ip-modal"
-  aria-label="Item"
+  aria-label={label}
   bind:this={dialog}
   onclick={(e) => e.target === dialog && dialog.close()}
 >
   <ExplorerHead
-    title="Item"
+    title={label}
     icon="fa-database"
     crumbs={[
       { label: 'Sources', onclick: source ? () => enter('') : undefined },
@@ -86,21 +119,24 @@
     />
     <div class="ip-list">
       {#if !source}
-        <ExplorerRow
-          icon="fa-ban"
-          name={none}
-          meta="No item: the fields show their own text"
-          selected={!value?.source}
-          onclick={() => pick(undefined)}
-        />
+        {#if none !== null}
+          <ExplorerRow
+            icon="fa-ban"
+            name={none}
+            meta={items_ ? 'No item: the fields show their own text' : 'No source'}
+            selected={!current}
+            onclick={() => pick(undefined)}
+          />
+        {/if}
         {#each sources as id (id)}
           <ExplorerRow
             icon="fa-database"
-            name="{id}.json"
-            meta="{itemsOf(id).length} items"
-            selected={value?.source === id}
-            enter
-            onclick={() => enter(id)}
+            name={`${id}.json`}
+            meta={`${itemsOf(id).length} items`}
+            selected={current === id}
+            enter={items_}
+            data-pick={id}
+            onclick={() => (items_ ? enter(id) : pick(id))}
           />
         {/each}
       {:else}
@@ -108,7 +144,8 @@
           <ExplorerRow
             lead={String(r.i + 1).padStart(2, '0')}
             name={r.name}
-            selected={value?.source === source && value?.id === r.it?.id}
+            selected={current === source && value?.id === r.it?.id}
+            data-pick={r.it?.id}
             onclick={() => pick({ source, id: r.it.id })}
           />
         {:else}
@@ -120,10 +157,43 @@
 </dialog>
 
 <style lang="scss">
-  .ip-current {
+  .opt {
+    min-width: 0;
+    padding: var(--space-1);
+
+    // (as the block settings' labels beside it: GroupFields.svelte)
+    .tf__label {
+      min-height: 24px;
+    }
+
+    .dot {
+      display: none;
+    }
+
+    &.is-changed .dot {
+      display: inline-block;
+    }
+  }
+
+  // [ people.json · Eeliya Rasta   (Change) ]
+  .ip-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--size-control);
+  }
+
+  .ip-value {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
+    font-size: var(--fs-base);
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &.is-none {
+      color: var(--c-text-muted);
+    }
   }
 
   dialog.ip-modal {
@@ -143,7 +213,7 @@
     flex-direction: column;
     gap: var(--space-3);
     min-height: 0;
-    padding: var(--space-4) var(--space-3) var(--space-4);
+    padding: var(--space-4) var(--space-3);
   }
 
   .ip-search {

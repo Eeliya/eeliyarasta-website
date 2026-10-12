@@ -11,7 +11,6 @@
               bound text's format (BlockInspector.svelte, Field.svelte); null: none
 -->
 <script>
-  import Button from './Button.svelte';
   import Field from './Field.svelte';
   import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
@@ -21,7 +20,8 @@
   import { parse } from '../lib/pointer.js';
   import { openMedia } from './media.svelte.js';
   import { pairedHalves } from './source-items.js';
-  import { baseName } from '../../site/files.js';
+  import ItemPicker from './ItemPicker.svelte';
+  import { sourceFile } from '../../site/files.js';
   import { isBound } from '../../site/layout/bindings.js';
 
   let { g, live, bridge, sourceIds, onsource, bindings = null } = $props();
@@ -84,28 +84,31 @@
     });
   }
 
+  // a source's items (for the source fields' counts)
+  const itemsOf = (id) => {
+    live.version;
+    const list = live.get(sourceFile(id), '/items');
+    return Array.isArray(list) ? list : [];
+  };
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
   const own = $derived(!!g.source);
   const options = $derived(g.config?.filter((c) => c.options || c.type === 'boolean') ?? []);
 </script>
 
-<!-- one field: a Field (text, photo, switch, choice), or a source Select (a list item's
-     source); `own` = the group names the source file, so the field doesn't -->
+<!-- one field: a Field (text, photo, switch, choice), or a source field (a list item's
+     source, ItemPicker.svelte); `own` = the group names the source file, so the field doesn't -->
 {#snippet field(f, half)}
   {#if f.type === 'source'}
-    {@const value = live.get(f.file, f.ptr)}
-    <div class={['opt', live.changed(f.file, f.ptr) && 'is-changed']}>
-      <label class="tf__label" for="{uid}-{f.edit}"
-        >{f.label}<i class="dot" title="Changed"></i></label
-      >
-      <Select
-        id="{uid}-{f.edit}"
-        value={value ?? ''}
-        placeholder="Pick…"
-        options={sourceIds.map((id) => ({ value: id, label: `${id}.json` }))}
-        onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
-      />
-    </div>
+    <ItemPicker
+      mode="source"
+      label={f.label}
+      value={live.get(f.file, f.ptr)}
+      changed={live.changed(f.file, f.ptr)}
+      none={null}
+      {sourceIds}
+      {itemsOf}
+      onpick={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
+    />
   {:else if f.type === 'link'}
     <LinkField
       {live}
@@ -145,45 +148,45 @@
   </div>
 {/snippet}
 
-<!-- a block setting (config): a Select (source, select) or a switch (boolean), labelled;
-     a source has an edit button beside it -->
+<!-- a block setting (config): a source field (ItemPicker.svelte: its source only), a Select
+     (select) or a switch (boolean), labelled -->
 {#snippet option(c)}
   {@const value = live.get(g.file, c.ptr)}
-  {@const edit =
-    c.type === 'source' &&
-    value &&
-    !String(c.options.find(([v]) => v === value)?.[1]).endsWith('(missing)')}
-  <div class={['opt', live.changed(g.file, c.ptr) && 'is-changed', edit && 'has-extra']}>
-    <label class="tf__label" for="{uid}-{c.key}">
-      {c.label}<i class="dot" title="Changed"></i>
-    </label>
-    {#if c.type === 'boolean'}
-      <input
-        id="{uid}-{c.key}"
-        type="checkbox"
-        class="switch"
-        checked={!!value}
-        onchange={(e) => setConfig(c, e.currentTarget.checked)}
-      />
-    {:else}
-      <Select
-        id="{uid}-{c.key}"
-        value={value ?? ''}
-        placeholder="Pick…"
-        options={c.options.map(([v, label]) => ({ value: v, label }))}
-        onchange={(v) => setConfig(c, v)}
-      />
-    {/if}
-    {#if edit}
-      <Button
-        size="small"
-        icon="pen-to-square"
-        iconOnly
-        label="Edit {baseName(`sources/${value}.json`)}"
-        onclick={() => onsource(`sources/${value}.json`)}
-      />
-    {/if}
-  </div>
+  {#if c.type === 'source'}
+    <ItemPicker
+      mode="source"
+      label={c.label}
+      {value}
+      changed={live.changed(g.file, c.ptr)}
+      none={c.empty ?? null}
+      {sourceIds}
+      {itemsOf}
+      onpick={(v) => setConfig(c, v ?? '')}
+    />
+  {:else}
+    <div class={['opt', live.changed(g.file, c.ptr) && 'is-changed']}>
+      <label class="tf__label" for="{uid}-{c.key}">
+        {c.label}<i class="dot" title="Changed"></i>
+      </label>
+      {#if c.type === 'boolean'}
+        <input
+          id="{uid}-{c.key}"
+          type="checkbox"
+          class="switch"
+          checked={!!value}
+          onchange={(e) => setConfig(c, e.currentTarget.checked)}
+        />
+      {:else}
+        <Select
+          id="{uid}-{c.key}"
+          value={value ?? ''}
+          placeholder="Pick…"
+          options={c.options.map(([v, label]) => ({ value: v, label }))}
+          onchange={(v) => setConfig(c, v)}
+        />
+      {/if}
+    </div>
+  {/if}
 {/snippet}
 
 {#if options.length}
@@ -234,19 +237,6 @@
     position: relative;
     min-width: 0;
     padding: var(--space-1);
-
-    // the edit button sits beside the label, drawn at the right of the title row
-    > :global(.btn) {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      height: 24px;
-      margin: 0;
-    }
-
-    &.has-extra .tf__label {
-      padding-right: 28px;
-    }
 
     .tf__label {
       min-height: 24px;

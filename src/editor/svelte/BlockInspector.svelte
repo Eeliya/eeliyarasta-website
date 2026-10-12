@@ -205,23 +205,22 @@
     />
   {/key}
 {:else}
-  {#if g.fields.length || g.config?.some((c) => c.type === 'text')}
-    <div class={['opts', live.changed(g.file, `${base}/item`) && 'is-changed']}>
-      <div class="opt">
-        <span class="tf__label">Item<i class="dot" title="Changed"></i></span>
-        <ItemPicker
-          value={ref}
-          {sourceIds}
-          none={template ? "This page's item" : 'None'}
-          itemsOf={(id) => {
-            live.version;
-            const list = live.get(sourceFile(id), '/items');
-            return Array.isArray(list) ? list : [];
-          }}
-          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
-          onpick={setItem}
-        />
-      </div>
+  <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
+  {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
+    <div class="opts">
+      <ItemPicker
+        value={ref}
+        changed={live.changed(g.file, `${base}/item`)}
+        {sourceIds}
+        none={template ? "This page's item" : 'None'}
+        itemsOf={(id) => {
+          live.version;
+          const list = live.get(sourceFile(id), '/items');
+          return Array.isArray(list) ? list : [];
+        }}
+        nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
+        onpick={setItem}
+      />
     </div>
   {/if}
   <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
@@ -311,22 +310,8 @@
     margin-bottom: var(--space-4);
   }
 
-  // the item: one button opening the item window (ItemPicker.svelte)
+  // the item: its source field (ItemPicker.svelte)
   .opts {
-    display: grid;
     margin-bottom: var(--space-4);
-
-    .dot {
-      display: none;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
-    }
-  }
-
-  .opt {
-    min-width: 0;
-    padding: var(--space-1);
   }
 </style>
