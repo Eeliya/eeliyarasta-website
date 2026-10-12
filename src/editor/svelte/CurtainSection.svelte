@@ -34,7 +34,7 @@
   // The curtain shown: the page's own (Custom) or the global one.
   const edit = $derived(
     page && mode === 'custom'
-      ? curtainEdits(live.store, page.file, page.ptr)
+      ? curtainEdits(live.store, page.file, `${page.ptr}/overrides`, { over: true })
       : curtainEdits(live.store, ANIMATIONS, CURTAIN),
   );
   // Re-read after every store change.

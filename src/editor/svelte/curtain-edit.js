@@ -4,7 +4,7 @@
  * No DOM here. Times come only from normalizeCurtain + curtainPlan (src/client/anim/curtain.js).
  */
 import { ANIMATIONS } from '../../site/files.js';
-import { normalizeCurtain, curtainPlan } from '../../client/anim/curtain.js';
+import { normalizeCurtain, curtainPlan, withOverrides } from '../../client/anim/curtain.js';
 
 /** The global curtain in settings/animations.json. */
 export const CURTAIN = '/transitions/page/curtain';
@@ -92,34 +92,38 @@ export function clampTo(field, v, plan) {
 
 /**
  * A page's curtain mode (Motion tab), as one undo step. `page` is where the page's
- * "transition" is stored ({ file, ptr }, see src/site/routes.js). Custom starts from the
- * page's earlier custom values, else from a copy of the global curtain. The values stay
- * when switching to Global or Off, so switching back brings them back.
+ * "transition" is stored ({ file, ptr }, see src/site/routes.js): Global is no "transition",
+ * Custom { preset: 'curtain', overrides } (the site curtain, then what the page changes; it
+ * keeps earlier overrides), Off { preset: 'none' }.
  */
 export function setCurtainMode(store, page, mode) {
   const now = store.get(page.file, page.ptr);
-  const fields = { ...(now && typeof now === 'object' ? now : {}) };
-  delete fields.mode;
-  if (mode === 'custom' && !Object.keys(fields).length)
-    Object.assign(fields, structuredClone(store.get(ANIMATIONS, CURTAIN) ?? {}));
-  // Global without earlier values: no "transition" at all, as before.
-  const next = mode === 'global' && !Object.keys(fields).length ? undefined : { mode, ...fields };
+  const next =
+    mode === 'custom'
+      ? { preset: 'curtain', overrides: structuredClone(now?.overrides ?? {}) }
+      : mode === 'off'
+        ? { preset: 'none' }
+        : undefined;
   store.set(page.file, page.ptr, next, { source: 'panel' });
 }
 
 /**
  * The curtain edits on the store. Every write goes through here, so the timeline and the
  * number fields follow the same rules. file + base: the curtain being edited, the global one
- * by default or a page's own ("pages/index.json", "/transition").
+ * by default or a page's overrides ("pages/index.json", "/transition/overrides", `over`: the
+ * values it doesn't set are the site curtain's).
  */
-export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN) {
+export function curtainEdits(store, file = ANIMATIONS, base = CURTAIN, { over = false } = {}) {
   const TOTAL_PTR = base + '/total';
   const EASE_MODE_PTR = base + '/easeMode';
   const SHARED_EASE_PTR = base + '/ease';
   const get = (ptr) => store.get(file, ptr);
   const set = (ptr, value) =>
     store.set(file, ptr, value, { key: `curtain:${file}#${ptr}`, source: 'panel' });
-  const effective = () => normalizeCurtain(get(base) ?? true);
+  const effective = () =>
+    normalizeCurtain(
+      over ? withOverrides(store.get(ANIMATIONS, CURTAIN), get(base)) : (get(base) ?? true),
+    );
   const plan = () => curtainPlan(effective(), true);
 
   /** Pull text (and outStart) back inside total after the window shrinks. */

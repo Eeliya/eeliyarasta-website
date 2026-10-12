@@ -115,7 +115,9 @@ tags, and works with JavaScript disabled.
 `src/client/router.js` intercepts internal link clicks, fetches the target's prerendered HTML
 (prefetched on hover), runs the page-leave transition (a curtain showing the destination's
 name; its text and an optional per-page `transition` live in the page's file `pages/<page>/index.json`,
-or in the album's item in `sources/`), swaps `<main data-router-view>`, updates
+or in the album's item in `sources/`: `{ "preset": "curtain", "overrides": { … } }`, the site's
+curtain with some of its fields changed, or `{ "preset": "none" }`; missing: the site's curtain),
+swaps `<main data-router-view>`, updates
 title/meta/history, scrolls to top and re-mounts animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
 in one `gsap.context` and are reverted on leave. If anything fails it falls back to a normal
 page load.

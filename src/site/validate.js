@@ -210,6 +210,18 @@ function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
   // its stable id: what links point at (its folder, the URL, can change)
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
+  // its page transition: { preset: "curtain", overrides? } or { preset: "none" }
+  const t = d.transition;
+  if (t !== undefined) {
+    if (!isObject(t) || !['curtain', 'none'].includes(t.preset))
+      out.push(
+        '"transition" must be { "preset": "curtain", "overrides"?: {…} } or { "preset": "none" }',
+      );
+    else if (t.overrides !== undefined && (t.preset !== 'curtain' || !isObject(t.overrides)))
+      out.push('"transition.overrides" must be an object, only with the "curtain" preset');
+    else if (Object.keys(t).some((k) => k !== 'preset' && k !== 'overrides'))
+      out.push('"transition" has only "preset" and "overrides"');
+  }
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
     out.push('"template.source" must name a source (a [slug] page makes a page per item)');
   if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)

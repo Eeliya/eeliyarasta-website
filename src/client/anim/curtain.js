@@ -15,9 +15,11 @@
  *   label         false hides the text on every page
  *
  * Per page, a "transition" next to the page's curtain text (see src/site/routes.js):
- *   missing or { mode: 'global' }   the site-wide curtain above
- *   { mode: 'custom', ...fields }   the page's own curtain, same fields as above
- *   { mode: 'off' }                 no curtain when navigating to this page (a plain fade)
+ *   missing                                   the site-wide curtain above
+ *   { preset: 'curtain', overrides: {…} }     the site-wide curtain with some fields of its
+ *                                             own (same fields as above; a step's own keys
+ *                                             merge into the site's step)
+ *   { preset: 'none' }                        no curtain when navigating to this page (a fade)
  * The page you go to decides: leaving a page with its own curtain (or none) changes nothing.
  */
 const CURTAIN_DEFAULTS = {
@@ -28,16 +30,28 @@ const CURTAIN_DEFAULTS = {
 };
 
 export const CURTAIN_MODES = ['global', 'custom', 'off'];
+/** A page transition's presets: the site's curtain, or none. */
+export const TRANSITION_PRESETS = ['curtain', 'none'];
 
-/** A page transition's mode: 'global' unless it says 'custom' or 'off'. */
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/** A page transition's mode in the editor: 'off' (preset none), 'custom' (overrides), 'global'. */
 export const curtainMode = (transition) =>
-  transition?.mode === 'custom' || transition?.mode === 'off' ? transition.mode : 'global';
+  transition?.preset === 'none' ? 'off' : isObj(transition?.overrides) ? 'custom' : 'global';
+
+/** The site curtain with a page's overrides on it (a step's keys merge into the site's step). */
+export function withOverrides(global, overrides) {
+  const out = { ...(isObj(global) ? global : {}) };
+  for (const [k, v] of Object.entries(isObj(overrides) ? overrides : {}))
+    out[k] = isObj(v) && isObj(out[k]) ? { ...out[k], ...v } : v;
+  return out;
+}
 
 /** The raw curtain for a page (what normalizeCurtain takes): its own, the global one, or null. */
 export function curtainFor(transition, global) {
   const mode = curtainMode(transition);
   if (mode === 'off') return null;
-  return mode === 'custom' ? transition : global;
+  return mode === 'custom' ? withOverrides(global, transition.overrides) : global;
 }
 
 const num = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
