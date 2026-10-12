@@ -1,1 +1,3 @@
-[]
+[
+  { "from": "/people/noor-vermeer/:slug/", "to": "/people/" }
+]

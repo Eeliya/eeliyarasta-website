@@ -37,5 +37,6 @@
       "time": { "title": "Local time" }
     }
   },
-  "nav": { "menu": "Menu", "close": "Close", "clock": "NL" }
+  "nav": { "menu": "Menu", "close": "Close", "clock": "NL" },
+  "layout": { "contained": 96 }
 }

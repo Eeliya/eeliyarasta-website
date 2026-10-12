@@ -407,14 +407,15 @@
     padding: 4px;
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px var(--line);
+    justify-self: start;
   }
 
   .hset__btn {
     display: grid;
     flex: 1;
     place-items: center;
-    min-width: 0;
     height: 24px;
+    width: 36px;
     padding: 0;
     border: 0;
     border-radius: 4px;
