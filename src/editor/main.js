@@ -72,7 +72,7 @@ const overlay = createOverlay({
   onplace(id, pos, { mobile = false, flow = {}, rows = 0 } = {}) {
     const b = blockAt(id);
     if (!b) return;
-    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { flow });
+    if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { flow, rows });
     else placeBlock(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
   },
   // a block linked to another (its top circle dropped on that one's bottom circle) or freed

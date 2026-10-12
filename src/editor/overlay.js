@@ -31,8 +31,10 @@
  *   Rows      a Custom height section shows a line on its bottom edge (the hovered section's,
  *             or the selected block's): dragged up or down it sets the section's rows, in
  *             whole cells, never fewer than its content needs, the count shown live; on
- *             release one undo step (onrows). On the phone preview it sets the phone rows
- *             (half the desktop rows, rounded up: the desktop rows become twice them).
+ *             release one undo step (onrows). On the phone preview it sets the section's own
+ *             phone rows (mobile.minRows; without them: half the desktop rows, rounded up).
+ *             A block dragged or resized past a Custom section's bottom: on release its rows
+ *             become the content's (onplace's rows), so moving it back up leaves empty rows.
  *
  * A block is where the site's rows.js put it (--fr / --frs: a linked block below its leader,
  * auto and aspect blocks the rows they need), so a drag starts from there; while it runs the
@@ -201,7 +203,7 @@ function nearest(list, v, step) {
 /**
  * onpick(id): a block was clicked; onplace(id, pos, { mobile, flow, rows }): a drag ended with
  * the block at `pos` (mobile: its phone area; flow: where the section's blocks are now, { id:
- * area }, and rows: its rows now); onlink(id, to, gap, { mobile }): block `id` follows `to`
+ * area }, and rows: the rows its content needs now); onlink(id, to, gap, { mobile }): block `id` follows `to`
  * with `gap` cells between them (to null: it is free again); blockOf(id): the stored block
  * (null when it isn't on the page); onrows(secId, rows, { mobile }): a Custom section's bottom
  * edge was dragged to `rows` (the phone's rows when mobile).
@@ -532,10 +534,12 @@ export function createOverlay({
   function show(p) {
     setArea(drag.el.style, p, drag.phone);
     const items = drag.items.map((it) => (it.id === drag.id ? { ...it, ...p } : it));
-    const { rows, at } = resolveRows(items, drag.rows);
+    const { rows, at } = resolveRows(items, 1);
     for (const it of drag.items)
       if (it.id !== drag.id && at[it.id]) it.el.style.setProperty('--fr', at[it.id].row);
-    drag.sec.style.setProperty('--frows', Math.max(drag.min, drag.rows, rows, p.row + p.rows - 1));
+    // its content's rows (a Custom section grows to them on release: onplace's rows)
+    drag.content = Math.max(rows, p.row + p.rows - 1);
+    drag.sec.style.setProperty('--frows', Math.max(drag.min, drag.rows, drag.content));
     if (drag.link) {
       const lead = at[drag.link.to];
       if (lead) drag.label = `${drag.phone ? 'phone · ' : ''}gap ${p.row - (lead.row + lead.rows)}`;
@@ -556,7 +560,8 @@ export function createOverlay({
   }
 
   function end() {
-    const { id, from, pos, phone, flow, rows } = drag;
+    const { id, from, pos, phone, flow } = drag;
+    const rows = drag.content || 0;
     const moved = ['col', 'span', 'row', 'rows'].some((k) => pos[k] !== from[k]);
     if (!moved) restore(); // a click changes nothing
     stop();
@@ -605,7 +610,7 @@ export function createOverlay({
       saved: [sec.style.cssText, phone ? '--mminrows' : '--minrows'],
       max: phone ? Math.ceil(MAX_MIN_ROWS / 2) : MAX_MIN_ROWS,
     };
-    ui.secRows = { id: sec.dataset.sec, rows: phone ? rows * 2 : rows };
+    ui.secRows = { id: sec.dataset.sec, rows, phone };
     win.addEventListener('pointermove', moveRows, true);
     win.addEventListener('pointerup', endRows, true);
     win.addEventListener('keydown', cancelRows, true);
@@ -619,7 +624,7 @@ export function createOverlay({
     s.rows = n;
     s.sec.style.setProperty('--frows', n);
     s.sec.style.setProperty(s.saved[1], n);
-    ui.secRows = { id: s.sec.dataset.sec, rows: s.phone ? n * 2 : n };
+    ui.secRows = { id: s.sec.dataset.sec, rows: n, phone: s.phone };
   }
 
   function stopRows() {

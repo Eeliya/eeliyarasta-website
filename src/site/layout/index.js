@@ -88,6 +88,16 @@ export const minRowsOf = (s) =>
   s?.height === 'custom' && Number.isInteger(s.minRows) && s.minRows >= 1
     ? Math.min(s.minRows, MAX_MIN_ROWS)
     : 0;
+/**
+ * A custom section's phone rows: its own (mobile.minRows, set in the phone preview), or its
+ * desktop rows halved, rounded up; 0 when it isn't custom.
+ */
+export const mobileMinRowsOf = (s) => {
+  const min = minRowsOf(s);
+  if (!min) return 0;
+  const own = s.mobile?.minRows;
+  return Number.isInteger(own) && own >= 1 ? Math.min(own, MAX_MIN_ROWS) : Math.ceil(min / 2);
+};
 export const WIDTHS = ['contained', 'full'];
 /** Ids the page's own templates use: no section is named one of them. */
 export const RESERVED_IDS = ['main', 'portal', 'page-curtains', 'accent-init', 'mobile-menu'];
@@ -177,8 +187,9 @@ export function sectionVars(s) {
   if (!min) return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
   // custom: that many rows, its blocks where they are from the top, the rows below the last
   // one empty space (more when its content needs more); the phone's halved, like a block's
-  // area there. rows.js keeps it so as the content grows (--minrows / --mminrows)
-  const m = Math.ceil(min / 2);
+  // area there, unless it has phone rows of its own (mobile.minRows). rows.js keeps it so as
+  // the content grows (--minrows / --mminrows)
+  const m = mobileMinRowsOf(s);
   return `--rows:${Math.max(rowsOf(s), min)};--mrows:${Math.max(mobileRowsOf(s), m)};--minrows:${min};--mminrows:${m}`;
 }
 

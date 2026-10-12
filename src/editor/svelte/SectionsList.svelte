@@ -25,12 +25,13 @@
     removeBlock,
     removeSection,
     setSection,
+    setSectionRows,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import {
-    MAX_MIN_ROWS,
     anchorOf,
     heightOf,
+    mobileMinRowsOf,
     nameProblems,
     rowsOf,
   } from '../../site/layout/index.js';
@@ -77,13 +78,29 @@
     if (key !== 'height') return set(at, { [key]: value });
     // custom: its rows to start from (its last ones, or its content's); others: none
     const s = sections[at];
-    set(at, { height: value, minRows: value === 'custom' ? s.minRows || rowsOf(s) : undefined });
+    // (its own phone rows go with it)
+    const custom = value === 'custom';
+    set(at, {
+      height: value,
+      minRows: custom ? s.minRows || rowsOf(s) : undefined,
+      ...(custom ? {} : { mobile: undefined }),
+    });
   };
+  // the phone preview shows and edits a custom height's own phone rows (mobile.minRows)
+  const phoneView = $derived(ui.viewport === 'mobile');
+  const rowsShown = (s) =>
+    ui.secRows?.id === s.id
+      ? ui.secRows.rows
+      : phoneView
+        ? mobileMinRowsOf(s)
+        : (s.minRows ?? rowsOf(s));
   // a custom height's rows, typed: one undo step per field edit
   const setMinRows = (at, v) => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return;
-    const minRows = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(v)));
-    set(at, { minRows }, `section:${file}#${at}/minRows`);
+    setSectionRows(live.store, file, at, v, {
+      phone: phoneView,
+      key: `section:${file}#${at}/${phoneView ? 'mobile/' : ''}minRows`,
+    });
   };
   // its name: empty removes it (no anchor)
   const setName = (at, name) =>
@@ -291,12 +308,14 @@
         <!-- custom: its rows (square cells, from the top; those below its last block are empty
              space; on phones half as many) -->
         <Field
-          edit="{file}#/sections/{at}/minRows"
-          label="Rows"
+          edit="{file}#/sections/{at}/{phoneView ? 'mobile/' : ''}minRows"
+          label={phoneView ? 'Phone rows' : 'Rows'}
           type="number"
           half
-          value={ui.secRows?.id === s.id ? ui.secRows.rows : (s.minRows ?? rowsOf(s))}
-          help="Rows below the last block are space (phones: half)"
+          value={rowsShown(s)}
+          help={phoneView
+            ? 'Phone only; unset: half the desktop rows'
+            : 'Rows below the last block are space (phones: their own, or half)'}
           changed={changed(at, 'minRows')}
           onvalue={(v) => setMinRows(at, v)}
         />

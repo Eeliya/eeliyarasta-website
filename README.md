@@ -246,8 +246,11 @@ every section is a grid of **blocks** (`src/site/layout/`):
   with `custom`), its blocks at their rows **from the top** (not centred), so the rows below
   the last block are empty space under it; never shorter than its content (when a block
   grows, the section is its content's rows, the empty rows don't stack on top). On phones
-  half as many rows, rounded up, the way a block's desktop area is halved there, so the
-  space keeps its proportion to the content. Or `height` is a **minimum** with the rows
+  its own rows, `mobile.minRows` (set only in the editor's phone preview), or else half as
+  many rows, rounded up, the way a block's desktop area is halved there. In the editor a
+  line on its bottom edge drags its rows (the phone's in the phone preview, never below its
+  content), and a block dragged or resized past its bottom makes its rows its content's
+  (they only grow that way: moving the block back up leaves empty rows). Or `height` is a **minimum** with the rows
   centred: `fit` (default: its content, i.e. its rows),
   `third`, `half` or `full` (at least 1/3, 1/2 or all of the screen's height: `min-height`
   33.333svh / 50svh / 100svh; a custom one `.sec--h-custom`, its `--rows` at least

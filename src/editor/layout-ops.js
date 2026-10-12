@@ -8,6 +8,10 @@
 import {
   MAX_MIN_ROWS,
   MCOLS,
+  minRowsOf,
+  mobileMinRowsOf,
+  mobileRowsOf,
+  rowsOf,
   hasMobileArea,
   linkOf,
   makesLoop,
@@ -109,17 +113,34 @@ export function setSection(store, file, at, patch, key) {
 }
 
 /**
- * A Custom section's rows set from the preview (its bottom edge dragged): `rows` on the desktop
- * grid, or the phone's (phone: a section's phone rows are half its rows, rounded up, so its rows
- * become twice them). Clamped to 1..MAX_MIN_ROWS; false when it isn't Custom or nothing changed.
- * One undo step.
+ * A Custom section whose content now reaches below its rows (a block dragged or resized past
+ * its bottom): its rows become its content's, so they stay when the block moves back up (the
+ * phone's own rows on the phone). Only ever grows. In place, part of the move's undo step.
  */
-export function setSectionRows(store, file, at, rows, { phone = false } = {}) {
+function grow(section, content, phone = false) {
+  const now = phone ? mobileMinRowsOf(section) : minRowsOf(section);
+  if (!now || content <= now) return;
+  const rows = Math.min(MAX_MIN_ROWS, content);
+  if (phone) section.mobile = { ...section.mobile, minRows: rows };
+  else section.minRows = rows;
+}
+
+/**
+ * A Custom section's rows set from the preview (its bottom edge dragged, or its Rows field):
+ * `rows` on the desktop grid, or on the phone's (phone: its own phone rows, mobile.minRows; the
+ * desktop's are untouched). Clamped to 1..MAX_MIN_ROWS; false when it isn't Custom or nothing
+ * changed. One undo step (key: a field's typing coalesces).
+ */
+export function setSectionRows(store, file, at, rows, { phone = false, key } = {}) {
   const s = listOf(store, file)[at];
-  if (!s || s.height !== 'custom' || !Number.isInteger(rows)) return false;
-  const minRows = Math.min(MAX_MIN_ROWS, Math.max(1, phone ? rows * 2 : rows));
-  if (minRows === s.minRows) return false;
-  return setSection(store, file, at, { minRows });
+  if (!s || s.height !== 'custom' || !Number.isFinite(rows)) return false;
+  const n = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(rows)));
+  if (phone) {
+    if (n === s.mobile?.minRows) return false;
+    return setSection(store, file, at, { mobile: { ...s.mobile, minRows: n } }, key);
+  }
+  if (n === s.minRows) return false;
+  return setSection(store, file, at, { minRows: n }, key);
 }
 
 /** The first free row below every block of a section. */
@@ -207,7 +228,7 @@ function gapAt(section, link, row, flow = {}, phone = false) {
  * drag); key: typing in a number field coalesces (see writeSection). flow: where the other
  * blocks are now (storeFlow).
  */
-export function placeBlock(store, file, at, j, pos, key, { flow } = {}) {
+export function placeBlock(store, file, at, j, pos, key, { flow, rows = 0 } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow);
   const b = section.blocks[j];
@@ -215,6 +236,7 @@ export function placeBlock(store, file, at, j, pos, key, { flow } = {}) {
   // a linked block moved: its gap changes, it keeps following its leader
   const l = linkOf(b);
   if (l) b.link = { to: l.to, gap: gapAt(section, l, b.pos.row, flow) };
+  grow(section, Math.max(rows, rowsOf(section)));
   return writeSection(store, file, at, section, key);
 }
 
@@ -287,7 +309,7 @@ function setMobile(block, patch) {
  * from then on (the first time, its desktop link comes along as its phone link, the gap
  * halved). A linked block's gap follows where it was put. One undo step; key: see writeSection.
  */
-export function placeMobile(store, file, at, j, area, { key, flow } = {}) {
+export function placeMobile(store, file, at, j, area, { key, flow, rows = 0 } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow, true);
   const b = section.blocks[j];
@@ -296,6 +318,7 @@ export function placeMobile(store, file, at, j, area, { key, flow } = {}) {
   if (inherited) setMobile(b, { link: inherited });
   const l = linkOf(b, true);
   if (l) setMobile(b, { link: { to: l.to, gap: gapAt(section, l, b.mobile.row, flow, true) } });
+  grow(section, Math.max(rows, mobileRowsOf(section)), true);
   return writeSection(store, file, at, section, key);
 }
 

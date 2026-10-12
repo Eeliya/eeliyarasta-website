@@ -269,13 +269,24 @@ function checkSection(s, at) {
     bad('minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
   else if (s.minRows !== undefined && s.height !== 'custom')
     bad('minRows', 'left out unless the height is custom');
+  // custom: its own phone rows (the only phone setting a section has; an old phone spacing:
+  // the migration, below)
+  if (s.mobile !== undefined && !(isObject(s.mobile) && 'spacing' in s.mobile)) {
+    const { minRows, ...rest } = isObject(s.mobile) ? s.mobile : { x: 1 };
+    if (!isObject(s.mobile) || Object.keys(rest).length)
+      bad('mobile', "an object { minRows } (a custom height's phone rows)");
+    else if (s.height !== 'custom') bad('mobile.minRows', 'left out unless the height is custom');
+    else if (!(whole(minRows, 1) && minRows <= MAX_MIN_ROWS))
+      bad('mobile.minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
+  }
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   // rowHeight (the 8px-row grid's) is ignored on the square grid: a row is one cell
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  // removed: a section's aspect height, its space above / below, its own row count and where
+  // removed: a section's aspect height, its space above / below (also the phone's,
+  // mobile.spacing: see mobile above), its own row count and where
   // its content sits (always centred) (scripts/migrate-sections.mjs)
   for (const key of ['aspect', 'spacing', 'mobile', 'rows', 'align'])
-    if (s[key] !== undefined)
+    if (key === 'mobile' ? isObject(s.mobile) && 'spacing' in s.mobile : s[key] !== undefined)
       out.push(
         `${where}: "${key}" is no longer a section setting (node scripts/migrate-sections.mjs)`,
       );

@@ -287,43 +287,77 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
-test('custom rows: a block moved keeps the rows; the bottom edge dragged sets them, one undo', () => {
+test('custom rows: block moves only grow them; the bottom edge sets them; phone rows own', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
   store.load({ [F]: { sections: [sec([a], { height: 'custom', minRows: 50 })] } });
   const s = () => store.current[F].sections[0];
   const vars = '--rows:50;--mrows:25;--minrows:50;--mminrows:25';
-  // moved and resized on the desktop and on the phone: still 50 rows, not its content's
+  // moved inside its rows (desktop, phone): still 50 rows, not its content's
   placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 3, rows: 10 }, undefined, {
     flow: { 'b-aaaa': a.pos },
     rows: 12,
   });
-  assert.equal(s().minRows, 50);
   assert.equal(sectionVars(s()), vars);
-  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 });
-  assert.equal(s().minRows, 50);
+  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 }, { rows: 6 });
   assert.equal(sectionVars(s()), vars);
-  // content below the rows: it grows past them, the rows stay stored
+  assert.ok(!('mobile' in s()));
+  // dragged past its bottom: its rows become the content's, in the move's one undo step
   placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 55, rows: 10 });
+  assert.equal(s().minRows, 64);
+  // a flowed follower lower than the stored areas show: the overlay's rows count
+  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 50, rows: 10 }, undefined, { rows: 70 });
+  assert.equal(s().minRows, 70);
+  // moved back up: the rows stay (empty space)
+  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 1, rows: 10 });
+  assert.equal(s().minRows, 70);
+  store.undo();
+  store.undo();
+  assert.equal(s().minRows, 64);
+  store.undo();
   assert.equal(s().minRows, 50);
-  assert.match(sectionVars(s()), /^--rows:64;.*--minrows:50;/);
+  assert.equal(s().blocks[0].pos.row, 3);
 
-  // the bottom edge: the desktop rows, or the phone's (twice them), one undo step each
+  // the phone: its own rows, the desktop's untouched
+  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 30, rows: 5 }, { rows: 34 });
+  assert.equal(s().mobile.minRows, 34);
+  assert.equal(s().minRows, 50);
+  assert.match(sectionVars(s()), /--minrows:50;--mminrows:34$/);
+  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 1, rows: 5 });
+  assert.equal(s().mobile.minRows, 34);
+
+  // the bottom edge / Rows field: the desktop's, or the phone's own (never the other)
   assert.equal(setSectionRows(store, F, 0, 72), true);
-  assert.equal(s().minRows, 72);
+  assert.deepEqual([s().minRows, s().mobile.minRows], [72, 34]);
   assert.equal(setSectionRows(store, F, 0, 72), false);
-  setSectionRows(store, F, 0, 30, { phone: true });
-  assert.equal(s().minRows, 60);
-  assert.match(sectionVars(s()), /--mminrows:30$/);
+  setSectionRows(store, F, 0, 20, { phone: true });
+  assert.deepEqual([s().minRows, s().mobile.minRows], [72, 20]);
   assert.equal(setSectionRows(store, F, 0, 5000), true);
   assert.equal(s().minRows, 999);
   store.undo();
-  assert.equal(s().minRows, 60);
-  store.undo();
   assert.equal(s().minRows, 72);
+  assert.deepEqual(checkContent(F, store.current[F]), []);
+  // no phone rows of its own: half, rounded up
+  setSection(store, F, 0, { mobile: undefined });
+  assert.match(sectionVars(s()), /--mminrows:36$/);
   setSection(store, F, 0, { height: 'fit', minRows: undefined });
   assert.equal(setSectionRows(store, F, 0, 40), false); // not custom
-  assert.deepEqual(checkContent(F, store.current[F]), []);
+  assert.equal(setSectionRows(store, F, 0, 40, { phone: true }), false);
+  // fit / other heights never grow
+  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 80, rows: 10 });
+  assert.ok(!('minRows' in s()));
+});
+
+test('custom rows: validation of the phone rows', () => {
+  const of = (more) => checkContent(F, { sections: [sec([], more)] });
+  assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { minRows: 12 } }), []);
+  assert.deepEqual(of({ height: 'fit', mobile: { minRows: 12 } }), [
+    'section 1: "mobile.minRows" must be left out unless the height is custom',
+  ]);
+  assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { minRows: 0 } }), [
+    'section 1: "mobile.minRows" must be a whole number of rows from 1 to 999',
+  ]);
+  assert.equal(of({ height: 'custom', minRows: 30, mobile: { spacing: {} } }).length, 1);
 });
 
 test('migration: phone spacing from the old phone paddings, once', () => {
