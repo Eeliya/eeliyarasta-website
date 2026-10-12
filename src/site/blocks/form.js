@@ -1,7 +1,7 @@
 /**
  * The contact form block. See ./index.js for the shape of a type.
  *
- * Its texts are content (title, intro, each field's label and placeholder, the button, the
+ * Its texts are content (title, body (its intro), each field's label and placeholder, the button, the
  * messages); `fields` is the list of inputs: { name, type, label, placeholder, required,
  * options } (type text | email | tel | textarea | select; options: a select's choices,
  * comma-separated). The name is what the submission calls the value; "name", "email" and
@@ -79,7 +79,7 @@ export const form = {
   icon: 'envelope',
   fields: [
     { key: 'title', label: 'Title (empty: none)' },
-    { key: 'intro', label: 'Intro (empty: none)', type: 'block' },
+    { key: 'body', label: 'Intro (empty: none)', type: 'block' },
     {
       key: 'fields',
       label: 'Form fields',
@@ -111,7 +111,7 @@ export const form = {
   defaults: {
     motion: { anim: 'fade-in' },
     title: 'Get in touch',
-    intro: 'Shoots, collaborations or just hello: I read everything.',
+    body: 'Shoots, collaborations or just hello: I read everything.',
     fields: [
       { name: 'name', type: 'text', label: 'Name', placeholder: 'Your name', required: true },
       {
@@ -166,7 +166,7 @@ export const form = {
     const msg = (key) => ` data-${key}="${esc(s[key] ?? '')}"`;
     return html` <div class="formblock">
       ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
-      ${s.intro ? html`<p class="formblock__intro" ${b.ed('intro', 'block')}>${esc(s.intro)}</p>` : ''}
+      ${s.body ? html`<p class="formblock__intro" ${b.ed('body', 'block')}>${esc(s.body)}</p>` : ''}
       <form class="cform" id="${id}" method="post" action="${esc(action)}"${mode === 'email' ? ' enctype="text/plain"' : ''} data-contact="${mode}"${msg('success')}${msg('error')}${msg('required')}${msg('invalid')}${msg('sending')}>
         ${fields.map(
           (f, i) => html`<div class="cform__field">

@@ -83,22 +83,25 @@
     // custom: its rows to start from (its last ones, or its content's); others: none
     const s = sections[at];
     // (its own phone rows go when the phone isn't custom then: setSection)
-    set(at, { height: value, minRows: value === 'custom' ? s.minRows || rowsOf(s) : undefined });
+    set(at, {
+      height: value,
+      rows: value === 'custom' ? { min: s.rows?.min || rowsOf(s) } : undefined,
+    });
   };
-  // the phone preview shows and edits a custom height's own phone rows (mobile.minRows)
+  // the phone preview shows and edits a custom height's own phone rows (mobile.rows.min)
   const phoneView = $derived(ui.viewport === 'mobile');
   const rowsShown = (s) =>
     ui.secRows?.id === s.id
       ? ui.secRows.rows
       : phoneView
         ? mobileMinRowsOf(s)
-        : (s.minRows ?? rowsOf(s));
+        : (s.rows?.min ?? rowsOf(s));
   // a custom height's rows, typed: one undo step per field edit
   const setMinRows = (at, v) => {
     if (typeof v !== 'number' || !Number.isFinite(v)) return;
     setSectionRows(live.store, file, at, v, {
       phone: phoneView,
-      key: `section:${file}#${at}/${phoneView ? 'mobile/' : ''}minRows`,
+      key: `section:${file}#${at}/${phoneView ? 'mobile/' : ''}rows/min`,
     });
   };
   // its name: empty removes it (no anchor)
@@ -317,7 +320,7 @@
         <!-- custom: its rows (square cells, from the top; those below its last block are empty
              space; on phones half as many) -->
         <Field
-          edit="{file}#/sections/{at}/{phoneView ? 'mobile/' : ''}minRows"
+          edit="{file}#/sections/{at}/{phoneView ? 'mobile/' : ''}rows/min"
           label={phoneView ? 'Phone rows' : 'Rows'}
           type="number"
           half
@@ -325,7 +328,7 @@
           help={phoneView
             ? 'Phone only; unset: half the desktop rows'
             : 'Rows below the last block are space (phones: their own, or half)'}
-          changed={changed(at, phoneView ? 'mobile/minRows' : 'minRows')}
+          changed={changed(at, phoneView ? 'mobile/rows/min' : 'rows/min')}
           onvalue={(v) => setMinRows(at, v)}
         />
       {/if}

@@ -3,9 +3,9 @@
  * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
  * drag / wheel navigation and a Slider ⇄ Grid toggle. Its photos are the item of the page it
  * is on (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
- * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "name" },
+ * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "title" },
  * the facts ("Role" / "{{role}}"; a fact whose value is empty is left out, "Photos" and the
- * count always come last) and the summary { "bind": "summary" }.
+ * count always come last) and the body { "bind": "body" }.
  */
 import { html, esc, img, pad, creditText, ratio, ed, lines, imagesOf } from '../helpers.js';
 
@@ -24,15 +24,15 @@ export const album = {
         value: { type: 'text', label: 'Value', width: 'half' },
       },
     },
-    { key: 'summary', label: 'Summary', type: 'block' },
+    { key: 'body', label: 'Summary', type: 'block' },
   ],
   defaults: {
-    title: { bind: 'name' },
+    title: { bind: 'title' },
     meta: [
       { label: 'Location', value: '{{location}}' },
       { label: 'Year', value: '{{year}}' },
     ],
-    summary: { bind: 'summary' },
+    body: { bind: 'body' },
   },
   render: (s, ctx, b) => albumOf(s, ctx, ctx.route, b),
 };
@@ -45,7 +45,7 @@ function albumOf(s, ctx, route, b) {
   // a photo's src, edited (and uploaded) in the editor
   const photo = (i) => ed(route.file, ['items', route.index, 'images', i, 'src'], 'image');
   const title = String(s.title ?? '');
-  const summary = String(s.summary ?? '');
+  const summary = String(s.body ?? '');
   const meta = [
     ...(Array.isArray(s.meta) ? s.meta : []).map((m, i) => [
       m?.label,
@@ -66,7 +66,7 @@ function albumOf(s, ctx, route, b) {
         <dl class="album__meta">
           ${meta.map(([k, v, attr, labelAttr]) => html`<div><dt class="label"${labelAttr}>${esc(k)}</dt><dd${attr}>${esc(v)}</dd></div>`)}
         </dl>
-        ${summary ? html`<p class="album__summary" ${b.ed('summary', 'block')}>${lines(summary)}</p>` : ''}
+        ${summary ? html`<p class="album__summary" ${b.ed('body', 'block')}>${lines(summary)}</p>` : ''}
         ${a.placeholder ? html`<p class="album__note"><span class="tag">Placeholder</span> <span${at('note', 'block')}>${lines(a.note || '')}</span></p>` : ''}
       </div>
     </aside>
@@ -76,7 +76,7 @@ function albumOf(s, ctx, route, b) {
       data-anim="album.stage"
       data-album-stage
       aria-roledescription="carousel"
-      aria-label="${esc(title || a.name)} photos"
+      aria-label="${esc(title || a.title)} photos"
     >
       ${images.map(
         (im, i) =>
@@ -159,7 +159,7 @@ function albumOf(s, ctx, route, b) {
       <a class="album__nextlink" href="${esc(route.nextPath)}">
         <span class="label"${ed(route.template, ['next'])}>${esc(route.nextLabel)}</span>
         <span class="album__nextname"
-          >${esc(route.next.name)} <span aria-hidden="true">→</span></span
+          >${esc(route.next.title)} <span aria-hidden="true">→</span></span
         >
       </a>
     </div>

@@ -129,9 +129,9 @@ site settings can live side by side):
 | `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                        |
 | `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                         |
 | `content/en/pages/<page>/index.json`  | the other pages: their `sections` of blocks (see "Layout"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                |
-| `content/en/sources/people.json`      | models: `slug`, `name`, role, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                                   |
+| `content/en/sources/people.json`      | models: `slug`, `title`, role, `body`, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
 | `content/en/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                     |
-| `content/en/sources/projects.json`    | projects: title, kind, year, description, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                       |
+| `content/en/sources/projects.json`    | projects: title, type, year, body, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                              |
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                    |
 | `content/en/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                               |
 
@@ -213,7 +213,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
     {
       "id": "b-7qpa",
       "type": "heading",
-      "crumb": "Photography / People",
+      "eyebrow": "Photography / People",
       "title": "People",
       "config": { "count": "people", "numbered": true },
       "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }
@@ -251,13 +251,13 @@ every section is a grid of **blocks** (`src/site/layout/`):
   whole number of rows; when its content needs more, it spans more (see Real rows below), so
   text never spills out. The old `rowHeight` is ignored. On phones the grid has **60 columns**
   (below).
-- **A section:** `height` is `custom`: exactly `minRows` rows of square cells (1–999, only
+- **A section:** `height` is `custom`: exactly `rows.min` rows of square cells (1–999, only
   with `custom`), its blocks at their rows **from the top** (not centred), so the rows below
   the last block are empty space under it; never shorter than its content (when a block
   grows, the section is its content's rows, the empty rows don't stack on top). Phones can
   have a height of their own, `mobile.height` (any of the five, set only in the editor's phone
   preview, where a reset beside it goes back to following the desktop); unset, the desktop's.
-  When the phone height is custom its rows are `mobile.minRows`, or else (the desktop custom
+  When the phone height is custom its rows are `mobile.rows.min`, or else (the desktop custom
   too) half the desktop rows, rounded up, the way a block's desktop area is halved there.
   `width` is shared. In the editor a
   line on its bottom edge drags its rows (the phone's in the phone preview, never below its
@@ -336,7 +336,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
   `{ "paragraph": { "size": 1.4, "line": 1.75, "tracking": 0, "min": 14 } }`: font size (cells),
   line height (× the size), letter spacing (em) and a minimum font size (px, so text stays
   readable on phones). Defaults: title 19 (a heading's title), heading 3 (a text's title),
-  paragraph 1.4 (text, a heading's intro), label 1 (a heading's crumb, a button), ≈ the fixed
+  paragraph 1.4 (text, a heading's body), label 1 (a heading's eyebrow, a button), ≈ the fixed
   sizes at 1440px. On phones a style's cell is half a 60-column cell (the 120 grid's), so the
   text scales like the layout and the minimum takes over. Off (default): the style's normal
   fixed size from the stylesheets.
@@ -393,23 +393,23 @@ and for **Add block**. A type is `{ type, label, icon, fields, config, defaults,
 ctx, b) }`; `item` binds it to a `[slug]` page's item. A block's content sits next to its type,
 how it works under `config` (`enabled`: on/off; the source, look, …):
 
-| type       | what                                                                                                                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------------- |
-| `heading`  | page heading: `crumb`, `title`, `intro`, `cta`; config `count` (a source's item count), `href`, `center`, `numbered` |
-| `text`     | paragraphs (a blank line starts one) under an optional `title`                                                       |
-| `photo`    | one photo (`src`) with an optional `caption`                                                                         |
-| `button`   | a button: `label`; config `href` (a path or a full URL)                                                              |
-| `form`     | a contact form (see "Contact form")                                                                                  |
-| `hero`     | the home hero: `title` (one word per line), `eyebrow`, `subline`, scattered `photos`                                 |
-| `intro`    | a statement (`text`)                                                                                                 |
-| `grid`     | a head + tiles of a source; config `source`, `layout` (`staggered` / `even`); `places` shows cards                   |
-| `albums`   | album cards of a source (the people/places index); config `source`, `layout` (`portrait` / `landscape`)              |
-| `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                             |
-| `projects` | the project accordion of a source; with a `title` it gets a head (home)                                              |
-| `about`    | the about block: `image`, `crumb`, `headline`, `paragraphs`, `facts`, `emailLabel`                                   |
-| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page: `title`, `meta` (facts), `summary`         |
+| type       | what                                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `heading`  | page heading: `eyebrow`, `title`, `body`, `cta`; config `count` (a source's item count), `href`, `center`, `numbered` |
+| `text`     | `body`: paragraphs (a blank line starts one) under an optional `title`                                                |
+| `photo`    | one photo (`src`) with an optional `caption`                                                                          |
+| `button`   | a button: `label`; config `href` (a path or a full URL)                                                               |
+| `form`     | a contact form (see "Contact form")                                                                                   |
+| `hero`     | the home hero: `title` (one word per line), `eyebrow`, `body`, scattered `photos`                                     |
+| `intro`    | a statement (`body`)                                                                                                  |
+| `grid`     | a head + tiles of a source; config `source`, `layout` (`staggered` / `even`); `places` shows cards                    |
+| `albums`   | album cards of a source (the people/places index); config `source`, `layout` (`portrait` / `landscape`)               |
+| `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                              |
+| `projects` | the project accordion of a source; with a `title` it gets a head (home)                                               |
+| `about`    | the about block: `image`, `eyebrow`, `title`, `body` (paragraphs), `facts`, `emailLabel`                              |
+| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page: `title`, `meta` (facts), `body`             |
 
-- **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its crumb
+- **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its eyebrow
   with its number among the page's numbered headings that are on: (01), (02), …
 - **Item pages:** a `[slug].json`'s blocks render once per item. A type marked `item` (the
   `album` block) reads the page's item, `ctx.route.album`, for its photos; its texts, like any
@@ -430,9 +430,9 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 ```json
 {
   "type": "heading",
-  "crumb": "Featured",
-  "title": { "bind": "name" },
-  "intro": "{{role}} in {{location}}",
+  "eyebrow": "Featured",
+  "title": { "bind": "title" },
+  "body": "{{role}} in {{location}}",
   "item": { "source": "people", "slug": "noor-vermeer" }
 }
 ```
@@ -441,7 +441,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **`{ "bind": "<field>" }`:** the item's whole value. Its type must fit the field's (a text field
   takes `text`, `choice`, `number`, `date`, `link`; a long text also `longtext`; a photo
   `photo`; a link `link`; a list of photos (`[{ src }]`) `photos`; see `BIND_TYPES`).
-- **`{{field}}` in a text:** the item's values in the text, e.g. `"{{name}}, {{role}}"` (text
+- **`{{field}}` in a text:** the item's values in the text, e.g. `"{{title}}, {{role}}"` (text
   fields only, also in a list's texts like the album's facts).
 - **The item:** a block's own `item: { source, slug }`, else, on a `[slug]` page, the page's
   item. Without one its bound fields render empty (a build warning).
@@ -451,12 +451,12 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **Checks:** Save and the build check their shape (`validate.js`) and, against the sources'
   schemas, `bindingProblems()`: a `{ bind }` to a field the source doesn't have or of a type
   that doesn't fit, or an item from a source that isn't one, is an error (Save refuses, the
-  build stops; a changed schema that breaks a page's binding too). A `{{name}}` the source
+  build stops; a changed schema that breaks a page's binding too). A `{{title}}` the source
   doesn't have, a binding without an item and an item that isn't in its source are build
   warnings (`[bindings] …`) and render empty.
-- **The `[slug]` pages** are built this way: the album block's title is `{ "bind": "name" }`, its
+- **The `[slug]` pages** are built this way: the album block's title is `{ "bind": "title" }`, its
   facts are `{ "label": "Role", "value": "{{role}}" }`, … (a fact whose value is empty is left
-  out; the photo count comes last), its summary `{ "bind": "summary" }`. Their output is the
+  out; the photo count comes last), its body `{ "bind": "body" }`. Their output is the
   same as before. A new `[slug]` page binds the source's title field, its list fields as facts
   and its first long text.
 - **In the editor:** bound values aren't typed in the preview; a click selects them and opens
@@ -465,7 +465,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   gets what it showed as its own text. Typing `{{` in a text lists the item's fields (↑ ↓,
   Enter or Tab, Esc). The block's Content tab starts with **Item from** (a source, or none /
   this page's item) and **Item**. The preview shows the values of the item it shows; what can't
-  be filled shows dimmed as `{{name}}` there (only there). Editing a source renders the
+  be filled shows dimmed as `{{title}}` there (only there). Editing a source renders the
   sections that show it again.
 
 ### Menu
@@ -486,7 +486,7 @@ mobile menu) and `footer` (the footer's Index column). An item links to a page b
 A header item with `children` (one level deep) or `items` opens a dropdown on click; `all`
 labels the link to the item's own page at its end. `items` names a source
 (`content/en/sources/<id>.json`) and lists its items: with their photo and photo count when the
-source has item pages (a `[slug].json` shows it), else by title and kind, linking to their spot
+source has item pages (a `[slug].json` shows it), else by title and type, linking to their spot
 on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. Footer items are
 plain links. The menu button and clock labels stay in `site.json` (`nav`).
 `src/site/templates/header.js` renders it; `checkContent` validates its shape.
@@ -638,7 +638,7 @@ heading's title, else its folder name), `description`, `image` (share image), `n
 another; else its own URL).
 
 **Item pages** (`[slug].json`), least magic: the title is `<item name> | <section>` in the
-template; the description is the item's `summary`, else the template's `meta.description`, else
+template; the description is the item's `body`, else the template's `meta.description`, else
 the site's; the share image is the item's cover, else the template's `meta.image`, else the
 site's. The template's `meta.noindex` hides every item page; an item with `"placeholder": true`
 gets `noindex` too. 404 is always `noindex`.

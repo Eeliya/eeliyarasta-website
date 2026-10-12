@@ -10,16 +10,16 @@ export const text = {
   icon: 'align-left',
   fields: [
     { key: 'title', label: 'Title (empty: none)' },
-    { key: 'text', label: 'Text (a blank line starts a paragraph)', type: 'block' },
+    { key: 'body', label: 'Text (a blank line starts a paragraph)', type: 'block' },
   ],
-  defaults: { title: '', text: 'Some text.', motion: { anim: 'lines-up' } },
+  defaults: { title: '', body: 'Some text.', motion: { anim: 'lines-up' } },
   render: (s, ctx, b) => {
-    const paragraphs = String(s.text ?? '')
+    const paragraphs = String(s.body ?? '')
       .split(/\n\s*\n/)
       .filter((p) => p.trim());
     return html` <div class="textblock">
       ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
-      <div class="textblock__body" ${b.ed('text', 'block')}>
+      <div class="textblock__body" ${b.ed('body', 'block')}>
         ${paragraphs.map((p) => html`<p>${esc(p.trim()).replace(/\r?\n/g, '<br>')}</p>`)}
       </div>
     </div>`;

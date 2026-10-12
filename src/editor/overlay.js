@@ -32,7 +32,7 @@
  *             or the selected block's): dragged up or down it sets the section's rows, in
  *             whole cells, never fewer than its content needs, the count shown live; on
  *             release one undo step (onrows). On the phone preview it sets the section's own
- *             phone rows (mobile.minRows; without them: half the desktop rows, rounded up).
+ *             phone rows (mobile.rows.min; without them: half the desktop rows, rounded up).
  *             A block dragged or resized past a Custom section's bottom: on release its rows
  *             become the content's (onplace's rows), so moving it back up leaves empty rows.
  *

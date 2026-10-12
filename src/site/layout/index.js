@@ -18,7 +18,7 @@
  * A section:
  *   name     optional: its anchor, slugified into its HTML id ("Our people" -> id="our-people",
  *            so /page/#our-people scrolls to it, below the header); unique on its page
- *   height   'custom': exactly `minRows` rows of square cells, its blocks at their rows from
+ *   height   'custom': exactly `rows.min` rows of square cells, its blocks at their rows from
  *            the top (not centred), the rows below the last block empty space, more only when
  *            its content needs more; on phones half as many, rounded up, as a block's desktop
  *            area is halved there | or a minimum, its rows centred: 'fit' (its
@@ -75,8 +75,8 @@ export const HEIGHTS = ['custom', 'fit', 'third', 'half', 'full'];
 export const MAX_MIN_ROWS = 999;
 /** A custom section's minimum rows (desktop), or 0. */
 export const minRowsOf = (s) =>
-  s?.height === 'custom' && Number.isInteger(s.minRows) && s.minRows >= 1
-    ? Math.min(s.minRows, MAX_MIN_ROWS)
+  s?.height === 'custom' && Number.isInteger(s.rows?.min) && s.rows.min >= 1
+    ? Math.min(s.rows.min, MAX_MIN_ROWS)
     : 0;
 /**
  * A section's height on phones: its own (mobile.height, set in the phone preview), else its
@@ -85,12 +85,12 @@ export const minRowsOf = (s) =>
 export const phoneHeightOf = (s) =>
   HEIGHTS.includes(s?.mobile?.height) ? s.mobile.height : heightOf(s);
 /**
- * A section's phone rows when its phone height is custom: its own (mobile.minRows), or its
+ * A section's phone rows when its phone height is custom: its own (mobile.rows.min), or its
  * desktop rows halved, rounded up; 0 otherwise (also custom without rows: as fit).
  */
 export const mobileMinRowsOf = (s) => {
   if (phoneHeightOf(s) !== 'custom') return 0;
-  const own = s.mobile?.minRows;
+  const own = s.mobile?.rows?.min;
   if (Number.isInteger(own) && own >= 1) return Math.min(own, MAX_MIN_ROWS);
   return Math.ceil(minRowsOf(s) / 2);
 };

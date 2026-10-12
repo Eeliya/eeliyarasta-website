@@ -3,14 +3,14 @@
   "items": [
     {
       "slug": "noor-vermeer",
-      "name": "Noor Vermeer",
+      "title": "Noor Vermeer",
       "placeholder": true,
       "note": "PLACEHOLDER model: invented name, stock photos from Unsplash. Replace with a real shoot.",
       "role": "Model",
       "agency": "Independent",
       "location": "Amsterdam",
       "year": 2026,
-      "summary": "Golden-hour street portraits between concrete and canals. Natural light only, shot handheld on the X100V.",
+      "body": "Golden-hour street portraits between concrete and canals. Natural light only, shot handheld on the X100V.",
       "accent": "#c9a27a",
       "cover": 0,
       "images": [
@@ -91,14 +91,14 @@
     },
     {
       "slug": "daan-okafor",
-      "name": "Daan Okafor",
+      "title": "Daan Okafor",
       "placeholder": true,
       "note": "PLACEHOLDER model: invented name, stock photos from Unsplash. Replace with a real shoot.",
       "role": "Model / Musician",
       "agency": "Independent",
       "location": "Rotterdam",
       "year": 2026,
-      "summary": "Monochrome editorial with a musician: long coats, glasses, late afternoons in the city.",
+      "body": "Monochrome editorial with a musician: long coats, glasses, late afternoons in the city.",
       "accent": "",
       "cover": 0,
       "images": [
@@ -170,14 +170,14 @@
     },
     {
       "slug": "mila-example",
-      "name": "Mila Example",
+      "title": "Mila Example",
       "placeholder": true,
       "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
       "role": "Model",
       "agency": "Independent",
       "location": "Rotterdam",
       "year": 2026,
-      "summary": "PLACEHOLDER: test portraits to fill the people grid. Window light and quiet corners.",
+      "body": "PLACEHOLDER: test portraits to fill the people grid. Window light and quiet corners.",
       "accent": "#b9a48f",
       "cover": 0,
       "images": [
@@ -222,14 +222,14 @@
     },
     {
       "slug": "joris-placeholder",
-      "name": "Joris Placeholder",
+      "title": "Joris Placeholder",
       "placeholder": true,
       "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
       "role": "Model",
       "agency": "Independent",
       "location": "Utrecht",
       "year": 2026,
-      "summary": "PLACEHOLDER: test portraits to fill the people grid. Overcast streets, shot handheld.",
+      "body": "PLACEHOLDER: test portraits to fill the people grid. Overcast streets, shot handheld.",
       "accent": "",
       "cover": 0,
       "images": [

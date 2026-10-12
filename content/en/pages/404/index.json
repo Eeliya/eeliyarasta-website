@@ -15,9 +15,9 @@
         {
           "id": "b-89og",
           "type": "heading",
-          "crumb": "Error 404",
+          "eyebrow": "Error 404",
           "title": "Lost frame",
-          "intro": "This page doesn't exist (yet).",
+          "body": "This page doesn't exist (yet).",
           "cta": "Back home",
           "config": {
             "href": "/",

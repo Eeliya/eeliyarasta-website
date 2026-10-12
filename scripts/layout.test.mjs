@@ -79,13 +79,13 @@ test('registry: every block type has a label, an icon and renders its defaults',
 
 test('render: sections are grids, blocks carry their area; off is hidden', () => {
   const list = [
-    section([block('text', { text: 'One', pos: { col: 3, span: 10, row: 2, rows: 4 }, z: 2 })]),
-    section([block('text', { text: 'Two', config: { enabled: false } })], {
+    section([block('text', { body: 'One', pos: { col: 3, span: 10, row: 2, rows: 4 }, z: 2 })]),
+    section([block('text', { body: 'Two', config: { enabled: false } })], {
       name: 'Our People',
       height: 'full',
       width: 'full',
     }),
-    section([block('text', { text: 'Three' })], { enabled: false }),
+    section([block('text', { body: 'Three' })], { enabled: false }),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
   // rows: down to the lowest block; the phone grid's rows: its blocks' halved areas
@@ -140,7 +140,7 @@ test('render: no automatic numbering; a heading can be numbered, counting the on
     section([heading('C', true)], { enabled: false }),
     section([
       heading('D', true),
-      block('grid', { title: 'G', label: 'L', config: { source: 'people' } }),
+      block('grid', { title: 'G', eyebrow: 'L', config: { source: 'people' } }),
     ]),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
@@ -167,7 +167,7 @@ test('render: editor markers point into the blocks, only when editable', () => {
 test('render: an unknown type, or an item type off a [slug] page, warns and is skipped', () => {
   const [out, seen] = warnings(() =>
     renderSections(ctxOf(page), page, F, [
-      section([block('nope'), block('album'), block('text', { text: 'x' })]),
+      section([block('nope'), block('album'), block('text', { body: 'x' })]),
     ]),
   );
   assert.doesNotMatch(out, /data-album/);
@@ -309,7 +309,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   const file = 'pages/about/index.json';
   const data = structuredClone(content.pages.about);
   const [s] = data.sections;
-  s.blocks[0].headline = 'Edited headline';
+  s.blocks[0].title = 'Edited headline';
   const r = renderOp(render, '.', {}, { path: '/about/', file, data, ids: [s.id] });
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(r.body.html), [s.id]);
@@ -321,7 +321,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
     ),
   );
   assert.match(html, /Edited headline/);
-  assert.match(html, /data-edit="pages\/about\/index\.json#\/sections\/0\/blocks\/0\/headline"/);
+  assert.match(html, /data-edit="pages\/about\/index\.json#\/sections\/0\/blocks\/0\/title"/);
   assert.match(html, /<\/section>$/);
   // the item of a [slug] page
   const slug = routes.find((r) => r.album);

@@ -16,7 +16,7 @@
           "id": "b-j8hg",
           "type": "album",
           "title": {
-            "bind": "name"
+            "bind": "title"
           },
           "meta": [
             {
@@ -36,8 +36,8 @@
               "value": "{{year}}"
             }
           ],
-          "summary": {
-            "bind": "summary"
+          "body": {
+            "bind": "body"
           },
           "config": {},
           "pos": {

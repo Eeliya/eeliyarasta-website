@@ -16,7 +16,7 @@
           "id": "b-gbxt",
           "type": "album",
           "title": {
-            "bind": "name"
+            "bind": "title"
           },
           "meta": [
             {
@@ -28,8 +28,8 @@
               "value": "{{year}}"
             }
           ],
-          "summary": {
-            "bind": "summary"
+          "body": {
+            "bind": "body"
           },
           "config": {},
           "pos": {

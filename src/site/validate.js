@@ -261,26 +261,34 @@ function checkSection(s, at) {
   if (s.height !== undefined && !HEIGHTS.includes(s.height))
     bad('height', `one of ${HEIGHTS.join(', ')}`);
   // custom: its minimum rows (only there)
-  if (s.height === 'custom' && !whole(s.minRows, 1))
-    bad('minRows', 'a whole number of rows from 1 (a custom height)');
-  else if (s.minRows !== undefined && !(whole(s.minRows, 1) && s.minRows <= MAX_MIN_ROWS))
-    bad('minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
-  else if (s.minRows !== undefined && s.height !== 'custom')
-    bad('minRows', 'left out unless the height is custom');
+  const min = s.rows?.min;
+  if (s.rows !== undefined && (!isObject(s.rows) || Object.keys(s.rows).some((k) => k !== 'min')))
+    bad('rows', 'an object { min } (a custom height\'s rows)');
+  else if (s.height === 'custom' && !whole(min, 1))
+    bad('rows.min', 'a whole number of rows from 1 (a custom height)');
+  else if (min !== undefined && !(whole(min, 1) && min <= MAX_MIN_ROWS))
+    bad('rows.min', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
+  else if (s.rows !== undefined && s.height !== 'custom')
+    bad('rows', 'left out unless the height is custom');
   // phones: a height of its own and, custom there, its rows
   if (s.mobile !== undefined) {
-    const { minRows, height, ...rest } = isObject(s.mobile) ? s.mobile : { x: 1 };
+    const { rows, height, ...rest } = isObject(s.mobile) ? s.mobile : { x: 1 };
+    const minRows = rows?.min;
     const phone = HEIGHTS.includes(height) ? height : s.height;
-    if (!isObject(s.mobile) || Object.keys(rest).length)
-      bad('mobile', "an object { height, minRows } (the phone's height and rows)");
+    if (
+      !isObject(s.mobile) ||
+      Object.keys(rest).length ||
+      (rows !== undefined && (!isObject(rows) || Object.keys(rows).some((k) => k !== 'min')))
+    )
+      bad('mobile', "an object { height, rows: { min } } (the phone's height and rows)");
     else if (height !== undefined && !HEIGHTS.includes(height))
       bad('mobile.height', `one of ${HEIGHTS.join(', ')}`);
     else if (height === 'custom' && s.height !== 'custom' && minRows === undefined)
-      bad('mobile.minRows', 'a whole number of rows from 1 (a custom phone height)');
+      bad('mobile.rows.min', 'a whole number of rows from 1 (a custom phone height)');
     else if (minRows !== undefined && phone !== 'custom')
-      bad('mobile.minRows', 'left out unless the phone height is custom');
+      bad('mobile.rows', 'left out unless the phone height is custom');
     else if (minRows !== undefined && !(whole(minRows, 1) && minRows <= MAX_MIN_ROWS))
-      bad('mobile.minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
+      bad('mobile.rows.min', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
   }
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');

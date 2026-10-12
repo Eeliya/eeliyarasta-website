@@ -118,7 +118,7 @@ export function setSection(store, file, at, patch, key) {
 function tidyMobile(s) {
   if (!s.mobile || typeof s.mobile !== 'object') return s;
   const m = { ...s.mobile };
-  if (phoneHeightOf(s) !== 'custom') delete m.minRows;
+  if (phoneHeightOf(s) !== 'custom') delete m.rows;
   if (Object.keys(m).length) s.mobile = m;
   else delete s.mobile;
   return s;
@@ -135,8 +135,8 @@ export function setPhoneHeight(store, file, at, height) {
   if (height === s.mobile?.height) return false;
   const mobile = { ...s.mobile, height };
   if (height === undefined) delete mobile.height;
-  if (height === 'custom' && !Number.isInteger(mobile.minRows))
-    mobile.minRows = Math.ceil(minRowsOf(s) / 2) || mobileRowsOf(s);
+  if (height === 'custom' && !Number.isInteger(mobile.rows?.min))
+    mobile.rows = { min: Math.ceil(minRowsOf(s) / 2) || mobileRowsOf(s) };
   return setSection(store, file, at, { mobile });
 }
 
@@ -149,13 +149,13 @@ function grow(section, content, phone = false) {
   const now = phone ? mobileMinRowsOf(section) : minRowsOf(section);
   if (!now || content <= now) return;
   const rows = Math.min(MAX_MIN_ROWS, content);
-  if (phone) section.mobile = { ...section.mobile, minRows: rows };
-  else section.minRows = rows;
+  if (phone) section.mobile = { ...section.mobile, rows: { min: rows } };
+  else section.rows = { min: rows };
 }
 
 /**
  * A Custom section's rows set from the preview (its bottom edge dragged, or its Rows field):
- * `rows` on the desktop grid, or on the phone's (phone: its own phone rows, mobile.minRows; the
+ * `rows` on the desktop grid, or on the phone's (phone: its own phone rows, mobile.rows.min; the
  * desktop's are untouched). Clamped to 1..MAX_MIN_ROWS; false when it isn't Custom or nothing
  * changed. One undo step (key: a field's typing coalesces).
  */
@@ -165,11 +165,11 @@ export function setSectionRows(store, file, at, rows, { phone = false, key } = {
     return false;
   const n = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(rows)));
   if (phone) {
-    if (n === s.mobile?.minRows) return false;
-    return setSection(store, file, at, { mobile: { ...s.mobile, minRows: n } }, key);
+    if (n === s.mobile?.rows?.min) return false;
+    return setSection(store, file, at, { mobile: { ...s.mobile, rows: { min: n } } }, key);
   }
-  if (n === s.minRows) return false;
-  return setSection(store, file, at, { minRows: n }, key);
+  if (n === s.rows?.min) return false;
+  return setSection(store, file, at, { rows: { min: n } }, key);
 }
 
 /** The first free row below every block of a section. */

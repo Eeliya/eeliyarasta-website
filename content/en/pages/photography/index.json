@@ -14,9 +14,9 @@
         {
           "id": "b-9m0e",
           "type": "heading",
-          "crumb": "Photography",
+          "eyebrow": "Photography",
           "title": "Photography",
-          "intro": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
+          "body": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
           "config": {},
           "pos": {
             "col": 1,

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "label": "People",
-  "title": "name",
+  "title": "title",
   "slug": "slug",
   "fields": [
     {
@@ -12,7 +12,7 @@
       "help": "The page URL, /people/<slug>/. When it changes, Save redirects the old one."
     },
     {
-      "key": "name",
+      "key": "title",
       "label": "Name",
       "type": "text",
       "required": true
@@ -44,7 +44,7 @@
       "width": "half"
     },
     {
-      "key": "summary",
+      "key": "body",
       "label": "Summary",
       "type": "longtext",
       "help": "Under the name on the album page; also its search description"

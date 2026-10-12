@@ -14,13 +14,13 @@ import {
 import { sourceFile } from '../files.js';
 
 /**
- * A block's head: Label / Title / glass CTA. at(field): the block's editor marker for one
+ * A block's head: eyebrow (label) / title / glass CTA. at(field): the block's editor marker for one
  * of its fields (see blocks/index.js).
  */
-export const sectionHead = ({ at, label, title, href, cta }) => {
+export const sectionHead = ({ at, eyebrow, title, href, cta }) => {
   return html`
   <header class="section__head">
-    <span class="section__label label" data-anim="section.label"${at('label')}>${esc(label)}</span>
+    <span class="section__label label" data-anim="section.label"${at('eyebrow')}>${esc(eyebrow)}</span>
     <h2 class="section__title" data-anim="section.title"${at('title')}>${esc(title)}</h2>
     ${href ? html`<a class="btn glass section__cta" href="${esc(href)}"><span${at('cta')}>${esc(cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
   </header>`;
@@ -47,7 +47,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
       <span class="acard__count">${pad(imagesOf(album).length)}</span>
     </div>
     <div class="acard__info">
-      <h2 class="acard__name" ${at('name')}>${esc(album.name)}</h2>
+      <h2 class="acard__name" ${at('title')}>${esc(album.title)}</h2>
       <span class="acard__meta"
         >${meta.map(([f, type], i) => html`${i ? ' · ' : ''}<span${at(f, type)}>${esc(album[f])}</span>`)}</span
       >
@@ -71,7 +71,7 @@ export const projectList = (
       <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}">
         <span class="prow__num">${pad(i + 1)}</span>
         <${h} class="prow__title"${ed(PROJECTS, ['items', i, 'title'])}>${esc(p.title)}</${h}>
-        <span class="prow__kind"${ed(PROJECTS, ['items', i, 'kind'])}>${esc(p.kind)}</span>
+        <span class="prow__kind"${ed(PROJECTS, ['items', i, 'type'])}>${esc(p.type)}</span>
         <span class="prow__year"${ed(PROJECTS, ['items', i, 'year'], 'number')}>${esc(p.year)}</span>
         <span class="prow__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
@@ -79,7 +79,7 @@ export const projectList = (
         <div class="prow__inner">
           <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: '(max-width: 760px) 100vw, 30vw', attrs: ed(PROJECTS, ['items', i, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
-            <p${ed(PROJECTS, ['items', i, 'description'], 'block')}>${lines(p.description)}</p>
+            <p${ed(PROJECTS, ['items', i, 'body'], 'block')}>${lines(p.body)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
             ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, ['items', i, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
           </div>

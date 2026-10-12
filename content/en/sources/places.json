@@ -3,12 +3,12 @@
   "items": [
     {
       "slug": "kasteel-de-haar",
-      "name": "Kasteel de Haar",
+      "title": "Kasteel de Haar",
       "placeholder": true,
       "note": "PLACEHOLDER album: stock photos from Unsplash (Pourya Gohari). Replace with own photos.",
       "location": "Haarzuilens, Utrecht",
       "year": 2025,
-      "summary": "A neo-gothic castle mirrored in its moat. Towers, brick and long reflections on a still autumn morning.",
+      "body": "A neo-gothic castle mirrored in its moat. Towers, brick and long reflections on a still autumn morning.",
       "accent": "",
       "cover": 1,
       "images": [
@@ -89,12 +89,12 @@
     },
     {
       "slug": "concrete-studies",
-      "name": "Concrete Studies",
+      "title": "Concrete Studies",
       "placeholder": true,
       "note": "PLACEHOLDER album: stock photos from Unsplash (various photographers). Replace with own photos.",
       "location": "Various cities",
       "year": 2026,
-      "summary": "Brutalist lines, stairwells and hard shadows. An ongoing series about light falling on concrete.",
+      "body": "Brutalist lines, stairwells and hard shadows. An ongoing series about light falling on concrete.",
       "accent": "#8fa3b0",
       "cover": 0,
       "images": [

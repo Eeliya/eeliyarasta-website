@@ -38,9 +38,9 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
     [
       {
         type: 'heading',
-        crumb: 'New one',
+        eyebrow: 'New one',
         title: 'New one',
-        intro: '',
+        body: '',
         config: {},
         pos: { col: 1, span: 120, row: 17, rows: 1 },
       },

@@ -69,7 +69,7 @@ function itemsOf(ctx, item) {
 const spotHref = (items, p) =>
   p.linkOut && p.url ? p.url : `${items.page}#${itemSlug(p, items.schema)}`;
 
-/** Dropdown rows: photo, name and photo count (items with pages), or title and kind. */
+/** Dropdown rows: photo, title and photo count (items with pages), or title and type. */
 const ddLinks = (ctx, items) =>
   items.pages
     ? items.list.map(
@@ -79,7 +79,7 @@ const ddLinks = (ctx, items) =>
           <span class="dd-link__thumb"
             >${coverOf(a) ? img(ctx, coverOf(a).src, { decorative: true, sizes: '48px' }) : ''}</span
           >
-          <span class="dd-link__name">${esc(a.name)}</span>
+          <span class="dd-link__name">${esc(a.title)}</span>
           <span class="dd-link__count">${pad(imagesOf(a).length)}</span>
         </a>
       </li>`,
@@ -89,7 +89,7 @@ const ddLinks = (ctx, items) =>
         return html`<li>
     <a class="dd-link dd-link--text" href="${esc(href)}" ${extAttrs(href)}>
       <span class="dd-link__name">${esc(p.title)}</span
-      ><span class="dd-link__count">${esc(p.kind)}${isExternal(href) ? arrowNE : ''}</span>
+      ><span class="dd-link__count">${esc(p.type)}${isExternal(href) ? arrowNE : ''}</span>
     </a>
   </li>`;
       });
@@ -98,7 +98,7 @@ const ddLinks = (ctx, items) =>
 const mmLinks = (ctx, items) =>
   items.pages
     ? items.list.map(
-        (p) => html`<a href="${esc(itemHref(ctx, items.source, p))}">${esc(p.name)}</a>`,
+        (p) => html`<a href="${esc(itemHref(ctx, items.source, p))}">${esc(p.title)}</a>`,
       )
     : items.list.map((p) => {
         const href = spotHref(items, p);

@@ -18,7 +18,7 @@
       "required": true
     },
     {
-      "key": "kind",
+      "key": "type",
       "label": "Kind",
       "type": "text",
       "width": "half",
@@ -31,7 +31,7 @@
       "width": "half"
     },
     {
-      "key": "description",
+      "key": "body",
       "label": "Description",
       "type": "longtext"
     },

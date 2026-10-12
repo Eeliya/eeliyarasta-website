@@ -16,7 +16,7 @@
  *   min       the smallest font size, px: scaled text never gets smaller (readable on phones)
  *
  * Which of a block's texts has which style: _layout.scss (.blk--scale), e.g. a heading block's
- * title "title", its crumb "label", its intro "paragraph". With `scale` off (the default) a
+ * title "title", its eyebrow "label", its body "paragraph". With `scale` off (the default) a
  * text has its style's normal fixed size (the site's stylesheets).
  */
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);

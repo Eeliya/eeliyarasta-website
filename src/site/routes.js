@@ -20,7 +20,7 @@
  * Search and share meta (src/site/seo.js): a page's title is its meta.title, else its first
  * heading's title, else its folder name, in the site's titleTemplate (home: meta.title, else
  * site.title, in full); description, image, canonical and noindex come from its "meta".
- * A [slug] page: "<item name> | <section>", the item's summary and cover, else the template's
+ * A [slug] page: "<item name> | <section>", the item's body and cover, else the template's
  * meta.description / meta.image; its meta.noindex keeps every item page out.
  * Routes with noindex (404, meta.noindex, items with "placeholder": true, or site.json
  * "robots": "noindex") get <meta name="robots" content="noindex"> and stay out of sitemap.xml.
@@ -194,7 +194,7 @@ export function buildRoutes(content) {
           next: next.item,
           nextPath: next.path,
           title,
-          description: item.summary || meta.description || site.description,
+          description: item.body || meta.description || site.description,
           image: coverOf(item)?.src || meta.image || undefined,
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,

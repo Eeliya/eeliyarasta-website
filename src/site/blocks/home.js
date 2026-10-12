@@ -39,7 +39,7 @@ export const hero = {
   fields: [
     { key: 'title', label: 'Name', type: 'words', width: 'half' },
     { key: 'eyebrow', label: 'Eyebrow', width: 'half' },
-    { key: 'subline', label: 'Subline', type: 'block' },
+    { key: 'body', label: 'Subline', type: 'block' },
     {
       key: 'photos',
       label: 'Photos',
@@ -48,7 +48,7 @@ export const hero = {
       item: { src: '', x: 40, y: 30, w: 16, depth: 1, layer: 'back' },
     },
   ],
-  defaults: { title: 'Your name', eyebrow: '', subline: '', photos: [] },
+  defaults: { title: 'Your name', eyebrow: '', body: '', photos: [] },
   render: (s, ctx, b) =>
     html` <div class="hero" data-hero>
       <div class="hero__photos" data-anim="hero.photos">
@@ -62,7 +62,7 @@ export const hero = {
       <div class="hero__meta" data-anim="hero.meta">
         <span class="label" ${b.ed('eyebrow')}>${esc(s.eyebrow)}</span>
         <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
-        <p class="hero__subline" ${b.ed('subline', 'block')}>${lines(s.subline)}</p>
+        <p class="hero__subline" ${b.ed('body', 'block')}>${lines(s.body)}</p>
       </div>
     </div>`,
 };
@@ -72,11 +72,11 @@ export const intro = {
   type: 'intro',
   label: 'Statement',
   icon: 'quote-left',
-  fields: [{ key: 'text', label: 'Text', type: 'block' }],
-  defaults: { text: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
+  fields: [{ key: 'body', label: 'Text', type: 'block' }],
+  defaults: { body: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
   render: (s, ctx, b) =>
     html` <div class="intro">
-      <p class="intro__text" ${b.ed('text', 'block')}>${lines(s.text)}</p>
+      <p class="intro__text" ${b.ed('body', 'block')}>${lines(s.body)}</p>
     </div>`,
 };
 
@@ -116,7 +116,7 @@ const placeCards = (ctx, source, items, layout) =>
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
         <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
         <span class="placecard__info">
-          <span class="placecard__name"${ed(sourceFile(source), ['items', i, 'name'])}>${esc(p.name)}</span>
+          <span class="placecard__name"${ed(sourceFile(source), ['items', i, 'title'])}>${esc(p.title)}</span>
           <span class="label"><span${ed(sourceFile(source), ['items', i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), ['items', i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>
         </span>
       </a>`;
@@ -126,13 +126,13 @@ const placeCards = (ctx, source, items, layout) =>
 /** Which tile look a grid uses, by source. Anything not listed gets photo tiles. */
 const GRID_LOOKS = { places: placeCards };
 
-/** A head (label, title, button), then a source's photos as tiles (or place cards for places). */
+/** A head (eyebrow, title, button), then a source's photos as tiles (or place cards for places). */
 export const grid = {
   type: 'grid',
   label: 'Photo grid',
   icon: 'table-cells',
   fields: [
-    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'eyebrow', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title', width: 'half' },
     { key: 'cta', label: 'Button' },
   ],
@@ -149,7 +149,7 @@ export const grid = {
     },
   ],
   defaults: {
-    label: 'People',
+    eyebrow: 'People',
     title: 'New grid',
     cta: 'See all',
     config: { source: 'people', layout: 'staggered' },
@@ -175,13 +175,13 @@ export const projects = {
   label: 'Project list',
   icon: 'list',
   fields: [
-    { key: 'label', label: 'Label', width: 'half' },
+    { key: 'eyebrow', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title (empty: no heading)', width: 'half' },
     { key: 'cta', label: 'Button' },
   ],
   config: [{ key: 'source', label: 'Source', type: 'source' }],
   defaults: {
-    label: 'Projects',
+    eyebrow: 'Projects',
     title: 'Things I build',
     cta: 'All projects',
     config: { source: 'projects' },

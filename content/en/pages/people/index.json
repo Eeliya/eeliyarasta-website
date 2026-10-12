@@ -14,9 +14,9 @@
         {
           "id": "b-j6je",
           "type": "heading",
-          "crumb": "Photography / People",
+          "eyebrow": "Photography / People",
           "title": "People",
-          "intro": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
+          "body": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
           "config": {
             "count": "people"
           },

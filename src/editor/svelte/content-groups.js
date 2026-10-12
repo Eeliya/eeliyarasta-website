@@ -130,9 +130,9 @@ function sectionsOf(store, file) {
   return Array.isArray(list) ? list : [];
 }
 
-/** A short name for block b: its first text (label, title, ...), at most 40 characters. */
+/** A short name for block b: its first text (label, title, eyebrow, caption), at most 40 characters. */
 export function nameOf(s) {
-  const text = [s?.label, s?.title, s?.headline, s?.crumb, s?.caption].find(
+  const text = [s?.label, s?.title, s?.eyebrow, s?.caption].find(
     (v) => typeof v === 'string' && v.trim(),
   );
   const line = String(text || '')

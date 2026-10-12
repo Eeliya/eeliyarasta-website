@@ -36,7 +36,7 @@
           "type": "hero",
           "title": "Eeliya Rasta",
           "eyebrow": "Portrait & editorial photography",
-          "subline": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
+          "body": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
           "photos": [
             {
               "src": "people/noor-vermeer/02.jpg",
@@ -165,7 +165,7 @@
         {
           "id": "b-9phu",
           "type": "intro",
-          "text": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
+          "body": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
           "config": {},
           "pos": {
             "col": 1,
@@ -189,7 +189,7 @@
         {
           "id": "b-xh7b",
           "type": "grid",
-          "label": "People",
+          "eyebrow": "People",
           "title": "Models I've worked with",
           "cta": "All people",
           "config": {
@@ -218,7 +218,7 @@
         {
           "id": "b-vnrc",
           "type": "grid",
-          "label": "Places",
+          "eyebrow": "Places",
           "title": "Buildings, streets & castles",
           "cta": "All places",
           "config": {
@@ -248,7 +248,7 @@
         {
           "id": "b-57ry",
           "type": "projects",
-          "label": "Projects",
+          "eyebrow": "Projects",
           "title": "Things I build",
           "cta": "All projects",
           "config": {},

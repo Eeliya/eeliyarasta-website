@@ -7,18 +7,18 @@ import { albumCard } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
 
 /**
- * A page's heading: crumb, big title (with the item count of a source: config.count), intro,
+ * A page's heading: eyebrow, big title (with the item count of a source: config.count), body,
  * and a button (cta, to config.href). config.center: centred on the screen (404);
- * config.numbered: the crumb starts with its number among the page's numbered headings (01).
+ * config.numbered: the eyebrow starts with its number among the page's numbered headings (01).
  */
 export const heading = {
   type: 'heading',
   label: 'Page heading',
   icon: 'heading',
   fields: [
-    { key: 'crumb', label: 'Crumb' },
+    { key: 'eyebrow', label: 'Eyebrow' },
     { key: 'title', label: 'Title' },
-    { key: 'intro', label: 'Intro', type: 'block' },
+    { key: 'body', label: 'Intro', type: 'block' },
     { key: 'cta', label: 'Button (empty: none)' },
   ],
   config: [
@@ -27,15 +27,15 @@ export const heading = {
     { key: 'center', label: 'Centred', type: 'boolean' },
     { key: 'numbered', label: 'Numbered (01)', type: 'boolean' },
   ],
-  defaults: { crumb: '', title: 'New page', intro: '', config: {} },
+  defaults: { eyebrow: '', title: 'New page', body: '', config: {} },
   render: (s, ctx, b) => {
     const c = s.config || {};
     const count = c.count ? sourceList(ctx, c.count).length : undefined;
     return html`
   <div class="page-head${c.center ? ' page-head--center' : ''}">
-    <span class="label page-head__crumb">${c.numbered ? `(${pad(b.number)}) ` : ''}<span${b.ed('crumb')}>${esc(s.crumb)}</span></span>
+    <span class="label page-head__crumb">${c.numbered ? `(${pad(b.number)}) ` : ''}<span${b.ed('eyebrow')}>${esc(s.eyebrow)}</span></span>
     <h1 class="page-title" data-anim="page.title"><span${b.ed('title')}>${esc(s.title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
-    ${s.intro ? html`<p class="page-intro" data-anim="page.intro" ${b.ed('intro', 'block')}>${lines(s.intro)}</p>` : ''}
+    ${s.body ? html`<p class="page-intro" data-anim="page.intro" ${b.ed('body', 'block')}>${lines(s.body)}</p>` : ''}
     ${s.cta ? html`<a class="btn glass" href="${esc(c.href || '/')}"><span${b.ed('cta')}>${esc(s.cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
   </div>`;
   },
@@ -109,16 +109,16 @@ export const panels = {
   },
 };
 
-/** The About bio: photo (with credit), crumb, headline, paragraphs, facts, email and socials. */
+/** The About bio: photo (with credit), eyebrow, title (headline), body (paragraphs), facts, email and socials. */
 export const about = {
   type: 'about',
   label: 'Bio',
   icon: 'user',
   fields: [
     { key: 'image', label: 'Photo', type: 'image' },
-    { key: 'crumb', label: 'Crumb' },
-    { key: 'headline', label: 'Headline' },
-    { key: 'paragraphs', label: 'Paragraphs', list: 'block' },
+    { key: 'eyebrow', label: 'Eyebrow' },
+    { key: 'title', label: 'Headline' },
+    { key: 'body', label: 'Paragraphs', list: 'block' },
     {
       key: 'facts',
       label: 'Facts',
@@ -131,9 +131,9 @@ export const about = {
   ],
   defaults: {
     image: '',
-    crumb: 'About',
-    headline: 'A line about you.',
-    paragraphs: ['A paragraph about you.'],
+    eyebrow: 'About',
+    title: 'A line about you.',
+    body: ['A paragraph about you.'],
     facts: [{ label: 'Based in', value: 'Netherlands' }],
     emailLabel: 'Email me',
   },
@@ -147,12 +147,12 @@ export const about = {
       </figcaption>
     </div>
     <div class="about__text">
-      <span class="label page-head__crumb" ${b.ed('crumb')}>${esc(a.crumb)}</span>
-      <h1 class="about__headline" data-anim="about.headline" ${b.ed('headline')}>
-        ${esc(a.headline)}
+      <span class="label page-head__crumb" ${b.ed('eyebrow')}>${esc(a.eyebrow)}</span>
+      <h1 class="about__headline" data-anim="about.headline" ${b.ed('title')}>
+        ${esc(a.title)}
       </h1>
       <div class="about__body" data-anim="about.body">
-        ${(a.paragraphs || []).map((p, i) => html`<p${b.ed(['paragraphs', i], 'block')}>${lines(p)}</p>`)}
+        ${(a.body || []).map((p, i) => html`<p${b.ed(['body', i], 'block')}>${lines(p)}</p>`)}
         <dl class="facts">
           ${(a.facts || []).map((f, i) => html`<div><dt class="label"${b.ed(['facts', i, 'label'])}>${esc(f.label)}</dt><dd${b.ed(['facts', i, 'value'])}>${esc(f.value)}</dd></div>`)}
         </dl>

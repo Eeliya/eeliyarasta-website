@@ -14,9 +14,9 @@
         {
           "id": "b-b4w8",
           "type": "heading",
-          "crumb": "Projects",
+          "eyebrow": "Projects",
           "title": "Projects",
-          "intro": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
+          "body": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
           "config": {
             "count": "projects"
           },

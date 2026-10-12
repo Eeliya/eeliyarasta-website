@@ -216,7 +216,7 @@ export function pagesOp(
       const ids = new Set();
       const heading = {
         ...newBlock('heading', ids, { row: HEAD_ROW, rows: 1 }),
-        crumb: t,
+        eyebrow: t,
         title: t,
       };
       const section = newSection(ids, [heading]);
@@ -350,7 +350,7 @@ function albumBlock(root, source, ids) {
     meta: fields
       .filter((f) => f.list && ['text', 'choice', 'number', 'date'].includes(f.type))
       .map((f) => ({ label: f.label, value: `{{${f.key}}}` })),
-    summary: long ? { bind: long.key } : '',
+    body: long ? { bind: long.key } : '',
   };
 }
 
