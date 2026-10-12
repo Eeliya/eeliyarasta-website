@@ -2,6 +2,7 @@
 // This file has the base and what several components share (buttons, fields, dialogs,
 // the ease picker); styles of one component are in its <style> block (svelte/*.svelte).
 @use '../../client/styles/tokens';
+@use 'tokens' as editor-tokens;
 
 $hi: #9fd3ff;
 
@@ -17,18 +18,9 @@ body {
   height: 100%;
   background: #030303;
   color: var(--fg);
-  // Opaque text tokens — alpha fills are expensive to paint in the editor.
-  // Composited from rgb(242 239 233 / a) over #030303.
-  --muted: #868582; // was / 0.55
-  --faint: #4f4f4d; // was / 0.32
-  --hi: #{$hi}; // highlight: links, badges, ease curves
-  --ed-accent: #3cf; // focus and selection, everywhere in the editor (and the preview's outlines)
-  --ed-accent-bg: #0d222e;
-  --panel-w: 400px; // the side panel
-  --btn: #2a2a2a; // Button.svelte: solid, on the panel and in windows
-  --btn-hover: #383838;
-  --danger: #a8352c; // Delete, Discard: a solid red pill with light text
-  --danger-hover: #ba4237;
+  // (the editor's opaque text tones over the site's: _tokens.scss)
+  --muted: var(--c-text-muted);
+  --faint: var(--c-text-faint);
 }
 
 body {

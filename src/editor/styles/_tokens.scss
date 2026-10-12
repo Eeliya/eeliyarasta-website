@@ -1,0 +1,155 @@
+// The editor's design tokens: the one place its colours, sizes, radii and type sizes are set.
+// Two layers:
+//   primitives  raw values (--gray-*, --cyan-*, …, alpha steps --white-a08 …): only used here
+//               and, for one-off tints, in components
+//   semantic    what components use: --c-* colours, --space-*, --radius-*, --fs-*, --size-*
+// Builds on the site's tokens (src/client/styles/_tokens.scss: --fg, --line, fonts, easing).
+// Raw hex colours and px font sizes are only allowed in token files (stylelint
+// local/no-raw-tokens). The preview's injected CSS (overlay.js, bridge.js) takes its values
+// from ../ui-tokens.js, which mirrors the accent and overlay colours here.
+:root {
+  // ---- primitives: greys (named by their hex level)
+  --white: #fff;
+  --black: #000;
+  --gray-03: #030303;
+  --gray-14: #141414;
+  --gray-1c: #1c1c1c;
+  --gray-22: #222;
+  --gray-26: #262625;
+  --gray-2a: #2a2a2a;
+  --gray-2b: #2b2b2b;
+  --gray-38: #383838;
+  --gray-3a: #3a3a38;
+  --gray-4f: #4f4f4d;
+  --gray-86: #868582;
+  --gray-c1: #c1c1c1;
+  // ---- primitives: hues
+  --blue-300: #9fd3ff;
+  --cyan-400: #3cf;
+  --cyan-950: #0d222e;
+  --slate-800: #283540;
+  --red-50: #fff4f2;
+  --red-200: #ffb4a8;
+  --red-300: #ff8a7a;
+  --red-600: #ba4237;
+  --red-700: #a8352c;
+  --green-200: #b9f0c4;
+  --amber-300: #ffcf7a;
+  --orange-400: #f0a040;
+  --sand-200: #e6dcc4;
+  // ---- primitives: alpha steps (tints over the dark UI)
+  --white-a03: rgb(255 255 255 / 0.03);
+  --white-a04: rgb(255 255 255 / 0.04);
+  --white-a05: rgb(255 255 255 / 0.05);
+  --white-a06: rgb(255 255 255 / 0.06);
+  --white-a08: rgb(255 255 255 / 0.08);
+  --white-a10: rgb(255 255 255 / 0.1);
+  --white-a12: rgb(255 255 255 / 0.12);
+  --white-a14: rgb(255 255 255 / 0.14);
+  --white-a18: rgb(255 255 255 / 0.18);
+  --white-a20: rgb(255 255 255 / 0.2);
+  --white-a55: rgb(255 255 255 / 0.55);
+  --black-a18: rgb(0 0 0 / 0.18);
+  --black-a35: rgb(0 0 0 / 0.35);
+  --black-a40: rgb(0 0 0 / 0.4);
+  --black-a50: rgb(0 0 0 / 0.5);
+  --black-a60: rgb(0 0 0 / 0.6);
+  --black-a70: rgb(0 0 0 / 0.7);
+  --black-a82: rgb(0 0 0 / 0.82);
+  --black-a90: rgb(0 0 0 / 0.9);
+  --blue-300-a06: rgb(159 211 255 / 0.06);
+  --blue-300-a40: rgb(159 211 255 / 0.4);
+  --blue-300-a45: rgb(159 211 255 / 0.45);
+  --blue-300-a50: rgb(159 211 255 / 0.5);
+  --amber-300-a08: rgb(255 207 122 / 0.08);
+  --amber-300-a15: rgb(255 207 122 / 0.15);
+  --amber-300-a25: rgb(255 207 122 / 0.25);
+  --red-300-a08: rgb(255 138 122 / 0.08);
+  --red-300-a25: rgb(255 138 122 / 0.25);
+  --sand-200-a35: rgb(230 220 196 / 0.35);
+  --brand-a06: rgb(207 200 184 / 0.06); // the site's --accent (#cfc8b8)
+
+  // ---- semantic: colours
+  --c-bg: var(--gray-03); // the editor's page
+  --c-bg-site: var(--bg); // the site's own background
+  --c-surface: var(--bg-2); // inputs, lists
+  --c-surface-2: var(--gray-14); // a nested panel
+  --c-surface-3: var(--gray-1c);
+  --c-card: var(--solid-card); // toasts, menus
+  --c-card-peek: var(--solid-card-peek);
+  --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
+  --c-control-hover: var(--gray-38);
+  --c-switch: var(--gray-26);
+  --c-switch-line: var(--gray-3a);
+  --c-text: var(--fg);
+  // opaque text tones (alpha fills are expensive to paint in the editor): composited from
+  // rgb(242 239 233 / a) over --c-bg
+  --c-text-muted: var(--gray-86); // was / 0.55
+  --c-text-faint: var(--gray-4f); // was / 0.32
+  --c-text-dim: var(--solid-faint);
+  --c-text-soft: var(--gray-c1);
+  --c-line: var(--line);
+  --c-brand: var(--accent); // the site's warm accent
+  --c-accent: var(--cyan-400); // focus and selection, everywhere (and the preview's outlines)
+  --c-accent-bg: var(--cyan-950);
+  --c-on-accent: var(--black);
+  --c-link: var(--blue-300); // highlight: links, badges, ease curves
+  --c-focus-ring: var(--blue-300-a45);
+  --c-danger: var(--red-700); // Delete, Discard: a solid red pill with light text
+  --c-danger-hover: var(--red-600);
+  --c-on-danger: var(--red-50);
+  --c-error: var(--red-300);
+  --c-error-strong: var(--red-200);
+  --c-success: var(--green-200);
+  --c-warning: var(--amber-300);
+  --c-notice: var(--orange-400);
+  --c-fill-hover: var(--white-a03);
+  --c-fill-active: var(--white-a08);
+  --c-shadow: var(--black-a35);
+  --c-scrim: var(--black-a90);
+
+  // ---- semantic: spacing (the 4px grid)
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  // ---- semantic: radii
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  // ---- semantic: type sizes
+  --fs-2xs: 9px;
+  --fs-xs: 10px;
+  --fs-sm: 11px;
+  --fs-base: 12px;
+  --fs-md: 14px;
+  --fs-lg: 15px;
+  --fs-xl: 16px;
+  --fs-2xl: 22px;
+  --fs-3xl: 26px;
+
+  // ---- semantic: sizes
+  --size-control: 32px; // a field, a button, a row: the editor's one control height
+  --size-control-sm: 24px;
+  --size-icon: 16px;
+  --panel-w: 400px; // the side panel
+
+  // ---- aliases of the old names (removed once nothing uses them)
+  --ed-accent: var(--c-accent);
+  --ed-accent-bg: var(--c-accent-bg);
+  --hi: var(--c-link);
+  --btn: var(--c-control);
+  --btn-hover: var(--c-control-hover);
+  --danger: var(--c-danger);
+  --danger-hover: var(--c-danger-hover);
+}
