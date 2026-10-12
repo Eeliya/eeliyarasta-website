@@ -77,20 +77,23 @@ const SCRIPTED = /pinned|v-center/;
  * changed in a way the site's script handles (a pin): the view needs mounting again. Blocks
  * whose motion changed are added to `moved` (their animation plays again).
  */
-function applyLayout(el, s, moved = []) {
+function applyLayout(el, s, moved = [], touched = { layout: false }) {
+  // (only what differs is written: a name typed changes the id alone, nothing to lay out)
+  const was = el.className + '|' + el.style.cssText + el.hidden;
   el.className = sectionClass(s);
   // its anchor: its name's slug (a name changed: the id with it)
   const anchor = sectionAnchor(s);
   if (anchor) el.id = anchor;
   else el.removeAttribute('id');
-  // (the rows the site's rows.js worked out stay until it flows the section again)
-  const kept = ['--frows', '--ffill']
+  // (the cell and rows the site's rows.js worked out stay until it flows the section again)
+  const kept = ['--cell', '--frows', '--ffill']
     .map((v) => [v, el.style.getPropertyValue(v)])
     .filter(([, x]) => x)
     .map(([v, x]) => `;${v}:${x}`)
     .join('');
   el.style.cssText = sectionVars(s) + kept;
   el.hidden = s.enabled === false;
+  if (el.className + '|' + el.style.cssText + el.hidden !== was) touched.layout = true;
   let remount = false;
   for (const b of s.blocks || []) {
     // (a pinned block sits in the pin's spacer)
@@ -99,6 +102,7 @@ function applyLayout(el, s, moved = []) {
     const cls = blockClass(b);
     if (node.className !== cls && (SCRIPTED.test(node.className) || SCRIPTED.test(cls)))
       remount = true;
+    const wasNode = node.className + '|' + node.style.cssText + node.hidden;
     node.className = cls;
     const kept = ['--bh', '--fr', '--frs']
       .map((v) => [v, node.style.getPropertyValue(v)])
@@ -107,7 +111,9 @@ function applyLayout(el, s, moved = []) {
       .join('');
     node.style.cssText = blockVars(b) + kept;
     node.hidden = b.config?.enabled === false;
-    for (const [name, value] of Object.entries(blockLinks(b))) setAttr(node, name, value);
+    if (node.className + '|' + node.style.cssText + node.hidden !== wasNode) touched.layout = true;
+    for (const [name, value] of Object.entries(blockLinks(b)))
+      if (setAttr(node, name, value)) touched.layout = true;
     const [anim, options, parts] = motionOf(b);
     // its parts' animations are mounted with the view's: mount again
     if (setAttr(node, 'data-anim-parts', parts)) remount = true;
@@ -121,8 +127,9 @@ function applyLayout(el, s, moved = []) {
  * Sync the preview's sections with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
  * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
- * `remount` set when a pin changed (the view's modules need mounting again) and `motion`: the
- * block elements whose motion changed.
+ * `remount` set when a pin changed (the view's modules need mounting again), `motion`: the
+ * block elements whose motion changed, and `layout`: whether anything the rows and scroll
+ * triggers measure changed (a name alone changes the id only).
  */
 export function syncLayout(doc, store, { structure = false } = {}) {
   const view = doc?.querySelector('[data-router-view]');
@@ -135,19 +142,27 @@ export function syncLayout(doc, store, { structure = false } = {}) {
   // Order: only touch the DOM when it differs (new sections come with their render).
   const order = sections.map((s) => els.get(s?.id)).filter(Boolean);
   const now = [...view.querySelectorAll(':scope > [data-sec]')];
+  let moved = false;
+  for (const id of els.keys()) if (!ids.has(id)) moved = true;
   if (order.some((el, k) => now[k] !== el)) {
+    moved = true;
     const anchor = now.at(-1)?.nextSibling ?? null;
     for (const el of order) view.insertBefore(el, anchor);
   }
 
   const numbers = headingNumbers(sections);
   const stale = [];
+  stale.moved = moved;
   stale.motion = [];
+  const touched = { layout: false };
   sections.forEach((s, at) => {
     const el = els.get(s?.id);
-    if (el && applyLayout(el, s, stale.motion)) stale.remount = true;
+    if (el && applyLayout(el, s, stale.motion, touched)) stale.remount = true;
     if (!el || (structure && rendered.get(el) !== keyOf(s, at, numbers))) stale.push(s.id);
   });
+  // the layout changed (classes, CSS variables, links, on/off, order, a section gone): the
+  // rows and the scroll triggers need working out again
+  stale.layout = touched.layout || stale.moved || stale.remount || stale.motion.length > 0;
   return stale;
 }
 

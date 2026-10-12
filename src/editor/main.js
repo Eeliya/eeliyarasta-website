@@ -343,8 +343,13 @@ function syncSections({ structure = false } = {}) {
   if (stale.remount && !stale.length) bridge.api?.remountView();
   // a block's motion changed: its animation plays again (the whole page's when it lost it)
   else if (!stale.length) for (const el of stale.motion) bridge.replayOne(el);
-  bridge.api?.reflow?.(); // the rows the blocks need now (src/client/modules/rows.js)
-  bridge.api?.ScrollTrigger?.refresh();
+  // the rows the blocks need now (src/client/modules/rows.js) and the scroll triggers' positions:
+  // only when the layout changed. (A refresh with nothing changed, e.g. a section's name typed,
+  // could put the preview back at a stale scroll position: it jumped to the top.)
+  if (stale.layout) {
+    bridge.api?.reflow?.();
+    bridge.api?.refresh?.();
+  }
   renderSections(stale);
 }
 

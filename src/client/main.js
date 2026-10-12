@@ -89,6 +89,13 @@ function remountAnimations() {
  * production builds, so this function, the window.__site API and the editor
  * shortcut are dropped from the public bundle entirely.
  */
+/** Run fn, then put the window back where it was scrolled (dev: the editor's refreshes). */
+function keepScroll(fn) {
+  const y = window.scrollY;
+  fn();
+  if (window.scrollY !== y) window.scrollTo(0, y);
+}
+
 function connectEditor() {
   const api = {
     gsap,
@@ -115,8 +122,10 @@ function connectEditor() {
     },
     /** The editor changed the layout of the view's sections: flow their rows again (rows.js). */
     reflow() {
-      if (current?.rows.reflow()) ScrollTrigger.refresh();
+      if (current?.rows.reflow()) keepScroll(() => ScrollTrigger.refresh());
     },
+    /** ScrollTrigger.refresh, the scroll position kept (in the editor it could come back stale). */
+    refresh: () => keepScroll(() => ScrollTrigger.refresh()),
     /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
     remountView() {
       if (!current) return;
