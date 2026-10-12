@@ -109,13 +109,36 @@ test('phone grid: 60 columns; a block without a phone area shows its desktop are
 });
 
 test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always centred', () => {
-  assert.deepEqual(HEIGHTS, ['fit', 'third', 'half', 'full']);
+  assert.deepEqual(HEIGHTS, ['custom', 'fit', 'third', 'half', 'full']);
   const cls = (more) => sectionClass(sec([], more));
   assert.equal(cls({}), 'sec'); // fit (the default): its rows
   assert.equal(cls({ height: 'fit' }), 'sec');
   assert.equal(cls({ height: 'third' }), 'sec sec--h-third');
   assert.equal(cls({ height: 'half', width: 'full' }), 'sec sec--h-half sec--full');
   assert.equal(cls({ height: 'full' }), 'sec sec--h-full');
+  // custom: at least minRows square cells (phones: half, rounded up), only with its rows
+  const custom = sec([], { height: 'custom', minRows: 41 });
+  assert.equal(sectionClass(custom), 'sec sec--h-custom');
+  assert.equal(sectionVars(custom), '--rows:41;--mrows:21;--minrows:41;--mminrows:21');
+  // never shorter than its content: a block reaching row 60 makes it 60 rows
+  const deep = [blk({ pos: { col: 1, span: 10, row: 51, rows: 10 } })];
+  assert.equal(
+    sectionVars(sec(deep, { height: 'custom', minRows: 41 })),
+    '--rows:60;--mrows:30;--minrows:41;--mminrows:21',
+  );
+  assert.equal(cls({ height: 'custom' }), 'sec'); // no rows: as fit
+  assert.equal(sectionVars(sec([], { height: 'fit', minRows: 9 })), '--rows:1;--mrows:1');
+  const of = (more) => checkContent(F, { sections: [sec([], more)] });
+  assert.deepEqual(of({ height: 'custom', minRows: 30 }), []);
+  assert.deepEqual(of({ height: 'custom' }), [
+    'section 1: "minRows" must be a whole number of rows from 1 (a custom height)',
+  ]);
+  assert.deepEqual(of({ height: 'custom', minRows: 1000 }), [
+    'section 1: "minRows" must be a whole number of rows from 1 to 999',
+  ]);
+  assert.deepEqual(of({ height: 'half', minRows: 8 }), [
+    'section 1: "minRows" must be left out unless the height is custom',
+  ]);
   // an old one (not migrated yet) renders as fit; its rows, alignment and spacing are ignored
   const old = sec([], { height: 'screen', align: 'bottom', rows: 9, spacing: { top: 4 } });
   assert.equal(sectionClass(old), 'sec');
@@ -211,7 +234,7 @@ test('validation: size, aspect, place, mobile; no section aspect or spacing', ()
     `section 1: "${k}" is no longer a section setting (node scripts/migrate-sections.mjs)`;
   assert.deepEqual(of({ height: 'full' }), []);
   assert.deepEqual(of({ height: 'aspect', aspect: '16:9', mobile: { spacing: { top: 3 } } }), [
-    'section 1: "height" must be one of fit, third, half, full',
+    'section 1: "height" must be one of custom, fit, third, half, full',
     gone('aspect'),
     gone('mobile'),
   ]);
@@ -251,6 +274,11 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   assert.ok(blocks().every((x) => x.mobile));
 
   setSection(store, F, 0, { height: 'third', name: 'Intro' });
+  setSection(store, F, 0, { height: 'custom', minRows: 24 });
+  assert.deepEqual(checkContent(F, store.current[F]), []);
+  store.undo();
+  assert.equal(store.current[F].sections[0].height, 'third');
+  assert.ok(!('minRows' in store.current[F].sections[0]));
   setSection(store, F, 0, { height: 'fit', name: undefined });
   assert.ok(!('name' in store.current[F].sections[0]));
   assert.equal(store.current[F].sections[0].height, 'fit');

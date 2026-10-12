@@ -242,9 +242,16 @@ every section is a grid of **blocks** (`src/site/layout/`):
   whole number of rows; when its content needs more, it spans more (see Real rows below), so
   text never spills out. The old `rowHeight` is ignored. On phones the grid has **60 columns**
   (below).
-- **A section:** `height` is a **minimum**: `fit` (default: its content, i.e. its rows),
+- **A section:** `height` is `custom`: exactly `minRows` rows of square cells (1–999, only
+  with `custom`), its blocks at their rows **from the top** (not centred), so the rows below
+  the last block are empty space under it; never shorter than its content (when a block
+  grows, the section is its content's rows, the empty rows don't stack on top). On phones
+  half as many rows, rounded up, the way a block's desktop area is halved there, so the
+  space keeps its proportion to the content. Or `height` is a **minimum** with the rows
+  centred: `fit` (default: its content, i.e. its rows),
   `third`, `half` or `full` (at least 1/3, 1/2 or all of the screen's height: `min-height`
-  33.333svh / 50svh / 100svh). Its rows are always down to its lowest block (uniform square
+  33.333svh / 50svh / 100svh; a custom one `.sec--h-custom`, its `--rows` at least
+  `--minrows`, `--mminrows` on phones, kept so by `rows.js`). Its rows are always down to its lowest block (uniform square
   cells, no row count of its own); when the section is taller than them they are **centred
   vertically** (`align-content: center`), and content taller than the minimum makes the
   section taller. `width` is `contained` (inside the page's side margins, `--pad`) or `full`
@@ -853,7 +860,9 @@ In the Content panel every **section** of the page is a box (Section 1, 2, …, 
 under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
 turns it on/off, and the caret folds it. Under the bar are its settings (**Name**, the whole row, empty by
 default, with the `#anchor` it makes shown under it, or what's wrong with it: taken by another
-section on the page, …; then side by side **Height**, four quiet icon buttons with tooltips: fit
+section on the page, …; then side by side **Height**, five quiet icon buttons with tooltips: custom
+(a **Rows** number field appears below: the section's rows, the ones below its last block
+empty space; picking it starts from the section's rows), fit
 content, 1/3, 1/2 or the full screen, each icon the screen with that share filled (the content
 is always centred), and **Width**, two such buttons: contained (a centred band in the screen)
 or full width (a band edge to edge)) and its **blocks**, in order, each with ↑ / ↓, Duplicate,

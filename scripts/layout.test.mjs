@@ -189,14 +189,14 @@ test('validation: the layout, then each block against its type', () => {
     'section 1: "id" must be a section id like "s-k3x9"',
   ]);
   assert.deepEqual(problems([ok({ height: 'tall', width: 'wide' })]), [
-    'section 1: "height" must be one of fit, third, half, full',
+    'section 1: "height" must be one of custom, fit, third, half, full',
     'section 1: "width" must be contained or full',
   ]);
   for (const height of ['fit', 'third', 'half', 'full'])
     assert.deepEqual(problems([ok({ height })]), [], height);
   // the old ones: migrate (scripts/migrate-sections.mjs); its own rows and alignment are gone
   assert.deepEqual(problems([ok({ height: 'screen', align: 'center', rows: 8 })]), [
-    'section 1: "height" must be one of fit, third, half, full (node scripts/migrate-sections.mjs)',
+    'section 1: "height" must be one of custom, fit, third, half, full (node scripts/migrate-sections.mjs)',
     'section 1: "rows" is no longer a section setting (node scripts/migrate-sections.mjs)',
     'section 1: "align" is no longer a section setting (node scripts/migrate-sections.mjs)',
   ]);

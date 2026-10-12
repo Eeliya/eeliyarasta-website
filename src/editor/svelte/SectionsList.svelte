@@ -27,7 +27,13 @@
     setSection,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { anchorOf, heightOf, nameProblems } from '../../site/layout/index.js';
+  import {
+    MAX_MIN_ROWS,
+    anchorOf,
+    heightOf,
+    nameProblems,
+    rowsOf,
+  } from '../../site/layout/index.js';
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, file, onopen } = $props();
@@ -49,6 +55,7 @@
 
   // [value, label (its tooltip and aria-label), the share of the screen its icon fills]
   const HEIGHTS = [
+    ['custom', 'Custom: a number of rows (space below the blocks)', 'rows'],
     ['fit', 'Fit content: as tall as its blocks', 0],
     ['third', 'At least 1/3 of the screen', 1 / 3],
     ['half', 'At least 1/2 of the screen', 1 / 2],
@@ -66,7 +73,17 @@
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   // Height and Width: one picked of a group (only a change is written: one undo step)
   const pick = (at, key, value, now) => {
-    if (value !== now) set(at, { [key]: value });
+    if (value === now) return;
+    if (key !== 'height') return set(at, { [key]: value });
+    // custom: its rows to start from (its last ones, or its content's); others: none
+    const s = sections[at];
+    set(at, { height: value, minRows: value === 'custom' ? s.minRows || rowsOf(s) : undefined });
+  };
+  // a custom height's rows, typed: one undo step per field edit
+  const setMinRows = (at, v) => {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return;
+    const minRows = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(v)));
+    set(at, { minRows }, `section:${file}#${at}/minRows`);
   };
   // its name: empty removes it (no anchor)
   const setName = (at, name) =>
@@ -184,7 +201,12 @@
 
 {#snippet heightIcon(share)}
   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-    {#if share}
+    {#if share === 'rows'}
+      <!-- custom: the screen with rows counted off, the top ones filled -->
+      <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
+      <rect x="4" y="3" width="8" height="5" rx="0.5" />
+      <path class="frame" d="M4 10.5h8M4 12.5h8" />
+    {:else if share}
       <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
       <rect x="4" y="3" width="8" height={10 * share} rx="0.5" />
     {:else}
@@ -265,6 +287,20 @@
       <!-- Height (a minimum; its content always centred) | Width: icon buttons, one picked -->
       {@render choices(at, 'height', 'Height', HEIGHTS, heightOf(s), heightIcon)}
       {@render choices(at, 'width', 'Width', WIDTHS, widthOf(s), widthIcon)}
+      {#if heightOf(s) === 'custom'}
+        <!-- custom: its rows (square cells, from the top; those below its last block are empty
+             space; on phones half as many) -->
+        <Field
+          edit="{file}#/sections/{at}/minRows"
+          label="Rows"
+          type="number"
+          half
+          value={s.minRows ?? rowsOf(s)}
+          help="Rows below the last block are space (phones: half)"
+          changed={changed(at, 'minRows')}
+          onvalue={(v) => setMinRows(at, v)}
+        />
+      {/if}
     </div>
 
     <ul class="blocks" aria-label="Blocks of section {at + 1}">

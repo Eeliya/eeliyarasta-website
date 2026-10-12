@@ -154,8 +154,15 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
     els.set(id, el);
   }
   sec.classList.remove('sec--measure');
-  const stored = parseInt(sec.style.getPropertyValue(phone ? '--mrows' : '--rows'), 10) || 1;
-  const { rows, at } = resolveRows(items, stored);
+  // a custom height: exactly its rows, or its content's when that needs more (the empty rows
+  // below its last block don't stack on top of a grown block's)
+  const min = parseInt(sec.style.getPropertyValue(phone ? '--mminrows' : '--minrows'), 10) || 0;
+  const stored = min
+    ? 1
+    : parseInt(sec.style.getPropertyValue(phone ? '--mrows' : '--rows'), 10) || 1;
+  const resolved = resolveRows(items, stored);
+  const { at } = resolved;
+  const rows = Math.max(resolved.rows, min);
   let changed = set(sec, '--frows', rows) || resized;
   for (const [id, el] of els) {
     const a = at[id];

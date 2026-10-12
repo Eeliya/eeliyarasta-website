@@ -26,6 +26,7 @@ import { BLOCK_TYPES } from './blocks/index.js';
 import {
   COLS,
   HEIGHTS,
+  MAX_MIN_ROWS,
   MCOLS,
   PLACES,
   SIZES,
@@ -261,6 +262,13 @@ function checkSection(s, at) {
       `one of ${HEIGHTS.join(', ')}` +
         (['auto', 'screen'].includes(s.height) ? ' (node scripts/migrate-sections.mjs)' : ''),
     );
+  // custom: its minimum rows (only there)
+  if (s.height === 'custom' && !whole(s.minRows, 1))
+    bad('minRows', 'a whole number of rows from 1 (a custom height)');
+  else if (s.minRows !== undefined && !(whole(s.minRows, 1) && s.minRows <= MAX_MIN_ROWS))
+    bad('minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
+  else if (s.minRows !== undefined && s.height !== 'custom')
+    bad('minRows', 'left out unless the height is custom');
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   // rowHeight (the 8px-row grid's) is ignored on the square grid: a row is one cell
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');

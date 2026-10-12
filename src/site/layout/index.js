@@ -18,8 +18,12 @@
  * A section:
  *   name     optional: its anchor, slugified into its HTML id ("Our people" -> id="our-people",
  *            so /page/#our-people scrolls to it, below the header); unique on its page
- *   height   a minimum: 'fit' (its content: its rows) | 'third' | 'half' | 'full' (a third, half
- *            or all of the screen's height, svh). Its rows are always down to its lowest block
+ *   height   'custom': exactly `minRows` rows of square cells, its blocks at their rows from
+ *            the top (not centred), the rows below the last block empty space, more only when
+ *            its content needs more; on phones half as many, rounded up, as a block's desktop
+ *            area is halved there | or a minimum, its rows centred: 'fit' (its
+ *            content: its rows) | 'third' | 'half' | 'full' (a third, half or all of the
+ *            screen's height, svh). Its rows are always down to its lowest block
  *            (uniform square cells); a taller section centres them vertically, and content
  *            taller than the minimum makes it taller. No space above or below it: the space
  *            between sections is empty rows (rows above its first block)
@@ -76,7 +80,14 @@ export {
 } from './grid.js';
 export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
 /** A section's minimum height: its content, or a third, a half or all of the screen's. */
-export const HEIGHTS = ['fit', 'third', 'half', 'full'];
+export const HEIGHTS = ['custom', 'fit', 'third', 'half', 'full'];
+/** The most rows a custom height can ask for. */
+export const MAX_MIN_ROWS = 999;
+/** A custom section's minimum rows (desktop), or 0. */
+export const minRowsOf = (s) =>
+  s?.height === 'custom' && Number.isInteger(s.minRows) && s.minRows >= 1
+    ? Math.min(s.minRows, MAX_MIN_ROWS)
+    : 0;
 export const WIDTHS = ['contained', 'full'];
 /** Ids the page's own templates use: no section is named one of them. */
 export const RESERVED_IDS = ['main', 'portal', 'page-curtains', 'accent-init', 'mobile-menu'];
@@ -162,12 +173,18 @@ export function mobileRowsOf(section) {
 
 /** The CSS variables of a section's element. */
 export function sectionVars(s) {
-  return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
+  const min = minRowsOf(s);
+  if (!min) return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
+  // custom: that many rows, its blocks where they are from the top, the rows below the last
+  // one empty space (more when its content needs more); the phone's halved, like a block's
+  // area there. rows.js keeps it so as the content grows (--minrows / --mminrows)
+  const m = Math.ceil(min / 2);
+  return `--rows:${Math.max(rowsOf(s), min)};--mrows:${Math.max(mobileRowsOf(s), m)};--minrows:${min};--mminrows:${m}`;
 }
 
 /** The classes of a section's element: its minimum height (sec--h-third …) and width. */
 export function sectionClass(s) {
-  const h = heightOf(s);
+  const h = heightOf(s) === 'custom' && !minRowsOf(s) ? 'fit' : heightOf(s);
   return 'sec' + (h !== 'fit' ? ` sec--h-${h}` : '') + (s?.width === 'full' ? ' sec--full' : '');
 }
 
