@@ -93,6 +93,10 @@ whose data is a list or a map keeps it under one key next to it: a source's `"it
 redirects.json's `"redirects"`, photos.json's `"photos"`. A change of shape bumps the version and
 converts the content in the same commit.
 
+**Item ids.** Every source item has a stable `id` (`"p-k3x9"`, given once, never changed): blocks
+and links point at items by it; its `slug` is only its URL and can change. A `cover` is the path
+of one of the item's own photos (empty: the first).
+
 ### Build / prerender ("SSR but static")
 
 `vite-plugin-static-site.mjs` is the whole builder (~100 lines):
@@ -129,7 +133,7 @@ site settings can live side by side):
 | `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                        |
 | `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                         |
 | `content/en/pages/<page>/index.json`  | the other pages: their `sections` of blocks (see "Layout"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                |
-| `content/en/sources/people.json`      | models: `slug`, `title`, role, `body`, location, `accent`, `cover`, `images[]` (with credits)                                                                                                                                                                          |
+| `content/en/sources/people.json`      | models: `id`, `slug`, `title`, role, `body`, location, `accent`, `cover` (the path of one of its photos), `images[]` (with credits)                                                                                                                                    |
 | `content/en/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                     |
 | `content/en/sources/projects.json`    | projects: title, type, year, body, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                              |
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                    |
@@ -433,7 +437,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   "eyebrow": "Featured",
   "title": { "bind": "title" },
   "body": { "bind": "role", "format": "{value} in Amsterdam" },
-  "item": { "source": "people", "slug": "noor-vermeer" }
+  "item": { "source": "people", "id": "p-qw7b" }
 }
 ```
 
@@ -444,7 +448,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **`"format"`** (text fields only, also a list's texts like the album's facts): text around
   the value, `{value}` marks where it goes, e.g. `"{value} photos"`. An empty value leaves the
   whole field empty. There is no `{{field}}` syntax: one field, one binding.
-- **The item:** a block's own `item: { source, slug }`, else, on a `[slug]` page, the page's
+- **The item:** a block's own `item: { source, id }`, else, on a `[slug]` page, the page's
   item. Without one its bound fields render empty (a build warning).
 - **Rendering:** one resolver, `resolveBlock()`, swaps the values in before every block renders
   (`src/site/layout/index.js`), so blocks don't know about bindings; values are escaped as

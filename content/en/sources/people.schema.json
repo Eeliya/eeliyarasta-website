@@ -57,9 +57,9 @@
     {
       "key": "cover",
       "label": "Cover photo",
-      "type": "number",
+      "type": "photo",
       "width": "half",
-      "help": "Which photo: 0 is the first"
+      "help": "One of its photos; empty: the first"
     },
     {
       "key": "accent",

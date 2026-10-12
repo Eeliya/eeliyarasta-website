@@ -326,9 +326,9 @@ function checkBlock(b, where) {
   if (!t) return out; // an unknown type only warns (render)
   if (
     b.item !== undefined &&
-    !(isObject(b.item) && isSlug(b.item.source) && typeof b.item.slug === 'string')
+    !(isObject(b.item) && isSlug(b.item.source) && isId(b.item.id, 'p'))
   )
-    bad('item', '{ "source": "<source>", "slug": "<item slug>" }');
+    bad('item', '{ "source": "<source>", "id": "<item id>" }');
   // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>", "format"? }
   const bindShape = (key, v, type) => {
     const extra = Object.keys(v).filter((k) => k !== 'bind' && k !== 'format');

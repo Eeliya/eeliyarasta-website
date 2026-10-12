@@ -288,7 +288,8 @@ export function accentOf(ctx, album) {
 export const imagesOf = (album) => (Array.isArray(album?.images) ? album.images : []);
 
 /** Cover image of an album (undefined when it has no photos). */
-export const coverOf = (album) => imagesOf(album)[album?.cover || 0] || imagesOf(album)[0];
+export const coverOf = (album) =>
+  imagesOf(album).find((p) => album?.cover && p.src === album.cover) || imagesOf(album)[0];
 
 /** "Photo: Name / Unsplash" credit line (placeholder images). */
 export const creditText = (credit) =>

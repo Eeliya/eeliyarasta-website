@@ -2,6 +2,7 @@
   "version": 1,
   "items": [
     {
+      "id": "p-qw7b",
       "slug": "noor-vermeer",
       "title": "Noor Vermeer",
       "placeholder": true,
@@ -12,7 +13,7 @@
       "year": 2026,
       "body": "Golden-hour street portraits between concrete and canals. Natural light only, shot handheld on the X100V.",
       "accent": "#c9a27a",
-      "cover": 0,
+      "cover": "people/noor-vermeer/01.jpg",
       "images": [
         {
           "src": "people/noor-vermeer/01.jpg",
@@ -90,6 +91,7 @@
       "curtain": "Noor Vermeer"
     },
     {
+      "id": "p-3pdk",
       "slug": "daan-okafor",
       "title": "Daan Okafor",
       "placeholder": true,
@@ -100,7 +102,7 @@
       "year": 2026,
       "body": "Monochrome editorial with a musician: long coats, glasses, late afternoons in the city.",
       "accent": "",
-      "cover": 0,
+      "cover": "people/daan-okafor/01.jpg",
       "images": [
         {
           "src": "people/daan-okafor/01.jpg",
@@ -169,6 +171,7 @@
       "curtain": "Daan Okafor"
     },
     {
+      "id": "p-hx4p",
       "slug": "mila-example",
       "title": "Mila Example",
       "placeholder": true,
@@ -179,7 +182,7 @@
       "year": 2026,
       "body": "PLACEHOLDER: test portraits to fill the people grid. Window light and quiet corners.",
       "accent": "#b9a48f",
-      "cover": 0,
+      "cover": "people/noor-vermeer/05.jpg",
       "images": [
         {
           "src": "people/noor-vermeer/05.jpg",
@@ -221,6 +224,7 @@
       "curtain": "Mila Example"
     },
     {
+      "id": "p-y8gp",
       "slug": "joris-placeholder",
       "title": "Joris Placeholder",
       "placeholder": true,
@@ -231,7 +235,7 @@
       "year": 2026,
       "body": "PLACEHOLDER: test portraits to fill the people grid. Overcast streets, shot handheld.",
       "accent": "",
-      "cover": 0,
+      "cover": "people/daan-okafor/05.jpg",
       "images": [
         {
           "src": "people/daan-okafor/05.jpg",

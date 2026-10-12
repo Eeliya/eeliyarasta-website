@@ -2,7 +2,7 @@
  * Block types of the home page look: the hero with its scattered photos, the big intro
  * statement, a grid of a source's photos, the project list. See ./index.js for the shape.
  */
-import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed } from '../helpers.js';
+import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed, coverOf } from '../helpers.js';
 import { sourceFile } from '../files.js';
 import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
@@ -111,7 +111,7 @@ const placeCards = (ctx, source, items, layout) =>
     class="placecards${layout === 'even' ? ' placecards--even' : ''}"
   >
     ${items.map((p, i) => {
-      const cover = imagesOf(p)[p.cover || 0] || imagesOf(p)[0];
+      const cover = coverOf(p);
       return html`
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
         <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>

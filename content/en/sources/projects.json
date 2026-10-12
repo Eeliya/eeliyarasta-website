@@ -2,6 +2,7 @@
   "version": 1,
   "items": [
     {
+      "id": "p-i2ii",
       "slug": "grok-observatory",
       "title": "Grok Observatory",
       "type": "Web / Dev tool",
@@ -14,6 +15,7 @@
       "placeholder": false
     },
     {
+      "id": "p-aann",
       "slug": "eeliyarasta-com",
       "title": "eeliyarasta.com",
       "type": "Web / Design",
@@ -25,6 +27,7 @@
       "placeholder": false
     },
     {
+      "id": "p-kksu",
       "slug": "film-scan-rig",
       "title": "Film Scan Rig",
       "type": "DIY",
@@ -42,6 +45,7 @@
       "placeholder": true
     },
     {
+      "id": "p-m8nl",
       "slug": "desk-controller",
       "title": "Desk Controller",
       "type": "DIY / Electronics",

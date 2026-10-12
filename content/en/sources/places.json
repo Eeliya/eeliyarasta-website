@@ -2,6 +2,7 @@
   "version": 1,
   "items": [
     {
+      "id": "p-an0r",
       "slug": "kasteel-de-haar",
       "title": "Kasteel de Haar",
       "placeholder": true,
@@ -10,7 +11,7 @@
       "year": 2025,
       "body": "A neo-gothic castle mirrored in its moat. Towers, brick and long reflections on a still autumn morning.",
       "accent": "",
-      "cover": 1,
+      "cover": "places/kasteel-de-haar/02.jpg",
       "images": [
         {
           "src": "places/kasteel-de-haar/01.jpg",
@@ -88,6 +89,7 @@
       "curtain": "Kasteel de Haar"
     },
     {
+      "id": "p-lyke",
       "slug": "concrete-studies",
       "title": "Concrete Studies",
       "placeholder": true,
@@ -96,7 +98,7 @@
       "year": 2026,
       "body": "Brutalist lines, stairwells and hard shadows. An ongoing series about light falling on concrete.",
       "accent": "#8fa3b0",
-      "cover": 0,
+      "cover": "places/concrete-studies/01.jpg",
       "images": [
         {
           "src": "places/concrete-studies/01.jpg",

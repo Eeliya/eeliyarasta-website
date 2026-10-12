@@ -108,7 +108,7 @@
   const slugOf = (it) => itemSlug(it, schema);
   // the item the preview shows: the block's, or the [slug] page's (its path's last part)
   const item = $derived.by(() => {
-    if (ref) return items.find((it) => slugOf(it) === ref.slug) ?? null;
+    if (ref) return items.find((it) => it?.id === ref.id) ?? null;
     if (!template) return null;
     const last = String(ui.path || '')
       .split('/')
@@ -135,9 +135,8 @@
   function pickSource(id) {
     if (!id) return setItem(undefined);
     const list = live.get(sourceFile(id), '/items');
-    const sc = schemaFor(live.store, sourceFile(id));
-    const first = Array.isArray(list) && list.length ? itemSlug(list[0], sc) : '';
-    setItem({ source: id, slug: first });
+    const first = Array.isArray(list) && list.length ? list[0].id : '';
+    setItem({ source: id, id: first });
   }
 
   // the block's element in the preview, read again after every edit
@@ -231,10 +230,10 @@
         {#if ref}
           <Select
             aria-label="Item"
-            value={ref.slug}
+            value={ref.id}
             placeholder="Pick…"
-            options={items.map((it) => ({ value: slugOf(it), label: itemName(it, schema) }))}
-            onchange={(slug) => setItem({ source: ref.source, slug })}
+            options={items.map((it) => ({ value: it.id, label: itemName(it, schema) }))}
+            onchange={(id) => setItem({ source: ref.source, id })}
           />
         {:else}
           <span class="item-name">{item ? itemName(item, schema) : '—'}</span>

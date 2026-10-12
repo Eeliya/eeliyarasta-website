@@ -30,7 +30,8 @@ export const sectionHead = ({ at, eyebrow, title, href, cta }) => {
 export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {}) => {
   const at = (field, type) => ed(sourceFile(kind), ['items', index, field], type);
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
-  const first = [coverOf(album), ...imagesOf(album).filter((_, i) => i !== (album.cover || 0))]
+  const cover = coverOf(album);
+  const first = [cover, ...imagesOf(album).filter((p) => p !== cover)]
     .filter(Boolean)
     .slice(0, 4);
   const sizes = landscape

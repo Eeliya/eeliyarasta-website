@@ -8,7 +8,7 @@
  *                                           a text around the value ({value}; text fields only,
  *                                           an empty value leaves the whole field empty)
  *
- * The item: a block's own `item: { source, slug }`, else the item of a [slug] page
+ * The item: a block's own `item: { source, id }`, else the item of a [slug] page
  * (route.album). A binding without an item, or to a field the item's source doesn't have,
  * renders empty, and the build warns (bindingProblems). Values are escaped by the blocks as before: the
  * resolver only swaps values (resolveBlock, applied to every block before it renders).
@@ -18,7 +18,6 @@
  * of objects, each text subkey can be bound. BIND_TYPES says which
  * source field types (src/site/schemas.js) fit each block field type.
  */
-import { itemSlug } from '../helpers.js';
 import { schemaOf } from '../schemas.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -65,8 +64,7 @@ export function itemOf(ctx, route, block) {
   const ref = block?.item;
   if (isObject(ref) && ref.source) {
     const list = Array.isArray(ctx.sources?.[ref.source]) ? ctx.sources[ref.source] : [];
-    const schema = schemaOf(ctx, ref.source);
-    const item = list.find((it) => itemSlug(it, schema) === String(ref.slug ?? '')) || null;
+    const item = list.find((it) => it?.id === ref.id) || null;
     return { item, source: ref.source };
   }
   if (route?.album) return { item: route.album, source: route.kind };
@@ -197,12 +195,8 @@ export function bindingProblems(content, { types, pageFile, files = null }) {
           source = b.item.source;
           const list = content.sources?.[source];
           if (!Array.isArray(list)) return problem('error', `item: "${source}" is not a source`);
-          const schema = schemaOf(content, source);
-          if (!list.some((it) => itemSlug(it, schema) === String(b.item.slug ?? '')))
-            problem(
-              'warn',
-              `item: "${b.item.slug}" is not in ${source}: its bound fields are empty`,
-            );
+          if (!list.some((it) => it?.id === b.item.id))
+            problem('warn', `item: "${b.item.id}" is not in ${source}: its bound fields are empty`);
         }
         const uses = bindingsOf(b, t);
         if (!uses.length) return;

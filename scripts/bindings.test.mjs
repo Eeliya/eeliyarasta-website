@@ -98,7 +98,7 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
 
 test('item resolution: the block item, else the [slug] page item', () => {
   const daan = content.people.find((p) => p.slug === 'daan-okafor');
-  assert.deepEqual(itemOf(content, {}, { item: { source: 'people', slug: 'daan-okafor' } }), {
+  assert.deepEqual(itemOf(content, {}, { item: { source: 'people', id: 'p-3pdk' } }), {
     item: daan,
     source: 'people',
   });
@@ -108,14 +108,11 @@ test('item resolution: the block item, else the [slug] page item', () => {
   });
   // the block's own item wins on a [slug] page too
   assert.equal(
-    itemOf(
-      content,
-      { album: noor, kind: 'people' },
-      { item: { source: 'people', slug: 'daan-okafor' } },
-    ).item,
+    itemOf(content, { album: noor, kind: 'people' }, { item: { source: 'people', id: 'p-3pdk' } })
+      .item,
     daan,
   );
-  assert.equal(itemOf(content, {}, { item: { source: 'people', slug: 'nobody' } }).item, null);
+  assert.equal(itemOf(content, {}, { item: { source: 'people', id: 'p-zzzz' } }).item, null);
   assert.equal(itemOf(content, {}, {}).item, null);
 });
 
@@ -155,7 +152,7 @@ test('a normal page: a block with an item; without one its bound fields are empt
     eyebrow: 'Featured',
     title: { bind: 'title', format: '{value}, model' },
     body: { bind: 'body' },
-    item: { source: 'people', slug: 'noor-vermeer' },
+    item: { source: 'people', id: 'p-qw7b' },
   };
   const page = [newSection(ids, [heading])];
   const html = renderSections(content, { id: 'x' }, 'pages/x/index.json', page);
@@ -182,16 +179,16 @@ test('bindingProblems: schema-aware errors and warnings', () => {
       x: {
         sections: [
           newSection(ids, [
-            block({ title: { bind: 'title' }, item: { source: 'people', slug: 'noor-vermeer' } }),
-            block({ title: { bind: 'nope' }, item: { source: 'people', slug: 'noor-vermeer' } }),
-            block({ title: { bind: 'images' }, item: { source: 'people', slug: 'noor-vermeer' } }),
+            block({ title: { bind: 'title' }, item: { source: 'people', id: 'p-qw7b' } }),
+            block({ title: { bind: 'nope' }, item: { source: 'people', id: 'p-qw7b' } }),
+            block({ title: { bind: 'images' }, item: { source: 'people', id: 'p-qw7b' } }),
             block({
               title: { bind: 'title', format: '{value}!' },
-              item: { source: 'people', slug: 'noor-vermeer' },
+              item: { source: 'people', id: 'p-qw7b' },
             }),
             block({ title: { bind: 'title' } }),
-            block({ title: 'x', item: { source: 'nope', slug: 'a' } }),
-            block({ title: { bind: 'title' }, item: { source: 'people', slug: 'nobody' } }),
+            block({ title: 'x', item: { source: 'nope', id: 'p-aaaa' } }),
+            block({ title: { bind: 'title' }, item: { source: 'people', id: 'p-zzzz' } }),
           ]),
         ],
       },
@@ -229,12 +226,12 @@ test('validation: the shape of bindings and items', () => {
     [],
   );
   assert.deepEqual(checkContent(F, page({ config: { href: { bind: 'slug' } } })), []);
-  assert.deepEqual(checkContent(F, page({ item: { source: 'people', slug: 'a' } })), []);
+  assert.deepEqual(checkContent(F, page({ item: { source: 'people', id: 'p-aaaa' } })), []);
   const one = (p, type) => checkContent(F, page(p, type)).join('; ');
   assert.match(one({ title: { bind: '' } }), /"title" must be \{ "bind": "<field>", "format"/);
   assert.match(one({ title: { bind: 'a', x: 1 } }), /"title" must be \{ "bind"/);
   assert.match(one({ item: 'people' }), /"item" must be/);
-  assert.match(one({ item: { source: 'People!', slug: 'a' } }), /"item" must be/);
+  assert.match(one({ item: { source: 'People!', id: 'p-aaaa' } }), /"item" must be/);
   assert.match(one({ body: { bind: 'body' } }, 'about'), /"body" must be a list of its own/);
   assert.match(
     one({ src: { bind: 'cover', format: '{value}.jpg' } }, 'photo'),
@@ -265,7 +262,7 @@ test('Save refuses bindings that do not fit the schema', () => {
     version: 1,
     sections: [
       newSection(ids, [
-        { ...newBlock('heading', ids), title, item: { source: 'people', slug: 'noor-vermeer' } },
+        { ...newBlock('heading', ids), title, item: { source: 'people', id: 'p-qw7b' } },
       ]),
     ],
   });

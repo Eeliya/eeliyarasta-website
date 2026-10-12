@@ -108,6 +108,7 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
   const photoExists = (k) => k === 'ok.jpg';
   const items = [
     {
+      id: 'p-t001',
       slug: 'ann',
       name: 'Ann',
       year: '2024',
@@ -118,8 +119,9 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
       images: [{ src: 'ok.jpg' }, { src: 'gone.jpg' }],
       placeholder: 'yes',
     },
-    { slug: 'ann', name: '' },
+    { id: 'p-t002', slug: 'ann', name: '' },
     {
+      id: 'p-t003',
       slug: 'Bad Slug',
       name: 'C',
       url: 'https://x.y/',
@@ -139,8 +141,21 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
     'item 2: another item has the slug "ann"',
     'item 3 (C): slug "Bad Slug" must be lowercase words with dashes',
   ]);
+  // an id each, unique; a cover is one of its own photos
+  const a = { id: 'p-aaaa', slug: 'a', name: 'A', images: [{ src: 'a.jpg' }], cover: 'b.jpg' };
+  assert.deepEqual(
+    checkItems([a, { ...a, slug: 'b', cover: 'a.jpg' }, { slug: 'c', name: 'C' }], PEOPLE),
+    [
+      'item 1 (A): "cover" must be one of its photos ("b.jpg" isn\'t)',
+      'item 2 (A): another item has the id "p-aaaa"',
+      'item 3 (C): "id" must be an item id ("p-k3x9")',
+    ],
+  );
   // without photoExists, photos are not looked up
-  assert.deepEqual(checkItems([{ slug: 'a', name: 'A', image: 'x.jpg' }], PEOPLE), []);
+  assert.deepEqual(
+    checkItems([{ id: 'p-t004', slug: 'a', name: 'A', image: 'x.jpg' }], PEOPLE),
+    [],
+  );
 });
 
 test('checkSources: every source, with its schema or inferred; photos from media and photos.json', () => {
@@ -148,10 +163,15 @@ test('checkSources: every source, with its schema or inferred; photos from media
     ...contentFromFiles({
       'sources/people.json': {
         version: 1,
-        items: [{ slug: 'a', name: 'A', image: 'people/a.jpg' }],
+        items: [{ id: 'p-t005', slug: 'a', name: 'A', image: 'people/a.jpg' }],
       },
       'sources/people.schema.json': PEOPLE,
-      'sources/places.json': { version: 1, items: [{ name: 'P', cover: 'places/p.jpg' }] },
+      'sources/places.json': {
+        version: 1,
+        items: [
+          { id: 'p-pppp', name: 'P', images: [{ src: 'places/p.jpg' }], cover: 'places/p.jpg' },
+        ],
+      },
       'settings/photos.json': { version: 1, photos: { 'places/p.jpg': { srcset: [] } } },
     }),
     media: {},
@@ -194,12 +214,17 @@ test('routes: slug and title from the schema', () => {
   );
   assert.equal(r[0].title, 'The xx | Bands | Site');
   // no schema file: inferred (slug, name)
-  assert.equal(schemaOf({ sources: { x: [{ slug: 's', name: 'N' }] } }, 'x').title, 'name');
+  assert.equal(
+    schemaOf({ sources: { x: [{ id: 'p-t006', slug: 's', name: 'N' }] } }, 'x').title,
+    'name',
+  );
 });
 
-test('newItemOf: every field empty, a unique slug and title', () => {
+test('newItemOf: a new id, every field empty, a unique slug and title', () => {
   const item = newItemOf(PEOPLE, [{ slug: 'new-item-2' }]);
   assert.equal(item.slug, 'new-item-3');
+  assert.match(item.id, /^p-[a-z0-9]{4}$/);
+  assert.equal(Object.keys(item)[0], 'id');
   assert.equal(item.name, 'New item 3');
   assert.equal(item.year, new Date().getFullYear());
   assert.deepEqual(item.images, []);
@@ -216,18 +241,24 @@ test('save: a source that breaks its schema is not written', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'schemas-'));
   const dir = path.join(root, 'content/en', 'sources');
   fs.mkdirSync(dir, { recursive: true });
-  const people = [{ slug: 'a', name: 'A', year: 2024 }];
+  const people = [{ id: 'p-t007', slug: 'a', name: 'A', year: 2024 }];
   fs.writeFileSync(path.join(dir, 'people.json'), JSON.stringify({ version: 1, items: people }));
   fs.writeFileSync(path.join(dir, 'people.schema.json'), JSON.stringify(PEOPLE));
   const before = fs.readFileSync(path.join(dir, 'people.json'), 'utf8');
 
   let r = save(root, {
-    'sources/people.json': { version: 1, items: [{ slug: 'a', name: '', year: 2024 }] },
+    'sources/people.json': {
+      version: 1,
+      items: [{ id: 'p-t008', slug: 'a', name: '', year: 2024 }],
+    },
   });
   assert.equal(r.status, 400);
   assert.match(r.body.error, /sources\/people\.json: item 1: "Name" is required/);
   r = save(root, {
-    'sources/people.json': { version: 1, items: [{ slug: 'a', name: 'A', image: 'nope.jpg' }] },
+    'sources/people.json': {
+      version: 1,
+      items: [{ id: 'p-t009', slug: 'a', name: 'A', image: 'nope.jpg' }],
+    },
   });
   assert.match(r.body.error, /"nope\.jpg" is not a photo/);
   // a new schema is checked against the saved items too
@@ -241,7 +272,10 @@ test('save: a source that breaks its schema is not written', () => {
   assert.equal(fs.readFileSync(path.join(dir, 'people.json'), 'utf8'), before);
 
   r = save(root, {
-    'sources/people.json': { version: 1, items: [{ slug: 'a', name: 'Ann', year: 2025 }] },
+    'sources/people.json': {
+      version: 1,
+      items: [{ id: 'p-t010', slug: 'a', name: 'Ann', year: 2025 }],
+    },
   });
   assert.equal(r.status, 200);
 });

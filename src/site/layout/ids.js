@@ -4,10 +4,10 @@
  * or block in the preview by its id; later, bindings and animations will point at them too.
  */
 
-/** Is `id` a section (kind 's') or block ('b') id? */
+/** Is `id` a section (kind 's'), block ('b') or source item ('p') id? */
 export const isId = (id, kind) => new RegExp(`^${kind}-[a-z0-9]{4,12}$`).test(String(id ?? ''));
 
-/** A new id of `kind` ('s' or 'b') not in `taken` (a Set of ids), then added to it. */
+/** A new id of `kind` ('s', 'b' or 'p') not in `taken` (a Set of ids), then added to it. */
 export function newId(kind, taken = new Set()) {
   for (;;) {
     const id = `${kind}-${Math.random().toString(36).slice(2, 6).padEnd(4, '0')}`;

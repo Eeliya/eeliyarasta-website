@@ -24,6 +24,7 @@
  * Used by the build and Save (checkItems), the routes (title, slug) and the editor.
  */
 import { isSlug } from './files.js';
+import { isId, newId } from './layout/ids.js';
 
 export const FIELD_TYPES = [
   'text',
@@ -184,10 +185,15 @@ export function checkItems(list, schema, { photoExists } = {}) {
   if (!Array.isArray(list)) return [];
   const out = [];
   const slugs = new Set();
+  const ids = new Set();
   list.forEach((item, i) => {
     if (!isObject(item)) return;
     const title = itemTitle(item, schema);
     const name = `item ${i + 1}${title ? ` (${title})` : ''}`;
+    // its stable id: what pages and links point at (the slug is only its URL)
+    if (!isId(item.id, 'p')) out.push(`${name}: "id" must be an item id ("p-k3x9")`);
+    else if (ids.has(item.id)) out.push(`${name}: another item has the id "${item.id}"`);
+    ids.add(item.id);
     for (const f of schema.fields || []) {
       const v = item[f.key];
       const label = `"${f.label || labelOf(f.key)}"`;
@@ -195,6 +201,11 @@ export function checkItems(list, schema, { photoExists } = {}) {
         out.push(`${name}: ${label} is required`);
       out.push(...checkValue(f, v, photoExists).map((m) => `${name}: ${label} ${m}`));
     }
+    // the cover: one of its own photos (its path)
+    const photos = (schema.fields || []).find((f) => f.type === 'photos')?.key;
+    if (photos && typeof item.cover === 'string' && item.cover)
+      if (!(Array.isArray(item[photos]) && item[photos].some((p) => p?.src === item.cover)))
+        out.push(`${name}: "cover" must be one of its photos ("${item.cover}" isn't)`);
     const slug = schema.slug ? item[schema.slug] : undefined;
     if (empty(slug) || typeof slug !== 'string') return;
     if (!isSlug(slug)) out.push(`${name}: slug "${slug}" must be lowercase words with dashes`);
@@ -220,8 +231,9 @@ export function checkSources(content) {
   );
 }
 
-/** A new item for a source: every schema field empty (text '', number 0 (a year: this year), false, []), a unique slug and title. */
+/** A new item for a source: a new id, every schema field empty (text '', number 0 (a year: this year), false, []), a unique slug and title. */
 export function newItemOf(schema, list = []) {
+  const id = newId('p', new Set(list.map((it) => it?.id)));
   const slugs = new Set(list.map((it) => it?.[schema.slug]));
   let n = list.length + 1;
   while (slugs.has(`new-item-${n}`)) n++;
@@ -237,7 +249,7 @@ export function newItemOf(schema, list = []) {
           : f.type === 'choice' && f.required
             ? f.options[0]
             : '';
-  const item = Object.fromEntries((schema.fields || []).map((f) => [f.key, blank(f)]));
+  const item = { id, ...Object.fromEntries((schema.fields || []).map((f) => [f.key, blank(f)])) };
   if (schema.slug) item[schema.slug] = `new-item-${n}`;
   if (schema.title) item[schema.title] = `New item ${n}`;
   return item;
