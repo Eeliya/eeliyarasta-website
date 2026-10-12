@@ -10,9 +10,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { REPO_VARS, repoEnv, testEnv } from './git-env.mjs';
 
-const here = path.dirname(new URL(import.meta.url).pathname);
+// fileURLToPath, not URL.pathname: on Windows that is "/S:/…", a cwd spawn can't use (ENOENT)
+const here = path.dirname(fileURLToPath(import.meta.url));
 const git = (cwd, ...args) =>
   execFileSync('git', args, { cwd, env: testEnv(), encoding: 'utf8' }).trim();
 
@@ -59,7 +61,9 @@ test('publish.test.mjs under a hook environment leaves the hook repo untouched',
       env: { ...base, ...vars, GIT_PREFIX: '' },
       encoding: 'utf8',
     });
-    assert.equal(r.status, 0, r.stdout + r.stderr);
+    // a spawn that failed (r.error: ENOENT, a timeout …) says why
+    assert.equal(r.error, undefined, `spawn failed: ${r.error?.code} ${r.error?.message}`);
+    assert.equal(r.status, 0, `status ${r.status} signal ${r.signal}\n${r.stdout}${r.stderr}`);
     assert.match(r.stdout, /^# pass 1$/m);
     assert.deepEqual(snapshot(), before, Object.keys(vars).join());
   }
