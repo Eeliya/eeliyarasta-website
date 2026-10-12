@@ -7,10 +7,10 @@
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
-  The head row: Back (a quiet arrow: to the list of sections, SectionsList.svelte) and the
-  block's name. (Esc or a click on empty space in the preview also goes back.) Above it, its
-  section's settings, read only and live (name, height with its rows (the phone's in the phone
-  preview), width): a click opens that section in the list.
+  At the top, plain (not a card): Back (to the list of sections, SectionsList.svelte; Esc or a
+  click on empty space in the preview also goes back), its section's title (dim when only
+  "Section N") and Locate, then the section's settings, editable (SectionSettings.svelte, as in
+  the list). Under them the block in a card: its type and title, the tabs and their fields.
 -->
 <script>
   import Button from './Button.svelte';
@@ -24,15 +24,8 @@
   import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
-  import SectionIcon from './SectionIcon.svelte';
-  import {
-    heightOf,
-    minRowsOf,
-    mobileMinRowsOf,
-    phoneHeightOf,
-    rowsOf,
-  } from '../../site/layout/index.js';
-  import { tick } from 'svelte';
+  import SectionSettings from './SectionSettings.svelte';
+  import { locate } from '../locate.js';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
@@ -49,42 +42,15 @@
     return live.get(g.file, base) || {};
   });
 
-  // ---- its section's settings, read only (a row above the head: a click opens them)
-  const H_LABELS = {
-    custom: ['', 'rows'],
-    fit: ['Fit', 0],
-    third: ['1/3 screen', 1 / 3],
-    half: ['1/2 screen', 1 / 2],
-    full: ['Full screen', 1],
-  };
-  const sec = $derived.by(() => {
-    live.version;
-    const s = live.get(g.file, `/sections/${at}`) || {};
-    const phone = ui.viewport === 'mobile';
-    // the height of the view shown (the phone's own, else the desktop's)
-    const own = phone ? phoneHeightOf(s) : heightOf(s);
-    const h = own === 'custom' && !(phone ? mobileMinRowsOf(s) : minRowsOf(s)) ? 'fit' : own;
-    // the rows: the resize line's while it is dragged, else the stored ones (the phone's own)
-    const dragged = ui.secRows?.id === s.id ? ui.secRows.rows : 0;
-    const rows = h === 'custom' ? dragged || (phone ? mobileMinRowsOf(s) : minRowsOf(s)) : 0;
-    return {
-      id: s.id,
-      name: typeof s.name === 'string' && s.name.trim() ? s.name : '',
-      h,
-      rows: rows || (h === 'custom' ? rowsOf(s) : 0),
-      phone,
-      full: s.width === 'full',
-    };
+  // ---- its section: its settings editable at the top (SectionSettings.svelte, as in the list)
+  const sections = $derived.by(() => {
+    const list = live.current(g.file)?.sections;
+    return Array.isArray(list) ? list : [];
   });
-  async function openSection() {
-    const id = sec.id;
-    ui.sections[`text:${g.file}#${id}`] = true;
-    ui.block = null;
-    await tick();
-    document
-      .querySelector(`[data-section="${CSS.escape(id)}"]`)
-      ?.scrollIntoView({ block: 'start' });
-  }
+  const secTitle = $derived.by(() => {
+    const n = sections[at]?.name;
+    return typeof n === 'string' && n.trim() ? n.trim() : '';
+  });
 
   // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
   const template = $derived(g.file.endsWith(`/${TEMPLATE}.json`));
@@ -141,146 +107,132 @@
   });
 </script>
 
-<button
-  type="button"
-  class="parent"
-  title="Open this section's settings"
-  aria-label="Section settings: {sec.name || 'Unnamed section'}"
-  onclick={openSection}
->
-  <span class={['parent__name', !sec.name && 'is-none']}>{sec.name || 'Unnamed section'}</span>
-  <span class="parent__val" data-part="height">
-    <SectionIcon kind="height" arg={H_LABELS[sec.h][1]} />
-    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'}
-      {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
-  </span>
-  <span class="parent__val" data-part="width">
-    <SectionIcon kind="width" arg={sec.full ? 'edge' : 'inside'} />
-    {sec.full ? 'Full' : 'Contained'}
-  </span>
-</button>
-
-<div class="head">
-  <Button
-    icon="arrow-left"
-    iconOnly
-    label="Back to sections"
-    title="Back to sections"
-    onclick={onback}
-  />
-  <span class="title">
-    <i class="fa-solid fa-{g.icon}" aria-hidden="true"></i>
-    {g.title}
-    {#if g.name}<strong>{g.name}</strong>{/if}
-  </span>
-</div>
-
-<div class="seg tabs" role="tablist" aria-label="Block">
-  {#each TABS as [id, label] (id)}
-    <button
-      type="button"
-      role="tab"
-      aria-selected={ui.blockTab === id}
-      class={['seg__btn', ui.blockTab === id && 'is-active']}
-      onclick={() => (ui.blockTab = id)}>{label}</button
-    >
-  {/each}
-</div>
-
-{#if ui.blockTab === 'layout'}
-  <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
-{:else if ui.blockTab === 'motion'}
-  {#key blockEl}
-    <BlockMotion
-      {live}
-      {bridge}
-      gsap={bridge.api?.gsap}
-      cfg={live.current(ANIMATIONS)}
-      file={g.file}
-      {at}
-      {j}
-      el={blockEl}
-      {onlibrary}
-      onpart={onmotion}
+<!-- its section: Back, its title (dim when only "Section N") and Locate; its settings -->
+<div class="sec-top">
+  <div class="sec-head">
+    <Button
+      icon="arrow-left"
+      iconOnly
+      label="Back to sections"
+      title="Back to sections"
+      onclick={onback}
     />
-  {/key}
-{:else}
-  <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
-  {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
-    <div class="opts">
-      <ItemPicker
-        store={live.store}
-        value={ref}
-        changed={live.changed(g.file, `${base}/item`)}
-        {sourceIds}
-        {onsource}
-        none={template ? "This page's item" : 'None'}
-        itemsOf={(id) => {
-          live.version;
-          const list = live.get(sourceFile(id), '/items');
-          return Array.isArray(list) ? list : [];
-        }}
-        nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
-        onpick={setItem}
+    <span class={['sec-title', !secTitle && 'is-default']}>{secTitle || `Section ${at + 1}`}</span>
+    <Button
+      size="small"
+      icon="location-crosshairs"
+      iconOnly
+      label="Show this section in the preview"
+      title="Show in preview"
+      onclick={() => locate(bridge, sections[at]?.id)}
+    />
+  </div>
+  <SectionSettings {live} file={g.file} {at} {sections} />
+</div>
+
+<!-- the block, in a card: its type and title, its tabs and fields -->
+<div class="card">
+  <div class="head">
+    <span class="title">
+      {g.title}
+      {#if g.name}<strong>{g.name}</strong>{/if}
+    </span>
+  </div>
+
+  <div class="seg tabs" role="tablist" aria-label="Block">
+    {#each TABS as [id, label] (id)}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={ui.blockTab === id}
+        class={['seg__btn', ui.blockTab === id && 'is-active']}
+        onclick={() => (ui.blockTab = id)}>{label}</button
+      >
+    {/each}
+  </div>
+
+  {#if ui.blockTab === 'layout'}
+    <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
+  {:else if ui.blockTab === 'motion'}
+    {#key blockEl}
+      <BlockMotion
+        {live}
+        {bridge}
+        gsap={bridge.api?.gsap}
+        cfg={live.current(ANIMATIONS)}
+        file={g.file}
+        {at}
+        {j}
+        el={blockEl}
+        {onlibrary}
+        onpart={onmotion}
       />
-    </div>
+    {/key}
+  {:else}
+    <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
+    {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
+      <div class="opts">
+        <ItemPicker
+          store={live.store}
+          value={ref}
+          changed={live.changed(g.file, `${base}/item`)}
+          {sourceIds}
+          {onsource}
+          none={template ? "This page's item" : 'None'}
+          itemsOf={(id) => {
+            live.version;
+            const list = live.get(sourceFile(id), '/items');
+            return Array.isArray(list) ? list : [];
+          }}
+          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
+          onpick={setItem}
+        />
+      </div>
+    {/if}
+    <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
+    {#if !g.fields.length && !g.config?.length}
+      <p class="hint small">No texts or settings in this block.</p>
+    {/if}
   {/if}
-  <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
-  {#if !g.fields.length && !g.config?.length}
-    <p class="hint small">No texts or settings in this block.</p>
-  {/if}
-{/if}
+</div>
 
 <style lang="scss">
-  // [ name · height · width ]: the block's section, muted; a click opens its settings
-  .parent {
-    display: flex;
-    align-items: center;
+  // its section: a plain area (not a card), then the block's card
+  .sec-top {
+    display: grid;
     gap: var(--space-3);
-    width: 100%;
-    height: var(--size-control);
-    margin-bottom: var(--space-1);
-    padding: 0 var(--space-2);
-    border: 1px solid var(--c-line);
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--c-text-muted);
-    font: inherit;
-    font-size: var(--fs-sm);
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-      color: var(--c-link);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
-    }
+    margin-bottom: var(--space-5);
   }
 
-  .parent__name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    &.is-none {
-      font-style: italic;
-    }
-  }
-
-  .parent__val {
-    display: flex;
-    flex: none;
+  .sec-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: var(--space-1);
-    white-space: nowrap;
+    gap: var(--space-2);
   }
 
-  // [ ← | icon Type name ]
+  .sec-title {
+    overflow: hidden;
+    color: var(--c-text);
+    font-size: var(--fs-base);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+
+    &.is-default {
+      color: var(--c-text-faint);
+    }
+  }
+
+  .card {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--c-card);
+  }
+
+  // [ Type name ]
   .head {
     display: flex;
     align-items: center;
@@ -294,10 +246,6 @@
     gap: var(--space-2);
     min-width: 0;
     font-size: var(--fs-base);
-
-    i {
-      color: var(--c-text-muted);
-    }
 
     strong {
       overflow: hidden;
