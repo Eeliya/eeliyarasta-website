@@ -9,7 +9,8 @@
   Used by the Content panel, the Sources modal and Settings.
   Bindings (a block's field, src/site/layout/bindings.js):
     binds     the item's fields this one can show, [{ value, label }] (null: it can't bind).
-              A Source switch in the label row: on stores { "bind": "<first>" } and shows a
+              A Source switch in the label row, only when there is an item to show (binds
+              not empty) or the field is still bound: on stores { "bind": "<first>" } and shows a
               Select of them; off stores `resolved` (what it showed) as the field's own text
     formats   a text field: when bound, a Format input under the Select ("{value} photos");
               empty or just {value} stores { "bind" } alone
@@ -124,19 +125,16 @@
         onchange={(e) => onvalue(e.currentTarget.checked)}
       />
     {/if}
-    {#if binds}
+    {#if binds && (binds.length || bound)}
       <span class="tf__bind" class:is-on={bound}>Source</span>
       <input
         type="checkbox"
         role="switch"
         class="switch"
         aria-label="{label}: from the item"
-        title={!binds.length && !bound
-          ? 'No item to show: pick one (Item) first'
-          : bound
-            ? 'Shows a field of the item (off: own text)'
-            : 'Own text (on: a field of the item)'}
-        disabled={!binds.length && !bound}
+        title={bound
+          ? 'Shows a field of the item (off: own text)'
+          : 'Own text (on: a field of the item)'}
         checked={bound}
         {onfocus}
         onchange={(e) => setBound(e.currentTarget.checked)}
