@@ -2,7 +2,7 @@
  * Search and share meta of a page: what <head> says about it (templates/layout.js), what the
  * editor's SEO previews show, and the build's [seo] warnings.
  *
- * Site defaults live in content/settings/site.json:
+ * Site defaults live in content/en/settings/site.json:
  *   title          home's title (in full)
  *   titleTemplate  every other page's title: "{page}" is the page's own title, "{site}" the
  *                  site name ("{page} | {site}", the default)

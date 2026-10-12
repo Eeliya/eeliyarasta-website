@@ -14,7 +14,7 @@ useTestEnv();
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const real = (p) => fs.realpathSync(p);
 
-/** A repo with content/pages/a/index.json and c/index.json, pushed to a bare "origin". */
+/** A repo with content/en/pages/a/index.json and c/index.json, pushed to a bare "origin". */
 function repo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'publish-'));
   const origin = path.join(dir, 'origin.git');
@@ -25,7 +25,7 @@ function repo() {
   assert.equal(real(git(root, 'rev-parse', '--show-toplevel')), real(root));
   assert.equal(real(path.resolve(root, git(root, 'rev-parse', '--git-dir'))), real(`${root}/.git`));
   for (const f of ['a/index.json', 'c/index.json', 'index.json']) {
-    const file = path.join(root, 'content/pages', f);
+    const file = path.join(root, 'content/en/pages', f);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, `{ "title": "${f}" }\n`);
   }
@@ -39,8 +39,8 @@ function repo() {
 
 test('publish: a git mv rename commits the new path and the removal of the old one', async () => {
   const { root, origin } = repo();
-  git(root, 'mv', 'content/pages/a', 'content/pages/b');
-  fs.rmSync(path.join(root, 'content/pages/c'), { recursive: true });
+  git(root, 'mv', 'content/en/pages/a', 'content/en/pages/b');
+  fs.rmSync(path.join(root, 'content/en/pages/c'), { recursive: true });
   fs.appendFileSync(path.join(root, 'notes.txt'), 'staged, not content\n');
   git(root, 'add', 'notes.txt');
 
@@ -52,7 +52,7 @@ test('publish: a git mv rename commits the new path and the removal of the old o
   const r = await publish(root, 'Rename a to b');
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const files = git(origin, 'ls-tree', '-r', '--name-only', 'main').split('\n');
-  assert.deepEqual(files, ['content/pages/b/index.json', 'content/pages/index.json', 'notes.txt']);
+  assert.deepEqual(files, ['content/en/pages/b/index.json', 'content/en/pages/index.json', 'notes.txt']);
   // the staged non-content change stays staged, out of the commit
   assert.equal(git(root, 'status', '--porcelain'), 'M  notes.txt');
 });

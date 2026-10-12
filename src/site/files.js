@@ -2,13 +2,13 @@
  * Content files, by kind. Each kind has its own folder under content/, so a name
  * never means two things (a page called "site" and the site settings can coexist):
  *
- *   content/pages/              one folder per page, its URL: the page's file is index.json in
+ *   content/en/pages/              one folder per page, its URL: the page's file is index.json in
  *                               it (pages/index.json is home, pages/people/index.json is
  *                               /people/), plus maybe [slug].json, a template page for every
  *                               item of a source (see src/site/routes.js)
- *   content/sources/<id>.json   lists that grids pull from; the top level is a JSON array
- *   content/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
- *   content/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
+ *   content/en/sources/<id>.json   lists that grids pull from; the top level is a JSON array
+ *   content/en/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
+ *   content/en/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
  *                               animations.json, redirects.json: a list), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
  *                               sizes of photos uploaded to R2; written by the editor's Media
@@ -18,6 +18,8 @@
  * (data-edit="pages/index.json#/hero/title").
  */
 export const FOLDERS = ['pages', 'sources', 'settings'];
+/** Content files at the top of the locale's folder (content/en/strings.json: UI text). */
+export const ROOT_FILES = ['strings.json'];
 
 /**
  * The file of a page by id: "home" -> "pages/index.json", "people" -> "pages/people/index.json",
@@ -38,6 +40,7 @@ export const NAV = settingsFile('nav');
 export const ANIMATIONS = settingsFile('animations');
 export const PHOTOS = settingsFile('photos');
 export const REDIRECTS = settingsFile('redirects');
+export const STRINGS = 'strings.json';
 
 /**
  * A page file's id (pageFile backwards): "pages/index.json" -> "home",
@@ -62,7 +65,7 @@ const NAME = '[a-z0-9][a-z0-9_-]*';
 const SOURCE = new RegExp(`^sources/(${NAME})\\.json$`, 'i');
 const SCHEMA = new RegExp(`^sources/(${NAME})\\.schema\\.json$`, 'i');
 const CONTENT_FILE = new RegExp(
-  `^(?:(?:sources|settings)/${NAME}|sources/${NAME}\\.schema|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
+  `^(?:strings|(?:sources|settings)/${NAME}|sources/${NAME}\\.schema|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
   'i',
 );
 
@@ -110,5 +113,7 @@ export function contentFromFiles(files) {
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
     photos: files[PHOTOS] || {},
     redirects: Array.isArray(files[REDIRECTS]) ? files[REDIRECTS] : [],
+    // UI text of the templates (footer, menu): { footer: {...}, nav: {...} }
+    strings: files[STRINGS] || {},
   };
 }

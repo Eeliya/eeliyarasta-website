@@ -16,12 +16,12 @@
  *               width: 'half' shares a row with a half field next to it (short texts)
  *               list: the field is a list: a type for a list of values ('block'), or
  *                     { subkey: type } for a list of objects ({ title: 'text' }; a subkey
- *                     can also be 'source', a content/sources file, 'boolean' (a switch), or
+ *                     can also be 'source', a content/en/sources file, 'boolean' (a switch), or
  *                     { type, label, width?, options? }: a type with its label, 'select' with options
  *                     [[value, label]])
  *               item: a new item of the list (default: '' or the subkeys empty)
  *   config    its settings: [{ key, label, type, options?, empty? }]
- *               type: 'source' (a content/sources file) | 'select' (options [[value, label]])
+ *               type: 'source' (a content/en/sources file) | 'select' (options [[value, label]])
  *                     | 'text' | 'boolean'; every block also has config.enabled (on/off)
  *   defaults  a new block of this type (Add block)
  *   check(block)  optional: more problems than the fields' types (src/site/validate.js)

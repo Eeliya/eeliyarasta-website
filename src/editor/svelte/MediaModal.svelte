@@ -1,6 +1,6 @@
 <!--
   Media window: every photo the site can use, the ones uploaded to Cloudflare R2
-  (content/settings/photos.json) and the ones in media/ (the media manifest). Like the
+  (content/en/settings/photos.json) and the ones in media/ (the media manifest). Like the
   Pages and Sources windows: the header with where it is, the photos left (a grid, filtered
   by All / R2 / Local), the selected one right: a larger preview, its sizes, where the
   content uses it (click to go there) and its alt text, which belongs to the photo.

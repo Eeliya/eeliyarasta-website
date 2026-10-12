@@ -22,21 +22,18 @@
       "handle": "@eeliya.rasta",
       "url": "https://www.instagram.com/eeliya.rasta/"
     },
-    { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
-    { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
-  ],
-  "footer": {
-    "label": "Say hello",
-    "cta": "Let's make\nsomething.",
-    "note": "Shot on Fujifilm X100V. Built with Vite + GSAP.",
-    "toTop": "Back to top",
-    "columns": {
-      "social": { "title": "Social" },
-      "index": { "title": "Index" },
-      "contact": { "title": "Contact" },
-      "time": { "title": "Local time" }
+    {
+      "label": "YouTube",
+      "handle": "@eeliyarasta",
+      "url": "https://www.youtube.com/@eeliyarasta"
+    },
+    {
+      "label": "GitHub",
+      "handle": "Eeliya",
+      "url": "https://github.com/Eeliya"
     }
-  },
-  "nav": { "menu": "Menu", "close": "Close", "clock": "NL" },
-  "layout": { "contained": 96 }
+  ],
+  "layout": {
+    "contained": 96
+  }
 }

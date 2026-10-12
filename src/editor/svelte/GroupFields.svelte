@@ -5,7 +5,7 @@
 
     g         the group
     live      reactive store (live.svelte.js); bridge: the preview (../bridge.js)
-    sourceIds the files in content/sources/, for a list item's source
+    sourceIds the files in content/en/sources/, for a list item's source
     onsource  (file, item?, edit?): open the Source Explorer
     bindings  a block's: { binds(type), names, resolved(f) } for its fields' Source switch and
               {{name}} suggestions (BlockInspector.svelte, Field.svelte); null: none

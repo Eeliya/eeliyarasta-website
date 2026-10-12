@@ -15,6 +15,7 @@ import {
   PHOTOS,
   REDIRECTS,
   SITE,
+  STRINGS,
   TEMPLATE,
   isSlug,
   pageIdOf,
@@ -64,7 +65,7 @@ export function parseContent(text, file) {
       where = ` (line ${before.length}, column ${before.at(-1).length + 1})`;
     }
     throw new Error(
-      `content/${file}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
+      `content/en/${file}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
       { cause: err },
     );
   }
@@ -102,8 +103,6 @@ function checkSite(d) {
       lang: 'string',
       timezone: 'string',
       social: 'array',
-      footer: 'object',
-      nav: 'object',
       labels: 'object',
       forms: 'object',
     }),
@@ -390,6 +389,7 @@ export function checkContent(file, data) {
   if (file === SITE) return checkSite(data);
   if (file === ANIMATIONS) return checkAnimations(data);
   if (file === NAV) return checkNav(data);
+  if (file === STRINGS) return optional(data, { footer: 'object', nav: 'object' });
   if (file === PHOTOS) return checkPhotos(data);
   if (pageIdOf(file)) return checkPage(file, data);
   return [];
@@ -398,5 +398,5 @@ export function checkContent(file, data) {
 /** Throws "content/<file>: <problems>" when the data doesn't fit. */
 export function assertContent(file, data) {
   const problems = checkContent(file, data);
-  if (problems.length) throw new Error(`content/${file}: ${problems.join('; ')}`);
+  if (problems.length) throw new Error(`content/en/${file}: ${problems.join('; ')}`);
 }

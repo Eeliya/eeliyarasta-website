@@ -1,6 +1,6 @@
 /**
  * The header (logo, nav pill with click-to-open dropdowns, local time, menu toggle) and the
- * mobile menu, both from content/settings/nav.json "header": a list of items
+ * mobile menu, both from content/en/settings/nav.json "header": a list of items
  *
  *   { "label": "About", "page": "/about/" }                  a page, by its URL
  *   { "label": "Shop", "href": "https://…" }                 any other link (opens in a new tab)
@@ -8,11 +8,11 @@
  *     "children": [{ "label": "People", "page": "/people/", "items": "people" }, …] }
  *   { "label": "Projects", "page": "/projects/", "all": "All projects", "items": "projects" }
  *
- * An item with "children" (one level) or "items" (the items of a content/sources list) opens a
+ * An item with "children" (one level) or "items" (the items of a content/en/sources list) opens a
  * dropdown; "all" labels its link to the item's own page. Items of a source with pages of their
  * own (a [slug].json shows it) are listed with a photo and their photo count; other items (e.g.
  * projects) by title and kind, linking to their spot on the item's page, or to their own site
- * when "linkOut" is on. The menu, close and clock labels stay in settings/site.json "nav".
+ * when "linkOut" is on. The menu, close and clock labels are in strings.json "nav".
  */
 import {
   html,
@@ -30,7 +30,7 @@ import {
   warnOnce,
 } from '../helpers.js';
 import { schemaOf } from '../schemas.js';
-import { NAV, SITE } from '../files.js';
+import { NAV, STRINGS } from '../files.js';
 
 const caret =
   '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
@@ -40,7 +40,7 @@ const arrowNE = '<span class="arrow-ne" aria-hidden="true">↗</span>';
 export function linkOf(ctx, item) {
   if (item.page === undefined) return item.href || '#';
   if (!(ctx.routes || []).some((r) => r.path === item.page))
-    warnOnce(`content/${NAV}: "${item.label}" links to "${item.page}", which is no page`, 'nav');
+    warnOnce(`content/en/${NAV}: "${item.label}" links to "${item.page}", which is no page`, 'nav');
   return item.page;
 }
 
@@ -50,7 +50,7 @@ function itemsOf(ctx, item) {
   const list = ctx.sources?.[item.items];
   if (!Array.isArray(list)) {
     warnOnce(
-      `content/${NAV}: "${item.label}" lists source "${item.items}", which is missing`,
+      `content/en/${NAV}: "${item.label}" lists source "${item.items}", which is missing`,
       'nav',
     );
     return { list: [], pages: false };
@@ -154,7 +154,7 @@ function navItem(ctx, item, i) {
 /** Persistent header: logo, glass nav pill with click-to-open dropdowns, local time, mobile menu toggle. */
 export function header(ctx) {
   const { site } = ctx;
-  const nav = site.nav || {};
+  const nav = ctx.strings?.nav || {};
   const n = (key, fallback) => nav[key] ?? fallback;
   const items = Array.isArray(ctx.nav?.header) ? ctx.nav.header : [];
   return html`
@@ -168,9 +168,9 @@ export function header(ctx) {
     </nav>
 
     <div class="header__right">
-      <span class="header__clock"><span class="header__clock-dot"></span><span${ed(SITE, ['nav', 'clock'])}>${esc(nav.clock)}</span> <time data-clock="${esc(site.timezone)}">--:--</time></span>
+      <span class="header__clock"><span class="header__clock-dot"></span><span${ed(STRINGS, ['nav', 'clock'])}>${esc(nav.clock)}</span> <time data-clock="${esc(site.timezone)}">--:--</time></span>
       <button class="menu-toggle glass" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
-        <span class="menu-toggle__label" data-open-label="${esc(n('close', 'Close'))}"><span${ed(SITE, ['nav', 'menu'])}>${esc(n('menu', 'Menu'))}</span></span>
+        <span class="menu-toggle__label" data-open-label="${esc(n('close', 'Close'))}"><span${ed(STRINGS, ['nav', 'menu'])}>${esc(n('menu', 'Menu'))}</span></span>
         <span class="menu-toggle__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
     </div>

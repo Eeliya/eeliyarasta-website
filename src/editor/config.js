@@ -8,6 +8,6 @@ import { FOLDERS } from '../site/files.js';
 export default {
   owner: 'Eeliya',
   repo: 'eeliyarasta-website',
-  contentDir: 'content',
+  contentDir: 'content/en',
   folders: FOLDERS,
 };

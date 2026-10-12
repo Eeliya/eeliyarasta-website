@@ -1,5 +1,5 @@
 <!--
-  Source Explorer: the lists in content/sources/ (people, places, projects, ...). It starts on
+  Source Explorer: the lists in content/en/sources/ (people, places, projects, ...). It starts on
   the files with their item counts; click one to enter it: its items on the left, the
   selected item's fields on the right, Back returns to the files. ContentPanel.svelte calls
   open() from its Sources button (the files), and from a grid's Source edit button or a click

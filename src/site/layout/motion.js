@@ -1,6 +1,6 @@
 /**
  * Block motion: a block's `motion` picks an animation of the library
- * (content/settings/animations.json, `presets`) and may set its own timing:
+ * (content/en/settings/animations.json, `presets`) and may set its own timing:
  *
  *   "motion": { "anim": "grid-reveal", "delay": 0.3, "trigger": "load" }
  *
@@ -68,7 +68,7 @@ export function motionProblems(content, { pageFile, files = null } = {}) {
       (s?.blocks || []).forEach((b, j) => {
         const anim = b?.motion?.anim;
         if (typeof anim !== 'string') return;
-        const where = `content/${file}: section ${at + 1}, block ${j + 1} (${b.type})`;
+        const where = `content/en/${file}: section ${at + 1}, block ${j + 1} (${b.type})`;
         const p = presets[anim];
         if (!p) out.push({ file, message: `${where}: unknown animation "${anim}"` });
         else if (!BLOCK_ANIM_TYPES.includes(p.type))

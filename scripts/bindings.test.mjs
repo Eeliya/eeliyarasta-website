@@ -241,12 +241,12 @@ test('Save refuses bindings that do not fit the schema', () => {
     'sources/people.json',
     'sources/people.schema.json',
   ]) {
-    fs.mkdirSync(path.dirname(path.join(root, 'content', f)), { recursive: true });
-    fs.copyFileSync(path.join('content', f), path.join(root, 'content', f));
+    fs.mkdirSync(path.dirname(path.join(root, 'content/en', f)), { recursive: true });
+    fs.copyFileSync(path.join('content/en', f), path.join(root, 'content/en', f));
   }
   const F = 'pages/x/index.json';
-  fs.mkdirSync(path.join(root, 'content/pages/x'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'content', F), '{}');
+  fs.mkdirSync(path.join(root, 'content/en/pages/x'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'content/en', F), '{}');
   const ids = new Set();
   const page = (title) => ({
     sections: [
@@ -263,8 +263,8 @@ test('Save refuses bindings that do not fit the schema', () => {
   // a {{name}} the source doesn't have only warns (the build), so it saves
   assert.equal(save(root, { [F]: page('{{nope}}') }).status, 200);
   // a schema change that breaks a saved page's binding is refused too
-  const schema = JSON.parse(fs.readFileSync(path.join(root, 'content/sources/people.schema.json')));
-  fs.writeFileSync(path.join(root, 'content', F), JSON.stringify(page({ bind: 'role' })));
+  const schema = JSON.parse(fs.readFileSync(path.join(root, 'content/en/sources/people.schema.json')));
+  fs.writeFileSync(path.join(root, 'content/en', F), JSON.stringify(page({ bind: 'role' })));
   const without = { ...schema, fields: schema.fields.filter((f) => f.key !== 'role') };
   assert.equal(save(root, { 'sources/people.schema.json': without }).status, 400);
 });

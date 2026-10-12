@@ -200,7 +200,7 @@ export function bindingProblems(content, { types, pageFile, files = null }) {
       (Array.isArray(s?.blocks) ? s.blocks : []).forEach((b, j) => {
         const t = types[b?.type];
         if (!t || !isObject(b)) return;
-        const where = `content/${file} (sections/${at}/blocks/${j})`;
+        const where = `content/en/${file} (sections/${at}/blocks/${j})`;
         const problem = (level, msg) => out.push({ level, message: `${where}: ${msg}` });
         let source = pageSource;
         if (isObject(b.item)) {

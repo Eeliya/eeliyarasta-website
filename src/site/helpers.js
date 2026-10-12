@@ -84,7 +84,7 @@ export const itemSlug = (item, schema) => {
 
 /**
  * URL of a source item's page, from the routes (ctx.routes): the template route of its
- * source (content/pages/<folder>/[slug].json) or the fixed page that replaced it.
+ * source (content/en/pages/<folder>/[slug].json) or the fixed page that replaced it.
  * itemHref(ctx, 'people', item) -> "/people/noor-vermeer/"; "#" (and a warning) when no
  * template shows that source.
  */
@@ -135,7 +135,7 @@ export function warnOnce(msg, tag = 'photos') {
  * Sizes of a photo, the same shape for both kinds: { src, srcset: [{ url, w }], width, height,
  * color, lqip }, or null when there are none (a full URL, or a key missing from photos.json).
  *   media/ photos: the generated manifest (.generated/media.json, scripts/images.mjs)
- *   R2 photos:     content/settings/photos.json (written by the upload), keys made URLs here
+ *   R2 photos:     content/en/settings/photos.json (written by the upload), keys made URLs here
  */
 export function photoOf(ctx, src) {
   if (!src || isExternal(src)) return null;
@@ -143,7 +143,7 @@ export function photoOf(ctx, src) {
   if (local) return local;
   const r2 = ctx.photos?.[src];
   if (!r2?.srcset) {
-    warnOnce(`"${src}" is not in media/ or content/settings/photos.json: plain <img>, no sizes`);
+    warnOnce(`"${src}" is not in media/ or content/en/settings/photos.json: plain <img>, no sizes`);
     return null;
   }
   if (!ctx.site?.mediaUrl)
@@ -166,7 +166,7 @@ export function photoOf(ctx, src) {
 export const firstPhotos = (i) => ({ priority: i === 0, loading: i < 3 ? 'eager' : 'lazy' });
 
 /**
- * A photo's alt text: it belongs to the photo, in content/settings/photos.json ({ alt } per
+ * A photo's alt text: it belongs to the photo, in content/en/settings/photos.json ({ alt } per
  * media/ path or R2 key), not to the page using it. Missing: '' and a build warning.
  */
 export function altOf(ctx, src) {
@@ -174,7 +174,7 @@ export function altOf(ctx, src) {
   if (typeof alt === 'string' && alt.trim()) return alt;
   if (src && !isExternal(src))
     warnOnce(
-      `"${src}" has no alt text (Media window in the editor, content/settings/photos.json)`,
+      `"${src}" has no alt text (Media window in the editor, content/en/settings/photos.json)`,
       'alt',
     );
   return '';

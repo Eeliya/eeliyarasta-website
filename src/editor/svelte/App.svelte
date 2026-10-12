@@ -185,7 +185,7 @@
           icon="database"
           iconOnly
           label="Sources"
-          title="Sources: people, places, projects (the lists in content/sources/)"
+          title="Sources: people, places, projects (the lists in content/en/sources/)"
           onclick={openSources}
         />
         <Button

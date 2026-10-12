@@ -6,7 +6,7 @@
  *  build → after Vite bundles the client (index.html → dist/index.html with hashed
  *          JS/CSS), every route is rendered into that shell and written to
  *          dist/<route>/index.html, plus 404.html, sitemap.xml, robots.txt and _redirects
- *          (content/settings/redirects.json, src/site/redirects.js).
+ *          (content/en/settings/redirects.json, src/site/redirects.js).
  *
  * index.html is the shell; it contains two markers: <!--ssr-head--> and <!--ssr-body-->.
  *
@@ -58,7 +58,7 @@ export default function staticSite() {
       // The editor's unsaved edits: dev pages render from them (POST /__editor/draft)
       const drafts = {};
       // Content and media manifest changes re-render pages (see handleHotUpdate).
-      server.watcher.add([path.join(root, 'content'), path.join(root, '.generated')]);
+      server.watcher.add([path.join(root, 'content/en'), path.join(root, '.generated')]);
 
       // Editor endpoints (dev only, localhost only).
       server.middlewares.use(

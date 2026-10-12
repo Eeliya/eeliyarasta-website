@@ -98,16 +98,16 @@ test('the library has the scroll animations and every default and page animation
 
 test('save refuses a block with an unknown animation', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'motion-'));
-  fs.cpSync('content', path.join(root, 'content'), { recursive: true });
+  fs.cpSync('content/en', path.join(root, 'content/en'), { recursive: true });
   const F = 'pages/index.json';
-  const page = JSON.parse(fs.readFileSync(path.join('content', F), 'utf8'));
+  const page = JSON.parse(fs.readFileSync(path.join('content/en', F), 'utf8'));
   const blk = page.sections.flatMap((s) => s.blocks).find((b) => b.motion);
-  const before = fs.readFileSync(path.join(root, 'content', F), 'utf8');
+  const before = fs.readFileSync(path.join(root, 'content/en', F), 'utf8');
   blk.motion = { anim: 'no-such-animation' };
   const res = save(root, { [F]: page });
   assert.equal(res.status, 400);
   assert.match(res.body.error, /unknown animation "no-such-animation"/);
-  assert.equal(fs.readFileSync(path.join(root, 'content', F), 'utf8'), before);
+  assert.equal(fs.readFileSync(path.join(root, 'content/en', F), 'utf8'), before);
   // removing the animation from the library breaks the pages that use it
   const cfg = structuredClone(content.animations);
   const used = page.sections.flatMap((s) => s.blocks).find((b) => b.motion && b !== blk);

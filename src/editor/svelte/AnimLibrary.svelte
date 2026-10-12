@@ -1,5 +1,5 @@
 <!--
-  Motion tab, Animations: the animations in content/settings/animations.json ("presets"
+  Motion tab, Animations: the animations in content/en/settings/animations.json ("presets"
   there), inline in the panel so the preview stays in view while editing. It starts on the
   list of animations, each with its type and how many blocks and elements use it; click one to
   edit its own values, Back returns to the list. The only place that defines what an animation
@@ -60,7 +60,7 @@
       />
     {/if}
     <h3 class="lib__title">{name || 'Animations'}</h3>
-    <span class="lib__path">content/settings/animations.json</span>
+    <span class="lib__path">content/en/settings/animations.json</span>
   </header>
 
   {#if !name}

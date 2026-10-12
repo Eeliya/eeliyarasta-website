@@ -1,5 +1,5 @@
 /**
- * Source schemas: content/sources/<id>.schema.json, next to the list it describes
+ * Source schemas: content/en/sources/<id>.schema.json, next to the list it describes
  * (sources/people.json). A small format of its own, shaped like the block registry's
  * field definitions (./blocks/index.js):
  *
@@ -171,7 +171,7 @@ function checkValue(f, v, photoExists) {
   if (f.type === 'choice' && !f.options?.includes(v))
     return want(`one of ${f.options?.join(', ')}`);
   if (f.type === 'photo' && photoExists && !isExternal(v) && !photoExists(v))
-    return [`"${v}" is not a photo in media/ or content/settings/photos.json`];
+    return [`"${v}" is not a photo in media/ or content/en/settings/photos.json`];
   return [];
 }
 
@@ -208,14 +208,14 @@ export function checkItems(list, schema, { photoExists } = {}) {
 export const photoChecker = (media, photos) => (key) => !!(media?.[key] || photos?.[key]);
 
 /**
- * Every source's problems against its schema, for the build: ["content/sources/people.json:
+ * Every source's problems against its schema, for the build: ["content/en/sources/people.json:
  * item 2 (…): …"]. content: loadContent's (sources, schemas, media, photos).
  */
 export function checkSources(content) {
   const photoExists = photoChecker(content.media, content.photos);
   return Object.keys(content.sources || {}).flatMap((id) =>
     checkItems(content.sources[id], schemaOf(content, id), { photoExists }).map(
-      (p) => `content/sources/${id}.json: ${p}`,
+      (p) => `content/en/sources/${id}.json: ${p}`,
     ),
   );
 }

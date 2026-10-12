@@ -19,9 +19,9 @@
  *
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
- * Only existing JSON files in content/pages/, content/sources/ and content/settings/ can be
+ * Only existing JSON files in content/en/pages/, content/en/sources/ and content/en/settings/ can be
  * read or written (src/editor/config.js, src/site/files.js); Save never creates files: only
- * the Pages window does (POST /pages), and only page files under content/pages/.
+ * the Pages window does (POST /pages), and only page files under content/en/pages/.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,6 +36,7 @@ import {
   REDIRECTS,
   TEMPLATE,
   isContentFile,
+  ROOT_FILES,
   isSlug,
   pageFile,
   schemaFile,
@@ -85,6 +86,8 @@ export function editableFiles(root) {
       if (isContentFile(file) && file !== PHOTOS) files.push(file);
     }
   }
+  for (const file of ROOT_FILES)
+    if (fs.existsSync(path.join(root, CONTENT_DIR, file))) files.push(file);
   return new Set(files);
 }
 
@@ -100,9 +103,9 @@ const titleCase = (s) =>
     .join(' ');
 
 /**
- * The Pages window (src/editor/svelte/PagesModal.svelte): the pages in content/pages/. Every
+ * The Pages window (src/editor/svelte/PagesModal.svelte): the pages in content/en/pages/. Every
  * page is a folder, its URL, with its own file index.json inside; pages/index.json is home,
- * whose folder is content/pages/ itself. Ids as in src/site/files.js: "home", "people",
+ * whose folder is content/en/pages/ itself. Ids as in src/site/files.js: "home", "people",
  * "people/whatever", "people/[slug]". `parent` is the id of the page whose folder it is
  * about, '' for the root (the pages next to home's file).
  *
@@ -628,7 +631,10 @@ export async function contentStatus(root) {
   const branch = branchR.stdout.trim();
   const prefix = prefixR.stdout.trim();
   // Every JSON file in the editable folders, including deleted or new ones.
-  const rel = editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/**/*.json`);
+  const rel = [
+    ...editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/**/*.json`),
+    ...ROOT_FILES.map((f) => `${CONTENT_DIR}/${f}`),
+  ];
 
   const st = await git(root, [
     'status',

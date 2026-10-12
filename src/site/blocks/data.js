@@ -5,7 +5,7 @@ import { pathOfId } from '../routes.js';
 import { blocksOf } from '../layout/ids.js';
 
 /**
- * The list a block pulls from: content/sources/<source>.json. A missing file or one that
+ * The list a block pulls from: content/en/sources/<source>.json. A missing file or one that
  * isn't a top-level array warns and gives [] (the block renders empty).
  */
 export function sourceList(ctx, source) {

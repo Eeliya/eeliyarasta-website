@@ -1,5 +1,5 @@
 <!--
-  Settings > Menu: the menus of content/settings/nav.json (src/site/templates/header.js), a
+  Settings > Menu: the menus of content/en/settings/nav.json (src/site/templates/header.js), a
   Section each: Header (the nav pill and the mobile menu) and Footer (its Index column).
   Each item: its label, its link (a page of the site, or an external URL), and in the header
   a dropdown: links one level deep, or the items of a source. Every change is one undo step;

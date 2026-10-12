@@ -36,7 +36,7 @@
   // edit: the field's data-edit ("file#/pointer"), also on the label so others can find it.
   // type: 'text' | 'words' | 'number' | 'date' | 'block' | 'image' | 'boolean' | 'select'.
   // onvalue(value) gets every valid input.
-  // source: the content/sources/ file the value comes from ('' for the page's own), with
+  // source: the content/en/sources/ file the value comes from ('' for the page's own), with
   // onsource() opening it.
   let {
     edit,

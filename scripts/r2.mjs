@@ -18,7 +18,7 @@
  * deletePhoto removes every size of an uploaded photo from R2 and its photos.json entry (the
  * Media window's Delete, only for photos nothing uses).
  *
- * Sizes, placeholder and colour go into content/settings/photos.json (PHOTOS, files.js), keyed by
+ * Sizes, placeholder and colour go into content/en/settings/photos.json (PHOTOS, files.js), keyed by
  * that key, so the build renders srcset, width/height and the blurred placeholder without
  * downloading anything from R2. Publish commits it with the content.
  */

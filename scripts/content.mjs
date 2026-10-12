@@ -1,7 +1,7 @@
 /** Load all content files (+ the generated media manifest) into one object. Node only. */
 import fs from 'node:fs';
 import path from 'node:path';
-import { FOLDERS, contentFromFiles, isContentFile } from '../src/site/files.js';
+import { FOLDERS, ROOT_FILES, contentFromFiles, isContentFile } from '../src/site/files.js';
 import { assertContent, parseContent } from '../src/site/validate.js';
 
 const read = (file, fallback) =>
@@ -12,7 +12,7 @@ const read = (file, fallback) =>
  * mistake throws an error that names the file (and the line, for broken JSON).
  */
 export function readContentFile(root, file, { check = true } = {}) {
-  const data = parseContent(fs.readFileSync(path.join(root, 'content', file), 'utf8'), file);
+  const data = parseContent(fs.readFileSync(path.join(root, 'content/en', file), 'utf8'), file);
   if (check) assertContent(file, data);
   return data;
 }
@@ -49,7 +49,7 @@ export function walkJson(dir) {
 
 /** Every content file as { "pages/index.json": data, "pages/people/[slug].json": data, ... }. */
 export function readContentDir(root) {
-  const dir = path.join(root, 'content');
+  const dir = path.join(root, 'content/en');
   const files = {};
   for (const folder of FOLDERS) {
     for (const name of walkJson(path.join(dir, folder))) {
@@ -57,6 +57,8 @@ export function readContentDir(root) {
       if (isContentFile(file)) files[file] = readContentFile(root, file);
     }
   }
+  for (const file of ROOT_FILES)
+    if (fs.existsSync(path.join(dir, file))) files[file] = readContentFile(root, file);
   return files;
 }
 

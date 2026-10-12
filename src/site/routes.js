@@ -2,7 +2,7 @@
  * Every page of the site, derived from content. The prerender step writes one
  * static HTML file per route; the client router fetches those same files.
  *
- * Routes come from content/pages/: every page is a folder, its URL, with the page's own
+ * Routes come from content/en/pages/: every page is a folder, its URL, with the page's own
  * file index.json inside (page ids: "home", "people", "people/whatever", "people/[slug]"):
  *
  *   pages/index.json                   /                  home (pages/404/index.json is 404.html)
@@ -102,7 +102,7 @@ export function buildRoutes(content) {
   const exists = new Set(ids);
   const routes = [];
 
-  // Curtain text and transition of a page live in its own file, content/pages/<id>/index.json.
+  // Curtain text and transition of a page live in its own file, content/en/pages/<id>/index.json.
   const pageCurtain = (id, title) => ({
     curtain: curtainOf(pages[id]?.curtain, title),
     curtainEdit: curtainEditOf(pageFile(id), ['curtain']),

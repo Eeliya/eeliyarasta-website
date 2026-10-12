@@ -1,7 +1,7 @@
 /**
  * The layout engine: every page is a list of sections, each a grid of 120 square cells wide,
  * holding blocks
- * ("sections" in its file, content/pages/<page>/index.json or a template's [slug].json):
+ * ("sections" in its file, content/en/pages/<page>/index.json or a template's [slug].json):
  *
  *   { "id": "s-k3x9", "name": "Our people", "height": "fit", "width": "contained", "enabled": true,
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
@@ -313,7 +313,7 @@ export function headingNumbers(sections) {
 /** One block of section `at` (its index `j`), rendered with its grid area. */
 function renderBlock(ctx, route, file, at, j, block, numbers) {
   const t = BLOCK_TYPES[block?.type];
-  const where = `content/${file} (sections/${at}/blocks/${j})`;
+  const where = `content/en/${file} (sections/${at}/blocks/${j})`;
   if (!t) {
     warnOnce(`${where}: unknown block type "${block?.type}": skipped`, 'layout');
     return '';

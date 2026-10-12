@@ -290,13 +290,13 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'layout-'));
   for (const f of ['settings/site.json', 'settings/animations.json', 'pages/index.json']) {
-    fs.mkdirSync(path.dirname(path.join(root, 'content', f)), { recursive: true });
-    fs.copyFileSync(path.join('content', f), path.join(root, 'content', f));
+    fs.mkdirSync(path.dirname(path.join(root, 'content/en', f)), { recursive: true });
+    fs.copyFileSync(path.join('content/en', f), path.join(root, 'content/en', f));
   }
-  fs.mkdirSync(path.join(root, 'content/pages/test'));
-  fs.writeFileSync(path.join(root, 'content', F), '{}');
+  fs.mkdirSync(path.join(root, 'content/en/pages/test'));
+  fs.writeFileSync(path.join(root, 'content/en', F), '{}');
   assert.equal(save(root, { [F]: store.current[F] }).status, 200);
-  const saved = JSON.parse(fs.readFileSync(path.join(root, 'content', F), 'utf8'));
+  const saved = JSON.parse(fs.readFileSync(path.join(root, 'content/en', F), 'utf8'));
   assert.deepEqual(
     saved.sections.map((s) => s.blocks.length),
     [2, 1, 1],

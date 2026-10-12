@@ -1,5 +1,5 @@
 /**
- * Redirects: content/settings/redirects.json, a list of { from, to, status? } (status 301, the
+ * Redirects: content/en/settings/redirects.json, a list of { from, to, status? } (status 301, the
  * default, or 302). `from` is a path of the site ("/old/"), or a pattern for the item pages of
  * a template ("/old/:slug/"); `to` is a path ("/new/", "/new/:slug/") or a URL. The build writes
  * them to dist/_redirects (Cloudflare Pages and Netlify read it); the dev server ignores them.

@@ -4,7 +4,7 @@
  * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { NAV, SITE, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
+import { NAV, SITE, STRINGS, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
 import { BLOCK_TYPES } from '../../site/blocks/index.js';
@@ -31,7 +31,7 @@ export const SEO_SETTINGS = [
   ['lang', 'Language (<html lang>, e.g. en)', 'text'],
 ];
 
-/** Lists in content/sources/ (people, places, projects, ...). */
+/** Lists in content/en/sources/ (people, places, projects, ...). */
 export const isSource = (file) => sourceIdOf(file) !== null;
 
 /** "pages/index.json#/sections/0/blocks/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/blocks/0/title' } */
@@ -263,9 +263,11 @@ export function groupFor(store, { file, ptr }, page) {
     if (parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
     if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
   }
-  if (file === SITE) {
+  if (file === STRINGS) {
     if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
     if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
+  }
+  if (file === SITE) {
     if (parts[0] === 'social') return { id: 'social', title: 'Social links' };
     if (parts[0] === 'email' || parts[0] === 'location') return { id: 'footer', title: 'Footer' };
   }
@@ -302,10 +304,10 @@ function componentFields(store, id) {
   if (id === 'menu')
     return [
       ...labels('header'),
-      ...['menu', 'close', 'clock'].map((k) => [SITE, `/nav/${k}`, 'text']),
+      ...['menu', 'close', 'clock'].map((k) => [STRINGS, `/nav/${k}`, 'text']),
     ];
   return [
-    ...FOOTER.map(([ptr, type]) => [SITE, ptr, type]),
+    ...FOOTER.map(([ptr, type]) => [ptr.startsWith('/footer/') ? STRINGS : SITE, ptr, type]),
     ...labels('footer'),
     ...[0, 1, 2].flatMap((i) => [
       [SITE, `/social/${i}/label`, 'text'],
@@ -336,11 +338,12 @@ function fieldsOf(store, bridge, target) {
       );
   }
   // Page content only: the header and footer texts are edited under Menu / Footer.
-  const shared = ['nav', 'footer', 'social', 'email', 'location'];
+  const shared = ['social', 'email', 'location'];
   return bridge
     .editFields()
     .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
-    .filter((f) => f.file !== NAV && (f.file !== SITE || !shared.includes(parse(f.ptr)[0])))
+    .filter((f) => f.file !== NAV && f.file !== STRINGS)
+    .filter((f) => f.file !== SITE || !shared.includes(parse(f.ptr)[0]))
     .filter((f) => !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
 }
 

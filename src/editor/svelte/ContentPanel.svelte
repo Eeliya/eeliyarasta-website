@@ -64,7 +64,7 @@
   });
   const others = $derived(groups.filter((g) => !g.block));
   const open = $derived(file && groups.find((g) => g.block && g.id === ui.block));
-  // the files in content/sources/, for a list item's source
+  // the files in content/en/sources/, for a list item's source
   const sourceIds = $derived.by(() => {
     live.version;
     return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();

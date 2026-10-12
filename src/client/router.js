@@ -32,7 +32,7 @@ export function setPageCurtains(map) {
 
 /**
  * Curtain timings for navigating to `pathname`: the page's own, the global one from
- * content/settings/animations.json transitions.page.curtain, or null for none
+ * content/en/settings/animations.json transitions.page.curtain, or null for none
  * (see anim/curtain.js). Read on every navigation, so edits pushed by the editor apply
  * to the next transition.
  */

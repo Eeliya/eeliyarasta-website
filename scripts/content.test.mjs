@@ -21,33 +21,33 @@ function tree(files = {}) {
     ...files,
   };
   for (const [f, data] of Object.entries(all)) {
-    const file = path.join(root, 'content', f);
+    const file = path.join(root, 'content/en', f);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
   }
   return root;
 }
-const read = (root, f) => fs.readFileSync(path.join(root, 'content', f), 'utf8');
+const read = (root, f) => fs.readFileSync(path.join(root, 'content/en', f), 'utf8');
 
 test('broken JSON: the error names the file, line and column', () => {
   assert.throws(
     () => parseContent('{\n  "a": 1\n  "b": 2\n}', 'pages/about/index.json'),
-    /^Error: content\/pages\/about\/index\.json: invalid JSON, .* \(line 3, column 3\)$/,
+    /^Error: content\/en\/pages\/about\/index\.json: invalid JSON, .* \(line 3, column 3\)$/,
   );
   const root = tree({ 'sources/places.json': '[{ "name": "A" },\n]' });
-  assert.throws(() => loadContent(root), /content\/sources\/places\.json: invalid JSON/);
+  assert.throws(() => loadContent(root), /content\/en\/sources\/places\.json: invalid JSON/);
   // the editor's GET /content too
-  assert.throws(() => readContentFiles(root), /content\/sources\/places\.json: invalid JSON/);
+  assert.throws(() => readContentFiles(root), /content\/en\/sources\/places\.json: invalid JSON/);
 });
 
 test('shapes: the build stops on a wrong shape and names the file', () => {
   assert.throws(
     () => loadContent(tree({ 'settings/animations.json': [] })),
-    /content\/settings\/animations\.json: must be an object, not an array/,
+    /content\/en\/settings\/animations\.json: must be an object, not an array/,
   );
   assert.throws(
-    () => loadContent(tree({ 'settings/site.json': { ...site, footer: 'x' } })),
-    /content\/settings\/site\.json: "footer" must be an object, not a string/,
+    () => loadContent(tree({ 'strings.json': { footer: 'x' } })),
+    /content\/en\/strings\.json: "footer" must be an object, not a string/,
   );
   // optional keys may be missing
   assert.equal(loadContent(tree()).site.name, 'Site');
@@ -76,7 +76,7 @@ test('save: rejects bad shapes and writes nothing', () => {
   const before = read(root, 'pages/index.json');
   const r = save(root, { 'pages/index.json': { title: 'New' }, 'settings/animations.json': [] });
   assert.equal(r.status, 400);
-  assert.match(r.body.error, /content\/settings\/animations\.json: must be an object/);
+  assert.match(r.body.error, /content\/en\/settings\/animations\.json: must be an object/);
   assert.equal(read(root, 'pages/index.json'), before);
   assert.equal(save(root, { 'settings/nope.json': {} }).status, 400);
   assert.equal(save(root, { '../package.json': {} }).status, 400);
@@ -92,7 +92,7 @@ test('save: writes every file, formatted, with no temporary files left', () => {
   assert.deepEqual(r.body.written, ['pages/index.json']);
   assert.equal(writes, 1);
   assert.equal(read(root, 'pages/index.json'), '{ "title": "New" }\n');
-  assert.deepEqual(fs.readdirSync(path.join(root, 'content', 'pages')), ['index.json']);
+  assert.deepEqual(fs.readdirSync(path.join(root, 'content/en', 'pages')), ['index.json']);
 });
 
 test('writeFileAtomic: replaces the file in one step; a failed write keeps the old file', () => {
@@ -127,7 +127,7 @@ test('site.json with only name and url builds every page', async () => {
 test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async () => {
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
-  const options = await prettier.resolveConfig('content/pages/index.json');
+  const options = await prettier.resolveConfig('content/en/pages/index.json');
   const cases = [
     [],
     [1, 2],
@@ -156,11 +156,11 @@ test('formatJSON (what Save writes) is Prettier-clean for every content file', a
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
   const { readContentDir } = await import('./content.mjs');
-  const options = await prettier.resolveConfig('content/pages/index.json');
+  const options = await prettier.resolveConfig('content/en/pages/index.json');
   for (const [file, data] of Object.entries(readContentDir('.'))) {
     const text = formatJSON(data);
     const pretty = await prettier.format(text, { ...options, parser: 'json' });
-    assert.equal(text, pretty, `content/${file}`);
+    assert.equal(text, pretty, `content/en/${file}`);
   }
 });
 
@@ -227,9 +227,9 @@ test('alt migration: no alt in pages or sources, every photo they use has one in
       }
   };
   for (const dir of ['pages', 'sources'])
-    for (const f of fs.readdirSync(path.join('content', dir), { recursive: true }))
+    for (const f of fs.readdirSync(path.join('content/en', dir), { recursive: true }))
       if (f.endsWith('.json'))
-        walk(JSON.parse(fs.readFileSync(path.join('content', dir, f), 'utf8')), `${dir}/${f}`);
+        walk(JSON.parse(fs.readFileSync(path.join('content/en', dir, f), 'utf8')), `${dir}/${f}`);
   assert.ok(used.length > 20);
   for (const src of used) assert.ok(photos[src]?.alt, `${src} has no alt in photos.json`);
 });

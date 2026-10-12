@@ -10,7 +10,7 @@ import { rowsOf } from '../src/site/layout/index.js';
 function site() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pages-'));
   const put = (f, data) => {
-    const file = path.join(root, 'content', f);
+    const file = path.join(root, 'content/en', f);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
@@ -23,7 +23,7 @@ function site() {
   put('sources/people.json', [{ slug: 'noor' }]);
   return root;
 }
-const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content', f), 'utf8'));
+const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 const pages = (root) => [...editableFiles(root)].filter((f) => f.startsWith('pages/'));
 
 test('add: a folder with its index.json, valid slugs only, no overwrites', () => {

@@ -45,7 +45,7 @@
     ...(saveFirst ? dirty : [])
       .filter((name) => !pub.files.some((p) => p.name === name))
       .map((name) => ({
-        path: `content/${name}`,
+        path: `content/en/${name}`,
         status: 'modified',
         changes: changes(name),
         note: ' · unsaved, saved first',

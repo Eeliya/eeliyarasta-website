@@ -1,0 +1,27 @@
+{
+  "footer": {
+    "label": "Say hello",
+    "cta": "Let's make\nsomething.",
+    "note": "Shot on Fujifilm X100V. Built with Vite + GSAP.",
+    "toTop": "Back to top",
+    "columns": {
+      "social": {
+        "title": "Social"
+      },
+      "index": {
+        "title": "Index"
+      },
+      "contact": {
+        "title": "Contact"
+      },
+      "time": {
+        "title": "Local time"
+      }
+    }
+  },
+  "nav": {
+    "menu": "Menu",
+    "close": "Close",
+    "clock": "NL"
+  }
+}

@@ -128,8 +128,8 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
     'item 1 (Ann): "Kind" must be one of model, band',
     'item 1 (Ann): "Link" must be a link (https://…, /path/ or mailto:…)',
     'item 1 (Ann): "Shot on" must be a date (YYYY-MM-DD)',
-    'item 1 (Ann): "Photo" "missing.jpg" is not a photo in media/ or content/settings/photos.json',
-    'item 1 (Ann): "Photos" photo 2 "gone.jpg" is not a photo in media/ or content/settings/photos.json',
+    'item 1 (Ann): "Photo" "missing.jpg" is not a photo in media/ or content/en/settings/photos.json',
+    'item 1 (Ann): "Photos" photo 2 "gone.jpg" is not a photo in media/ or content/en/settings/photos.json',
     'item 1 (Ann): "Placeholder" must be true or false',
     'item 2: "Name" is required',
     'item 2: another item has the slug "ann"',
@@ -150,7 +150,7 @@ test('checkSources: every source, with its schema or inferred; photos from media
     media: {},
   };
   assert.deepEqual(checkSources(content), [
-    'content/sources/people.json: item 1 (A): "Photo" "people/a.jpg" is not a photo in media/ or content/settings/photos.json',
+    'content/en/sources/people.json: item 1 (A): "Photo" "people/a.jpg" is not a photo in media/ or content/en/settings/photos.json',
   ]);
   content.media = { 'people/a.jpg': {} };
   assert.deepEqual(checkSources(content), []);
@@ -204,7 +204,7 @@ test('newItemOf: every field empty, a unique slug and title', () => {
 
 test('save: a source that breaks its schema is not written', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'schemas-'));
-  const dir = path.join(root, 'content', 'sources');
+  const dir = path.join(root, 'content/en', 'sources');
   fs.mkdirSync(dir, { recursive: true });
   const people = [{ slug: 'a', name: 'A', year: 2024 }];
   fs.writeFileSync(path.join(dir, 'people.json'), JSON.stringify(people));

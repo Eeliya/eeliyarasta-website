@@ -1,5 +1,5 @@
 <!--
-  Pages window: the pages in content/pages/. Every page is a folder, its URL, with its own
+  Pages window: the pages in content/en/pages/. Every page is a folder, its URL, with its own
   file index.json inside (src/site/routes.js); the root is home's folder. Like the Source
   Explorer: the breadcrumb under the title is the URL of the folder shown; the list has its
   own page first (the row "/"), then the pages in it (click to enter), then its [slug] page;
@@ -89,7 +89,7 @@
     })),
   ]);
   // a page's folder in content/
-  const pathOf = (id) => `content/pages/${id === 'home' ? '' : `${id}/`}`;
+  const pathOf = (id) => `content/en/pages/${id === 'home' ? '' : `${id}/`}`;
 
   // the add form: a name from the title, unless typed
   const slug = $derived(newName || slugify(newTitle));

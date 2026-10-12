@@ -19,7 +19,7 @@ import { checkContent } from '../src/site/validate.js';
 function site(redirects = []) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'redirects-'));
   const put = (f, data) => {
-    const file = path.join(root, 'content', f);
+    const file = path.join(root, 'content/en', f);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
@@ -52,7 +52,7 @@ function page(block) {
   const pos = { col: 1, span: 24, row: 1, rows: 1 };
   return { sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }] };
 }
-const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content', f), 'utf8'));
+const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 
 test('rename: every path of the folder redirects (items by pattern), links follow', () => {
   const root = site();

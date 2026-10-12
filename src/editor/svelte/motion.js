@@ -3,7 +3,7 @@
  * In the editor an "animation" is what animations.json (and the code here) calls a preset.
  * A block's values (blockModel): its `motion` in its page file (the animation and its own
  * timing, src/site/layout/motion.js), then the animation's in the library.
- * A data-anim element's values live at one of these layers of content/settings/animations.json:
+ * A data-anim element's values live at one of these layers of content/en/settings/animations.json:
  *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
  *   target  -> targets["<target>"]               (every element with that data-anim, "All")
  *   preset  -> presets["<animation>"]            (the animation's own values: the library)

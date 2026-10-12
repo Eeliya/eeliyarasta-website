@@ -62,7 +62,7 @@ export const render = ({ path, file, data, ids }) =>
   });
 
 /**
- * Add, rename or delete pages and folders in content/pages/ (POST /__editor/pages, see
+ * Add, rename or delete pages and folders in content/en/pages/ (POST /__editor/pages, see
  * pagesOp in scripts/editor-server.mjs): { op: 'add', parent, name, title }, ...
  * Resolves to { id, created, removed } (content file names).
  */
