@@ -15,6 +15,7 @@
   import AnimLibrary from './AnimLibrary.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import Button from './Button.svelte';
+  import Tabs from './Tabs.svelte';
   import CurtainSection from './CurtainSection.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
@@ -132,17 +133,13 @@
   {#if !gsap}
     <p class="hint">Waiting for the preview…</p>
   {:else}
-    <div class="seg mtabs" role="tablist" aria-label="Motion">
-      {#each TABS as [lib, label] (label)}
-        <button
-          type="button"
-          role="tab"
-          aria-selected={ui.library.open === lib}
-          class={['seg__btn', ui.library.open === lib && 'is-active']}
-          onclick={() => (ui.library.open = lib)}>{label}</button
-        >
-      {/each}
-    </div>
+    <Tabs
+      class="mtabs"
+      label="Motion"
+      tabs={TABS}
+      value={ui.library.open}
+      onpick={(lib) => (ui.library.open = lib)}
+    />
     {#if ui.library.open}
       <AnimLibrary {live} {bridge} {cfg} {items} {sections} {gsap} />
     {:else if picks}
@@ -229,7 +226,7 @@
 
 <style lang="scss">
   // Elements | Animations, above everything else in the tab
-  .mtabs {
+  :global(.mtabs) {
     margin-bottom: var(--space-4);
   }
 

@@ -15,6 +15,7 @@
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
+  import Tabs from './Tabs.svelte';
   import { ui } from './ui.svelte.js';
   import {
     media,
@@ -299,18 +300,14 @@
 
   <nav class="md-list" aria-label="Photos">
     <div class="row md-list__head">
-      <div class="seg md-filter" role="group" aria-label="Show">
-        {#each FILTERS as [value, label] (value)}
-          <button
-            type="button"
-            class={['seg__btn', ui.media.filter === value && 'is-active']}
-            aria-pressed={ui.media.filter === value}
-            onclick={() => (ui.media.filter = value)}
-          >
-            {label}
-          </button>
-        {/each}
-      </div>
+      <Tabs
+        class="md-filter"
+        role="group"
+        label="Show"
+        tabs={FILTERS}
+        value={ui.media.filter}
+        onpick={(v) => (ui.media.filter = v)}
+      />
       <Button
         size="small"
         icon="upload"
@@ -486,10 +483,6 @@
   .md-list__head {
     justify-content: space-between;
     padding: 0 0 var(--space-3);
-  }
-
-  .md-filter {
-    width: 192px;
   }
 
   .md-grid {

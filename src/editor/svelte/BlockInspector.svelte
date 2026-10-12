@@ -16,6 +16,7 @@
   import Button from './Button.svelte';
   import GroupFields from './GroupFields.svelte';
   import ItemPicker from './ItemPicker.svelte';
+  import Tabs from './Tabs.svelte';
   import { schemaFor, itemName } from './source-items.js';
   import { TEMPLATE, sourceFile } from '../../site/files.js';
   import { itemSlug } from '../../site/helpers.js';
@@ -139,61 +140,59 @@
     </span>
   </div>
 
-  <div class="seg tabs" role="tablist" aria-label="Block">
-    {#each TABS as [id, label] (id)}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={ui.blockTab === id}
-        class={['seg__btn', ui.blockTab === id && 'is-active']}
-        onclick={() => (ui.blockTab = id)}>{label}</button
-      >
-    {/each}
-  </div>
+  <Tabs
+    class="card__tabs"
+    label="Block"
+    tabs={TABS}
+    value={ui.blockTab}
+    onpick={(id) => (ui.blockTab = id)}
+  />
 
-  {#if ui.blockTab === 'layout'}
-    <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
-  {:else if ui.blockTab === 'motion'}
-    {#key blockEl}
-      <BlockMotion
-        {live}
-        {bridge}
-        gsap={bridge.api?.gsap}
-        cfg={live.current(ANIMATIONS)}
-        file={g.file}
-        {at}
-        {j}
-        el={blockEl}
-        {onlibrary}
-        onpart={onmotion}
-      />
-    {/key}
-  {:else}
-    <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
-    {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
-      <div class="opts">
-        <ItemPicker
-          store={live.store}
-          value={ref}
-          changed={live.changed(g.file, `${base}/item`)}
-          {sourceIds}
-          {onsource}
-          none={template ? "This page's item" : 'None'}
-          itemsOf={(id) => {
-            live.version;
-            const list = live.get(sourceFile(id), '/items');
-            return Array.isArray(list) ? list : [];
-          }}
-          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
-          onpick={setItem}
+  <div class="card__body">
+    {#if ui.blockTab === 'layout'}
+      <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
+    {:else if ui.blockTab === 'motion'}
+      {#key blockEl}
+        <BlockMotion
+          {live}
+          {bridge}
+          gsap={bridge.api?.gsap}
+          cfg={live.current(ANIMATIONS)}
+          file={g.file}
+          {at}
+          {j}
+          el={blockEl}
+          {onlibrary}
+          onpart={onmotion}
         />
-      </div>
+      {/key}
+    {:else}
+      <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
+      {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
+        <div class="opts">
+          <ItemPicker
+            store={live.store}
+            value={ref}
+            changed={live.changed(g.file, `${base}/item`)}
+            {sourceIds}
+            {onsource}
+            none={template ? "This page's item" : 'None'}
+            itemsOf={(id) => {
+              live.version;
+              const list = live.get(sourceFile(id), '/items');
+              return Array.isArray(list) ? list : [];
+            }}
+            nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
+            onpick={setItem}
+          />
+        </div>
+      {/if}
+      <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
+      {#if !g.fields.length && !g.config?.length}
+        <p class="hint small">No texts or settings in this block.</p>
+      {/if}
     {/if}
-    <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
-    {#if !g.fields.length && !g.config?.length}
-      <p class="hint small">No texts or settings in this block.</p>
-    {/if}
-  {/if}
+  </div>
 </div>
 
 <style lang="scss">
@@ -226,8 +225,9 @@
     }
   }
 
+  // the side padding is on its parts, so the tabs' line runs edge to edge
   .card {
-    padding: var(--space-3);
+    padding: var(--space-3) 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);
   }
@@ -238,6 +238,7 @@
     align-items: center;
     gap: var(--space-2);
     margin-bottom: var(--space-3);
+    padding-inline: var(--space-3);
   }
 
   .title {
@@ -256,8 +257,12 @@
     }
   }
 
-  .tabs {
+  .card :global(.card__tabs) {
     margin-bottom: var(--space-4);
+  }
+
+  .card__body {
+    padding-inline: var(--space-3);
   }
 
   // the item: its source field (ItemPicker.svelte)
