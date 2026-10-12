@@ -9,7 +9,8 @@
  * drop line, before or after row j), or null: nothing moves (its own place, or the pointer is
  * over no section's blocks: between cards, over the settings).
  */
-export const SLACK = 4; // px around a blocks area that still count as over it
+// px: around a blocks area that still count as over it, and how far a press moves to be a drag
+export const SLACK = 4;
 
 export function dropTarget(lists, from, y) {
   const list = lists.find((l) => y >= l.top - SLACK && y <= l.bottom + SLACK);

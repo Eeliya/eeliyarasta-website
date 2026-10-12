@@ -10,7 +10,7 @@
 -->
 <script>
   import { tick } from 'svelte';
-  import { dropTarget } from '../drag-target.js';
+  import { SLACK, dropTarget } from '../drag-target.js';
   import { locate } from '../locate.js';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
@@ -39,7 +39,7 @@
   // ---- a block's row dragged to another place (its own section's order, or another section):
   // it lifts and follows the pointer, a line shows where it lands; one undo step. A drag
   // isn't a click (no block opens). Alt+↑/↓ on a row moves it by one.
-  let drag = $state(null); // { id, at, j, y, dy, moving, over: { at, j, side } }
+  let drag = $state(null); // { id, at, j, y, dy, moving, over: { at, to, line }, lists, … }
   // the rows' places when it starts (the lifted row moves; its own place still counts)
   const listsNow = () =>
     [...document.querySelectorAll('[data-list]')].map((el) => {
@@ -54,43 +54,104 @@
         }),
       };
     });
+  // the sections and their blocks' ids: a drop only lands when they are as they were at the start
+  const shape = () => sections.map((s) => (s.blocks || []).map((b) => b.id).join(',')).join('|');
+  // the panel that scrolls the list (the nearest scrolling ancestor)
+  function scrollerOf(el) {
+    for (let n = el.parentElement; n; n = n.parentElement)
+      if (/(auto|scroll)/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight)
+        return n;
+    return document.scrollingElement;
+  }
+  const EDGE = 32; // px from the panel's top or bottom where a drag scrolls it
+  const SPEED = 12; // px per frame at the very edge
   // only its handle starts a drag
   function grab(e, id, at, j) {
     if (e.button !== 0) return;
     e.preventDefault();
-    drag = { id, at, j, y: e.clientY, dy: 0, moving: false, over: null, lists: listsNow() };
+    const scroller = scrollerOf(e.currentTarget);
+    drag = {
+      id,
+      at,
+      j,
+      y: e.clientY,
+      py: e.clientY,
+      dy: 0,
+      moving: false,
+      over: null,
+      lists: listsNow(),
+      shape: shape(),
+      scroller,
+      top0: scroller.scrollTop,
+      raf: 0,
+    };
     window.addEventListener('pointermove', follow);
     window.addEventListener('pointerup', drop, { once: true });
     window.addEventListener('pointercancel', cancel, { once: true });
-    window.addEventListener('keydown', escape);
+    window.addEventListener('keydown', escape, true);
+    scroller.addEventListener('scroll', place);
   }
-  function follow(e) {
-    const dy = e.clientY - drag.y;
-    if (!drag.moving && Math.abs(dy) < 4) return;
+  // where the pointer is on the rows as they were at the start: its y plus how far the panel scrolled
+  function place() {
+    if (!drag) return;
+    const scrolled = drag.scroller.scrollTop - drag.top0;
+    const dy = drag.py - drag.y + scrolled;
+    if (!drag.moving && Math.abs(dy) < SLACK) return;
     drag.moving = true;
     drag.dy = dy;
-    drag.over = dropTarget(drag.lists, drag, e.clientY);
+    drag.over = dropTarget(drag.lists, drag, drag.py + scrolled);
+  }
+  function follow(e) {
+    drag.py = e.clientY;
+    place();
+    if (drag.moving && !drag.raf) drag.raf = requestAnimationFrame(edge);
+  }
+  // near the panel's top or bottom edge: scroll it (faster the closer), every frame until away
+  function edge() {
+    if (!drag) return;
+    drag.raf = 0;
+    const s = drag.scroller;
+    const r =
+      s === document.scrollingElement ? { top: 0, bottom: innerHeight } : s.getBoundingClientRect();
+    const v =
+      drag.py < r.top + EDGE
+        ? -Math.ceil(((r.top + EDGE - drag.py) / EDGE) * SPEED)
+        : drag.py > r.bottom - EDGE
+          ? Math.ceil(((drag.py - r.bottom + EDGE) / EDGE) * SPEED)
+          : 0;
+    if (!v) return;
+    const before = s.scrollTop;
+    s.scrollTop += Math.max(-SPEED, Math.min(SPEED, v));
+    if (s.scrollTop !== before) drag.raf = requestAnimationFrame(edge);
   }
   function stop() {
     window.removeEventListener('pointermove', follow);
     window.removeEventListener('pointerup', drop);
     window.removeEventListener('pointercancel', cancel);
-    window.removeEventListener('keydown', escape);
+    window.removeEventListener('keydown', escape, true);
     const d = drag;
+    if (d) {
+      d.scroller.removeEventListener('scroll', place);
+      cancelAnimationFrame(d.raf);
+    }
     drag = null;
     return d;
   }
   const cancel = () => stop();
+  // Esc ends the drag before anything else hears it (capture: a panel or dialog stays open)
   function escape(e) {
     if (e.key !== 'Escape') return;
     e.preventDefault();
     e.stopPropagation();
     stop();
   }
-  // its own place (or no section's blocks under the pointer): nothing moves, no undo step
+  // its own place (or no section's blocks under the pointer): nothing moves, no undo step; the
+  // page changed under it (an undo, a redo): nothing moves either (the places are old)
   function drop() {
     const d = stop();
-    if (d?.moving && d.over) moveBlockTo(live.store, file, d.at, d.j, d.over.at, d.over.to);
+    if (!d?.moving || !d.over || d.shape !== shape()) return;
+    if (sections[d.at]?.blocks?.[d.j]?.id !== d.id) return;
+    moveBlockTo(live.store, file, d.at, d.j, d.over.at, d.over.to);
   }
   // the drop line's class on row j of section at
   const dropAt = (at, j) =>
@@ -277,6 +338,7 @@
               type="button"
               class="block__open"
               title="Open {label} (Alt+↑/↓ moves it)"
+              aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
               onclick={() => onopen(b.id)}
             >
               {label}
