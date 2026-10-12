@@ -80,8 +80,8 @@
     border-radius: 12px;
 
     &:first-of-type {
-      //border-top-color: transparent;
-      //padding-top: 0;
+      // border-top-color: transparent;
+      // padding-top: 0;
     }
   }
 
@@ -116,7 +116,7 @@
     z-index: 1;
     margin: -8px 0;
     padding: 8px 0;
-    //background: var(--bg-2);
+    // background: var(--bg-2);
   }
 
   // caret | title, with the name under the title
