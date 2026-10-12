@@ -132,8 +132,8 @@
     },
     "parallax": {
       "type": "parallax",
-      "speed": 10,
-      "scrub": true
+      "scrub": true,
+      "speedPct": 10
     },
     "scatter-drift": {
       "type": "scatter",
@@ -145,13 +145,13 @@
         "fromScale": 0.6
       },
       "drift": {
-        "amplitude": 14,
-        "rotation": 2.5,
-        "minDuration": 5,
-        "maxDuration": 9
+        "amplitudePx": 14,
+        "rotationDeg": 2.5,
+        "minDurationSec": 5,
+        "maxDurationSec": 9
       },
       "scroll": {
-        "distance": 55
+        "distanceVh": 55
       }
     },
     "hero-title": {
@@ -176,8 +176,8 @@
     },
     "hover-preview": {
       "type": "hover-preview",
-      "x": 72,
-      "glide": 0.45
+      "glideSec": 0.45,
+      "xPct": 72
     },
     "lines-up": {
       "type": "split",
@@ -346,12 +346,12 @@
   },
   "interactions": {
     "cardCycle": {
-      "interval": 0.75
+      "intervalSec": 0.75
     },
     "album": {
-      "wheelThreshold": 40,
-      "wheelLock": 0.9,
-      "dragThreshold": 50
+      "wheelThresholdPx": 40,
+      "wheelLockSec": 0.9,
+      "dragThresholdPx": 50
     }
   },
   "transitions": {

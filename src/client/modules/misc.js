@@ -5,7 +5,7 @@ import { scrollToTop } from '../scroll.js';
 
 export function cards(view) {
   if (!finePointer()) return null;
-  const interval = (interactions.cardCycle?.interval || 0.75) * 1000;
+  const interval = (interactions.cardCycle?.intervalSec || 0.75) * 1000;
   const off = [];
   view.querySelectorAll('[data-card-cycle]').forEach((card) => {
     const imgs = [...card.querySelectorAll('.acard__media img')];

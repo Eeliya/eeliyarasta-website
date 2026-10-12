@@ -35,6 +35,6 @@
     }
   ],
   "layout": {
-    "contained": 96
+    "containedCols": 96
   }
 }

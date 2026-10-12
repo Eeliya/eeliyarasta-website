@@ -279,7 +279,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
   renders it hidden (so the switch shows it again at once). A section has **no space above or below**: the
   space between sections is empty rows (cells: a block placed lower leaves rows above it), so
   it scales with the width like everything else (the side margins, `--pad`, stay).
-- **Contained width** (`site.json` `"layout": { "contained": 115 }`, Settings › Layout, 60–120):
+- **Contained width** (`site.json` `"layout": { "containedCols": 115 }`, Settings › Layout, 60–120):
   a contained section is that many columns of the full-width grid's cell (window width / 120)
   wide, centred, and never nearer the window's edges than the side margins (`--pad`). Its
   content is still the 120-column grid, its cells smaller, so blocks keep their columns and a
@@ -775,8 +775,8 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
     },
     "scatter-drift": {
       "type": "scatter",
-      "drift": { "amplitude": 14 },
-      "scroll": { "distance": 55 },
+      "drift": { "amplitudePx": 14 },
+      "scroll": { "distanceVh": 55 },
     },
   },
   "targets": {
@@ -787,6 +787,12 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
   "transitions": { "...": "page curtain, accent tween, album slide, menu" },
 }
 ```
+
+**Units in key names.** A number that isn't a GSAP property says its unit in its key:
+`containedCols`, `speedPct`, `amplitudePx`, `rotationDeg`, `minDurationSec`, `distanceVh`,
+`xPct`, `glideSec`, `intervalSec`, `wheelThresholdPx`, `wheelLockSec`, `dragThresholdPx`. GSAP's
+own keys (`duration`, `delay`, `stagger` in seconds, `x`/`y` in px, `yPercent`, `scale`,
+`autoAlpha`) keep GSAP's names and units.
 
 The page scrolls natively (`src/client/scroll.js`); every ScrollTrigger reads the window's
 scroll position.
@@ -1022,7 +1028,7 @@ once; **Replay** runs them again. Seconds are in the labels: `Duration (s) / eas
 `Delay (s)`, like the curtain's rows. The list shows how many blocks and elements on this page use each animation and which `data-anim` names
 use it on the site.
 
-Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `speed` in
+Older non-timing overrides on an element or `data-anim` name (e.g. a parallax `speedPct` in
 `targets`) are listed in a notice in the element view: **Move to animation** copies them into
 the animation (which changes it for every element using it), **Drop** removes them.
 

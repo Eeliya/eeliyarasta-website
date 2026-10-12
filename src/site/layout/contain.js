@@ -1,5 +1,5 @@
 /**
- * How wide a contained section is (site.json "layout": { "contained": N }): N columns of the
+ * How wide a contained section is (site.json "layout": { "containedCols": N }): N columns of the
  * full-width grid's cell (the window's width / 120), centred, but never nearer the window's
  * edges than the page's side margin (--pad). Its content is still a 120-column grid (its
  * cells as much smaller as it is narrower), so a block keeps its columns whatever N is: a
@@ -23,7 +23,7 @@ const padAt = (vw) => Math.min(40, Math.max(16, vw * 0.026));
 
 /** site.json's contained columns (the default when unset or invalid). */
 export function containedOf(site) {
-  const n = site?.layout?.contained;
+  const n = site?.layout?.containedCols;
   return Number.isInteger(n) && n >= CONTAINED_MIN && n <= COLS ? n : CONTAINED;
 }
 
@@ -40,14 +40,14 @@ export const layoutVars = (site) => {
 export function checkLayout(l) {
   if (l === undefined) return [];
   if (!l || typeof l !== 'object' || Array.isArray(l))
-    return ['"layout" must be an object { contained }'];
+    return ['"layout" must be an object { containedCols }'];
   const out = [];
-  const n = l.contained;
+  const n = l.containedCols;
   if (n !== undefined && !(Number.isInteger(n) && n >= CONTAINED_MIN && n <= COLS))
     out.push(
-      `"layout.contained" must be a whole number of columns from ${CONTAINED_MIN} to ${COLS}`,
+      `"layout.containedCols" must be a whole number of columns from ${CONTAINED_MIN} to ${COLS}`,
     );
   for (const k of Object.keys(l))
-    if (k !== 'contained') out.push(`"layout.${k}" is not a layout setting`);
+    if (k !== 'containedCols') out.push(`"layout.${k}" is not a layout setting`);
   return out;
 }

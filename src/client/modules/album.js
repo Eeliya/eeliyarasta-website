@@ -200,11 +200,11 @@ export function album(view) {
       e.preventDefault();
       if (locked) return;
       acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (Math.abs(acc) > (I.wheelThreshold || 40)) {
+      if (Math.abs(acc) > (I.wheelThresholdPx || 40)) {
         acc > 0 ? next() : prev();
         acc = 0;
         locked = true;
-        setTimeout(() => (locked = false), (I.wheelLock || 0.9) * 1000);
+        setTimeout(() => (locked = false), (I.wheelLockSec || 0.9) * 1000);
       }
     },
     { passive: false },
@@ -230,7 +230,7 @@ export function album(view) {
     startX = null;
     stage.classList.remove('is-dragging');
     const img = slides[index].querySelector('img');
-    if (Math.abs(dx) > (I.dragThreshold || 50)) dx < 0 ? next() : prev();
+    if (Math.abs(dx) > (I.dragThresholdPx || 50)) dx < 0 ? next() : prev();
     else gsap.to(img, { x: 0, duration: 0.6, ease: 'expo.out' });
   };
   on(stage, 'pointerup', end);

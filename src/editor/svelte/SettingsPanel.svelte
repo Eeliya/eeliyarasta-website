@@ -83,7 +83,7 @@
   });
   function setContained(value) {
     if (!Number.isInteger(value) || value < CONTAINED_MIN || value > 120) return;
-    set('layout/contained', value);
+    set('layout/containedCols', value);
   }
 
   function setStyle(k, key, value) {
@@ -187,11 +187,11 @@
     </p>
     <div class="fields">
       <Field
-        edit="{SITE}#/layout/contained"
+        edit="{SITE}#/layout/containedCols"
         label="Contained width (columns)"
         type="number"
         value={contained}
-        changed={live.changed(SITE, '/layout/contained')}
+        changed={live.changed(SITE, '/layout/containedCols')}
         onvalue={setContained}
       />
     </div>

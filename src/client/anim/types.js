@@ -149,7 +149,7 @@ function scrubWords(el, spec, ctx) {
 /** Scroll-scrubbed vertical parallax of an image inside an overflow:hidden box. */
 function parallax(el, spec, ctx) {
   if (ctx.reduce) return;
-  const speed = Number(spec.speed) || 10;
+  const speed = Number(spec.speedPct) || 10;
   for (const t of targetsOf(el, spec, ctx)) {
     gsap.set(t, { scale: 1 + (speed * 2.2) / 100 });
     gsap.fromTo(
@@ -201,10 +201,10 @@ function scatter(el, spec, { reduce }) {
     });
     // 2. endless drift
     gsap.to(item.querySelector('.scatter__drift'), {
-      x: rnd(-drift.amplitude, drift.amplitude),
-      y: rnd(-drift.amplitude, drift.amplitude),
-      rotation: rnd(-drift.rotation, drift.rotation),
-      duration: rnd(drift.minDuration, drift.maxDuration),
+      x: rnd(-drift.amplitudePx, drift.amplitudePx),
+      y: rnd(-drift.amplitudePx, drift.amplitudePx),
+      rotation: rnd(-drift.rotationDeg, drift.rotationDeg),
+      duration: rnd(drift.minDurationSec, drift.maxDurationSec),
       ease: 'sine.inOut',
       yoyo: true,
       repeat: -1,
@@ -212,7 +212,7 @@ function scatter(el, spec, { reduce }) {
     });
     // 3. scroll parallax by depth
     gsap.to(item, {
-      y: () => -window.innerHeight * (scroll.distance / 100) * depth,
+      y: () => -window.innerHeight * (scroll.distanceVh / 100) * depth,
       ease: 'none',
       scrollTrigger: {
         trigger: hero,
@@ -248,8 +248,8 @@ function heroTitle(el, spec, { reduce, onCleanup }) {
 
 /**
  * Image preview for a project list. It does not follow the pointer: it sits at a
- * fixed horizontal position over the list (`x`, % of the list width) and glides
- * vertically to the row being hovered (`glide` seconds).
+ * fixed horizontal position over the list (`xPct`, % of the list width) and glides
+ * vertically to the row being hovered (`glideSec` seconds).
  */
 function hoverPreview(el, spec, { reduce, onCleanup }) {
   const list = document.querySelector(`[data-project-list="${el.dataset.previewFor}"]`);
@@ -260,7 +260,7 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
   const imgs = [...el.querySelectorAll('img')];
   gsap.set(el, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.85 });
   gsap.set(imgs, { autoAlpha: 0 });
-  const glide = reduce ? 0 : Number(spec.glide) || 0;
+  const glide = reduce ? 0 : Number(spec.glideSec) || 0;
   const yTo = gsap.quickTo(el, 'y', { duration: glide, ease: 'power3' });
   const rows = [...list.querySelectorAll('[data-prow]')];
   let active = -1,
@@ -270,7 +270,7 @@ function hoverPreview(el, spec, { reduce, onCleanup }) {
   const anchor = (i) => {
     const lb = list.getBoundingClientRect();
     const hb = rows[i].querySelector('.prow__head').getBoundingClientRect();
-    return { x: lb.left + lb.width * ((Number(spec.x) || 72) / 100), y: hb.top + hb.height / 2 };
+    return { x: lb.left + lb.width * ((Number(spec.xPct) || 72) / 100), y: hb.top + hb.height / 2 };
   };
   const place = (i, instant) => {
     const { x, y } = anchor(i);

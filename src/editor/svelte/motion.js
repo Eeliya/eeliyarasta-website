@@ -227,7 +227,7 @@ export const GROUPS = {
     [
       'Parallax',
       [
-        n(['speed'], 'Speed', 40, 1, '%'),
+        n(['speedPct'], 'Speed', 40, 1, '%'),
         {
           ...F.scrub,
           options: [
@@ -262,13 +262,13 @@ export const GROUPS = {
     [
       'Drift',
       [
-        n(['drift', 'amplitude'], 'Amplitude', 60, 1, 'px'),
-        n(['drift', 'rotation'], 'Rotation', 15, 0.1, '°'),
-        n(['drift', 'minDuration'], 'Min duration (s)', 20, 0.5),
-        n(['drift', 'maxDuration'], 'Max duration (s)', 20, 0.5),
+        n(['drift', 'amplitudePx'], 'Amplitude', 60, 1, 'px'),
+        n(['drift', 'rotationDeg'], 'Rotation', 15, 0.1, '°'),
+        n(['drift', 'minDurationSec'], 'Min duration (s)', 20, 0.5),
+        n(['drift', 'maxDurationSec'], 'Max duration (s)', 20, 0.5),
       ],
     ],
-    ['Scroll', [n(['scroll', 'distance'], 'Fly-off distance', 150, 1, '%vh')]],
+    ['Scroll', [n(['scroll', 'distanceVh'], 'Fly-off distance', 150, 1, '%vh')]],
   ],
   'hero-title': [
     TIMING,
@@ -286,8 +286,8 @@ export const GROUPS = {
     [
       'Preview',
       [
-        n(['x'], 'Position across the list', 100, 1, '%'),
-        n(['glide'], 'Glide between rows (s)', 1.5, 0.01),
+        n(['xPct'], 'Position across the list', 100, 1, '%'),
+        n(['glideSec'], 'Glide between rows (s)', 1.5, 0.01),
       ],
     ],
   ],
@@ -296,7 +296,7 @@ export const GROUPS = {
 /**
  * Timing: what an element, or every element with its data-anim name, can set for itself in the
  * element view, each field with a Custom switch (off: inherit). A field is timing when the last key
- * of its path is here, so ['intro', 'duration'] (scatter) is timing and ['drift', 'minDuration']
+ * of its path is here, so ['intro', 'duration'] (scatter) is timing and ['drift', 'minDurationSec']
  * is not. Every other value says what the animation does (start / end state, distances, ...):
  * read-only in the element view, edited in the Animations library only.
  * Add or remove a key here to move fields between the two.
