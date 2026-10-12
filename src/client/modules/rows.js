@@ -94,11 +94,8 @@ function linkOfEl(el, phone) {
   return m ? { to: m[1], gap: Number(m[2]) } : null;
 }
 
-/**
- * Set a section's --cell from its content width now (the phone grid's 60 columns on the
- * phone, else 120); returns the cell in px (0 when it has no width, e.g. hidden).
- */
-function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedStyle(sec)) {
+/** A section's content width now (its used width inside padding and border; 0 when hidden). */
+function widthOf(cs) {
   let width = parseFloat(cs.width) || 0; // its used width (not transformed, not rounded)
   if (cs.boxSizing === 'border-box')
     width -=
@@ -106,9 +103,7 @@ function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedSty
       parseFloat(cs.paddingRight) +
       parseFloat(cs.borderLeftWidth) +
       parseFloat(cs.borderRightWidth);
-  const cell = cellOf(width, phone ? MCOLS : COLS);
-  if (cell) set(sec, '--cell', `${cell}px`);
-  return cell;
+  return width;
 }
 
 /** The height a section has at least (its min-height), inside its padding (else Infinity). */
@@ -118,23 +113,16 @@ function minHeightOf(sec, cs) {
   return min - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 }
 
-/** Flow one section; true when something moved. */
-function flowSection(sec, phone = matchMedia(PHONE).matches) {
-  if (document.documentElement.hasAttribute('data-flow-hold')) return false;
-  if (sec.hidden) return clear(sec);
-  const before = sec.style.getPropertyValue('--cell');
-  const cell = measureCell(sec, phone);
-  const resized = sec.style.getPropertyValue('--cell') !== before;
+/** A section's blocks as they measure now (inside .sec--measure): the items resolveRows takes. */
+function readSection(sec, phone, row) {
   const cs = getComputedStyle(sec);
-  const row = cell || parseFloat(cs.getPropertyValue('--cell')) || 8;
   const avail = minHeightOf(sec, cs);
   const cap = Math.floor(avail / row + 0.01);
   const items = [];
   const els = new Map();
-  sec.classList.add('sec--measure');
   for (const el of blocksOf(sec)) {
+    if (el.hidden) continue;
     const area = areaOf(el, phone);
-    if (!area || el.hidden) continue;
     const pos = getComputedStyle(el).position;
     if (pos === 'fixed') continue; // fixed, fullscreen: not in the grid
     const id = el.dataset.block || `b${els.size}`;
@@ -153,7 +141,11 @@ function flowSection(sec, phone = matchMedia(PHONE).matches) {
     items.push({ id, ...area, need, link: linkOfEl(el, phone) });
     els.set(id, el);
   }
-  sec.classList.remove('sec--measure');
+  return { items, els };
+}
+
+/** Write a section's resolved rows; true when something moved. */
+function writeSection(sec, phone, { items, els }) {
   // a custom height: exactly its rows, or its content's when that needs more (the empty rows
   // below its last block don't stack on top of a grown block's)
   const min = parseInt(sec.style.getPropertyValue(phone ? '--mminrows' : '--minrows'), 10) || 0;
@@ -162,11 +154,11 @@ function flowSection(sec, phone = matchMedia(PHONE).matches) {
     : parseInt(sec.style.getPropertyValue(phone ? '--mrows' : '--rows'), 10) || 1;
   const resolved = resolveRows(items, stored);
   const { at } = resolved;
-  const rows = Math.max(resolved.rows, min);
-  let changed = set(sec, '--frows', rows) || resized;
+  let changed = set(sec, '--frows', Math.max(resolved.rows, min));
   for (const [id, el] of els) {
     const a = at[id];
-    changed = set(el, '--fr', a.row) | set(el, '--frs', a.rows) || changed;
+    if (set(el, '--fr', a.row)) changed = true;
+    if (set(el, '--frs', a.rows)) changed = true;
     const spacer = el.parentElement;
     if (spacer?.classList.contains('pin-spacer'))
       spacer.style.gridRow = `${a.row} / span ${a.rows}`;
@@ -174,11 +166,33 @@ function flowSection(sec, phone = matchMedia(PHONE).matches) {
   return changed;
 }
 
-/** Flow every section of `root`; true when something moved. */
+/**
+ * Flow every section of `root`; true when something moved. In passes, so the page is laid out
+ * about once, not once per section: read every width, write every --cell; measure every block
+ * (all sections in .sec--measure at once); write every row.
+ */
 function flowAll(root = document) {
+  if (document.documentElement.hasAttribute('data-flow-hold')) return false;
   const phone = matchMedia(PHONE).matches;
   let changed = false;
-  for (const sec of root.querySelectorAll('.sec')) changed = flowSection(sec, phone) || changed;
+  const secs = [];
+  for (const sec of root.querySelectorAll('.sec')) {
+    if (sec.hidden) changed = clear(sec) || changed;
+    else secs.push({ sec });
+  }
+  // 1. cells: read every width, then write
+  for (const s of secs) s.cell = cellOf(widthOf(getComputedStyle(s.sec)), phone ? MCOLS : COLS);
+  for (const s of secs) if (s.cell && set(s.sec, '--cell', `${s.cell}px`)) changed = true;
+  // 2. measure: every section's blocks as tall as their content, read in one go
+  for (const s of secs) s.sec.classList.add('sec--measure');
+  for (const s of secs) {
+    // no width now (hidden by an ancestor): its last cell, else a guess (it measures 0 anyway)
+    const row = s.cell || parseFloat(getComputedStyle(s.sec).getPropertyValue('--cell')) || 8;
+    s.read = readSection(s.sec, phone, row);
+  }
+  for (const s of secs) s.sec.classList.remove('sec--measure');
+  // 3. write the rows
+  for (const s of secs) if (writeSection(s.sec, phone, s.read)) changed = true;
   return changed;
 }
 
