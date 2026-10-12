@@ -59,12 +59,12 @@
   .pm__badge {
     flex: none;
     margin-left: auto;
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     line-height: 16px; // 16px tall: the button stays 32px
     letter-spacing: 0.05em;
     text-transform: uppercase;
     padding: 0 8px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     color: var(--c-text-faint);
     box-shadow: inset 0 0 0 1px var(--c-line);
 
@@ -86,7 +86,7 @@
   }
 
   .pm__path {
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     color: var(--c-text-muted);
   }
 </style>

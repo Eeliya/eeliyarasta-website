@@ -234,7 +234,7 @@
     margin: 8px 0 0;
     font-family: var(--f-display);
     font-weight: 400;
-    font-size: 26px;
+    font-size: var(--fs-3xl);
     line-height: 1;
   }
 
@@ -244,12 +244,12 @@
   }
 
   .mlist__part {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
 
   .mlist__count {
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   // motion panel
@@ -261,7 +261,7 @@
     padding: 8px 12px;
     line-height: 16px; // 32px tall
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     text-align: left;
     background: var(--c-fill-hover);

@@ -313,7 +313,7 @@
     justify-content: space-between;
     padding: 0 8px 12px;
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -340,7 +340,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    min-height: 32px;
+    min-height: var(--size-control);
     margin-bottom: 4px;
 
     .src-item__title {
@@ -356,7 +356,7 @@
 
   .src-item__title {
     margin: 0;
-    font-size: 12px;
+    font-size: var(--fs-base);
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;

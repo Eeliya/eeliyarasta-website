@@ -431,9 +431,9 @@
   .hset {
     display: flex;
     gap: 4px;
-    height: 32px;
+    height: var(--size-control);
     padding: 4px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: inset 0 0 0 1px var(--c-line);
     justify-self: start;
   }
@@ -449,7 +449,7 @@
     border: 0;
     background: none;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     cursor: pointer;
 
     &:hover:not(:disabled) {
@@ -475,7 +475,7 @@
     width: 36px;
     padding: 0;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--c-text-muted);
     cursor: pointer;
@@ -510,9 +510,9 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    min-height: 32px;
+    min-height: var(--size-control);
     padding-right: 4px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--c-surface-2);
 
     &.is-active {
@@ -530,14 +530,14 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
-    height: 32px;
+    height: var(--size-control);
     padding: 0 8px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: none;
     color: var(--c-text);
     font: inherit;
-    font-size: 12px;
+    font-size: var(--fs-base);
     text-align: left;
     cursor: pointer;
 
@@ -573,7 +573,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
+    font-size: var(--fs-base);
 
     span {
       flex: 1;

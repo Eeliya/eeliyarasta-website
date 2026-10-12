@@ -472,7 +472,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    min-height: 32px;
+    min-height: var(--size-control);
   }
 
   // the delete question: what goes, then Cancel / Delete
@@ -485,7 +485,7 @@
     flex: 1;
     min-width: 0;
     margin: 0;
-    font-size: 12px;
+    font-size: var(--fs-base);
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;

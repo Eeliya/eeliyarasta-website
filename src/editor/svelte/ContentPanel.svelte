@@ -161,7 +161,7 @@
 <style lang="scss">
   .count {
     color: var(--c-text-faint);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     letter-spacing: 0;
   }
 </style>

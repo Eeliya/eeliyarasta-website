@@ -163,7 +163,7 @@
 
     kbd {
       padding: 4px 8px;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       box-shadow:
         inset 0 0 0 1px var(--c-line),
         0 1px 0 var(--white-a10);

@@ -156,7 +156,7 @@
   .seo__head {
     margin: 16px 0 8px;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     font-weight: 400;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -170,20 +170,20 @@
     gap: 4px;
     margin-bottom: 8px;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--c-surface-2);
   }
 
   .seo__url,
   .seo__domain {
     color: var(--c-text-muted);
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
 
   .seo__title {
     overflow: hidden;
     color: var(--c-link);
-    font-size: 14px;
+    font-size: var(--fs-md);
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -192,7 +192,7 @@
     display: -webkit-box;
     overflow: hidden;
     color: var(--c-text);
-    font-size: 12px;
+    font-size: var(--fs-base);
     line-height: 1.5;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;

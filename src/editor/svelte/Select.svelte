@@ -237,7 +237,7 @@
     gap: 8px;
     padding: 8px 12px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     line-height: 16px;
     text-align: left;
     cursor: pointer;
@@ -282,7 +282,7 @@
   .sel__caret {
     flex: none;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
 
   // the list: in the top layer, placed under (or over) the button by show()
@@ -298,14 +298,17 @@
     color: var(--c-text);
     background: var(--c-surface);
     box-shadow: inset 0 0 0 1px var(--c-focus-ring);
-    border-radius: 0 0 8px 8px;
-    font: 400 12px/16px var(--f-mono);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    font-family: var(--f-mono);
+    font-size: var(--fs-base);
+    font-weight: 400;
+    line-height: 16px;
     scrollbar-width: thin;
     scrollbar-color: var(--white-a20) transparent;
   }
 
   .is-up + .sel__list {
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
   }
 
   .sel__group {
@@ -320,7 +323,7 @@
     align-items: baseline;
     gap: 12px;
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
 
     &[aria-selected='true'] {

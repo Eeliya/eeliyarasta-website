@@ -73,14 +73,14 @@
     gap: 8px;
     padding: 12px 20px;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
     color: var(--c-text);
     background: var(--c-control);
     box-shadow:
       inset 0 1px 0 var(--white-a12),
       inset 0 0 0 1px var(--c-line);
-    font-size: 11px;
+    font-size: var(--fs-sm);
     line-height: 16px; // 12 + 16 + 12 = 40px
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -134,9 +134,9 @@
   // just the icon: a quiet utility, no pill; a toggle (aria-pressed) is the accent while on
   .btn--icon {
     width: 32px;
-    height: 32px;
+    height: var(--size-control);
     padding: 0;
-    font-size: 15px;
+    font-size: var(--fs-lg);
     color: var(--c-text-muted);
     background: none;
     box-shadow: none;
@@ -157,7 +157,7 @@
   .btn--icon.btn--small {
     width: 24px;
     height: 24px;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     color: var(--c-text-muted);
     background: none;
     box-shadow: none;

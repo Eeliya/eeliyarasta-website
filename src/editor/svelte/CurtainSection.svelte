@@ -254,7 +254,7 @@
     position: relative;
     margin: 0 0 16px;
     padding: 8px 8px 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--c-card);
     display: grid;
     gap: 12px;
@@ -284,7 +284,7 @@
   .ptg__advanced {
     margin: 0 -12px;
     padding: 0;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     box-shadow: inset 0 1px 0 var(--c-line);
     background: var(--black-a18);
   }
@@ -295,10 +295,10 @@
     width: 100%;
     padding: 12px;
     border: 0;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     background: none;
     font: inherit;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     line-height: 16px;
     letter-spacing: 0.04em;
     text-align: left;

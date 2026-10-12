@@ -57,7 +57,7 @@
     position: relative;
     margin: 0;
     padding: 12px 36px 12px 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     animation: fade 0.3s;
     // solid like the dialogs: no see-through, no blur
     background: var(--c-card);

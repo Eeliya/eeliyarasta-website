@@ -318,7 +318,7 @@
   }
 
   .ptl__name {
-    font-size: 10px;
+    font-size: var(--fs-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--c-text-muted);
@@ -333,7 +333,7 @@
   .ptl__bars {
     position: absolute;
     inset: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     pointer-events: none;
     overflow: hidden;
     background: var(--white-a04);
@@ -363,7 +363,7 @@
   }
 
   .ptl__len {
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     line-height: 1;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
@@ -438,7 +438,7 @@
       top: 0;
       bottom: 0;
       width: 4px;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       background: var(--c-text-dim);
       box-shadow: 0 0 0 1px var(--black-a70);
       opacity: 1;
@@ -465,7 +465,7 @@
   .ptl__axis {
     position: relative;
     height: 12px;
-    font-size: 10px;
+    font-size: var(--fs-xs);
     color: var(--c-text-faint);
 
     span {

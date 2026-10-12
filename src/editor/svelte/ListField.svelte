@@ -83,7 +83,7 @@
     display: grid;
     gap: 8px;
     padding: 8px;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--c-line-strong);
   }
 
@@ -98,7 +98,7 @@
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     color: var(--c-text-dim);
     text-overflow: ellipsis;
     white-space: nowrap;

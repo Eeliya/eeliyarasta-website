@@ -62,7 +62,7 @@
 
   .pfile__stat {
     margin-left: auto;
-    font-size: 11px;
+    font-size: var(--fs-sm);
 
     .add {
       color: var(--c-success);

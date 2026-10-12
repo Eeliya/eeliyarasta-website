@@ -21,7 +21,10 @@ body {
 }
 
 body {
-  font: 400 12px/1.5 var(--f-mono);
+  font-family: var(--f-mono);
+  font-size: var(--fs-base);
+  font-weight: 400;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -40,7 +43,7 @@ a {
 code,
 kbd {
   font-family: var(--f-mono);
-  font-size: 11px;
+  font-size: var(--fs-sm);
 }
 
 // ---------------------------------------------------------------- utilities
@@ -100,7 +103,7 @@ kbd {
 // fields below (8px corners). The editor's main tabs are pills: .seg--pill.
 .seg {
   display: flex;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--c-shadow);
   box-shadow: inset 0 0 0 1px var(--c-line);
   overflow: hidden;
@@ -113,7 +116,7 @@ kbd {
     cursor: pointer;
     padding: 8px;
     border-radius: 0;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--c-text-muted);
@@ -144,11 +147,11 @@ kbd {
   // the main tabs (Browse, Content, Motion, Settings): round, with a gap around the buttons
   &--pill {
     padding: 4px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
 
   &--pill &__btn {
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
 }
 
@@ -157,7 +160,7 @@ kbd {
 .f__num {
   background: var(--c-shadow);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow: inset 0 0 0 1px var(--c-line);
   padding: 8px;
   outline: none;
@@ -206,7 +209,7 @@ kbd {
   margin: 0 0 12px;
 
   &.small {
-    font-size: 11px;
+    font-size: var(--fs-sm);
   }
 }
 
@@ -214,7 +217,7 @@ kbd {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: var(--c-link);
   vertical-align: middle;
   margin-left: 4px;
@@ -233,7 +236,7 @@ kbd {
 
 .grp__title {
   margin: 0 0 12px;
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -262,12 +265,12 @@ kbd {
 }
 
 .f__src {
-  font-size: 9.5px;
+  font-size: var(--fs-xs);
   line-height: 12px; // 20px tall
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--c-text-faint);
   box-shadow: inset 0 0 0 1px var(--c-line);
 
@@ -293,7 +296,7 @@ kbd {
     margin: 0;
     color: var(--c-text-muted);
     text-align: left;
-    height: 32px;
+    height: var(--size-control);
   }
 }
 
@@ -315,7 +318,7 @@ kbd {
 
 .f__inherit {
   color: var(--c-text-faint);
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   line-height: 20px;
 
   + .switch {
@@ -342,7 +345,7 @@ kbd {
 .f__unit {
   color: var(--c-text-faint);
   width: 24px;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
 }
 
 .f__range,
@@ -352,7 +355,7 @@ kbd {
   margin: 0;
   height: 4px;
   background: var(--white-a18);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   outline: none;
   cursor: pointer;
 
@@ -360,7 +363,7 @@ kbd {
     appearance: none;
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: var(--radius-round);
     background: var(--c-text);
     box-shadow: 0 0 0 4px var(--c-fill-active);
   }
@@ -369,7 +372,7 @@ kbd {
     width: 16px;
     height: 16px;
     border: 0;
-    border-radius: 50%;
+    border-radius: var(--radius-round);
     background: var(--c-text);
   }
 
@@ -386,7 +389,7 @@ kbd {
   width: 100%;
   padding: 8px 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
   background: var(--c-shadow);
@@ -437,7 +440,7 @@ kbd {
   gap: 4px;
   margin-top: 8px;
   padding: 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--c-shadow);
   box-shadow: inset 0 0 0 1px var(--c-line);
 }
@@ -448,12 +451,12 @@ kbd {
   gap: 4px;
   padding: 8px 4px 4px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: none;
   cursor: pointer;
 
   span {
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     line-height: 12px; // the option 64px tall
     color: var(--c-text-muted);
   }
@@ -485,7 +488,7 @@ kbd {
   margin-top: 4px;
   background: var(--c-shadow);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow: inset 0 0 0 1px var(--c-line);
   padding: 8px 12px;
   line-height: 16px; // 32px tall
@@ -498,7 +501,7 @@ kbd {
   align-items: center;
   gap: 8px;
   color: var(--c-text);
-  font-size: 11px;
+  font-size: var(--fs-sm);
 }
 
 // text fields (Field.svelte, also used by the curtain timeline)
@@ -507,7 +510,7 @@ kbd {
   transition: box-shadow 0.6s;
   padding: 4px;
   margin: -4px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .tf.is-selected {
@@ -531,7 +534,7 @@ kbd {
   margin-bottom: 8px;
   min-height: 24px;
   color: var(--c-text-muted);
-  font-size: 11px;
+  font-size: var(--fs-sm);
   line-height: 16px;
 }
 
@@ -552,7 +555,7 @@ kbd {
   margin: 0;
   width: 32px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   background: radial-gradient(circle, var(--c-text-muted) 6px, transparent 7px) 0 0 / 20px 20px
     no-repeat var(--c-switch);
@@ -597,7 +600,7 @@ kbd {
   display: block;
   margin-top: 4px;
   color: var(--c-text-muted);
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   line-height: 16px;
 }
 
@@ -626,7 +629,7 @@ kbd {
 // a textarea: one line (32px, like the inputs), growing with its text
 textarea.tf__input {
   field-sizing: content;
-  min-height: 32px;
+  min-height: var(--size-control);
   max-height: 320px;
 }
 
@@ -654,7 +657,7 @@ dialog.modal__box {
 .modal__box {
   width: min(520px, calc(100vw - 32px));
   padding: 24px;
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   // solid panel: no see-through, no blur
   background: var(--c-card);
   box-shadow:
@@ -666,7 +669,7 @@ dialog.modal__box {
   margin: 0 0 12px;
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: 26px;
+  font-size: var(--fs-3xl);
   line-height: 1.05;
 }
 
@@ -688,16 +691,16 @@ dialog.modal__box {
   .tf__input,
   .f__num {
     box-sizing: border-box;
-    height: 32px;
+    height: var(--size-control);
     line-height: 1.25;
   }
 
   .ease__toggle {
     box-sizing: border-box;
-    height: 32px;
-    min-height: 32px;
+    height: var(--size-control);
+    min-height: var(--size-control);
     padding: 0 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     gap: 8px;
   }
 
@@ -773,7 +776,7 @@ dialog.modal__box {
 .ease--compact .ease__toggle {
   padding: 4px 12px;
   gap: 12px;
-  min-height: 32px;
+  min-height: var(--size-control);
 }
 
 .ease--compact .ease__big {

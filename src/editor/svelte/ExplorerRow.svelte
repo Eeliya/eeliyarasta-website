@@ -43,7 +43,7 @@
     padding: 8px 12px;
     line-height: 16px; // two lines: 52px
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: none;
     text-align: left;
     cursor: pointer;
@@ -77,10 +77,10 @@
   .xrow__lead {
     grid-row: 1 / 3;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
 
     &--icon {
-      font-size: 14px;
+      font-size: var(--fs-md);
     }
   }
 
@@ -88,7 +88,7 @@
     grid-column: 4;
     grid-row: 1 / 3;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
   }
 
   .xrow__name,
@@ -101,6 +101,6 @@
 
   .xrow__meta {
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 </style>

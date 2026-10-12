@@ -261,15 +261,15 @@
     align-items: center;
     gap: 12px;
     width: 100%;
-    height: 32px;
+    height: var(--size-control);
     margin-bottom: 4px;
     padding: 0 8px;
     border: 1px solid var(--c-line);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: none;
     color: var(--c-text-muted);
     font: inherit;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     text-align: left;
     cursor: pointer;
 
@@ -316,7 +316,7 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
-    font-size: 12px;
+    font-size: var(--fs-base);
 
     i {
       color: var(--c-text-muted);
@@ -361,7 +361,7 @@
     padding: 8px 0;
     overflow: hidden;
     color: var(--c-text-muted);
-    font-size: 12px;
+    font-size: var(--fs-base);
     line-height: 16px;
     text-overflow: ellipsis;
     white-space: nowrap;

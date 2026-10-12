@@ -77,7 +77,7 @@
     margin-inline: -8px;
     border: 1px solid transparent;
     background: var(--c-card);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 
     &:first-of-type {
       // border-top-color: transparent;
@@ -91,7 +91,7 @@
     display: flex;
     align-items: flex-start;
     gap: 4px;
-    font-size: 12px;
+    font-size: var(--fs-base);
     line-height: 20px;
     font-weight: 500;
     letter-spacing: 0.1em;
@@ -128,7 +128,7 @@
     column-gap: 4px;
     padding: 0;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: none;
     font: inherit;
     letter-spacing: inherit;
@@ -159,7 +159,7 @@
     width: 20px;
     height: 20px;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     line-height: 20px;
     text-align: center;
     transition: rotate 0.15s;

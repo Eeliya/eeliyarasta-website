@@ -146,7 +146,7 @@
   }
 
   .scrub__label {
-    font-size: 10px;
+    font-size: var(--fs-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -160,7 +160,7 @@
   .bm__parts {
     margin: 16px 0 8px;
     color: var(--c-text-muted);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -174,7 +174,7 @@
     padding: 8px 12px;
     line-height: 16px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     text-align: left;
     background: var(--c-fill-hover);

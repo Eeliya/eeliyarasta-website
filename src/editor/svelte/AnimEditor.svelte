@@ -204,13 +204,13 @@
     margin: 8px 0 0;
     font-family: var(--f-display);
     font-weight: 400;
-    font-size: 26px;
+    font-size: var(--fs-3xl);
     line-height: 1;
   }
 
   .msel__key {
     color: var(--c-text-faint);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
     word-break: break-all;
   }
 
@@ -230,7 +230,7 @@
   }
 
   .scrub__label {
-    font-size: 10px;
+    font-size: var(--fs-xs);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -245,11 +245,11 @@
   .legacy {
     margin-bottom: 16px;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: inset 0 0 0 1px var(--c-line);
 
     .hint {
-      font-size: 11px;
+      font-size: var(--fs-sm);
       margin: 0 0 8px;
     }
   }
@@ -262,7 +262,7 @@
 
   .legacy__scope {
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   .legacy__actions {
@@ -283,7 +283,7 @@
     }
 
     .hint {
-      font-size: 11px;
+      font-size: var(--fs-sm);
       margin: 0;
     }
   }

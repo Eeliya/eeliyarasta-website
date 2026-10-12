@@ -262,7 +262,7 @@
     margin: 12px 0 0;
     padding: 0;
     color: var(--c-text-muted);
-    font-size: 11px;
+    font-size: var(--fs-sm);
     list-style: none;
 
     li {

@@ -313,8 +313,11 @@
     color: var(--c-text);
     background: var(--c-surface);
     box-shadow: inset 0 0 0 1px var(--c-focus-ring);
-    border-radius: 0 0 8px 8px;
-    font: 400 12px/16px var(--f-mono);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    font-family: var(--f-mono);
+    font-size: var(--fs-base);
+    font-weight: 400;
+    line-height: 16px;
   }
 
   .sug__opt {
@@ -322,7 +325,7 @@
     align-items: baseline;
     gap: 12px;
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
 
     &.is-active {
@@ -351,13 +354,13 @@
     height: 64px;
     padding: 0;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
     cursor: pointer;
     color: var(--c-text-muted);
     background: var(--c-control);
     box-shadow: inset 0 0 0 1px var(--c-line);
-    font-size: 16px;
+    font-size: var(--fs-xl);
     transition: background 0.2s;
 
     &:hover {
@@ -389,7 +392,7 @@
     min-width: 0;
     display: grid;
     gap: 4px;
-    font-size: 12px;
+    font-size: var(--fs-base);
     line-height: 16px;
   }
 
@@ -401,7 +404,7 @@
   }
 
   .photo__meta {
-    font-size: 11px;
+    font-size: var(--fs-sm);
     color: var(--c-text-muted);
   }
 </style>

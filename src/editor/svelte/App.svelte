@@ -273,7 +273,7 @@
     width: 100%;
     height: 100%;
     border: 0;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     box-shadow:
       0 0 0 1px var(--c-fill-active),
       0 30px 80px -30px var(--c-scrim);
@@ -286,7 +286,7 @@
   .ed-stage.is-mobile .ed-frame {
     width: 392px;
     height: min(844px, 100%);
-    border-radius: 28px;
+    border-radius: var(--radius-3xl);
   }
 
   .ed-panel {
@@ -297,7 +297,7 @@
     width: var(--panel-w);
     display: flex;
     flex-direction: column;
-    border-radius: 20px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
     background: var(--c-surface);
     box-shadow:
@@ -330,7 +330,7 @@
   .ed-brand {
     margin: 0;
     font-family: var(--f-display);
-    font-size: 22px;
+    font-size: var(--fs-2xl);
     font-weight: 400;
     line-height: 1;
     letter-spacing: -0.01em;
@@ -364,7 +364,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     line-height: 16px;
     color: var(--c-text-muted);
 
@@ -381,7 +381,7 @@
     &__dot {
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: var(--radius-round);
       background: var(--c-success);
       flex: none;
     }

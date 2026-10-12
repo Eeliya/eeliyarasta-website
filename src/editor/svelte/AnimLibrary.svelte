@@ -125,7 +125,7 @@
   .lib__title {
     grid-area: title;
     margin: 0;
-    font-size: 16px;
+    font-size: var(--fs-xl);
     font-weight: 500;
     line-height: 24px;
   }
@@ -133,7 +133,7 @@
   .lib__path {
     grid-area: path;
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   // icon | name / type and usage
@@ -146,7 +146,7 @@
     padding: 8px 12px;
     line-height: 16px; // name + two meta lines: 68px
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--c-fill-hover);
     box-shadow: inset 0 0 0 1px var(--c-line);
     text-align: left;
@@ -170,7 +170,7 @@
 
   .lib__meta {
     color: var(--c-text-muted);
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   .lib__info {

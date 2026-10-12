@@ -224,7 +224,7 @@
     align-items: center;
     margin: 0 0 16px;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--amber-300-a08);
     box-shadow: inset 0 0 0 1px var(--amber-300-a25);
     cursor: pointer;
@@ -237,7 +237,7 @@
   .commits {
     margin: -4px 0 12px;
     gap: 4px;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     color: var(--c-text-muted);
 
     code {
@@ -246,7 +246,7 @@
   }
 
   .pub-ok {
-    font-size: 15px;
+    font-size: var(--fs-lg);
     margin: 12px 0 8px;
     color: var(--c-success);
 
@@ -255,7 +255,7 @@
     }
 
     code {
-      font-size: 14px;
+      font-size: var(--fs-md);
       color: inherit;
     }
   }
@@ -267,7 +267,7 @@
   .pub-hint {
     margin: 8px 0;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--red-300-a08);
     box-shadow: inset 0 0 0 1px var(--red-300-a25);
   }
@@ -277,10 +277,13 @@
     padding: 12px;
     max-height: 180px;
     overflow: auto;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--black-a50);
     box-shadow: inset 0 0 0 1px var(--c-line);
-    font: 11px/1.5 var(--f-mono);
+    font-family: var(--f-mono);
+    font-size: var(--fs-sm);
+    font-weight: 400;
+    line-height: 1.5;
     color: var(--c-error-strong);
     white-space: pre-wrap;
     overflow-wrap: anywhere;

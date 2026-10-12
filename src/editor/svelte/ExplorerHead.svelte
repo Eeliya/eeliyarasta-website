@@ -59,7 +59,7 @@
     align-items: baseline;
     gap: 0 4px;
     color: var(--c-text-muted);
-    font-size: 11px;
+    font-size: var(--fs-sm);
     line-height: 16px;
 
     > i {

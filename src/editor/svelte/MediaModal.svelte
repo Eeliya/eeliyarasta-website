@@ -472,7 +472,7 @@
     aspect-ratio: 1;
     padding: 0;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
     cursor: pointer;
     background: var(--c-control);
@@ -504,8 +504,8 @@
       left: 4px;
       bottom: 4px;
       padding: 0 8px;
-      border-radius: 999px;
-      font-size: 10px;
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
       line-height: 16px;
       color: var(--c-on-light);
       background: var(--c-text);
@@ -526,7 +526,7 @@
     inset: 0;
     display: grid;
     place-items: center;
-    font-size: 11px;
+    font-size: var(--fs-sm);
     color: var(--c-text);
   }
 
@@ -547,7 +547,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    min-height: 32px;
+    min-height: var(--size-control);
   }
 
   .md-detail__title {
@@ -557,7 +557,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 12px;
+    font-size: var(--fs-base);
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -568,7 +568,7 @@
     width: 100%;
     max-height: 320px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--c-surface);
   }
 
