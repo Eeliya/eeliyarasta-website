@@ -69,7 +69,7 @@ test("a drag stores where the section's blocks are now (their real rows), one un
             id: 'b-cccc',
             type: 'text',
             pos: pos(12, 2),
-            mobile: { col: 1, span: 12, row: 3, rows: 2 },
+            phone: { col: 1, span: 12, row: 3, rows: 2 },
           },
         ],
       },
@@ -108,13 +108,13 @@ test("a drag stores where the section's blocks are now (their real rows), one un
     },
   );
   // a block with a phone area of its own stores its rows now; one without keeps none
-  assert.deepEqual(store.current[F].sections[0].blocks[2].mobile, {
+  assert.deepEqual(store.current[F].sections[0].blocks[2].phone, {
     col: 1,
     span: 12,
     row: 7,
     rows: 3,
   });
-  assert.ok(!('mobile' in store.current[F].sections[0].blocks[0]));
+  assert.ok(!('phone' in store.current[F].sections[0].blocks[0]));
   // a section setting set and removed again
   setSection(store, F, 0, { name: 'Intro' });
   assert.equal(store.current[F].sections[0].name, 'Intro');

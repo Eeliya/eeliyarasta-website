@@ -106,7 +106,7 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
   assert.match(ed, /data-sec="[^"]+" style="--rows:1;--mrows:1" hidden>[\s\S]*Three/);
   assert.ok(ed.indexOf('One') < ed.indexOf('Two') && ed.indexOf('Two') < ed.indexOf('Three'));
   // a phone area of its own: on the 60-column phone grid
-  const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
+  const mobile = [section([block('text', { phone: { col: 1, span: 24, row: 1, rows: 2 } })])];
   assert.match(
     renderSections(ctxOf(page), page, F, mobile),
     /class="sec"[\s\S]*;--mc:1;--ms:24;--mr:1;--mrs:2"/,

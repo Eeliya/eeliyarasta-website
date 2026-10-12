@@ -44,14 +44,14 @@ function settleLinks(section) {
     blocks.map((b) => ({ id: b.id, ...placeOf(b.pos), link: linkOf(b) })),
     1,
   ).at;
-  const own = blocks.filter((b) => hasMobileArea(b.mobile));
+  const own = blocks.filter((b) => hasMobileArea(b.phone));
   const phone = resolveRows(
-    own.map((b) => ({ id: b.id, ...placeOf(b.mobile, MCOLS), link: linkOf(b, true) })),
+    own.map((b) => ({ id: b.id, ...placeOf(b.phone, MCOLS), link: linkOf(b, true) })),
     1,
   ).at;
   for (const b of blocks) {
     if (linkOf(b) && desk[b.id]) b.pos = { ...placeOf(b.pos), row: desk[b.id].row };
-    if (linkOf(b, true) && phone[b.id]) b.mobile = { ...b.mobile, row: phone[b.id].row };
+    if (linkOf(b, true) && phone[b.id]) b.phone = { ...b.phone, row: phone[b.id].row };
   }
   return section;
 }
@@ -117,30 +117,30 @@ export function setSection(store, file, at, patch, key) {
   return writeSection(store, file, at, tidyMobile(next), key);
 }
 
-/** Its phone rows only while its phone height is custom; no empty `mobile`. */
+/** Its phone rows only while its phone height is custom; no empty `phone`. */
 function tidyMobile(s) {
-  if (!s.mobile || typeof s.mobile !== 'object') return s;
-  const m = { ...s.mobile };
+  if (!s.phone || typeof s.phone !== 'object') return s;
+  const m = { ...s.phone };
   if (phoneHeightOf(s) !== 'custom') delete m.rows;
-  if (Object.keys(m).length) s.mobile = m;
-  else delete s.mobile;
+  if (Object.keys(m).length) s.phone = m;
+  else delete s.phone;
   return s;
 }
 
 /**
- * A section's height on phones (section.mobile.height), its desktop height untouched; undefined:
+ * A section's height on phones (section.phone.height), its desktop height untouched; undefined:
  * its own is removed, the phone follows the desktop again. Custom: its phone rows to start from
  * (its own, the desktop's halved, or its content's on the phone grid). One undo step.
  */
 export function setPhoneHeight(store, file, at, height) {
   const s = listOf(store, file)[at];
   if (!s || (height !== undefined && !HEIGHTS.includes(height))) return false;
-  if (height === s.mobile?.height) return false;
-  const mobile = { ...s.mobile, height };
+  if (height === s.phone?.height) return false;
+  const mobile = { ...s.phone, height };
   if (height === undefined) delete mobile.height;
   if (height === 'custom' && !Number.isInteger(mobile.rows?.min))
     mobile.rows = { min: Math.ceil(minRowsOf(s) / 2) || mobileRowsOf(s) };
-  return setSection(store, file, at, { mobile });
+  return setSection(store, file, at, { phone: mobile });
 }
 
 /**
@@ -152,13 +152,13 @@ function grow(section, content, phone = false) {
   const now = phone ? mobileMinRowsOf(section) : minRowsOf(section);
   if (!now || content <= now) return;
   const rows = Math.min(MAX_MIN_ROWS, content);
-  if (phone) section.mobile = { ...section.mobile, rows: { min: rows } };
+  if (phone) section.phone = { ...section.phone, rows: { min: rows } };
   else section.rows = { min: rows };
 }
 
 /**
  * A Custom section's rows set from the preview (its bottom edge dragged, or its Rows field):
- * `rows` on the desktop grid, or on the phone's (phone: its own phone rows, mobile.rows.min; the
+ * `rows` on the desktop grid, or on the phone's (phone: its own phone rows, phone.rows.min; the
  * desktop's are untouched). Clamped to 1..MAX_MIN_ROWS; false when it isn't Custom or nothing
  * changed. One undo step (key: a field's typing coalesces).
  */
@@ -168,8 +168,8 @@ export function setSectionRows(store, file, at, rows, { phone = false, key } = {
     return false;
   const n = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(rows)));
   if (phone) {
-    if (n === s.mobile?.rows?.min) return false;
-    return setSection(store, file, at, { mobile: { ...s.mobile, rows: { min: n } } }, key);
+    if (n === s.phone?.rows?.min) return false;
+    return setSection(store, file, at, { phone: { ...s.phone, rows: { min: n } } }, key);
   }
   if (n === s.rows?.min) return false;
   return setSection(store, file, at, { rows: { min: n } }, key);
@@ -199,9 +199,9 @@ export function duplicateBlock(store, file, at, j) {
   copy.pos = { ...placeOf(copy.pos), row: below(section) };
   // a copy is free (its links were the original's place)
   delete copy.link;
-  if (copy.mobile) {
-    delete copy.mobile.link;
-    if (!hasMobileArea(copy.mobile) && !copy.mobile.place) delete copy.mobile;
+  if (copy.phone) {
+    delete copy.phone.link;
+    if (!hasMobileArea(copy.phone) && !copy.phone.place) delete copy.phone;
   }
   section.blocks.splice(j + 1, 0, copy);
   write(store, file, list);
@@ -223,7 +223,7 @@ export function removeBlock(store, file, at, j) {
   const [gone] = list[at].blocks.splice(j, 1);
   for (const b of list[at].blocks) {
     if (b.link?.to === gone?.id) delete b.link;
-    if (b.mobile?.link?.to === gone?.id) delete b.mobile.link;
+    if (b.phone?.link?.to === gone?.id) delete b.phone.link;
   }
   return write(store, file, list);
 }
@@ -239,7 +239,7 @@ function storeFlow(section, j, flow = {}, phone = false) {
     if (!a) return;
     // on the phone only a block's own phone area (one without shows its desktop area halved)
     if (phone) {
-      if (hasMobileArea(b.mobile)) b.mobile = { ...b.mobile, row: a.row, rows: a.rows };
+      if (hasMobileArea(b.phone)) b.phone = { ...b.phone, row: a.row, rows: a.rows };
     } else b.pos = { ...placeOf(b.pos), row: a.row, rows: a.rows };
   });
 }
@@ -293,7 +293,7 @@ export function linkBlock(store, file, at, j, to, gap = 0, { phone = false, row 
   // stored rows (an auto leader's content may span more)
   const stay = !next && Number.isInteger(row) && row > 0 ? { row } : {};
   if (phone) {
-    if (!hasMobileArea(b.mobile)) setMobile(b, phoneAreaOf(b));
+    if (!hasMobileArea(b.phone)) setMobile(b, phoneAreaOf(b));
     setMobile(b, { link: next, ...stay });
   } else if (next) b.link = next;
   else {
@@ -328,12 +328,12 @@ export function setBlock(store, file, at, j, patch, key) {
   return writeSection(store, file, at, section, key);
 }
 
-/** A block's `mobile` with `patch` (area keys, place); removed when nothing is left. */
+/** A block's `phone` with `patch` (area keys, place); removed when nothing is left. */
 function setMobile(block, patch) {
-  const next = { ...block.mobile, ...patch };
+  const next = { ...block.phone, ...patch };
   for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
-  if (Object.keys(next).length) block.mobile = next;
-  else delete block.mobile;
+  if (Object.keys(next).length) block.phone = next;
+  else delete block.phone;
 }
 
 /**
@@ -345,11 +345,11 @@ export function placeMobile(store, file, at, j, area, { key, flow, rows = 0 } = 
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow, true);
   const b = section.blocks[j];
-  const inherited = !hasMobileArea(b.mobile) ? linkOf(b, true) : null;
+  const inherited = !hasMobileArea(b.phone) ? linkOf(b, true) : null;
   setMobile(b, placeOf(area, MCOLS));
   if (inherited) setMobile(b, { link: inherited });
   const l = linkOf(b, true);
-  if (l) setMobile(b, { link: { to: l.to, gap: gapAt(section, l, b.mobile.row, flow, true) } });
+  if (l) setMobile(b, { link: { to: l.to, gap: gapAt(section, l, b.phone.row, flow, true) } });
   grow(section, Math.max(rows, mobileRowsOf(section)), true);
   return writeSection(store, file, at, section, key);
 }
@@ -367,7 +367,7 @@ export function placeOnPhone(store, file, at, j, place) {
  */
 export function resetMobile(store, file, at) {
   const section = listOf(store, file)[at];
-  if (!section.blocks.some((b) => b.mobile)) return false;
-  for (const b of section.blocks) delete b.mobile;
+  if (!section.blocks.some((b) => b.phone)) return false;
+  for (const b of section.blocks) delete b.phone;
   return writeSection(store, file, at, section);
 }

@@ -44,7 +44,7 @@
     live.version;
     return live.get(g.file, `/sections/${at}`) || {};
   });
-  const phoneSet = $derived((section.blocks || []).some((b) => b?.mobile));
+  const phoneSet = $derived((section.blocks || []).some((b) => b?.phone));
   const link = $derived(linkOf(block, phone));
   const leader = $derived(link && (section.blocks || []).find((b) => b?.id === link.to));
   const leaderName = $derived(
@@ -259,7 +259,7 @@
     <span class="tf__label">Placement on phones</span>
     <Select
       aria-label="Placement on phones"
-      value={block.mobile?.place ?? 'none'}
+      value={block.phone?.place ?? 'none'}
       options={places}
       onchange={(v) => placeOnPhone(live.store, g.file, at, j, v)}
     />

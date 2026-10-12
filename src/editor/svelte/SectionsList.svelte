@@ -88,7 +88,7 @@
       rows: value === 'custom' ? { min: s.rows?.min || rowsOf(s) } : undefined,
     });
   };
-  // the phone preview shows and edits a custom height's own phone rows (mobile.rows.min)
+  // the phone preview shows and edits a custom height's own phone rows (phone.rows.min)
   const phoneView = $derived(ui.viewport === 'mobile');
   const rowsShown = (s) =>
     ui.secRows?.id === s.id
@@ -303,12 +303,12 @@
         {@render choices(
           at,
           'phoneHeight',
-          s.mobile?.height ? 'Phone height' : 'Phone height (desktop)',
+          s.phone?.height ? 'Phone height' : 'Phone height (desktop)',
           HEIGHTS,
           phoneHeightOf(s),
           heightIcon,
           {
-            on: !!s.mobile?.height,
+            on: !!s.phone?.height,
             run: () => setPhoneHeight(live.store, file, at, undefined),
           },
         )}

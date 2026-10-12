@@ -25,8 +25,10 @@ const imagesOf = (item) =>
   Array.isArray(item?.images) ? item.images : item?.image ? [item.image] : [];
 
 const heroPhoto = (ctx, b, p, i) => {
-  const mobile = p.mx !== undefined;
-  const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${p.mx}%;--my:${p.my}%;--mw:${p.mw}vw;` : ''}`;
+  // phone: its own x / y / w over the desktop's (partly or all); null: hidden on phones
+  const mobile = p.phone !== null;
+  const ph = { x: p.x, y: p.y, w: p.w, ...(p.phone || {}) };
+  const style = `--x:${p.x}%;--y:${p.y}%;--w:${p.w}vw;${mobile ? `--mx:${ph.x}%;--my:${ph.y}%;--mw:${ph.w}vw;` : ''}`;
   if (!p.src) return '';
   return html` <a
     class="scatter scatter--${p.layer === 'front' ? 'front' : 'back'}${mobile ? '' : ' scatter--desktop'}"
@@ -37,13 +39,13 @@ const heroPhoto = (ctx, b, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${p.mw || 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${mobile ? ph.w : 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
 };
 
-/** The big name over scattered photos (photos: [{ src, link, label, x, y, w, mx?, my?, mw?, depth, layer }]). */
+/** The big name over scattered photos (photos: [{ src, link, label, x, y, w, phone?: { x?, y?, w? } | null, depth?, layer? }]). */
 export const hero = {
   type: 'hero',
   label: 'Hero',

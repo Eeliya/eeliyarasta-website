@@ -21,7 +21,7 @@
  * below the fixed header (scroll-margin-top; modules/anchors.js). A custom height
  * (.sec--h-custom) is rows, not a min-height: --rows is at least its --minrows (phones
  * --mminrows), its blocks from the top, empty rows below them. Phones can have a height of
- * their own (.sec--mh-*, section.mobile.height), else the desktop's.
+ * their own (.sec--mh-*, section.phone.height), else the desktop's.
  *
  * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a block
  * without a phone area of its own has its desktop area halved there), so a phone shows the
@@ -211,7 +211,7 @@
   .sec--full {
     --cell: calc(100vw / 60);
   }
-  // a phone height of its own (section.mobile.height): instead of the desktop's
+  // a phone height of its own (section.phone.height): instead of the desktop's
   .sec--mh-fit,
   .sec--mh-custom {
     min-height: 0;

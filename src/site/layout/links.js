@@ -4,7 +4,7 @@
  * another: its top at the other one's bottom plus a gap in cells (negative: they overlap),
  *
  *   "link": { "to": "b-7qpa", "gap": 2 }            (desktop)
- *   "mobile": { ..., "link": { "to": "b-7qpa", "gap": -1 } }   (the phone grid's)
+ *   "phone": { ..., "link": { "to": "b-7qpa", "gap": -1 } }   (the phone grid's)
  *
  * so it moves when the block it follows grows or shrinks (its content at another width).
  * One block it follows (its leader), any number following one block, chains; never a loop,
@@ -28,7 +28,7 @@ export const halfGap = (g) => Math.sign(g) * Math.round(Math.abs(g) / 2);
 /** The link a block follows on the desktop grid, or on the phone grid (`phone`); null: free. */
 export function linkOf(b, phone = false) {
   if (!phone) return linkShape(b?.link);
-  if (hasMobileArea(b?.mobile)) return linkShape(b.mobile.link);
+  if (hasMobileArea(b?.phone)) return linkShape(b.phone.link);
   const l = linkShape(b?.link);
   return l && { to: l.to, gap: halfGap(l.gap) };
 }
@@ -60,10 +60,10 @@ export function linkProblems(blocks, elsewhere = new Set()) {
   const out = [];
   for (const [phone, key] of [
     [false, 'link'],
-    [true, 'mobile.link'],
+    [true, 'phone.link'],
   ]) {
     for (const b of list) {
-      const raw = phone ? b?.mobile?.link : b?.link;
+      const raw = phone ? b?.phone?.link : b?.link;
       if (raw === undefined) continue;
       const l = linkShape(raw);
       const name = `block "${b?.id}" ${key}`;
@@ -86,7 +86,7 @@ export function linkProblems(blocks, elsewhere = new Set()) {
         if (on.has(at)) {
           const loop = path.slice(path.indexOf(at));
           // a phone loop of desktop links only is the desktop's (reported there)
-          const own = !phone || loop.some((x) => hasMobileArea(byId.get(x)?.mobile));
+          const own = !phone || loop.some((x) => hasMobileArea(byId.get(x)?.phone));
           if (loop.length > 1 && own && !loop.some((x) => reported.has(x))) {
             loop.forEach((x) => reported.add(x));
             out.push(`${phone ? 'phone ' : ''}links make a loop: ${[...loop, at].join(' -> ')}`);

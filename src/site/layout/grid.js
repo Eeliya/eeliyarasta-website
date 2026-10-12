@@ -4,7 +4,7 @@
  */
 export const COLS = 120;
 /**
- * Columns of the phone grid (a block's `mobile` area): 60, half of 120, so a block without a
+ * Columns of the phone grid (a block's `phone` area): 60, half of 120, so a block without a
  * phone area of its own shows its desktop area halved there (phoneAreaOf): the phone is the
  * desktop layout scaled down, ~6px cells at 390px.
  */
@@ -30,7 +30,7 @@ export function placeOf(pos, cols = COLS) {
   };
 }
 
-/** Does a block's `mobile` hold an area (it can hold only a placement or a link)? */
+/** Does a block's `phone` hold an area (it can hold only a placement or a link)? */
 export const hasMobileArea = (m) =>
   !!m && ['col', 'span', 'row', 'rows'].some((k) => m[k] !== undefined);
 
@@ -48,4 +48,4 @@ export function halfArea(pos) {
 
 /** A block's area on the phone grid: its own phone area, else its desktop area halved. */
 export const phoneAreaOf = (b) =>
-  hasMobileArea(b?.mobile) ? placeOf(b.mobile, MCOLS) : halfArea(b?.pos);
+  hasMobileArea(b?.phone) ? placeOf(b.phone, MCOLS) : halfArea(b?.pos);

@@ -80,10 +80,10 @@ test('links on the phone: its own phone link, else the desktop link with the gap
   assert.deepEqual(linkOf(b, true), to('b-aaaa', 3));
   assert.deepEqual(linkOf({ ...b, link: to('b-aaaa', -3) }, true), to('b-aaaa', -2));
   // a phone area of its own: only its own phone link
-  const own = { ...b, mobile: { col: 1, span: 60, row: 1, rows: 4 } };
+  const own = { ...b, phone: { col: 1, span: 60, row: 1, rows: 4 } };
   assert.equal(linkOf(own, true), null);
   assert.deepEqual(
-    linkOf({ ...own, mobile: { ...own.mobile, link: to('b-cccc', -1) } }, true),
+    linkOf({ ...own, phone: { ...own.phone, link: to('b-cccc', -1) } }, true),
     to('b-cccc', -1),
   );
   assert.deepEqual(blockLinks(b), { 'data-link': 'b-aaaa 5', 'data-mlink': 'b-aaaa 3' });
@@ -121,12 +121,12 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
     checkContent(
       F,
       page(
-        [{ id: 'b-aaaa', type: 'text', mobile: { link: to('b-dddd') } }],
+        [{ id: 'b-aaaa', type: 'text', phone: { link: to('b-dddd') } }],
         [{ id: 'b-dddd', type: 'text' }],
       ),
     ),
     [
-      'section 1: block "b-aaaa" mobile.link follows "b-dddd" of another section (links stay in their section)',
+      'section 1: block "b-aaaa" phone.link follows "b-dddd" of another section (links stay in their section)',
     ],
   );
   assert.deepEqual(checkContent(F, page([{ id: 'b-aaaa', type: 'text', link: to('b-aaaa') }])), [
@@ -216,14 +216,14 @@ test('editor: phone links are separate; the first phone move brings the desktop 
   const b = () => store.current[F].sections[0].blocks[1];
   // on the phone a's halved area ends at row 5; b dropped at row 9: gap 3
   placeMobile(store, F, 0, 1, { col: 1, span: 60, row: 9, rows: 2 });
-  assert.deepEqual(b().mobile, { col: 1, span: 60, row: 9, rows: 2, link: to('b-aaaa', 3) });
+  assert.deepEqual(b().phone, { col: 1, span: 60, row: 9, rows: 2, link: to('b-aaaa', 3) });
   assert.deepEqual(b().link, to('b-aaaa', 4)); // the desktop's unchanged
   linkBlock(store, F, 0, 1, null, 0, { phone: true });
-  assert.ok(!('link' in b().mobile) && b().link);
+  assert.ok(!('link' in b().phone) && b().link);
   store.undo();
   // unlinked where the preview shows it (an auto leader grew): it stays on that row
   linkBlock(store, F, 0, 1, null, 0, { phone: true, row: 14 });
-  assert.equal(b().mobile.row, 14);
+  assert.equal(b().phone.row, 14);
   linkBlock(store, F, 0, 1, null, 0, { row: 30 });
   assert.ok(!('link' in b()));
   assert.equal(b().pos.row, 30);

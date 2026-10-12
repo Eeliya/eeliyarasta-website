@@ -48,7 +48,7 @@
  *            Corners: top-left, top-center, top-right, center, bottom-left, bottom-center,
  *            bottom-right
  *   z        its layer when blocks overlap (higher is in front)
- *   mobile   optional, below 760px: { col, span, row, rows } its area on the phone grid of 60
+ *   phone    optional, below 760px: { col, span, row, rows } its area on the phone grid of 60
  *            columns (without one: its desktop area halved), { link } its phone link (without a
  *            phone area: its desktop link, the gap halved) and { place } (without one it is in
  *            its area: no sticky, fixed, pin)
@@ -79,18 +79,18 @@ export const minRowsOf = (s) =>
     ? Math.min(s.rows.min, MAX_MIN_ROWS)
     : 0;
 /**
- * A section's height on phones: its own (mobile.height, set in the phone preview), else its
+ * A section's height on phones: its own (phone.height, set in the phone preview), else its
  * desktop height.
  */
 export const phoneHeightOf = (s) =>
-  HEIGHTS.includes(s?.mobile?.height) ? s.mobile.height : heightOf(s);
+  HEIGHTS.includes(s?.phone?.height) ? s.phone.height : heightOf(s);
 /**
- * A section's phone rows when its phone height is custom: its own (mobile.rows.min), or its
+ * A section's phone rows when its phone height is custom: its own (phone.rows.min), or its
  * desktop rows halved, rounded up; 0 otherwise (also custom without rows: as fit).
  */
 export const mobileMinRowsOf = (s) => {
   if (phoneHeightOf(s) !== 'custom') return 0;
-  const own = s.mobile?.rows?.min;
+  const own = s.phone?.rows?.min;
   if (Number.isInteger(own) && own >= 1) return Math.min(own, MAX_MIN_ROWS);
   return Math.ceil(minRowsOf(s) / 2);
 };
@@ -196,7 +196,7 @@ export function sectionVars(s) {
 export function sectionClass(s) {
   const h = heightOf(s) === 'custom' && !minRowsOf(s) ? 'fit' : heightOf(s);
   // a phone height of its own: sec--mh-* (phones only)
-  const own = HEIGHTS.includes(s?.mobile?.height);
+  const own = HEIGHTS.includes(s?.phone?.height);
   const m = phoneHeightOf(s) === 'custom' && !mobileMinRowsOf(s) ? 'fit' : phoneHeightOf(s);
   return (
     'sec' +
@@ -256,7 +256,7 @@ export function blockClass(b) {
     (aspect ? ' blk--aspect' : size === 'auto' || size === 'aspect' ? ' blk--auto' : '') +
     (scaled(b) ? ' blk--scale' : '') +
     placeClass(b?.place) +
-    placeClass(b?.mobile?.place, 'm-')
+    placeClass(b?.phone?.place, 'm-')
   );
 }
 

@@ -7,7 +7,7 @@
  *
  * The block's own content (texts, photos) sits next to its type; how it works (which source
  * it pulls, its look, on/off) is under "config"; where it sits is the layout's (id, pos, z,
- * mobile: layout keys, never a field key). A type:
+ * phone: layout keys, never a field key). A type:
  *
  *   type      its name in the content
  *   label     its name in the editor; icon: a Font Awesome icon name (no "fa-")
@@ -62,7 +62,7 @@ export const BLOCK_TYPES = Object.fromEntries(
  */
 export function kindOf(block) {
   // eslint-disable-next-line no-unused-vars
-  const { pos, z, mobile, size, aspect, place, motion, link, scale, config, ...rest } = block || {};
+  const { pos, z, phone, size, aspect, place, motion, link, scale, config, ...rest } = block || {};
   const { enabled, ...settings } = config || {}; // eslint-disable-line no-unused-vars
   return JSON.stringify([rest, settings]);
 }

@@ -252,7 +252,7 @@ const FIELD_TYPES = { number: 'number' }; // the other field types are strings
 const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strings
 const whole = (v, min) => Number.isInteger(v) && v >= min;
 
-/** A grid area { col, span, row, rows } of a block (pos, or its mobile area). */
+/** A grid area { col, span, row, rows } of a block (pos, or its phone area). */
 function checkArea(p, key, cols = COLS) {
   if (!isObject(p)) return [`"${key}" must be an object { col, span, row, rows }`];
   const out = [];
@@ -285,24 +285,24 @@ function checkSection(s, at) {
   else if (s.rows !== undefined && s.height !== 'custom')
     bad('rows', 'left out unless the height is custom');
   // phones: a height of its own and, custom there, its rows
-  if (s.mobile !== undefined) {
-    const { rows, height, ...rest } = isObject(s.mobile) ? s.mobile : { x: 1 };
+  if (s.phone !== undefined) {
+    const { rows, height, ...rest } = isObject(s.phone) ? s.phone : { x: 1 };
     const minRows = rows?.min;
     const phone = HEIGHTS.includes(height) ? height : s.height;
     if (
-      !isObject(s.mobile) ||
+      !isObject(s.phone) ||
       Object.keys(rest).length ||
       (rows !== undefined && (!isObject(rows) || Object.keys(rows).some((k) => k !== 'min')))
     )
-      bad('mobile', "an object { height, rows: { min } } (the phone's height and rows)");
+      bad('phone', "an object { height, rows: { min } } (the phone's height and rows)");
     else if (height !== undefined && !HEIGHTS.includes(height))
-      bad('mobile.height', `one of ${HEIGHTS.join(', ')}`);
+      bad('phone.height', `one of ${HEIGHTS.join(', ')}`);
     else if (height === 'custom' && s.height !== 'custom' && minRows === undefined)
-      bad('mobile.rows.min', 'a whole number of rows from 1 (a custom phone height)');
+      bad('phone.rows.min', 'a whole number of rows from 1 (a custom phone height)');
     else if (minRows !== undefined && phone !== 'custom')
-      bad('mobile.rows', 'left out unless the phone height is custom');
+      bad('phone.rows', 'left out unless the phone height is custom');
     else if (minRows !== undefined && !(whole(minRows, 1) && minRows <= MAX_MIN_ROWS))
-      bad('mobile.rows.min', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
+      bad('phone.rows.min', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
   }
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
@@ -321,17 +321,27 @@ function checkBlock(b, where) {
   if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
   if (b.pos !== undefined) out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
   if (b.size !== undefined && !SIZES.includes(b.size)) bad('size', SIZES.join(', '));
+  if (b.type === 'hero' && Array.isArray(b.photos))
+    b.photos.forEach((p, i) => {
+      const ph = p?.phone;
+      if (ph === undefined || ph === null) return;
+      if (!isObject(ph) || Object.keys(ph).some((k) => !['x', 'y', 'w'].includes(k)))
+        bad(`photos.${i}.phone`, 'null (hidden on phones) or { x?, y?, w? }');
+      else
+        for (const [k, v] of Object.entries(ph))
+          if (typeof v !== 'number') bad(`photos.${i}.phone.${k}`, 'a number');
+    });
   if ((b.size === 'aspect' || b.aspect !== undefined) && !isRatio(b.aspect))
     bad('aspect', 'a ratio like "4:5"');
   if (b.place !== undefined && !PLACES.includes(b.place)) bad('place', 'a placement (see layout)');
-  if (b.mobile !== undefined) {
-    if (!isObject(b.mobile)) bad('mobile', 'an object { col, span, row, rows, place, link }');
+  if (b.phone !== undefined) {
+    if (!isObject(b.phone)) bad('phone', 'an object { col, span, row, rows, place, link }');
     else {
-      const { place, link, ...area } = b.mobile; // eslint-disable-line no-unused-vars
+      const { place, link, ...area } = b.phone; // eslint-disable-line no-unused-vars
       if (place !== undefined && !PLACES.includes(place))
-        bad('mobile.place', 'a placement (see layout)');
+        bad('phone.place', 'a placement (see layout)');
       if (Object.keys(area).length)
-        out.push(...checkArea(area, 'mobile', MCOLS).map((p) => `${name}: ${p}`));
+        out.push(...checkArea(area, 'phone', MCOLS).map((p) => `${name}: ${p}`));
     }
   }
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');

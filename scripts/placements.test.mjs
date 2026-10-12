@@ -61,7 +61,7 @@ test('sizes: auto by default; every block spans its stored rows (rows.js works o
 
 test('placements: classes per kind and corner, the phone ones prefixed m-', () => {
   const cls = (place, mobile) =>
-    blockClass(blk({ place, mobile })).replace('blk blk--text blk--auto', '');
+    blockClass(blk({ place, phone: mobile })).replace('blk blk--text blk--auto', '');
   assert.equal(cls('none'), '');
   assert.equal(cls('wobbly'), '');
   assert.equal(cls('sticky-top-left'), ' blk--sticky blk--v-top blk--h-left');
@@ -78,14 +78,14 @@ test('placements: classes per kind and corner, the phone ones prefixed m-', () =
 });
 
 test('phone grid: 60 columns; a block without a phone area shows its desktop area halved', () => {
-  const placed = blk({ mobile: { col: 55, span: 9, row: 3, rows: 4 } }); // span cut at column 60
+  const placed = blk({ phone: { col: 55, span: 9, row: 3, rows: 4 } }); // span cut at column 60
   assert.equal(blockVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:55;--ms:6;--mr:3;--mrs:4');
   const s = sec([placed, { ...blk(), id: 'b-bbbb' }]);
   assert.equal(mobileRowsOf(s), 12); // b-bbbb halved: rows 3-12
   assert.match(sectionVars(s), /;--mrows:12$/);
   assert.equal(sectionClass(s), 'sec'); // nothing stacks
   // a placement alone: the halved area
-  const only = sec([blk({ mobile: { place: 'sticky-top-left' } })]);
+  const only = sec([blk({ phone: { place: 'sticky-top-left' } })]);
   assert.match(blockVars(only.blocks[0]), new RegExp(`${HALF}$`));
   assert.equal(phoneAreaOf(only.blocks[0]).span, 5);
   // halving: the cells it covers (first rounded down, last up), at least one
@@ -186,28 +186,28 @@ test('validation: size, aspect, place, mobile', () => {
       size: 'aspect',
       aspect: '4:5',
       place: 'pinned',
-      mobile: { col: 1, span: 12, row: 1, rows: 3, place: 'fixed-top-left' },
+      phone: { col: 1, span: 12, row: 1, rows: 3, place: 'fixed-top-left' },
     }),
     [],
   );
-  assert.deepEqual(one({ mobile: { place: 'sticky-center' } }), []);
+  assert.deepEqual(one({ phone: { place: 'sticky-center' } }), []);
   const where = 'section 1, block 1 (Text)';
   assert.deepEqual(one({ size: 'big' }), [`${where}: "size" must be auto, aspect, rows`]);
   assert.deepEqual(one({ size: 'aspect' }), [`${where}: "aspect" must be a ratio like "4:5"`]);
   assert.deepEqual(one({ place: 'sticky' }), [
     `${where}: "place" must be a placement (see layout)`,
   ]);
-  assert.deepEqual(one({ mobile: { place: 'up' } }), [
-    `${where}: "mobile.place" must be a placement (see layout)`,
+  assert.deepEqual(one({ phone: { place: 'up' } }), [
+    `${where}: "phone.place" must be a placement (see layout)`,
   ]);
-  assert.deepEqual(one({ mobile: { col: 56, span: 6, row: 1, rows: 1 } }), [
-    `${where}: "mobile" must end by column 60 (col 56 + span 6)`,
+  assert.deepEqual(one({ phone: { col: 56, span: 6, row: 1, rows: 1 } }), [
+    `${where}: "phone" must end by column 60 (col 56 + span 6)`,
   ]);
-  assert.match(one({ mobile: { col: 1 } })[0], /"mobile.span" must be a whole number/);
+  assert.match(one({ phone: { col: 1 } })[0], /"phone.span" must be a whole number/);
   assert.deepEqual(of({ height: 'full' }), []);
-  assert.deepEqual(of({ height: 'aspect', mobile: { spacing: { top: 3 } } }), [
+  assert.deepEqual(of({ height: 'aspect', phone: { spacing: { top: 3 } } }), [
     'section 1: "height" must be one of custom, fit, third, half, full',
-    `section 1: "mobile" must be an object { height, rows: { min } } (the phone's height and rows)`,
+    `section 1: "phone" must be an object { height, rows: { min } } (the phone's height and rows)`,
   ]);
 });
 
@@ -228,20 +228,20 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
 
   // a move on the phone: its own phone area; the others keep showing their desktop halved
   placeMobile(store, F, 0, 1, { col: 49, span: 20, row: 1, rows: 10 });
-  assert.deepEqual(blocks()[1].mobile, { col: 49, span: 12, row: 1, rows: 10 });
-  assert.ok(!('mobile' in blocks()[0]));
+  assert.deepEqual(blocks()[1].phone, { col: 49, span: 12, row: 1, rows: 10 });
+  assert.ok(!('phone' in blocks()[0]));
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 });
   assert.deepEqual(blocks()[0].pos, a.pos); // the desktop is untouched
   placeOnPhone(store, F, 0, 0, 'pinned');
-  assert.equal(blocks()[0].mobile.place, 'pinned');
+  assert.equal(blocks()[0].phone.place, 'pinned');
   placeOnPhone(store, F, 0, 0, 'none');
-  assert.ok(!('place' in blocks()[0].mobile));
+  assert.ok(!('place' in blocks()[0].phone));
 
   assert.equal(resetMobile(store, F, 0), true);
-  assert.ok(blocks().every((x) => !('mobile' in x)));
+  assert.ok(blocks().every((x) => !('phone' in x)));
   assert.equal(resetMobile(store, F, 0), false); // nothing to reset
   store.undo();
-  assert.ok(blocks().every((x) => x.mobile));
+  assert.ok(blocks().every((x) => x.phone));
 
   setSection(store, F, 0, { height: 'third', name: 'Intro' });
   setSection(store, F, 0, { height: 'custom', rows: { min: 24 } });
@@ -275,7 +275,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
   assert.equal(sectionVars(s()), vars);
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 }, { rows: 6 });
   assert.equal(sectionVars(s()), vars);
-  assert.ok(!('mobile' in s()));
+  assert.ok(!('phone' in s()));
   // dragged past its bottom: its rows become the content's, in the move's one undo step
   placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 55, rows: 10 });
   assert.equal(s().rows.min, 64);
@@ -294,25 +294,25 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
 
   // the phone: its own rows, the desktop's untouched
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 30, rows: 5 }, { rows: 34 });
-  assert.equal(s().mobile.rows.min, 34);
+  assert.equal(s().phone.rows.min, 34);
   assert.equal(s().rows.min, 50);
   assert.match(sectionVars(s()), /--minrows:50;--mminrows:34$/);
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 1, rows: 5 });
-  assert.equal(s().mobile.rows.min, 34);
+  assert.equal(s().phone.rows.min, 34);
 
   // the bottom edge / Rows field: the desktop's, or the phone's own (never the other)
   assert.equal(setSectionRows(store, F, 0, 72), true);
-  assert.deepEqual([s().rows.min, s().mobile.rows.min], [72, 34]);
+  assert.deepEqual([s().rows.min, s().phone.rows.min], [72, 34]);
   assert.equal(setSectionRows(store, F, 0, 72), false);
   setSectionRows(store, F, 0, 20, { phone: true });
-  assert.deepEqual([s().rows.min, s().mobile.rows.min], [72, 20]);
+  assert.deepEqual([s().rows.min, s().phone.rows.min], [72, 20]);
   assert.equal(setSectionRows(store, F, 0, 5000), true);
   assert.equal(s().rows.min, 999);
   store.undo();
   assert.equal(s().rows.min, 72);
   assert.deepEqual(checkContent(F, store.current[F]), []);
   // no phone rows of its own: half, rounded up
-  setSection(store, F, 0, { mobile: undefined });
+  setSection(store, F, 0, { phone: undefined });
   assert.match(sectionVars(s()), /--mminrows:36$/);
   setSection(store, F, 0, { height: 'fit', rows: undefined });
   assert.equal(setSectionRows(store, F, 0, 40), false); // not custom
@@ -324,27 +324,27 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
 
 test('phone height: validation', () => {
   const of = (more) => checkContent(F, { version: 1, id: 'pg-t025', sections: [sec([], more)] });
-  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { rows: { min: 12 } } }), []);
-  assert.deepEqual(of({ mobile: { height: 'half' } }), []);
-  assert.deepEqual(of({ mobile: { height: 'custom', rows: { min: 9 } } }), []);
-  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'custom' } }), []);
-  assert.deepEqual(of({ mobile: { rows: { min: 12 } } }), [
-    'section 1: "mobile.rows" must be left out unless the phone height is custom',
+  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, phone: { rows: { min: 12 } } }), []);
+  assert.deepEqual(of({ phone: { height: 'half' } }), []);
+  assert.deepEqual(of({ phone: { height: 'custom', rows: { min: 9 } } }), []);
+  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, phone: { height: 'custom' } }), []);
+  assert.deepEqual(of({ phone: { rows: { min: 12 } } }), [
+    'section 1: "phone.rows" must be left out unless the phone height is custom',
   ]);
   assert.deepEqual(
-    of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'fit', rows: { min: 4 } } }),
-    ['section 1: "mobile.rows" must be left out unless the phone height is custom'],
+    of({ height: 'custom', rows: { min: 30 }, phone: { height: 'fit', rows: { min: 4 } } }),
+    ['section 1: "phone.rows" must be left out unless the phone height is custom'],
   );
-  assert.deepEqual(of({ mobile: { height: 'custom' } }), [
-    'section 1: "mobile.rows.min" must be a whole number of rows from 1 (a custom phone height)',
+  assert.deepEqual(of({ phone: { height: 'custom' } }), [
+    'section 1: "phone.rows.min" must be a whole number of rows from 1 (a custom phone height)',
   ]);
-  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { rows: { min: 0 } } }), [
-    'section 1: "mobile.rows.min" must be a whole number of rows from 1 to 999',
+  assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, phone: { rows: { min: 0 } } }), [
+    'section 1: "phone.rows.min" must be a whole number of rows from 1 to 999',
   ]);
-  assert.deepEqual(of({ mobile: { height: 'tall' } }), [
-    'section 1: "mobile.height" must be one of custom, fit, third, half, full',
+  assert.deepEqual(of({ phone: { height: 'tall' } }), [
+    'section 1: "phone.height" must be one of custom, fit, third, half, full',
   ]);
-  assert.equal(of({ height: 'custom', rows: { min: 30 }, mobile: { spacing: {} } }).length, 1);
+  assert.equal(of({ height: 'custom', rows: { min: 30 }, phone: { spacing: {} } }).length, 1);
 });
 
 test('phone height: its own, the desktop untouched; reset; rows, line and growth follow it', () => {
@@ -364,43 +364,43 @@ test('phone height: its own, the desktop untouched; reset; rows, line and growth
   assert.match(sectionVars(s()), /--mminrows:20$/);
   // phone: half the screen; the desktop stays custom 40
   assert.equal(setPhoneHeight(store, F, 0, 'half'), true);
-  assert.deepEqual(s().mobile, { height: 'half' });
+  assert.deepEqual(s().phone, { height: 'half' });
   assert.equal(s().rows.min, 40);
   assert.equal(sectionClass(s()), 'sec sec--h-custom sec--mh-half');
   assert.equal(sectionVars(s()), '--rows:40;--mrows:5;--minrows:40');
   // not custom on the phone: no phone rows from the line, a phone drag doesn't grow anything
   assert.equal(setSectionRows(store, F, 0, 30, { phone: true }), false);
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 50, rows: 5 }, { rows: 54 });
-  assert.deepEqual(s().mobile, { height: 'half' });
+  assert.deepEqual(s().phone, { height: 'half' });
   // phone custom: rows to start from (the desktop's halved); the line and growth edit them
   setPhoneHeight(store, F, 0, 'custom');
-  assert.deepEqual(s().mobile, { height: 'custom', rows: { min: 20 } });
+  assert.deepEqual(s().phone, { height: 'custom', rows: { min: 20 } });
   assert.equal(sectionClass(s()), 'sec sec--h-custom sec--mh-custom');
   setSectionRows(store, F, 0, 33, { phone: true });
-  assert.equal(s().mobile.rows.min, 33);
+  assert.equal(s().phone.rows.min, 33);
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 60, rows: 5 }, { rows: 64 });
-  assert.equal(s().mobile.rows.min, 64);
+  assert.equal(s().phone.rows.min, 64);
   assert.equal(s().rows.min, 40);
   assert.deepEqual(checkContent(F, store.current[F]), []);
   // the desktop fit: the phone keeps its own custom height and rows
   setSection(store, F, 0, { height: 'fit', rows: undefined });
-  assert.deepEqual(s().mobile, { height: 'custom', rows: { min: 64 } });
+  assert.deepEqual(s().phone, { height: 'custom', rows: { min: 64 } });
   assert.equal(sectionClass(s()), 'sec sec--mh-custom');
   assert.match(sectionVars(s()), /^--rows:10;--mrows:64;--mminrows:64$/);
   assert.deepEqual(checkContent(F, store.current[F]), []);
   // reset: the phone follows the desktop (fit): its rows go too
   assert.equal(setPhoneHeight(store, F, 0, undefined), true);
-  assert.ok(!('mobile' in s()));
+  assert.ok(!('phone' in s()));
   assert.equal(sectionClass(s()), 'sec');
   assert.equal(setPhoneHeight(store, F, 0, undefined), false);
   // one undo step each
   store.undo();
-  assert.deepEqual(s().mobile, { height: 'custom', rows: { min: 64 } });
+  assert.deepEqual(s().phone, { height: 'custom', rows: { min: 64 } });
   store.undo();
   assert.equal(s().height, 'custom');
   // a phone custom height without desktop rows: from its phone content
-  setSection(store, F, 0, { height: 'third', rows: undefined, mobile: undefined });
+  setSection(store, F, 0, { height: 'third', rows: undefined, phone: undefined });
   setPhoneHeight(store, F, 0, 'custom');
-  assert.equal(s().mobile.rows.min, 64); // its phone content (the block at phone row 60)
+  assert.equal(s().phone.rows.min, 64); // its phone content (the block at phone row 60)
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });

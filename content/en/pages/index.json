@@ -52,10 +52,12 @@
               "x": 7,
               "y": 9,
               "w": 13,
-              "depth": 0.35,
-              "mx": 4,
-              "my": 10,
-              "mw": 34
+              "phone": {
+                "x": 4,
+                "y": 10,
+                "w": 34
+              },
+              "depth": 0.35
             },
             {
               "src": "people/daan-okafor/02.jpg",
@@ -69,10 +71,12 @@
               "x": 31,
               "y": 4,
               "w": 10,
-              "depth": 0.7,
-              "mx": 62,
-              "my": 6,
-              "mw": 30
+              "phone": {
+                "x": 62,
+                "y": 6,
+                "w": 30
+              },
+              "depth": 0.7
             },
             {
               "src": "places/kasteel-de-haar/02.jpg",
@@ -86,6 +90,7 @@
               "x": 63,
               "y": 7,
               "w": 16,
+              "phone": null,
               "depth": 0.5
             },
             {
@@ -100,6 +105,7 @@
               "x": 85,
               "y": 18,
               "w": 11,
+              "phone": null,
               "depth": 0.9
             },
             {
@@ -114,10 +120,12 @@
               "x": 2,
               "y": 58,
               "w": 12,
-              "depth": 0.8,
-              "mx": 6,
-              "my": 66,
-              "mw": 28
+              "phone": {
+                "x": 6,
+                "y": 66,
+                "w": 28
+              },
+              "depth": 0.8
             },
             {
               "src": "people/noor-vermeer/04.jpg",
@@ -131,11 +139,13 @@
               "x": 22,
               "y": 50,
               "w": 12,
+              "phone": {
+                "x": 40,
+                "y": 58,
+                "w": 30
+              },
               "depth": 1,
-              "layer": "front",
-              "mx": 40,
-              "my": 58,
-              "mw": 30
+              "layer": "front"
             },
             {
               "src": "places/concrete-studies/05.jpg",
@@ -149,6 +159,7 @@
               "x": 47,
               "y": 66,
               "w": 9,
+              "phone": null,
               "depth": 0.45
             },
             {
@@ -163,11 +174,13 @@
               "x": 66,
               "y": 52,
               "w": 12,
+              "phone": {
+                "x": 70,
+                "y": 70,
+                "w": 26
+              },
               "depth": 0.85,
-              "layer": "front",
-              "mx": 70,
-              "my": 70,
-              "mw": 26
+              "layer": "front"
             },
             {
               "src": "people/noor-vermeer/01.jpg",
@@ -181,6 +194,7 @@
               "x": 86,
               "y": 64,
               "w": 10,
+              "phone": null,
               "depth": 0.6
             }
           ],

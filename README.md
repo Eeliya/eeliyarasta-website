@@ -133,7 +133,7 @@ site settings can live side by side):
 | `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.label`, `footer.cta`, `footer.note`, `footer.toTop`, `footer.columns.*.title`)                                                                                                            |
 | `content/en/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, `timezone` of the clock, `jobTitle` / `country` (structured data on home)                                            |
 | `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                   |
-| `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                                    |
+| `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, `phone` over them (`{ x?, y?, w? }`, `null`: hidden on phones), `depth`, `layer` back/front), curtain text                                                                       |
 | `content/en/pages/<page>/index.json`  | the other pages: their `sections` of blocks (see "Layout"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                                                           |
 | `content/en/sources/people.json`      | models: `id`, `slug`, `title`, role, `body`, location, `accent`, `cover` (the path of one of its photos), `images[]` (photo paths)                                                                                                                                                                                |
 | `content/en/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                |
@@ -258,9 +258,9 @@ every section is a grid of **blocks** (`src/site/layout/`):
   with `custom`), its blocks at their rows **from the top** (not centred), so the rows below
   the last block are empty space under it; never shorter than its content (when a block
   grows, the section is its content's rows, the empty rows don't stack on top). Phones can
-  have a height of their own, `mobile.height` (any of the five, set only in the editor's phone
+  have a height of their own, `phone.height` (any of the five, set only in the editor's phone
   preview, where a reset beside it goes back to following the desktop); unset, the desktop's.
-  When the phone height is custom its rows are `mobile.rows.min`, or else (the desktop custom
+  When the phone height is custom its rows are `phone.rows.min`, or else (the desktop custom
   too) half the desktop rows, rounded up, the way a block's desktop area is halved there.
   `width` is shared. In the editor a
   line on its bottom edge drags its rows (the phone's in the phone preview, never below its
@@ -300,7 +300,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
   project row's slug, say) is a build warning (`[anchors]`). Without a name: no id.
 - **A block:** its `type` and content (below), `pos` (first column 1–120, columns, first row,
   rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
-  an optional `link` (below), `scale` (text blocks, below), `place`, an optional `mobile`
+  an optional `link` (below), `scale` (text blocks, below), `place`, an optional `phone`
   layout (below) and an optional `motion`
   (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
   timing, see Animations).
@@ -365,7 +365,7 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
   60, ~6px at 390px; its rows `--mrows`). Nothing stacks: a block without a phone area of its
   own shows its **desktop area halved** (columns and rows, rounded to the cells it covers:
   `grid.js` `halfArea`), so a phone starts as the desktop layout scaled down, and its desktop
-  link comes along with the gap halved. A block's `mobile` changes that:
+  link comes along with the gap halved. A block's `phone` changes that:
   `{ "col": 1, "span": 60, "row": 1, "rows": 20, "link": { "to": "b-…", "gap": 2 }, "place":
 "sticky-top-left" }`: its own phone area and its own phone link (desktop and phone links are
   separate once it has a phone area), and a phone placement (without one, desktop placements
