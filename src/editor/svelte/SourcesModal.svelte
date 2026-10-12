@@ -125,8 +125,11 @@
   /**
    * Open on the list of files, or straight into a file at item nextIndex, optionally on one
    * field (its data-edit): focused, scrolled to and highlighted (ui.explorer.field, its key).
+   * then: called once when it closes.
    */
-  export function open(nextFile = '', nextIndex = 0, edit = null) {
+  let after = null; // called once when it closes (the item picker opens again: ItemPicker.svelte)
+  export function open(nextFile = '', nextIndex = 0, edit = null, then = null) {
+    after = then;
     ui.explorer.file = files.includes(nextFile) ? nextFile : '';
     select(nextIndex);
     flushSync(); // render now, so the field below exists
@@ -154,7 +157,12 @@
   aria-label="Sources"
   bind:this={dialog}
   onclick={(e) => e.target === dialog && dialog.close()}
-  onclose={() => (ui.explorer.open = false)}
+  onclose={() => {
+    ui.explorer.open = false;
+    const then = after;
+    after = null;
+    then?.();
+  }}
 >
   <ExplorerHead
     title="Sources"

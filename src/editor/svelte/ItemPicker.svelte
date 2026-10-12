@@ -8,6 +8,9 @@
     value, label, changed (its changed dot), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
     onpick(value | undefined)
+    onsource(file, index, edit, then): open the Source Explorer (SourcesModal.svelte); each
+              row's edit button closes this window and opens it there, and this window opens
+              again on the same source or item when the Source Explorer closes (then)
 -->
 <script>
   import { tick } from 'svelte';
@@ -25,6 +28,7 @@
     itemsOf,
     nameOf = () => '',
     onpick,
+    onsource,
   } = $props();
 
   const items_ = $derived(mode === 'item');
@@ -75,7 +79,23 @@
     onpick(next);
     dialog.close();
   }
+  // edit a source (index -1: its list) or one of its items in the Source Explorer
+  function edit(id, index = -1, itemId = '') {
+    dialog.close();
+    onsource(`sources/${id}.json`, Math.max(0, index), null, () =>
+      open(items_ ? (index < 0 && !itemId ? '' : id) : '', itemId || id),
+    );
+  }
 </script>
+
+{#snippet row(props, editLabel, onedit)}
+  <div class="ip-row">
+    <ExplorerRow {...props} />
+    {#if onsource}
+      <Button size="small" icon="pen-to-square" iconOnly label={editLabel} onclick={onedit} />
+    {/if}
+  </div>
+{/snippet}
 
 <div class={['opt', changed && 'is-changed']}>
   <span class="tf__label" id="{uid}-label">{label}<i class="dot" title="Changed"></i></span>
@@ -129,25 +149,33 @@
           />
         {/if}
         {#each sources as id (id)}
-          <ExplorerRow
-            icon="fa-database"
-            name={`${id}.json`}
-            meta={`${itemsOf(id).length} items`}
-            selected={current === id}
-            enter={items_}
-            data-pick={id}
-            onclick={() => (items_ ? enter(id) : pick(id))}
-          />
+          {@render row(
+            {
+              icon: 'fa-database',
+              name: `${id}.json`,
+              meta: `${itemsOf(id).length} items`,
+              selected: current === id,
+              enter: items_,
+              'data-pick': id,
+              onclick: () => (items_ ? enter(id) : pick(id)),
+            },
+            `Edit ${id}.json in the Source Explorer`,
+            () => edit(id),
+          )}
         {/each}
       {:else}
         {#each items as r (r.it?.id ?? r.i)}
-          <ExplorerRow
-            lead={String(r.i + 1).padStart(2, '0')}
-            name={r.name}
-            selected={current === source && value?.id === r.it?.id}
-            data-pick={r.it?.id}
-            onclick={() => pick({ source, id: r.it.id })}
-          />
+          {@render row(
+            {
+              lead: String(r.i + 1).padStart(2, '0'),
+              name: r.name,
+              selected: current === source && value?.id === r.it?.id,
+              'data-pick': r.it?.id,
+              onclick: () => pick({ source, id: r.it.id }),
+            },
+            `Edit ${r.name} in the Source Explorer`,
+            () => edit(source, r.i, r.it?.id),
+          )}
         {:else}
           <p class="hint small">Nothing found.</p>
         {/each}
@@ -226,5 +254,17 @@
     display: grid;
     gap: var(--space-1);
     overflow: auto;
+  }
+
+  // a row and its edit button
+  .ip-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    > :global(.xrow) {
+      flex: 1;
+      min-width: 0;
+    }
   }
 </style>

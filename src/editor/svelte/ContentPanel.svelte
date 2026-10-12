@@ -77,7 +77,7 @@
         : 'Editing Footer copy. Scroll the preview to the bottom to see changes.',
   );
 
-  const onsource = (f, item, edit) => sourcesModal.open(f, item, edit);
+  const onsource = (f, item, edit, then) => sourcesModal.open(f, item, edit, then);
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
 
   function openBlock(id) {

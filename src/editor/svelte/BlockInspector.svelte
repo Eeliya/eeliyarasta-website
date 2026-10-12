@@ -212,6 +212,7 @@
         value={ref}
         changed={live.changed(g.file, `${base}/item`)}
         {sourceIds}
+        {onsource}
         none={template ? "This page's item" : 'None'}
         itemsOf={(id) => {
           live.version;

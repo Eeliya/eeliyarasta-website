@@ -107,6 +107,7 @@
       none={null}
       {sourceIds}
       {itemsOf}
+      {onsource}
       onpick={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
     />
   {:else if f.type === 'link'}
@@ -161,6 +162,7 @@
       none={c.empty ?? null}
       {sourceIds}
       {itemsOf}
+      {onsource}
       onpick={(v) => setConfig(c, v ?? '')}
     />
   {:else}
