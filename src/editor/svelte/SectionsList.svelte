@@ -12,6 +12,7 @@
   import Button from './Button.svelte';
   import Field from './Field.svelte';
   import Section from './Section.svelte';
+  import SectionIcon from './SectionIcon.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { nameOf } from './content-groups.js';
@@ -179,14 +180,7 @@
 <!-- a width's icon: the screen (a frame) and a band across its middle, narrower and centred
      (contained: inside the page margins) or from edge to edge (full width) -->
 {#snippet widthIcon(band)}
-  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-    <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
-    {#if band === 'edge'}
-      <rect x="1" y="5.5" width="14" height="5" rx="0.5" />
-    {:else}
-      <rect x="5.5" y="5.5" width="5" height="5" rx="0.5" />
-    {/if}
-  </svg>
+  <SectionIcon kind="width" arg={band} />
 {/snippet}
 
 <!-- a setting as a half field (.tf: the same label row as a Field) of quiet icon buttons, one
@@ -217,20 +211,7 @@
 {/snippet}
 
 {#snippet heightIcon(share)}
-  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-    {#if share === 'rows'}
-      <!-- custom: the screen with rows counted off, the top ones filled -->
-      <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
-      <rect x="4" y="3" width="8" height="5" rx="0.5" />
-      <path class="frame" d="M4 10.5h8M4 12.5h8" />
-    {:else if share}
-      <rect class="frame" x="2.5" y="1.5" width="11" height="13" rx="1.5" />
-      <rect x="4" y="3" width="8" height={10 * share} rx="0.5" />
-    {:else}
-      <rect x="4" y="6.5" width="8" height="3" rx="0.5" />
-      <path class="frame" d="M2.5 4.5h11M2.5 11.5h11" />
-    {/if}
-  </svg>
+  <SectionIcon kind="height" arg={share} />
 {/snippet}
 
 {#each sections as s, at (s.id)}
@@ -457,17 +438,6 @@
     &:focus-visible {
       outline: none;
       box-shadow: inset 0 0 0 1px var(--ed-accent);
-    }
-
-    svg {
-      fill: currentcolor;
-    }
-
-    .frame {
-      fill: none;
-      stroke: currentcolor;
-      stroke-width: 1;
-      opacity: 0.55;
     }
   }
 

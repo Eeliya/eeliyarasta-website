@@ -8,7 +8,9 @@
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   The head row: Back (a quiet arrow: to the list of sections, SectionsList.svelte) and the
-  block's name. (Esc or a click on empty space in the preview also goes back.)
+  block's name. (Esc or a click on empty space in the preview also goes back.) Above it, its
+  section's settings, read only and live (name, height with its rows (the phone's in the phone
+  preview), width): a click opens that section in the list.
 -->
 <script>
   import Button from './Button.svelte';
@@ -22,6 +24,9 @@
   import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
+  import SectionIcon from './SectionIcon.svelte';
+  import { heightOf, minRowsOf, mobileMinRowsOf, rowsOf } from '../../site/layout/index.js';
+  import { tick } from 'svelte';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
@@ -37,6 +42,41 @@
     live.version;
     return live.get(g.file, base) || {};
   });
+
+  // ---- its section's settings, read only (a row above the head: a click opens them)
+  const H_LABELS = {
+    custom: ['Custom', 'rows'],
+    fit: ['Fit', 0],
+    third: ['1/3 screen', 1 / 3],
+    half: ['1/2 screen', 1 / 2],
+    full: ['Full screen', 1],
+  };
+  const sec = $derived.by(() => {
+    live.version;
+    const s = live.get(g.file, `/sections/${at}`) || {};
+    const phone = ui.viewport === 'mobile';
+    const h = heightOf(s) === 'custom' && !minRowsOf(s) ? 'fit' : heightOf(s);
+    // the rows: the resize line's while it is dragged, else the stored ones (the phone's own)
+    const dragged = ui.secRows?.id === s.id ? ui.secRows.rows : 0;
+    const rows = h === 'custom' ? dragged || (phone ? mobileMinRowsOf(s) : minRowsOf(s)) : 0;
+    return {
+      id: s.id,
+      name: typeof s.name === 'string' && s.name.trim() ? s.name : '',
+      h,
+      rows: rows || (h === 'custom' ? rowsOf(s) : 0),
+      phone,
+      full: s.width === 'full',
+    };
+  });
+  async function openSection() {
+    const id = sec.id;
+    ui.sections[`text:${g.file}#${id}`] = true;
+    ui.block = null;
+    await tick();
+    document
+      .querySelector(`[data-section="${CSS.escape(id)}"]`)
+      ?.scrollIntoView({ block: 'start' });
+  }
 
   // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
   const template = $derived(g.file.endsWith(`/${TEMPLATE}.json`));
@@ -105,6 +145,24 @@
     return bridge.doc?.querySelector(`[data-block="${CSS.escape(g.id)}"]`) || null;
   });
 </script>
+
+<button
+  type="button"
+  class="parent"
+  title="Open this section's settings"
+  aria-label="Section settings: {sec.name || 'Unnamed section'}"
+  onclick={openSection}
+>
+  <span class={['parent__name', !sec.name && 'is-none']}>{sec.name || 'Unnamed section'}</span>
+  <span class="parent__val" data-part="height">
+    <SectionIcon kind="height" arg={H_LABELS[sec.h][1]} />
+    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'}&nbsp;· {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
+  </span>
+  <span class="parent__val" data-part="width">
+    <SectionIcon kind="width" arg={sec.full ? 'edge' : 'inside'} />
+    {sec.full ? 'Full' : 'Contained'}
+  </span>
+</button>
 
 <div class="head">
   <Button
@@ -188,6 +246,54 @@
 {/if}
 
 <style lang="scss">
+  // [ name · height · width ]: the block's section, muted; a click opens its settings
+  .parent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 32px;
+    margin-bottom: 4px;
+    padding: 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--hi);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
+    }
+  }
+
+  .parent__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.is-none {
+      font-style: italic;
+    }
+  }
+
+  .parent__val {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
   // [ ← | icon Type name ]
   .head {
     display: flex;
