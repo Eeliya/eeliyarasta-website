@@ -91,7 +91,7 @@
       "start": "top 80%",
       "end": "bottom 45%"
     },
-    "parallax": { "type": "parallax", "speed": 12, "scrub": true },
+    "parallax": { "type": "parallax", "speed": 10, "scrub": true },
     "scatter-drift": {
       "type": "scatter",
       "intro": {
@@ -176,7 +176,7 @@
     "hero.meta": { "preset": "fade-up", "trigger": "load", "delay": 1.1, "duration": 1.2 },
     "section.label": { "preset": "fade-up", "duration": 0.9 },
     "section.title": { "preset": "split-lines" },
-    "place.card.image": { "preset": "parallax", "speed": 10 },
+    "place.card.image": { "preset": "parallax" },
     "projects.preview": { "preset": "hover-preview" },
     "page.title": { "preset": "split-chars", "trigger": "load" },
     "page.intro": { "preset": "fade-up", "trigger": "load", "delay": 0.45 },

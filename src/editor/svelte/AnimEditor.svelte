@@ -13,7 +13,7 @@
   import MotionGroups from './MotionGroups.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { GENERIC_TYPES, animModel, keepFor, layerPtr, legacyOverrides } from './motion.js';
+  import { GENERIC_TYPES, animModel, keepFor, layerPtr } from './motion.js';
   import { compile } from '../lib/pointer.js';
   import { ANIMATIONS } from '../../site/files.js';
 
@@ -38,7 +38,6 @@
     ),
   );
   const hasOverrides = $derived(Object.keys(m.own).length > 0);
-  const legacy = $derived(legacyOverrides(m));
 
   // Scroll position of the element in the preview, 0-100 (read once, when it is picked).
   const scrolled = () => Math.round(bridge.scrubProgress(sel.el) * 100);
@@ -54,24 +53,6 @@
         keep: keepFor(sel.scope),
         source: 'motion-structure',
       });
-  }
-
-  /** Remove the older non-timing overrides; with move, copy them into the animation first. */
-  function settleLegacy(move) {
-    const list = legacy;
-    live.store.batch(
-      () => {
-        for (const o of list) {
-          const path = compile(o.path);
-          if (move)
-            live.store.set(ANIMATIONS, layerPtr(m, sel, 'preset') + path, o.value, { keep: 2 });
-          live.store.remove(ANIMATIONS, layerPtr(m, sel, o.scope) + path, {
-            keep: keepFor(o.scope),
-          });
-        }
-      },
-      { source: 'motion-structure' },
-    );
   }
 </script>
 
@@ -148,35 +129,6 @@
     onchange={setPreset}
   />
 </div>
-{#if legacy.length}
-  <div class="legacy">
-    <p class="hint">
-      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-      Older overrides of what the animation does, which only the animation sets now:
-    </p>
-    <ul class="legacy__list">
-      {#each legacy as o (o.scope + o.path.join('.'))}
-        <li>
-          <code>{o.path.join('.')}: {JSON.stringify(o.value)}</code>
-          <span class="legacy__scope"
-            >{o.scope === 'element' ? 'this element' : `all "${sel.id}"`}</span
-          >
-        </li>
-      {/each}
-    </ul>
-    <p class="hint">
-      Move to animation copies them into {m.presetName}: every element using it changes.
-    </p>
-    <div class="legacy__actions">
-      <Button size="small" icon="arrow-up" onclick={() => settleLegacy(true)}>
-        Move to animation
-      </Button>
-      <Button variant="danger" size="small" icon="trash" onclick={() => settleLegacy(false)}>
-        Drop
-      </Button>
-    </div>
-  </div>
-{/if}
 <MotionGroups {live} {gsap} {m} scope={sel.scope} ptr={ptr()} />
 {#if hasOverrides}
   <Button
@@ -239,35 +191,6 @@
     width: 36px;
     text-align: right;
     color: var(--c-text);
-  }
-
-  // older non-timing overrides: what they are, Move to animation / Drop
-  .legacy {
-    margin-bottom: var(--space-4);
-    padding: var(--space-3);
-    border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--c-line);
-
-    .hint {
-      font-size: var(--fs-sm);
-      margin: 0 0 var(--space-2);
-    }
-  }
-
-  .legacy__list {
-    margin: 0 0 var(--space-2);
-    padding: 0;
-    list-style: none;
-  }
-
-  .legacy__scope {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
-  }
-
-  .legacy__actions {
-    display: flex;
-    gap: var(--space-2);
   }
 
   .scope {
