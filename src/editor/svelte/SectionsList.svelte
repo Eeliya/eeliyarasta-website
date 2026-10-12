@@ -234,7 +234,6 @@
   <Section
     id={s.id}
     key="text:{file}#{s.id}"
-    icon="layer-group"
     title="Section {at + 1}"
     name={typeof s.name === 'string' ? s.name.trim() : ''}
     off={s.enabled === false}
