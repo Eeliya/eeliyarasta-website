@@ -13,7 +13,9 @@
  * sets where every block sits now (a linked block below its leader) and how many rows it
  * spans (--fr / --frs) and the section's rows (--frows), which win over the stored ones.
  * While it measures, a section has .sec--measure. A section has no padding above or below
- * (the space between sections is empty rows); at the sides the page's --pad. Its height is at
+ * (the space between sections is empty rows); at the sides --cpad: a contained section is
+ * --contain columns of the full-width cell wide, centred, at least the page's --pad from the
+ * edges (src/site/layout/contain.js). Its height is at
  * least its rows, or its preset's (.sec--h-third / -half / -full: that much of the screen),
  * its rows always centred in it. A named section has an id (its anchor): a link to it lands
  * below the fixed header (scroll-margin-top; modules/anchors.js).
@@ -37,8 +39,18 @@
   --stick-top: calc(var(--header-h) + var(--edge));
 }
 
+// off (the editor's preview: the switch; the public page leaves them out): their display
+// (grid) would otherwise beat the hidden attribute
+.sec[hidden],
+.blk[hidden] {
+  display: none;
+}
+
 .sec {
-  --cell: calc((100vw - 2 * var(--pad)) / 120);
+  // a contained section's side margins: --contain (site.json layout.contained, 115 by default:
+  // src/site/layout/contain.js) columns of the full-width cell, centred, at least --pad
+  --cpad: max(var(--pad), calc((120 - var(--contain, 115)) * 100vw / 240));
+  --cell: calc((100vw - 2 * var(--cpad)) / 120);
   --tcell: var(--cell);
 
   display: grid;
@@ -49,7 +61,7 @@
   // (a min-height below; modules/rows.js fits a block that fits to the whole rows the minimum
   // holds: under a cell is left over)
   place-content: center;
-  padding: 0 var(--pad);
+  padding: 0 var(--cpad);
   scroll-margin-top: var(--header-h);
   &--full {
     --cell: calc(100vw / 120);
@@ -182,6 +194,7 @@
 @media (width <= $bp-sm) {
   // the phone grid: 60 square columns; text scales by the 120-column cell (half of one)
   .sec {
+    --cpad: var(--pad); // contained on a phone: the side margins only (no --contain)
     --cell: calc((100vw - 2 * var(--pad)) / 60);
     --tcell: calc(var(--cell) / 2);
 

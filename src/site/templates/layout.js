@@ -2,6 +2,7 @@ import { html, esc, editable } from '../helpers.js';
 import { seoOf } from '../seo.js';
 import { header, mobileMenu } from './header.js';
 import { typographyVars } from '../layout/type.js';
+import { layoutVars } from '../layout/contain.js';
 import { footer } from './footer.js';
 
 /** <head> contents injected into index.html at <!--ssr-head--> (meta: src/site/seo.js) */
@@ -10,7 +11,8 @@ export function head(ctx, route, accent) {
   const seo = seoOf(ctx, route);
   const image = seo.image;
   // site.json typography: the text styles scaled text uses (layout/type.js), where they differ
-  const type = typographyVars(site);
+  // site.json typography and layout (a contained section's columns: layout/contain.js)
+  const type = [typographyVars(site), layoutVars(site)].filter(Boolean).join('; ');
   const ld =
     route.page === 'home'
       ? html`<script type="application/ld+json">

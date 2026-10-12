@@ -34,6 +34,11 @@ export const ui = $state({
    */
   selection: null,
   /**
+   * The section the pointer is over, { id, from: 'panel' | 'preview' }, or null: the other
+   * side shows it faintly (a section row in the Content tab, the section in the preview).
+   */
+  peek: null,
+  /**
    * The animated element picked in the Motion tab: { el, id, key, scope }, or null.
    * scope: where its edits go: 'element' | 'target' (see motion.js).
    */

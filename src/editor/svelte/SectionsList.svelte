@@ -99,6 +99,25 @@
     else addSection(live.store, file, type);
   }
 
+  // hover sync: a section row the pointer is over shows its section in the preview
+  // (overlay.js); one hovered in the preview shows its row here (.is-peek)
+  $effect(() => {
+    const over = (e) => {
+      const id = e.target.closest?.('[data-section^="s-"]')?.dataset.section || '';
+      if (id) {
+        if (ui.peek?.id !== id || ui.peek.from !== 'panel') ui.peek = { id, from: 'panel' };
+      } else if (ui.peek?.from === 'panel') ui.peek = null;
+    };
+    const out = () => ui.peek?.from === 'panel' && (ui.peek = null);
+    document.addEventListener('pointerover', over);
+    document.documentElement.addEventListener('pointerleave', out);
+    return () => {
+      document.removeEventListener('pointerover', over);
+      document.documentElement.removeEventListener('pointerleave', out);
+      out();
+    };
+  });
+
   function addTo(at, type) {
     const b = addBlock(live.store, file, at, type);
     onopen(b.id);
@@ -184,6 +203,7 @@
     title="Section {at + 1}"
     name={typeof s.name === 'string' ? s.name.trim() : ''}
     off={s.enabled === false}
+    class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
   >
     {#snippet bar()}
       <Button

@@ -35,6 +35,7 @@ import {
 } from './layout/index.js';
 import { linkProblems } from './layout/links.js';
 import { checkScale, checkTypography } from './layout/type.js';
+import { checkLayout } from './layout/contain.js';
 import { isId } from './layout/ids.js';
 import { checkMotion } from './layout/motion.js';
 import { bindTypeOf, hasTemplate, isBinding, TEMPLATE_TYPES } from './layout/bindings.js';
@@ -107,6 +108,7 @@ function checkSite(d) {
     }),
     ...checkForms(d.forms),
     ...checkTypography(d.typography),
+    ...checkLayout(d.layout),
     ...(d.robots === undefined || ['index', 'noindex'].includes(d.robots)
       ? []
       : ['"robots" must be "index" or "noindex"']),

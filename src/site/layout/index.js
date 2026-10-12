@@ -24,7 +24,8 @@
  *            taller than the minimum makes it taller. No space above or below it: the space
  *            between sections is empty rows (rows above its first block)
  *   width    'contained': inside the page's side margins | 'full': edge to edge
- *   enabled  false: hidden (still rendered, so the editor can turn it on live)
+ *   enabled  false: off: not on the public page at all; in the editor's preview rendered hidden
+ *            (so it can be turned on live)
  * A block (its content: src/site/blocks/index.js):
  *   pos      { col, span, row, rows }: its grid area, columns 1-120 and rows (cells) from 1
  *   size     'auto' (default): as tall as its content | 'aspect': as tall as its columns'
@@ -319,6 +320,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
  * section rendered on its own still counts the headings before it).
  */
 export function renderSection(ctx, route, file, section, at, numbers = {}) {
+  if (section?.enabled === false && !editable) return ''; // off: not on the public page
   const blocks = (Array.isArray(section?.blocks) ? section.blocks : [])
     .map((b, j) => renderBlock(ctx, route, file, at, j, b, numbers))
     .join('');

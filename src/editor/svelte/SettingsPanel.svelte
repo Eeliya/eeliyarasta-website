@@ -25,6 +25,12 @@
   import { TARGETS } from '../../site/blocks/form.js';
   import { SITE } from '../../site/files.js';
   import { TEXT_STYLES, typographyOf } from '../../site/layout/type.js';
+  import {
+    CONTAINED,
+    CONTAINED_MIN,
+    containedOf,
+    containedWidth,
+  } from '../../site/layout/contain.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js)
   let { live, bridge } = $props();
@@ -64,6 +70,22 @@
       root.style.setProperty(`--ts-${k}-min`, `${t.min}px`);
     }
   });
+  // Layout: a contained section's columns (layout/contain.js), its width at common windows
+  const contained = $derived.by(() => {
+    live.version;
+    return containedOf(live.get(SITE, '') || {});
+  });
+  const WINDOWS = [1280, 1366, 1440, 1536, 1920];
+  // the preview follows as it is typed (the page's head has it after Save)
+  $effect(() => {
+    ui.previewVersion;
+    bridge.doc?.documentElement.style.setProperty('--contain', String(contained));
+  });
+  function setContained(value) {
+    if (!Number.isInteger(value) || value < CONTAINED_MIN || value > 120) return;
+    set('layout/contained', value);
+  }
+
   function setStyle(k, key, value) {
     if (typeof value !== 'number' || (key !== 'tracking' && value <= 0)) return;
     set(`typography/${k}/${key}`, value);
@@ -157,6 +179,29 @@
     </p>
   </Section>
 
+  <Section key="settings:layout" title="Site" name="Layout">
+    <p class="hint">
+      How wide a contained section is: columns of the 120-column grid ({CONTAINED_MIN}–120;
+      {CONTAINED} by default), centred and never nearer the edges than the side margins. Its blocks keep
+      their columns: they scale with it. Phones: the full width inside the margins.
+    </p>
+    <div class="fields">
+      <Field
+        edit="{SITE}#/layout/contained"
+        label="Contained width (columns)"
+        type="number"
+        value={contained}
+        changed={live.changed(SITE, '/layout/contained')}
+        onvalue={setContained}
+      />
+    </div>
+    <ul class="widths" aria-label="Contained width at common window sizes">
+      {#each WINDOWS as w (w)}
+        <li><span>{w}</span><strong>{Math.round(containedWidth(w, contained))} px</strong></li>
+      {/each}
+    </ul>
+  </Section>
+
   <Section key="settings:type" title="Site" name="Typography">
     <p class="hint">
       The text styles of scaled text (a text block's Layout › Scale text), in cells of the
@@ -208,3 +253,26 @@
     <p class="hint">Waiting for the preview…</p>
   {/if}
 </section>
+
+<style lang="scss">
+  // the contained width at each window size: window | px
+  .widths {
+    display: grid;
+    gap: 4px;
+    margin: 12px 0 0;
+    padding: 0;
+    color: var(--muted);
+    font-size: 11px;
+    list-style: none;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    strong {
+      color: var(--fg);
+      font-weight: 400;
+    }
+  }
+</style>

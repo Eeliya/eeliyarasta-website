@@ -248,9 +248,21 @@ every section is a grid of **blocks** (`src/site/layout/`):
   cells, no row count of its own); when the section is taller than them they are **centred
   vertically** (`align-content: center`), and content taller than the minimum makes the
   section taller. `width` is `contained` (inside the page's side margins, `--pad`) or `full`
-  (edge to edge); `enabled: false` hides it. A section has **no space above or below**: the
+  (edge to edge); `enabled: false` turns it off: the public page leaves it out, the editor's preview
+  renders it hidden (so the switch shows it again at once). A section has **no space above or below**: the
   space between sections is empty rows (cells: a block placed lower leaves rows above it), so
   it scales with the width like everything else (the side margins, `--pad`, stay).
+- **Contained width** (`site.json` `"layout": { "contained": 115 }`, Settings › Layout, 60–120):
+  a contained section is that many columns of the full-width grid's cell (window width / 120)
+  wide, centred, and never nearer the window's edges than the side margins (`--pad`). Its
+  content is still the 120-column grid, its cells smaller, so blocks keep their columns and a
+  narrower setting scales the layout down like a narrower window (rather than N columns of the
+  full-width cell, which would cut off blocks placed past column N). The default, 115, is the
+  look before the setting (up to 1920px the margins are the narrower; wider, 115/120 of the
+  width). Settings shows the resulting px at 1280, 1366, 1440, 1536 and 1920 wide, and the
+  preview follows as you type. Phones: the full 60-column grid inside the side margins. On the
+  page it is `--contain` on `:root` (only when not the default), read by `_layout.scss`
+  (`--cpad`); `src/site/layout/contain.js`.
 - **A section's name (its anchor):** optional `name`, slugified into the section's HTML `id`
   (`"Our People"` → `id="our-people"`), so `/page/#our-people` links to it. It lands just below
   the fixed header (`scroll-margin-top: var(--header-h)`), with native scrolling, on a link on

@@ -100,8 +100,13 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
   // a name: its anchor (id); a height preset: its min-height class
   assert.match(out, /<section id="our-people" class="sec sec--h-full sec--full"/);
   assert.match(out, /style="--c:1;--s:120;--r:1;--rs:1;--mc:1;--ms:60;--mr:1;--mrs:1" hidden>/); // no pos: full width
-  assert.match(out, /style="--rows:1;--mrows:1" hidden>/);
-  assert.ok(out.indexOf('One') < out.indexOf('Two') && out.indexOf('Two') < out.indexOf('Three'));
+  // a section that is off: not on the public page; in the editor's preview rendered hidden
+  assert.doesNotMatch(out, /Three/);
+  setEditable(true);
+  const ed = renderSections(ctxOf(page), page, F, list);
+  setEditable(false);
+  assert.match(ed, /data-sec="[^"]+" style="--rows:1;--mrows:1" hidden>[\s\S]*Three/);
+  assert.ok(ed.indexOf('One') < ed.indexOf('Two') && ed.indexOf('Two') < ed.indexOf('Three'));
   // a phone area of its own: on the 60-column phone grid
   const mobile = [section([block('text', { mobile: { col: 1, span: 24, row: 1, rows: 2 } })])];
   assert.match(

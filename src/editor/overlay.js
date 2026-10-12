@@ -55,6 +55,7 @@ const STYLE = `
 .cells { position: absolute; background-image: linear-gradient(to right, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(255 255 255 / .12); }
 .box { position: absolute; box-sizing: border-box; border-radius: 2px; }
 .hover { border: 1px dashed #fff; opacity: .7; }
+.peek { border-radius: 0; background: rgb(255 255 255 / .03); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2); }
 .sel { border: 2px solid #3cf; }
 .sel.is-dragging { background: #3cf; background: rgb(51 204 255 / .08); }
 .label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: 4px; background: #3cf; color: #000; white-space: nowrap; }
@@ -201,6 +202,15 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
   const secOf = (el) => el?.closest('[data-sec]');
+  const secById = (id) => doc.querySelector(`[data-sec="${CSS.escape(id)}"]:not([hidden])`);
+  /** The section under the pointer in the preview: its row in the Content tab shows it. */
+  const peekAt = (sec) => {
+    const id = sec?.dataset.sec;
+    if (id) {
+      if (ui.peek?.id !== id || ui.peek.from !== 'preview') ui.peek = { id, from: 'preview' };
+    } else if (ui.peek?.from === 'preview') ui.peek = null;
+  };
+  const unpeek = () => peekAt(null);
   /** The block elements of a section (not a nested section's). */
   const blocksIn = (sec) =>
     [...sec.querySelectorAll('[data-block]')].filter((n) => secOf(n) === sec);
@@ -217,11 +227,12 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     host.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483645;';
     const shadow = host.attachShadow({ mode: 'open' });
     const dots = '<i class="dot" data-dot="top"></i><i class="dot" data-dot="bottom"></i>';
-    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
+    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box peek" hidden></div><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
     root = shadow.querySelector('.layer');
     els.grids = root.querySelector('.grids');
     els.links = root.querySelector('.links');
     els.hover = root.querySelector('.hover');
+    els.peek = root.querySelector('.peek');
     els.sel = root.querySelector('.sel');
     els.label = root.querySelector('.label');
     els.targets = root.querySelector('.targets');
@@ -360,6 +371,10 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
       els.label.textContent = drag?.label ?? labelOf(b, sel);
       dotsOf(els.sel, sel);
     }
+    // the section row hovered in the Content tab: its section, faintly (under the block boxes)
+    const p = arrange && !drag && ui.peek?.from === 'panel' ? secById(ui.peek.id) : null;
+    els.peek.hidden = !p;
+    if (p) place(els.peek, rectOf(p, win));
     const h = arrange && hover !== sel && !drag ? hover : null;
     els.hover.hidden = !h;
     if (h) {
@@ -631,6 +646,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
   function onpointerover(e) {
     if (e.target.id === '__ed-layout') return; // over its circles: the block stays hovered
     hover = arranging() ? e.target.closest?.('[data-block]') || null : null;
+    if (e.target.id !== '__ed-layout') peekAt(arranging() ? secOf(e.target) : null);
   }
 
   return {
@@ -644,6 +660,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
       doc.addEventListener('mousedown', swallow, true);
       doc.addEventListener('click', swallow, true);
       doc.addEventListener('pointerover', onpointerover, true);
+      doc.documentElement.addEventListener('pointerleave', unpeek);
       doc.addEventListener('keydown', onkeydown, true);
       this.refresh();
     },
