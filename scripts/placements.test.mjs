@@ -15,6 +15,7 @@ import {
   phoneAreaOf,
   ratioOf,
   rowsOf,
+  phoneHeightOf,
   sectionAnchor,
   sectionClass,
   sectionVars,
@@ -27,6 +28,7 @@ import {
   placeOnPhone,
   resetMobile,
   setBlock,
+  setPhoneHeight,
   setSection,
   setSectionRows,
 } from '../src/editor/layout-ops.js';
@@ -348,16 +350,80 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
   assert.ok(!('minRows' in s()));
 });
 
-test('custom rows: validation of the phone rows', () => {
+test('phone height: validation', () => {
   const of = (more) => checkContent(F, { sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { minRows: 12 } }), []);
+  assert.deepEqual(of({ height: 'fit', mobile: { height: 'half' } }), []);
+  assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom', minRows: 9 } }), []);
+  assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { height: 'custom' } }), []);
   assert.deepEqual(of({ height: 'fit', mobile: { minRows: 12 } }), [
-    'section 1: "mobile.minRows" must be left out unless the height is custom',
+    'section 1: "mobile.minRows" must be left out unless the phone height is custom',
+  ]);
+  assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { height: 'fit', minRows: 4 } }), [
+    'section 1: "mobile.minRows" must be left out unless the phone height is custom',
+  ]);
+  assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom' } }), [
+    'section 1: "mobile.minRows" must be a whole number of rows from 1 (a custom phone height)',
   ]);
   assert.deepEqual(of({ height: 'custom', minRows: 30, mobile: { minRows: 0 } }), [
     'section 1: "mobile.minRows" must be a whole number of rows from 1 to 999',
   ]);
+  assert.deepEqual(of({ mobile: { height: 'tall' } }), [
+    'section 1: "mobile.height" must be one of custom, fit, third, half, full',
+  ]);
   assert.equal(of({ height: 'custom', minRows: 30, mobile: { spacing: {} } }).length, 1);
+});
+
+test('phone height: its own, the desktop untouched; reset; rows, line and growth follow it', () => {
+  const store = createStore();
+  const a = { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 24, row: 1, rows: 10 } };
+  store.load({ [F]: { sections: [sec([a], { height: 'custom', minRows: 40 })] } });
+  const s = () => store.current[F].sections[0];
+  // unset: the desktop's (custom: half its rows)
+  assert.equal(phoneHeightOf(s()), 'custom');
+  assert.equal(sectionClass(s()), 'sec sec--h-custom');
+  assert.match(sectionVars(s()), /--mminrows:20$/);
+  // phone: half the screen; the desktop stays custom 40
+  assert.equal(setPhoneHeight(store, F, 0, 'half'), true);
+  assert.deepEqual(s().mobile, { height: 'half' });
+  assert.equal(s().minRows, 40);
+  assert.equal(sectionClass(s()), 'sec sec--h-custom sec--mh-half');
+  assert.equal(sectionVars(s()), '--rows:40;--mrows:5;--minrows:40');
+  // not custom on the phone: no phone rows from the line, a phone drag doesn't grow anything
+  assert.equal(setSectionRows(store, F, 0, 30, { phone: true }), false);
+  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 50, rows: 5 }, { rows: 54 });
+  assert.deepEqual(s().mobile, { height: 'half' });
+  // phone custom: rows to start from (the desktop's halved); the line and growth edit them
+  setPhoneHeight(store, F, 0, 'custom');
+  assert.deepEqual(s().mobile, { height: 'custom', minRows: 20 });
+  assert.equal(sectionClass(s()), 'sec sec--h-custom sec--mh-custom');
+  setSectionRows(store, F, 0, 33, { phone: true });
+  assert.equal(s().mobile.minRows, 33);
+  placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 60, rows: 5 }, { rows: 64 });
+  assert.equal(s().mobile.minRows, 64);
+  assert.equal(s().minRows, 40);
+  assert.deepEqual(checkContent(F, store.current[F]), []);
+  // the desktop fit: the phone keeps its own custom height and rows
+  setSection(store, F, 0, { height: 'fit', minRows: undefined });
+  assert.deepEqual(s().mobile, { height: 'custom', minRows: 64 });
+  assert.equal(sectionClass(s()), 'sec sec--mh-custom');
+  assert.match(sectionVars(s()), /^--rows:10;--mrows:64;--mminrows:64$/);
+  assert.deepEqual(checkContent(F, store.current[F]), []);
+  // reset: the phone follows the desktop (fit): its rows go too
+  assert.equal(setPhoneHeight(store, F, 0, undefined), true);
+  assert.ok(!('mobile' in s()));
+  assert.equal(sectionClass(s()), 'sec');
+  assert.equal(setPhoneHeight(store, F, 0, undefined), false);
+  // one undo step each
+  store.undo();
+  assert.deepEqual(s().mobile, { height: 'custom', minRows: 64 });
+  store.undo();
+  assert.equal(s().height, 'custom');
+  // a phone custom height without desktop rows: from its phone content
+  setSection(store, F, 0, { height: 'third', minRows: undefined, mobile: undefined });
+  setPhoneHeight(store, F, 0, 'custom');
+  assert.equal(s().mobile.minRows, 64); // its phone content (the block at phone row 60)
+  assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
 test('migration: phone spacing from the old phone paddings, once', () => {

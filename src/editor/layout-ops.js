@@ -8,8 +8,10 @@
 import {
   MAX_MIN_ROWS,
   MCOLS,
+  HEIGHTS,
   minRowsOf,
   mobileMinRowsOf,
+  phoneHeightOf,
   mobileRowsOf,
   rowsOf,
   hasMobileArea,
@@ -109,7 +111,33 @@ export function removeSection(store, file, at) {
 export function setSection(store, file, at, patch, key) {
   const next = { ...listOf(store, file)[at], ...patch };
   for (const k of Object.keys(patch)) if (patch[k] === undefined) delete next[k];
-  return writeSection(store, file, at, next, key);
+  return writeSection(store, file, at, tidyMobile(next), key);
+}
+
+/** Its phone rows only while its phone height is custom; no empty `mobile`. */
+function tidyMobile(s) {
+  if (!s.mobile || typeof s.mobile !== 'object' || 'spacing' in s.mobile) return s;
+  const m = { ...s.mobile };
+  if (phoneHeightOf(s) !== 'custom') delete m.minRows;
+  if (Object.keys(m).length) s.mobile = m;
+  else delete s.mobile;
+  return s;
+}
+
+/**
+ * A section's height on phones (section.mobile.height), its desktop height untouched; undefined:
+ * its own is removed, the phone follows the desktop again. Custom: its phone rows to start from
+ * (its own, the desktop's halved, or its content's on the phone grid). One undo step.
+ */
+export function setPhoneHeight(store, file, at, height) {
+  const s = listOf(store, file)[at];
+  if (!s || (height !== undefined && !HEIGHTS.includes(height))) return false;
+  if (height === s.mobile?.height) return false;
+  const mobile = { ...s.mobile, height };
+  if (height === undefined) delete mobile.height;
+  if (height === 'custom' && !Number.isInteger(mobile.minRows))
+    mobile.minRows = Math.ceil(minRowsOf(s) / 2) || mobileRowsOf(s);
+  return setSection(store, file, at, { mobile });
 }
 
 /**
@@ -133,7 +161,8 @@ function grow(section, content, phone = false) {
  */
 export function setSectionRows(store, file, at, rows, { phone = false, key } = {}) {
   const s = listOf(store, file)[at];
-  if (!s || s.height !== 'custom' || !Number.isFinite(rows)) return false;
+  if (!s || (phone ? phoneHeightOf(s) : s.height) !== 'custom' || !Number.isFinite(rows))
+    return false;
   const n = Math.min(MAX_MIN_ROWS, Math.max(1, Math.round(rows)));
   if (phone) {
     if (n === s.mobile?.minRows) return false;
