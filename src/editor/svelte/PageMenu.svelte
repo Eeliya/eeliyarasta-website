@@ -46,7 +46,7 @@
   :global(.sel__value):has(> .pm__label) {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .pm__label {
@@ -63,7 +63,7 @@
     line-height: 16px; // 16px tall: the button stays 32px
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 0 8px;
+    padding: 0 var(--space-2);
     border-radius: var(--radius-pill);
     color: var(--c-text-faint);
     box-shadow: inset 0 0 0 1px var(--c-line);
@@ -81,7 +81,7 @@
 
   .pm__title {
     display: grid;
-    gap: 4px;
+    gap: var(--space-1);
     min-width: 0;
   }
 

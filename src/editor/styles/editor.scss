@@ -58,14 +58,14 @@ kbd {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 // children side by side, vertically centred, 8px apart
 .row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 // hidden wins over a display set by a class
@@ -112,7 +112,7 @@ kbd {
     border: 0;
     background: none;
     cursor: pointer;
-    padding: 8px;
+    padding: var(--space-2);
     border-radius: 0;
     font-size: var(--fs-sm);
     letter-spacing: 0.06em;
@@ -138,13 +138,13 @@ kbd {
     // an icon-only tab (Settings) takes only the room it needs
     &--icon {
       flex: none;
-      padding-inline: 12px;
+      padding-inline: var(--space-3);
     }
   }
 
   // the main tabs (Browse, Content, Motion, Settings): round, with a gap around the buttons
   &--pill {
-    padding: 4px;
+    padding: var(--space-1);
     border-radius: var(--radius-pill);
   }
 
@@ -160,7 +160,7 @@ kbd {
   border: 0;
   border-radius: var(--radius-md);
   box-shadow: inset 0 0 0 1px var(--c-line);
-  padding: 8px;
+  padding: var(--space-2);
   outline: none;
   transition: box-shadow 0.2s;
   line-height: 16px;
@@ -194,17 +194,17 @@ kbd {
 .ed-body {
   flex: 1;
   overflow: hidden auto;
-  padding: 16px 16px 24px;
+  padding: var(--space-4) var(--space-4) var(--space-5);
   overscroll-behavior: contain;
   container-type: inline-size; // .fields go one column when narrow
-  gap: 8px;
+  gap: var(--space-2);
   display: flex;
   flex-direction: column;
 }
 
 .hint {
   color: var(--c-text-muted);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 
   &.small {
     font-size: var(--fs-sm);
@@ -218,22 +218,22 @@ kbd {
   border-radius: var(--radius-round);
   background: var(--c-link);
   vertical-align: middle;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 // ------------------------------------------------------------ groups & fields
 .grp {
-  padding: 16px 0;
+  padding: var(--space-4) 0;
   border-top: 1px solid var(--c-line);
 
   &:first-child {
     border-top: 0;
-    padding-top: 4px;
+    padding-top: var(--space-1);
   }
 }
 
 .grp__title {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   font-size: var(--fs-xs);
   font-weight: 400;
   letter-spacing: 0.1em;
@@ -247,15 +247,15 @@ kbd {
 }
 
 .f {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .f__top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   min-height: 20px; // like the switch, badge and reset in it
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .f__label {
@@ -267,7 +267,7 @@ kbd {
   line-height: 12px; // 20px tall
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
   color: var(--c-text-faint);
   box-shadow: inset 0 0 0 1px var(--c-line);
@@ -327,7 +327,7 @@ kbd {
 .f__row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .f__text {
@@ -336,7 +336,7 @@ kbd {
 
 .f__num {
   width: 76px;
-  padding: 8px;
+  padding: var(--space-2);
   text-align: right;
 }
 
@@ -383,9 +383,9 @@ kbd {
 .ease__toggle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border: 0;
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -435,9 +435,9 @@ kbd {
 .ease__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  margin-top: 8px;
-  padding: 8px;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
   border-radius: var(--radius-lg);
   background: var(--c-shadow);
   box-shadow: inset 0 0 0 1px var(--c-line);
@@ -446,8 +446,8 @@ kbd {
 .ease__opt {
   display: grid;
   justify-items: center;
-  gap: 4px;
-  padding: 8px 4px 4px;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1) var(--space-1);
   border: 0;
   border-radius: var(--radius-md);
   background: none;
@@ -483,12 +483,12 @@ kbd {
 
 .ease__custom {
   grid-column: 1 / -1;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   background: var(--c-shadow);
   border: 0;
   border-radius: var(--radius-md);
   box-shadow: inset 0 0 0 1px var(--c-line);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   line-height: 16px; // 32px tall
   outline: none;
 }
@@ -497,7 +497,7 @@ kbd {
 .confirm {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--c-text);
   font-size: var(--fs-sm);
 }
@@ -506,7 +506,7 @@ kbd {
 .tf {
   display: block;
   transition: box-shadow 0.6s;
-  padding: 4px;
+  padding: var(--space-1);
   margin: -4px;
   border-radius: var(--radius-lg);
 }
@@ -528,8 +528,8 @@ kbd {
 .tf__label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
   min-height: 24px;
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
@@ -596,7 +596,7 @@ kbd {
 // a field's hint, under its input (a schema field's "help")
 .tf__help {
   display: block;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
   line-height: 16px;
@@ -607,7 +607,7 @@ kbd {
 .fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
 
   > * {
     grid-column: 1 / -1;
@@ -654,7 +654,7 @@ dialog.modal__box {
 
 .modal__box {
   width: min(520px, calc(100vw - 32px));
-  padding: 24px;
+  padding: var(--space-5);
   border-radius: var(--radius-2xl);
   // solid panel: no see-through, no blur
   background: var(--c-card);
@@ -664,7 +664,7 @@ dialog.modal__box {
 }
 
 .modal__title {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   font-family: var(--f-display);
   font-weight: 400;
   font-size: var(--fs-3xl);
@@ -675,8 +675,8 @@ dialog.modal__box {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
-  margin-top: 16px;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 // ------------------------------------------------------------ page transition fields
@@ -697,9 +697,9 @@ dialog.modal__box {
     box-sizing: border-box;
     height: var(--size-control);
     min-height: var(--size-control);
-    padding: 0 12px;
+    padding: 0 var(--space-3);
     border-radius: var(--radius-md);
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .ease__big {
@@ -715,7 +715,7 @@ dialog.modal__box {
   }
 
   .ease--compact .ease__toggle {
-    padding: 0 8px;
+    padding: 0 var(--space-2);
   }
 
   .ease--compact .ease__big {
@@ -759,7 +759,7 @@ dialog.modal__box {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 
   > .ease {
     display: contents;
@@ -772,8 +772,8 @@ dialog.modal__box {
 }
 
 .ease--compact .ease__toggle {
-  padding: 4px 12px;
-  gap: 12px;
+  padding: var(--space-1) var(--space-3);
+  gap: var(--space-3);
   min-height: var(--size-control);
 }
 

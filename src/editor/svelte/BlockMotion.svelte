@@ -132,16 +132,16 @@
 <style lang="scss">
   .bm__actions {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3);
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .scrub {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     color: var(--c-text-muted);
   }
 
@@ -158,7 +158,7 @@
   }
 
   .bm__parts {
-    margin: 16px 0 8px;
+    margin: var(--space-4) 0 var(--space-2);
     color: var(--c-text-muted);
     font-size: var(--fs-xs);
     font-weight: 500;
@@ -170,8 +170,8 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     line-height: 16px;
     border: 0;
     border-radius: var(--radius-lg);

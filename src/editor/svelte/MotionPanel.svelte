@@ -220,18 +220,18 @@
 <style lang="scss">
   // Elements | Animations, above everything else in the tab
   .mtabs {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .msel__head {
     display: grid;
-    gap: 4px;
-    margin-bottom: 12px;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
     justify-items: start;
   }
 
   .msel__title {
-    margin: 8px 0 0;
+    margin: var(--space-2) 0 0;
     font-family: var(--f-display);
     font-weight: 400;
     font-size: var(--fs-3xl);
@@ -240,7 +240,7 @@
 
   // a block's parts, under it
   .mlist__parts {
-    margin: 4px 0 0 16px;
+    margin: var(--space-1) 0 0 var(--space-4);
   }
 
   .mlist__part {
@@ -257,8 +257,8 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     line-height: 16px; // 32px tall
     border: 0;
     border-radius: var(--radius-lg);

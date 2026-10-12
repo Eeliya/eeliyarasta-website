@@ -39,8 +39,8 @@
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
-    gap: 4px 12px;
-    padding: 8px 12px;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
     line-height: 16px; // two lines: 52px
     border: 0;
     border-radius: var(--radius-lg);

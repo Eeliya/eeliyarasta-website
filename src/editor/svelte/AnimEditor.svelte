@@ -195,13 +195,13 @@
 <style lang="scss">
   .msel__head {
     display: grid;
-    gap: 4px;
-    margin-bottom: 12px;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
     justify-items: start;
   }
 
   .msel__title {
-    margin: 8px 0 0;
+    margin: var(--space-2) 0 0;
     font-family: var(--f-display);
     font-weight: 400;
     font-size: var(--fs-3xl);
@@ -216,16 +216,16 @@
 
   .msel__actions {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3);
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .scrub {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     color: var(--c-text-muted);
   }
 
@@ -243,19 +243,19 @@
 
   // older non-timing overrides: what they are, Move to animation / Drop
   .legacy {
-    margin-bottom: 16px;
-    padding: 12px;
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
     border-radius: var(--radius-md);
     box-shadow: inset 0 0 0 1px var(--c-line);
 
     .hint {
       font-size: var(--fs-sm);
-      margin: 0 0 8px;
+      margin: 0 0 var(--space-2);
     }
   }
 
   .legacy__list {
-    margin: 0 0 8px;
+    margin: 0 0 var(--space-2);
     padding: 0;
     list-style: none;
   }
@@ -267,11 +267,11 @@
 
   .legacy__actions {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .scope {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
 
     // the data-anim name as written in the HTML (the tab's other text is uppercase)
     &__id {
@@ -279,7 +279,7 @@
     }
 
     .seg {
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
     }
 
     .hint {

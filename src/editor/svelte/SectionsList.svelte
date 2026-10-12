@@ -423,16 +423,16 @@
 <style lang="scss">
   // the settings, then the blocks
   .fields {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
   }
 
   // a utility group: icon-only, no fill; the picked one in the accent, on a faint ground
   // 32px tall, like the inputs (4 + 24 + 4), its buttons sharing the half's width
   .hset {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     height: var(--size-control);
-    padding: 4px;
+    padding: var(--space-1);
     border-radius: var(--radius-md);
     box-shadow: inset 0 0 0 1px var(--c-line);
     justify-self: start;
@@ -444,7 +444,7 @@
     place-items: center;
     width: 16px;
     height: 16px;
-    margin-left: 4px;
+    margin-left: var(--space-1);
     padding: 0;
     border: 0;
     background: none;
@@ -500,7 +500,7 @@
 
   .blocks {
     display: grid;
-    gap: 4px;
+    gap: var(--space-1);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -509,9 +509,9 @@
   .block {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     min-height: var(--size-control);
-    padding-right: 4px;
+    padding-right: var(--space-1);
     border-radius: var(--radius-md);
     background: var(--c-surface-2);
 
@@ -528,10 +528,10 @@
     display: flex;
     flex: 1;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     min-width: 0;
     height: var(--size-control);
-    padding: 0 8px;
+    padding: 0 var(--space-2);
     border: 0;
     border-radius: var(--radius-md);
     background: none;
@@ -572,7 +572,7 @@
   .confirm {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     font-size: var(--fs-base);
 
     span {
@@ -581,7 +581,7 @@
   }
 
   .add {
-    padding-top: 12px;
+    padding-top: var(--space-3);
     border-top: 1px solid var(--c-line);
   }
 

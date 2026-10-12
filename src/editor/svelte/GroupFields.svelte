@@ -213,13 +213,13 @@
   .opts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .opt {
     position: relative;
     min-width: 0;
-    padding: 4px;
+    padding: var(--space-1);
 
     // the edit button sits beside the label, drawn at the right of the title row
     > :global(.btn) {

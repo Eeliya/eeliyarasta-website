@@ -72,8 +72,8 @@
   .sec {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 12px 8px;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
     margin-inline: -8px;
     border: 1px solid transparent;
     background: var(--c-card);
@@ -90,7 +90,7 @@
   .sec__bar {
     display: flex;
     align-items: flex-start;
-    gap: 4px;
+    gap: var(--space-1);
     font-size: var(--fs-base);
     line-height: 20px;
     font-weight: 500;
@@ -115,7 +115,7 @@
     top: -16px; // the scroll area's top edge, over its padding
     z-index: 1;
     margin: -8px 0;
-    padding: 8px 0;
+    padding: var(--space-2) 0;
     // background: var(--c-surface);
   }
 
@@ -125,7 +125,7 @@
     min-width: 0;
     display: grid;
     grid-template-columns: 20px minmax(0, 1fr);
-    column-gap: 4px;
+    column-gap: var(--space-1);
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
@@ -171,12 +171,12 @@
 
   .sec__icon {
     width: 16px;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     text-align: center;
   }
 
   .sec__body > :global(* + *) {
-    margin-top: 12px;
+    margin-top: var(--space-3);
   }
 
   .sec.is-off {

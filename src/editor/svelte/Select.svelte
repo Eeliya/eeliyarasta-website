@@ -234,8 +234,8 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border: 0;
     border-radius: var(--radius-md);
     line-height: 16px;
@@ -290,7 +290,7 @@
     position: fixed;
     inset: auto;
     margin: 0;
-    padding: 8px;
+    padding: var(--space-2);
     border: 0;
     list-style: none;
     overflow: auto;
@@ -312,7 +312,7 @@
   }
 
   .sel__group {
-    padding: 8px 12px 4px;
+    padding: var(--space-2) var(--space-3) var(--space-1);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--c-text-faint);
@@ -321,8 +321,8 @@
   .sel__opt {
     display: flex;
     align-items: baseline;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     cursor: pointer;
 

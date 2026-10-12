@@ -215,15 +215,15 @@
 <style lang="scss">
   .error {
     color: var(--c-error);
-    margin: 8px 0 0;
+    margin: var(--space-2) 0 0;
   }
 
   .pub-save {
     display: flex;
-    gap: 12px;
+    gap: var(--space-3);
     align-items: center;
-    margin: 0 0 16px;
-    padding: 12px;
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
     border-radius: var(--radius-lg);
     background: var(--amber-300-a08);
     box-shadow: inset 0 0 0 1px var(--amber-300-a25);
@@ -235,8 +235,8 @@
   }
 
   .commits {
-    margin: -4px 0 12px;
-    gap: 4px;
+    margin: -4px 0 var(--space-3);
+    gap: var(--space-1);
     font-size: var(--fs-sm);
     color: var(--c-text-muted);
 
@@ -247,7 +247,7 @@
 
   .pub-ok {
     font-size: var(--fs-lg);
-    margin: 12px 0 8px;
+    margin: var(--space-3) 0 var(--space-2);
     color: var(--c-success);
 
     a {
@@ -265,16 +265,16 @@
   }
 
   .pub-hint {
-    margin: 8px 0;
-    padding: 12px;
+    margin: var(--space-2) 0;
+    padding: var(--space-3);
     border-radius: var(--radius-lg);
     background: var(--red-300-a08);
     box-shadow: inset 0 0 0 1px var(--red-300-a25);
   }
 
   .pub-out {
-    margin: 8px 0 0;
-    padding: 12px;
+    margin: var(--space-2) 0 0;
+    padding: var(--space-3);
     max-height: 180px;
     overflow: auto;
     border-radius: var(--radius-lg);

@@ -443,13 +443,13 @@
 
   .md-list {
     overflow: auto;
-    padding: 16px 16px 24px;
+    padding: var(--space-4) var(--space-4) var(--space-5);
     border-right: 1px solid var(--c-line);
   }
 
   .md-list__head {
     justify-content: space-between;
-    padding: 0 0 12px;
+    padding: 0 0 var(--space-3);
   }
 
   .md-filter {
@@ -462,7 +462,7 @@
     padding: 0;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .mtile {
@@ -503,7 +503,7 @@
       position: absolute;
       left: 4px;
       bottom: 4px;
-      padding: 0 8px;
+      padding: 0 var(--space-2);
       border-radius: var(--radius-pill);
       font-size: var(--fs-xs);
       line-height: 16px;
@@ -532,10 +532,10 @@
 
   .md-detail {
     overflow: auto;
-    padding: 16px 24px 24px;
+    padding: var(--space-4) var(--space-5) var(--space-5);
     display: grid;
     align-content: start;
-    gap: 12px;
+    gap: var(--space-3);
 
     .hint {
       margin: 0;
@@ -546,7 +546,7 @@
   .md-detail__head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
     min-height: var(--size-control);
   }
 

@@ -140,12 +140,12 @@
 
 <style lang="scss">
   .help {
-    margin: 0 0 12px;
-    padding-left: 16px;
+    margin: 0 0 var(--space-3);
+    padding-left: var(--space-4);
     color: var(--c-text-muted);
 
     li {
-      margin: 4px 0;
+      margin: var(--space-1) 0;
     }
 
     b {
@@ -157,12 +157,12 @@
   .kbd-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
+    gap: var(--space-2) var(--space-4);
     color: var(--c-text-muted);
     margin: 0;
 
     kbd {
-      padding: 4px 8px;
+      padding: var(--space-1) var(--space-2);
       border-radius: var(--radius-sm);
       box-shadow:
         inset 0 0 0 1px var(--c-line),
@@ -180,20 +180,20 @@
   .chg__list {
     list-style: none;
     margin: 0;
-    padding: 0 0 0 24px;
+    padding: 0 0 0 var(--space-5);
     display: grid;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .chg__path {
     color: var(--c-text);
-    margin-right: 8px;
+    margin-right: var(--space-2);
   }
 
   // the saved value, struck through, before the new one
   .chg__was {
     color: var(--c-text-muted);
-    margin-right: 8px;
+    margin-right: var(--space-2);
     overflow-wrap: anywhere;
   }
 

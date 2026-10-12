@@ -38,8 +38,8 @@
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 20px 24px 16px;
+    gap: var(--space-3);
+    padding: 20px var(--space-5) var(--space-4);
     border-bottom: 1px solid var(--c-line);
   }
 
@@ -48,7 +48,7 @@
     min-width: 0;
 
     .modal__title {
-      margin: 0 0 4px;
+      margin: 0 0 var(--space-1);
     }
   }
 
@@ -57,13 +57,13 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0 4px;
+    gap: 0 var(--space-1);
     color: var(--c-text-muted);
     font-size: var(--fs-sm);
     line-height: 16px;
 
     > i {
-      margin-right: 4px;
+      margin-right: var(--space-1);
     }
   }
 

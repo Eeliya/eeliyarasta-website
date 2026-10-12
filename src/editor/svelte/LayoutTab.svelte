@@ -284,8 +284,8 @@
   // where it is: two small read-only lines
   .where {
     display: grid;
-    gap: 4px;
-    margin-bottom: 12px;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
 
     .tf__label {
       margin: 0;
@@ -296,8 +296,8 @@
   // label above its control
   .opt {
     display: grid;
-    gap: 4px;
-    margin: 12px 0;
+    gap: var(--space-1);
+    margin: var(--space-3) 0;
 
     .tf__label {
       margin: 0;
@@ -306,7 +306,7 @@
 
   // the closing hint, apart from the last row
   .hint:last-of-type {
-    margin-top: 16px;
+    margin-top: var(--space-4);
   }
 
   // the ratios: four to a row, in one box
@@ -318,8 +318,8 @@
   .line {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
 
     .tf__label {
       flex: 1;

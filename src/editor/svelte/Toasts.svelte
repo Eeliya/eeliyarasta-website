@@ -49,14 +49,14 @@
     color: inherit;
     background: none;
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
     max-width: min(460px, calc(100vw - var(--panel-w) - 72px));
   }
 
   .toast {
     position: relative;
     margin: 0;
-    padding: 12px 36px 12px 16px;
+    padding: var(--space-3) 36px var(--space-3) var(--space-4);
     border-radius: var(--radius-lg);
     animation: fade 0.3s;
     // solid like the dialogs: no see-through, no blur

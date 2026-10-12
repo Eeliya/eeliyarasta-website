@@ -297,21 +297,21 @@
   .src-files {
     grid-column: 1 / -1;
     align-content: start;
-    gap: 4px;
+    gap: var(--space-1);
     overflow: auto;
-    padding: 16px 12px 20px;
+    padding: var(--space-4) var(--space-3) 20px;
   }
 
   // left: the file's items
   .src-list {
     overflow: auto;
-    padding: 16px 12px 20px;
+    padding: var(--space-4) var(--space-3) 20px;
     border-right: 1px solid var(--c-line);
   }
 
   .src-list__head {
     justify-content: space-between;
-    padding: 0 8px 12px;
+    padding: 0 var(--space-2) var(--space-3);
     color: var(--c-text-muted);
     font-size: var(--fs-sm);
     letter-spacing: 0.06em;
@@ -319,29 +319,29 @@
   }
 
   .src-list__items {
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .src-list__note {
-    margin: 12px 8px 0;
+    margin: var(--space-3) var(--space-2) 0;
   }
 
   // right: the selected item
   .src-detail {
     container-type: inline-size;
     overflow: auto;
-    padding: 16px 24px 24px;
+    padding: var(--space-4) var(--space-5) var(--space-5);
     display: grid;
     align-content: start;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .src-detail__head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
     min-height: var(--size-control);
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
 
     .src-item__title {
       flex: 1;

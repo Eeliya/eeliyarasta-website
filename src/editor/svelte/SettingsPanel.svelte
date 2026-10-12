@@ -258,8 +258,8 @@
   // the contained width at each window size: window | px
   .widths {
     display: grid;
-    gap: 4px;
-    margin: 12px 0 0;
+    gap: var(--space-1);
+    margin: var(--space-3) 0 0;
     padding: 0;
     color: var(--c-text-muted);
     font-size: var(--fs-sm);

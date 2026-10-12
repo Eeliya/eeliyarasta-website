@@ -300,7 +300,7 @@
 <style lang="scss">
   .ptl {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
     padding: 0;
     background: none;
     box-shadow: none;
@@ -314,7 +314,7 @@
   /* Label above bar so the track can use the full width. */
   .ptl__row {
     display: grid;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .ptl__name {

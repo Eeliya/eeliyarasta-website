@@ -246,18 +246,18 @@
   /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
   .tf__hint {
     display: block;
-    margin: 8px 0 0;
+    margin: var(--space-2) 0 0;
   }
 
   /* One bordered curtain group: total, timeline, ease, Advanced. */
   .ptg__box {
     position: relative;
-    margin: 0 0 16px;
-    padding: 8px 8px 0;
+    margin: 0 0 var(--space-4);
+    padding: var(--space-2) var(--space-2) 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
 
     > .tf {
       margin-bottom: 0;
@@ -293,7 +293,7 @@
   .ptg__toggle {
     display: block;
     width: 100%;
-    padding: 12px;
+    padding: var(--space-3);
     border: 0;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     background: none;
@@ -307,7 +307,7 @@
     user-select: none;
 
     &[aria-expanded='true'] {
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
       color: var(--c-text);
     }
 
@@ -319,7 +319,7 @@
 
   .ptg__caret {
     width: 1em;
-    margin-right: 4px;
+    margin-right: var(--space-1);
     color: var(--c-text-faint);
     font-size: 0.95em;
     transition: rotate 0.15s;
@@ -332,7 +332,7 @@
   .ptg__advanced-body {
     display: grid;
     // Same 6px rhythm as .tf__label → control and .tf__hint (title / field / help).
-    gap: 8px;
-    padding: 0 12px 12px;
+    gap: var(--space-2);
+    padding: 0 var(--space-3) var(--space-3);
   }
 </style>

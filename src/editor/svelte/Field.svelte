@@ -305,7 +305,7 @@
     position: fixed;
     inset: auto;
     margin: 0;
-    padding: 8px;
+    padding: var(--space-2);
     border: 0;
     list-style: none;
     max-height: 240px;
@@ -323,8 +323,8 @@
   .sug__opt {
     display: flex;
     align-items: baseline;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
     cursor: pointer;
 
@@ -343,7 +343,7 @@
   .photo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .photo__thumb {
@@ -391,7 +391,7 @@
     flex: 1;
     min-width: 0;
     display: grid;
-    gap: 4px;
+    gap: var(--space-1);
     font-size: var(--fs-base);
     line-height: 16px;
   }

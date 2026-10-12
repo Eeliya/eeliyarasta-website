@@ -150,11 +150,11 @@
   .seo__row {
     display: flex;
     justify-content: flex-end;
-    margin: -4px 0 12px;
+    margin: -4px 0 var(--space-3);
   }
 
   .seo__head {
-    margin: 16px 0 8px;
+    margin: var(--space-4) 0 var(--space-2);
     color: var(--c-text-muted);
     font-size: var(--fs-xs);
     font-weight: 400;
@@ -167,9 +167,9 @@
   .seo__card {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 8px;
-    padding: 12px;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+    padding: var(--space-3);
     border-radius: var(--radius-md);
     background: var(--c-surface-2);
   }
@@ -200,18 +200,18 @@
 
   // a share card: the image (1.91:1, as most sites crop it) above the text
   .seo__card {
-    padding: 0 0 12px;
+    padding: 0 0 var(--space-3);
     overflow: hidden;
 
     > :not(img) {
-      padding: 0 12px;
+      padding: 0 var(--space-3);
     }
   }
 
   .seo__img {
     width: 100%;
     aspect-ratio: 1.91;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
     object-fit: cover;
   }
 

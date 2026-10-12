@@ -262,7 +262,7 @@
   .ed-stage {
     position: absolute;
     inset: 0 calc(var(--panel-w) + 24px) 0 0;
-    padding: 12px 0 12px 12px;
+    padding: var(--space-3) 0 var(--space-3) var(--space-3);
     display: grid;
     place-items: center;
   }
@@ -314,11 +314,11 @@
 
   // [ Editor | mobile | undo | redo ], then the tabs and the page menu on full rows
   .ed-head {
-    padding: 16px 16px 12px;
+    padding: var(--space-4) var(--space-4) var(--space-3);
     display: grid;
     grid-template-columns: minmax(0, 1fr) repeat(3, auto);
     align-items: center;
-    gap: 12px 4px;
+    gap: var(--space-3) var(--space-1);
     border-bottom: 1px solid var(--c-line);
 
     > .seg,
@@ -340,7 +340,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) repeat(3, auto);
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .ed-bar__item {
@@ -351,11 +351,11 @@
   // [ status line | Save | Publish ]
   .ed-foot {
     border-top: 1px solid var(--c-line);
-    padding: 12px 16px 16px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .ed-pending {
@@ -363,7 +363,7 @@
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     font-size: var(--fs-sm);
     line-height: 16px;
     color: var(--c-text-muted);
@@ -395,7 +395,7 @@
   @media (width <= 900px) {
     .ed-stage {
       inset: 0 0 50vh;
-      padding: 8px;
+      padding: var(--space-2);
     }
     .ed-panel {
       inset: auto 8px 8px;

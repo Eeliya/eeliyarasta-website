@@ -259,11 +259,11 @@
   .parent {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
     width: 100%;
     height: var(--size-control);
-    margin-bottom: 4px;
-    padding: 0 8px;
+    margin-bottom: var(--space-1);
+    padding: 0 var(--space-2);
     border: 1px solid var(--c-line);
     border-radius: var(--radius-sm);
     background: none;
@@ -299,7 +299,7 @@
     display: flex;
     flex: none;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     white-space: nowrap;
   }
 
@@ -307,14 +307,14 @@
   .head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 
   .title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     min-width: 0;
     font-size: var(--fs-base);
 
@@ -332,15 +332,15 @@
   }
 
   .tabs {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   // the item picker: two columns, like the block's settings (GroupFields.svelte)
   .opts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
 
     .dot {
       display: none;
@@ -353,12 +353,12 @@
 
   .opt {
     min-width: 0;
-    padding: 4px;
+    padding: var(--space-1);
   }
 
   .item-name {
     display: block;
-    padding: 8px 0;
+    padding: var(--space-2) 0;
     overflow: hidden;
     color: var(--c-text-muted);
     font-size: var(--fs-base);

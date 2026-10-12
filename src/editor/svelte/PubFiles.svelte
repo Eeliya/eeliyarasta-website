@@ -30,7 +30,7 @@
 
 <style lang="scss">
   .files {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   // publish dialog
@@ -38,7 +38,7 @@
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
-    gap: 0 8px;
+    gap: 0 var(--space-2);
 
     code {
       color: var(--c-text);

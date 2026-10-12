@@ -67,7 +67,7 @@
 <style lang="scss">
   .lf {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
     justify-items: start;
 
     > :global(*) {
@@ -81,8 +81,8 @@
 
   .lf__item {
     display: grid;
-    gap: 8px;
-    padding: 8px;
+    gap: var(--space-2);
+    padding: var(--space-2);
     border-radius: var(--radius-xl);
     border: 1px solid var(--c-line-strong);
   }
@@ -90,7 +90,7 @@
   .lf__bar {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     min-height: 24px;
   }
 

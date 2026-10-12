@@ -443,25 +443,25 @@
 
   .pg-list {
     overflow: auto;
-    padding: 16px 12px 20px;
+    padding: var(--space-4) var(--space-3) 20px;
     border-right: 1px solid var(--c-line);
   }
 
   .pg-list__head {
-    gap: 8px;
-    padding: 0 0 12px;
+    gap: var(--space-2);
+    padding: 0 0 var(--space-3);
   }
 
   .pg-list__items {
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .pg-detail {
     overflow: auto;
-    padding: 16px 24px 24px;
+    padding: var(--space-4) var(--space-5) var(--space-5);
     display: grid;
     align-content: start;
-    gap: 12px;
+    gap: var(--space-3);
 
     .hint {
       margin: 0;
@@ -471,14 +471,14 @@
   .pg-detail__head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
     min-height: var(--size-control);
   }
 
   // the delete question: what goes, then Cancel / Delete
   .pg-confirm {
     display: grid;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .pg-detail__title {

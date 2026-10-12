@@ -70,8 +70,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: var(--space-2);
+    padding: var(--space-3) 20px;
     border: 0;
     border-radius: var(--radius-pill);
     cursor: pointer;
@@ -101,7 +101,7 @@
   }
 
   .btn--small {
-    padding: 8px 16px; // 32px
+    padding: var(--space-2) var(--space-4); // 32px
   }
 
   .btn--primary {
@@ -126,7 +126,7 @@
 
   // a file name: as written, 24px
   .btn--file {
-    padding: 4px 12px;
+    padding: var(--space-1) var(--space-3);
     letter-spacing: 0;
     text-transform: none;
   }
