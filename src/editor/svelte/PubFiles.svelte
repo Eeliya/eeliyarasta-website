@@ -41,7 +41,7 @@
     gap: 0 8px;
 
     code {
-      color: var(--fg);
+      color: var(--c-text);
     }
   }
 
@@ -49,14 +49,14 @@
     width: 16px;
     flex: none;
     font-weight: 500;
-    color: #ffcf7a;
+    color: var(--c-warning);
 
     &.is-new {
-      color: #b9f0c4;
+      color: var(--c-success);
     }
 
     &.is-deleted {
-      color: #ff8a7a;
+      color: var(--c-error);
     }
   }
 
@@ -65,11 +65,11 @@
     font-size: 11px;
 
     .add {
-      color: #b9f0c4;
+      color: var(--c-success);
     }
 
     .del {
-      color: #ff8a7a;
+      color: var(--c-error);
     }
   }
 </style>

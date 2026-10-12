@@ -65,12 +65,12 @@
     text-transform: uppercase;
     padding: 0 8px;
     border-radius: 999px;
-    color: var(--faint);
-    box-shadow: inset 0 0 0 1px var(--line);
+    color: var(--c-text-faint);
+    box-shadow: inset 0 0 0 1px var(--c-line);
 
     &.is-component {
-      color: #e6dcc4;
-      box-shadow: inset 0 0 0 1px rgb(230 220 196 / 0.35);
+      color: var(--c-warm);
+      box-shadow: inset 0 0 0 1px var(--sand-200-a35);
     }
   }
 
@@ -87,6 +87,6 @@
 
   .pm__path {
     font-size: 9px;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 </style>

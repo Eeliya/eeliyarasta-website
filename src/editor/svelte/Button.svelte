@@ -75,11 +75,11 @@
     border: 0;
     border-radius: 999px;
     cursor: pointer;
-    color: var(--fg);
-    background: var(--btn);
+    color: var(--c-text);
+    background: var(--c-control);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.12),
-      inset 0 0 0 1px var(--line);
+      inset 0 1px 0 var(--white-a12),
+      inset 0 0 0 1px var(--c-line);
     font-size: 11px;
     line-height: 16px; // 12 + 16 + 12 = 40px
     letter-spacing: 0.06em;
@@ -90,7 +90,7 @@
     transition: background 0.2s;
 
     &:hover:not(:disabled, [aria-disabled]) {
-      background: var(--btn-hover);
+      background: var(--c-control-hover);
     }
 
     &:disabled,
@@ -105,22 +105,22 @@
   }
 
   .btn--primary {
-    color: #000;
-    background: var(--fg);
+    color: var(--c-on-light);
+    background: var(--c-text);
     box-shadow: none;
 
     &:hover:not(:disabled, [aria-disabled]) {
-      background: #fff;
+      background: var(--c-text-strong);
     }
   }
 
   .btn--danger {
-    color: #fff4f2;
-    background: var(--danger);
+    color: var(--c-on-danger);
+    background: var(--c-danger);
     box-shadow: none;
 
     &:hover:not(:disabled, [aria-disabled]) {
-      background: var(--danger-hover);
+      background: var(--c-danger-hover);
     }
   }
 
@@ -137,19 +137,19 @@
     height: 32px;
     padding: 0;
     font-size: 15px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     background: none;
     box-shadow: none;
     transition: color 0.2s;
 
     &:hover:not(:disabled, [aria-disabled]) {
-      color: var(--fg);
+      color: var(--c-text);
       background: none;
     }
 
     &[aria-pressed='true'],
     &[aria-pressed='true']:hover:not(:disabled, [aria-disabled]) {
-      color: var(--ed-accent);
+      color: var(--c-accent);
     }
   }
 
@@ -158,17 +158,17 @@
     width: 24px;
     height: 24px;
     font-size: 11px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     background: none;
     box-shadow: none;
 
     &:hover:not(:disabled, [aria-disabled]) {
-      color: var(--fg);
-      background: var(--btn-hover);
+      color: var(--c-text);
+      background: var(--c-control-hover);
     }
 
     &[aria-pressed='true'] {
-      color: var(--ed-accent);
+      color: var(--c-accent);
     }
   }
 
@@ -176,7 +176,7 @@
   .btn:focus-visible {
     outline: none;
     box-shadow:
-      inset 0 0 0 1px var(--ed-accent),
-      0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
+      inset 0 0 0 1px var(--c-accent),
+      0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
   }
 </style>

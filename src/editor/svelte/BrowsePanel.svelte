@@ -142,14 +142,14 @@
   .help {
     margin: 0 0 12px;
     padding-left: 16px;
-    color: var(--muted);
+    color: var(--c-text-muted);
 
     li {
       margin: 4px 0;
     }
 
     b {
-      color: var(--fg);
+      color: var(--c-text);
       font-weight: 500;
     }
   }
@@ -158,16 +158,16 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px 16px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     margin: 0;
 
     kbd {
       padding: 4px 8px;
       border-radius: 4px;
       box-shadow:
-        inset 0 0 0 1px var(--line),
-        0 1px 0 rgb(255 255 255 / 0.1);
-      color: var(--fg);
+        inset 0 0 0 1px var(--c-line),
+        0 1px 0 var(--white-a10);
+      color: var(--c-text);
     }
   }
 
@@ -186,19 +186,19 @@
   }
 
   .chg__path {
-    color: var(--fg);
+    color: var(--c-text);
     margin-right: 8px;
   }
 
   // the saved value, struck through, before the new one
   .chg__was {
-    color: var(--muted);
+    color: var(--c-text-muted);
     margin-right: 8px;
     overflow-wrap: anywhere;
   }
 
   .chg__val {
-    color: var(--fg);
+    color: var(--c-text);
     overflow-wrap: anywhere;
   }
 </style>

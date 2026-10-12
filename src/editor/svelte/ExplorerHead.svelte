@@ -40,7 +40,7 @@
     align-items: center;
     gap: 12px;
     padding: 20px 24px 16px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--c-line);
   }
 
   .xhead__main {
@@ -58,7 +58,7 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0 4px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 11px;
     line-height: 16px;
 
@@ -71,31 +71,31 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--muted);
+    color: var(--c-text-muted);
 
     &.is-current {
-      color: var(--fg);
+      color: var(--c-text);
     }
   }
 
   button.xhead__crumb {
     cursor: pointer;
     text-decoration: underline;
-    text-decoration-color: var(--faint);
+    text-decoration-color: var(--c-text-faint);
     text-underline-offset: 4px;
 
     &:hover {
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     &:focus-visible {
       outline: none;
-      color: var(--fg);
-      box-shadow: 0 1px 0 var(--ed-accent);
+      color: var(--c-text);
+      box-shadow: 0 1px 0 var(--c-accent);
     }
   }
 
   .xhead__sep {
-    color: var(--faint);
+    color: var(--c-text-faint);
   }
 </style>

@@ -47,7 +47,7 @@
     background: none;
     text-align: left;
     cursor: pointer;
-    color: var(--fg);
+    color: var(--c-text);
 
     .dot {
       display: none;
@@ -61,22 +61,22 @@
     }
 
     &:hover {
-      background: rgb(255 255 255 / 0.05);
+      background: var(--white-a05);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     &.is-selected {
-      background: color-mix(in srgb, var(--ed-accent) 20%, transparent);
+      background: color-mix(in srgb, var(--c-accent) 20%, transparent);
     }
   }
 
   .xrow__lead {
     grid-row: 1 / 3;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
 
     &--icon {
@@ -87,7 +87,7 @@
   .xrow__enter {
     grid-column: 4;
     grid-row: 1 / 3;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
   }
 
@@ -100,7 +100,7 @@
   }
 
   .xrow__meta {
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
   }
 </style>

@@ -321,7 +321,7 @@
     font-size: 10px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 
   .ptl__track {
@@ -336,7 +336,7 @@
     border-radius: 4px;
     pointer-events: none;
     overflow: hidden;
-    background: rgb(255 255 255 / 0.04);
+    background: var(--white-a04);
 
     // Tick lines every 0.5s (--tick), over the bars.
     &::after {
@@ -345,7 +345,7 @@
       inset: 0;
       background: repeating-linear-gradient(
         to right,
-        rgb(255 255 255 / 0.08) 0 1px,
+        var(--c-fill-active) 0 1px,
         transparent 1px var(--tick, 25%)
       );
     }
@@ -367,7 +367,7 @@
     line-height: 1;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
-    color: #2b2b2b; // was rgb(0 0 0 / 0.72) on move bar
+    color: var(--c-on-bar); // was rgb(0 0 0 / 0.72) on move bar
     pointer-events: none;
     white-space: nowrap;
     user-select: none;
@@ -376,7 +376,7 @@
   }
 
   .ptl__bar.is-text.is-move .ptl__len {
-    color: #283540; // was rgb(0 0 0 / 0.75) on var(--hi)
+    color: var(--c-on-bar-active); // was rgb(0 0 0 / 0.75) on var(--c-link)
   }
 
   // Stay length centered in the empty gap between text-in and text-out.
@@ -392,16 +392,16 @@
     box-sizing: border-box;
 
     .ptl__len {
-      color: #c1c1c1; // was rgb(255 255 255 / 0.72) on #212121
+      color: var(--c-text-soft); // was rgb(255 255 255 / 0.72) on #212121
     }
   }
 
   .ptl__bar.is-move {
-    background: rgb(255 255 255 / 0.55);
+    background: var(--white-a55);
   }
 
   .ptl__bar.is-text.is-move {
-    background: var(--hi);
+    background: var(--c-link);
   }
 
   .ptl__bar.is-text {
@@ -410,7 +410,7 @@
     outline: none;
 
     &:focus-visible {
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
@@ -439,8 +439,8 @@
       bottom: 0;
       width: 4px;
       border-radius: 4px;
-      background: var(--solid-faint);
-      box-shadow: 0 0 0 1px rgb(0 0 0 / 0.7);
+      background: var(--c-text-dim);
+      box-shadow: 0 0 0 1px var(--black-a70);
       opacity: 1;
       transition:
         background 0.15s,
@@ -448,17 +448,17 @@
     }
 
     .ptl:hover &::before {
-      background: var(--fg);
+      background: var(--c-text);
     }
 
     &:hover::before,
     &:focus-visible::before,
     &.is-active::before {
       opacity: 1;
-      background: var(--ed-accent);
+      background: var(--c-accent);
       box-shadow:
-        0 0 0 1px rgb(0 0 0 / 0.6),
-        0 0 0 4px color-mix(in srgb, var(--ed-accent) 18%, transparent);
+        0 0 0 1px var(--black-a60),
+        0 0 0 4px color-mix(in srgb, var(--c-accent) 18%, transparent);
     }
   }
 
@@ -466,7 +466,7 @@
     position: relative;
     height: 12px;
     font-size: 10px;
-    color: var(--faint);
+    color: var(--c-text-faint);
 
     span {
       position: absolute;

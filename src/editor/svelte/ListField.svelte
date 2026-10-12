@@ -84,7 +84,7 @@
     gap: 8px;
     padding: 8px;
     border-radius: 16px;
-    border: 1px solid #222;
+    border: 1px solid var(--c-line-strong);
   }
 
   .lf__bar {
@@ -99,7 +99,7 @@
     min-width: 0;
     overflow: hidden;
     font-size: 11px;
-    color: var(--solid-faint);
+    color: var(--c-text-dim);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

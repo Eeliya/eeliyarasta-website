@@ -444,7 +444,7 @@
   .pg-list {
     overflow: auto;
     padding: 16px 12px 20px;
-    border-right: 1px solid var(--line);
+    border-right: 1px solid var(--c-line);
   }
 
   .pg-list__head {
@@ -489,6 +489,6 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--fg);
+    color: var(--c-text);
   }
 </style>

@@ -255,7 +255,7 @@
     margin: 0 0 16px;
     padding: 8px 8px 0;
     border-radius: 12px;
-    background: var(--solid-card);
+    background: var(--c-card);
     display: grid;
     gap: 12px;
 
@@ -285,8 +285,8 @@
     margin: 0 -12px;
     padding: 0;
     border-radius: 0 0 12px 12px;
-    box-shadow: inset 0 1px 0 var(--line);
-    background: rgb(0 0 0 / 0.18);
+    box-shadow: inset 0 1px 0 var(--c-line);
+    background: var(--black-a18);
   }
 
   // caret + "Advanced", 40px tall; the caret turns down when open
@@ -302,25 +302,25 @@
     line-height: 16px;
     letter-spacing: 0.04em;
     text-align: left;
-    color: var(--muted);
+    color: var(--c-text-muted);
     cursor: pointer;
     user-select: none;
 
     &[aria-expanded='true'] {
       margin-bottom: 8px;
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
   .ptg__caret {
     width: 1em;
     margin-right: 4px;
-    color: var(--faint);
+    color: var(--c-text-faint);
     font-size: 0.95em;
     transition: rotate 0.15s;
 

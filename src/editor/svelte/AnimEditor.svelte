@@ -209,7 +209,7 @@
   }
 
   .msel__key {
-    color: var(--faint);
+    color: var(--c-text-faint);
     font-size: 10.5px;
     word-break: break-all;
   }
@@ -226,7 +226,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 
   .scrub__label {
@@ -238,7 +238,7 @@
   .scrub__val {
     width: 36px;
     text-align: right;
-    color: var(--fg);
+    color: var(--c-text);
   }
 
   // older non-timing overrides: what they are, Move to animation / Drop
@@ -246,7 +246,7 @@
     margin-bottom: 16px;
     padding: 12px;
     border-radius: 8px;
-    box-shadow: inset 0 0 0 1px var(--line);
+    box-shadow: inset 0 0 0 1px var(--c-line);
 
     .hint {
       font-size: 11px;
@@ -261,7 +261,7 @@
   }
 
   .legacy__scope {
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
   }
 

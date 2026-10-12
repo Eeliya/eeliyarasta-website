@@ -264,22 +264,22 @@
     height: 32px;
     margin-bottom: 4px;
     padding: 0 8px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--c-line);
     border-radius: 4px;
     background: none;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font: inherit;
     font-size: 11px;
     text-align: left;
     cursor: pointer;
 
     &:hover {
-      color: var(--hi);
+      color: var(--c-link);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
@@ -319,12 +319,12 @@
     font-size: 12px;
 
     i {
-      color: var(--muted);
+      color: var(--c-text-muted);
     }
 
     strong {
       overflow: hidden;
-      color: var(--hi);
+      color: var(--c-link);
       font-weight: 400;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -360,7 +360,7 @@
     display: block;
     padding: 8px 0;
     overflow: hidden;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 12px;
     line-height: 16px;
     text-overflow: ellipsis;

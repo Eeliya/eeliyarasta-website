@@ -214,7 +214,7 @@
 
 <style lang="scss">
   .error {
-    color: #ff8a7a;
+    color: var(--c-error);
     margin: 8px 0 0;
   }
 
@@ -225,12 +225,12 @@
     margin: 0 0 16px;
     padding: 12px;
     border-radius: 12px;
-    background: rgb(255 207 122 / 0.08);
-    box-shadow: inset 0 0 0 1px rgb(255 207 122 / 0.25);
+    background: var(--amber-300-a08);
+    box-shadow: inset 0 0 0 1px var(--amber-300-a25);
     cursor: pointer;
 
     input {
-      accent-color: #ffcf7a;
+      accent-color: var(--c-warning);
     }
   }
 
@@ -238,17 +238,17 @@
     margin: -4px 0 12px;
     gap: 4px;
     font-size: 11px;
-    color: var(--muted);
+    color: var(--c-text-muted);
 
     code {
-      color: var(--hi);
+      color: var(--c-link);
     }
   }
 
   .pub-ok {
     font-size: 15px;
     margin: 12px 0 8px;
-    color: #b9f0c4;
+    color: var(--c-success);
 
     a {
       color: inherit;
@@ -268,8 +268,8 @@
     margin: 8px 0;
     padding: 12px;
     border-radius: 12px;
-    background: rgb(255 138 122 / 0.08);
-    box-shadow: inset 0 0 0 1px rgb(255 138 122 / 0.25);
+    background: var(--red-300-a08);
+    box-shadow: inset 0 0 0 1px var(--red-300-a25);
   }
 
   .pub-out {
@@ -278,10 +278,10 @@
     max-height: 180px;
     overflow: auto;
     border-radius: 12px;
-    background: rgb(0 0 0 / 0.5);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--black-a50);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     font: 11px/1.5 var(--f-mono);
-    color: #ffb4a8;
+    color: var(--c-error-strong);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
   }

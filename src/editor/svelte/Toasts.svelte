@@ -60,27 +60,27 @@
     border-radius: 12px;
     animation: fade 0.3s;
     // solid like the dialogs: no see-through, no blur
-    background: var(--solid-card, #212121);
+    background: var(--c-card);
     box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.08),
-      0 24px 60px -20px rgb(0 0 0 / 0.9);
+      inset 0 0 0 1px var(--c-fill-active),
+      0 24px 60px -20px var(--c-scrim);
 
     &--ok {
       box-shadow:
-        inset 3px 0 0 #b9f0c4,
-        inset 0 0 0 1px var(--line),
-        0 20px 40px -16px #000;
+        inset 3px 0 0 var(--c-success),
+        inset 0 0 0 1px var(--c-line),
+        0 20px 40px -16px var(--black);
     }
 
     &--error {
       box-shadow:
-        inset 3px 0 0 #ff8a7a,
-        inset 0 0 0 1px var(--line),
-        0 20px 40px -16px #000;
+        inset 3px 0 0 var(--c-error),
+        inset 0 0 0 1px var(--c-line),
+        0 20px 40px -16px var(--black);
     }
 
     code {
-      color: var(--fg);
+      color: var(--c-text);
     }
   }
 

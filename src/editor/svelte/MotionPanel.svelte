@@ -248,7 +248,7 @@
   }
 
   .mlist__count {
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
   }
 
@@ -264,11 +264,11 @@
     border-radius: 12px;
     cursor: pointer;
     text-align: left;
-    background: rgb(255 255 255 / 0.03);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--c-fill-hover);
+    box-shadow: inset 0 0 0 1px var(--c-line);
 
     &:hover {
-      background: rgb(255 255 255 / 0.08);
+      background: var(--c-fill-active);
     }
   }
 </style>

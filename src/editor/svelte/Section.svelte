@@ -20,52 +20,52 @@
     children  the section body
 -->
 <script>
-    import {ui} from './ui.svelte.js';
+  import { ui } from './ui.svelte.js';
 
-    let {
-        title,
-        icon = '',
-        name = '',
-        key = '',
-        open = true,
-        id = null,
-        off = false,
-        class: cls = '',
-        bar,
-        children,
-    } = $props();
+  let {
+    title,
+    icon = '',
+    name = '',
+    key = '',
+    open = true,
+    id = null,
+    off = false,
+    class: cls = '',
+    bar,
+    children,
+  } = $props();
 
-    const uid = $props.id();
-    let toggled = $state(null); // open/closed of a section without a key
-    const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
+  const uid = $props.id();
+  let toggled = $state(null); // open/closed of a section without a key
+  const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
 
-    function toggle() {
-        if (key) ui.sections[key] = !isOpen;
-        else toggled = !isOpen;
-    }
+  function toggle() {
+    if (key) ui.sections[key] = !isOpen;
+    else toggled = !isOpen;
+  }
 </script>
 
 <section class={['sec', off && 'is-off', cls]} data-section={id}>
-    <div class="sec__bar">
-        <button
-                type="button"
-                class="sec__toggle"
-                aria-expanded={isOpen}
-                aria-controls="{uid}-body"
-                onclick={toggle}
-        >
-            <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-            <span>
+  <div class="sec__bar">
+    <button
+      type="button"
+      class="sec__toggle"
+      aria-expanded={isOpen}
+      aria-controls="{uid}-body"
+      onclick={toggle}
+    >
+      <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
+      <span>
         {#if icon}<i class="fa-solid fa-{icon} sec__icon" aria-hidden="true"></i>{/if}
-                {title}
+        {title}
       </span>
-            {#if name}<strong>{name}</strong>{/if}
-        </button>
-        {@render bar?.()}
-    </div>
-    <div class="sec__body" id="{uid}-body" hidden={!isOpen}>
-        {@render children?.()}
-    </div>
+      {#if name}<strong>{name}</strong>{/if}
+    </button>
+    {@render bar?.()}
+  </div>
+  <div class="sec__body" id="{uid}-body" hidden={!isOpen}>
+    {@render children?.()}
+  </div>
 </section>
 
 <style lang="scss">
@@ -76,7 +76,7 @@
     padding: 12px 8px;
     margin-inline: -8px;
     border: 1px solid transparent;
-    background: var(--solid-card);
+    background: var(--c-card);
     border-radius: 12px;
 
     &:first-of-type {
@@ -96,7 +96,7 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--solid-faint);
+    color: var(--c-text-dim);
 
     > :global(*) {
       flex: none;
@@ -116,7 +116,7 @@
     z-index: 1;
     margin: -8px 0;
     padding: 8px 0;
-    // background: var(--bg-2);
+    // background: var(--c-surface);
   }
 
   // caret | title, with the name under the title
@@ -138,19 +138,19 @@
     cursor: pointer;
 
     &:hover {
-      color: #fff;
+      color: var(--c-text-strong);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     // the name under the title, like .grp__title strong
     strong {
       grid-column: 2;
       font-weight: 400;
-      color: var(--accent);
+      color: var(--c-brand);
     }
   }
 
@@ -158,7 +158,7 @@
   .sec__caret {
     width: 20px;
     height: 20px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
     line-height: 20px;
     text-align: center;
@@ -181,7 +181,7 @@
 
   .sec.is-off {
     .sec__toggle {
-      color: var(--muted);
+      color: var(--c-text-muted);
     }
 
     .sec__body {

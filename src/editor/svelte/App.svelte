@@ -275,12 +275,12 @@
     border: 0;
     border-radius: 16px;
     box-shadow:
-      0 0 0 1px rgb(255 255 255 / 0.08),
-      0 30px 80px -30px rgb(0 0 0 / 0.9);
+      0 0 0 1px var(--c-fill-active),
+      0 30px 80px -30px var(--c-scrim);
     transition:
       width 0.5s var(--ease-out),
       height 0.5s var(--ease-out);
-    background: var(--bg);
+    background: var(--c-bg-site);
   }
 
   .ed-stage.is-mobile .ed-frame {
@@ -299,12 +299,12 @@
     flex-direction: column;
     border-radius: 20px;
     overflow: hidden;
-    background: var(--bg-2);
+    background: var(--c-surface);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.14),
-      inset 0 0 0 1px rgb(255 255 255 / 0.08),
-      0 24px 60px -20px rgb(0 0 0 / 0.9),
-      0 2px 10px rgb(0 0 0 / 0.4);
+      inset 0 1px 0 var(--white-a14),
+      inset 0 0 0 1px var(--c-fill-active),
+      0 24px 60px -20px var(--c-scrim),
+      0 2px 10px var(--black-a40);
   }
 
   // the tab panels (child components) may shrink
@@ -319,7 +319,7 @@
     grid-template-columns: minmax(0, 1fr) repeat(3, auto);
     align-items: center;
     gap: 12px 4px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--c-line);
 
     > .seg,
     > .ed-bar {
@@ -350,7 +350,7 @@
 
   // [ status line | Save | Publish ]
   .ed-foot {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--c-line);
     padding: 12px 16px 16px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
@@ -366,7 +366,7 @@
     gap: 8px;
     font-size: 11px;
     line-height: 16px;
-    color: var(--muted);
+    color: var(--c-text-muted);
 
     span {
       overflow: hidden;
@@ -375,20 +375,20 @@
     }
 
     &:is([data-kind='pending'], [data-kind='unsaved']) {
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     &__dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #b9f0c4;
+      background: var(--c-success);
       flex: none;
     }
 
     &:is([data-kind='pending'], [data-kind='unsaved']) .ed-pending__dot {
-      background: #ffcf7a;
-      box-shadow: 0 0 0 3px rgb(255 207 122 / 0.15);
+      background: var(--c-warning);
+      box-shadow: 0 0 0 3px var(--amber-300-a15);
     }
   }
 

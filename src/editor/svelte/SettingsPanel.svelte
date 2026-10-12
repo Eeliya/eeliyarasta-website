@@ -261,7 +261,7 @@
     gap: 4px;
     margin: 12px 0 0;
     padding: 0;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 11px;
     list-style: none;
 
@@ -271,7 +271,7 @@
     }
 
     strong {
-      color: var(--fg);
+      color: var(--c-text);
       font-weight: 400;
     }
   }

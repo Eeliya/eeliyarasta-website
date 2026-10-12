@@ -142,7 +142,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 
   .scrub__label {
@@ -154,12 +154,12 @@
   .scrub__val {
     width: 36px;
     text-align: right;
-    color: var(--fg);
+    color: var(--c-text);
   }
 
   .bm__parts {
     margin: 16px 0 8px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
     font-weight: 500;
     letter-spacing: 0.06em;
@@ -177,11 +177,11 @@
     border-radius: 12px;
     cursor: pointer;
     text-align: left;
-    background: rgb(255 255 255 / 0.03);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--c-fill-hover);
+    box-shadow: inset 0 0 0 1px var(--c-line);
 
     &:hover {
-      background: rgb(255 255 255 / 0.08);
+      background: var(--c-fill-active);
     }
   }
 </style>

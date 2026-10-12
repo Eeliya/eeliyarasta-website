@@ -306,13 +306,13 @@
   .src-list {
     overflow: auto;
     padding: 16px 12px 20px;
-    border-right: 1px solid var(--line);
+    border-right: 1px solid var(--c-line);
   }
 
   .src-list__head {
     justify-content: space-between;
     padding: 0 8px 12px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -350,7 +350,7 @@
   }
 
   .src-detail :global(.tf__input:disabled) {
-    color: var(--muted);
+    color: var(--c-text-muted);
     cursor: not-allowed;
   }
 
@@ -360,6 +360,6 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--fg);
+    color: var(--c-text);
   }
 </style>

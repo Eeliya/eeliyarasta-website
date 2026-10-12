@@ -103,6 +103,12 @@
   --c-success: var(--green-200);
   --c-warning: var(--amber-300);
   --c-notice: var(--orange-400);
+  --c-on-light: var(--black); // text on a light fill (the primary button, badges)
+  --c-text-strong: var(--white);
+  --c-line-strong: var(--gray-22);
+  --c-on-bar: var(--gray-2b); // text on the curtain timeline's bars
+  --c-on-bar-active: var(--slate-800);
+  --c-warm: var(--sand-200); // the page menu's current page
   --c-fill-hover: var(--white-a03);
   --c-fill-active: var(--white-a08);
   --c-shadow: var(--black-a35);

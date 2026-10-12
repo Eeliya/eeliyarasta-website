@@ -241,19 +241,19 @@
     line-height: 16px;
     text-align: left;
     cursor: pointer;
-    background: rgb(0 0 0 / 0.35);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--c-shadow);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     outline: none;
     transition: box-shadow 0.2s;
 
     &:hover {
-      box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+      box-shadow: inset 0 0 0 1px var(--c-focus-ring);
     }
 
     &:focus-visible {
       box-shadow:
-        inset 0 0 0 1px var(--ed-accent),
-        0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
+        inset 0 0 0 1px var(--c-accent),
+        0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
     }
 
     &.is-down {
@@ -275,13 +275,13 @@
     white-space: nowrap;
 
     &.is-placeholder {
-      color: var(--muted);
+      color: var(--c-text-muted);
     }
   }
 
   .sel__caret {
     flex: none;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
   }
 
@@ -295,13 +295,13 @@
     list-style: none;
     overflow: auto;
     overscroll-behavior: contain;
-    color: var(--fg);
-    background: var(--bg-2);
-    box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+    color: var(--c-text);
+    background: var(--c-surface);
+    box-shadow: inset 0 0 0 1px var(--c-focus-ring);
     border-radius: 0 0 8px 8px;
     font: 400 12px/16px var(--f-mono);
     scrollbar-width: thin;
-    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+    scrollbar-color: var(--white-a20) transparent;
   }
 
   .is-up + .sel__list {
@@ -312,7 +312,7 @@
     padding: 8px 12px 4px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--faint);
+    color: var(--c-text-faint);
   }
 
   .sel__opt {
@@ -324,11 +324,11 @@
     cursor: pointer;
 
     &[aria-selected='true'] {
-      background: color-mix(in srgb, var(--ed-accent) 12%, var(--bg-2));
+      background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
     }
 
     &.is-active {
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     &[aria-disabled='true'] {
@@ -339,6 +339,6 @@
 
   .sel__hint {
     margin-left: auto;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 </style>

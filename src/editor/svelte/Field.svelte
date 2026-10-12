@@ -289,10 +289,10 @@
   // the Source switch's word, before it in the label row
   .tf__bind {
     margin-left: auto;
-    color: var(--faint);
+    color: var(--c-text-faint);
 
     &.is-on {
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     + :global(.switch) {
@@ -310,9 +310,9 @@
     list-style: none;
     max-height: 240px;
     overflow: auto;
-    color: var(--fg);
-    background: var(--bg-2);
-    box-shadow: inset 0 0 0 1px rgb(159 211 255 / 0.45);
+    color: var(--c-text);
+    background: var(--c-surface);
+    box-shadow: inset 0 0 0 1px var(--c-focus-ring);
     border-radius: 0 0 8px 8px;
     font: 400 12px/16px var(--f-mono);
   }
@@ -326,14 +326,14 @@
     cursor: pointer;
 
     &.is-active {
-      background: color-mix(in srgb, var(--ed-accent) 12%, var(--bg-2));
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
   .sug__hint {
     margin-left: auto;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 
   // a photo: 64px thumbnail (or a + tile), its file name and sizes, Change
@@ -354,15 +354,15 @@
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    color: var(--muted);
-    background: var(--btn);
-    box-shadow: inset 0 0 0 1px var(--line);
+    color: var(--c-text-muted);
+    background: var(--c-control);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     font-size: 16px;
     transition: background 0.2s;
 
     &:hover {
-      color: var(--fg);
-      background: var(--btn-hover);
+      color: var(--c-text);
+      background: var(--c-control-hover);
     }
 
     &:hover img {
@@ -373,8 +373,8 @@
     .is-selected & {
       outline: none;
       box-shadow:
-        inset 0 0 0 1px var(--ed-accent),
-        0 0 0 3px color-mix(in srgb, var(--ed-accent) 12%, transparent);
+        inset 0 0 0 1px var(--c-accent),
+        0 0 0 3px color-mix(in srgb, var(--c-accent) 12%, transparent);
     }
 
     img {
@@ -397,11 +397,11 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: var(--fg);
+    color: var(--c-text);
   }
 
   .photo__meta {
     font-size: 11px;
-    color: var(--muted);
+    color: var(--c-text-muted);
   }
 </style>

@@ -437,14 +437,14 @@
 
     // files dragged over the window
     &.is-drop {
-      box-shadow: inset 0 0 0 2px var(--ed-accent);
+      box-shadow: inset 0 0 0 2px var(--c-accent);
     }
   }
 
   .md-list {
     overflow: auto;
     padding: 16px 16px 24px;
-    border-right: 1px solid var(--line);
+    border-right: 1px solid var(--c-line);
   }
 
   .md-list__head {
@@ -475,8 +475,8 @@
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    background: var(--btn);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--c-control);
+    box-shadow: inset 0 0 0 1px var(--c-line);
 
     img {
       width: 100%;
@@ -493,8 +493,8 @@
     &:focus-visible {
       outline: none;
       box-shadow:
-        0 0 0 2px var(--ed-accent),
-        0 0 0 4px color-mix(in srgb, var(--ed-accent) 24%, transparent);
+        0 0 0 2px var(--c-accent),
+        0 0 0 4px color-mix(in srgb, var(--c-accent) 24%, transparent);
     }
 
     // the field's photo now
@@ -507,8 +507,8 @@
       border-radius: 999px;
       font-size: 10px;
       line-height: 16px;
-      color: #000;
-      background: var(--fg);
+      color: var(--c-on-light);
+      background: var(--c-text);
     }
   }
 
@@ -527,7 +527,7 @@
     display: grid;
     place-items: center;
     font-size: 11px;
-    color: var(--fg);
+    color: var(--c-text);
   }
 
   .md-detail {
@@ -561,7 +561,7 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--fg);
+    color: var(--c-text);
   }
 
   .md-preview {
@@ -569,7 +569,7 @@
     max-height: 320px;
     object-fit: contain;
     border-radius: 8px;
-    background: var(--bg-2);
+    background: var(--c-surface);
   }
 
   .md-uses {

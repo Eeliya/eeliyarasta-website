@@ -132,7 +132,7 @@
 
   .lib__path {
     grid-area: path;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
   }
 
@@ -147,29 +147,29 @@
     line-height: 16px; // name + two meta lines: 68px
     border: 0;
     border-radius: 12px;
-    background: rgb(255 255 255 / 0.03);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--c-fill-hover);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     text-align: left;
     cursor: pointer;
-    color: var(--fg);
+    color: var(--c-text);
 
     i {
       grid-row: 1 / 3;
-      color: var(--muted);
+      color: var(--c-text-muted);
     }
 
     &:hover {
-      background: rgb(255 255 255 / 0.08);
+      background: var(--c-fill-active);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
   .lib__meta {
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10.5px;
   }
 

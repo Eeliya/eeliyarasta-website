@@ -119,6 +119,6 @@
 
 <style lang="scss">
   .redir__warn {
-    color: #f0a040;
+    color: var(--c-notice);
   }
 </style>

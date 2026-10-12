@@ -434,7 +434,7 @@
     height: 32px;
     padding: 4px;
     border-radius: 8px;
-    box-shadow: inset 0 0 0 1px var(--line);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     justify-self: start;
   }
 
@@ -448,12 +448,12 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--muted);
+    color: var(--c-text-muted);
     font-size: 10px;
     cursor: pointer;
 
     &:hover:not(:disabled) {
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     &:disabled {
@@ -463,7 +463,7 @@
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
@@ -477,24 +477,24 @@
     border: 0;
     border-radius: 4px;
     background: none;
-    color: var(--muted);
+    color: var(--c-text-muted);
     cursor: pointer;
     transition:
       color 0.2s,
       background 0.2s;
 
     &:hover {
-      color: var(--fg);
+      color: var(--c-text);
     }
 
     &.is-active {
-      background: rgb(255 255 255 / 0.08);
-      color: var(--ed-accent);
+      background: var(--c-fill-active);
+      color: var(--c-accent);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
@@ -513,14 +513,14 @@
     min-height: 32px;
     padding-right: 4px;
     border-radius: 8px;
-    background: #141414;
+    background: var(--c-surface-2);
 
     &.is-active {
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     &.is-off .block__open {
-      color: var(--faint);
+      color: var(--c-text-faint);
     }
   }
 
@@ -535,7 +535,7 @@
     border: 0;
     border-radius: 8px;
     background: none;
-    color: var(--fg);
+    color: var(--c-text);
     font: inherit;
     font-size: 12px;
     text-align: left;
@@ -547,7 +547,7 @@
 
     strong {
       overflow: hidden;
-      color: var(--hi);
+      color: var(--c-link);
       font-weight: 400;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -555,17 +555,17 @@
 
     i {
       width: 16px;
-      color: var(--muted);
+      color: var(--c-text-muted);
       text-align: center;
     }
 
     &:hover {
-      background: #1c1c1c;
+      background: var(--c-surface-3);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--ed-accent);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
   }
 
@@ -582,12 +582,12 @@
 
   .add {
     padding-top: 12px;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--c-line);
   }
 
   .type {
     width: 16px;
-    color: var(--muted);
+    color: var(--c-text-muted);
     text-align: center;
   }
 </style>
