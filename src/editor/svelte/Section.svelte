@@ -19,6 +19,7 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
+    foot      optional: more body under a line across the whole card (a page section's blocks)
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -39,6 +40,7 @@
     class: cls = '',
     bar,
     children,
+    foot,
   } = $props();
 
   const uid = $props.id();
@@ -101,6 +103,7 @@
       <div class="sec__inner">
         {@render children?.()}
       </div>
+      {#if foot}<div class="sec__foot">{@render foot()}</div>{/if}
     </div>
   </div>
 </section>
@@ -109,7 +112,7 @@
   .sec {
     display: flex;
     flex-direction: column;
-    padding: var(--space-3) var(--space-2);
+    padding: var(--space-3) 0; // the sides: the bar's and the inner's (a foot's line is edge to edge)
     margin-inline: -8px;
     border: 1px solid transparent;
     background: var(--c-card);
@@ -125,6 +128,7 @@
   // (a toggle with a name has a second 20px line)
   .sec__bar {
     display: flex;
+    padding-inline: var(--space-2);
     align-items: flex-start;
     gap: var(--space-1);
     font-size: var(--fs-base);
@@ -152,7 +156,7 @@
     top: -16px; // the scroll area's top edge, over its padding
     z-index: 1;
     margin: -8px 0;
-    padding: var(--space-2) 0;
+    padding: var(--space-2);
     // background: var(--c-surface);
   }
 
@@ -232,12 +236,21 @@
     overflow: hidden;
   }
 
+  // its parts a column with gaps (not margins on them: a part keeps its own margins)
   .sec__inner {
-    padding-top: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2) 0;
   }
 
-  .sec__inner > :global(* + *) {
-    margin-top: var(--space-3);
+  .sec__foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-2) 0;
+    border-top: 1px solid var(--c-line);
   }
 
   .sec.is-off {

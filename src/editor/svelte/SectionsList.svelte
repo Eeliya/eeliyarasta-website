@@ -9,6 +9,7 @@
   opens in the block inspector (BlockInspector.svelte, onopen).
 -->
 <script>
+  import { tick } from 'svelte';
   import Button from './Button.svelte';
   import Field from './Field.svelte';
   import Section from './Section.svelte';
@@ -22,6 +23,7 @@
     duplicateBlock,
     duplicateSection,
     moveBlock,
+    moveBlockTo,
     moveSection,
     removeBlock,
     removeSection,
@@ -57,6 +59,70 @@
     });
   }
   let deleting = $state(''); // the id of the section or block asking "Delete?"
+
+  // ---- a block's row dragged to another place (its own section's order, or another section):
+  // it lifts and follows the pointer, a line shows where it lands; one undo step. A drag
+  // isn't a click (no block opens). Alt+↑/↓ on a row moves it by one.
+  let drag = $state(null); // { id, at, j, y, dy, moving, over: { at, j, side } }
+  let dragged = false; // the click after a drag
+  function grab(e, id, at, j) {
+    if (e.button !== 0 || e.target.closest('input, .btn')) return;
+    drag = { id, at, j, y: e.clientY, dy: 0, moving: false, over: null };
+    window.addEventListener('pointermove', follow);
+    window.addEventListener('pointerup', drop, { once: true });
+    window.addEventListener('pointercancel', drop, { once: true });
+  }
+  function follow(e) {
+    const dy = e.clientY - drag.y;
+    if (!drag.moving && Math.abs(dy) < 4) return;
+    drag.moving = true;
+    drag.dy = dy;
+    drag.over = targetAt(e.clientY);
+  }
+  // where a block let go at y lands: before or after the nearest other row (or in an empty list)
+  function targetAt(y) {
+    let best = null;
+    for (const el of document.querySelectorAll('[data-row]')) {
+      const [at, j] = el.dataset.row.split(':').map(Number);
+      if (at === drag.at && j === drag.j) continue;
+      const r = el.getBoundingClientRect();
+      const d = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+      if (!best || d < best.d)
+        best = { d, at, j, side: y < r.top + r.height / 2 ? 'before' : 'after' };
+    }
+    for (const el of document.querySelectorAll('[data-list]')) {
+      if (el.querySelector('[data-row]')) continue;
+      const r = el.getBoundingClientRect();
+      const d = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+      if (!best || d < best.d) best = { d, at: Number(el.dataset.list), j: 0, side: 'before' };
+    }
+    return best;
+  }
+  function drop() {
+    window.removeEventListener('pointermove', follow);
+    const d = drag;
+    drag = null;
+    if (!d?.moving) return;
+    dragged = true;
+    setTimeout(() => (dragged = false));
+    const o = d.over;
+    if (!o) return;
+    let to = o.j + (o.side === 'after' ? 1 : 0);
+    if (o.at === d.at && d.j < to) to--; // its own place is gone from the list
+    if (o.at !== d.at || to !== d.j) moveBlockTo(live.store, file, d.at, d.j, o.at, to);
+  }
+  // the drop line's class on row j of section at
+  const dropAt = (at, j) =>
+    drag?.moving && drag.over?.at === at && drag.over.j === j ? `is-drop-${drag.over.side}` : '';
+  async function nudge(e, at, j, n) {
+    if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    const to = j + (e.key === 'ArrowUp' ? -1 : 1);
+    if (to < 0 || to >= n) return;
+    moveBlock(live.store, file, at, j, to);
+    await tick();
+    document.querySelector(`[data-row="${at}:${to}"] .block__open`)?.focus();
+  }
 
   // A copy, new after every edit, undo and redo: the store changes a section in place (its
   // `sections` array stays the same object), so the store's own array would leave the fields
@@ -357,78 +423,84 @@
       {/if}
     </div>
 
-    <ul class="blocks" aria-label="Blocks of section {at + 1}">
-      {#each s.blocks || [] as b, j (b.id)}
-        {@const t = typeOf(b)}
-        {@const label = t?.label || `Unknown type "${b.type}"`}
-        <li
-          class={[
-            'block',
-            ui.block === b.id && 'is-active',
-            b.config?.enabled === false && 'is-off',
-          ]}
-        >
-          <button type="button" class="block__open" onclick={() => onopen(b.id)}>
-            <i class="fa-solid fa-{t?.icon || 'question'}" aria-hidden="true"></i>
-            <span>{label}</span>
-            <strong>{nameOf(b)}</strong>
-          </button>
-          <Button
-            size="small"
-            icon="arrow-up"
-            iconOnly
-            label="Move {label} up"
-            disabled={j === 0}
-            onclick={() => moveBlock(live.store, file, at, j, j - 1)}
-          />
-          <Button
-            size="small"
-            icon="arrow-down"
-            iconOnly
-            label="Move {label} down"
-            disabled={j === s.blocks.length - 1}
-            onclick={() => moveBlock(live.store, file, at, j, j + 1)}
-          />
-          <Button
-            size="small"
-            icon="copy"
-            iconOnly
-            label="Duplicate {label}"
-            onclick={() => duplicateBlock(live.store, file, at, j)}
-          />
-          <Button
-            size="small"
-            icon="trash"
-            iconOnly
-            label="Delete {label}"
-            onclick={() => (deleting = b.id)}
-          />
-          <input
-            type="checkbox"
-            class="switch"
-            aria-label="Show {label}"
-            checked={b.config?.enabled !== false}
-            onchange={(e) => setBlockOn(at, j, e.currentTarget.checked)}
-          />
-        </li>
-        {#if deleting === b.id}{@render confirm('block', () =>
-            removeBlock(live.store, file, at, j),
-          )}{/if}
-      {:else}
-        <li class="hint small">No blocks yet.</li>
-      {/each}
-    </ul>
-    <Select
-      aria-label="Add a block to section {at + 1}"
-      value={null}
-      placeholder="Add block…"
-      options={types}
-      onchange={(type) => addTo(at, type)}
-    >
-      {#snippet option(o)}
-        <i class="fa-solid fa-{o.icon} type" aria-hidden="true"></i>{o.label}
-      {/snippet}
-    </Select>
+    {#snippet foot()}
+      <ul class="blocks" aria-label="Blocks of section {at + 1}" data-list={at}>
+        {#each s.blocks || [] as b, j (b.id)}
+          {@const label = typeOf(b)?.label || `Unknown type "${b.type}"`}
+          <!-- the row takes the drag and Alt+↑/↓ (keys from its focused buttons) -->
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+          <li
+            class={[
+              'block',
+              ui.block === b.id && 'is-active',
+              b.config?.enabled === false && 'is-off',
+              drag?.id === b.id && drag.moving && 'is-lifted',
+              dropAt(at, j),
+            ]}
+            style:translate={drag?.id === b.id && drag.moving ? `0 ${drag.dy}px` : null}
+            data-row="{at}:{j}"
+            onpointerdown={(e) => grab(e, b.id, at, j)}
+            onkeydown={(e) => nudge(e, at, j, s.blocks.length)}
+          >
+            <button
+              type="button"
+              class="block__open"
+              title="Open {label} (drag to reorder; Alt+↑/↓ moves it)"
+              onclick={(e) => (dragged ? e.preventDefault() : onopen(b.id))}
+            >
+              {label}
+            </button>
+            <Button
+              size="small"
+              icon="copy"
+              iconOnly
+              label="Duplicate {label}"
+              onclick={() => duplicateBlock(live.store, file, at, j)}
+            />
+            <Button
+              size="small"
+              icon="trash"
+              iconOnly
+              label="Delete {label}"
+              onclick={() => (deleting = b.id)}
+            />
+            <input
+              type="checkbox"
+              class="switch"
+              aria-label="Show {label}"
+              checked={b.config?.enabled !== false}
+              onchange={(e) => setBlockOn(at, j, e.currentTarget.checked)}
+            />
+            {#if nameOf(b)}
+              <button
+                type="button"
+                class="block__title"
+                tabindex="-1"
+                onclick={(e) => (dragged ? e.preventDefault() : onopen(b.id))}
+              >
+                {nameOf(b)}
+              </button>
+            {/if}
+          </li>
+          {#if deleting === b.id}{@render confirm('block', () =>
+              removeBlock(live.store, file, at, j),
+            )}{/if}
+        {:else}
+          <li class={['hint', 'small', dropAt(at, 0)]}>No blocks yet.</li>
+        {/each}
+      </ul>
+      <Select
+        aria-label="Add a block to section {at + 1}"
+        value={null}
+        placeholder="Add block…"
+        options={types}
+        onchange={(type) => addTo(at, type)}
+      >
+        {#snippet option(o)}
+          <i class="fa-solid fa-{o.icon} type" aria-hidden="true"></i>{o.label}
+        {/snippet}
+      </Select>
+    {/snippet}
   </Section>
 {/each}
 
@@ -448,8 +520,9 @@
 
 <style lang="scss">
   // the settings, then the blocks
-  .fields {
-    margin-bottom: var(--space-3);
+  // the name's #anchor hint at its right, under it
+  .fields > :global(:first-child .tf__help) {
+    text-align: right;
   }
 
   // a utility group: icon-only, no fill; the picked one in the accent, on a faint ground
@@ -524,75 +597,104 @@
     }
   }
 
+  // the blocks, under the card's line (Section's foot)
   .blocks {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
+  // [ Type          copy | trash | switch ]
+  // [ its title, the whole width          ]
   .block {
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
     align-items: center;
-    gap: var(--space-1);
-    min-height: var(--size-control);
+    column-gap: var(--space-1);
     padding-right: var(--space-1);
     border-radius: var(--radius-md);
     background: var(--c-surface-2);
+    touch-action: none;
+    user-select: none;
 
     &.is-active {
       box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
-    &.is-off .block__open {
+    &.is-off > button {
       color: var(--c-text-faint);
+    }
+
+    // lifted while dragged: above the others, following the pointer
+    &.is-lifted {
+      z-index: 2;
+      background: var(--c-surface-3);
+      box-shadow:
+        inset 0 0 0 1px var(--c-accent),
+        0 12px 28px -12px var(--c-scrim);
+      cursor: grabbing;
+    }
+
+    // where it lands: a line in the gap above or below this row
+    &.is-drop-before::before,
+    &.is-drop-after::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      border-top: 2px solid var(--c-accent);
+    }
+
+    &.is-drop-before::before {
+      top: -4px;
+    }
+
+    &.is-drop-after::after {
+      bottom: -4px;
     }
   }
 
-  .block__open {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    gap: var(--space-2);
+  .block__open,
+  .block__title {
     min-width: 0;
-    height: var(--size-control);
     padding: 0 var(--space-2);
+    overflow: hidden;
     border: 0;
     border-radius: var(--radius-md);
     background: none;
-    color: var(--c-text);
     font: inherit;
     font-size: var(--fs-base);
     text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     cursor: pointer;
+  }
 
-    span {
-      flex: none;
-    }
-
-    strong {
-      overflow: hidden;
-      color: var(--c-link);
-      font-weight: 400;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    i {
-      width: 16px;
-      color: var(--c-text-muted);
-      text-align: center;
-    }
-
-    &:hover {
-      background: var(--c-surface-3);
-    }
+  .block__open {
+    height: var(--size-control);
+    color: var(--c-text);
 
     &:focus-visible {
       outline: none;
       box-shadow: inset 0 0 0 1px var(--c-accent);
     }
+  }
+
+  .block__title {
+    grid-column: 1 / -1;
+    margin-bottom: var(--space-2);
+    color: var(--c-link);
+  }
+
+  // a lifted row is drawn over the card's edge (its body clips it otherwise)
+  :global(.sec__clip:has(.is-lifted)) {
+    overflow: visible;
+  }
+
+  .hint.is-drop-before {
+    box-shadow: inset 0 2px 0 var(--c-accent);
   }
 
   .confirm {
