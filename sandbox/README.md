@@ -6,9 +6,10 @@ fonts), Font Awesome icons and Svelte components. It is served by `npm run dev` 
 
 ## A mock
 
-`sandbox/mocks/<name>.svelte` (or `<name>.html`). Import real components from
-`../../src/editor/svelte/…`; shared mock pieces go in `sandbox/parts/`. Example:
-`mocks/block-row-a.svelte` (the four block-row variants, `parts/BlockRowCard.svelte`).
+`sandbox/mocks/<name>.svelte` (or `<name>.html`). Build it from the real components
+(`../../src/editor/svelte/…`: Section, Field, Button, Select, …) with made-up props, and copy
+only the piece the mock changes, so it can't drift from the editor; shared mock pieces go in
+`sandbox/parts/`. Once a mock is decided and built, delete it and its parts (git keeps them).
 
 Open `/edit/sandbox/?mock=<name>` (`?mock=a,b,c` stacks several with their names,
 `&width=N` sets the panel width, default `--panel-w`, `&bare=1` drops the panel). Without
