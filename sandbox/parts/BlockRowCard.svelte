@@ -8,6 +8,7 @@
   menu: the first row's menu open (A, D).
 -->
 <script>
+  import SectionIcon from '../../src/editor/svelte/SectionIcon.svelte';
   import Section from '../../src/editor/svelte/Section.svelte';
   import Button from '../../src/editor/svelte/Button.svelte';
 
@@ -16,6 +17,17 @@
   const rows = [
     { icon: 'table-cells', type: 'Photo grid', name: "Models I've worked with" },
     { icon: 'star', type: 'Hero', name: 'Eeliya Rasta' },
+  ];
+  const HEIGHTS = [
+    ['custom', 'height', 'rows'],
+    ['fit', 'height', 0],
+    ['third', 'height', 1 / 3],
+    ['half', 'height', 1 / 2],
+    ['full', 'height', 1],
+  ];
+  const WIDTHS = [
+    ['contained', 'width', 'inside'],
+    ['full', 'width', 'edge'],
   ];
   const sectionBar = [
     ['location-crosshairs', 'Show in preview'],
@@ -27,8 +39,10 @@
 </script>
 
 {#snippet actions(r, j)}
-  <Button size="small" icon="arrow-up" iconOnly label="Move {r.type} up" disabled={j === 0} />
-  <Button size="small" icon="arrow-down" iconOnly label="Move {r.type} down" disabled={j === 1} />
+  {#if variant !== 'E'}
+    <Button size="small" icon="arrow-up" iconOnly label="Move {r.type} up" disabled={j === 0} />
+    <Button size="small" icon="arrow-down" iconOnly label="Move {r.type} down" disabled={j === 1} />
+  {/if}
   <Button size="small" icon="copy" iconOnly label="Duplicate {r.type}" />
   <Button size="small" icon="trash" iconOnly label="Delete {r.type}" />
 {/snippet}
@@ -70,7 +84,24 @@
     {/each}
     <input type="checkbox" class="switch" aria-label="Show section 3" checked />
   {/snippet}
-  <input class="tf__input" placeholder="Name" aria-label="Name" />
+  <div class="fields">
+    <div class="tf">
+      <input class="tf__input" placeholder="Name" aria-label="Name" />
+      <span class="tf__help hint">Optional: a #link to this section</span>
+    </div>
+    {#each [['Height', HEIGHTS, 'fit'], ['Width', WIDTHS, 'contained']] as [title, opts, now] (title)}
+      <div class="tf is-half">
+        <span class="tf__label">{title}</span>
+        <div class="hset" role="radiogroup">
+          {#each opts as [value, kind, arg] (value)}
+            <button type="button" class={['hset__btn', now === value && 'is-active']}>
+              <SectionIcon {kind} {arg} />
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/each}
+  </div>
   <ul class="blocks">
     {#each rows as r, j (r.type)}
       <li class={['block', hover && j === 0 && 'is-hover']}>
@@ -79,11 +110,11 @@
             ><i class="fa-solid fa-grip-vertical" aria-hidden="true"></i></span
           >
         {/if}
-        {#if variant === 'C'}
+        {#if variant === 'C' || variant === 'E'}
           <div class="two">
             <div class="top">
               <button type="button" class="open">
-                <i class="fa-solid fa-{r.icon}" aria-hidden="true"></i><span>{r.type}</span>
+                {#if variant === 'C'}<i class="fa-solid fa-{r.icon}" aria-hidden="true"></i>{/if}<span>{r.type}</span>
               </button>
               {@render actions(r, j)}
               <input type="checkbox" class="switch" aria-label="Show {r.type}" checked />
@@ -110,9 +141,51 @@
 
 <style lang="scss">
   // as SectionsList.svelte's block rows
+  .fields {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+
+
+  .hint {
+    text-align: right;
+  }
+
+  .hset {
+    display: flex;
+    gap: var(--space-1);
+    height: var(--size-control);
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--c-line);
+    justify-self: start;
+  }
+
+  .hset__btn {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    width: 36px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-text-muted);
+
+    &.is-active {
+      background: var(--c-fill-active);
+      color: var(--c-accent);
+    }
+  }
+
+  // the divider: edge to edge across the card (out over its side padding)
   .blocks {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
+    margin-inline: calc(-1 * var(--space-2)) !important;
+    padding: var(--space-3) var(--space-2) 0 !important;
+    border-top: 1px solid var(--c-line);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -200,7 +273,7 @@
 
   .title {
     margin-top: calc(-1 * var(--space-2));
-    padding: 0 var(--space-2) var(--space-2) 32px;
+    padding: 0 var(--space-2) var(--space-2);
     border: 0;
     background: none;
     color: var(--c-link);
@@ -275,6 +348,11 @@
         color: var(--c-danger-hover);
       }
     }
+  }
+
+  // the divider reaches over the card's side padding (clip, with a margin as wide)
+  :global(.sec__clip) {
+    overflow: visible !important;
   }
 
   // the open menu reaches out of the card
