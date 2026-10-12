@@ -35,12 +35,6 @@
       "url": "",
       "linkLabel": "",
       "image": "projects/film-scanner.jpg",
-      "imageCredit": {
-        "name": "Jakub Żerdzicki",
-        "url": "https://unsplash.com/@jakubzerdzicki",
-        "source": "https://unsplash.com/photos/camera-digitizing-film-negatives-on-a-light-table-B1Mx8T3odhI",
-        "license": "Unsplash License"
-      },
       "body": "PLACEHOLDER: a light table and copy stand for digitising negatives with a digital camera. Replace with a real DIY project.",
       "placeholder": true
     },
@@ -53,12 +47,6 @@
       "url": "",
       "linkLabel": "",
       "image": "projects/arduino.jpg",
-      "imageCredit": {
-        "name": "Vishnu Mohanan",
-        "url": "https://unsplash.com/@vishnumaiea",
-        "source": "https://unsplash.com/photos/a-close-up-of-a-small-electronic-device-on-a-table-kyDsOF8gsIA",
-        "license": "Unsplash License"
-      },
       "body": "PLACEHOLDER: a microcontroller box with knobs that drives the lights and shortcuts at my desk. Replace with a real DIY project.",
       "placeholder": true
     }

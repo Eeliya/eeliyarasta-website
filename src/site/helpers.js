@@ -276,7 +276,7 @@ const hsl = (h, s, l) => {
  */
 export function accentOf(ctx, album) {
   if (album?.accent) return album.accent;
-  const cover = coverOf(album)?.src;
+  const cover = coverOf(album);
   const color = cover && photoOf(ctx, cover)?.color;
   if (!color) return ctx.site.accent;
   const [h, s] = rgbToHsl(hexToRgb(color));
@@ -284,12 +284,19 @@ export function accentOf(ctx, album) {
   return hsl(h, Math.min(0.55, Math.max(0.3, s)), 0.66);
 }
 
-/** Photos of an album ([] when it has none yet, e.g. a person just added in the editor). */
-export const imagesOf = (album) => (Array.isArray(album?.images) ? album.images : []);
+/**
+ * Photos of an album: their paths ([] when it has none yet, e.g. a person just added in the
+ * editor). Alt text and credits belong to the photo (content/en/settings/photos.json).
+ */
+export const imagesOf = (album) =>
+  Array.isArray(album?.images) ? album.images.filter((p) => typeof p === 'string' && p) : [];
 
-/** Cover image of an album (undefined when it has no photos). */
+/** Cover photo of an album, its path (undefined when it has no photos). */
 export const coverOf = (album) =>
-  imagesOf(album).find((p) => album?.cover && p.src === album.cover) || imagesOf(album)[0];
+  imagesOf(album).find((p) => album?.cover && p === album.cover) || imagesOf(album)[0];
+
+/** A photo's credit ({ name, url, source, license }), from photos.json; undefined: none. */
+export const creditOf = (ctx, src) => ctx.photos?.[src]?.credit;
 
 /** "Photo: Name / Unsplash" credit line (placeholder images). */
 export const creditText = (credit) =>

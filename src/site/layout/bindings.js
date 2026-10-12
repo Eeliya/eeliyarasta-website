@@ -55,8 +55,9 @@ export function bindTypeOf(def, { config = false } = {}) {
   if (!def) return null;
   if (config) return def.type === 'text' ? 'link' : null;
   if (!def.list) return def.type || 'text';
+  if (def.list === 'image') return 'photos';
   const subs = isObject(def.list) ? Object.keys(def.list) : [];
-  return subs.includes('src') && subs.every((k) => ['src', 'credit'].includes(k)) ? 'photos' : null;
+  return subs.length === 1 && subs[0] === 'src' ? 'photos' : null;
 }
 
 /** The item a block shows: { item, source } (item null when there is none or it is missing). */
@@ -96,7 +97,9 @@ export function resolve(
       return (warn(`{ "bind": "${value.bind}" } has no item to show`), missing(value.bind));
     if (keys && !keys.has(value.bind) && !(value.bind in item))
       return (warn(`the item has no field "${value.bind}"`), missing(value.bind));
-    return formatted(item[value.bind], value.format) ?? empty(def);
+    const v = formatted(item[value.bind], value.format) ?? empty(def);
+    // an item's photo paths in a list of { src } (e.g. the hero's placed photos)
+    return Array.isArray(v) && isObject(def?.list) ? v.map((src) => ({ src })) : v;
   }
   if (Array.isArray(value) && isObject(def?.list))
     return value.map((entry) =>

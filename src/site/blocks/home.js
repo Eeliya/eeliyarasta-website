@@ -2,15 +2,26 @@
  * Block types of the home page look: the hero with its scattered photos, the big intro
  * statement, a grid of a source's photos, the project list. See ./index.js for the shape.
  */
-import { html, esc, img, pad, lines, words, itemHref, firstPhotos, ed, coverOf } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  lines,
+  words,
+  itemHref,
+  firstPhotos,
+  ed,
+  coverOf,
+} from '../helpers.js';
 import { sourceFile } from '../files.js';
 import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
 
-/** Images of a source item: albums have images[], projects a single image. */
+/** Photo paths of a source item: albums have images[], projects a single image. */
 const imagesOf = (item) =>
-  Array.isArray(item?.images) ? item.images : item?.image ? [{ src: item.image }] : [];
+  Array.isArray(item?.images) ? item.images : item?.image ? [item.image] : [];
 
 const heroPhoto = (ctx, b, p, i) => {
   const mobile = p.mx !== undefined;
@@ -98,7 +109,7 @@ const photoTiles = (ctx, source, items, layout) => {
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
-        <span class="tile__media">${img(ctx, image.src, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
+        <span class="tile__media">${img(ctx, image, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
         <span class="tile__cap"><span${ed(sourceFile(source), ['items', at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
       </a>`,
     )}
@@ -114,7 +125,7 @@ const placeCards = (ctx, source, items, layout) =>
       const cover = coverOf(p);
       return html`
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
-        <span class="placecard__media">${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
+        <span class="placecard__media">${cover ? img(ctx, cover, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
         <span class="placecard__info">
           <span class="placecard__name"${ed(sourceFile(source), ['items', i, 'title'])}>${esc(p.title)}</span>
           <span class="label"><span${ed(sourceFile(source), ['items', i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), ['items', i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>

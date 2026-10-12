@@ -7,7 +7,7 @@
   Upload (or drop files anywhere on the window) resizes and stores them in R2, a few at a
   time, each tile showing how far it is. Opened from a photo field (openMedia, with `pick`)
   it offers "Use this photo": the field gets the key, one undo step. Delete is only there for
-  photos nothing uses. Alt text and Delete go straight to disk (source.mediaOp), like uploads.
+  photos nothing uses. Alt text, credit and Delete go straight to disk (source.mediaOp), like uploads.
   Where it is lives in ui.media (persist.js).
 -->
 <script>
@@ -48,6 +48,7 @@
   let busy = $state(false);
   let dropping = $state(false);
   let alt = $state('');
+  let credit = $state({ name: '', source: '' });
   // uploads in progress: { id, name, url, progress } (0..1 bytes sent, 1: resizing; null: waiting)
   let pending = $state([]);
 
@@ -70,6 +71,7 @@
     ui.media.key = next;
     confirming = false;
     alt = media.photos[next]?.alt || '';
+    credit = { name: '', source: '', ...media.photos[next]?.credit };
   }
 
   /** Open the window (on its photo); pick: see openMedia in media.svelte.js. */
@@ -190,6 +192,18 @@
     }
   }
 
+  async function saveCredit() {
+    const was = media.photos[key]?.credit || {};
+    const next = { ...was, name: credit.name.trim(), source: credit.source.trim() };
+    if (next.name === (was.name || '') && next.source === (was.source || '')) return;
+    try {
+      await mediaOp({ op: 'credit', key, credit: next });
+      toast(next.name ? 'Credit saved' : 'Credit removed', { kind: 'ok', note: key });
+    } catch (err) {
+      toast(err.message, { kind: 'error', timeout: 0 });
+    }
+  }
+
   async function remove() {
     busy = true;
     try {
@@ -218,7 +232,7 @@
   /** A use as a row: "Noor Vermeer / photo 4" in "people.json" */
   const where = (u) => ({
     name: labelFor(live.store, u).replace(
-      /(?:images|photos) \/ #?(\d+) \/ src$/,
+      /(?:images|photos) \/ #?(\d+)(?: \/ src)?$/,
       (_, n) => `photo ${Number(n) + 1}`,
     ),
     meta: u.file,
@@ -368,6 +382,28 @@
           bind:value={alt}
           onchange={saveAlt}></textarea>
       </label>
+      <div class="md-credit">
+        <label class="tf" for="{uid}-credit">
+          <span class="tf__label">Credit (photographer)</span>
+          <input
+            id="{uid}-credit"
+            class="tf__input"
+            placeholder="empty: none"
+            bind:value={credit.name}
+            onchange={saveCredit}
+          />
+        </label>
+        <label class="tf" for="{uid}-credit-src">
+          <span class="tf__label">Credit link</span>
+          <input
+            id="{uid}-credit-src"
+            class="tf__input"
+            placeholder="https://…"
+            bind:value={credit.source}
+            onchange={saveCredit}
+          />
+        </label>
+      </div>
 
       <div class="md-uses">
         <span class="tf__label"
@@ -578,5 +614,11 @@
 
   .confirm {
     flex-wrap: wrap;
+  }
+
+  .md-credit {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
   }
 </style>

@@ -2,7 +2,17 @@
  * Block types of the inner pages: a page heading, album cards of a source (People,
  * Places), photography panels, the About bio. See ./index.js for the shape.
  */
-import { html, esc, img, pad, lines, coverOf, creditText, firstPhotos } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  lines,
+  coverOf,
+  creditText,
+  creditOf,
+  firstPhotos,
+} from '../helpers.js';
 import { albumCard } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
 
@@ -95,7 +105,7 @@ export const panels = {
       const cover = list.map(coverOf).find(Boolean);
       return html` <a class="ppanel" href="${esc(sourcePage(ctx, source))}" data-anim-item>
       <span class="ppanel__media"
-        >${cover ? img(ctx, cover.src, { sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
+        >${cover ? img(ctx, cover, { sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
       >
       <span class="ppanel__info"
         ><span class="ppanel__title"${b.ed(['panels', i, 'title'])}>${esc(title)}</span
@@ -143,7 +153,7 @@ export const about = {
         ${a.image ? img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: b.ed('image', 'image') }) : ''}
       </figure>
       <figcaption class="label muted">
-        ${esc(creditText(a.imageCredit))}
+        ${esc(creditText(creditOf(ctx, a.image)))}
       </figcaption>
     </div>
     <div class="about__text">

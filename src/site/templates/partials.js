@@ -31,9 +31,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
   const at = (field, type) => ed(sourceFile(kind), ['items', index, field], type);
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
   const cover = coverOf(album);
-  const first = [cover, ...imagesOf(album).filter((p) => p !== cover)]
-    .filter(Boolean)
-    .slice(0, 4);
+  const first = [cover, ...imagesOf(album).filter((p) => p !== cover)].filter(Boolean).slice(0, 4);
   const sizes = landscape
     ? '(max-width: 760px) 100vw, 50vw'
     : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
@@ -44,7 +42,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
     data-card-cycle
   >
     <div class="acard__media">
-      ${first.map((im, i) => img(ctx, im.src, { decorative: i > 0, sizes, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
+      ${first.map((im, i) => img(ctx, im, { decorative: i > 0, sizes, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
       <span class="acard__count">${pad(imagesOf(album).length)}</span>
     </div>
     <div class="acard__info">

@@ -80,7 +80,7 @@ test('inferSchema: one type per field from all items, title and slug', () => {
       bio: 'Two\nlines',
       cover: '',
       on: false,
-      images: [{ src: 'people/b/01.jpg' }],
+      images: ['people/b/01.jpg'],
       credit: { name: 'x' },
       mixed: 1,
     },
@@ -116,7 +116,7 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
       url: 'example.com',
       shot: '1/2/2024',
       image: 'missing.jpg',
-      images: [{ src: 'ok.jpg' }, { src: 'gone.jpg' }],
+      images: ['ok.jpg', 'gone.jpg'],
       placeholder: 'yes',
     },
     { id: 'p-t002', slug: 'ann', name: '' },
@@ -142,7 +142,7 @@ test('checkItems: required, types, choices, links, dates, photos, slugs', () => 
     'item 3 (C): slug "Bad Slug" must be lowercase words with dashes',
   ]);
   // an id each, unique; a cover is one of its own photos
-  const a = { id: 'p-aaaa', slug: 'a', name: 'A', images: [{ src: 'a.jpg' }], cover: 'b.jpg' };
+  const a = { id: 'p-aaaa', slug: 'a', name: 'A', images: ['a.jpg'], cover: 'b.jpg' };
   assert.deepEqual(
     checkItems([a, { ...a, slug: 'b', cover: 'a.jpg' }, { slug: 'c', name: 'C' }], PEOPLE),
     [
@@ -168,9 +168,7 @@ test('checkSources: every source, with its schema or inferred; photos from media
       'sources/people.schema.json': PEOPLE,
       'sources/places.json': {
         version: 1,
-        items: [
-          { id: 'p-pppp', name: 'P', images: [{ src: 'places/p.jpg' }], cover: 'places/p.jpg' },
-        ],
+        items: [{ id: 'p-pppp', name: 'P', images: ['places/p.jpg'], cover: 'places/p.jpg' }],
       },
       'settings/photos.json': { version: 1, photos: { 'places/p.jpg': { srcset: [] } } },
     }),
@@ -293,7 +291,7 @@ test('editor: half fields pair with the next half; a lone half takes the row', a
   ]);
   assert.deepEqual([...set], ['a', 'b', 'e', 'f']);
   // fields from the schema: no slug (its own input), a photo per photos item
-  const fields = itemFields('sources/people.json', { images: [{ src: 'x.jpg' }] }, 0, PEOPLE);
+  const fields = itemFields('sources/people.json', { images: ['x.jpg'] }, 0, PEOPLE);
   assert.deepEqual(
     fields.map((x) => [x.key, x.label, x.type, x.half]),
     [
@@ -303,9 +301,9 @@ test('editor: half fields pair with the next half; a lone half takes the row', a
       ['url', 'Link', 'text', false],
       ['shot', 'Shot on', 'date', false],
       ['image', 'Photo', 'image', false],
-      ['images.0.src', 'Photo 1', 'image', false],
+      ['images.0', 'Photo 1', 'image', false],
       ['placeholder', 'Placeholder', 'boolean', false],
     ],
   );
-  assert.equal(fields[6].edit, 'sources/people.json#/items/0/images/0/src');
+  assert.equal(fields[6].edit, 'sources/people.json#/items/0/images/0');
 });

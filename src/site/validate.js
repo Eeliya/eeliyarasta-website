@@ -324,10 +324,7 @@ function checkBlock(b, where) {
   out.push(...checkScale(b).map((p) => `${name}: ${p}`));
   if (b.motion !== undefined) out.push(...checkMotion(b.motion).map((p) => `${name}: ${p}`));
   if (!t) return out; // an unknown type only warns (render)
-  if (
-    b.item !== undefined &&
-    !(isObject(b.item) && isSlug(b.item.source) && isId(b.item.id, 'p'))
-  )
+  if (b.item !== undefined && !(isObject(b.item) && isSlug(b.item.source) && isId(b.item.id, 'p')))
     bad('item', '{ "source": "<source>", "id": "<item id>" }');
   // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>", "format"? }
   const bindShape = (key, v, type) => {
@@ -388,11 +385,30 @@ function checkBlock(b, where) {
   return out;
 }
 
-/** photos.json: { alt?, and for R2 photos srcset: [{ key, w }], width, height, ... } per photo. */
+/**
+ * photos.json, the one photo library: { alt?, credit?: { name, url?, source?, license? },
+ * focal?: { x, y } (0–100, where to keep in view when cropped), and for R2 photos
+ * srcset: [{ key, w }], width, height, ... } per photo. Content refers to photos by path only.
+ */
 function checkPhotos(d) {
   return Object.entries(d).flatMap(([k, v]) => {
     if (!isObject(v)) return [`photo "${k}" must be an object`];
     const out = optional(v, { alt: 'string', srcset: 'array' }).map((p) => `photo "${k}": ${p}`);
+    if (
+      v.credit !== undefined &&
+      !(
+        isObject(v.credit) &&
+        typeof v.credit.name === 'string' &&
+        v.credit.name &&
+        ['url', 'source', 'license'].every(
+          (x) => v.credit[x] === undefined || typeof v.credit[x] === 'string',
+        )
+      )
+    )
+      out.push(`photo "${k}": "credit" must be { "name", "url"?, "source"?, "license"? } (texts)`);
+    const pct = (n) => Number.isFinite(n) && n >= 0 && n <= 100;
+    if (v.focal !== undefined && !(isObject(v.focal) && pct(v.focal.x) && pct(v.focal.y)))
+      out.push(`photo "${k}": "focal" must be { "x", "y" } (0 to 100)`);
     if (Array.isArray(v.srcset) && !v.srcset.every((s) => isObject(s) && typeof s.key === 'string'))
       out.push(`photo "${k}": every size in "srcset" needs a "key"`);
     return out;

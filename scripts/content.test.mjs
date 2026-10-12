@@ -246,7 +246,7 @@ test('alt text comes from photos.json; decorative photos and missing alts are em
   assert.match(warned.join('\n'), /"missing\.jpg" has no alt text/);
 });
 
-test('alt migration: no alt in pages or sources, every photo they use has one in photos.json', () => {
+test('photo library: no alt or credit in pages or sources, every photo they use has alt in photos.json', () => {
   const content = loadContent(process.cwd());
   const photos = content.photos;
   const used = [];
@@ -255,7 +255,12 @@ test('alt migration: no alt in pages or sources, every photo they use has one in
     else if (v && typeof v === 'object')
       for (const [k, x] of Object.entries(v)) {
         assert.ok(k !== 'alt' && k !== 'imageAlt', `${where}/${k}: alt belongs in photos.json`);
-        if (['src', 'image'].includes(k) && typeof x === 'string' && x) used.push(x);
+        assert.ok(
+          k !== 'credit' && k !== 'imageCredit',
+          `${where}/${k}: credits belong in photos.json`,
+        );
+        if (['src', 'image', 'cover'].includes(k) && typeof x === 'string' && x) used.push(x);
+        if (k === 'images' && Array.isArray(x)) used.push(...x);
         walk(x, `${where}/${k}`);
       }
   };

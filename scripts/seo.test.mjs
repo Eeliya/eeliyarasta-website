@@ -77,7 +77,7 @@ test('[slug] pages: the item title, body and cover, then the template meta', () 
     },
     'sources/people.json': {
       version: 1,
-      items: [{ title: 'Noor', body: 'Noor.', images: [{ src: 'n.jpg' }] }, { title: 'Daan' }],
+      items: [{ title: 'Noor', body: 'Noor.', images: ['n.jpg'] }, { title: 'Daan' }],
     },
   });
   const noor = routeOf(c, '/people/noor/');

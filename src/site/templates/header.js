@@ -77,7 +77,7 @@ const ddLinks = (ctx, items) =>
           html` <li>
         <a class="dd-link" href="${esc(itemHref(ctx, items.source, a))}">
           <span class="dd-link__thumb"
-            >${coverOf(a) ? img(ctx, coverOf(a).src, { decorative: true, sizes: '48px' }) : ''}</span
+            >${coverOf(a) ? img(ctx, coverOf(a), { decorative: true, sizes: '48px' }) : ''}</span
           >
           <span class="dd-link__name">${esc(a.title)}</span>
           <span class="dd-link__count">${pad(imagesOf(a).length)}</span>

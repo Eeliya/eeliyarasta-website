@@ -80,7 +80,7 @@ export function itemFields(file, item, i, schema) {
     if (f.type !== 'photos') return [fieldOf(file, i, [f.key], f)];
     const list = Array.isArray(item?.[f.key]) ? item[f.key] : [];
     return list.map((_, j) =>
-      fieldOf(file, i, [f.key, j, 'src'], { ...f, type: 'photo' }, `Photo ${j + 1}`),
+      fieldOf(file, i, [f.key, j], { ...f, type: 'photo' }, `Photo ${j + 1}`),
     );
   });
 }

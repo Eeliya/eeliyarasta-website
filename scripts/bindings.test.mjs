@@ -36,7 +36,12 @@ test('resolve: custom values stay, { bind } takes the whole value, a format wrap
   const o = { item: noor, keys, onwarn: w.onwarn };
   assert.equal(resolve('Plain text', { ...o, def: { type: 'text' } }), 'Plain text');
   assert.equal(resolve({ bind: 'title' }, { ...o, def: { type: 'text' } }), 'Noor Vermeer');
-  assert.equal(resolve({ bind: 'images' }, { ...o, def: { list: { src: 'image' } } }), noor.images);
+  assert.equal(resolve({ bind: 'images' }, { ...o, def: { list: 'image' } }), noor.images);
+  // a list of { src } (the hero's placed photos) gets the paths as { src }
+  assert.deepEqual(
+    resolve({ bind: 'images' }, { ...o, def: { list: { src: 'image' } } }),
+    noor.images.map((src) => ({ src })),
+  );
   assert.equal(
     resolve({ bind: 'year', format: '({value}) {value}' }, { ...o, def: { type: 'text' } }),
     `(${noor.year}) ${noor.year}`,

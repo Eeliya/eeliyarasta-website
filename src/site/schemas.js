@@ -11,7 +11,7 @@
  *   }
  *
  *   type      text | longtext (lines) | number | photo (a media/ path or R2 key) |
- *             photos (a list of { src, credit? }) | link (https://…, /path/ or mailto:) |
+ *             photos (a list of photo paths; alt and credit live in photos.json) | link (https://…, /path/ or mailto:) |
  *             choice (one of options: ["a", "b"]) | boolean | date (YYYY-MM-DD)
  *   width     'half': two half fields side by side in the editor
  *   required  must have a value (a photos list: at least one photo)
@@ -53,13 +53,16 @@ export const labelOf = (key) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
+/** A photo's path or R2 key (a list of them is a photos field). */
+const PHOTO_PATH = /\.(jpe?g|png|webp|avif|gif)$/i;
+
 /** A field's type from all of its values (the same for every item, so the editor is stable). */
 function inferType(values) {
   if (!values.length) return null;
   if (values.every((v) => typeof v === 'boolean')) return { type: 'boolean' };
   if (values.every((v) => typeof v === 'number')) return { type: 'number', width: 'half' };
   if (values.every((v) => Array.isArray(v)))
-    return values.flat().every((p) => isObject(p) && typeof p.src === 'string')
+    return values.flat().every((p) => typeof p === 'string' && PHOTO_PATH.test(p))
       ? { type: 'photos' }
       : null;
   if (!values.every((v) => typeof v === 'string')) return null;
@@ -158,10 +161,10 @@ function checkValue(f, v, photoExists) {
       return typeof v === 'boolean' ? [] : want('true or false');
     case 'photos': {
       if (v === undefined) return [];
-      if (!Array.isArray(v) || !v.every((p) => isObject(p) && typeof p.src === 'string'))
-        return want('a list of photos ({ "src": … })');
+      if (!Array.isArray(v) || !v.every((p) => typeof p === 'string' && p))
+        return want('a list of photo paths');
       return v.flatMap((p, j) =>
-        checkValue({ type: 'photo' }, p.src, photoExists).map((m) => `photo ${j + 1} ${m}`),
+        checkValue({ type: 'photo' }, p, photoExists).map((m) => `photo ${j + 1} ${m}`),
       );
     }
     default:
@@ -204,7 +207,7 @@ export function checkItems(list, schema, { photoExists } = {}) {
     // the cover: one of its own photos (its path)
     const photos = (schema.fields || []).find((f) => f.type === 'photos')?.key;
     if (photos && typeof item.cover === 'string' && item.cover)
-      if (!(Array.isArray(item[photos]) && item[photos].some((p) => p?.src === item.cover)))
+      if (!(Array.isArray(item[photos]) && item[photos].includes(item.cover)))
         out.push(`${name}: "cover" must be one of its photos ("${item.cover}" isn't)`);
     const slug = schema.slug ? item[schema.slug] : undefined;
     if (empty(slug) || typeof slug !== 'string') return;

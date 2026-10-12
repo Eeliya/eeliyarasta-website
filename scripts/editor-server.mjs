@@ -480,7 +480,7 @@ const readPhotos = (root) =>
  *
  * Returns { status, body }; body has the photos and media lists afresh.
  */
-export async function mediaOp(root, env, { op, key, alt } = {}, onWrite = () => {}) {
+export async function mediaOp(root, env, { op, key, alt, credit } = {}, onWrite = () => {}) {
   const photosFile = path.join(root, CONTENT_DIR, PHOTOS);
   const photos = readPhotos(root);
   const manifest = readMediaManifest(root);
@@ -492,15 +492,25 @@ export async function mediaOp(root, env, { op, key, alt } = {}, onWrite = () => 
     body: { ok: true, ...extra, photos: readPhotos(root), media: readMedia(root) },
   });
 
-  if (!['alt', 'delete'].includes(op)) return fail(400, `Unknown media op "${op ?? ''}"`);
+  if (!['alt', 'credit', 'delete'].includes(op)) return fail(400, `Unknown media op "${op ?? ''}"`);
   if (!isR2 && !isLocal) return fail(404, `No photo "${key ?? ''}"`);
 
-  if (op === 'alt') {
-    const text = String(alt ?? '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    const entry = { ...photos[key], alt: text };
-    if (!text) delete entry.alt;
+  // alt text and credit belong to the photo: photos.json, the one photo library
+  if (op === 'alt' || op === 'credit') {
+    const clean = (v) =>
+      String(v ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const entry = { ...photos[key] };
+    if (op === 'alt') entry.alt = clean(alt);
+    else
+      entry.credit = Object.fromEntries(
+        ['name', 'url', 'source', 'license']
+          .map((k) => [k, clean(credit?.[k])])
+          .filter(([, v]) => v),
+      );
+    if (!entry.alt) delete entry.alt;
+    if (entry.credit && !entry.credit.name) delete entry.credit;
     if (Object.keys(entry).length) photos[key] = entry;
     else delete photos[key];
     writePhotos(photosFile, photos, onWrite);

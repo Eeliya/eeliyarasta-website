@@ -97,6 +97,8 @@ function fieldLabel(store, f) {
   }
   if (f.type === 'image' && parts.at(-1) === 'src' && /^\d+$/.test(parts.at(-2)))
     return `Photo ${Number(parts.at(-2)) + 1}`;
+  if (f.type === 'image' && parts.at(-2) === 'images' && /^\d+$/.test(parts.at(-1)))
+    return `Photo ${Number(parts.at(-1)) + 1}`;
   const key = parts.at(-1);
   if (f.file === SITE && parts[0] === 'social') return `Social ${Number(parts[1]) + 1} ${key}`;
   if (parts.at(-3) === 'columns') return `${labelOf(parts.at(-2))} column title`;

@@ -7,7 +7,18 @@
  * the facts ("Role" / { "bind": "role" }; a fact whose value is empty is left out, "Photos" and the
  * count always come last) and the body { "bind": "body" }.
  */
-import { html, esc, img, pad, creditText, ratio, ed, lines, imagesOf } from '../helpers.js';
+import {
+  html,
+  esc,
+  img,
+  pad,
+  creditText,
+  creditOf,
+  ratio,
+  ed,
+  lines,
+  imagesOf,
+} from '../helpers.js';
 
 export const album = {
   type: 'album',
@@ -42,8 +53,8 @@ function albumOf(s, ctx, route, b) {
   const images = imagesOf(a);
   const n = images.length;
   const at = (field, type) => ed(route.file, ['items', route.index, field], type);
-  // a photo's src, edited (and uploaded) in the editor
-  const photo = (i) => ed(route.file, ['items', route.index, 'images', i, 'src'], 'image');
+  // a photo's path, edited (and uploaded) in the editor
+  const photo = (i) => ed(route.file, ['items', route.index, 'images', i], 'image');
   const title = String(s.title ?? '');
   const summary = String(s.body ?? '');
   const meta = [
@@ -83,13 +94,13 @@ function albumOf(s, ctx, route, b) {
           html` <figure
             class="slide${i === 0 ? ' is-active' : ''}"
             data-slide="${i}"
-            data-credit="${esc(creditText(im.credit))}"
-            data-credit-url="${esc(im.credit?.source || '')}"
-            style="--r:${ratio(ctx, im.src).toFixed(4)}"
+            data-credit="${esc(creditText(creditOf(ctx, im)))}"
+            data-credit-url="${esc(creditOf(ctx, im)?.source || '')}"
+            style="--r:${ratio(ctx, im).toFixed(4)}"
             aria-label="${i + 1} of ${n}"
             ${i === 0 ? '' : ' aria-hidden="true"'}
           >
-            ${img(ctx, im.src, { sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
+            ${img(ctx, im, { sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
           </figure>`,
       )}
       <button
@@ -118,10 +129,10 @@ function albumOf(s, ctx, route, b) {
       <a
         class="album__credit label muted"
         data-album-credit
-        href="${esc(images[0]?.credit?.source || '#')}"
+        href="${esc(creditOf(ctx, images[0])?.source || '#')}"
         target="_blank"
         rel="noopener"
-        >${esc(creditText(images[0]?.credit))}</a
+        >${esc(creditText(creditOf(ctx, images[0])))}</a
       >
       <ol class="album__thumbs" data-anim="album.thumbs" data-album-thumbs>
         ${images.map(
@@ -134,7 +145,7 @@ function albumOf(s, ctx, route, b) {
                 aria-label="Show photo ${i + 1}"
               >
                 <span class="thumb__num">${pad(i + 1)}</span
-                >${img(ctx, im.src, { decorative: true, sizes: '80px', attrs: photo(i) })}
+                >${img(ctx, im, { decorative: true, sizes: '80px', attrs: photo(i) })}
               </button>
             </li>`,
         )}
@@ -152,7 +163,7 @@ function albumOf(s, ctx, route, b) {
           >
             <span class="gcell__num">${pad(i + 1)}</span>
             <span class="gcell__media"
-              >${img(ctx, im.src, { sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
+              >${img(ctx, im, { sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
             >
           </button>`,
       )}

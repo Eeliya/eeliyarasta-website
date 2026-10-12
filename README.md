@@ -125,19 +125,19 @@ page load.
 Content is split by kind, so a file name never means two things (a page called `site` and the
 site settings can live side by side):
 
-| file                                  | what                                                                                                                                                                                                                                                                   |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content/en/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                 |
-| `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.label`, `footer.cta`, `footer.note`, `footer.toTop`, `footer.columns.*.title`)                                                                 |
-| `content/en/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, `timezone` of the clock, `jobTitle` / `country` (structured data on home) |
-| `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                        |
-| `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                         |
-| `content/en/pages/<page>/index.json`  | the other pages: their `sections` of blocks (see "Layout"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                |
-| `content/en/sources/people.json`      | models: `id`, `slug`, `title`, role, `body`, location, `accent`, `cover` (the path of one of its photos), `images[]` (with credits)                                                                                                                                    |
-| `content/en/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                     |
-| `content/en/sources/projects.json`    | projects: title, type, year, body, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                              |
-| `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                    |
-| `content/en/settings/photos.json`     | every photo's **alt text** (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`, media/ paths and R2 keys alike) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads                                                               |
+| file                                  | what                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content/en/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                                            |
+| `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.label`, `footer.cta`, `footer.note`, `footer.toTop`, `footer.columns.*.title`)                                                                                                            |
+| `content/en/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, `timezone` of the clock, `jobTitle` / `country` (structured data on home)                                            |
+| `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                   |
+| `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, mobile `mx/my/mw`, `depth`, `layer` back/front), curtain text                                                                                                                    |
+| `content/en/pages/<page>/index.json`  | the other pages: their `sections` of blocks (see "Layout"), curtain text, `meta`: its title, description, share image, `noindex`, canonical (see "SEO")                                                                                                                                                           |
+| `content/en/sources/people.json`      | models: `id`, `slug`, `title`, role, `body`, location, `accent`, `cover` (the path of one of its photos), `images[]` (photo paths)                                                                                                                                                                                |
+| `content/en/sources/places.json`      | places, same shape                                                                                                                                                                                                                                                                                                |
+| `content/en/sources/projects.json`    | projects: title, type, year, body, url, image; `linkOut: true` makes the menus link straight to its `url`                                                                                                                                                                                                         |
+| `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                               |
+| `content/en/settings/photos.json`     | the **photo library**: every photo's `alt`, `credit` (`{ name, url?, source?, license? }`) and optional `focal` (`{ x, y }`, 0–100), keyed by media/ path or R2 key (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads |
 
 | `content/en/pages/people/[slug].json` | the people pages: `template.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
 
@@ -169,13 +169,12 @@ shaped like the block registry's fields (`src/site/schemas.js`):
 - `title`: the field that names an item (the editor's lists, page titles, `<name> | People`);
   `slug`: the field with its URL slug (`/people/<slug>/`; empty: the title, slugified).
 - `type`: `text`, `longtext` (lines), `number`, `photo` (a `media/` path or R2 key), `photos`
-  (a list of `{ "src", "credit"? }`), `link` (`https://…`, `/path/` or `mailto:`), `choice`
+  (a list of photo paths), `link` (`https://…`, `/path/` or `mailto:`), `choice`
   (one of `options: ["a", "b"]`), `boolean`, `date` (`YYYY-MM-DD`).
 - `width: "half"`: two half fields next to each other share a row in the editor (one column
   when the panel is narrow); `required`, `help` (a hint under the field), `list` (shown under
   the name in the Source Explorer's item list).
-- Keys a schema doesn't name are kept as they are, not edited or checked (`imageCredit`,
-  `transition`).
+- Keys a schema doesn't name are kept as they are, not edited or checked (`transition`).
 
 **Checks.** Save and `npm run build` check every source against its schema: required values,
 types, choice options, links, dates, valid unique slugs, and photos that exist (in `media/` or
@@ -196,7 +195,7 @@ Source Explorer don't list them. A new source is a new `<id>.json` (with its sch
 > ⚠️ **Placeholder content.** The two people (_Noor Vermeer_, _Daan Okafor_), the two places and
 > the two DIY projects are placeholders (`"placeholder": true`, shown with a "Placeholder" tag).
 > Their photos are free Unsplash images (Unsplash License); photographer and source URL are
-> recorded per image in the JSON and shown as a credit in the album view. Replace them with
+> each photo's `credit` in `content/en/settings/photos.json` and shown as a credit in the album view. Replace them with
 > real shoots. The email `hello@eeliyarasta.com` is a placeholder too.
 > Pages of items with `"placeholder": true` get `noindex` and are left out of `sitemap.xml`;
 > remove the flag (or set it to `false`) when the item is real.
@@ -672,9 +671,10 @@ If `sharp` is missing, originals are copied and the site still works. Both outpu
 generated, so they're git-ignored. Sizes, format and quality are in `scripts/image-variants.mjs`,
 shared with photos uploaded to R2 (below).
 
-**Alt text belongs to the photo**, not to the page using it: one entry per photo in
-`content/en/settings/photos.json` (`alt`), keyed by its `media/` path or R2 key, edited in the
-editor's Media window. Every `<img>` takes it from there (`altOf()` / `img()` in
+**Alt text and credits belong to the photo**, not to the page using it: one entry per photo in
+`content/en/settings/photos.json` (`alt`, `credit`, `focal`), keyed by its `media/` path or R2
+key, edited in the editor's Media window. Everything else refers to a photo by its path only
+(a source's `images` is a list of paths, `cover` and `image` are paths). Every `<img>` takes it from there (`altOf()` / `img()` in
 `src/site/helpers.js`); thumbnails and repeats are `decorative` (`alt=""`). A photo without
 alt text renders `alt=""` and the build warns.
 

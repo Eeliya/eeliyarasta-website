@@ -195,7 +195,7 @@ export function buildRoutes(content) {
           nextPath: next.path,
           title,
           description: item.body || meta.description || site.description,
-          image: coverOf(item)?.src || meta.image || undefined,
+          image: coverOf(item) || meta.image || undefined,
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
           curtain: curtainOf(item.curtain, title),

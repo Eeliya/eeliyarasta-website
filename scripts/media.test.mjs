@@ -51,7 +51,7 @@ function project() {
   write('content/en/pages/index.json', { version: 1, hero: { photos: [{ src: 'a/used.jpg' }] } });
   write('content/en/sources/people.json', {
     version: 1,
-    items: [{ name: 'N', images: [{ src: 'photos/used-1600.webp' }] }],
+    items: [{ name: 'N', images: ['photos/used-1600.webp'] }],
   });
   write('content/en/settings/photos.json', {
     version: 1,
@@ -120,7 +120,7 @@ test('delete: a used photo is refused and names where it is used', async () => {
   assert.deepEqual(local.body.uses, [{ file: 'pages/index.json', ptr: '/hero/photos/0/src' }]);
   const r2 = await mediaOp(root, env, { op: 'delete', key: 'photos/used-1600.webp' });
   assert.equal(r2.status, 409);
-  assert.match(r2.body.error, /sources\/people\.json#\/items\/0\/images\/0\/src/);
+  assert.match(r2.body.error, /sources\/people\.json#\/items\/0\/images\/0/);
   assert.ok(fs.existsSync(path.join(root, 'media/a/used.jpg')));
   assert.deepEqual(photosOf(root), before);
   assert.equal(deletes.length, 0);
