@@ -1,11 +1,12 @@
 <!--
-  A source field: its label, what it is set to (read only) and a button that opens a window to
+  A source field (always a whole row of its field grid), labelled "Source list" (mode source)
+  or "Source item" (mode item): its label, what it is set to (read only) and a button that opens a window to
   pick it. Every source-using block has one (BlockInspector.svelte, GroupFields.svelte).
     mode      'item'   a block's item, { source, id } or null: a source, then one of its items;
                        it shows "people.json · Eeliya Rasta" and opens on that source's items
               'source' a source id ('' or null: none): it stops at the sources, the current
                        one highlighted; it shows "people.json"
-    value, label, changed (its changed dot), none (the label of no value, null: none can't be
+    value, changed (its changed dot), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
     onpick(value | undefined)
     onsource(file, index, edit, then): open the Source Explorer (SourcesModal.svelte); each
@@ -21,7 +22,6 @@
   let {
     mode = 'item',
     value,
-    label = 'Item',
     changed = false,
     none = 'None',
     sourceIds,
@@ -32,6 +32,8 @@
   } = $props();
 
   const items_ = $derived(mode === 'item');
+  // always named by what it picks: a whole list, or one item of one
+  const label = $derived(items_ ? 'Source item' : 'Source list');
   const current = $derived(items_ ? value?.source || '' : value || '');
   const uid = $props.id();
   let dialog = $state();
@@ -186,6 +188,7 @@
 
 <style lang="scss">
   .opt {
+    grid-column: 1 / -1;
     min-width: 0;
     padding: var(--space-1);
 

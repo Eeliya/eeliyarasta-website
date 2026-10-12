@@ -101,7 +101,6 @@
   {#if f.type === 'source'}
     <ItemPicker
       mode="source"
-      label={f.label}
       value={live.get(f.file, f.ptr)}
       changed={live.changed(f.file, f.ptr)}
       none={null}
@@ -156,7 +155,6 @@
   {#if c.type === 'source'}
     <ItemPicker
       mode="source"
-      label={c.label}
       {value}
       changed={live.changed(g.file, c.ptr)}
       none={c.empty ?? null}
