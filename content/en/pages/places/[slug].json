@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-h6eg",
+  "grid": 120,
   "template": {
     "source": "places"
   },
@@ -15,6 +16,13 @@
         {
           "id": "b-gbxt",
           "type": "album",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "title": {
             "bind": "title"
           },
@@ -35,13 +43,7 @@
           "body": {
             "bind": "body"
           },
-          "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 75
-          }
+          "config": {}
         }
       ]
     }

@@ -162,12 +162,18 @@ test('validation: page meta and site defaults', () => {
     checkContent('pages/a/index.json', {
       version: 1,
       id: 'pg-t009',
+      grid: 120,
       meta: { noindex: true, title: 'A' },
     }),
     [],
   );
   assert.deepEqual(
-    checkContent('pages/a/index.json', { version: 1, id: 'pg-t010', meta: { noindex: 'yes' } }),
+    checkContent('pages/a/index.json', {
+      version: 1,
+      id: 'pg-t010',
+      grid: 120,
+      meta: { noindex: 'yes' },
+    }),
     ['meta: "noindex" must be a boolean, not a string'],
   );
   const s = (more) =>

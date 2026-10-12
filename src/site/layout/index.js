@@ -3,9 +3,11 @@
  * holding blocks
  * ("sections" in its file, content/en/pages/<page>/index.json or a template's [slug].json):
  *
- *   { "id": "s-k3x9", "name": "Our people", "height": "fit", "width": "contained", "enabled": true,
+ *   { "id": "s-k3x9", "name": "Our people",
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
- *                  "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }, "z": 0 }] }
+ *                  "layout": { "base": { "col": 1, "span": 120, "row": 1 } } }] }
+ *
+ * The page file says its grid: "grid": 120 (COLS; the only one there is).
  *
  * The square grid: a section's content width is split into COLS (120) columns of one cell
  * size, --cell = width / 120, and every row is one cell tall, so every cell is exactly square
@@ -31,27 +33,26 @@
  *   enabled  false: off: not on the public page at all; in the editor's preview rendered hidden
  *            (so it can be turned on live)
  * A block (its content: src/site/blocks/index.js):
- *   pos      { col, span, row, rows }: its grid area, columns 1-120 and rows (cells) from 1
+ *   layout   { base, phone? }: where it sits. base: { col, span, row, rows?, link?, place? }:
+ *            its grid area (columns 1-120, rows (cells) from 1), its link and placement.
+ *            phone (optional, below 760px): any of the same keys over the phone grid of 60
+ *            columns: an area of its own (without one: base's area halved), its phone link
+ *            (without a phone area: base's, the gap halved) and place (without one it is in its
+ *            area: no sticky, fixed, pin). `rows` is stored only for size "aspect" / "rows";
+ *            an auto block's rows are measured on the page (rows.js, ./flow.js).
  *   size     'auto' (default): as tall as its content | 'aspect': as tall as its columns'
- *            width × `aspect` ("4:5", "16:9", any "w:h") | 'rows': exactly its pos.rows (fixed).
- *            Every block spans whole rows: an aspect or auto block the rows its height needs at
- *            the page's width, rows.js on the page works them out (./flow.js); its pos.rows is
- *            that span where it was last placed (the page's first render)
- *   link     optional { to, gap }: it follows block `to` of its section, its top `gap` cells
- *            below that block's bottom (negative: overlapping); without one it is free, at its
- *            row whatever the blocks above do (./links.js)
+ *            width × `aspect` ("4:5", "16:9", any "w:h") | 'rows': exactly its base rows (fixed)
+ *   link     (in base / phone) optional { to, gap }: it follows block `to` of its section, its
+ *            top `gap` cells below that block's bottom (negative: overlapping); without one it
+ *            is free, at its row whatever the blocks above do (./links.js)
  *   scale    optional { on, adjust }: a text block's text in cells (./type.js)
- *   place    'none' (default) | 'sticky-<corner>': held at a screen edge while its section
- *            scrolls by | 'fixed-<corner>': at a screen corner the whole time | 'fullscreen':
- *            covers the screen the whole time (behind the page unless its z is set: a
- *            background) | 'pinned': pinned (GSAP) while the rest of its section scrolls by.
- *            Corners: top-left, top-center, top-right, center, bottom-left, bottom-center,
- *            bottom-right
+ *   place    (in base / phone) 'none' (default) | 'sticky-<corner>': held at a screen edge
+ *            while its section scrolls by | 'fixed-<corner>': at a screen corner the whole time
+ *            | 'fullscreen': covers the screen the whole time (behind the page unless its z is
+ *            set: a background) | 'pinned': pinned (GSAP) while the rest of its section
+ *            scrolls by. Corners: top-left, top-center, top-right, center, bottom-left,
+ *            bottom-center, bottom-right
  *   z        its layer when blocks overlap (higher is in front)
- *   phone    optional, below 760px: { col, span, row, rows } its area on the phone grid of 60
- *            columns (without one: its desktop area halved), { link } its phone link (without a
- *            phone area: its desktop link, the gap halved) and { place } (without one it is in
- *            its area: no sticky, fixed, pin)
  *   motion   optional { anim, ...timing }: its animation from the library and its own timing
  *            (./motion.js)
  *   item     optional { source, slug }: the source item its bound fields show (./bindings.js;
@@ -63,11 +64,25 @@ import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
 import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
-import { COLS, phoneAreaOf, placeOf } from './grid.js';
+import { COLS, baseOf, phoneAreaOf, phoneOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, scaled } from './type.js';
 
-export { COLS, MCOLS, cellOf, halfArea, hasMobileArea, phoneAreaOf, placeOf } from './grid.js';
+export {
+  COLS,
+  MCOLS,
+  cellOf,
+  halfArea,
+  hasMobileArea,
+  phoneAreaOf,
+  placeOf,
+  baseOf,
+  phoneOf,
+  setBase,
+  setPhone,
+  storesRows,
+  tidyRows,
+} from './grid.js';
 export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
 /** A section's minimum height: its content, or a third, a half or all of the screen's. */
 export const HEIGHTS = ['custom', 'fit', 'third', 'half', 'full'];
@@ -142,13 +157,9 @@ export const sizeOf = (b) => (SIZES.includes(b?.size) ? b.size : 'auto');
  */
 export function newBlock(type, taken, pos = {}) {
   const { config = {}, ...rest } = structuredClone(BLOCK_TYPES[type].defaults || {});
-  return {
-    id: newId('b', taken),
-    type,
-    ...rest,
-    config,
-    pos: { col: 1, span: COLS, row: 1, rows: 8, ...pos },
-  };
+  const b = { id: newId('b', taken), type, ...rest, config };
+  setBase(b, { col: 1, span: COLS, row: 1, rows: 8, ...pos });
+  return b;
 }
 
 /** A new section holding `blocks`: its content's height (fit), contained, no name. */
@@ -159,7 +170,7 @@ export function newSection(taken, blocks = []) {
 /** The rows a section has: down to its lowest block (1 when it has none). */
 export function rowsOf(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
-  return Math.max(1, ...blocks.map((b) => placeOf(b?.pos).row + placeOf(b?.pos).rows - 1));
+  return Math.max(1, ...blocks.map((b) => placeOf(baseOf(b)).row + placeOf(baseOf(b)).rows - 1));
 }
 
 /**
@@ -255,8 +266,9 @@ export function blockClass(b) {
     `blk blk--${b?.type}` +
     (aspect ? ' blk--aspect' : size === 'auto' || size === 'aspect' ? ' blk--auto' : '') +
     (scaled(b) ? ' blk--scale' : '') +
-    placeClass(b?.place) +
-    placeClass(b?.phone?.place, 'm-')
+    placeClass(baseOf(b).place) +
+    placeClass(phoneOf(b)?.place, 'm-') +
+    (b?.layout?.phone === null ? ' blk--m-hidden' : '')
   );
 }
 
@@ -265,7 +277,7 @@ export function blockClass(b) {
  * desktop area halved) and its text's scale.
  */
 export function blockVars(b) {
-  const p = placeOf(b?.pos);
+  const p = placeOf(baseOf(b));
   const m = phoneAreaOf(b);
   const ratio = sizeOf(b) === 'aspect' ? ratioOf(b?.aspect) : null;
   const k = scaled(b) ? adjustOf(b) : 1;

@@ -219,21 +219,25 @@ every section is a grid of **blocks** (`src/site/layout/`):
       "eyebrow": "Photography / People",
       "title": "People",
       "config": { "count": "people", "numbered": true },
-      "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 }
+      "layout": { "base": { "col": 1, "span": 120, "row": 1 } }
     },
     {
       "id": "b-2fq0",
       "type": "photo",
       "src": "people/noor/01.jpg",
-      "pos": { "col": 61, "span": 60, "row": 4, "rows": 20 },
+      "size": "aspect",
+      "aspect": "4:5",
+      "layout": { "base": { "col": 61, "span": 60, "row": 4, "rows": 20 } },
       "z": 1
     },
     {
       "id": "b-c4pt",
       "type": "text",
       "text": "Noor, Amsterdam 2026",
-      "pos": { "col": 61, "span": 40, "row": 26, "rows": 3 },
-      "link": { "to": "b-2fq0", "gap": 1 },
+      "layout": {
+        "base": { "col": 61, "span": 40, "row": 26, "link": { "to": "b-2fq0", "gap": 1 } },
+        "phone": null
+      },
       "scale": { "on": true, "adjust": 90 }
     }
   ]
@@ -298,21 +302,28 @@ every section is a grid of **blocks** (`src/site/layout/`):
   be one of the page's own ids (`main`, `portal`, `page-curtains`, `accent-init`,
   `mobile-menu`), and be unique on the page; a clash with another id on the rendered page (a
   project row's slug, say) is a build warning (`[anchors]`). Without a name: no id.
-- **A block:** its `type` and content (below), `pos` (first column 1–120, columns, first row,
-  rows; without one it is full width in row 1), `z` (its layer when blocks overlap), `size`,
-  an optional `link` (below), `scale` (text blocks, below), `place`, an optional `phone`
-  layout (below) and an optional `motion`
+- **A page** says its grid: `"grid": 120` (the columns its blocks are placed on; required on
+  a page with sections, and 120 is the only value).
+- **A block:** its `type` and content (below), `layout` (below), `z` (its layer when blocks
+  overlap), `size`, `scale` (text blocks, below) and an optional `motion`
   (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
   timing, see Animations).
 - **Size** (`size`): `auto` (**default**: as tall as its content), `aspect` (its width, from its
   columns, × `aspect`: `1:1 4:5 3:4 2:3 3:2 16:9 21:9` or any `"w:h"`; photos fill it, cropped
-  (`object-fit: cover`)) or `rows` (exactly its `pos.rows`, fixed). An aspect or auto block
-  spans the rows its height needs at the page's width; its `pos.rows` is that span where it was
-  last placed (what the page renders before its script runs).
+  (`object-fit: cover`)) or `rows` (exactly its `layout.base.rows`, fixed). An aspect or auto
+  block spans the rows its height needs at the page's width. Only `aspect` and `rows` blocks
+  store `rows`; an auto block's rows are never stored: the page's script measures them (before
+  it runs an auto block spans one row).
+- **Layout** (`layout`, `src/site/layout/grid.js`): `{ "base": { col, span, row, rows?, link?,
+place? }, "phone"?: { …the same keys… } | null }`. `base`: its area on the 120-column grid
+  (first column 1–120, columns, first row; without a layout it is full width in row 1), its
+  `link` and `place`. `phone`: only what changes on phones, over what it would show there (its
+  base area halved, its base link with the gap halved, no placement); `null`: hidden on phones.
+  The same rule as hero photos (`x/y/w` plus `phone`).
 - **Free blocks and links** (`src/site/layout/links.js`): blocks are **free**: each stays at
   the row it was placed on whatever the blocks above it do, and blocks may overlap (`z` orders
   them). A block can **follow** another block of its section instead,
-  `"link": { "to": "b-2fq0", "gap": 1 }`: its top is that block's bottom plus `gap` cells
+  `layout.base.link`, `{ "to": "b-2fq0", "gap": 1 }`: its top is that block's bottom plus `gap` cells
   (negative: they overlap, e.g. a caption over a photo's bottom edge), so when the leader grows
   or shrinks (text wrapping at another width, an aspect photo) its followers move with it, and
   theirs with them. One leader per block, any number of followers per leader, chains; no loops
@@ -343,7 +354,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
   sizes at 1440px. On phones a style's cell is half a 60-column cell (the 120 grid's), so the
   text scales like the layout and the minimum takes over. Off (default): the style's normal
   fixed size from the stylesheets.
-- **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
+- **Placement** (`layout.base.place` / `layout.phone.place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
   _Unused in content as of 2026-10-12 (no block sets `place`); a deletion candidate._
   - `none` (default): in the grid.
   - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
@@ -365,7 +376,7 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
   60, ~6px at 390px; its rows `--mrows`). Nothing stacks: a block without a phone area of its
   own shows its **desktop area halved** (columns and rows, rounded to the cells it covers:
   `grid.js` `halfArea`), so a phone starts as the desktop layout scaled down, and its desktop
-  link comes along with the gap halved. A block's `phone` changes that:
+  link comes along with the gap halved. A block's `layout.phone` changes that:
   `{ "col": 1, "span": 60, "row": 1, "rows": 20, "link": { "to": "b-…", "gap": 2 }, "place":
 "sticky-top-left" }`: its own phone area and its own phone link (desktop and phone links are
   separate once it has a phone area), and a phone placement (without one, desktop placements

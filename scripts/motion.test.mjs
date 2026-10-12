@@ -22,6 +22,7 @@ const presets = content.animations.presets;
 const pageWith = (motion) => ({
   version: 1,
   id: 'pg-t011',
+  grid: 120,
   sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'text', text: 'x', motion }] }],
 });
 const problems = (motion) =>
@@ -149,6 +150,7 @@ test('block parts: shape, attributes; defaults and comments are refused', async 
   const page = {
     version: 1,
     id: 'pg-aaaa',
+    grid: 120,
     sections: [{ id: 's-aaaa', enabled: true, height: 'fit', blocks: [] }],
   };
   assert.equal(storedDefaults(F, page).length, 2);

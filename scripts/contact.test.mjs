@@ -202,11 +202,12 @@ test('the block: where it sends, its form, its validation', () => {
   );
   assert.match(withKey, /<div class="cf-turnstile" data-sitekey="k">/);
 
-  const pos = { col: 1, span: 24, row: 1, rows: 1 };
+  const layout = { base: { col: 1, span: 24, row: 1 } };
   const page = (fields) => ({
     version: 1,
     id: 'pg-t034',
-    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, pos }] }],
+    grid: 120,
+    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, layout }] }],
   });
   assert.deepEqual(checkContent('pages/contact/index.json', page(s.fields)), []);
   assert.deepEqual(

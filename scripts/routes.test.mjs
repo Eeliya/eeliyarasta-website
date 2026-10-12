@@ -40,6 +40,7 @@ test('[slug] template: a page per item, slug field or slugified name', () => {
     'sources/people.json': {
       version: 1,
       id: 'pg-t029',
+      grid: 120,
       items: [{ slug: 'noor', name: 'Noor' }, { name: 'Daan Ökafor' }],
     },
   });
@@ -64,6 +65,7 @@ test('a fixed page beats the template for the same slug', () => {
     'sources/people.json': {
       version: 1,
       id: 'pg-t030',
+      grid: 120,
       items: [
         { slug: 'noor', name: 'Noor' },
         { slug: 'daan', name: 'Daan' },
@@ -88,6 +90,7 @@ test('missing, invalid and duplicate slugs warn and get no page', () => {
     'sources/people.json': {
       version: 1,
       id: 'pg-t031',
+      grid: 120,
       items: [{ slug: 'a' }, { slug: 'a' }, {}, { slug: 'Not Valid' }],
     },
   });
@@ -126,6 +129,7 @@ test('placeholder items: noindex, so not in the sitemap', () => {
     'sources/people.json': {
       version: 1,
       id: 'pg-t032',
+      grid: 120,
       items: [{ name: 'Real' }, { name: 'Stock', placeholder: true }],
     },
   });

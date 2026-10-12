@@ -12,7 +12,7 @@
  * desktop area halved, grid.js phoneAreaOf) follows its desktop link there too, the gap
  * halved; one with a phone area has only its own phone link.
  */
-import { hasMobileArea } from './grid.js';
+import { baseOf, hasMobileArea, phoneOf } from './grid.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -27,9 +27,9 @@ export const halfGap = (g) => Math.sign(g) * Math.round(Math.abs(g) / 2);
 
 /** The link a block follows on the desktop grid, or on the phone grid (`phone`); null: free. */
 export function linkOf(b, phone = false) {
-  if (!phone) return linkShape(b?.link);
-  if (hasMobileArea(b?.phone)) return linkShape(b.phone.link);
-  const l = linkShape(b?.link);
+  if (!phone) return linkShape(baseOf(b).link);
+  if (hasMobileArea(phoneOf(b))) return linkShape(phoneOf(b).link);
+  const l = linkShape(baseOf(b).link);
   return l && { to: l.to, gap: halfGap(l.gap) };
 }
 
@@ -59,11 +59,11 @@ export function linkProblems(blocks, elsewhere = new Set()) {
   const ids = new Set(list.map((b) => b?.id));
   const out = [];
   for (const [phone, key] of [
-    [false, 'link'],
-    [true, 'phone.link'],
+    [false, 'layout.base.link'],
+    [true, 'layout.phone.link'],
   ]) {
     for (const b of list) {
-      const raw = phone ? b?.phone?.link : b?.link;
+      const raw = phone ? phoneOf(b)?.link : baseOf(b).link;
       if (raw === undefined) continue;
       const l = linkShape(raw);
       const name = `block "${b?.id}" ${key}`;
@@ -86,7 +86,7 @@ export function linkProblems(blocks, elsewhere = new Set()) {
         if (on.has(at)) {
           const loop = path.slice(path.indexOf(at));
           // a phone loop of desktop links only is the desktop's (reported there)
-          const own = !phone || loop.some((x) => hasMobileArea(byId.get(x)?.phone));
+          const own = !phone || loop.some((x) => hasMobileArea(phoneOf(byId.get(x))));
           if (loop.length > 1 && own && !loop.some((x) => reported.has(x))) {
             loop.forEach((x) => reported.add(x));
             out.push(`${phone ? 'phone ' : ''}links make a loop: ${[...loop, at].join(' -> ')}`);

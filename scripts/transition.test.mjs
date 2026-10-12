@@ -22,7 +22,7 @@ test('page transition: { preset, overrides } on the site curtain', () => {
 
 test('page transition: validation and the editor modes', () => {
   const F = 'pages/x/index.json';
-  const of = (transition) => checkContent(F, { version: 1, id: 'pg-xxxx', transition });
+  const of = (transition) => checkContent(F, { version: 1, id: 'pg-xxxx', grid: 120, transition });
   assert.deepEqual(of({ preset: 'none' }), []);
   assert.deepEqual(of({ preset: 'curtain', overrides: { total: 2 } }), []);
   assert.equal(of({ mode: 'custom' }).length, 1);

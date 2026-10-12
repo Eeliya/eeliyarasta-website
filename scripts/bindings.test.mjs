@@ -221,6 +221,7 @@ test('validation: the shape of bindings and items', () => {
   const page = (patch, type = 'heading') => ({
     version: 1,
     id: 'pg-t004',
+    grid: 120,
     sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
   });
   const F = 'pages/x/index.json';
@@ -267,6 +268,7 @@ test('Save refuses bindings that do not fit the schema', () => {
   const page = (title) => ({
     version: 1,
     id: 'pg-t005',
+    grid: 120,
     sections: [
       newSection(ids, [
         { ...newBlock('heading', ids), title, item: { source: 'people', id: 'p-qw7b' } },

@@ -51,6 +51,7 @@ import {
   makesLoop,
   phoneAreaOf,
   placeOf,
+  baseOf,
   sizeOf,
 } from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
@@ -117,7 +118,7 @@ function flowAreas(sec, phone, blockOf) {
     if (el.closest('[data-sec]') !== sec) continue;
     const b = blockOf(el.dataset.block);
     if (!b) continue;
-    const stored = phone ? phoneAreaOf(b) : placeOf(b.pos);
+    const stored = phone ? phoneAreaOf(b) : placeOf(baseOf(b));
     const row = parseInt(el.style.getPropertyValue('--fr'), 10);
     const rows = parseInt(el.style.getPropertyValue('--frs'), 10);
     out[el.dataset.block] = { ...stored, ...(row > 0 && rows > 0 ? { row, rows } : {}) };

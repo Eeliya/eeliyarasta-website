@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-gk6t",
+  "grid": 120,
   "template": {
     "source": "people"
   },
@@ -15,6 +16,13 @@
         {
           "id": "b-j8hg",
           "type": "album",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "title": {
             "bind": "title"
           },
@@ -47,13 +55,7 @@
           "body": {
             "bind": "body"
           },
-          "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 75
-          }
+          "config": {}
         }
       ]
     }

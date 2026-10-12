@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-cwyg",
+  "grid": 120,
   "curtain": "Projects",
   "meta": {
     "description": "Websites, tools and DIY things built by Eeliya Rasta."
@@ -12,17 +13,18 @@
         {
           "id": "b-b4w8",
           "type": "heading",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Projects",
           "title": "Projects",
           "body": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
           "config": {
             "count": "projects"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 19
           }
         }
       ]
@@ -33,14 +35,15 @@
         {
           "id": "b-h6t6",
           "type": "projects",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "config": {
             "source": "projects"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 46
           },
           "motion": {
             "anim": "list-up",

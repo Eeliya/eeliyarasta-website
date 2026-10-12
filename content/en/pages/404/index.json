@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-078h",
+  "grid": 120,
   "curtain": "Not found",
   "meta": {
     "title": "Not found",
@@ -14,6 +15,13 @@
         {
           "id": "b-89og",
           "type": "heading",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Error 404",
           "title": "Lost frame",
           "body": "This page doesn't exist (yet).",
@@ -23,12 +31,6 @@
             "link": {
               "page": "pg-boha"
             }
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 63
           }
         }
       ]

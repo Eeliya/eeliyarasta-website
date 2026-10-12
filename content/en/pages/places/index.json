@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-rugs",
+  "grid": 120,
   "curtain": "Places",
   "meta": {
     "description": "Places and architecture photographed by Eeliya Rasta."
@@ -12,17 +13,18 @@
         {
           "id": "b-erex",
           "type": "heading",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Photography / Places",
           "title": "Places",
           "body": "Buildings, streets and castles. What is left when the people walk out of frame.",
           "config": {
             "count": "places"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 19
           }
         }
       ]
@@ -33,15 +35,16 @@
         {
           "id": "b-syyw",
           "type": "albums",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "config": {
             "source": "places",
             "layout": "landscape"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 63
           },
           "motion": {
             "anim": "grid-reveal",

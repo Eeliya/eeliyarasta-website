@@ -47,7 +47,12 @@ function site(redirects = []) {
     page('pg-abou', { type: 'button', label: 'x', config: { link: { href: '/peoples/' } } }),
   );
   put('pages/people/index.json', { version: 1, id: 'pg-peop' });
-  put('pages/people/[slug].json', { version: 1, id: 'pg-pslg', template: { source: 'people' } });
+  put('pages/people/[slug].json', {
+    version: 1,
+    id: 'pg-pslg',
+    grid: 120,
+    template: { source: 'people' },
+  });
   put('pages/people/team/index.json', { version: 1, id: 'pg-team' });
   put('sources/people.json', {
     version: 1,
@@ -60,11 +65,12 @@ function site(redirects = []) {
 }
 /** A page with one section holding `block`. */
 function page(id, block) {
-  const pos = { col: 1, span: 24, row: 1, rows: 1 };
+  const layout = { base: { col: 1, span: 24, row: 1 } };
   return {
     version: 1,
     id,
-    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }],
+    grid: 120,
+    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', layout, ...block }] }],
   };
 }
 const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));

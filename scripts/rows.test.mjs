@@ -1,4 +1,5 @@
 /** Real rows: uniform rows per section, blocks spanning whole rows, free blocks (src/site/layout/flow.js). */
+import { lay } from './test-layout.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveRows, rowsFor } from '../src/site/layout/flow.js';
@@ -47,7 +48,7 @@ test('sections count every block by its stored rows (aspect and auto too)', () =
     id: 'b-aaaa',
     type: 'text',
     size,
-    pos: { col: 1, span: 24, row, rows },
+    layout: { base: { col: 1, span: 24, row, rows } },
   });
   assert.equal(rowsOf({ blocks: [blk('auto', 3, 40)] }), 42);
   assert.equal(rowsOf({ blocks: [blk('aspect', 1, 12)] }), 12);
@@ -63,14 +64,14 @@ test("a drag stores where the section's blocks are now (their real rows), one un
       {
         id: 's-aaaa',
         blocks: [
-          { id: 'b-aaaa', type: 'text', size: 'auto', pos: pos(1, 4) },
-          { id: 'b-bbbb', type: 'text', pos: pos(6, 4) },
-          {
+          lay({ id: 'b-aaaa', type: 'text', pos: pos(1, 4) }),
+          lay({ id: 'b-bbbb', type: 'text', size: 'rows', pos: pos(6, 4) }),
+          lay({
             id: 'b-cccc',
             type: 'text',
             pos: pos(12, 2),
             phone: { col: 1, span: 12, row: 3, rows: 2 },
-          },
+          }),
         ],
       },
     ],
@@ -82,14 +83,14 @@ test("a drag stores where the section's blocks are now (their real rows), one un
   placeBlock(store, F, 0, 2, pos(30, 2), undefined, { flow });
   const s = store.current[F].sections[0];
   assert.deepEqual(
-    s.blocks.map((x) => [x.pos.row, x.pos.rows]),
+    s.blocks.map((x) => [x.layout.base.row, x.layout.base.rows]),
     [
-      [1, 10],
+      [1, undefined], // auto: its row only (its rows are measured on the page)
       [12, 4],
-      [30, 2],
+      [30, undefined],
     ],
   );
-  assert.equal(rowsOf(s), 31); // down to its lowest block (no rows stored)
+  assert.equal(rowsOf(s), 30); // down to its lowest block (no rows stored)
   assert.equal(s.rows, undefined);
   store.undo();
   assert.deepEqual(store.current[F], page);
@@ -108,13 +109,12 @@ test("a drag stores where the section's blocks are now (their real rows), one un
     },
   );
   // a block with a phone area of its own stores its rows now; one without keeps none
-  assert.deepEqual(store.current[F].sections[0].blocks[2].phone, {
+  assert.deepEqual(store.current[F].sections[0].blocks[2].layout.phone, {
     col: 1,
     span: 12,
     row: 7,
-    rows: 3,
   });
-  assert.ok(!('phone' in store.current[F].sections[0].blocks[0]));
+  assert.ok(!('phone' in store.current[F].sections[0].blocks[0].layout));
   // a section setting set and removed again
   setSection(store, F, 0, { name: 'Intro' });
   assert.equal(store.current[F].sections[0].name, 'Intro');

@@ -48,4 +48,46 @@ export function halfArea(pos) {
 
 /** A block's area on the phone grid: its own phone area, else its desktop area halved. */
 export const phoneAreaOf = (b) =>
-  hasMobileArea(b?.phone) ? placeOf(b.phone, MCOLS) : halfArea(b?.pos);
+  hasMobileArea(phoneOf(b)) ? placeOf(phoneOf(b), MCOLS) : halfArea(baseOf(b));
+
+/*
+ * A block's layout: { base, phone? } (./index.js). base: its area on the page grid
+ * { col, span, row, rows? } plus its `link` and `place`; phone: what changes on phones, any of
+ * the same keys on the phone grid (an area, a link, a place). `rows` is stored only when the
+ * block's height isn't its content's (size "aspect" or "rows"): an auto block's rows are
+ * measured on the page (src/client/modules/rows.js), never stored.
+ */
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+/** The keys of an area. */
+export const AREA_KEYS = ['col', 'span', 'row', 'rows'];
+/** A block's base layout ({} without one). */
+export const baseOf = (b) => (isObj(b?.layout?.base) ? b.layout.base : {});
+/** A block's phone layout (undefined without one). */
+export const phoneOf = (b) => (isObj(b?.layout?.phone) ? b.layout.phone : undefined);
+/** Does a block store its rows (its height isn't its content's)? */
+export const storesRows = (b) => b?.size === 'aspect' || b?.size === 'rows';
+
+function tidy(b, o) {
+  const next = { ...o };
+  for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
+  if (!storesRows(b)) delete next.rows;
+  return next;
+}
+/** Merge `patch` into a block's base (a key set to undefined is removed). */
+export function setBase(b, patch) {
+  b.layout = { ...(isObj(b.layout) ? b.layout : {}), base: tidy(b, { ...baseOf(b), ...patch }) };
+}
+/** Merge `patch` into a block's phone layout; removed when nothing is left (null: removed). */
+export function setPhone(b, patch) {
+  const next = patch === null ? {} : tidy(b, { ...phoneOf(b), ...patch });
+  const layout = { ...(isObj(b.layout) ? b.layout : {}) };
+  if (Object.keys(next).length) layout.phone = next;
+  else delete layout.phone;
+  b.layout = layout;
+}
+/** Drop stored rows a block no longer keeps (after its size changed). */
+export function tidyRows(b) {
+  if (storesRows(b)) return;
+  if (baseOf(b).rows !== undefined) setBase(b, {});
+  if (phoneOf(b)?.rows !== undefined) setPhone(b, {});
+}

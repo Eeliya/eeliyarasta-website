@@ -9,6 +9,7 @@
  * A source's items against its schema (required fields, types, photos) are checked by
  * checkItems (src/site/schemas.js): that needs the schema and the photos, not one file.
  */
+import { AREA_KEYS, storesRows } from './layout/grid.js';
 import { storedDefaults } from './defaults.js';
 import {
   ANIMATIONS,
@@ -213,6 +214,10 @@ function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
   // its stable id: what links point at (its folder, the URL, can change)
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
+  // the grid its blocks' areas are on: 120 columns (COLS), the only one
+  if (Array.isArray(d.sections) && d.sections.length && d.grid !== COLS)
+    out.push(`"grid" must be ${COLS} (the page grid's columns its blocks are placed on)`);
+  else if (d.grid !== undefined && d.grid !== COLS) out.push(`"grid" must be ${COLS}`);
   // its page transition: { preset: "curtain", overrides? } or { preset: "none" }
   const t = d.transition;
   if (t !== undefined) {
@@ -252,14 +257,53 @@ const FIELD_TYPES = { number: 'number' }; // the other field types are strings
 const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strings
 const whole = (v, min) => Number.isInteger(v) && v >= min;
 
-/** A grid area { col, span, row, rows } of a block (pos, or its phone area). */
-function checkArea(p, key, cols = COLS) {
-  if (!isObject(p)) return [`"${key}" must be an object { col, span, row, rows }`];
+/**
+ * A grid area { col, span, row, rows? } of a block (its base, or its phone area); rows: does
+ * the block store its rows (size aspect / rows: required; auto: left out).
+ */
+function checkArea(p, key, cols = COLS, rows = true) {
   const out = [];
-  for (const k of ['col', 'span', 'row', 'rows'])
+  for (const k of ['col', 'span', 'row'])
     if (!whole(p[k], 1)) out.push(`"${key}.${k}" must be a whole number from 1`);
+  if (rows && !whole(p.rows, 1)) out.push(`"${key}.rows" must be a whole number from 1`);
+  if (!rows && p.rows !== undefined)
+    out.push(`"${key}.rows" must be left out: an auto block's rows are measured on the page`);
   if (!out.length && p.col + p.span - 1 > cols)
     out.push(`"${key}" must end by column ${cols} (col ${p.col} + span ${p.span})`);
+  return out;
+}
+
+/**
+ * A block's "layout": { base: { col, span, row, rows?, link?, place? }, phone?: the same keys
+ * on the phone grid, or null (hidden on phones) }. Links are checked with their section.
+ */
+function checkBlockLayout(b) {
+  const out = [];
+  for (const k of ['pos', 'phone', 'place', 'link', 'mobile'])
+    if (b[k] !== undefined)
+      out.push(`"${k}" must be left out: it is in "layout" ({ base, phone })`);
+  const l = b.layout;
+  if (l === undefined) return out; // full width at row 1
+  if (!isObject(l) || Object.keys(l).some((k) => k !== 'base' && k !== 'phone'))
+    return [...out, '"layout" must be an object { base, phone? }'];
+  const rows = storesRows(b);
+  const part = (o, key, cols, whole) => {
+    if (!isObject(o))
+      return [`"${key}" must be an object { col, span, row, rows?, link?, place? }`];
+    const res = [];
+    const extra = Object.keys(o).filter(
+      (k) => !AREA_KEYS.includes(k) && k !== 'link' && k !== 'place',
+    );
+    if (extra.length) res.push(`"${key}.${extra[0]}" must be left out (area, link and place only)`);
+    if (o.place !== undefined && !PLACES.includes(o.place))
+      res.push(`"${key}.place" must be a placement (see layout)`);
+    if (whole || AREA_KEYS.some((k) => o[k] !== undefined))
+      res.push(...checkArea(o, key, cols, rows));
+    return res;
+  };
+  out.push(...part(l.base, 'layout.base', COLS, true));
+  if (l.phone !== undefined && l.phone !== null)
+    out.push(...part(l.phone, 'layout.phone', MCOLS, false));
   return out;
 }
 
@@ -319,7 +363,7 @@ function checkBlock(b, where) {
   const out = [];
   const bad = (key, want) => out.push(`${name}: "${key}" must be ${want}`);
   if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
-  if (b.pos !== undefined) out.push(...checkArea(b.pos, 'pos').map((p) => `${name}: ${p}`));
+  out.push(...checkBlockLayout(b).map((p) => `${name}: ${p}`));
   if (b.size !== undefined && !SIZES.includes(b.size)) bad('size', SIZES.join(', '));
   if (b.type === 'hero' && Array.isArray(b.photos))
     b.photos.forEach((p, i) => {
@@ -333,17 +377,6 @@ function checkBlock(b, where) {
     });
   if ((b.size === 'aspect' || b.aspect !== undefined) && !isRatio(b.aspect))
     bad('aspect', 'a ratio like "4:5"');
-  if (b.place !== undefined && !PLACES.includes(b.place)) bad('place', 'a placement (see layout)');
-  if (b.phone !== undefined) {
-    if (!isObject(b.phone)) bad('phone', 'an object { col, span, row, rows, place, link }');
-    else {
-      const { place, link, ...area } = b.phone; // eslint-disable-line no-unused-vars
-      if (place !== undefined && !PLACES.includes(place))
-        bad('phone.place', 'a placement (see layout)');
-      if (Object.keys(area).length)
-        out.push(...checkArea(area, 'phone', MCOLS).map((p) => `${name}: ${p}`));
-    }
-  }
   if (b.z !== undefined && !Number.isInteger(b.z)) bad('z', 'a whole number');
   out.push(...checkScale(b).map((p) => `${name}: ${p}`));
   if (b.motion !== undefined) out.push(...checkMotion(b.motion).map((p) => `${name}: ${p}`));

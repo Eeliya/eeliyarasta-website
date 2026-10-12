@@ -16,10 +16,15 @@ function site() {
   };
   put('pages/index.json', { version: 1, id: 'pg-t035' });
   put('pages/404/index.json', { version: 1, id: 'pg-t036' });
-  put('pages/about/index.json', { version: 1, id: 'pg-t037', title: 'About' });
-  put('pages/people/index.json', { version: 1, id: 'pg-t038', title: 'People' });
-  put('pages/people/[slug].json', { version: 1, id: 'pg-t039', template: { source: 'people' } });
-  put('pages/people/team/index.json', { version: 1, id: 'pg-t040', title: 'Team' });
+  put('pages/about/index.json', { version: 1, id: 'pg-t037', grid: 120, title: 'About' });
+  put('pages/people/index.json', { version: 1, id: 'pg-t038', grid: 120, title: 'People' });
+  put('pages/people/[slug].json', {
+    version: 1,
+    id: 'pg-t039',
+    grid: 120,
+    template: { source: 'people' },
+  });
+  put('pages/people/team/index.json', { version: 1, id: 'pg-t040', grid: 120, title: 'Team' });
   put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
   return root;
 }
@@ -48,7 +53,7 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
         title: 'New one',
         body: '',
         config: {},
-        pos: { col: 1, span: 120, row: 17, rows: 1 },
+        layout: { base: { col: 1, span: 120, row: 17 } },
       },
     ],
   );

@@ -196,6 +196,7 @@ test('routes: slug and title from the schema', () => {
     'sources/bands.json': {
       version: 1,
       id: 'pg-t033',
+      grid: 120,
       items: [
         { handle: 'the-xx', label: 'The xx', slug: 'ignored' },
         { label: 'Big Thief', name: 'ignored' },

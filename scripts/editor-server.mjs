@@ -70,6 +70,7 @@ import {
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { omitDefaults } from '../src/site/defaults.js';
+import { COLS } from '../src/site/layout/grid.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
 import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
@@ -234,7 +235,13 @@ export function pagesOp(
         title: t,
       };
       const section = newSection(ids, [heading]);
-      write(file, { version: VERSION, id: newPageId(), curtain: t, sections: [section] });
+      write(file, {
+        version: VERSION,
+        id: newPageId(),
+        grid: COLS,
+        curtain: t,
+        sections: [section],
+      });
       return done({ id: join(parent, name), created: [file] });
     }
     if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
@@ -247,6 +254,7 @@ export function pagesOp(
     write(pageFile(pid), {
       version: VERSION,
       id: newPageId(),
+      grid: COLS,
       template: { source },
       section: titleCase(source),
       next: 'Next',

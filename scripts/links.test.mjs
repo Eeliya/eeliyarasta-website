@@ -17,6 +17,7 @@ import {
   typographyOf,
   typographyVars,
 } from '../src/site/layout/type.js';
+import { flat, lay } from './test-layout.mjs';
 import { checkContent } from '../src/site/validate.js';
 import { createStore } from '../src/editor/store.js';
 import {
@@ -75,15 +76,15 @@ test('links: a loop or a missing leader counts as free (and resolving ends)', ()
 });
 
 test('links on the phone: its own phone link, else the desktop link with the gap halved', () => {
-  const b = { id: 'b-bbbb', type: 'text', link: to('b-aaaa', 5) };
+  const b = lay({ id: 'b-bbbb', type: 'text', link: to('b-aaaa', 5) });
   assert.deepEqual(linkOf(b), to('b-aaaa', 5));
   assert.deepEqual(linkOf(b, true), to('b-aaaa', 3));
-  assert.deepEqual(linkOf({ ...b, link: to('b-aaaa', -3) }, true), to('b-aaaa', -2));
+  assert.deepEqual(linkOf(lay({ ...flat(b), link: to('b-aaaa', -3) }), true), to('b-aaaa', -2));
   // a phone area of its own: only its own phone link
-  const own = { ...b, phone: { col: 1, span: 60, row: 1, rows: 4 } };
+  const own = lay({ ...flat(b), phone: { col: 1, span: 60, row: 1 } });
   assert.equal(linkOf(own, true), null);
   assert.deepEqual(
-    linkOf({ ...own, phone: { ...own.phone, link: to('b-cccc', -1) } }, true),
+    linkOf(lay({ ...flat(own), phone: { ...flat(own).phone, link: to('b-cccc', -1) } }), true),
     to('b-cccc', -1),
   );
   assert.deepEqual(blockLinks(b), { 'data-link': 'b-aaaa 5', 'data-mlink': 'b-aaaa 3' });
@@ -92,9 +93,9 @@ test('links on the phone: its own phone link, else the desktop link with the gap
 
 test('links: loops are found; validation rejects unknown, other sections, self, loops', () => {
   const blocks = [
-    { id: 'b-aaaa', type: 'text' },
-    { id: 'b-bbbb', type: 'text', link: to('b-aaaa') },
-    { id: 'b-cccc', type: 'text', link: to('b-bbbb') },
+    lay({ id: 'b-aaaa', type: 'text' }),
+    lay({ id: 'b-bbbb', type: 'text', link: to('b-aaaa') }),
+    lay({ id: 'b-cccc', type: 'text', link: to('b-bbbb') }),
   ];
   assert.equal(makesLoop(blocks, 'b-aaaa', 'b-cccc'), true);
   assert.equal(makesLoop(blocks, 'b-aaaa', 'b-aaaa'), true);
@@ -104,36 +105,39 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
   const page = (s1, s2 = []) => ({
     version: 1,
     id: 'pg-t001',
+    grid: 120,
     sections: [
       { id: 's-aaaa', blocks: s1 },
       { id: 's-bbbb', blocks: s2 },
     ],
   });
   assert.deepEqual(checkContent(F, page(blocks)), []);
-  const loop = [{ id: 'b-aaaa', type: 'text', link: to('b-cccc') }, ...blocks.slice(1)];
+  const loop = [lay({ id: 'b-aaaa', type: 'text', link: to('b-cccc') }), ...blocks.slice(1)];
   assert.deepEqual(checkContent(F, page(loop)), [
     'section 1: links make a loop: b-aaaa -> b-cccc -> b-bbbb -> b-aaaa',
   ]);
-  assert.deepEqual(checkContent(F, page([{ id: 'b-aaaa', type: 'text', link: to('b-zzzz') }])), [
-    'section 1: block "b-aaaa" link follows "b-zzzz", which isn\'t on the page',
-  ]);
+  assert.deepEqual(
+    checkContent(F, page([lay({ id: 'b-aaaa', type: 'text', link: to('b-zzzz') })])),
+    ['section 1: block "b-aaaa" layout.base.link follows "b-zzzz", which isn\'t on the page'],
+  );
   assert.deepEqual(
     checkContent(
       F,
       page(
-        [{ id: 'b-aaaa', type: 'text', phone: { link: to('b-dddd') } }],
-        [{ id: 'b-dddd', type: 'text' }],
+        [lay({ id: 'b-aaaa', type: 'text', phone: { link: to('b-dddd') } })],
+        [lay({ id: 'b-dddd', type: 'text' })],
       ),
     ),
     [
-      'section 1: block "b-aaaa" phone.link follows "b-dddd" of another section (links stay in their section)',
+      'section 1: block "b-aaaa" layout.phone.link follows "b-dddd" of another section (links stay in their section)',
     ],
   );
-  assert.deepEqual(checkContent(F, page([{ id: 'b-aaaa', type: 'text', link: to('b-aaaa') }])), [
-    'section 1: block "b-aaaa" link can\'t follow the block itself',
-  ]);
+  assert.deepEqual(
+    checkContent(F, page([lay({ id: 'b-aaaa', type: 'text', link: to('b-aaaa') })])),
+    ['section 1: block "b-aaaa" layout.base.link can\'t follow the block itself'],
+  );
   assert.match(
-    checkContent(F, page([{ id: 'b-aaaa', type: 'text', link: { to: 'b-x', gap: 1.5 } }]))[0],
+    checkContent(F, page([lay({ id: 'b-aaaa', type: 'text', link: { to: 'b-x', gap: 1.5 } })]))[0],
     /must be \{ "to"/,
   );
 });
@@ -141,52 +145,51 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
 test('editor: link, drag a follower (its gap changes), unlink; new blocks are free', () => {
   const F = 'pages/t/index.json';
   const pos = (row, rows) => ({ col: 1, span: 120, row, rows });
+  // fixed rows: these blocks' stored rows are what links settle on
+  const at = (id, p) => lay({ id, type: 'text', size: 'rows', pos: p });
   const store = createStore();
   store.load({
     [F]: {
       version: 1,
       id: 'pg-t002',
+      grid: 120,
       sections: [
         {
           id: 's-aaaa',
-          blocks: [
-            { id: 'b-aaaa', type: 'text', pos: pos(1, 10) },
-            { id: 'b-bbbb', type: 'text', pos: pos(14, 4) },
-            { id: 'b-cccc', type: 'text', pos: pos(20, 4) },
-          ],
+          blocks: [at('b-aaaa', pos(1, 10)), at('b-bbbb', pos(14, 4)), at('b-cccc', pos(20, 4))],
         },
-        { id: 's-bbbb', blocks: [{ id: 'b-dddd', type: 'text', pos: pos(1, 4) }] },
+        { id: 's-bbbb', blocks: [at('b-dddd', pos(1, 4))] },
       ],
     },
   });
   const blocks = () => store.current[F].sections[0].blocks;
   assert.equal(linkBlock(store, F, 0, 1, 'b-aaaa', 3), true);
-  assert.deepEqual(blocks()[1].link, to('b-aaaa', 3));
-  assert.equal(blocks()[1].pos.row, 14); // where it was: 10 + 1 + 3
+  assert.deepEqual(flat(blocks()[1]).link, to('b-aaaa', 3));
+  assert.equal(flat(blocks()[1]).pos.row, 14); // where it was: 10 + 1 + 3
   assert.equal(linkBlock(store, F, 0, 2, 'b-bbbb', -2), true);
-  assert.equal(blocks()[2].pos.row, 16); // stored rows settle to the links: 17 - 2 + 1
+  assert.equal(flat(blocks()[2]).pos.row, 16); // stored rows settle to the links: 17 - 2 + 1
   // a loop, another section's block, itself: refused
   assert.equal(linkBlock(store, F, 0, 0, 'b-cccc', 0), null);
   assert.equal(linkBlock(store, F, 0, 0, 'b-dddd', 0), null);
   assert.equal(linkBlock(store, F, 0, 0, 'b-aaaa', 0), null);
   // dragged up 6 rows: still linked, the gap -3 (overlapping); its follower comes along
   placeBlock(store, F, 0, 1, pos(8, 4));
-  assert.deepEqual(blocks()[1].link, to('b-aaaa', -3));
-  assert.equal(blocks()[2].pos.row, 10);
+  assert.deepEqual(flat(blocks()[1]).link, to('b-aaaa', -3));
+  assert.equal(flat(blocks()[2]).pos.row, 10);
   // the leader removed: its followers are free
   store.batch(() => {});
   linkBlock(store, F, 0, 1, null);
-  assert.ok(!('link' in blocks()[1]));
+  assert.ok(!('link' in flat(blocks()[1])));
   store.undo();
-  assert.ok(blocks()[1].link);
+  assert.ok(flat(blocks()[1]).link);
   removeBlock(store, F, 0, 0);
-  assert.ok(!('link' in blocks()[0]));
+  assert.ok(!('link' in flat(blocks()[0])));
   store.undo();
   // a copy is free; a new block is free
   const copy = duplicateBlock(store, F, 0, 2);
-  assert.ok(!('link' in copy));
+  assert.ok(!('link' in flat(copy)));
   const added = addBlock(store, F, 0, 'text');
-  assert.ok(!('link' in added) && !('link' in newBlock('text', new Set())));
+  assert.ok(!('link' in flat(added)) && !('link' in flat(newBlock('text', new Set()))));
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
@@ -197,17 +200,24 @@ test('editor: phone links are separate; the first phone move brings the desktop 
     [F]: {
       version: 1,
       id: 'pg-t003',
+      grid: 120,
       sections: [
         {
           id: 's-aaaa',
           blocks: [
-            { id: 'b-aaaa', type: 'text', pos: { col: 1, span: 120, row: 1, rows: 10 } },
-            {
+            lay({
+              id: 'b-aaaa',
+              type: 'text',
+              size: 'rows',
+              pos: { col: 1, span: 120, row: 1, rows: 10 },
+            }),
+            lay({
               id: 'b-bbbb',
               type: 'text',
+              size: 'rows',
               pos: { col: 1, span: 60, row: 15, rows: 4 },
               link: to('b-aaaa', 4),
-            },
+            }),
           ],
         },
       ],
@@ -216,24 +226,24 @@ test('editor: phone links are separate; the first phone move brings the desktop 
   const b = () => store.current[F].sections[0].blocks[1];
   // on the phone a's halved area ends at row 5; b dropped at row 9: gap 3
   placeMobile(store, F, 0, 1, { col: 1, span: 60, row: 9, rows: 2 });
-  assert.deepEqual(b().phone, { col: 1, span: 60, row: 9, rows: 2, link: to('b-aaaa', 3) });
-  assert.deepEqual(b().link, to('b-aaaa', 4)); // the desktop's unchanged
+  assert.deepEqual(flat(b()).phone, { col: 1, span: 60, row: 9, rows: 2, link: to('b-aaaa', 3) });
+  assert.deepEqual(flat(b()).link, to('b-aaaa', 4)); // the desktop's unchanged
   linkBlock(store, F, 0, 1, null, 0, { phone: true });
-  assert.ok(!('link' in b().phone) && b().link);
+  assert.ok(!('link' in flat(b()).phone) && flat(b()).link);
   store.undo();
   // unlinked where the preview shows it (an auto leader grew): it stays on that row
   linkBlock(store, F, 0, 1, null, 0, { phone: true, row: 14 });
-  assert.equal(b().phone.row, 14);
+  assert.equal(flat(b()).phone.row, 14);
   linkBlock(store, F, 0, 1, null, 0, { row: 30 });
-  assert.ok(!('link' in b()));
-  assert.equal(b().pos.row, 30);
+  assert.ok(!('link' in flat(b())));
+  assert.equal(flat(b()).pos.row, 30);
 });
 
 test('scaled text: per block, by its styles; site typography over the defaults', () => {
   const t = (more) => ({
     id: 'b-aaaa',
     type: 'text',
-    pos: { col: 1, span: 120, row: 1, rows: 1 },
+    layout: { base: { col: 1, span: 120, row: 1, rows: 1 } },
     ...more,
   });
   assert.doesNotMatch(blockClass(t()), /scale/);

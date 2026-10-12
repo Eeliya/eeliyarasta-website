@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-lyos",
+  "grid": 120,
   "sections": [
     {
       "id": "s-ud3l",
@@ -8,6 +9,13 @@
         {
           "id": "b-wrvr",
           "type": "about",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "About",
           "title": "I photograph people, the way they are when they forget the camera.",
           "image": "about/x100v.jpg",
@@ -35,13 +43,7 @@
             }
           ],
           "emailLabel": "Email me",
-          "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 82
-          }
+          "config": {}
         }
       ]
     }

@@ -3,11 +3,11 @@
  * for it. Blocks sit in the sections of a page (src/site/layout/index.js places them):
  *
  *   { "id": "b-k3x9", "type": "grid", "label": "People", "title": "Models",
- *     "config": { "source": "people" }, "pos": { "col": 1, "span": 120, "row": 1, "rows": 8 } }
+ *     "config": { "source": "people" }, "layout": { "base": { "col": 1, "span": 120, "row": 1 } } }
  *
  * The block's own content (texts, photos) sits next to its type; how it works (which source
- * it pulls, its look, on/off) is under "config"; where it sits is the layout's (id, pos, z,
- * phone: layout keys, never a field key). A type:
+ * it pulls, its look, on/off) is under "config"; where it sits is the layout's (id, layout, z,
+ * size: layout keys, never a field key). A type:
  *
  *   type      its name in the content
  *   label     its name in the editor; icon: a Font Awesome icon name (no "fa-")
@@ -62,7 +62,7 @@ export const BLOCK_TYPES = Object.fromEntries(
  */
 export function kindOf(block) {
   // eslint-disable-next-line no-unused-vars
-  const { pos, z, phone, size, aspect, place, motion, link, scale, config, ...rest } = block || {};
+  const { layout, z, size, aspect, motion, scale, config, ...rest } = block || {};
   const { enabled, ...settings } = config || {}; // eslint-disable-line no-unused-vars
   return JSON.stringify([rest, settings]);
 }

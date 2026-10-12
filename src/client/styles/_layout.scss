@@ -33,7 +33,7 @@
  * adjust (--tk), never under the style's min.
  *
  * Placements (.blk--sticky / --fixed / --full / --pinned, with --v-* / --h-* for the corner)
- * apply above 760px; on phones only the .blk--m-* ones (the block's mobile place), so a
+ * apply above 760px; on phones only the .blk--m-* ones (the block's phone place), so a
  * block without one is in the normal flow there. Offsets from the screen edge: --edge, below
  * the header at the top (--stick-top).
  */
@@ -231,6 +231,10 @@
     --p-rs: var(--mrs, 1);
   }
   @include placed('m-');
+  // layout.phone: null: not on phones
+  .blk--m-hidden {
+    display: none;
+  }
 }
 
 /*

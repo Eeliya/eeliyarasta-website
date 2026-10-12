@@ -28,6 +28,8 @@
     linkOf,
     phoneAreaOf,
     placeOf,
+    baseOf,
+    phoneOf,
     ratioOf,
     sizeOf,
   } from '../../site/layout/index.js';
@@ -44,7 +46,7 @@
     live.version;
     return live.get(g.file, `/sections/${at}`) || {};
   });
-  const phoneSet = $derived((section.blocks || []).some((b) => b?.phone));
+  const phoneSet = $derived((section.blocks || []).some((b) => b?.layout?.phone !== undefined));
   const link = $derived(linkOf(block, phone));
   const leader = $derived(link && (section.blocks || []).find((b) => b?.id === link.to));
   const leaderName = $derived(
@@ -65,7 +67,7 @@
     return () => watch.disconnect();
   });
   const area = $derived.by(() => {
-    const a = phone ? phoneAreaOf(block) : placeOf(block.pos);
+    const a = phone ? phoneAreaOf(block) : placeOf(baseOf(block));
     const ok = (n) => Number.isInteger(n) && n > 0;
     return {
       ...a,
@@ -132,6 +134,8 @@
     setBlock(live.store, g.file, at, j, {
       size: next === 'auto' ? undefined : next,
       aspect: next === 'aspect' ? block.aspect || '4:5' : undefined,
+      // aspect / rows store the rows it shows now
+      rows: next === 'auto' ? undefined : area.rows,
     });
   }
   function setScale(patch, k) {
@@ -234,7 +238,7 @@
     <span class="tf__label">Placement</span>
     <Select
       aria-label="Placement"
-      value={block.place ?? 'none'}
+      value={baseOf(block).place ?? 'none'}
       options={places}
       onchange={(v) => setBlock(live.store, g.file, at, j, { place: v === 'none' ? undefined : v })}
     />
@@ -259,7 +263,7 @@
     <span class="tf__label">Placement on phones</span>
     <Select
       aria-label="Placement on phones"
-      value={block.phone?.place ?? 'none'}
+      value={phoneOf(block)?.place ?? 'none'}
       options={places}
       onchange={(v) => placeOnPhone(live.store, g.file, at, j, v)}
     />

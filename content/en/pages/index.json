@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-boha",
+  "grid": 120,
   "curtain": "Eeliya Rasta",
   "transition": {
     "preset": "curtain",
@@ -36,6 +37,13 @@
         {
           "id": "b-plp2",
           "type": "hero",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "title": "Eeliya Rasta",
           "eyebrow": "Portrait & editorial photography",
           "body": "Based in the Netherlands. Shot on a Fujifilm X100V & X-M5",
@@ -199,12 +207,6 @@
             }
           ],
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 75
-          },
           "motion": {
             "parts": {
               "hero.title": {
@@ -221,14 +223,15 @@
         {
           "id": "b-9phu",
           "type": "intro",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "body": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 18
-          },
           "motion": {
             "anim": "scrub-words"
           }
@@ -241,18 +244,19 @@
         {
           "id": "b-xh7b",
           "type": "grid",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "People",
           "title": "Models I've worked with",
           "cta": "All people",
           "config": {
             "source": "people",
             "layout": "even"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 204
           },
           "motion": {
             "anim": "grid-reveal"
@@ -266,18 +270,19 @@
         {
           "id": "b-vnrc",
           "type": "grid",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Places",
           "title": "Buildings, streets & castles",
           "cta": "All places",
           "config": {
             "source": "places",
             "layout": "staggered"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 86
           },
           "motion": {
             "anim": "grid-reveal",
@@ -292,16 +297,17 @@
         {
           "id": "b-57ry",
           "type": "projects",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Projects",
           "title": "Things I build",
           "cta": "All projects",
           "config": {},
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 63
-          },
           "motion": {
             "anim": "list-up",
             "trigger": "load"

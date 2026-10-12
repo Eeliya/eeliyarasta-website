@@ -1,6 +1,7 @@
 {
   "version": 1,
   "id": "pg-yzuw",
+  "grid": 120,
   "curtain": "People",
   "meta": {
     "description": "Models photographed by Eeliya Rasta."
@@ -12,17 +13,18 @@
         {
           "id": "b-j6je",
           "type": "heading",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "eyebrow": "Photography / People",
           "title": "People",
           "body": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
           "config": {
             "count": "people"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 19
           }
         }
       ]
@@ -33,15 +35,16 @@
         {
           "id": "b-grz4",
           "type": "albums",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1
+            }
+          },
           "config": {
             "source": "people",
             "layout": "portrait"
-          },
-          "pos": {
-            "col": 1,
-            "span": 120,
-            "row": 1,
-            "rows": 141
           },
           "motion": {
             "anim": "grid-reveal",
