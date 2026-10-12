@@ -39,11 +39,14 @@ test('contained width: validated in site.json, and on the page as --contain', ()
   ]);
   assert.deepEqual(checkLayout({ contained: 100.5 }).length, 1);
   const content = loadContent('.');
-  const site = { ...content.site, layout: { contained: 121 } };
+  // the site's own setting doesn't matter: the default (no layout) and a set one
+  const { layout: _own, ...plain } = content.site; // eslint-disable-line no-unused-vars
+  const site = { ...plain, layout: { contained: 121 } };
   assert.match(checkContent('settings/site.json', site).join('\n'), /layout.contained/);
   const { routes } = buildRoutes(content);
   const about = routes.find((r) => r.path === '/about/');
   const head = (s) => renderRoute(about, { ...content, site: s }).head;
-  assert.doesNotMatch(head(content.site), /--contain/);
-  assert.match(head({ ...content.site, layout: { contained: 100 } }), /--contain: 100;/);
+  assert.doesNotMatch(head(plain), /--contain/);
+  assert.doesNotMatch(head({ ...plain, layout: { contained: 115 } }), /--contain/);
+  assert.match(head({ ...plain, layout: { contained: 100 } }), /--contain: 100;/);
 });

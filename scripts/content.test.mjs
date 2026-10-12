@@ -124,6 +124,34 @@ test('site.json with only name and url builds every page', async () => {
   }
 });
 
+test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async () => {
+  const prettier = await import('prettier');
+  const { formatJSON } = await import('../src/editor/lib/json-format.js');
+  const options = await prettier.resolveConfig('content/pages/index.json');
+  const cases = [
+    [],
+    [1, 2],
+    [{ a: 1 }],
+    [{ from: '/people/x/:slug/', to: '/people/' }], // redirects.json with one redirect
+    [{ a: 1 }, { b: 2 }],
+    [
+      { a: 1, b: 2 },
+      { c: 1, d: 2 },
+    ],
+    [[1], [2]],
+    [
+      [1, 2],
+      [3, 4],
+    ],
+    { r: [{ from: '/a', to: '/b' }], x: [1, 'b'] },
+    [{ a: { b: 1 } }],
+  ];
+  for (const v of cases) {
+    const text = formatJSON(v);
+    assert.equal(text, await prettier.format(text, { ...options, parser: 'json' }), text);
+  }
+});
+
 test('formatJSON (what Save writes) is Prettier-clean for every content file', async () => {
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
