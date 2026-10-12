@@ -28,6 +28,11 @@
  *             again (onlink). A line joins every leader's bottom to its followers' tops; a
  *             click on one selects that link, Delete or Backspace removes it. The phone
  *             preview shows and edits the phone links.
+ *   Rows      a Custom height section shows a line on its bottom edge (the hovered section's,
+ *             or the selected block's): dragged up or down it sets the section's rows, in
+ *             whole cells, never fewer than its content needs, the count shown live; on
+ *             release one undo step (onrows). On the phone preview it sets the phone rows
+ *             (half the desktop rows, rounded up: the desktop rows become twice them).
  *
  * A block is where the site's rows.js put it (--fr / --frs: a linked block below its leader,
  * auto and aspect blocks the rows they need), so a drag starts from there; while it runs the
@@ -37,7 +42,15 @@
  * (mode, block, link) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
-import { COLS, MCOLS, makesLoop, phoneAreaOf, placeOf, sizeOf } from '../site/layout/index.js';
+import {
+  COLS,
+  MAX_MIN_ROWS,
+  MCOLS,
+  makesLoop,
+  phoneAreaOf,
+  placeOf,
+  sizeOf,
+} from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
 
 const MOBILE = 760;
@@ -77,6 +90,12 @@ const STYLE = `
 .sel.is-dragging .dot, .is-linking .box .dot { display: none; }
 .target { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 50%; background: #000; }
 .target.is-near { background: #3cf; box-shadow: 0 0 0 4px rgb(51 204 255 / .35); }
+.secrow { position: absolute; height: 12px; margin-top: -6px; pointer-events: auto; cursor: row-resize; }
+.secrow::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: rgb(255 255 255 / .75); box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
+.secrow::after { content: ''; position: absolute; left: calc(50% - 18px); top: 2px; width: 36px; height: 8px; box-sizing: border-box; border-radius: 4px; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .45); }
+.secrow:hover::before, .secrow.is-dragging::before { background: #fff; }
+.secrow .count { position: absolute; left: calc(50% + 26px); bottom: 100%; margin-bottom: 2px; padding: 4px 8px; border-radius: 4px; background: #fff; color: #000; white-space: nowrap; }
+.secrow:not(.is-dragging) .count { display: none; }
 svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .link { fill: none; stroke: #3cf; stroke-width: 2; }
 .link.is-sel { stroke: #fff; stroke-width: 3; }
@@ -184,9 +203,17 @@ function nearest(list, v, step) {
  * the block at `pos` (mobile: its phone area; flow: where the section's blocks are now, { id:
  * area }, and rows: its rows now); onlink(id, to, gap, { mobile }): block `id` follows `to`
  * with `gap` cells between them (to null: it is free again); blockOf(id): the stored block
- * (null when it isn't on the page).
+ * (null when it isn't on the page); onrows(secId, rows, { mobile }): a Custom section's bottom
+ * edge was dragged to `rows` (the phone's rows when mobile).
  */
-export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf }) {
+export function createOverlay({
+  ui,
+  onpick,
+  onplace,
+  onlink = () => {},
+  onrows = () => {},
+  blockOf,
+}) {
   let doc = null;
   let win = null;
   let root = null; // the shadow root's layer
@@ -194,6 +221,8 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
   let drag = null;
   let linking = null;
   let hover = null;
+  let hoverSec = null;
+  let sizing = null; // a section's bottom edge being dragged
   let gridKey = '';
   const els = {};
 
@@ -227,7 +256,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     host.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483645;';
     const shadow = host.attachShadow({ mode: 'open' });
     const dots = '<i class="dot" data-dot="top"></i><i class="dot" data-dot="bottom"></i>';
-    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box peek" hidden></div><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
+    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box peek" hidden></div><div class="secrow" hidden><span class="count"></span></div><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
     root = shadow.querySelector('.layer');
     els.grids = root.querySelector('.grids');
     els.links = root.querySelector('.links');
@@ -236,8 +265,11 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     els.sel = root.querySelector('.sel');
     els.label = root.querySelector('.label');
     els.targets = root.querySelector('.targets');
+    els.secrow = root.querySelector('.secrow');
+    els.count = root.querySelector('.count');
     shadow.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
+      if (e.target.closest?.('.secrow')) return startRows(e);
       const h = e.target.dataset?.h;
       if (h && ui.block) return start(e, blockEl(ui.block), h);
       const dot = e.target.dataset?.dot;
@@ -375,6 +407,18 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     const p = arrange && !drag && ui.peek?.from === 'panel' ? secById(ui.peek.id) : null;
     els.peek.hidden = !p;
     if (p) place(els.peek, rectOf(p, win));
+    // a Custom section's bottom edge: the one being dragged, hovered, or the selected block's
+    const rs =
+      arrange && !drag && !linking
+        ? sizing?.sec || customOf(hoverSec) || customOf(secOf(sel))
+        : null;
+    els.secrow.hidden = !rs;
+    if (rs) {
+      const r = rectOf(rs, win);
+      place(els.secrow, { x: r.x, y: r.y + r.h, w: r.w, h: 12 });
+      els.secrow.classList.toggle('is-dragging', !!sizing);
+      if (sizing) els.count.textContent = `${sizing.phone ? 'phone · ' : ''}${sizing.rows} rows`;
+    }
     const h = arrange && hover !== sel && !drag ? hover : null;
     els.hover.hidden = !h;
     if (h) {
@@ -427,6 +471,8 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
       link: linkOfEl(el),
       label: null,
       rows: rows || Number(sec.style.getPropertyValue(phone ? '--mrows' : '--rows')) || 1,
+      // a Custom section keeps its rows (never fewer: its blocks move inside them)
+      min: minOf(sec, phone),
     };
     els.sel.classList.add('is-dragging');
     win.addEventListener('pointermove', move, true);
@@ -489,7 +535,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     const { rows, at } = resolveRows(items, drag.rows);
     for (const it of drag.items)
       if (it.id !== drag.id && at[it.id]) it.el.style.setProperty('--fr', at[it.id].row);
-    drag.sec.style.setProperty('--frows', Math.max(drag.rows, rows, p.row + p.rows - 1));
+    drag.sec.style.setProperty('--frows', Math.max(drag.min, drag.rows, rows, p.row + p.rows - 1));
     if (drag.link) {
       const lead = at[drag.link.to];
       if (lead) drag.label = `${drag.phone ? 'phone · ' : ''}gap ${p.row - (lead.row + lead.rows)}`;
@@ -525,6 +571,79 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
     restore();
     stop();
     drag = null;
+  }
+
+  // ---- a Custom section's rows: its bottom edge dragged
+
+  /** A section's own rows (Custom height; the phone's on the phone), 0 for any other. */
+  function minOf(sec, phone) {
+    return parseInt(sec?.style.getPropertyValue(phone ? '--mminrows' : '--minrows'), 10) || 0;
+  }
+  const customOf = (sec) =>
+    sec && !sec.hidden && sec.classList.contains('sec--h-custom') ? sec : null;
+
+  function startRows(e) {
+    const sec = customOf(hoverSec) || customOf(secOf(blockEl(ui.block)));
+    if (!sec || drag || linking) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const phone = mobile();
+    const flow = flowAreas(sec, phone, blockOf);
+    // the rows its content needs: down to its lowest block, as rows.js placed them
+    const content = Math.max(1, ...Object.values(flow).map((a) => a.row + a.rows - 1));
+    const rows = Number(sec.style.getPropertyValue('--frows')) || minOf(sec, phone) || content;
+    const lines = linesOf(sec, win);
+    doc.documentElement.setAttribute('data-flow-hold', '');
+    sizing = {
+      sec,
+      phone,
+      content,
+      from: rows,
+      rows,
+      y: e.clientY,
+      step: lines.row + lines.rowGap,
+      saved: [sec.style.cssText, phone ? '--mminrows' : '--minrows'],
+      max: phone ? Math.ceil(MAX_MIN_ROWS / 2) : MAX_MIN_ROWS,
+    };
+    ui.secRows = { id: sec.dataset.sec, rows: phone ? rows * 2 : rows };
+    win.addEventListener('pointermove', moveRows, true);
+    win.addEventListener('pointerup', endRows, true);
+    win.addEventListener('keydown', cancelRows, true);
+    if (!raf) raf = win.requestAnimationFrame(frame);
+  }
+
+  function moveRows(e) {
+    const s = sizing;
+    const n = Math.min(s.max, Math.max(s.content, Math.round(s.from + (e.clientY - s.y) / s.step)));
+    if (n === s.rows) return;
+    s.rows = n;
+    s.sec.style.setProperty('--frows', n);
+    s.sec.style.setProperty(s.saved[1], n);
+    ui.secRows = { id: s.sec.dataset.sec, rows: s.phone ? n * 2 : n };
+  }
+
+  function stopRows() {
+    doc.documentElement.removeAttribute('data-flow-hold');
+    win.removeEventListener('pointermove', moveRows, true);
+    win.removeEventListener('pointerup', endRows, true);
+    win.removeEventListener('keydown', cancelRows, true);
+    sizing = null;
+    ui.secRows = null;
+  }
+
+  function endRows() {
+    const { sec, rows, from, phone } = sizing;
+    if (rows === from) sec.style.cssText = sizing.saved[0];
+    stopRows();
+    if (rows !== from) onrows(sec.dataset.sec, rows, { mobile: phone });
+  }
+
+  function cancelRows(e) {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation();
+    sizing.sec.style.cssText = sizing.saved[0];
+    stopRows();
   }
 
   // ---- links: a drag from a block's top circle to another block's bottom circle
@@ -646,6 +765,7 @@ export function createOverlay({ ui, onpick, onplace, onlink = () => {}, blockOf 
   function onpointerover(e) {
     if (e.target.id === '__ed-layout') return; // over its circles: the block stays hovered
     hover = arranging() ? e.target.closest?.('[data-block]') || null : null;
+    hoverSec = arranging() ? secOf(e.target) || null : null;
     if (e.target.id !== '__ed-layout') peekAt(arranging() ? secOf(e.target) : null);
   }
 

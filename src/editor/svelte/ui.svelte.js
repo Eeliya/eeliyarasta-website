@@ -38,6 +38,8 @@ export const ui = $state({
    * side shows it faintly (a section row in the Content tab, the section in the preview).
    */
   peek: null,
+  /** A custom section's rows while its bottom edge is dragged in the preview: { id, rows } (overlay.js). */
+  secRows: null,
   /**
    * The animated element picked in the Motion tab: { el, id, key, scope }, or null.
    * scope: where its edits go: 'element' | 'target' (see motion.js).

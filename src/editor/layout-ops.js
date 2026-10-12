@@ -6,6 +6,7 @@
  * follows by itself, through the elements' classes and CSS variables.
  */
 import {
+  MAX_MIN_ROWS,
   MCOLS,
   hasMobileArea,
   linkOf,
@@ -105,6 +106,20 @@ export function setSection(store, file, at, patch, key) {
   const next = { ...listOf(store, file)[at], ...patch };
   for (const k of Object.keys(patch)) if (patch[k] === undefined) delete next[k];
   return writeSection(store, file, at, next, key);
+}
+
+/**
+ * A Custom section's rows set from the preview (its bottom edge dragged): `rows` on the desktop
+ * grid, or the phone's (phone: a section's phone rows are half its rows, rounded up, so its rows
+ * become twice them). Clamped to 1..MAX_MIN_ROWS; false when it isn't Custom or nothing changed.
+ * One undo step.
+ */
+export function setSectionRows(store, file, at, rows, { phone = false } = {}) {
+  const s = listOf(store, file)[at];
+  if (!s || s.height !== 'custom' || !Number.isInteger(rows)) return false;
+  const minRows = Math.min(MAX_MIN_ROWS, Math.max(1, phone ? rows * 2 : rows));
+  if (minRows === s.minRows) return false;
+  return setSection(store, file, at, { minRows });
 }
 
 /** The first free row below every block of a section. */

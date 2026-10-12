@@ -53,7 +53,7 @@ import {
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
 import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
-import { linkBlock, placeBlock, placeMobile } from './layout-ops.js';
+import { linkBlock, placeBlock, placeMobile, setSectionRows } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 
@@ -81,6 +81,12 @@ const overlay = createOverlay({
     if (!b) return;
     if (linkBlock(store, b.file, b.at, b.j, to, gap, { phone: mobile, row }) === null)
       toast("Can't link those blocks (another section's, or a loop)", { kind: 'error' });
+  },
+  // a Custom section's bottom edge dragged: its rows (one undo step)
+  onrows(id, rows, { mobile = false } = {}) {
+    const file = previewFile(bridge.doc);
+    const at = (store.current[file]?.sections || []).findIndex((s) => s?.id === id);
+    if (at >= 0) setSectionRows(store, file, at, rows, { phone: mobile });
   },
   blockOf(id) {
     const b = blockAt(id);

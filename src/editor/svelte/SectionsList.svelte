@@ -295,7 +295,7 @@
           label="Rows"
           type="number"
           half
-          value={s.minRows ?? rowsOf(s)}
+          value={ui.secRows?.id === s.id ? ui.secRows.rows : (s.minRows ?? rowsOf(s))}
           help="Rows below the last block are space (phones: half)"
           changed={changed(at, 'minRows')}
           onvalue={(v) => setMinRows(at, v)}
