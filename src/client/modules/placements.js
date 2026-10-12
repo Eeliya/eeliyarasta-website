@@ -1,3 +1,4 @@
+// Unused in content as of 2026-10-12 (no block sets `place`): a deletion candidate.
 /**
  * Block placements that CSS can't do alone (src/client/styles/_layout.scss has the rest):
  *   pinned          .blk--pinned (above 760px) / .blk--m-pinned (phones): pinned with

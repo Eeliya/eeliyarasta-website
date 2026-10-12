@@ -332,6 +332,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
   text scales like the layout and the minimum takes over. Off (default): the style's normal
   fixed size from the stylesheets.
 - **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
+  _Unused in content as of 2026-10-12 (no block sets `place`); a deletion candidate._
   - `none` (default): in the grid.
   - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
 bottom-left bottom-center bottom-right`): held on screen while its **section** scrolls by
