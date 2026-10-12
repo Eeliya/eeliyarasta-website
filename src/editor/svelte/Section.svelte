@@ -2,7 +2,7 @@
   A collapsible panel section: a bar (a toggle button with the caret and title, then the `bar`
   snippet's controls) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
   in the preview can be found and its section opened). Used by the Content, Motion and Settings
-  tabs and the Animations library. .sec is a flex column: bar, body.
+  tabs and the Animations library. .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
 
     title     the bar title (small caps)
     icon      optional: a Font Awesome icon name before the title (a page section's type)
@@ -19,8 +19,8 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
-  Opening and closing animate the card's max-height (GSAP, 0.25s power2.out): closed it is
-  clipped to its bar, the body still rendered but inert; none with prefers-reduced-motion.
+  Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
+  it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
 <script>
   import { untrack } from 'svelte';
@@ -45,65 +45,31 @@
   let toggled = $state(null); // open/closed of a section without a key
   const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
 
-  // Closed, the card is clipped to its bar (max-height, overflow: clip); the body stays in the
-  // DOM, inert. Opening tweens max-height up to the full height and then lets go (none), so
-  // later content changes aren't clipped.
-  let card = $state();
-  let barEl = $state();
-  const barHeight = () => {
-    const cs = getComputedStyle(card);
-    const bs = getComputedStyle(barEl);
-    const px = (k, c = cs) => parseFloat(c[k]) || 0;
-    return (
-      barEl.offsetHeight +
-      px('marginTop', bs) +
-      px('marginBottom', bs) +
-      px('paddingTop') +
-      px('paddingBottom') +
-      px('borderTopWidth') +
-      px('borderBottomWidth')
-    );
-  };
-  const CLOSED = () => ({ maxHeight: barHeight(), overflow: 'clip' });
-  const OPEN = 'maxHeight,overflow';
+  // The body is a one-row grid: 1fr open, 0fr closed (CSS, by its inert); its inner element
+  // (min-height: 0, overflow: hidden) is clipped to that row. It stays rendered, inert while
+  // closed. Opening and closing tween grid-template-rows between them, then hand back to CSS.
+  let body = $state();
   let first = true;
   $effect(() => {
     const opening = isOpen;
     untrack(() => {
-      if (first) {
-        first = false;
-        if (!opening) gsap.set(card, CLOSED());
-        return;
-      }
-      slide(opening);
+      if (first) first = false;
+      else slide(opening);
     });
   });
   function slide(opening) {
-    gsap.killTweensOf(card);
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (opening) gsap.set(card, { clearProps: OPEN });
-      else gsap.set(card, CLOSED());
-      return;
-    }
-    const from = card.offsetHeight;
-    if (opening) {
-      gsap.fromTo(
-        card,
-        { maxHeight: from, overflow: 'clip' },
-        {
-          maxHeight: card.scrollHeight,
-          duration: 0.25,
-          ease: 'power2.out',
-          onComplete: () => gsap.set(card, { clearProps: OPEN }),
-        },
-      );
-    } else {
-      gsap.fromTo(
-        card,
-        { maxHeight: from, overflow: 'clip' },
-        { ...CLOSED(), duration: 0.25, ease: 'power2.out' },
-      );
-    }
+    gsap.killTweensOf(body);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.fromTo(
+      body,
+      { gridTemplateRows: opening ? '0fr' : '1fr' },
+      {
+        gridTemplateRows: opening ? '1fr' : '0fr',
+        duration: 0.25,
+        ease: 'power2.out',
+        onComplete: () => gsap.set(body, { clearProps: 'gridTemplateRows' }),
+      },
+    );
   }
 
   function toggle() {
@@ -112,8 +78,8 @@
   }
 </script>
 
-<section class={['sec', off && 'is-off', cls]} data-section={id} bind:this={card}>
-  <div class="sec__bar" bind:this={barEl}>
+<section class={['sec', off && 'is-off', cls]} data-section={id}>
+  <div class="sec__bar">
     <button
       type="button"
       class="sec__toggle"
@@ -130,8 +96,12 @@
     </button>
     {@render bar?.()}
   </div>
-  <div class="sec__body" id="{uid}-body" inert={!isOpen}>
-    {@render children?.()}
+  <div class="sec__body" id="{uid}-body" inert={!isOpen} bind:this={body}>
+    <div class="sec__clip">
+      <div class="sec__inner">
+        {@render children?.()}
+      </div>
+    </div>
   </div>
 </section>
 
@@ -139,7 +109,6 @@
   .sec {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
     padding: var(--space-3) var(--space-2);
     margin-inline: -8px;
     border: 1px solid transparent;
@@ -247,7 +216,27 @@
     text-align: center;
   }
 
-  .sec__body > :global(* + *) {
+  // the body's row: open 1fr, closed (inert) 0fr; the bar's gap is the inner's padding, so
+  // it closes with it
+  .sec__body {
+    display: grid;
+    grid-template-rows: 1fr;
+
+    &[inert] {
+      grid-template-rows: 0fr;
+    }
+  }
+
+  .sec__clip {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .sec__inner {
+    padding-top: var(--space-3);
+  }
+
+  .sec__inner > :global(* + *) {
     margin-top: var(--space-3);
   }
 
