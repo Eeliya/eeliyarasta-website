@@ -7,10 +7,14 @@
  *   block    size: "auto", config.enabled: true
  *   hero     photos[].layer: "back"
  *
+ * omitDefaults also tidies (not a validation error): no empty "config" or "meta", and a block's
+ * area without col 1, row 1 or a span to the last column (no "layout": full width at row 1).
+ *
  * The animation library (animations.json presets) is not covered: each animation carries every
  * value it uses (there is no global layer to fall back on).
  */
 import { pageIdOf } from './files.js';
+import { COLS } from './layout/grid.js';
 
 export const DEFAULTS = {
   section: { enabled: true, width: 'contained', height: 'fit' },
@@ -38,12 +42,46 @@ function* places(data) {
   }
 }
 
+const isEmpty = (v) => isObject(v) && !Object.keys(v).length;
+
+/** Strip the DEFAULTS values from a page's `data` in place, calling found(where, message) for each. */
+function strip(data, found) {
+  for (const [obj, defs, where] of places(data))
+    for (const [k, v] of Object.entries(defs))
+      if (obj[k] === v) {
+        found(where, `"${k}" is the default (${JSON.stringify(v)}): leave it out`);
+        delete obj[k];
+      }
+}
+
+/**
+ * Tidy a page's `data` in place for saving (not a validation error: the editor's copy keeps
+ * whole areas while it works): no empty "config" or "meta", and a block's desktop area without
+ * its defaults (col 1, row 1, a span that reaches the last column; placeOf fills them in), its
+ * "layout" left out when nothing is left (full width at row 1).
+ */
+function tidy(data) {
+  if (isEmpty(data.meta)) delete data.meta;
+  for (const s of Array.isArray(data.sections) ? data.sections : [])
+    for (const b of Array.isArray(s?.blocks) ? s.blocks : []) {
+      if (!isObject(b)) continue;
+      if (isEmpty(b.config)) delete b.config;
+      const base = b.layout?.base;
+      if (!isObject(base)) continue;
+      const col = Number.isInteger(base.col) ? base.col : 1;
+      if (base.col === 1) delete base.col;
+      if (base.row === 1) delete base.row;
+      if (Number.isInteger(base.span) && col + base.span - 1 === COLS) delete base.span;
+      if (isEmpty(base) && Object.keys(b.layout).length === 1) delete b.layout;
+    }
+}
+
 /** A copy of a content file's data without its default values (only page files have any). */
 export function omitDefaults(file, data) {
   if (!pageIdOf(file) || !isObject(data)) return data;
   const copy = structuredClone(data);
-  for (const [obj, defs] of places(copy))
-    for (const [k, v] of Object.entries(defs)) if (obj[k] === v) delete obj[k];
+  strip(copy, () => {});
+  tidy(copy);
   return copy;
 }
 
@@ -51,9 +89,6 @@ export function omitDefaults(file, data) {
 export function storedDefaults(file, data) {
   if (!pageIdOf(file) || !isObject(data)) return [];
   const out = [];
-  for (const [obj, defs, where] of places(data))
-    for (const [k, v] of Object.entries(defs))
-      if (obj[k] === v)
-        out.push(`${where}: "${k}" is the default (${JSON.stringify(v)}): leave it out`);
+  strip(structuredClone(data), (where, message) => out.push(`${where}: ${message}`));
   return out;
 }

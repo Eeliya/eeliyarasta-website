@@ -148,7 +148,7 @@ export function buildRoutes(content) {
       warnings.push(`${file}: template.source "${source ?? ''}" is not a source list`);
       return [];
     }
-    const section = tpl.section ?? titleCase(source);
+    const section = tpl.template?.section ?? titleCase(source);
     const schema = schemaOf(content, source);
     const meta = tpl.meta || {}; // defaults of its item pages
     const seen = new Set();
@@ -188,7 +188,7 @@ export function buildRoutes(content) {
           name,
           parent,
           section,
-          nextLabel: tpl.next ?? 'Next',
+          nextLabel: tpl.template?.next ?? 'Next',
           album: item,
           index,
           file: sourceFile(source),

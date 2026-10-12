@@ -77,7 +77,7 @@ test('checkContent per kind', () => {
     '"version" must be 1 (the content\'s shape)',
   ]);
   assert.deepEqual(
-    checkContent('pages/about/index.json', { version: 1, id: 'pg-t042', grid: 120, sections: {} }),
+    checkContent('pages/about/index.json', { version: 1, id: 'pg-t042', sections: {} }),
     ['"sections" must be an array, not an object'],
   );
   assert.equal(checkContent('pages/people/[slug].json', { version: 1, id: 'pg-t043' }).length, 1);
@@ -85,14 +85,13 @@ test('checkContent per kind', () => {
     checkContent('pages/people/[slug].json', {
       version: 1,
       id: 'pg-t044',
-      grid: 120,
+
       template: { source: 'people' },
     }),
     [],
   );
   assert.equal(
-    checkContent('pages/about/index.json', { version: 1, id: 'pg-t045', grid: 120, template: {} })
-      .length,
+    checkContent('pages/about/index.json', { version: 1, id: 'pg-t045', template: {} }).length,
     1,
   );
 });
@@ -101,7 +100,7 @@ test('save: rejects bad shapes and writes nothing', () => {
   const root = tree();
   const before = read(root, 'pages/index.json');
   const r = save(root, {
-    'pages/index.json': { version: 1, id: 'pg-t046', grid: 120, title: 'New' },
+    'pages/index.json': { version: 1, id: 'pg-t046', title: 'New' },
     'settings/animations.json': [],
   });
   assert.equal(r.status, 400);
@@ -118,7 +117,7 @@ test('save: writes every file, formatted, with no temporary files left', () => {
   let writes = 0;
   const r = save(
     root,
-    { 'pages/index.json': { version: 1, id: 'pg-t047', grid: 120, title: 'New' } },
+    { 'pages/index.json': { version: 1, id: 'pg-t047', title: 'New' } },
     () => writes++,
   );
   assert.equal(r.status, 200);
@@ -126,7 +125,7 @@ test('save: writes every file, formatted, with no temporary files left', () => {
   assert.equal(writes, 1);
   assert.equal(
     read(root, 'pages/index.json'),
-    '{ "version": 1, "id": "pg-t047", "grid": 120, "title": "New" }\n',
+    '{ "version": 1, "id": "pg-t047", "title": "New" }\n',
   );
   assert.deepEqual(fs.readdirSync(path.join(root, 'content/en', 'pages')), ['index.json']);
 });
@@ -297,7 +296,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
     'pages/index.json': {
       version: 1,
       id: 'pg-t052',
-      grid: 120,
+
       sections: [
         {
           id: 's-aaaa',

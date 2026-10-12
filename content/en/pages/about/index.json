@@ -1,7 +1,6 @@
 {
   "version": 1,
   "id": "pg-lyos",
-  "grid": 120,
   "sections": [
     {
       "id": "s-ud3l",
@@ -9,13 +8,6 @@
         {
           "id": "b-wrvr",
           "type": "about",
-          "layout": {
-            "base": {
-              "col": 1,
-              "span": 120,
-              "row": 1
-            }
-          },
           "eyebrow": "About",
           "title": "I photograph people, the way they are when they forget the camera.",
           "image": "about/x100v.jpg",
@@ -25,25 +17,12 @@
             "Want to shoot together, or have a project in mind? Send me a message."
           ],
           "facts": [
-            {
-              "label": "Based in",
-              "value": "Netherlands"
-            },
-            {
-              "label": "Camera",
-              "value": "Fujifilm X100V"
-            },
-            {
-              "label": "Shoots",
-              "value": "Portrait, Editorial, Fashion, Architecture"
-            },
-            {
-              "label": "Builds",
-              "value": "Websites, Dev tools, DIY"
-            }
+            { "label": "Based in", "value": "Netherlands" },
+            { "label": "Camera", "value": "Fujifilm X100V" },
+            { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
+            { "label": "Builds", "value": "Websites, Dev tools, DIY" }
           ],
-          "emailLabel": "Email me",
-          "config": {}
+          "emailLabel": "Email me"
         }
       ]
     }

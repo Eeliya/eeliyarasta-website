@@ -105,7 +105,7 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
   const page = (s1, s2 = []) => ({
     version: 1,
     id: 'pg-t001',
-    grid: 120,
+
     sections: [
       { id: 's-aaaa', blocks: s1 },
       { id: 's-bbbb', blocks: s2 },
@@ -152,7 +152,7 @@ test('editor: link, drag a follower (its gap changes), unlink; new blocks are fr
     [F]: {
       version: 1,
       id: 'pg-t002',
-      grid: 120,
+
       sections: [
         {
           id: 's-aaaa',
@@ -200,7 +200,7 @@ test('editor: phone links are separate; the first phone move brings the desktop 
     [F]: {
       version: 1,
       id: 'pg-t003',
-      grid: 120,
+
       sections: [
         {
           id: 's-aaaa',

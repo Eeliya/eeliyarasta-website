@@ -1,12 +1,8 @@
 {
   "version": 1,
   "id": "pg-078h",
-  "grid": 120,
   "curtain": "Not found",
-  "meta": {
-    "title": "Not found",
-    "description": "Page not found."
-  },
+  "meta": { "title": "Not found", "description": "Page not found." },
   "sections": [
     {
       "id": "s-yzyj",
@@ -15,22 +11,13 @@
         {
           "id": "b-89og",
           "type": "heading",
-          "layout": {
-            "base": {
-              "col": 1,
-              "span": 120,
-              "row": 1
-            }
-          },
           "eyebrow": "Error 404",
           "title": "Lost frame",
           "body": "This page doesn't exist (yet).",
           "cta": "Back home",
           "config": {
             "center": true,
-            "link": {
-              "page": "pg-boha"
-            }
+            "link": { "page": "pg-boha" }
           }
         }
       ]

@@ -4,10 +4,11 @@
  * ("sections" in its file, content/en/pages/<page>/index.json or a template's [slug].json):
  *
  *   { "id": "s-k3x9", "name": "Our people",
- *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People", "config": {},
- *                  "layout": { "base": { "col": 1, "span": 120, "row": 1 } } }] }
+ *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People",
+ *                  "layout": { "base": { "col": 13, "row": 4 } } }] }
  *
- * The page file says its grid: "grid": 120 (COLS; the only one there is).
+ * Every page is on the one grid of COLS (120) columns (not stored). An area's defaults are left
+ * out (col 1, row 1, a span to the last column; no "layout": full width at row 1).
  *
  * The square grid: a section's content width is split into COLS (120) columns of one cell
  * size, --cell = width / 120, and every row is one cell tall, so every cell is exactly square

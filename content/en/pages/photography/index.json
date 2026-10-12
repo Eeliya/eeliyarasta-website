@@ -1,11 +1,8 @@
 {
   "version": 1,
   "id": "pg-evsk",
-  "grid": 120,
   "curtain": "Photography",
-  "meta": {
-    "description": "People and places photographed by Eeliya Rasta."
-  },
+  "meta": { "description": "People and places photographed by Eeliya Rasta." },
   "sections": [
     {
       "id": "s-a58t",
@@ -13,17 +10,9 @@
         {
           "id": "b-9m0e",
           "type": "heading",
-          "layout": {
-            "base": {
-              "col": 1,
-              "span": 120,
-              "row": 1
-            }
-          },
           "eyebrow": "Photography",
           "title": "Photography",
-          "body": "Two sides of the same habit: the people I photograph, and the places I keep coming back to.",
-          "config": {}
+          "body": "Two sides of the same habit: the people I photograph, and the places I keep coming back to."
         }
       ]
     },
@@ -33,31 +22,11 @@
         {
           "id": "b-2wrz",
           "type": "panels",
-          "layout": {
-            "base": {
-              "col": 1,
-              "span": 120,
-              "row": 1
-            }
-          },
           "panels": [
-            {
-              "source": "people",
-              "title": "People",
-              "unit": "models"
-            },
-            {
-              "source": "places",
-              "title": "Places",
-              "unit": "places"
-            }
+            { "source": "people", "title": "People", "unit": "models" },
+            { "source": "places", "title": "Places", "unit": "places" }
           ],
-          "config": {},
-          "motion": {
-            "anim": "grid-reveal",
-            "trigger": "load",
-            "delay": 0.3
-          }
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]
     }

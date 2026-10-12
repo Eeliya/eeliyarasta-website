@@ -70,7 +70,6 @@ import {
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { omitDefaults } from '../src/site/defaults.js';
-import { COLS } from '../src/site/layout/grid.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
 import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
@@ -238,7 +237,6 @@ export function pagesOp(
       write(file, {
         version: VERSION,
         id: newPageId(),
-        grid: COLS,
         curtain: t,
         sections: [section],
       });
@@ -254,10 +252,7 @@ export function pagesOp(
     write(pageFile(pid), {
       version: VERSION,
       id: newPageId(),
-      grid: COLS,
-      template: { source },
-      section: titleCase(source),
-      next: 'Next',
+      template: { source, section: titleCase(source), next: 'Next' },
       // the item's album, filling the screen
       sections: [
         {

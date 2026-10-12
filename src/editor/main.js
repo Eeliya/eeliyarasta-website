@@ -154,7 +154,7 @@ function pageEntries(routes) {
   }
   // a template whose source has no items yet has no pages, but is still a page to pick
   for (const id of ids)
-    if (id.endsWith(TEMPLATE)) template(id, store.current[pageFile(id)]?.section);
+    if (id.endsWith(TEMPLATE)) template(id, store.current[pageFile(id)]?.template?.section);
   return entries;
 }
 

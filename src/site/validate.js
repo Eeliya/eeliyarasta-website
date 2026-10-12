@@ -214,10 +214,11 @@ function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
   // its stable id: what links point at (its folder, the URL, can change)
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
-  // the grid its blocks' areas are on: 120 columns (COLS), the only one
-  if (Array.isArray(d.sections) && d.sections.length && d.grid !== COLS)
-    out.push(`"grid" must be ${COLS} (the page grid's columns its blocks are placed on)`);
-  else if (d.grid !== undefined && d.grid !== COLS) out.push(`"grid" must be ${COLS}`);
+  // the grid is always COLS (120) columns: not stored
+  if (d.grid !== undefined) out.push(`"grid" must be left out: the page grid is always ${COLS}`);
+  // a [slug] page's shared labels are in "template"
+  for (const k of ['section', 'next'])
+    if (d[k] !== undefined) out.push(`"${k}" must be left out: it is "template.${k}"`);
   // its page transition: { preset: "curtain", overrides? } or { preset: "none" }
   const t = d.transition;
   if (t !== undefined) {
@@ -232,6 +233,14 @@ function checkPage(file, d) {
   }
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
     out.push('"template.source" must name a source (a [slug] page makes a page per item)');
+  else if (isObject(d.template)) {
+    // its shared labels: the back link (its section's name) and the next link
+    out.push(
+      ...optional(d.template, { section: 'string', next: 'string' }).map((p) => `template: ${p}`),
+    );
+    if (Object.keys(d.template).some((k) => !['source', 'section', 'next'].includes(k)))
+      out.push('"template" has only "source", "section" and "next"');
+  }
   if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
     out.push('"template" is only for [slug] pages');
   if (!Array.isArray(d.sections)) return out;
@@ -261,15 +270,17 @@ const whole = (v, min) => Number.isInteger(v) && v >= min;
  * A grid area { col, span, row, rows? } of a block (its base, or its phone area); rows: does
  * the block store its rows (size aspect / rows: required; auto: left out).
  */
-function checkArea(p, key, cols = COLS, rows = true) {
+function checkArea(p, key, cols = COLS, rows = true, defaults = false) {
   const out = [];
   for (const k of ['col', 'span', 'row'])
-    if (!whole(p[k], 1)) out.push(`"${key}.${k}" must be a whole number from 1`);
+    if (!(defaults && p[k] === undefined) && !whole(p[k], 1))
+      out.push(`"${key}.${k}" must be a whole number from 1`);
   if (rows && !whole(p.rows, 1)) out.push(`"${key}.rows" must be a whole number from 1`);
   if (!rows && p.rows !== undefined)
     out.push(`"${key}.rows" must be left out: an auto block's rows are measured on the page`);
-  if (!out.length && p.col + p.span - 1 > cols)
-    out.push(`"${key}" must end by column ${cols} (col ${p.col} + span ${p.span})`);
+  const col = p.col ?? 1;
+  if (!out.length && p.span !== undefined && col + p.span - 1 > cols)
+    out.push(`"${key}" must end by column ${cols} (col ${col} + span ${p.span})`);
   return out;
 }
 
@@ -298,7 +309,7 @@ function checkBlockLayout(b) {
     if (o.place !== undefined && !PLACES.includes(o.place))
       res.push(`"${key}.place" must be a placement (see layout)`);
     if (whole || AREA_KEYS.some((k) => o[k] !== undefined))
-      res.push(...checkArea(o, key, cols, rows));
+      res.push(...checkArea(o, key, cols, rows, whole));
     return res;
   };
   out.push(...part(l.base, 'layout.base', COLS, true));

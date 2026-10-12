@@ -132,8 +132,7 @@ test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always ce
   );
   assert.equal(cls({ height: 'custom' }), 'sec'); // no rows: as fit
   assert.equal(sectionVars(sec([], { height: 'fit', rows: { min: 9 } })), '--rows:1;--mrows:1');
-  const of = (more) =>
-    checkContent(F, { version: 1, id: 'pg-t018', grid: 120, sections: [sec([], more)] });
+  const of = (more) => checkContent(F, { version: 1, id: 'pg-t018', sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', rows: { min: 30 } }), []);
   assert.deepEqual(of({ height: 'custom' }), [
     'section 1: "rows.min" must be a whole number of rows from 1 (a custom height)',
@@ -163,7 +162,7 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
   const named = (...names) => names.map((name, i) => sec([], { id: `s-n${i}00`, name }));
   assert.deepEqual(nameProblems(named('Our people', '', undefined, 'Work')), ['', '', '', '']);
   const of = (...names) =>
-    checkContent(F, { version: 1, id: 'pg-t019', grid: 120, sections: named(...names) });
+    checkContent(F, { version: 1, id: 'pg-t019', sections: named(...names) });
   assert.deepEqual(of('Our people', 'Work'), []);
   assert.deepEqual(of('Our People', 'our  people!'), [
     'section 2: "name" #our-people is already section 1\'s anchor',
@@ -176,16 +175,14 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
   ]);
   assert.deepEqual(of('portal'), ['section 1: "name" #portal is taken by the page itself']);
   assert.deepEqual(
-    checkContent(F, { version: 1, id: 'pg-t020', grid: 120, sections: [sec([], { name: 4 })] }),
+    checkContent(F, { version: 1, id: 'pg-t020', sections: [sec([], { name: 4 })] }),
     ['section 1: "name" must be text'],
   );
 });
 
 test('validation: size, aspect, place, mobile', () => {
-  const one = (b) =>
-    checkContent(F, { version: 1, id: 'pg-t021', grid: 120, sections: [sec([blk(b)])] });
-  const of = (s) =>
-    checkContent(F, { version: 1, id: 'pg-t022', grid: 120, sections: [sec([], s)] });
+  const one = (b) => checkContent(F, { version: 1, id: 'pg-t021', sections: [sec([blk(b)])] });
+  const of = (s) => checkContent(F, { version: 1, id: 'pg-t022', sections: [sec([], s)] });
   assert.deepEqual(
     one({
       size: 'aspect',
@@ -220,7 +217,7 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', layout: { base: { col: 1, span: 24, row: 1 } } };
   const b = { id: 'b-bbbb', type: 'text', layout: { base: { col: 1, span: 24, row: 11 } } };
-  store.load({ [F]: { version: 1, id: 'pg-t023', grid: 120, sections: [sec([a, b])] } });
+  store.load({ [F]: { version: 1, id: 'pg-t023', sections: [sec([a, b])] } });
   const blocks = () => store.current[F].sections[0].blocks;
 
   setBlock(store, F, 0, 0, { size: 'aspect', aspect: '3:2', place: 'sticky-center' });
@@ -272,7 +269,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
     [F]: {
       version: 1,
       id: 'pg-t024',
-      grid: 120,
+
       sections: [sec([a], { height: 'custom', rows: { min: 50 } })],
     },
   });
@@ -334,8 +331,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
 });
 
 test('phone height: validation', () => {
-  const of = (more) =>
-    checkContent(F, { version: 1, id: 'pg-t025', grid: 120, sections: [sec([], more)] });
+  const of = (more) => checkContent(F, { version: 1, id: 'pg-t025', sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, phone: { rows: { min: 12 } } }), []);
   assert.deepEqual(of({ phone: { height: 'half' } }), []);
   assert.deepEqual(of({ phone: { height: 'custom', rows: { min: 9 } } }), []);
@@ -371,7 +367,7 @@ test('phone height: its own, the desktop untouched; reset; rows, line and growth
     [F]: {
       version: 1,
       id: 'pg-t026',
-      grid: 120,
+
       sections: [sec([a], { height: 'custom', rows: { min: 40 } })],
     },
   });
@@ -423,20 +419,15 @@ test('phone height: its own, the desktop untouched; reset; rows, line and growth
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
-test('layout: phone null hides a block on phones; page grid 120; auto blocks store no rows', () => {
+test('layout: phone null hides a block on phones; no stored grid; auto blocks store no rows', () => {
   const hidden = blk({ phone: null });
   assert.match(blockClass(hidden), / blk--m-hidden$/);
   const page = (more, blocks = [blk()]) =>
     checkContent(F, { version: 1, id: 'pg-t030', sections: [sec(blocks)], ...more });
-  assert.deepEqual(page({ grid: 120 }, [hidden]), []);
-  assert.deepEqual(page({}), [
-    '"grid" must be 120 (the page grid\'s columns its blocks are placed on)',
-  ]);
-  assert.deepEqual(page({ grid: 60 }), [
-    '"grid" must be 120 (the page grid\'s columns its blocks are placed on)',
-  ]);
+  assert.deepEqual(page({}, [hidden]), []);
+  assert.deepEqual(page({ grid: 120 }), ['"grid" must be left out: the page grid is always 120']);
   const store = createStore();
-  store.load({ [F]: { version: 1, id: 'pg-t031', grid: 120, sections: [sec([blk()])] } });
+  store.load({ [F]: { version: 1, id: 'pg-t031', sections: [sec([blk()])] } });
   setBlock(store, F, 0, 0, { size: 'rows', rows: 7 });
   assert.equal(store.current[F].sections[0].blocks[0].layout.base.rows, 7);
   setBlock(store, F, 0, 0, { size: undefined });

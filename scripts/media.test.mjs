@@ -51,13 +51,13 @@ function project() {
   write('content/en/pages/index.json', {
     version: 1,
     id: 'pg-t027',
-    grid: 120,
+
     hero: { photos: [{ src: 'a/used.jpg' }] },
   });
   write('content/en/sources/people.json', {
     version: 1,
     id: 'pg-t028',
-    grid: 120,
+
     items: [{ name: 'N', images: ['photos/used-1600.webp'] }],
   });
   write('content/en/settings/photos.json', {

@@ -50,7 +50,7 @@ function site(redirects = []) {
   put('pages/people/[slug].json', {
     version: 1,
     id: 'pg-pslg',
-    grid: 120,
+
     template: { source: 'people' },
   });
   put('pages/people/team/index.json', { version: 1, id: 'pg-team' });
@@ -69,7 +69,7 @@ function page(id, block) {
   return {
     version: 1,
     id,
-    grid: 120,
+
     sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', layout, ...block }] }],
   };
 }
