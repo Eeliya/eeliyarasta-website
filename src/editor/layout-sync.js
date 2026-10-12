@@ -22,12 +22,17 @@ import {
 } from '../site/layout/index.js';
 import { kindOf } from '../site/blocks/index.js';
 
-/** A block's motion attributes as the site renders them: [data-motion, data-motion-options]. */
+/**
+ * A block's motion attributes as the site renders them:
+ * [data-motion, data-motion-options, data-anim-parts].
+ */
 function motionOf(b) {
   const m = b?.motion;
-  if (!m || typeof m !== 'object' || typeof m.anim !== 'string') return [null, null];
-  const { anim, ...timing } = m;
-  return [anim, Object.keys(timing).length ? JSON.stringify(timing) : null];
+  if (!m || typeof m !== 'object') return [null, null, null];
+  const { anim, parts, ...timing } = m;
+  const own = parts && typeof parts === 'object' ? JSON.stringify(parts) : null;
+  if (typeof anim !== 'string') return [null, null, own];
+  return [anim, Object.keys(timing).length ? JSON.stringify(timing) : null, own];
 }
 
 /** Set (or remove) an attribute; true when it changed. */
@@ -103,7 +108,9 @@ function applyLayout(el, s, moved = []) {
     node.style.cssText = blockVars(b) + kept;
     node.hidden = b.config?.enabled === false;
     for (const [name, value] of Object.entries(blockLinks(b))) setAttr(node, name, value);
-    const [anim, options] = motionOf(b);
+    const [anim, options, parts] = motionOf(b);
+    // its parts' animations are mounted with the view's: mount again
+    if (setAttr(node, 'data-anim-parts', parts)) remount = true;
     const a = setAttr(node, 'data-motion', anim);
     if (setAttr(node, 'data-motion-options', options) || a) moved.push(node);
   }

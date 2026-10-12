@@ -285,10 +285,8 @@ function pickAnim(sel) {
   if (owner) ui.block = owner;
   if (el.dataset.anim === undefined)
     return el.dataset.block ? { el, block: el.dataset.block } : null;
-  const key = el.dataset.animKey;
-  // Edits go to the element if it already has overrides, otherwise to every element of its target.
-  const scope = store.current[ANIMATIONS].elements?.[key] ? 'element' : 'target';
-  return { el, id: el.dataset.anim, key, scope };
+  // scope: where edits go, set by AnimEditor (its block's parts if they have values, else All)
+  return { el, id: el.dataset.anim, key: el.dataset.animKey, owner, scope: null };
 }
 
 /** The preview's mode: Settings has nothing to pick (browse). */

@@ -4,9 +4,6 @@
   "sections": [
     {
       "id": "s-ud3l",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-wrvr",
@@ -44,8 +41,7 @@
             "span": 120,
             "row": 1,
             "rows": 82
-          },
-          "size": "auto"
+          }
         }
       ]
     }

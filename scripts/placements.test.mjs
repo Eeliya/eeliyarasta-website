@@ -251,7 +251,7 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   assert.ok(!('rows' in store.current[F].sections[0]));
   setSection(store, F, 0, { height: 'fit', name: undefined });
   assert.ok(!('name' in store.current[F].sections[0]));
-  assert.equal(store.current[F].sections[0].height, 'fit');
+  assert.ok(!('height' in store.current[F].sections[0])); // fit: the default, left out
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
@@ -325,17 +325,17 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
 test('phone height: validation', () => {
   const of = (more) => checkContent(F, { version: 1, id: 'pg-t025', sections: [sec([], more)] });
   assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { rows: { min: 12 } } }), []);
-  assert.deepEqual(of({ height: 'fit', mobile: { height: 'half' } }), []);
-  assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom', rows: { min: 9 } } }), []);
+  assert.deepEqual(of({ mobile: { height: 'half' } }), []);
+  assert.deepEqual(of({ mobile: { height: 'custom', rows: { min: 9 } } }), []);
   assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'custom' } }), []);
-  assert.deepEqual(of({ height: 'fit', mobile: { rows: { min: 12 } } }), [
+  assert.deepEqual(of({ mobile: { rows: { min: 12 } } }), [
     'section 1: "mobile.rows" must be left out unless the phone height is custom',
   ]);
   assert.deepEqual(
     of({ height: 'custom', rows: { min: 30 }, mobile: { height: 'fit', rows: { min: 4 } } }),
     ['section 1: "mobile.rows" must be left out unless the phone height is custom'],
   );
-  assert.deepEqual(of({ height: 'fit', mobile: { height: 'custom' } }), [
+  assert.deepEqual(of({ mobile: { height: 'custom' } }), [
     'section 1: "mobile.rows.min" must be a whole number of rows from 1 (a custom phone height)',
   ]);
   assert.deepEqual(of({ height: 'custom', rows: { min: 30 }, mobile: { rows: { min: 0 } } }), [

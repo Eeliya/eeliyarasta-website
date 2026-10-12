@@ -9,6 +9,7 @@
  * A source's items against its schema (required fields, types, photos) are checked by
  * checkItems (src/site/schemas.js): that needs the schema and the photos, not one file.
  */
+import { storedDefaults } from './defaults.js';
 import {
   ANIMATIONS,
   NAV,
@@ -198,9 +199,11 @@ function checkMeta(meta) {
 function checkAnimations(d) {
   const out = [
     ...required(d, ['presets', 'targets', 'transitions'], 'object'),
-    ...optional(d, { elements: 'object', interactions: 'object' }),
+    ...optional(d, { interactions: 'object' }),
   ];
-  for (const group of ['presets', 'targets', 'elements'])
+  if (d.elements !== undefined)
+    out.push('"elements" is gone: a block\'s own part animations are its "motion.parts"');
+  for (const group of ['presets', 'targets'])
     for (const [k, v] of Object.entries(isObject(d[group]) ? d[group] : {}))
       if (!isObject(v)) out.push(`${group}["${k}"] must be an object`);
   return out;
@@ -441,6 +444,11 @@ function checkPhotos(d) {
 export function checkContent(file, data) {
   if (!isObject(data)) return [`must be an object, not ${typeOf(data)}`];
   if (data.version !== VERSION) return [`"version" must be ${VERSION} (the content's shape)`];
+  const notes = commentKeys(data);
+  if (notes.length)
+    return notes.map((k) => `"${k}": no comments in content (the README documents the shape)`);
+  const defaults = storedDefaults(file, data);
+  if (defaults.length) return defaults;
   const { version: _v, ...d } = data; // eslint-disable-line no-unused-vars
   if (sourceIdOf(file)) {
     if (d.items === undefined) return ['"items" is missing (a list, a JSON array)'];
@@ -460,6 +468,16 @@ export function checkContent(file, data) {
     return isObject(d.photos) ? checkPhotos(d.photos) : ['"photos" must be an object'];
   if (pageIdOf(file)) return checkPage(file, d);
   return [];
+}
+
+/** Keys starting with "_" (comments), anywhere in the data: their paths. */
+function commentKeys(v, at = '') {
+  if (Array.isArray(v)) return v.flatMap((x, i) => commentKeys(x, `${at}${at ? '.' : ''}${i}`));
+  if (!isObject(v)) return [];
+  return Object.entries(v).flatMap(([k, x]) => {
+    const p = `${at}${at ? '.' : ''}${k}`;
+    return k.startsWith('_') ? [p] : commentKeys(x, p);
+  });
 }
 
 /** Throws "content/<file>: <problems>" when the data doesn't fit. */

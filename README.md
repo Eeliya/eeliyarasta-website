@@ -211,9 +211,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
 {
   "id": "s-k3x9",
   "name": "Our people",
-  "height": "fit",
-  "width": "contained",
-  "enabled": true,
+  "height": "half",
   "blocks": [
     {
       "id": "b-7qpa",
@@ -788,6 +786,14 @@ Markup only says **what** an element is: `data-anim="hero.title"`. All the **how
 }
 ```
 
+**No defaults, no comments.** A value equal to its default is left out
+(`src/site/defaults.js`): a section's `enabled: true`, `width: "contained"`, `height: "fit"`; a
+block's `size: "auto"` and `config.enabled: true`; a hero photo's `layer: "back"`. Validation
+reports a stored default, and the editor's save strips them. Keys starting with `_` (comments)
+are refused anywhere in content: this README documents the shape. The animation library is the
+exception: each animation carries every value it uses (there is no global layer below it).
+Eases are GSAP's names (`power2.out`, `expo.out`, `none`, …) everywhere.
+
 **Units in key names.** A number that isn't a GSAP property says its unit in its key:
 `containedCols`, `speedPct`, `amplitudePx`, `rotationDeg`, `minDurationSec`, `distanceVh`,
 `xPct`, `glideSec`, `intervalSec`, `wheelThresholdPx`, `wheelLockSec`, `dragThresholdPx`. GSAP's
@@ -1006,9 +1012,11 @@ it in the library), its timing (Custom switches, stored in the block's `motion`)
 animation's timing** (drops all its overrides); **Replay** plays just that block. A **part**
 or global element is edited as before; choose where its edits go:
 
-- **This element**: `elements["<path>|<target>|<n>"]`, e.g. `"/about/|about.headline|0"`.
-  Only this element on this page. This is how you give one element a different animation
-  without touching templates.
+- **This block**: the block's `motion.parts["<target>"]` in the page file, e.g.
+  `"motion": { "parts": { "hero.title": { "preset": "stagger-up" } } }`. Only the parts with
+  that `data-anim` name inside this block. This is how you give a block's part a different
+  animation without touching templates (`preset`, plus timing only). A block with only parts
+  has no `anim`. Parts outside the blocks (header, footer) only have **All**.
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
 
 Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have a **Custom**

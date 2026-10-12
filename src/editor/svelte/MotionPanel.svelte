@@ -23,6 +23,7 @@
   import { getRoutes } from '../../site/routes.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { ANIMATIONS, contentFromFiles } from '../../site/files.js';
+  import { animationOf, partOf } from './motion.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // onsettings: switch to the Settings tab
@@ -109,7 +110,7 @@
   }
 </script>
 
-{#snippet part({ el, id, key })}
+{#snippet part({ el, id })}
   <li>
     <button
       type="button"
@@ -120,9 +121,9 @@
     >
       <span class="mlist__id">
         {id}
-        {#if cfg.elements?.[key]}<i class="dot" title="Has element overrides"></i>{/if}
+        {#if partOf(el, id)}<i class="dot" title="Has its own values in this block"></i>{/if}
       </span>
-      <span class="muted">{cfg.elements?.[key]?.preset || cfg.targets[id]?.preset || '?'}</span>
+      <span class="muted">{animationOf(cfg, { id, el }) || '?'}</span>
     </button>
   </li>
 {/snippet}
@@ -170,7 +171,16 @@
       {/key}
     {:else if ui.anim && !ui.anim.block}
       {#key ui.anim}
-        <AnimEditor {live} {bridge} {cfg} {items} {gsap} onlibrary={openLibrary} />
+        <AnimEditor
+          {live}
+          {bridge}
+          {cfg}
+          {items}
+          {gsap}
+          {file}
+          {sections}
+          onlibrary={openLibrary}
+        />
       {/key}
     {:else}
       {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}

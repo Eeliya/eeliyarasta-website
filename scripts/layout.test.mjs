@@ -190,7 +190,7 @@ test('validation: the layout, then each block against its type', () => {
     'section 1: "height" must be one of custom, fit, third, half, full',
     'section 1: "width" must be contained or full',
   ]);
-  for (const height of ['fit', 'third', 'half', 'full'])
+  for (const height of ['third', 'half', 'full'])
     assert.deepEqual(problems([ok({ height })]), [], height);
   assert.deepEqual(problems([ok({ height: 'screen', enabled: 'yes' })]), [
     'section 1: "height" must be one of custom, fit, third, half, full',

@@ -32,7 +32,6 @@
       "id": "s-hjhf",
       "height": "full",
       "width": "full",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-plp2",
@@ -54,7 +53,6 @@
               "y": 9,
               "w": 13,
               "depth": 0.35,
-              "layer": "back",
               "mx": 4,
               "my": 10,
               "mw": 34
@@ -72,7 +70,6 @@
               "y": 4,
               "w": 10,
               "depth": 0.7,
-              "layer": "back",
               "mx": 62,
               "my": 6,
               "mw": 30
@@ -89,8 +86,7 @@
               "x": 63,
               "y": 7,
               "w": 16,
-              "depth": 0.5,
-              "layer": "back"
+              "depth": 0.5
             },
             {
               "src": "people/noor-vermeer/06.jpg",
@@ -104,8 +100,7 @@
               "x": 85,
               "y": 18,
               "w": 11,
-              "depth": 0.9,
-              "layer": "back"
+              "depth": 0.9
             },
             {
               "src": "people/daan-okafor/05.jpg",
@@ -120,7 +115,6 @@
               "y": 58,
               "w": 12,
               "depth": 0.8,
-              "layer": "back",
               "mx": 6,
               "my": 66,
               "mw": 28
@@ -155,8 +149,7 @@
               "x": 47,
               "y": 66,
               "w": 9,
-              "depth": 0.45,
-              "layer": "back"
+              "depth": 0.45
             },
             {
               "src": "people/daan-okafor/01.jpg",
@@ -188,11 +181,9 @@
               "x": 86,
               "y": 64,
               "w": 10,
-              "depth": 0.6,
-              "layer": "back"
+              "depth": 0.6
             }
           ],
-          "_comment": "Scattered hero photos. x/y/w are in % of the hero (desktop); mx/my/mw are the mobile layout (omit mx to hide on mobile). depth 0..1 drives the scroll parallax. layer: back (behind the name) or front (over it).",
           "config": {},
           "pos": {
             "col": 1,
@@ -200,15 +191,18 @@
             "row": 1,
             "rows": 75
           },
-          "size": "auto"
+          "motion": {
+            "parts": {
+              "hero.title": {
+                "preset": "stagger-up"
+              }
+            }
+          }
         }
       ]
     },
     {
       "id": "s-rzxb",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-9phu",
@@ -223,16 +217,12 @@
           },
           "motion": {
             "anim": "scrub-words"
-          },
-          "size": "auto"
+          }
         }
       ]
     },
     {
       "id": "s-rpvk",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-xh7b",
@@ -252,16 +242,12 @@
           },
           "motion": {
             "anim": "grid-reveal"
-          },
-          "size": "auto"
+          }
         }
       ]
     },
     {
       "id": "s-fww5",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-vnrc",
@@ -282,16 +268,12 @@
           "motion": {
             "anim": "grid-reveal",
             "stagger": 0.15
-          },
-          "size": "auto"
+          }
         }
       ]
     },
     {
       "id": "s-y7qx",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-57ry",
@@ -309,8 +291,7 @@
           "motion": {
             "anim": "list-up",
             "trigger": "load"
-          },
-          "size": "auto"
+          }
         }
       ]
     }

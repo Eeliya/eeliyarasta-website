@@ -11,7 +11,6 @@
       "id": "s-gaii",
       "height": "full",
       "width": "full",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-gbxt",
@@ -42,8 +41,7 @@
             "span": 120,
             "row": 1,
             "rows": 75
-          },
-          "size": "auto"
+          }
         }
       ]
     }

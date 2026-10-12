@@ -5,6 +5,7 @@
  * again (src/editor/layout-sync.js); placing a block or changing a section's settings it
  * follows by itself, through the elements' classes and CSS variables.
  */
+import { DEFAULTS } from '../site/defaults.js';
 import {
   MAX_MIN_ROWS,
   MCOLS,
@@ -110,7 +111,9 @@ export function removeSection(store, file, at) {
  */
 export function setSection(store, file, at, patch, key) {
   const next = { ...listOf(store, file)[at], ...patch };
-  for (const k of Object.keys(patch)) if (patch[k] === undefined) delete next[k];
+  // (a default is left out: src/site/defaults.js)
+  for (const k of Object.keys(patch))
+    if (patch[k] === undefined || patch[k] === DEFAULTS.section[k]) delete next[k];
   return writeSection(store, file, at, tidyMobile(next), key);
 }
 

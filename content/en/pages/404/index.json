@@ -10,8 +10,6 @@
     {
       "id": "s-yzyj",
       "height": "full",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-89og",
@@ -31,8 +29,7 @@
             "span": 120,
             "row": 1,
             "rows": 63
-          },
-          "size": "auto"
+          }
         }
       ]
     }

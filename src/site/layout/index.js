@@ -153,7 +153,7 @@ export function newBlock(type, taken, pos = {}) {
 
 /** A new section holding `blocks`: its content's height (fit), contained, no name. */
 export function newSection(taken, blocks = []) {
-  return { id: newId('s', taken), height: 'fit', width: 'contained', enabled: true, blocks };
+  return { id: newId('s', taken), blocks };
 }
 
 /** The rows a section has: down to its lowest block (1 when it has none). */

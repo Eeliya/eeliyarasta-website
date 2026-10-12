@@ -1,7 +1,7 @@
 <!--
   Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
-  replay and scroll it, pick where edits go (this element, or every element with its
-  data-anim name), its animation, and its timing (a Custom switch per field, MotionGroups).
+  replay and scroll it, pick where edits go (this block's parts with its data-anim name, the
+  block's motion.parts in the page file; or every element with that name), its animation, and its timing (a Custom switch per field, MotionGroups).
   What the animation does is shown read-only: it is edited in the Animations sub-tab
   (AnimLibrary.svelte). Older overrides of those values get a notice: move them into the
   animation, or drop them.
@@ -14,18 +14,37 @@
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { GENERIC_TYPES, animModel, keepFor, layerPtr } from './motion.js';
-  import { compile } from '../lib/pointer.js';
   import { ANIMATIONS } from '../../site/files.js';
 
   // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's;
-  // onlibrary(name): open the Animations sub-tab at that animation
-  let { live, bridge, cfg, items, gsap, onlibrary } = $props();
+  // onlibrary(name): open the Animations sub-tab at that animation;
+  // file, sections: the page file and its sections (MotionPanel), to find the element's block
+  let { live, bridge, cfg, items, gsap, onlibrary, file, sections } = $props();
 
-  const sel = ui.anim; // { el, id, key, scope }
-  const m = $derived(animModel(cfg, sel));
+  const sel = ui.anim; // { el, id, key, owner, scope }
+  // its block in the page file: /sections/<i>/blocks/<j> (null: outside the blocks)
+  const base = $derived.by(() => {
+    for (const s of sections)
+      for (const b of s.blocks) if (b.id === sel.owner) return `/sections/${s.at}/blocks/${b.j}`;
+    return null;
+  });
+  const part = $derived.by(() => {
+    live.version;
+    return base ? live.get(file, `${base}/motion/parts`)?.[sel.id] : undefined;
+  });
+  // where edits go: picked, else this block's parts when they have values, else All
+  const scope = $derived(sel.scope || (part ? 'element' : 'target'));
+  const m = $derived(animModel(cfg, sel, part));
   const sameTarget = $derived(items.filter((x) => x.id === sel.id).length);
+  const sameBlock = $derived(
+    items.filter(
+      (x) => x.id === sel.id && x.el.closest('[data-block]')?.dataset.block === sel.owner,
+    ).length,
+  );
   const scopes = $derived([
-    ['element', 'This element', `Only this element on ${sel.key.split('|')[0]}`],
+    ...(base
+      ? [['element', 'This block', `The "${sel.id}" parts of this block (${sameBlock})`]]
+      : []),
     [
       'target',
       'All',
@@ -43,14 +62,18 @@
   const scrolled = () => Math.round(bridge.scrubProgress(sel.el) * 100);
   let progress = $state(scrolled());
 
-  const ptr = () => layerPtr(m, sel, sel.scope);
+  const ptr = () => layerPtr(m, sel, scope, base);
+  const fileOf = () => (scope === 'element' ? file : ANIMATIONS);
   const removePreset = () =>
-    live.store.remove(ANIMATIONS, `${ptr()}/preset`, { keep: 1, source: 'motion-structure' });
+    live.store.remove(fileOf(), `${ptr()}/preset`, {
+      keep: keepFor(scope),
+      source: 'motion-structure',
+    });
   function setPreset(name) {
-    if (sel.scope === 'element' && name === m.target.preset) removePreset();
+    if (scope === 'element' && name === m.target.preset) removePreset();
     else
-      live.store.set(ANIMATIONS, `${ptr()}/preset`, name, {
-        keep: keepFor(sel.scope),
+      live.store.set(fileOf(), `${ptr()}/preset`, name, {
+        keep: keepFor(scope),
         source: 'motion-structure',
       });
   }
@@ -59,7 +82,6 @@
 <div class="msel__head">
   <Button size="small" icon="arrow-left" onclick={() => bridge.select(null)}>Elements</Button>
   <h3 class="msel__title">{sel.id}</h3>
-  <code class="msel__key" title="Stable element key used for element overrides">{sel.key}</code>
 </div>
 
 <div class="msel__actions">
@@ -87,7 +109,7 @@
     {#each scopes as [s, label, title] (s)}
       <button
         type="button"
-        class={['seg__btn', s === sel.scope && 'is-active']}
+        class={['seg__btn', s === scope && 'is-active']}
         {title}
         onclick={() => (sel.scope = s)}
         >{label}
@@ -95,16 +117,16 @@
       >
     {/each}
   </div>
-  <p class="hint">Edits apply to: {scopes.find((s) => s[0] === sel.scope)[2]}.</p>
+  <p class="hint">Edits apply to: {scopes.find((s) => s[0] === scope)[2]}.</p>
 </div>
 
 <div class="f">
   <div class="f__top">
     <span class="f__label">Animation</span>
     <span class="f__src" data-src={m.own.preset ? 'element' : 'target'}
-      >{m.own.preset ? 'element' : 'all'}</span
+      >{m.own.preset ? 'block' : 'all'}</span
     >
-    {#if sel.scope === 'element' && m.own.preset}
+    {#if scope === 'element' && m.own.preset}
       <Button
         size="small"
         icon="rotate-left"
@@ -129,18 +151,18 @@
     onchange={setPreset}
   />
 </div>
-<MotionGroups {live} {gsap} {m} scope={sel.scope} ptr={ptr()} />
+<MotionGroups {live} {gsap} {m} {scope} file={fileOf()} ptr={ptr()} />
 {#if hasOverrides}
   <Button
     variant="danger"
     size="small"
     onclick={() =>
-      live.store.remove(ANIMATIONS, `/elements${compile([sel.key])}`, {
-        keep: 1,
+      live.store.remove(file, layerPtr(m, sel, 'element', base), {
+        keep: keepFor('element'),
         source: 'motion-structure',
       })}
   >
-    Remove all overrides of this element
+    Remove all overrides of this block's parts
   </Button>
 {/if}
 
@@ -158,12 +180,6 @@
     font-weight: 400;
     font-size: var(--fs-3xl);
     line-height: 1;
-  }
-
-  .msel__key {
-    color: var(--c-text-faint);
-    font-size: var(--fs-sm);
-    word-break: break-all;
   }
 
   .msel__actions {

@@ -8,9 +8,6 @@
   "sections": [
     {
       "id": "s-ncsm",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-b4w8",
@@ -26,16 +23,12 @@
             "span": 120,
             "row": 1,
             "rows": 19
-          },
-          "size": "auto"
+          }
         }
       ]
     },
     {
       "id": "s-ojv4",
-      "height": "fit",
-      "width": "contained",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-h6t6",
@@ -52,8 +45,7 @@
           "motion": {
             "anim": "list-up",
             "trigger": "load"
-          },
-          "size": "auto"
+          }
         }
       ]
     }

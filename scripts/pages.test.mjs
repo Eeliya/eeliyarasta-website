@@ -56,7 +56,7 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   // below the header: the rows above it empty (sections have no space above)
   assert.equal(heading.spacing, undefined);
   assert.equal(rowsOf(heading), 17); // down to its block: no rows stored
-  assert.deepEqual([heading.rows, heading.height], [undefined, 'fit']);
+  assert.deepEqual([heading.rows, heading.height], [undefined, undefined]);
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
   ]);

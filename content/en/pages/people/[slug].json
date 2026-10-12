@@ -11,7 +11,6 @@
       "id": "s-2jiz",
       "height": "full",
       "width": "full",
-      "enabled": true,
       "blocks": [
         {
           "id": "b-j8hg",
@@ -54,8 +53,7 @@
             "span": 120,
             "row": 1,
             "rows": 75
-          },
-          "size": "auto"
+          }
         }
       ]
     }

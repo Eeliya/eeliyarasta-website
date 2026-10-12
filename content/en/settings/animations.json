@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "_comment": "Single source of truth for every animation on the site. Elements opt in with data-anim=\"<target id>\". spec = presets[preset] <- targets[id] <- elements[key]. Edit by hand or with the visual editor at /edit/.",
   "presets": {
     "fade-up": {
       "type": "reveal",
@@ -336,12 +335,6 @@
     "footer.cols": {
       "preset": "stagger-up",
       "start": "top 95%"
-    }
-  },
-  "_elementsComment": "Per-element overrides keyed by \"<page path>|<target id>|<n>\" (n = nth element with that target on the page). Any value, including \"preset\", can be overridden. Written by the visual editor (/edit/).",
-  "elements": {
-    "/|hero.title|0": {
-      "preset": "stagger-up"
     }
   },
   "interactions": {

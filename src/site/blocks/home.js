@@ -57,7 +57,7 @@ export const hero = {
       label: 'Photos',
       list: { src: 'image', link: { type: 'link', label: 'Link' } },
       // a new photo: in the middle, behind the name (x / y / w in % of the hero; see heroPhoto)
-      item: { src: '', x: 40, y: 30, w: 16, depth: 1, layer: 'back' },
+      item: { src: '', x: 40, y: 30, w: 16, depth: 1 },
     },
   ],
   defaults: { title: 'Your name', eyebrow: '', body: '', photos: [] },

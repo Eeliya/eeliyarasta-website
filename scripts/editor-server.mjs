@@ -69,6 +69,7 @@ import {
   sitePaths,
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
+import { omitDefaults } from '../src/site/defaults.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
 import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
@@ -157,7 +158,7 @@ export function pagesOp(
   };
   const write = (file, data) => {
     fs.mkdirSync(path.dirname(abs(file)), { recursive: true });
-    writeFileAtomic(abs(file), formatJSON(data));
+    writeFileAtomic(abs(file), formatJSON(omitDefaults(file, data)));
   };
 
   // rename / delete: { moves, edits, broken }; changed: the other files written
@@ -427,6 +428,7 @@ export function save(root, files, onWrite = () => {}) {
   const bad = names.filter((n) => !editable.has(n));
   if (!names.length || bad.length)
     return { status: 400, body: { error: `Not writable: ${bad.join(', ') || '(nothing)'}` } };
+  for (const n of names) files[n] = omitDefaults(n, files[n]);
   const shape = names.flatMap((n) =>
     checkContent(n, files[n]).map((p) => `${CONTENT_DIR}/${n}: ${p}`),
   );

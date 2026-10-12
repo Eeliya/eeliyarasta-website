@@ -13,12 +13,12 @@
  * An element (parts of a block type with their own markup: the hero's photos and title,
  * album parts, the project preview; and the footer):
  *
- *   spec = presets[preset] ⟵ targets[id] ⟵ elements[key] ⟵ data-anim-options (JSON, optional)
+ *   spec = presets[preset] ⟵ targets[id] ⟵ its block's parts[id] ⟵ data-anim-options (JSON)
  *
- * `key` is a stable per-element id assigned at mount time: "<path>|<target id>|<n>"
- * (n = index among elements with that target on the page), e.g. "/about/|about.headline|0".
- * config.elements[key] may override any value, including `preset`, for that one element,
- * so the visual editor can re-style a single element without touching templates.
+ * A block's `motion.parts` (data-anim-parts on its element, src/site/layout/motion.js) may
+ * pick another animation (`preset`) or timing for the elements with that name inside it.
+ * `key` is a per-element id assigned at mount time, "<path>|<target id>|<n>" (n = index among
+ * elements with that target on the page): the editor uses it to find an element again.
  *
  * Each preset has a `type` handled by ./types.js. Everything is created inside a
  * gsap.context so a page's tweens, ScrollTriggers, SplitTexts and listeners are
@@ -49,6 +49,17 @@ const merge = (...objs) => {
 export const pageKey = (pathname = location.pathname) =>
   pathname.endsWith('/') || pathname.endsWith('.html') ? pathname : pathname + '/';
 
+const parse = (json) => {
+  try {
+    return json ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+};
+
+/** An element's own values from its block's motion.parts ({} when none). */
+const partOf = (el, id) => parse(el?.closest?.('[data-anim-parts]')?.dataset.animParts)?.[id] || {};
+
 export function resolve(id, el) {
   const target = config.targets[id];
   if (!target) {
@@ -56,7 +67,7 @@ export function resolve(id, el) {
     return null;
   }
   const key = el?.dataset.animKey;
-  const own = (key && config.elements?.[key]) || {};
+  const own = partOf(el, id);
   const presetName = own.preset || target.preset;
   const preset = config.presets[presetName];
   if (!preset) {
@@ -78,14 +89,6 @@ export function resolve(id, el) {
     preset: presetName,
   });
 }
-
-const parse = (json) => {
-  try {
-    return json ? JSON.parse(json) : null;
-  } catch {
-    return null;
-  }
-};
 
 /** A block's animation spec: its animation, then its own timing; null when unknown. */
 export function resolveBlock(el) {

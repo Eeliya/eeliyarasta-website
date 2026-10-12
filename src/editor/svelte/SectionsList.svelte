@@ -124,7 +124,7 @@
     live.store.set(
       file,
       `/sections/${at}/blocks/${j}/config`,
-      { ...b.config, enabled: on },
+      { ...b.config, enabled: on ? undefined : false },
       { source: 'panel' },
     );
   }
@@ -278,7 +278,7 @@
         aria-label="Show section {at + 1}"
         title={s.enabled === false ? 'Hidden on the public page' : 'Visible'}
         checked={s.enabled !== false}
-        onchange={(e) => set(at, { enabled: e.currentTarget.checked })}
+        onchange={(e) => set(at, { enabled: e.currentTarget.checked ? undefined : false })}
       />
     {/snippet}
 

@@ -130,3 +130,30 @@ test('editor: a block layer over its animation, inherit and keep', () => {
   assert.equal(keepFor('block'), 5);
   assert.equal(blockModel(content.animations, undefined).type, undefined);
 });
+
+test('block parts: shape, attributes; defaults and comments are refused', async () => {
+  const { checkMotion, motionAttrs } = await import('../src/site/layout/motion.js');
+  const { omitDefaults, storedDefaults } = await import('../src/site/defaults.js');
+  assert.deepEqual(checkMotion({ parts: { 'hero.title': { preset: 'x', delay: 0.2 } } }), []);
+  assert.deepEqual(checkMotion({ parts: { 'hero.title': { from: {} } } }), [
+    '"motion.parts.hero.title.from" must be left out: only duration, ease, delay, stagger, trigger, start, end, scrub can be set',
+  ]);
+  assert.deepEqual(checkMotion({ delay: 1, parts: { a: { delay: 1 } } }), [
+    '"motion.anim" must be set when the block sets its own timing',
+  ]);
+  assert.equal(
+    motionAttrs({ motion: { parts: { a: { delay: 1 } } } }),
+    ' data-anim-parts="{&quot;a&quot;:{&quot;delay&quot;:1}}"',
+  );
+  const F = 'pages/x/index.json';
+  const page = {
+    version: 1,
+    id: 'pg-aaaa',
+    sections: [{ id: 's-aaaa', enabled: true, height: 'fit', blocks: [] }],
+  };
+  assert.equal(storedDefaults(F, page).length, 2);
+  assert.deepEqual(omitDefaults(F, page).sections[0], { id: 's-aaaa', blocks: [] });
+  assert.deepEqual(checkContent(F, { ...omitDefaults(F, page), _comment: 'x' }), [
+    '"_comment": no comments in content (the README documents the shape)',
+  ]);
+});

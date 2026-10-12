@@ -3,10 +3,10 @@
  * In the editor an "animation" is what animations.json (and the code here) calls a preset.
  * A block's values (blockModel): its `motion` in its page file (the animation and its own
  * timing, src/site/layout/motion.js), then the animation's in the library.
- * A data-anim element's values live at one of these layers of content/en/settings/animations.json:
- *   element -> elements["<path>|<target>|<n>"]   (only this element on this page)
- *   target  -> targets["<target>"]               (every element with that data-anim, "All")
- *   preset  -> presets["<animation>"]            (the animation's own values: the library)
+ * A data-anim element's values live at one of these layers:
+ *   element -> its block's motion.parts["<target>"] in the page file (this block's only)
+ *   target  -> animations.json targets["<target>"]  (every element with that data-anim, "All")
+ *   preset  -> animations.json presets["<animation>"] (the animation's own values: the library)
  * A value is read from the first layer that has it: element, target, preset. There is no
  * global layer: each animation carries every value it uses.
  * The element view (AnimEditor.svelte) writes element / target, timing only (TIMING_KEYS);
@@ -306,12 +306,13 @@ const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
 export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.path);
 
 /**
- * The picked element's animation. cfg: animations.json, sel: { id, key }.
+ * The picked element's animation. cfg: animations.json, sel: { id }, part: its block's
+ * motion.parts[id] ({} or undefined when none).
  * spec: the merged values; layers: each scope's own values (for the Custom switches).
  */
-export function animModel(cfg, sel) {
+export function animModel(cfg, sel, part) {
   const target = cfg.targets[sel.id] || {};
-  const own = cfg.elements?.[sel.key] || {};
+  const own = part && typeof part === 'object' ? part : {};
   const presetName = own.preset || target.preset;
   const preset = cfg.presets[presetName] || {};
   const strip = ({ preset: _p, ...rest }) => rest;
@@ -325,7 +326,7 @@ export function animModel(cfg, sel) {
  * the 'block' layer, over the animation's values.
  */
 export function blockModel(cfg, motion) {
-  const { anim: presetName, ...own } = motion || {};
+  const { anim: presetName, parts: _p, ...own } = motion || {}; // eslint-disable-line no-unused-vars
   const preset = cfg.presets[presetName] || {};
   const layers = { element: {}, target: {}, block: own, preset };
   const spec = merge(preset, own);
@@ -340,23 +341,35 @@ export function presetModel(cfg, name) {
   return { target: {}, own: {}, presetName: name, preset, layers, spec, type: preset.type };
 }
 
-/** The animation an element uses (items from bridge.animElements()): its own, else its target's. */
-export const animationOf = (cfg, { id, key }) =>
-  cfg.elements?.[key]?.preset || cfg.targets[id]?.preset;
+/** An element's part values as the preview shows them (its block's data-anim-parts). */
+export function partOf(el, id) {
+  try {
+    return JSON.parse(el?.closest?.('[data-anim-parts]')?.dataset.animParts || '{}')[id];
+  } catch {
+    return undefined;
+  }
+}
 
-/** Pointer of a scope's object in animations.json (sel is not needed for 'preset'). */
-export const layerPtr = (m, sel, scope) =>
+/** The animation an element uses (items from bridge.animElements()): its block's, else its target's. */
+export const animationOf = (cfg, { id, el }) => partOf(el, id)?.preset || cfg.targets[id]?.preset;
+
+/**
+ * Pointer of a scope's object: 'element' in the page file (base: its block's pointer,
+ * /sections/<i>/blocks/<j>), the others in animations.json (sel is not needed for 'preset').
+ */
+export const layerPtr = (m, sel, scope, base = '') =>
   scope === 'element'
-    ? `/elements${compile([sel.key])}`
+    ? `${base}/motion/parts${compile([sel.id])}`
     : scope === 'target'
       ? `/targets${compile([sel.id])}`
       : `/presets${compile([m.presetName])}`;
 
 /**
  * How many path levels store.remove keeps when a scope's object gets empty (a block's motion,
- * /sections/<i>/blocks/<j>/motion, keeps its `anim`: never empty).
+ * /sections/<i>/blocks/<j>/motion, keeps its `anim`: never empty; a part's goes, and with it
+ * its block's motion when nothing else is left).
  */
-export const keepFor = (scope) => (scope === 'element' ? 1 : scope === 'block' ? 5 : 2);
+export const keepFor = (scope) => (scope === 'element' ? 4 : scope === 'block' ? 5 : 2);
 
 // The layers a scope inherits from, nearest first.
 const BELOW = { element: ['target', 'preset'], target: ['preset'], block: ['preset'], preset: [] };
