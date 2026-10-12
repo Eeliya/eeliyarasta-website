@@ -218,6 +218,7 @@ kbd {
 // up the room and the buttons and switch on the right don't move. Explorer rows and Motion
 // parts (has its own values): centered in their left padding, absolute.
 :is(.tf, .opt).is-changed > .tf__label::before,
+.opt.is-changed .sc__label::before,
 .sec.is-changed > .sec__bar::before,
 :is(.xrow, .mlist__part).is-changed::before {
   content: '';
@@ -230,7 +231,8 @@ kbd {
   pointer-events: none;
 }
 
-:is(.tf, .opt).is-changed > .tf__label {
+:is(.tf, .opt).is-changed > .tf__label,
+.opt.is-changed .sc__label {
   color: var(--c-text);
 }
 

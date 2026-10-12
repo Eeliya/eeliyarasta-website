@@ -112,6 +112,8 @@
   --c-fill-hover: var(--white-a03);
   --c-fill-active: var(--white-a08);
   --c-shadow: var(--black-a35);
+  // the inputs' look (--c-shadow on a card) as a solid color: the source card (ItemPicker)
+  --c-input: color-mix(in srgb, #000 35%, var(--c-card));
   --c-scrim: var(--black-a90);
 
   // ---- semantic: spacing (the 4px grid)

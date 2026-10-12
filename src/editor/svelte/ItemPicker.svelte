@@ -122,7 +122,6 @@
 {/snippet}
 
 <div class={['opt', changed && 'is-changed']}>
-  <span class="tf__label" id="{uid}-label">{label}</span>
   <!-- a click anywhere on the card opens the picker; the keyboard has its main button -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class={['sc', !card && 'is-empty']} onclick={() => open()}>
@@ -142,14 +141,9 @@
         </span>
       {/if}
       <span class="sc__text">
+        <span class="sc__label" id="{uid}-label">{label}</span>
         <span class="sc__name">{card ? card.name : items_ ? 'No item' : (none ?? 'No list')}</span>
-        <span class="sc__meta"
-          >{card
-            ? card.meta
-            : items_
-              ? 'Pick an item to fill fields from it'
-              : 'Pick a list to show'}</span
-        >
+        {#if card}<span class="sc__meta">{card.meta}</span>{/if}
       </span>
     </button>
     {#if card && onsource}
@@ -255,30 +249,23 @@
     min-width: 0;
     padding: var(--space-1);
 
-    // (as the block settings' labels beside it: GroupFields.svelte)
-    .tf__label {
-      min-height: 24px;
-    }
   }
 
-  // the card: [ tile | name / meta | edit | Change ]
+  // the card: [ tile | label / name / meta | edit | Change ], styled as an input (its
+  // background, line and 8px corners); empty or filled the same height (the 48px tile, the
+  // text 3 x 16px at most)
   .sc {
     display: flex;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-2);
-    border: 1px solid var(--c-line-strong);
-    border-radius: var(--radius-lg);
-    background: var(--c-card);
+    border-radius: var(--radius-md);
+    background: var(--c-input);
+    box-shadow: inset 0 0 0 1px var(--c-line);
     cursor: pointer;
 
     &:hover {
       background: var(--c-card-peek);
-    }
-
-    &.is-empty {
-      border-style: dashed;
-      background: none;
     }
   }
 
@@ -323,10 +310,20 @@
 
   .sc__text {
     display: grid;
-    gap: var(--space-1);
     min-width: 0;
+    line-height: 16px;
   }
 
+  // (changed: the dot before it, editor.scss)
+  .sc__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .sc__label,
   .sc__name,
   .sc__meta {
     overflow: hidden;
