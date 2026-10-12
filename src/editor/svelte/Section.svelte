@@ -97,6 +97,7 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--c-text-dim);
+    background: inherit;
 
     > :global(*) {
       flex: none;
