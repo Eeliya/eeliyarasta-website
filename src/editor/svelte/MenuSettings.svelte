@@ -96,10 +96,10 @@
   const nameOf = (item) => item.label || '(no label)';
 </script>
 
-<!-- a Select with its label, changed dot on the label -->
+<!-- a Select with its label, a changed bar at its left -->
 {#snippet select(id, label, value, options, changed, onchange)}
   <div class={['tf', changed && 'is-changed']}>
-    <label class="tf__label" for={id}>{label}<i class="dot" title="Changed"></i></label>
+    <label class="tf__label" for={id}>{label}</label>
     <Select {id} {value} {options} placeholder="Pick…" {onchange} />
   </div>
 {/snippet}

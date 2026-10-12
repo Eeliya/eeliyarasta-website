@@ -168,7 +168,7 @@
   {:else}
     <div class={['opt', live.changed(g.file, c.ptr) && 'is-changed']}>
       <label class="tf__label" for="{uid}-{c.key}">
-        {c.label}<i class="dot" title="Changed"></i>
+        {c.label}
       </label>
       {#if c.type === 'boolean'}
         <input
@@ -242,14 +242,6 @@
 
     .tf__label {
       min-height: 24px;
-    }
-
-    .dot {
-      display: none;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
     }
   }
 </style>

@@ -62,7 +62,7 @@
   </p>
   {#each ROWS as [step, label] (step)}
     <div class={['tf', changed(step) && 'is-changed']}>
-      <span class="tf__label">{label}<i class="dot" title="Changed"></i></span>
+      <span class="tf__label">{label}</span>
       <div class="f__pair">
         <input
           class={['f__num', invalid[step] && 'is-invalid']}

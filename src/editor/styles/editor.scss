@@ -212,14 +212,33 @@ kbd {
   }
 }
 
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-round);
-  background: var(--c-link);
-  vertical-align: middle;
-  margin-left: var(--space-1);
+// Unsaved changes: a 2px accent bar on the left edge, drawn by ::before (absolute, so it never
+// moves anything). A field's sits in the card's gutter, 8px left of it, and its label turns
+// white; a section card's and an explorer row's are inset by the corner radius (no uneven
+// rounded end). (A Motion part: has its own values.)
+:is(.tf, .opt, .sec, .xrow, .mlist__part).is-changed {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(-1 * var(--space-2));
+    width: 2px; /* stylelint-disable-line local/grid-4px -- the approved 2px marker (mock B) */
+    background: var(--c-accent);
+    pointer-events: none;
+  }
+}
+
+:is(.sec, .xrow, .mlist__part).is-changed::before {
+  top: var(--radius-lg);
+  bottom: var(--radius-lg);
+  left: 0;
+}
+
+:is(.tf, .opt).is-changed > .tf__label {
+  color: var(--c-text);
 }
 
 // ------------------------------------------------------------ groups & fields
@@ -535,14 +554,6 @@ kbd {
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
   line-height: 16px;
-}
-
-.tf .dot {
-  display: none;
-}
-
-.tf.is-changed .dot {
-  display: inline-block;
 }
 
 // On/off switch (Content section toggles, Settings): a checkbox drawn as a track, its knob a

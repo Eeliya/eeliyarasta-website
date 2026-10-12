@@ -189,6 +189,7 @@
     title={(typeof s.name === 'string' && s.name.trim()) || `Section ${at + 1}`}
     dim={!(typeof s.name === 'string' && s.name.trim())}
     off={s.enabled === false}
+    changed={live.changed(file, `/sections/${at}`)}
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
   >
     {#snippet bar()}
@@ -230,7 +231,7 @@
         label="Delete section {at + 1}"
         onclick={() => (deleting = s.id)}
       />
-      {#if changed(at, 'enabled')}<i class="dot" title="Changed"></i>{/if}
+      {#if changed(at, 'enabled')}{/if}
       <input
         type="checkbox"
         class="switch"

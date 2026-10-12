@@ -6,7 +6,7 @@
                        it shows "people.json · Eeliya Rasta" and opens on that source's items
               'source' a source id ('' or null: none): it stops at the sources, the current
                        one highlighted; it shows "people.json"
-    value, changed (its changed dot), none (the label of no value, null: none can't be
+    value, changed (its changed bar), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
     onpick(value | undefined); store: the editor's store (the sources' schemas: a list's name, an
     item's photo)
@@ -122,7 +122,7 @@
 {/snippet}
 
 <div class={['opt', changed && 'is-changed']}>
-  <span class="tf__label" id="{uid}-label">{label}<i class="dot" title="Changed"></i></span>
+  <span class="tf__label" id="{uid}-label">{label}</span>
   <!-- a click anywhere on the card opens the picker; the keyboard has its main button -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class={['sc', !card && 'is-empty']} onclick={() => open()}>
@@ -258,14 +258,6 @@
     // (as the block settings' labels beside it: GroupFields.svelte)
     .tf__label {
       min-height: 24px;
-    }
-
-    .dot {
-      display: none;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
     }
   }
 

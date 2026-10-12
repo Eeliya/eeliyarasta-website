@@ -86,10 +86,7 @@
   {/if}
   <label class={['tf', changed('noindex') && 'is-changed']}>
     <span class="tf__label"
-      >{template ? 'Hide every item page from search' : 'Hide from search'}<i
-        class="dot"
-        title="Changed"
-      ></i>
+      >{template ? 'Hide every item page from search' : 'Hide from search'}
       <input
         type="checkbox"
         class="switch"

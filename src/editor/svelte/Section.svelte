@@ -13,6 +13,7 @@
     open      open when nothing is remembered yet (default true)
     id        data-section, to find the section (e.g. scroll to it)
     off       dimmed: the section is turned off
+    changed   unsaved changes in it: a 2px accent bar on the card's left edge (no layout shift)
     dim       the title is a default ("Section 1", no name yet): very dim
     class     extra class on the section
     bar       snippet: controls at the right of the bar (count, buttons, a switch), each 20px tall
@@ -36,6 +37,7 @@
     open = true,
     id = null,
     off = false,
+    changed = false,
     dim = false,
     class: cls = '',
     bar,
@@ -80,7 +82,7 @@
   }
 </script>
 
-<section class={['sec', off && 'is-off', cls]} data-section={id}>
+<section class={['sec', off && 'is-off', changed && 'is-changed', cls]} data-section={id}>
   <div class="sec__bar">
     <button
       type="button"
@@ -141,11 +143,6 @@
 
     > :global(*) {
       flex: none;
-    }
-
-    // a changed-dot (8px) centered on the first line
-    > :global(.dot) {
-      margin: calc((1lh - 8px) / 2) 0;
     }
   }
 

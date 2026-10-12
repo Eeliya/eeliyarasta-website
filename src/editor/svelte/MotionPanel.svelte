@@ -114,14 +114,14 @@
   <li>
     <button
       type="button"
-      class="mlist__item mlist__part"
+      class={['mlist__item', 'mlist__part', partOf(el, id) && 'is-changed']}
+      title={partOf(el, id) ? 'Has its own values in this block' : undefined}
       onclick={() => pick(el)}
       onpointerenter={() => bridge.setHover(el)}
       onpointerleave={() => bridge.setHover(null)}
     >
       <span class="mlist__id">
         {id}
-        {#if partOf(el, id)}<i class="dot" title="Has its own values in this block"></i>{/if}
       </span>
       <span class="muted">{animationOf(cfg, { id, el }) || '?'}</span>
     </button>

@@ -90,7 +90,7 @@
 </script>
 
 <div class={['tf', changed && 'is-changed']} data-edit={edit}>
-  <label class="tf__label" for={uid}>{label}<i class="dot" title="Changed"></i></label>
+  <label class="tf__label" for={uid}>{label}</label>
   <Select id={uid} value={key} {options} placeholder="Pick…" onchange={pick} />
 </div>
 {#if kind === 'href'}

@@ -82,7 +82,7 @@
         onvalue={(v) => setKey(i, 'from', v.trim())}
       />
       <div class={['tf', live.changed(REDIRECTS, `/redirects/${i}/to`) && 'is-changed']}>
-        <label class="tf__label" for="{uid}-to-{i}">To<i class="dot" title="Changed"></i></label>
+        <label class="tf__label" for="{uid}-to-{i}">To</label>
         <Select
           id="{uid}-to-{i}"
           value={toOf(r)}
@@ -101,7 +101,7 @@
       {/if}
       <div class={['tf', live.changed(REDIRECTS, `/redirects/${i}/status`) && 'is-changed']}>
         <label class="tf__label" for="{uid}-status-{i}"
-          >Status<i class="dot" title="Changed"></i></label
+          >Status</label
         >
         <Select
           id="{uid}-status-{i}"

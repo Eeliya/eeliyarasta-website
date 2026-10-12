@@ -102,7 +102,7 @@
     data-edit="{file}#/sections/{at}/{ptr}"
   >
     <span class="tf__label" {id}
-      >{title}<i class="dot" title="Changed"></i>
+      >{title}
       {#if reset}
         <!-- its own phone height: back to the desktop's -->
         <button

@@ -138,7 +138,7 @@
     />
     {#if page}
       <div class={['tf', modeChanged && 'is-changed']}>
-        <span class="tf__label">Curtain for this page<i class="dot" title="Changed"></i></span>
+        <span class="tf__label">Curtain for this page</span>
         <div class="seg" role="group" aria-label="Curtain for this page">
           {#each CURTAIN_MODES as m (m)}
             <button
@@ -167,7 +167,7 @@
       </p>
     {:else}
       <label class={['tf', changed('/total') && 'is-changed']}>
-        <span class="tf__label">Total duration (s)<i class="dot" title="Changed"></i></span>
+        <span class="tf__label">Total duration (s)</span>
         {@render number('/total', 'tf__input')}
         <span class="hint small tf__hint">
           Fixed length of the timeline. The curtain-out bar is pinned to the end. Dragging bars will
@@ -214,7 +214,7 @@
                   !individual && 'is-ease-inactive',
                 ]}
               >
-                <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
+                <span class="tf__label">{row.label}</span>
                 <div class="f__pair">
                   {@render number(row.pair + '/duration', 'f__num', row.label)}
                   <EasePicker
@@ -230,7 +230,7 @@
               </div>
             {:else}
               <label class={['tf', changed(row.rel) && 'is-changed']}>
-                <span class="tf__label">{row.label}<i class="dot" title="Changed"></i></span>
+                <span class="tf__label">{row.label}</span>
                 {@render number(row.rel, 'tf__input')}
                 {#if row.hint}<span class="hint small tf__hint">{row.hint}</span>{/if}
               </label>

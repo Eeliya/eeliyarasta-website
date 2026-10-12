@@ -1,6 +1,6 @@
 <!--
   One row of an explorer list (Sources, Pages): a number or an icon, the name with a meta
-  line below it, a dot when it has unsaved changes, and a chevron when it opens something
+  line below it, a bar at its left edge when it has unsaved changes, and a chevron when it opens something
   (enter). Other props (onclick, data-*, aria-*) go on the <button>.
 -->
 <script>
@@ -28,16 +28,16 @@
   {/if}
   <span class="xrow__name">{name}</span>
   <span class="xrow__meta">{meta}</span>
-  <i class="dot" title="Changed"></i>
+  
   {#if enter}<i class="fa-solid fa-chevron-right xrow__enter" aria-hidden="true"></i>{/if}
 </button>
 
 <style lang="scss">
-  // lead | name / meta | changed dot | chevron
+  // lead | name / meta | chevron; changed: a bar at the left edge (.is-changed, editor.scss)
   .xrow {
     width: 100%;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--space-1) var(--space-3);
     padding: var(--space-2) var(--space-3);
@@ -49,16 +49,6 @@
     cursor: pointer;
     color: var(--c-text);
 
-    .dot {
-      display: none;
-      grid-column: 3;
-      grid-row: 1 / 3;
-      margin: 0;
-    }
-
-    &.is-changed .dot {
-      display: inline-block;
-    }
 
     &:hover {
       background: var(--white-a05);
@@ -85,7 +75,7 @@
   }
 
   .xrow__enter {
-    grid-column: 4;
+    grid-column: 3;
     grid-row: 1 / 3;
     color: var(--c-text-muted);
     font-size: var(--fs-xs);

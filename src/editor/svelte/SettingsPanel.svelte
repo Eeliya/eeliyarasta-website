@@ -127,7 +127,7 @@
     {/each}
     <div class={['tf', live.changed(SITE, '/robots') && 'is-changed']}>
       <label class="tf__label" for="{uid}-robots"
-        >Search engines<i class="dot" title="Changed"></i></label
+        >Search engines</label
       >
       <Select
         id="{uid}-robots"
@@ -149,7 +149,7 @@
     </p>
     <div class={['tf', live.changed(SITE, '/forms/target') && 'is-changed']}>
       <label class="tf__label" for="{uid}-forms"
-        >Forms send to<i class="dot" title="Changed"></i></label
+        >Forms send to</label
       >
       <Select
         id="{uid}-forms"
