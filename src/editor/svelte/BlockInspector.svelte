@@ -45,7 +45,7 @@
 
   // ---- its section's settings, read only (a row above the head: a click opens them)
   const H_LABELS = {
-    custom: ['Custom', 'rows'],
+    custom: ['', 'rows'],
     fit: ['Fit', 0],
     third: ['1/3 screen', 1 / 3],
     half: ['1/2 screen', 1 / 2],
@@ -156,7 +156,7 @@
   <span class={['parent__name', !sec.name && 'is-none']}>{sec.name || 'Unnamed section'}</span>
   <span class="parent__val" data-part="height">
     <SectionIcon kind="height" arg={H_LABELS[sec.h][1]} />
-    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'}&nbsp;· {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
+    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'} {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
   </span>
   <span class="parent__val" data-part="width">
     <SectionIcon kind="width" arg={sec.full ? 'edge' : 'inside'} />

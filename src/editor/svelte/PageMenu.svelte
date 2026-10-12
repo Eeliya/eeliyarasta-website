@@ -86,7 +86,7 @@
   }
 
   .pm__path {
-    font-size: 10.5px;
+    font-size: 9px;
     color: var(--muted);
   }
 </style>
