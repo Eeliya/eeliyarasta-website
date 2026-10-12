@@ -149,13 +149,4 @@
   --size-control-sm: 24px;
   --size-icon: 16px;
   --panel-w: 400px; // the side panel
-
-  // ---- aliases of the old names (removed once nothing uses them)
-  --ed-accent: var(--c-accent);
-  --ed-accent-bg: var(--c-accent-bg);
-  --hi: var(--c-link);
-  --btn: var(--c-control);
-  --btn-hover: var(--c-control-hover);
-  --danger: var(--c-danger);
-  --danger-hover: var(--c-danger-hover);
 }

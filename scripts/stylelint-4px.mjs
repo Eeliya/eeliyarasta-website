@@ -1,6 +1,8 @@
 // Two editor-only Stylelint rules (see stylelint.config.mjs):
 //   local/grid-4px             sizes and gaps in multiples of 4px (0, 1px and 999px+ pills are fine)
 //   local/no-alpha-text-color  text colors without transparency (rgba, / alpha, #rrggbbaa)
+//   local/no-raw-tokens        no raw hex colours or px font sizes outside token files
+//                              (_tokens.scss): use the tokens (--c-*, --fs-*)
 import stylelint from 'stylelint';
 
 const {
@@ -65,4 +67,24 @@ const alpha = createPlugin(ALPHA, (on) => (root, result) => {
   });
 });
 
-export default [grid, alpha];
+const RAW = 'local/no-raw-tokens';
+const HEX = /#[0-9a-f]{3,8}\b/i;
+
+const raw = createPlugin(RAW, (on) => (root, result) => {
+  if (!on) return;
+  // token files set the raw values
+  if (/(^|\/)_tokens\.scss$/.test(root.source?.input?.file || '')) return;
+  const messages = ruleMessages(RAW, {
+    hex: (prop) => `${prop}: no raw hex colour, use a colour token (--c-*)`,
+    size: () => 'font-size: no px size, use a type size token (--fs-*)',
+  });
+  root.walkDecls((decl) => {
+    const prop = decl.prop.toLowerCase();
+    if (HEX.test(decl.value))
+      report({ ruleName: RAW, result, node: decl, message: messages.hex(prop) });
+    if ((prop === 'font-size' || prop === 'font') && /\d*\.?\d+px/.test(decl.value.split('/')[0]))
+      report({ ruleName: RAW, result, node: decl, message: messages.size() });
+  });
+});
+
+export default [grid, alpha, raw];

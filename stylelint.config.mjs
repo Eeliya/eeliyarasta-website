@@ -1,5 +1,6 @@
 // Stylelint: standard SCSS rules, relaxed where they fight the code's conventions.
-// Prettier owns formatting. Editor files also get the local 4px-grid and text-color rules.
+// Prettier owns formatting. Editor files also get the local 4px-grid, text-color and
+// raw-token rules (no hex colours or px font sizes outside _tokens.scss).
 import local from './scripts/stylelint-4px.mjs';
 
 export default {
@@ -33,7 +34,11 @@ export default {
     },
     {
       files: ['src/editor/**/*.{scss,svelte}'],
-      rules: { 'local/grid-4px': true, 'local/no-alpha-text-color': true },
+      rules: {
+        'local/grid-4px': true,
+        'local/no-alpha-text-color': true,
+        'local/no-raw-tokens': true,
+      },
     },
   ],
 };

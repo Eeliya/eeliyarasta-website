@@ -6,7 +6,7 @@
     icon      Font Awesome name without the prefix, e.g. 'trash'
     iconOnly  just the icon, quiet: a utility (Grid, the phone view, undo / redo, close): no
               background, a little dim, brighter on hover; with aria-pressed it is a toggle,
-              --ed-accent while on. label is its aria-label and title
+              --c-accent while on. label is its aria-label and title
     label     the text when there are no children
     href      renders an <a> instead of a <button>
   Also disabled, type ('button'), title, onclick; anything else (aria-*, data-*, attachments)
