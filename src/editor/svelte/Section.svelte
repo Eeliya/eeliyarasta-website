@@ -1,6 +1,6 @@
 <!--
   A collapsible panel section: a bar (a toggle button with the caret and title, then the `bar`
-  snippet's controls) and the body, hidden while closed (it stays in the DOM, so a field picked
+  snippet's controls) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
   in the preview can be found and its section opened). Used by the Content, Motion and Settings
   tabs and the Animations library. .sec is a flex column: bar, body.
 
@@ -18,8 +18,8 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
-  Opening and closing animate the body's height and opacity (GSAP, 0.25s power2.out; the
-  column's gap with it, so nothing jumps at the end); none with prefers-reduced-motion.
+  Opening and closing animate the card's max-height (GSAP, 0.25s power2.out): closed it is
+  clipped to its bar, the body still rendered but inert; none with prefers-reduced-motion.
 -->
 <script>
   import { untrack } from 'svelte';
@@ -43,39 +43,65 @@
   let toggled = $state(null); // open/closed of a section without a key
   const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
 
-  // the body is shown while it is open or still closing
-  let body = $state();
-  let shown = $state(untrack(() => isOpen));
+  // Closed, the card is clipped to its bar (max-height, overflow: clip); the body stays in the
+  // DOM, inert. Opening tweens max-height up to the full height and then lets go (none), so
+  // later content changes aren't clipped.
+  let card = $state();
+  let barEl = $state();
+  const barHeight = () => {
+    const cs = getComputedStyle(card);
+    const bs = getComputedStyle(barEl);
+    const px = (k, c = cs) => parseFloat(c[k]) || 0;
+    return (
+      barEl.offsetHeight +
+      px('marginTop', bs) +
+      px('marginBottom', bs) +
+      px('paddingTop') +
+      px('paddingBottom') +
+      px('borderTopWidth') +
+      px('borderBottomWidth')
+    );
+  };
+  const CLOSED = () => ({ maxHeight: barHeight(), overflow: 'clip' });
+  const OPEN = 'maxHeight,overflow';
   let first = true;
   $effect(() => {
     const opening = isOpen;
-    if (first) {
-      first = false;
-      return;
-    }
-    untrack(() => slide(opening));
+    untrack(() => {
+      if (first) {
+        first = false;
+        if (!opening) gsap.set(card, CLOSED());
+        return;
+      }
+      slide(opening);
+    });
   });
   function slide(opening) {
-    gsap.killTweensOf(body);
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (opening) shown = true;
-    if (still) {
-      shown = opening;
+    gsap.killTweensOf(card);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (opening) gsap.set(card, { clearProps: OPEN });
+      else gsap.set(card, CLOSED());
       return;
     }
-    const gap = parseFloat(getComputedStyle(body.parentElement).rowGap) || 0;
-    const shut = { height: 0, opacity: 0, marginTop: -gap };
-    const full = { height: body.scrollHeight, opacity: 1, marginTop: 0 };
-    gsap.fromTo(body, opening ? shut : { ...full, height: body.offsetHeight }, {
-      ...(opening ? full : shut),
-      duration: 0.25,
-      ease: 'power2.out',
-      overflow: 'hidden',
-      onComplete: () => {
-        if (!opening) shown = false;
-        gsap.set(body, { clearProps: 'height,opacity,marginTop,overflow' });
-      },
-    });
+    const from = card.offsetHeight;
+    if (opening) {
+      gsap.fromTo(
+        card,
+        { maxHeight: from, overflow: 'clip' },
+        {
+          maxHeight: card.scrollHeight,
+          duration: 0.25,
+          ease: 'power2.out',
+          onComplete: () => gsap.set(card, { clearProps: OPEN }),
+        },
+      );
+    } else {
+      gsap.fromTo(
+        card,
+        { maxHeight: from, overflow: 'clip' },
+        { ...CLOSED(), duration: 0.25, ease: 'power2.out' },
+      );
+    }
   }
 
   function toggle() {
@@ -84,8 +110,8 @@
   }
 </script>
 
-<section class={['sec', off && 'is-off', cls]} data-section={id}>
-  <div class="sec__bar">
+<section class={['sec', off && 'is-off', cls]} data-section={id} bind:this={card}>
+  <div class="sec__bar" bind:this={barEl}>
     <button
       type="button"
       class="sec__toggle"
@@ -102,7 +128,7 @@
     </button>
     {@render bar?.()}
   </div>
-  <div class="sec__body" id="{uid}-body" hidden={!shown} bind:this={body}>
+  <div class="sec__body" id="{uid}-body" inert={!isOpen}>
     {@render children?.()}
   </div>
 </section>
