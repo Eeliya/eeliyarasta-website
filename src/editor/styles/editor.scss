@@ -316,13 +316,6 @@ kbd {
   margin: 0 0 0 auto;
   color: var(--c-text);
   text-align: right;
-
-  &--inherited {
-    margin: 0;
-    color: var(--c-text-muted);
-    text-align: left;
-    height: var(--size-control);
-  }
 }
 
 // an inherited timing value: the field's control, dimmed and inert (no clicks, no focus)

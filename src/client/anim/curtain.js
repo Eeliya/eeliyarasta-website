@@ -30,9 +30,6 @@ const CURTAIN_DEFAULTS = {
 };
 
 export const CURTAIN_MODES = ['global', 'custom', 'off'];
-/** A page transition's presets: the site's curtain, or none. */
-export const TRANSITION_PRESETS = ['curtain', 'none'];
-
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /** A page transition's mode in the editor: 'off' (preset none), 'custom' (overrides), 'global'. */
