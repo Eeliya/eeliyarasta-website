@@ -13,7 +13,8 @@
     "check:links": "node scripts/check-links.mjs",
     "lint": "eslint . && stylelint \"src/**/*.{scss,svelte}\"",
     "lint:fix": "eslint . --fix && stylelint \"src/**/*.{scss,svelte}\" --fix",
-    "prepare": "git config core.hooksPath .githooks || exit 0"
+    "prepare": "git config core.hooksPath .githooks || exit 0",
+    "mock": "node --experimental-websocket --no-warnings scripts/mock.mjs"
   },
   "license": "MIT",
   "dependencies": {

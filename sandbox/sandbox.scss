@@ -1,0 +1,42 @@
+// The sandbox page: mocks on the editor's panel, each at the panel's width.
+html,
+body {
+  height: auto;
+}
+
+body {
+  overflow: auto;
+}
+
+#sandbox {
+  display: inline-grid;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  background: var(--c-bg);
+}
+
+.sb-label {
+  margin: 0 0 var(--space-2);
+  color: var(--c-accent);
+  font-size: var(--fs-base);
+}
+
+// like the editor's side panel and its scroll area (.ed-panel, .ed-body)
+.sb-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--mock-w, var(--panel-w));
+  padding: var(--space-4);
+  border-radius: var(--radius-2xl);
+  background: var(--c-surface);
+  box-shadow: inset 0 0 0 1px var(--c-fill-active);
+  container-type: inline-size;
+
+  .is-bare & {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+}

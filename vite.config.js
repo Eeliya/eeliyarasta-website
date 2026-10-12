@@ -5,11 +5,11 @@ import staticSite from './scripts/vite-plugin-static-site.mjs';
 export default defineConfig({
   plugins: [
     staticSite(),
-    // Svelte is editor-only (src/editor/svelte). The public site never imports it.
+    // Svelte is editor-only (src/editor/svelte, and the editor's mock sandbox: sandbox/). The public site never imports it.
     // vitePreprocess: components can use <style lang="scss">. Runes mode everywhere (also for a
     // component that uses none); scripts/svelte.test.mjs compiles with the same options.
     svelte({
-      include: ['src/editor/**/*.svelte'],
+      include: ['src/editor/**/*.svelte', 'sandbox/**/*.svelte'],
       preprocess: vitePreprocess(),
       compilerOptions: { runes: true },
     }),
@@ -20,7 +20,8 @@ export default defineConfig({
     assetsInlineLimit: 0,
     modulePreload: { polyfill: false },
     // Only the public site is built. The visual editor (edit/index.html → src/editor)
-    // is served by the dev server only (`npm run dev` → /edit/) and never ships.
+    // is served by the dev server only (`npm run dev` → /edit/) and never ships; nor does the
+    // mock sandbox (edit/sandbox/index.html → sandbox/, sandbox/README.md).
     rolldownOptions: {
       input: { main: 'index.html' },
     },

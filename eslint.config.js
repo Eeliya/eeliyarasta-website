@@ -19,9 +19,9 @@ export default [
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
     },
   },
-  // The site, its templates and the editor run in the browser.
+  // The site, its templates, the editor and its mock sandbox run in the browser.
   {
-    files: ['src/**/*.{js,svelte}', 'src/**/*.svelte.js'],
+    files: ['src/**/*.{js,svelte}', 'src/**/*.svelte.js', 'sandbox/**/*.{js,svelte}'],
     languageOptions: { globals: globals.browser },
     rules: { 'no-console': ['warn', { allow: ['warn', 'error'] }] },
   },
