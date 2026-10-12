@@ -209,6 +209,7 @@
   {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
     <div class="opts">
       <ItemPicker
+        store={live.store}
         value={ref}
         changed={live.changed(g.file, `${base}/item`)}
         {sourceIds}

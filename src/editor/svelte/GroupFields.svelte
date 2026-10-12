@@ -100,6 +100,7 @@
 {#snippet field(f, half)}
   {#if f.type === 'source'}
     <ItemPicker
+      store={live.store}
       mode="source"
       value={live.get(f.file, f.ptr)}
       changed={live.changed(f.file, f.ptr)}
@@ -154,6 +155,7 @@
   {@const value = live.get(g.file, c.ptr)}
   {#if c.type === 'source'}
     <ItemPicker
+      store={live.store}
       mode="source"
       {value}
       changed={live.changed(g.file, c.ptr)}

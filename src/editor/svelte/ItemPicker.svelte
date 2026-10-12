@@ -8,7 +8,8 @@
                        one highlighted; it shows "people.json"
     value, changed (its changed dot), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
-    onpick(value | undefined)
+    onpick(value | undefined); store: the editor's store (the sources' schemas: a list's name, an
+    item's photo)
     onsource(file, index, edit, then): open the Source Explorer (SourcesModal.svelte); each
               row's edit button closes this window and opens it there, and this window opens
               again on the same source or item when the Source Explorer closes (then)
@@ -18,6 +19,9 @@
   import Button from './Button.svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
+  import { schemaFor } from './source-items.js';
+  import { sourceFile } from '../../site/files.js';
+  import { fallback, thumbUrl } from './media.svelte.js';
 
   let {
     mode = 'item',
@@ -29,6 +33,7 @@
     nameOf = () => '',
     onpick,
     onsource,
+    store = null,
   } = $props();
 
   const items_ = $derived(mode === 'item');
@@ -40,12 +45,29 @@
   let source = $state(''); // the source open in the list ('' = the list of sources)
   let query = $state('');
 
-  const shown = $derived.by(() => {
-    if (!current) return none ?? '—';
-    if (!items_) return `${current}.json`;
-    const it = itemsOf(current).find((i) => i?.id === value.id);
-    return `${current}.json · ${it ? nameOf(current, it) : '—'}`;
+  // the card: a list's name and count, or an item's name and photo (its first photo field)
+  const schema = $derived(current && store ? schemaFor(store, sourceFile(current)) : null);
+  const picked = $derived(
+    items_ && current ? (itemsOf(current).find((i) => i?.id === value?.id) ?? null) : null,
+  );
+  const photo = $derived.by(() => {
+    const fs = schema?.fields || [];
+    for (const f of fs.filter((f) => f.type === 'photo'))
+      if (typeof picked?.[f.key] === 'string' && picked[f.key]) return picked[f.key];
+    for (const f of fs.filter((f) => f.type === 'photos'))
+      if (Array.isArray(picked?.[f.key]) && picked[f.key][0]) return picked[f.key][0];
+    return '';
   });
+  const card = $derived(
+    !current
+      ? null
+      : items_
+        ? { name: picked ? nameOf(current, picked) : 'Missing item', meta: `${current}.json` }
+        : {
+            name: schema?.label || `${current}.json`,
+            meta: `${current}.json · ${itemsOf(current).length} items`,
+          },
+  );
   const q = $derived(query.trim().toLowerCase());
   const sources = $derived(sourceIds.filter((id) => !q || id.toLowerCase().includes(q)));
   const items = $derived(
@@ -101,14 +123,55 @@
 
 <div class={['opt', changed && 'is-changed']}>
   <span class="tf__label" id="{uid}-label">{label}<i class="dot" title="Changed"></i></span>
-  <div class="ip-field">
-    <span class={['ip-value', !current && 'is-none']} title={shown}>{shown}</span>
-    <Button
-      size="small"
+  <!-- a click anywhere on the card opens the picker; the keyboard has its main button -->
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class={['sc', !card && 'is-empty']} onclick={() => open()}>
+    <button
+      type="button"
+      class="sc__main"
       aria-haspopup="dialog"
       aria-describedby="{uid}-label"
-      title={items_ ? 'Pick the item this block shows' : 'Pick the source'}
-      onclick={() => open()}>Change</Button
+      title={items_ ? 'Pick the item this block shows' : 'Pick the source list'}
+      onclick={(e) => (e.stopPropagation(), open())}
+    >
+      {#if photo}
+        <img class="sc__tile" src={thumbUrl(photo)} alt="" {@attach fallback(photo)} />
+      {:else}
+        <span class="sc__tile" aria-hidden="true">
+          <i class="fa-solid fa-{!card ? 'plus' : items_ ? 'database' : 'table-cells'}"></i>
+        </span>
+      {/if}
+      <span class="sc__text">
+        <span class="sc__name">{card ? card.name : items_ ? 'No item' : (none ?? 'No list')}</span>
+        <span class="sc__meta"
+          >{card
+            ? card.meta
+            : items_
+              ? 'Pick an item to fill fields from it'
+              : 'Pick a list to show'}</span
+        >
+      </span>
+    </button>
+    {#if card && onsource}
+      <Button
+        size="small"
+        icon="pen-to-square"
+        iconOnly
+        label={items_
+          ? `Edit ${card.name} in the Source Explorer`
+          : `Edit ${current}.json in the Source Explorer`}
+        onclick={(e) => {
+          e.stopPropagation();
+          const i = items_ ? itemsOf(current).findIndex((it) => it?.id === value?.id) : -1;
+          onsource(`sources/${current}.json`, Math.max(0, i));
+        }}
+      />
+    {/if}
+    <Button
+      size="small"
+      variant={card ? 'primary' : 'default'}
+      tabindex="-1"
+      onclick={(e) => (e.stopPropagation(), open())}>{card ? 'Change' : 'Choose'}</Button
     >
   </div>
 </div>
@@ -206,24 +269,96 @@
     }
   }
 
-  // [ people.json · Eeliya Rasta   (Change) ]
-  .ip-field {
+  // the card: [ tile | name / meta | edit | Change ]
+  .sc {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    min-height: var(--size-control);
+    gap: var(--space-3);
+    padding: var(--space-2);
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--c-card);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--c-card-peek);
+    }
+
+    &.is-empty {
+      border-style: dashed;
+      background: none;
+    }
   }
 
-  .ip-value {
+  // the tile and the text: the keyboard's button
+  .sc__main {
+    display: flex;
     flex: 1;
+    align-items: center;
+    gap: var(--space-3);
     min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 1px var(--c-accent);
+    }
+  }
+
+  .sc__tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--c-switch);
+    color: var(--c-accent);
+    font-size: var(--fs-lg);
+    object-fit: cover;
+
+    .is-empty & {
+      color: var(--c-text-faint);
+    }
+  }
+
+  .sc__text {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .sc__name,
+  .sc__meta {
     overflow: hidden;
-    font-size: var(--fs-base);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
 
-    &.is-none {
+  .sc__name {
+    color: var(--c-text-strong);
+    font-size: var(--fs-base);
+    font-weight: 500;
+
+    .is-empty & {
       color: var(--c-text-muted);
+      font-weight: 400;
+    }
+  }
+
+  .sc__meta {
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+
+    .is-empty & {
+      white-space: normal;
     }
   }
 
