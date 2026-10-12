@@ -407,7 +407,7 @@ const LOOPBACK = /^(?:127(?:\.\d{1,3}){3}|::1|::ffff:127(?:\.\d{1,3}){3})$/;
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /** True only for requests made on this machine to a localhost URL. */
-export function isLocalRequest(req) {
+function isLocalRequest(req) {
   if (!LOOPBACK.test(req.socket?.remoteAddress || '')) return false;
   const host = String(req.headers.host || '').toLowerCase();
   const hostname = host.replace(/:\d+$/, '');

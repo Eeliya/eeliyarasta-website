@@ -367,7 +367,7 @@
     line-height: 1;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
-    color: var(--c-on-bar); // was rgb(0 0 0 / 0.72) on move bar
+    color: var(--c-on-bar);
     pointer-events: none;
     white-space: nowrap;
     user-select: none;
@@ -376,7 +376,7 @@
   }
 
   .ptl__bar.is-text.is-move .ptl__len {
-    color: var(--c-on-bar-active); // was rgb(0 0 0 / 0.75) on var(--c-link)
+    color: var(--c-on-bar-active);
   }
 
   // Stay length centered in the empty gap between text-in and text-out.
@@ -392,7 +392,7 @@
     box-sizing: border-box;
 
     .ptl__len {
-      color: var(--c-text-soft); // was rgb(255 255 255 / 0.72) on #212121
+      color: var(--c-text-soft);
     }
   }
 

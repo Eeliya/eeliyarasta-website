@@ -111,7 +111,7 @@ svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: no
  * Where the blocks of a section are now, as the site's rows.js placed them: { id: area }
  * (the phone grid's on the phone: a block's own phone area, or its desktop area halved).
  */
-export function flowAreas(sec, phone, blockOf) {
+function flowAreas(sec, phone, blockOf) {
   const out = {};
   for (const el of sec.querySelectorAll('[data-block]')) {
     if (el.closest('[data-sec]') !== sec) continue;

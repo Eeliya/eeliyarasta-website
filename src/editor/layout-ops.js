@@ -37,7 +37,7 @@ const write = (store, file, list, structure = true) =>
  * for blocks with a phone area and link of their own), so the page's first render (before
  * rows.js measures, or without JS) already has every follower below its leader.
  */
-export function settleLinks(section) {
+function settleLinks(section) {
   const blocks = section.blocks || [];
   const desk = resolveRows(
     blocks.map((b) => ({ id: b.id, ...placeOf(b.pos), link: linkOf(b) })),
@@ -116,7 +116,7 @@ export function setSection(store, file, at, patch, key) {
 
 /** Its phone rows only while its phone height is custom; no empty `mobile`. */
 function tidyMobile(s) {
-  if (!s.mobile || typeof s.mobile !== 'object' || 'spacing' in s.mobile) return s;
+  if (!s.mobile || typeof s.mobile !== 'object') return s;
   const m = { ...s.mobile };
   if (phoneHeightOf(s) !== 'custom') delete m.minRows;
   if (Object.keys(m).length) s.mobile = m;

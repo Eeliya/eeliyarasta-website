@@ -122,7 +122,7 @@ function described(store, f) {
 const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
 
 /** The sections of page file `file` (its "sections" list). */
-export function sectionsOf(store, file) {
+function sectionsOf(store, file) {
   const list = store.current[file]?.sections;
   return Array.isArray(list) ? list : [];
 }

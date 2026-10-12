@@ -28,7 +28,7 @@ export const TEXT_STYLES = {
   paragraph: { label: 'Paragraph', size: 1.4, line: 1.75, tracking: 0, min: 14 },
   label: { label: 'Label', size: 1, line: 1.3, tracking: 0.08, min: 10 },
 };
-export const STYLE_KEYS = ['size', 'line', 'tracking', 'min'];
+const STYLE_KEYS = ['size', 'line', 'tracking', 'min'];
 
 /** Block types whose text can scale (a Scale switch in the editor). */
 export const SCALE_TYPES = ['heading', 'text', 'button'];

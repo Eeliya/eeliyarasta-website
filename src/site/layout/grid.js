@@ -9,11 +9,6 @@ export const COLS = 120;
  * desktop layout scaled down, ~6px cells at 390px.
  */
 export const MCOLS = 60;
-/** The columns of the grid before the square grid (scripts/migrate-square-grid.mjs). */
-export const OLD_COLS = 24;
-export const OLD_MCOLS = 12;
-/** The phone grid before it was 60 columns (scripts/migrate-links.mjs). */
-export const OLD_SQUARE_MCOLS = 24;
 /**
  * The size of a cell in px: a section's content width over its columns, floored to the
  * browser's layout unit (1/64 px) so a column and a row come out exactly as wide as tall

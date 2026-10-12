@@ -257,11 +257,7 @@ function checkSection(s, at) {
   const bad = (key, want) => out.push(`${where}: "${key}" must be ${want}`);
   if (!isId(s.id, 's')) bad('id', 'a section id like "s-k3x9"');
   if (s.height !== undefined && !HEIGHTS.includes(s.height))
-    bad(
-      'height',
-      `one of ${HEIGHTS.join(', ')}` +
-        (['auto', 'screen'].includes(s.height) ? ' (node scripts/migrate-sections.mjs)' : ''),
-    );
+    bad('height', `one of ${HEIGHTS.join(', ')}`);
   // custom: its minimum rows (only there)
   if (s.height === 'custom' && !whole(s.minRows, 1))
     bad('minRows', 'a whole number of rows from 1 (a custom height)');
@@ -269,9 +265,8 @@ function checkSection(s, at) {
     bad('minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
   else if (s.minRows !== undefined && s.height !== 'custom')
     bad('minRows', 'left out unless the height is custom');
-  // phones: a height of its own and, custom there, its rows (an old phone spacing: the
-  // migration, below)
-  if (s.mobile !== undefined && !(isObject(s.mobile) && 'spacing' in s.mobile)) {
+  // phones: a height of its own and, custom there, its rows
+  if (s.mobile !== undefined) {
     const { minRows, height, ...rest } = isObject(s.mobile) ? s.mobile : { x: 1 };
     const phone = HEIGHTS.includes(height) ? height : s.height;
     if (!isObject(s.mobile) || Object.keys(rest).length)
@@ -286,16 +281,7 @@ function checkSection(s, at) {
       bad('mobile.minRows', `a whole number of rows from 1 to ${MAX_MIN_ROWS}`);
   }
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
-  // rowHeight (the 8px-row grid's) is ignored on the square grid: a row is one cell
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  // removed: a section's aspect height, its space above / below (also the phone's,
-  // mobile.spacing: see mobile above), its own row count and where
-  // its content sits (always centred) (scripts/migrate-sections.mjs)
-  for (const key of ['aspect', 'spacing', 'mobile', 'rows', 'align'])
-    if (key === 'mobile' ? isObject(s.mobile) && 'spacing' in s.mobile : s[key] !== undefined)
-      out.push(
-        `${where}: "${key}" is no longer a section setting (node scripts/migrate-sections.mjs)`,
-      );
   if (!Array.isArray(s.blocks)) return [...out, `${where}: "blocks" must be a list`];
   return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
 }

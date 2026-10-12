@@ -331,15 +331,6 @@ every section is a grid of **blocks** (`src/site/layout/`):
   sizes at 1440px. On phones a style's cell is half a 60-column cell (the 120 grid's), so the
   text scales like the layout and the minimum takes over. Off (default): the style's normal
   fixed size from the stylesheets.
-  The site's content was moved to this once: content-sized blocks became `auto` with their
-  span at 1440px stored, so the pages look as they did (within a row, 8px, per section). The
-  square grid moved it again (`scripts/migrate-square-grid.mjs`): columns ×5 (phone areas ×2),
-  rows by their px edges over the 1440px cell, so pages look the same at 1440px (within a cell).
-  Free blocks and links moved it once more (`scripts/migrate-links.mjs`): a block without a
-  `size` (it was "rows, more when its content needs them") gets `rows`, a block that had blocks
-  above it in its columns (which pushed it) follows the lowest of them, and phone areas go from
-  24 to 60 columns (×2.5); the site's content had nothing to change (every block was `auto`,
-  one per section, none with a phone area).
 - **Placement** (`place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
   - `none` (default): in the grid.
   - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
@@ -420,16 +411,6 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
   for their own pieces (see Animations).
 - **A new type:** add it to a file in `src/site/blocks/` and to `BLOCK_TYPES` in `index.js`
   (and its styles); the editor shows it with no editor code.
-- **Migration:** `scripts/migrate-layout.mjs` turned the old list of typed sections into this
-  shape once (each old section became a section with it as one full-width block, its old
-  padding the section's spacing; later its old phone padding the section's `mobile.spacing`,
-  where it differs); kept for reference, it changes nothing on migrated content.
-  `scripts/migrate-sections.mjs` then dropped sections' space above and below (`spacing`,
-  `mobile.spacing`, without compensating: the space is set by hand as empty rows) and made
-  their height a minimum preset: `screen` (Fullscreen) → `full`, `auto` (Rows) / `aspect` →
-  `fit` (an `aspect` ratio dropped), and dropped `align` (content is always centred; `stretch`
-  was centred too) and `rows` (a section's rows are down to its lowest block; the site's
-  content had no empty rows below its blocks, so nothing moved).
 
 ### Bindings
 
@@ -823,11 +804,6 @@ intro, grids, album grids/panels, projects list) are gone: their targets were re
 isn't in the library (or a markup-only type) is a **Save error** in the editor and fails the
 build (`motionProblems`). Saving `animations.json` checks every page, so removing an animation
 that blocks still use is refused.
-
-**Migration.** `scripts/migrate-motion.mjs` moved the old hooks once: it gave intro, grid,
-albums, panels and projects blocks the `motion` that matches how they moved before (e.g.
-projects `{ "anim": "list-up", "trigger": "load" }`), added the new presets and removed the
-moved targets. It is idempotent and kept for reference.
 
 `prefers-reduced-motion` is respected everywhere: no block motion, drift/parallax/splits or
 scroll scrubs (content is simply shown), no pinning, instant album slides, a quick crossfade

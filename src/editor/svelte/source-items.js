@@ -51,7 +51,7 @@ export const slugify = (s) =>
  * What the editor shows for schema field `f` (a value at `path` in item i of `file`):
  * { key, label, path, edit, ptr, type (a widget), half, help, options ([[value, label]]) }.
  */
-export function fieldOf(file, i, path, f, label = f.label) {
+function fieldOf(file, i, path, f, label = f.label) {
   const ptr = pointer([i, ...path]);
   return {
     key: path.join('.'),

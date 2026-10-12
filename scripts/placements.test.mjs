@@ -1,4 +1,4 @@
-/** Phase 3 of the layout engine: block sizes, placements, the phone grid and phone spacing. */
+/** Phase 3 of the layout engine: block sizes, placements, the phone grid. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { checkContent } from '../src/site/validate.js';
@@ -21,7 +21,6 @@ import {
   sectionVars,
 } from '../src/site/layout/index.js';
 import { createStore } from '../src/editor/store.js';
-import { migratePage as migrateSections } from './migrate-sections.mjs';
 import {
   placeBlock,
   placeMobile,
@@ -32,7 +31,6 @@ import {
   setSection,
   setSectionRows,
 } from '../src/editor/layout-ops.js';
-import { migratePage, phoneSpacingOf, withPhoneSpacing } from './migrate-layout.mjs';
 
 const F = 'pages/test/index.json';
 const pos = { col: 3, span: 10, row: 5, rows: 20 };
@@ -143,7 +141,7 @@ test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always ce
   assert.deepEqual(of({ height: 'half', minRows: 8 }), [
     'section 1: "minRows" must be left out unless the height is custom',
   ]);
-  // an old one (not migrated yet) renders as fit; its rows, alignment and spacing are ignored
+  // an unknown height renders as fit; keys sections no longer have are ignored
   const old = sec([], { height: 'screen', align: 'bottom', rows: 9, spacing: { top: 4 } });
   assert.equal(sectionClass(old), 'sec');
   assert.equal(sectionVars(old), '--rows:1;--mrows:1');
@@ -178,37 +176,7 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
   ]);
 });
 
-test('migrate-sections: screen -> full, Rows -> fit; align, rows, aspect, spacing dropped; once', () => {
-  const s = sec([], {
-    height: 'aspect',
-    aspect: '16:9',
-    align: 'bottom',
-    rows: 12,
-    spacing: { top: 4, bottom: 2 },
-    mobile: { spacing: { top: 1 } },
-  });
-  const sections = [
-    s,
-    sec([], { id: 's-bbbb', height: 'screen', align: 'stretch', rows: 75, width: 'full' }),
-    sec([], { id: 's-cccc', height: 'auto', align: 'center', rows: 8 }),
-    sec([], { id: 's-dddd', name: 'Work', height: 'half' }),
-  ];
-  const page = { curtain: 'x', sections };
-  const next = migrateSections(page);
-  const strip = ({ id: _id, blocks: _b, ...rest }) => rest;
-  assert.deepEqual(next.sections.map(strip), [
-    { height: 'fit' },
-    { height: 'full', width: 'full' },
-    { height: 'fit' },
-    { name: 'Work', height: 'half' },
-  ]);
-  assert.equal(next.sections[3], page.sections[3]); // nothing to change: the same object
-  assert.equal(next.curtain, 'x');
-  assert.equal(migrateSections(next), next);
-  assert.deepEqual(checkContent(F, next), []);
-});
-
-test('validation: size, aspect, place, mobile; no section aspect or spacing', () => {
+test('validation: size, aspect, place, mobile', () => {
   const one = (b) => checkContent(F, { sections: [sec([blk(b)])] });
   const of = (s) => checkContent(F, { sections: [sec([], s)] });
   assert.deepEqual(
@@ -234,15 +202,11 @@ test('validation: size, aspect, place, mobile; no section aspect or spacing', ()
     `${where}: "mobile" must end by column 60 (col 56 + span 6)`,
   ]);
   assert.match(one({ mobile: { col: 1 } })[0], /"mobile.span" must be a whole number/);
-  const gone = (k) =>
-    `section 1: "${k}" is no longer a section setting (node scripts/migrate-sections.mjs)`;
   assert.deepEqual(of({ height: 'full' }), []);
-  assert.deepEqual(of({ height: 'aspect', aspect: '16:9', mobile: { spacing: { top: 3 } } }), [
+  assert.deepEqual(of({ height: 'aspect', mobile: { spacing: { top: 3 } } }), [
     'section 1: "height" must be one of custom, fit, third, half, full',
-    gone('aspect'),
-    gone('mobile'),
+    `section 1: "mobile" must be an object { height, minRows } (the phone's height and rows)`,
   ]);
-  assert.deepEqual(of({ spacing: { top: 1 } }), [gone('spacing')]);
 });
 
 test('ops: block settings, a phone area of its own, phone placement, reset; one undo each', () => {
@@ -424,23 +388,4 @@ test('phone height: its own, the desktop untouched; reset; rows, line and growth
   setPhoneHeight(store, F, 0, 'custom');
   assert.equal(s().mobile.minRows, 64); // its phone content (the block at phone row 60)
   assert.deepEqual(checkContent(F, store.current[F]), []);
-});
-
-test('migration: phone spacing from the old phone paddings, once', () => {
-  assert.deepEqual(phoneSpacingOf({ type: 'intro' }), { top: 15, bottom: 15 });
-  assert.deepEqual(phoneSpacingOf({ type: 'heading', title: 'x' }), { top: 16, bottom: 8 });
-  assert.equal(phoneSpacingOf({ type: 'hero' }), null);
-  assert.equal(phoneSpacingOf({ type: 'heading', config: { center: true } }), null);
-  assert.deepEqual(phoneSpacingOf({ type: 'projects' }), { top: 0, bottom: 13 });
-  const old = sec([blk({ type: 'about' })], { spacing: { top: 21, bottom: 16 } });
-  assert.deepEqual(withPhoneSpacing(old).mobile, { spacing: { top: 12, bottom: 15 } });
-  const edited = { ...old, spacing: { top: 20, bottom: 16 } };
-  assert.equal(withPhoneSpacing(edited), edited); // changed since: left alone
-  const page = { sections: [old] };
-  const next = migratePage(page);
-  assert.notEqual(next, page);
-  assert.equal(migratePage(next), next);
-  // migrating old content adds it too
-  const fresh = migratePage({ sections: [{ type: 'grid', config: {} }] });
-  assert.deepEqual(fresh.sections[0].mobile, { spacing: { top: 11, bottom: 13 } });
 });

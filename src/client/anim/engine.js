@@ -117,7 +117,7 @@ function blockTargets(el, spec) {
 }
 
 /** Stamp every [data-anim] element with its stable key (see header). */
-export function assignKeys(els, page = pageKey()) {
+function assignKeys(els, page = pageKey()) {
   const seen = {};
   for (const el of els) {
     const id = el.dataset.anim;

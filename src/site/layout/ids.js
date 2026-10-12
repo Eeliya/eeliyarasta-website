@@ -4,8 +4,6 @@
  * or block in the preview by its id; later, bindings and animations will point at them too.
  */
 
-export const ID = { section: 's', block: 'b' };
-
 /** Is `id` a section (kind 's') or block ('b') id? */
 export const isId = (id, kind) => new RegExp(`^${kind}-[a-z0-9]{4,12}$`).test(String(id ?? ''));
 

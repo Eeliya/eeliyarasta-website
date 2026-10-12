@@ -31,12 +31,11 @@ export const pageFile = (id) =>
       : `pages/${id}/index.json`;
 export const sourceFile = (id) => `sources/${id}.json`;
 export const schemaFile = (id) => `sources/${id}.schema.json`;
-export const settingsFile = (id) => `settings/${id}.json`;
+const settingsFile = (id) => `settings/${id}.json`;
 
 export const SITE = settingsFile('site');
 export const NAV = settingsFile('nav');
 export const ANIMATIONS = settingsFile('animations');
-export const HOME = pageFile('home');
 export const PHOTOS = settingsFile('photos');
 export const REDIRECTS = settingsFile('redirects');
 
@@ -53,7 +52,7 @@ export function pageIdOf(file) {
 }
 
 /** A URL segment and file name: lowercase letters, digits and dashes ("noor-vermeer"). */
-export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = (s) => SLUG.test(String(s ?? ''));
 
 /** The name of a template page (pages/people/[slug].json) and the last part of its id. */

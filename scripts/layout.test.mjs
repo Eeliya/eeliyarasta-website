@@ -5,8 +5,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadContent } from './content.mjs';
 import { save, renderOp } from './editor-server.mjs';
-import { migratePage } from './migrate-layout.mjs';
-import { migratePage as migrateSections } from './migrate-sections.mjs';
 import * as render from '../src/site/render.js';
 import { buildRoutes } from '../src/site/routes.js';
 import { setEditable } from '../src/site/helpers.js';
@@ -194,15 +192,9 @@ test('validation: the layout, then each block against its type', () => {
   ]);
   for (const height of ['fit', 'third', 'half', 'full'])
     assert.deepEqual(problems([ok({ height })]), [], height);
-  // the old ones: migrate (scripts/migrate-sections.mjs); its own rows and alignment are gone
-  assert.deepEqual(problems([ok({ height: 'screen', align: 'center', rows: 8 })]), [
-    'section 1: "height" must be one of custom, fit, third, half, full (node scripts/migrate-sections.mjs)',
-    'section 1: "rows" is no longer a section setting (node scripts/migrate-sections.mjs)',
-    'section 1: "align" is no longer a section setting (node scripts/migrate-sections.mjs)',
-  ]);
-  assert.deepEqual(problems([ok({ spacing: { top: 1 }, enabled: 'yes' })]), [
+  assert.deepEqual(problems([ok({ height: 'screen', enabled: 'yes' })]), [
+    'section 1: "height" must be one of custom, fit, third, half, full',
     'section 1: "enabled" must be true or false',
-    'section 1: "spacing" is no longer a section setting (node scripts/migrate-sections.mjs)',
   ]);
   const one = (b) => problems([section([{ id: 'b-aaaa', ...b }])]);
   assert.deepEqual(one({ title: 'x' }), ['section 1, block 1 needs a "type"']);
@@ -236,57 +228,6 @@ test('anchors: a named section renders its id; a clash with another id on the pa
     /\[anchors\] \/projects\/: section "Film scan rig" \(#film-scan-rig\) shares its id/,
   );
   assert.doesNotMatch(seen.join('\n'), /all-work/);
-});
-
-test('migration: each old section becomes a section with it as one full-width block', () => {
-  const old = {
-    curtain: 'x',
-    sections: [
-      { type: 'hero', title: 'Me', config: { enabled: true } },
-      { type: 'grid', label: 'People', config: { enabled: false, source: 'people' } },
-      { type: 'heading', title: '404', config: { center: true } },
-    ],
-  };
-  const next = migratePage(old);
-  assert.equal(next.curtain, 'x');
-  const [hero, grid, heading] = next.sections;
-  assert.deepEqual(
-    { ...hero, id: 0, blocks: hero.blocks.map((b) => ({ ...b, id: 0 })) },
-    {
-      id: 0,
-      height: 'screen',
-      align: 'stretch',
-      rows: 1,
-      width: 'full',
-      spacing: { top: 0, bottom: 0 },
-      enabled: true,
-      blocks: [
-        {
-          id: 0,
-          type: 'hero',
-          title: 'Me',
-          config: {},
-          pos: { col: 1, span: 24, row: 1, rows: 1 },
-        },
-      ],
-    },
-  );
-  assert.equal(grid.enabled, false);
-  assert.deepEqual(grid.blocks[0].config, { source: 'people' });
-  assert.deepEqual([grid.width, grid.spacing], ['contained', { top: 11, bottom: 14 }]);
-  assert.deepEqual([heading.height, heading.align], ['screen', 'center']);
-  assert.equal(idsOf(next.sections).size, 6);
-  assert.equal(migratePage(next), next); // once only
-  // (its spacing: then dropped by the later migrate-sections.mjs)
-  assert.deepEqual(checkContent('pages/x/index.json', migrateSections(next)), []);
-  // the site's own content is migrated and valid
-  for (const [pid, p] of Object.entries(content.pages)) {
-    assert.ok(
-      (p.sections || []).every((s) => Array.isArray(s.blocks)),
-      pid,
-    );
-    assert.equal(migratePage(p), p, pid);
-  }
 });
 
 test('ops: sections and blocks added, copied, moved, removed; one undo step each', () => {

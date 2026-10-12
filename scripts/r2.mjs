@@ -30,7 +30,7 @@ import { formatJSON } from '../src/editor/lib/json-format.js';
 import { writeFileAtomic } from './content.mjs';
 
 /** Image types an upload can be (they are stored as WebP). */
-export const IMAGE_TYPES = new Set([
+const IMAGE_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
@@ -99,7 +99,7 @@ async function check(res, what) {
  * PUT one object, signed with SigV4 (region "auto") including the hash of the bytes, so R2
  * rejects a body that changed on the way. Throws with R2's error code when it fails.
  */
-export async function putObject(cfg, { key, body, type }) {
+async function putObject(cfg, { key, body, type }) {
   const res = await client(cfg).fetch(objectUrl(cfg, key), {
     method: 'PUT',
     body,
@@ -113,7 +113,7 @@ export async function putObject(cfg, { key, body, type }) {
 }
 
 /** DELETE one object (SigV4 like putObject). A key that is already gone is fine (S3: 204). */
-export async function deleteObject(cfg, key) {
+async function deleteObject(cfg, key) {
   const res = await client(cfg).fetch(objectUrl(cfg, key), {
     method: 'DELETE',
     headers: { 'X-Amz-Content-Sha256': sha256('') },

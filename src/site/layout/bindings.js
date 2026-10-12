@@ -69,12 +69,6 @@ export function itemOf(ctx, route, block) {
   return { item: null, source: null };
 }
 
-/** The source fields a block field of bind type `type` can bind to: [{ key, label, type }]. */
-export function bindableFields(ctx, source, type) {
-  const fits = BIND_TYPES[type] || [];
-  return (schemaOf(ctx, source)?.fields || []).filter((f) => fits.includes(f.type));
-}
-
 /** The field keys of a source (its schema), null without a source. */
 export const keysOf = (ctx, source) =>
   source ? new Set((schemaOf(ctx, source)?.fields || []).map((f) => f.key)) : null;
@@ -130,7 +124,7 @@ export function resolve(
 }
 
 /** Does `block` (or its config's links) hold any binding? */
-export const hasBindings = (block, t) =>
+const hasBindings = (block, t) =>
   [...(t?.fields || []).map((f) => block?.[f.key]), ...Object.values(block?.config || {})].some(
     (v) =>
       isBound(v) ||
@@ -166,7 +160,7 @@ export function resolveBlock(block, t, { item, source, ctx, at, placeholders = f
  * The bound values of a block: [{ path, bind } | { path, names }] with each one's bind type
  * (bindTypeOf); path: from the block, e.g. ['title'] or ['config', 'href'] or ['meta', 0, 'value'].
  */
-export function bindingsOf(block, t) {
+function bindingsOf(block, t) {
   const out = [];
   const add = (path, v, type) => {
     if (isBinding(v)) out.push({ path, bind: v.bind, type });

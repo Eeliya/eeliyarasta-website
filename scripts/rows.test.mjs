@@ -2,8 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveRows, rowsFor } from '../src/site/layout/flow.js';
-import { rowsOf, sectionVars } from '../src/site/layout/index.js';
-import { checkContent } from '../src/site/validate.js';
+import { rowsOf } from '../src/site/layout/index.js';
 import { createStore } from '../src/editor/store.js';
 import { placeBlock, placeMobile, setSection } from '../src/editor/layout-ops.js';
 
@@ -41,14 +40,6 @@ test('section rows: its lowest block now, plus the empty rows it had below', () 
   assert.equal(grow.rows, 34);
   const shrink = resolveRows([b('a', 1, 24, 1, 20, 12), b('c', 1, 24, 2, 4, 4)], 20);
   assert.equal(shrink.rows, 12);
-});
-
-test('row height: the old per-section rowHeight is ignored (a row is one square cell)', () => {
-  assert.equal(sectionVars({ rows: 3, rowHeight: 12 }), sectionVars({ rows: 3 }));
-  assert.doesNotMatch(sectionVars({ rows: 3, rowHeight: 12 }), /--grid-row|--cell/);
-  const page = (s) => ({ sections: [{ id: 's-aaaa', blocks: [], ...s }] });
-  const F = 'pages/t/index.json';
-  for (const any of [16, 3, '8']) assert.deepEqual(checkContent(F, page({ rowHeight: any })), []);
 });
 
 test('sections count every block by its stored rows (aspect and auto too)', () => {
@@ -125,8 +116,8 @@ test("a drag stores where the section's blocks are now (their real rows), one un
   });
   assert.ok(!('mobile' in store.current[F].sections[0].blocks[0]));
   // a section setting set and removed again
-  setSection(store, F, 0, { rowHeight: 12 });
-  assert.equal(store.current[F].sections[0].rowHeight, 12);
-  setSection(store, F, 0, { rowHeight: undefined });
-  assert.equal('rowHeight' in store.current[F].sections[0], false);
+  setSection(store, F, 0, { name: 'Intro' });
+  assert.equal(store.current[F].sections[0].name, 'Intro');
+  setSection(store, F, 0, { name: undefined });
+  assert.equal('name' in store.current[F].sections[0], false);
 });

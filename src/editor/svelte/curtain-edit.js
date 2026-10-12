@@ -52,7 +52,7 @@ const digRel = (obj, rel) =>
  * One clamp for every edit path. Returns { min, max } for `field` given a frozen plan.
  * Enter bars cannot pass leave bars; the leave end is pinned to total.
  */
-export function limits(field, plan) {
+function limits(field, plan) {
   const t = plan.total;
   const cIn1 = plan.curtainIn[1];
   const cOut0 = plan.curtainOut[0];

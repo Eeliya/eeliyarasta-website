@@ -20,7 +20,7 @@
  *   { mode: 'off' }                 no curtain when navigating to this page (a plain fade)
  * The page you go to decides: leaving a page with its own curtain (or none) changes nothing.
  */
-export const CURTAIN_DEFAULTS = {
+const CURTAIN_DEFAULTS = {
   in: { duration: 0.7, ease: 'expo.inOut' },
   labelIn: { duration: 0.45, ease: 'expo.out' },
   labelOut: { duration: 0.35, ease: 'power2.in' },

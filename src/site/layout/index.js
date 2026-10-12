@@ -67,17 +67,7 @@ import { COLS, phoneAreaOf, placeOf } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, scaled } from './type.js';
 
-export {
-  COLS,
-  MCOLS,
-  OLD_COLS,
-  OLD_MCOLS,
-  cellOf,
-  halfArea,
-  hasMobileArea,
-  phoneAreaOf,
-  placeOf,
-} from './grid.js';
+export { COLS, MCOLS, cellOf, halfArea, hasMobileArea, phoneAreaOf, placeOf } from './grid.js';
 export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
 /** A section's minimum height: its content, or a third, a half or all of the screen's. */
 export const HEIGHTS = ['custom', 'fit', 'third', 'half', 'full'];
@@ -106,7 +96,7 @@ export const mobileMinRowsOf = (s) => {
 };
 export const WIDTHS = ['contained', 'full'];
 /** Ids the page's own templates use: no section is named one of them. */
-export const RESERVED_IDS = ['main', 'portal', 'page-curtains', 'accent-init', 'mobile-menu'];
+const RESERVED_IDS = ['main', 'portal', 'page-curtains', 'accent-init', 'mobile-menu'];
 
 /** A section's height preset ('fit' when unset or unknown). */
 export const heightOf = (s) => (HEIGHTS.includes(s?.height) ? s.height : 'fit');
@@ -114,7 +104,7 @@ export const heightOf = (s) => (HEIGHTS.includes(s?.height) ? s.height : 'fit');
 /** A section name's anchor: "Our People" -> "our-people" ('' when it has no letters or digits). */
 export const anchorOf = (name) => slugify(typeof name === 'string' ? name : '');
 /** Whether an anchor can be a section's id: a letter first (a number is an album photo's hash). */
-export const isAnchor = (a) => /^[a-z][a-z0-9-]*$/.test(a) && !RESERVED_IDS.includes(a);
+const isAnchor = (a) => /^[a-z][a-z0-9-]*$/.test(a) && !RESERVED_IDS.includes(a);
 /** A block's height: its content (the default), its width × an aspect ratio, or fixed rows. */
 export const SIZES = ['auto', 'aspect', 'rows'];
 export const ASPECTS = ['1:1', '4:5', '3:4', '2:3', '3:2', '16:9', '21:9'];

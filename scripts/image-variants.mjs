@@ -6,7 +6,7 @@
  * blurred placeholder (LQIP) and the most vivid colour (album accents).
  */
 export const WIDTHS = [480, 960, 1600];
-export const QUALITY = 78;
+const QUALITY = 78;
 export const FORMAT = { ext: 'webp', type: 'image/webp' };
 
 /** sharp, or null when it isn't installed. */
@@ -46,7 +46,7 @@ const hex = ({ r, g, b }) =>
  * mid-lightness, return the average colour of the strongest bucket. Greyscale
  * images return a grey (templates then fall back to the site accent).
  */
-export async function vividColor(sharp, input) {
+async function vividColor(sharp, input) {
   const { data, info } = await sharp(input)
     .resize(32, 32, { fit: 'cover' })
     .removeAlpha()

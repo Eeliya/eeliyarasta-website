@@ -5,7 +5,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadContent } from './content.mjs';
 import { save } from './editor-server.mjs';
-import { ADDED, MOVED, migrateAnimations, migratePage, motionOf } from './migrate-motion.mjs';
 import { motionChecks } from '../src/site/render.js';
 import { checkContent } from '../src/site/validate.js';
 import { BLOCK_TYPES } from '../src/site/blocks/index.js';
@@ -117,27 +116,6 @@ test('save refuses a block with an unknown animation', () => {
   blk.motion = { anim: 'fade-scrub', start: 'top 70%' };
   assert.equal(save(root, { [F]: page }).status, 200);
   fs.rmSync(root, { recursive: true });
-});
-
-test('migrate-motion: block motion from the old hooks, idempotent', () => {
-  assert.deepEqual(motionOf({ type: 'intro' }), { anim: 'scrub-words' });
-  assert.deepEqual(motionOf({ type: 'grid', config: { source: 'places' } }), {
-    anim: 'grid-reveal',
-    stagger: 0.15,
-  });
-  assert.equal(motionOf({ type: 'albums' }).trigger, 'load');
-  const page = {
-    sections: [{ blocks: [{ type: 'intro' }, { type: 'grid', motion: { anim: 'x' } }] }],
-  };
-  const once = migratePage(page);
-  assert.deepEqual(once.sections[0].blocks[0].motion, { anim: 'scrub-words' });
-  assert.deepEqual(once.sections[0].blocks[1].motion, { anim: 'x' });
-  assert.equal(migratePage(once), once);
-  const cfg = migrateAnimations({ presets: {}, targets: { [MOVED[0]]: {}, keep: {} } });
-  assert.deepEqual(Object.keys(cfg.targets), ['keep']);
-  assert.deepEqual(Object.keys(cfg.presets), Object.keys(ADDED));
-  assert.equal(migrateAnimations(cfg), cfg);
-  assert.equal(migrateAnimations(content.animations), content.animations);
 });
 
 test('editor: a block layer over its animation, inherit and keep', () => {

@@ -22,7 +22,7 @@ export const TITLE_MAX = 60;
 export const DESCRIPTION_MAX = 160;
 
 /** The site's address without a trailing slash. */
-export const siteBase = (site) => String(site?.url || '').replace(/\/+$/, '');
+const siteBase = (site) => String(site?.url || '').replace(/\/+$/, '');
 
 /** A path or URL made absolute on the site ("/about/" -> "https://eeliyarasta.com/about/"). */
 export const absolute = (site, url) => (isExternal(url) ? url : siteBase(site) + url);

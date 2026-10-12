@@ -46,7 +46,7 @@ const MOTION_PICK = '[data-anim], [data-block]';
 const ACTIVE = 'a, button, [role="button"], label, summary, input, select, textarea';
 
 const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-export const parseEdit = (attr) => {
+const parseEdit = (attr) => {
   const i = attr.indexOf('#');
   return { file: attr.slice(0, i), ptr: attr.slice(i + 1) };
 };

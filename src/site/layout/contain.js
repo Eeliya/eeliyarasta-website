@@ -19,7 +19,7 @@ import { COLS } from './grid.js';
 export const CONTAINED = 115;
 export const CONTAINED_MIN = 60;
 /** --pad in _tokens.scss: clamp(16px, 2.6vw, 40px). */
-export const padAt = (vw) => Math.min(40, Math.max(16, vw * 0.026));
+const padAt = (vw) => Math.min(40, Math.max(16, vw * 0.026));
 
 /** site.json's contained columns (the default when unset or invalid). */
 export function containedOf(site) {

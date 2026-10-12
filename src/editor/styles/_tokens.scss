@@ -84,8 +84,8 @@
   --c-text: var(--fg);
   // opaque text tones (alpha fills are expensive to paint in the editor): composited from
   // rgb(242 239 233 / a) over --c-bg
-  --c-text-muted: var(--gray-86); // was / 0.55
-  --c-text-faint: var(--gray-4f); // was / 0.32
+  --c-text-muted: var(--gray-86);
+  --c-text-faint: var(--gray-4f);
   --c-text-dim: var(--solid-faint);
   --c-text-soft: var(--gray-c1);
   --c-line: var(--line);

@@ -7,7 +7,7 @@
  *
  * The block's own content (texts, photos) sits next to its type; how it works (which source
  * it pulls, its look, on/off) is under "config"; where it sits is the layout's (id, pos, z,
- * mobile: see LAYOUT_KEYS, never a field key). A type:
+ * mobile: layout keys, never a field key). A type:
  *
  *   type      its name in the content
  *   label     its name in the editor; icon: a Font Awesome icon name (no "fa-")
@@ -54,22 +54,6 @@ export const BLOCK_TYPES = Object.fromEntries(
     album,
   ].map((t) => [t.type, t]),
 );
-
-/** Keys of a block that belong to the layout, not to its type's content. */
-export const LAYOUT_KEYS = [
-  'id',
-  'type',
-  'config',
-  'pos',
-  'z',
-  'mobile',
-  'size',
-  'aspect',
-  'place',
-  'motion',
-  'link',
-  'scale',
-];
 
 /**
  * What the preview can't show without rendering the block again: its type, content and

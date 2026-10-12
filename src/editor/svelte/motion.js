@@ -302,7 +302,7 @@ export const GROUPS = {
  * Add or remove a key here to move fields between the two.
  */
 export const TIMING_KEYS = new Set(TIMING_LIST);
-export const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
+const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
 export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.path);
 
 /**

@@ -42,7 +42,7 @@ export function repoEnv(env = process.env, extra = {}) {
 }
 
 /** The test identity, as environment (no `git config` writes). */
-export const TEST_IDENTITY = {
+const TEST_IDENTITY = {
   GIT_AUTHOR_NAME: 'Test',
   GIT_AUTHOR_EMAIL: 'test@example.com',
   GIT_COMMITTER_NAME: 'Test',

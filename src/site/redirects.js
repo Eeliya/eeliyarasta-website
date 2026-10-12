@@ -18,10 +18,8 @@ import { PHOTOS, REDIRECTS, TEMPLATE, contentFromFiles } from './files.js';
 import { getRoutes, pathOfId } from './routes.js';
 import { isExternal } from './helpers.js';
 
-export const STATUSES = [301, 302];
-
 /** "/people/:slug/": the paths of a template's item pages, as a redirect pattern. */
-export const itemPattern = (id) => `${pathOfId(id)}:slug/`;
+const itemPattern = (id) => `${pathOfId(id)}:slug/`;
 
 /** The redirect list of `files` (empty when there is none). */
 export const redirectsOf = (files) =>

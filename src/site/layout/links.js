@@ -17,7 +17,7 @@ import { hasMobileArea } from './grid.js';
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /** A link as stored, checked for shape only: { to, gap } or null. */
-export const linkShape = (l) =>
+const linkShape = (l) =>
   isObject(l) && typeof l.to === 'string' && l.to && Number.isInteger(l.gap ?? 0)
     ? { to: l.to, gap: l.gap ?? 0 }
     : null;

@@ -27,7 +27,6 @@ import {
   placeMobile,
   removeBlock,
 } from '../src/editor/layout-ops.js';
-import { migrateSection, pusherOf, widenPhone } from './migrate-links.mjs';
 
 const it = (id, row, rows, need, link = null) => ({ id, col: 1, span: 120, row, rows, need, link });
 const to = (id, gap = 0) => ({ to: id, gap });
@@ -263,35 +262,4 @@ test('scaled text: per block, by its styles; site typography over the defaults',
     checkContent('settings/site.json', { name: 'x', url: 'y', typography: 3 })[0],
     /typography/,
   );
-});
-
-test('migration: no size -> fixed rows, pushes -> links, phone areas 24 -> 60 columns', () => {
-  assert.deepEqual(widenPhone({ col: 13, span: 12, row: 3, rows: 4 }), {
-    col: 31,
-    span: 30,
-    row: 6,
-    rows: 10,
-  });
-  const areas = {
-    a: { col: 1, span: 60, row: 1, rows: 10 },
-    b: { col: 61, span: 60, row: 1, rows: 14 },
-    c: { col: 1, span: 120, row: 18, rows: 4 },
-    d: { col: 61, span: 60, row: 30, rows: 2 },
-  };
-  assert.deepEqual(pusherOf('c', areas), { to: 'b', gap: 3 }); // the lowest above it
-  assert.deepEqual(pusherOf('d', areas), { to: 'c', gap: 8 });
-  assert.equal(pusherOf('a', areas), null);
-  const s = migrateSection({
-    id: 's-aaaa',
-    blocks: [
-      { id: 'b-aaaa', type: 'text', size: 'auto', pos: areas.a },
-      { id: 'b-cccc', type: 'text', pos: areas.c, mobile: { col: 1, span: 24, row: 9, rows: 2 } },
-      { id: 'b-ffff', type: 'text', place: 'fixed-top-left', pos: areas.d },
-    ],
-  });
-  assert.equal(s.blocks[0].size, 'auto');
-  assert.equal(s.blocks[1].size, 'rows');
-  assert.deepEqual(s.blocks[1].link, { to: 'b-aaaa', gap: 7 });
-  assert.deepEqual(s.blocks[1].mobile, { col: 1, span: 60, row: 21, rows: 5 });
-  assert.ok(!('link' in s.blocks[2])); // a fixed block wasn't pushed
 });

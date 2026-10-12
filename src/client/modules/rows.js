@@ -98,7 +98,7 @@ function linkOfEl(el, phone) {
  * Set a section's --cell from its content width now (the phone grid's 60 columns on the
  * phone, else 120); returns the cell in px (0 when it has no width, e.g. hidden).
  */
-export function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedStyle(sec)) {
+function measureCell(sec, phone = matchMedia(PHONE).matches, cs = getComputedStyle(sec)) {
   let width = parseFloat(cs.width) || 0; // its used width (not transformed, not rounded)
   if (cs.boxSizing === 'border-box')
     width -=
@@ -119,7 +119,7 @@ function minHeightOf(sec, cs) {
 }
 
 /** Flow one section; true when something moved. */
-export function flowSection(sec, phone = matchMedia(PHONE).matches) {
+function flowSection(sec, phone = matchMedia(PHONE).matches) {
   if (document.documentElement.hasAttribute('data-flow-hold')) return false;
   if (sec.hidden) return clear(sec);
   const before = sec.style.getPropertyValue('--cell');
@@ -175,7 +175,7 @@ export function flowSection(sec, phone = matchMedia(PHONE).matches) {
 }
 
 /** Flow every section of `root`; true when something moved. */
-export function flowAll(root = document) {
+function flowAll(root = document) {
   const phone = matchMedia(PHONE).matches;
   let changed = false;
   for (const sec of root.querySelectorAll('.sec')) changed = flowSection(sec, phone) || changed;
