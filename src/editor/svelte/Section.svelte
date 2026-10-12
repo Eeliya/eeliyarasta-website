@@ -20,52 +20,52 @@
     children  the section body
 -->
 <script>
-  import { ui } from './ui.svelte.js';
+    import {ui} from './ui.svelte.js';
 
-  let {
-    title,
-    icon = '',
-    name = '',
-    key = '',
-    open = true,
-    id = null,
-    off = false,
-    class: cls = '',
-    bar,
-    children,
-  } = $props();
+    let {
+        title,
+        icon = '',
+        name = '',
+        key = '',
+        open = true,
+        id = null,
+        off = false,
+        class: cls = '',
+        bar,
+        children,
+    } = $props();
 
-  const uid = $props.id();
-  let toggled = $state(null); // open/closed of a section without a key
-  const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
+    const uid = $props.id();
+    let toggled = $state(null); // open/closed of a section without a key
+    const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
 
-  function toggle() {
-    if (key) ui.sections[key] = !isOpen;
-    else toggled = !isOpen;
-  }
+    function toggle() {
+        if (key) ui.sections[key] = !isOpen;
+        else toggled = !isOpen;
+    }
 </script>
 
 <section class={['sec', off && 'is-off', cls]} data-section={id}>
-  <div class="sec__bar">
-    <button
-      type="button"
-      class="sec__toggle"
-      aria-expanded={isOpen}
-      aria-controls="{uid}-body"
-      onclick={toggle}
-    >
-      <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
-      <span>
+    <div class="sec__bar">
+        <button
+                type="button"
+                class="sec__toggle"
+                aria-expanded={isOpen}
+                aria-controls="{uid}-body"
+                onclick={toggle}
+        >
+            <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
+            <span>
         {#if icon}<i class="fa-solid fa-{icon} sec__icon" aria-hidden="true"></i>{/if}
-        {title}
+                {title}
       </span>
-      {#if name}<strong>{name}</strong>{/if}
-    </button>
-    {@render bar?.()}
-  </div>
-  <div class="sec__body" id="{uid}-body" hidden={!isOpen}>
-    {@render children?.()}
-  </div>
+            {#if name}<strong>{name}</strong>{/if}
+        </button>
+        {@render bar?.()}
+    </div>
+    <div class="sec__body" id="{uid}-body" hidden={!isOpen}>
+        {@render children?.()}
+    </div>
 </section>
 
 <style lang="scss">

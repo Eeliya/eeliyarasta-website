@@ -799,10 +799,5 @@ dialog.modal__box {
 // a section row whose section the pointer is over in the preview (SectionsList.svelte): faint
 // white, not the accent (that is the selection's)
 [data-section].is-peek {
-  //border-radius: 8px;
-  //outline: 1px solid rgb(255 255 255 / 0.2);
-  //outline-offset: 4px;
   background: var(--solid-card-peek) !important;
-  //border-color: var(--solid-faint) !important;
-  //box-shadow: 0 0 2px 1px  var(--solid-faint);
 }
