@@ -285,12 +285,13 @@
         removeSection(live.store, file, at),
       )}{/if}
 
-    <!-- Name (its #anchor under it) the whole row; then Height | Width, two halves -->
+    <!-- Name (no label: its placeholder says it; its #anchor under it) the whole row; then Height | Width, two halves -->
     <div class="fields">
       <Field
         edit="{file}#/sections/{at}/name"
         label="Name"
-        placeholder="e.g. Our people"
+        bare
+        placeholder="Name"
         value={s.name ?? ''}
         help={hintOf(s, at)}
         changed={changed(at, 'name')}

@@ -2,7 +2,7 @@
   One field: a label (name, changed dot and, for a value from a source list, a button naming
   its file, e.g. people.json, that opens it in the Source Explorer) with an input, or a
   textarea for longer text, a switch (boolean) or a Select (select, options [[value, label]]).
-  help: a hint under it; half: it shares a row with the next field (the parent's grid).
+  bare: no label row (label is the input's aria-label; say it in the placeholder); help: a hint under it; half: it shares a row with the next field (the parent's grid).
   type 'image': a photo (its media/ path or R2 key) as a thumbnail with its file name and
   sizes; the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
   stores the photo picked there in this field: one undo step. No text input.
@@ -57,6 +57,7 @@
     binds = null,
     formats = false,
     resolved = '',
+    bare = false,
   } = $props();
 
   const uid = $props.id();
@@ -114,38 +115,42 @@
   class={['tf', changed && 'is-changed', selected && 'is-selected', half && 'is-half']}
   data-edit={edit}
 >
-  <span class="tf__label">
-    {label}<i class="dot" title="Changed"></i>
-    {#if type === 'boolean'}
-      <input
-        type="checkbox"
-        class="switch"
-        checked={!!value}
-        {onfocus}
-        onchange={(e) => onvalue(e.currentTarget.checked)}
-      />
-    {/if}
-    {#if binds && (binds.length || bound)}
-      <span class="tf__bind" class:is-on={bound}>Source</span>
-      <input
-        type="checkbox"
-        role="switch"
-        class="switch"
-        aria-label="{label}: from the item"
-        title={bound
-          ? 'Shows a field of the item (off: own text)'
-          : 'Own text (on: a field of the item)'}
-        checked={bound}
-        {onfocus}
-        onchange={(e) => setBound(e.currentTarget.checked)}
-      />
-    {/if}
-    {#if source}
-      <Button size="small" title="Edit in the Source Explorer: content/{source}" onclick={onsource}>
-        {baseName(source)}
-      </Button>
-    {/if}
-  </span>
+  {#if !bare}<span class="tf__label">
+      {label}<i class="dot" title="Changed"></i>
+      {#if type === 'boolean'}
+        <input
+          type="checkbox"
+          class="switch"
+          checked={!!value}
+          {onfocus}
+          onchange={(e) => onvalue(e.currentTarget.checked)}
+        />
+      {/if}
+      {#if binds && (binds.length || bound)}
+        <span class="tf__bind" class:is-on={bound}>Source</span>
+        <input
+          type="checkbox"
+          role="switch"
+          class="switch"
+          aria-label="{label}: from the item"
+          title={bound
+            ? 'Shows a field of the item (off: own text)'
+            : 'Own text (on: a field of the item)'}
+          checked={bound}
+          {onfocus}
+          onchange={(e) => setBound(e.currentTarget.checked)}
+        />
+      {/if}
+      {#if source}
+        <Button
+          size="small"
+          title="Edit in the Source Explorer: content/{source}"
+          onclick={onsource}
+        >
+          {baseName(source)}
+        </Button>
+      {/if}
+    </span>{/if}
   {#if bound}
     <Select
       id={uid}
@@ -210,6 +215,7 @@
       id={uid}
       class={['tf__input', invalid && 'is-invalid']}
       type={type === 'number' || type === 'date' ? type : 'text'}
+      aria-label={bare ? label : undefined}
       spellcheck={type !== 'number'}
       {placeholder}
       {@attach show(value)}
