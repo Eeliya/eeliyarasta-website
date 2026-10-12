@@ -18,8 +18,12 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
+  Opening and closing animate the body's height and opacity (GSAP, 0.25s power2.out; the
+  column's gap with it, so nothing jumps at the end); none with prefers-reduced-motion.
 -->
 <script>
+  import { untrack } from 'svelte';
+  import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
 
   let {
@@ -38,6 +42,41 @@
   const uid = $props.id();
   let toggled = $state(null); // open/closed of a section without a key
   const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
+
+  // the body is shown while it is open or still closing
+  let body = $state();
+  let shown = $state(untrack(() => isOpen));
+  let first = true;
+  $effect(() => {
+    const opening = isOpen;
+    if (first) {
+      first = false;
+      return;
+    }
+    untrack(() => slide(opening));
+  });
+  function slide(opening) {
+    gsap.killTweensOf(body);
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (opening) shown = true;
+    if (still) {
+      shown = opening;
+      return;
+    }
+    const gap = parseFloat(getComputedStyle(body.parentElement).rowGap) || 0;
+    const shut = { height: 0, opacity: 0, marginTop: -gap };
+    const full = { height: body.scrollHeight, opacity: 1, marginTop: 0 };
+    gsap.fromTo(body, opening ? shut : { ...full, height: body.offsetHeight }, {
+      ...(opening ? full : shut),
+      duration: 0.25,
+      ease: 'power2.out',
+      overflow: 'hidden',
+      onComplete: () => {
+        if (!opening) shown = false;
+        gsap.set(body, { clearProps: 'height,opacity,marginTop,overflow' });
+      },
+    });
+  }
 
   function toggle() {
     if (key) ui.sections[key] = !isOpen;
@@ -63,7 +102,7 @@
     </button>
     {@render bar?.()}
   </div>
-  <div class="sec__body" id="{uid}-body" hidden={!isOpen}>
+  <div class="sec__body" id="{uid}-body" hidden={!shown} bind:this={body}>
     {@render children?.()}
   </div>
 </section>
