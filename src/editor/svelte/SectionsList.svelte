@@ -25,6 +25,7 @@
     moveSection,
     removeBlock,
     removeSection,
+    setPhoneHeight,
     setSection,
     setSectionRows,
   } from '../layout-ops.js';
@@ -33,6 +34,7 @@
     anchorOf,
     heightOf,
     mobileMinRowsOf,
+    phoneHeightOf,
     nameProblems,
     rowsOf,
   } from '../../site/layout/index.js';
@@ -76,16 +78,12 @@
   // Height and Width: one picked of a group (only a change is written: one undo step)
   const pick = (at, key, value, now) => {
     if (value === now) return;
+    if (key === 'phoneHeight') return setPhoneHeight(live.store, file, at, value);
     if (key !== 'height') return set(at, { [key]: value });
     // custom: its rows to start from (its last ones, or its content's); others: none
     const s = sections[at];
-    // (its own phone rows go with it)
-    const custom = value === 'custom';
-    set(at, {
-      height: value,
-      minRows: custom ? s.minRows || rowsOf(s) : undefined,
-      ...(custom ? {} : { mobile: undefined }),
-    });
+    // (its own phone rows go when the phone isn't custom then: setSection)
+    set(at, { height: value, minRows: value === 'custom' ? s.minRows || rowsOf(s) : undefined });
   };
   // the phone preview shows and edits a custom height's own phone rows (mobile.minRows)
   const phoneView = $derived(ui.viewport === 'mobile');
@@ -185,13 +183,27 @@
 
 <!-- a setting as a half field (.tf: the same label row as a Field) of quiet icon buttons, one
      picked: Height and Width. options: [value, label, its icon's argument] -->
-{#snippet choices(at, key, title, options, now, icon)}
+{#snippet choices(at, key, title, options, now, icon, reset = null)}
   {@const id = `${sections[at].id}-${key}`}
+  {@const ptr = key === 'phoneHeight' ? 'mobile/height' : key}
   <div
-    class={['tf', 'is-half', changed(at, key) && 'is-changed']}
-    data-edit="{file}#/sections/{at}/{key}"
+    class={['tf', 'is-half', changed(at, ptr) && 'is-changed']}
+    data-edit="{file}#/sections/{at}/{ptr}"
   >
-    <span class="tf__label" {id}>{title}<i class="dot" title="Changed"></i></span>
+    <span class="tf__label" {id}
+      >{title}<i class="dot" title="Changed"></i>
+      {#if reset}
+        <!-- its own phone height: back to the desktop's -->
+        <button
+          type="button"
+          class="hreset"
+          title="Reset phone height (follow the desktop)"
+          aria-label="Reset phone height"
+          disabled={!reset.on}
+          onclick={reset.run}><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button
+        >
+      {/if}</span
+    >
     <div class="hset" role="radiogroup" aria-labelledby={id}>
       {#each options as [value, label, arg] (value)}
         <button
@@ -283,9 +295,25 @@
         onvalue={(name) => setName(at, name)}
       />
       <!-- Height (a minimum; its content always centred) | Width: icon buttons, one picked -->
-      {@render choices(at, 'height', 'Height', HEIGHTS, heightOf(s), heightIcon)}
+      {#if phoneView}
+        <!-- the phone preview: its phone height (its own, else the desktop's) -->
+        {@render choices(
+          at,
+          'phoneHeight',
+          s.mobile?.height ? 'Phone height' : 'Phone height (desktop)',
+          HEIGHTS,
+          phoneHeightOf(s),
+          heightIcon,
+          {
+            on: !!s.mobile?.height,
+            run: () => setPhoneHeight(live.store, file, at, undefined),
+          },
+        )}
+      {:else}
+        {@render choices(at, 'height', 'Height', HEIGHTS, heightOf(s), heightIcon)}
+      {/if}
       {@render choices(at, 'width', 'Width', WIDTHS, widthOf(s), widthIcon)}
-      {#if heightOf(s) === 'custom'}
+      {#if (phoneView ? phoneHeightOf(s) : heightOf(s)) === 'custom'}
         <!-- custom: its rows (square cells, from the top; those below its last block are empty
              space; on phones half as many) -->
         <Field
@@ -297,7 +325,7 @@
           help={phoneView
             ? 'Phone only; unset: half the desktop rows'
             : 'Rows below the last block are space (phones: their own, or half)'}
-          changed={changed(at, 'minRows')}
+          changed={changed(at, phoneView ? 'mobile/minRows' : 'minRows')}
           onvalue={(v) => setMinRows(at, v)}
         />
       {/if}
@@ -408,6 +436,35 @@
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px var(--line);
     justify-self: start;
+  }
+
+  // the phone height's reset: a quiet icon in its label row
+  .hreset {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--fg);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 1px var(--ed-accent);
+    }
   }
 
   .hset__btn {

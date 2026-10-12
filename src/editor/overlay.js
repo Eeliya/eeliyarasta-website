@@ -584,8 +584,8 @@ export function createOverlay({
   function minOf(sec, phone) {
     return parseInt(sec?.style.getPropertyValue(phone ? '--mminrows' : '--minrows'), 10) || 0;
   }
-  const customOf = (sec) =>
-    sec && !sec.hidden && sec.classList.contains('sec--h-custom') ? sec : null;
+  // custom on the grid shown (the phone's height on the phone: its --mminrows)
+  const customOf = (sec) => (sec && !sec.hidden && minOf(sec, mobile()) ? sec : null);
 
   function startRows(e) {
     const sec = customOf(hoverSec) || customOf(secOf(blockEl(ui.block)));

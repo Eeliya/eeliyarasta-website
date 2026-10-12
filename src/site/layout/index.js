@@ -89,14 +89,20 @@ export const minRowsOf = (s) =>
     ? Math.min(s.minRows, MAX_MIN_ROWS)
     : 0;
 /**
- * A custom section's phone rows: its own (mobile.minRows, set in the phone preview), or its
- * desktop rows halved, rounded up; 0 when it isn't custom.
+ * A section's height on phones: its own (mobile.height, set in the phone preview), else its
+ * desktop height.
+ */
+export const phoneHeightOf = (s) =>
+  HEIGHTS.includes(s?.mobile?.height) ? s.mobile.height : heightOf(s);
+/**
+ * A section's phone rows when its phone height is custom: its own (mobile.minRows), or its
+ * desktop rows halved, rounded up; 0 otherwise (also custom without rows: as fit).
  */
 export const mobileMinRowsOf = (s) => {
-  const min = minRowsOf(s);
-  if (!min) return 0;
+  if (phoneHeightOf(s) !== 'custom') return 0;
   const own = s.mobile?.minRows;
-  return Number.isInteger(own) && own >= 1 ? Math.min(own, MAX_MIN_ROWS) : Math.ceil(min / 2);
+  if (Number.isInteger(own) && own >= 1) return Math.min(own, MAX_MIN_ROWS);
+  return Math.ceil(minRowsOf(s) / 2);
 };
 export const WIDTHS = ['contained', 'full'];
 /** Ids the page's own templates use: no section is named one of them. */
@@ -183,20 +189,31 @@ export function mobileRowsOf(section) {
 
 /** The CSS variables of a section's element. */
 export function sectionVars(s) {
-  const min = minRowsOf(s);
-  if (!min) return `--rows:${rowsOf(s)};--mrows:${mobileRowsOf(s)}`;
   // custom: that many rows, its blocks where they are from the top, the rows below the last
-  // one empty space (more when its content needs more); the phone's halved, like a block's
-  // area there, unless it has phone rows of its own (mobile.minRows). rows.js keeps it so as
-  // the content grows (--minrows / --mminrows)
+  // one empty space (more when its content needs more); on phones its phone height's (its own
+  // or the desktop's): its own phone rows, or the desktop's halved, like a block's area there.
+  // rows.js keeps it so as the content grows (--minrows / --mminrows)
+  const min = minRowsOf(s);
   const m = mobileMinRowsOf(s);
-  return `--rows:${Math.max(rowsOf(s), min)};--mrows:${Math.max(mobileRowsOf(s), m)};--minrows:${min};--mminrows:${m}`;
+  return (
+    `--rows:${Math.max(rowsOf(s), min)};--mrows:${Math.max(mobileRowsOf(s), m)}` +
+    (min ? `;--minrows:${min}` : '') +
+    (m ? `;--mminrows:${m}` : '')
+  );
 }
 
 /** The classes of a section's element: its minimum height (sec--h-third …) and width. */
 export function sectionClass(s) {
   const h = heightOf(s) === 'custom' && !minRowsOf(s) ? 'fit' : heightOf(s);
-  return 'sec' + (h !== 'fit' ? ` sec--h-${h}` : '') + (s?.width === 'full' ? ' sec--full' : '');
+  // a phone height of its own: sec--mh-* (phones only)
+  const own = HEIGHTS.includes(s?.mobile?.height);
+  const m = phoneHeightOf(s) === 'custom' && !mobileMinRowsOf(s) ? 'fit' : phoneHeightOf(s);
+  return (
+    'sec' +
+    (h !== 'fit' ? ` sec--h-${h}` : '') +
+    (own ? ` sec--mh-${m}` : '') +
+    (s?.width === 'full' ? ' sec--full' : '')
+  );
 }
 
 /**

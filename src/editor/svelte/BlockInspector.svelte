@@ -25,7 +25,13 @@
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
   import SectionIcon from './SectionIcon.svelte';
-  import { heightOf, minRowsOf, mobileMinRowsOf, rowsOf } from '../../site/layout/index.js';
+  import {
+    heightOf,
+    minRowsOf,
+    mobileMinRowsOf,
+    phoneHeightOf,
+    rowsOf,
+  } from '../../site/layout/index.js';
   import { tick } from 'svelte';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
@@ -55,7 +61,9 @@
     live.version;
     const s = live.get(g.file, `/sections/${at}`) || {};
     const phone = ui.viewport === 'mobile';
-    const h = heightOf(s) === 'custom' && !minRowsOf(s) ? 'fit' : heightOf(s);
+    // the height of the view shown (the phone's own, else the desktop's)
+    const own = phone ? phoneHeightOf(s) : heightOf(s);
+    const h = own === 'custom' && !(phone ? mobileMinRowsOf(s) : minRowsOf(s)) ? 'fit' : own;
     // the rows: the resize line's while it is dragged, else the stored ones (the phone's own)
     const dragged = ui.secRows?.id === s.id ? ui.secRows.rows : 0;
     const rows = h === 'custom' ? dragged || (phone ? mobileMinRowsOf(s) : minRowsOf(s)) : 0;
@@ -156,7 +164,8 @@
   <span class={['parent__name', !sec.name && 'is-none']}>{sec.name || 'Unnamed section'}</span>
   <span class="parent__val" data-part="height">
     <SectionIcon kind="height" arg={H_LABELS[sec.h][1]} />
-    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'} {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
+    {H_LABELS[sec.h][0]}{#if sec.h === 'custom'}
+      {sec.rows}{sec.phone ? ' phone' : ''} rows{/if}
   </span>
   <span class="parent__val" data-part="width">
     <SectionIcon kind="width" arg={sec.full ? 'edge' : 'inside'} />
