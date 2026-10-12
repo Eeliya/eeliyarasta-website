@@ -21,6 +21,7 @@ import {
   duplicateSection,
   layerBlock,
   moveBlock,
+  moveBlockTo,
   moveSection,
   placeBlock,
   removeBlock,
@@ -272,6 +273,12 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.deepEqual(types()[0], 'heading+button+button');
   assert.equal(flat(sections()[0].blocks[2]).pos.row, 17);
   moveBlock(store, F, 0, 2, 0);
+  assert.deepEqual(types()[0], 'button+heading+button');
+  // to another section: free, below its blocks; one undo step
+  moveBlockTo(store, F, 0, 0, 1, 0);
+  assert.deepEqual(types().slice(0, 2), ['heading+button', 'button+text']);
+  assert.equal(flat(sections()[1].blocks[0]).pos.row > 1, true);
+  store.undo();
   assert.deepEqual(types()[0], 'button+heading+button');
   removeBlock(store, F, 0, 0);
   assert.deepEqual(types()[0], 'heading+button');

@@ -224,6 +224,36 @@ export function moveBlock(store, file, at, from, to) {
   return write(store, file, list);
 }
 
+/**
+ * Block `from` of section `at` moved to index `to` of section `toAt` (one undo step). In its own
+ * section: moveBlock. To another: it goes free below that section's blocks, and links to it or
+ * from it (they were its old section's) go.
+ */
+export function moveBlockTo(store, file, at, from, toAt, to) {
+  if (toAt === at)
+    return moveBlock(
+      store,
+      file,
+      at,
+      from,
+      Math.min(to, listOf(store, file)[at].blocks.length - 1),
+    );
+  const list = listOf(store, file);
+  const source = list[at];
+  const target = list[toAt];
+  if (!source?.blocks?.[from] || !target) return false;
+  const [b] = source.blocks.splice(from, 1);
+  for (const o of source.blocks) {
+    if (baseOf(o).link?.to === b.id) setBase(o, { link: undefined });
+    if (phoneOf(o)?.link?.to === b.id) setPhone(o, { link: undefined });
+  }
+  setBase(b, { row: below(target), link: undefined });
+  if (phoneOf(b)) setPhone(b, { link: undefined });
+  target.blocks = target.blocks || [];
+  target.blocks.splice(Math.max(0, Math.min(to, target.blocks.length)), 0, b);
+  return write(store, file, list);
+}
+
 /** Block `j` of section `at` removed (the blocks that followed it are free from then on). */
 export function removeBlock(store, file, at, j) {
   const list = listOf(store, file);
