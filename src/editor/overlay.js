@@ -54,6 +54,7 @@ import {
   sizeOf,
 } from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
+import { T } from './ui-tokens.js';
 
 const MOBILE = 760;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
@@ -65,16 +66,16 @@ const SVG = 'http://www.w3.org/2000/svg';
 
 const STYLE = `
 :host { all: initial; }
-.layer { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; font: 500 10px/1 'DM Mono', ui-monospace, monospace; }
+.layer { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; font: 500 ${T.fsXs}/1 ${T.font}; }
 .grid { position: absolute; box-sizing: border-box; }
 .cells { position: absolute; background-image: linear-gradient(to right, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(255 255 255 / .12); }
-.box { position: absolute; box-sizing: border-box; border-radius: 2px; }
-.hover { border: 1px dashed #fff; opacity: .7; }
+.box { position: absolute; box-sizing: border-box; border-radius: ${T.radiusXs}; }
+.hover { border: 1px dashed ${T.white}; opacity: .7; }
 .peek { border-radius: 0; background: rgb(255 255 255 / .03); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2); }
-.sel { border: 2px solid #3cf; }
-.sel.is-dragging { background: #3cf; background: rgb(51 204 255 / .08); }
-.label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: 4px; background: #3cf; color: #000; white-space: nowrap; }
-.handle { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 2px; background: #000; pointer-events: auto; }
+.sel { border: 2px solid ${T.accent}; }
+.sel.is-dragging { background: ${T.accent}; background: rgb(${T.accentRgb} / .08); }
+.label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.accent}; color: ${T.black}; white-space: nowrap; }
+.handle { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: ${T.radiusXs}; background: ${T.black}; pointer-events: auto; }
 .handle[data-h='n'], .handle[data-h='s'] { left: 50%; cursor: ns-resize; }
 .handle[data-h='e'], .handle[data-h='w'] { top: 50%; cursor: ew-resize; }
 .handle[data-h='n'], .handle[data-h='ne'], .handle[data-h='nw'] { top: 0; }
@@ -84,26 +85,26 @@ const STYLE = `
 .handle[data-h='ne'], .handle[data-h='sw'] { cursor: nesw-resize; }
 .handle[data-h='nw'], .handle[data-h='se'] { cursor: nwse-resize; }
 .sel.is-free .handle:not([data-h='e']):not([data-h='w']) { display: none; }
-.dot { position: absolute; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 50%; background: #000; pointer-events: auto; }
+.dot { position: absolute; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: 50%; background: ${T.black}; pointer-events: auto; }
 .dot[data-dot='top'] { top: -${DOT}px; cursor: grab; }
 .dot[data-dot='bottom'] { top: calc(100% + ${DOT}px); }
-.dot.is-linked { background: #3cf; }
+.dot.is-linked { background: ${T.accent}; }
 .hover .dot { opacity: 1; }
 .sel.is-dragging .dot, .is-linking .box .dot { display: none; }
-.target { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-sizing: border-box; border: 2px solid #3cf; border-radius: 50%; background: #000; }
-.target.is-near { background: #3cf; box-shadow: 0 0 0 4px rgb(51 204 255 / .35); }
+.target { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: 50%; background: ${T.black}; }
+.target.is-near { background: ${T.accent}; box-shadow: 0 0 0 4px rgb(${T.accentRgb} / .35); }
 .secrow { position: absolute; height: 12px; margin-top: -6px; pointer-events: auto; cursor: row-resize; }
 .secrow::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: rgb(255 255 255 / .75); box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
-.secrow::after { content: ''; position: absolute; left: calc(50% - 18px); top: 2px; width: 36px; height: 8px; box-sizing: border-box; border-radius: 4px; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .45); }
-.secrow:hover::before, .secrow.is-dragging::before { background: #fff; }
-.secrow .count { position: absolute; left: calc(50% + 26px); bottom: 100%; margin-bottom: 2px; padding: 4px 8px; border-radius: 4px; background: #fff; color: #000; white-space: nowrap; }
+.secrow::after { content: ''; position: absolute; left: calc(50% - 18px); top: 2px; width: 36px; height: 8px; box-sizing: border-box; border-radius: ${T.radiusSm}; background: ${T.white}; box-shadow: 0 0 0 1px rgb(0 0 0 / .45); }
+.secrow:hover::before, .secrow.is-dragging::before { background: ${T.white}; }
+.secrow .count { position: absolute; left: calc(50% + 26px); bottom: 100%; margin-bottom: 2px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.white}; color: ${T.black}; white-space: nowrap; }
 .secrow:not(.is-dragging) .count { display: none; }
 svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
-.link { fill: none; stroke: #3cf; stroke-width: 2; }
-.link.is-sel { stroke: #fff; stroke-width: 3; }
+.link { fill: none; stroke: ${T.accent}; stroke-width: 2; }
+.link.is-sel { stroke: ${T.white}; stroke-width: 3; }
 .link.is-temp { stroke-dasharray: 4 4; }
 .hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
-.gap { fill: #3cf; font: 500 10px 'DM Mono', ui-monospace, monospace; paint-order: stroke; stroke: #000; stroke-width: 3px; }
+.gap { fill: ${T.accent}; font: 500 ${T.fsXs} ${T.font}; paint-order: stroke; stroke: ${T.black}; stroke-width: 3px; }
 `;
 
 /**

@@ -18,25 +18,26 @@ import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
+import { T } from './ui-tokens.js';
 
 const INJECTED_CSS = `
-html.__ed-text [data-edit], html.__ed-text [data-bound] { outline-offset: 3px; border-radius: 2px; pointer-events: auto; }
+html.__ed-text [data-edit], html.__ed-text [data-bound] { outline-offset: 3px; border-radius: ${T.radiusXs}; pointer-events: auto; }
 html.__ed-text [data-edit]:hover { outline: 1px dashed rgb(255 255 255 / .5); }
 html.__ed-text [data-bound]:hover { outline: 1px dotted rgb(255 255 255 / .5); }
-html.__ed-text [data-edit][contenteditable] { outline: 1.5px solid var(--ed-accent); caret-color: var(--ed-accent); cursor: text !important; }
-html.__ed-text [data-edit].__ed-invalid { outline-color: #ff8a7a !important; }
+html.__ed-text [data-edit][contenteditable] { outline: 1.5px solid ${T.accent}; caret-color: ${T.accent}; cursor: text !important; }
+html.__ed-text [data-edit].__ed-invalid { outline-color: ${T.error} !important; }
 html.__ed-text [data-block], html.__ed-text [data-block] *:not([contenteditable], [contenteditable] *) { cursor: default !important; }
 [data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-block], html.__ed-motion [data-block] * { cursor: pointer !important; }
-.__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: 4px; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
+.__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: ${T.radiusSm}; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
 .__ed-box--hover { border: 1px dashed rgb(255 255 255 / .6); }
-.__ed-box--sel { border: 1.5px solid var(--ed-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ed-accent) 14%, transparent), inset 0 0 0 9999px color-mix(in srgb, var(--ed-accent) 4%, transparent); }
-.__ed-box span { position: absolute; left: -1.5px; bottom: 100%; margin-bottom: 5px; font: 500 10px/1 'DM Mono', ui-monospace, monospace; letter-spacing: .04em; padding: 5px 7px; border-radius: 4px; white-space: nowrap; }
-.__ed-box--hover span { background: rgb(20 20 20 / .85); color: #fff; border: 1px solid rgb(255 255 255 / .2); }
-.__ed-box--sel span { background: var(--ed-accent); color: #000; }
-.__ed-box.is-low span { bottom: auto; top: 100%; margin: 5px 0 0; }
+.__ed-box--sel { border: 1.5px solid ${T.accent}; box-shadow: 0 0 0 4px color-mix(in srgb, ${T.accent} 14%, transparent), inset 0 0 0 9999px color-mix(in srgb, ${T.accent} 4%, transparent); }
+.__ed-box span { position: absolute; left: -1.5px; bottom: 100%; margin-bottom: 4px; font: 500 ${T.fsXs}/1 ${T.font}; letter-spacing: .04em; padding: 4px 8px; border-radius: ${T.radiusSm}; white-space: nowrap; }
+.__ed-box--hover span { background: rgb(20 20 20 / .85); color: ${T.white}; border: 1px solid rgb(255 255 255 / .2); }
+.__ed-box--sel span { background: ${T.accent}; color: ${T.onAccent}; }
+.__ed-box.is-low span { bottom: auto; top: 100%; margin: 4px 0 0; }
 `;
 
 /** What Motion mode picks under the pointer: a data-anim part, else its block. */
@@ -398,9 +399,8 @@ export function createBridge({ store, labelFor }) {
   function attachListeners() {
     const style = doc.createElement('style');
     style.id = '__ed-style';
-    // --ed-accent comes from the editor (editor.scss), so it is defined in one place
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--ed-accent');
-    style.textContent = `:root { --ed-accent: ${accent}; }${INJECTED_CSS}`;
+    // (its colours: ui-tokens.js, the same as the editor's styles/_tokens.scss)
+    style.textContent = INJECTED_CSS;
     doc.head.append(style);
     const mk = (cls) => {
       const b = doc.createElement('div');
