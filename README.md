@@ -398,10 +398,10 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 
 | type       | what                                                                                                                  |
 | ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| `heading`  | page heading: `eyebrow`, `title`, `body`, `cta`; config `count` (a source's item count), `href`, `center`, `numbered` |
+| `heading`  | page heading: `eyebrow`, `title`, `body`, `cta`; config `count` (a source's item count), `link`, `center`, `numbered` |
 | `text`     | `body`: paragraphs (a blank line starts one) under an optional `title`                                                |
 | `photo`    | one photo (`src`) with an optional `caption`                                                                          |
-| `button`   | a button: `label`; config `href` (a path or a full URL)                                                               |
+| `button`   | a button: `label`; config `link` (see Links)                                                                          |
 | `form`     | a contact form (see "Contact form")                                                                                   |
 | `hero`     | the home hero: `title` (one word per line), `eyebrow`, `body`, scattered `photos`                                     |
 | `intro`    | a statement (`body`)                                                                                                  |
@@ -427,7 +427,7 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 
 ### Bindings
 
-Any text, long text, photo or link field of a block (and a link in its config, `href`) can show a
+Any text, long text, photo or link field of a block (and a link in its config, `link`) can show a
 value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 
 ```json
@@ -474,17 +474,29 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 ### Menu
 
 `content/en/settings/nav.json` holds the menus: `header` (the nav pill, its dropdowns and the
-mobile menu) and `footer` (the footer's Index column). An item links to a page by its URL
-(`page`, checked: a page that doesn't exist gives a `[nav]` build warning, and
-`npm run check:links` fails on it) or anywhere else (`href`, opens in a new tab):
+mobile menu) and `footer` (the footer's Index column). An item is a link (see Links) with a
+label: to a page by its id (`page`), to an item's page (`item`), or anywhere else (`href`,
+opens in a new tab). A page or item that isn't there gives a `[links]` build warning and `#`:
 
 ```json
-{ "label": "About", "page": "/about/" }
+{ "label": "About", "page": "pg-lyos" }
+{ "label": "Noor", "item": { "source": "people", "id": "p-qw7b" } }
 { "label": "Shop", "href": "https://shop.example.com" }
-{ "label": "Photography", "page": "/photography/", "all": "All photography",
-  "children": [{ "label": "People", "page": "/people/", "items": "people" }, …] }
-{ "label": "Projects", "page": "/projects/", "all": "All projects", "items": "projects" }
+{ "label": "Photography", "page": "pg-evsk", "all": "All photography",
+  "children": [{ "label": "People", "page": "pg-yzuw", "items": "people" }, …] }
+{ "label": "Projects", "page": "pg-cwyg", "all": "All projects", "items": "projects" }
 ```
+
+### Links
+
+A link in the content says what it points at; its URL is made at build time
+(`src/site/hrefs.js`, `hrefOf()`), so renaming or moving a page or changing an item's slug
+never breaks one: `{ "page": "pg-k3x9" }` (a page by its id, the `"id"` in its file),
+`{ "item": { "source": "people", "id": "p-k3x9" } }` (an item's page) or
+`{ "href": "https://…" }` (a full URL, `mailto:`, `#anchor`). Block settings (a button's,
+a heading's `link`), hero photos and the menus use them; the editor picks them from one list
+(pages, items, the block's item fields, External URL). Redirects stay paths: they are for
+URLs from outside.
 
 A header item with `children` (one level deep) or `items` opens a dropdown on click; `all`
 labels the link to the item's own page at its end. `items` names a source
@@ -496,7 +508,9 @@ plain links. The menu button and clock labels stay in `site.json` (`nav`).
 
 ### Pages and URLs
 
-Every page is a folder in `content/en/pages/`, and the folders are the URLs. A page's own file is
+Every page is a folder in `content/en/pages/`, and the folders are the URLs. Each page file has
+a stable `"id"` (`"pg-k3x9"`, given when the page is made): links point at it, so the folder can
+move. A page's own file is
 `index.json` in its folder; home's folder is `content/en/pages/` itself:
 
 | file                                    | URL                                                            |
@@ -601,14 +615,14 @@ in the site must point at pages, not at redirects.
 The editor keeps them up to date by itself (`src/site/redirects.js`):
 
 - **Rename a page** (Pages window): every path of its folder redirects to the new one, its
-  item pages with one pattern (`/people/:slug/` -> `/models/:slug/`). Links in all content to
-  those paths (menus, buttons, hero photo links, any string that is such a path) are updated
-  too; the toast says how many.
+  item pages with one pattern (`/people/:slug/` -> `/models/:slug/`). Links by id need
+  nothing; an `href` that is such a path is updated; the toast says how many.
 - **Delete a page**: its paths redirect to its parent page (the default), another page, or
-  nowhere ("No redirect": the 404 page; links to it stay and the toast counts them). Links go
-  to the page picked.
+  nowhere ("No redirect": the 404 page; links to it stay and the toast counts them). Page links
+  to it go to the page picked; item links to a deleted `[slug]` page's items stay (broken, the
+  build warns).
 - **Change an item's slug** (Source Explorer; or its name, when it has no slug): Save adds a
-  redirect from its old page and updates links to it, one undo step.
+  redirect from its old page; links by its id need nothing.
 - No chains: a redirect to a moved path follows it (A -> B, B renamed C: A -> C). A redirect to
   itself goes, and one from a path that is a page again (a new page, a rename back) is
   removed, with a note.

@@ -87,17 +87,17 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
     ...plain,
     title: { bind: 'title' },
     body: { bind: 'role', format: '{value} in Amsterdam' },
-    config: { href: { bind: 'slug' } },
+    config: { link: { bind: 'slug' } },
   };
   const out = resolveBlock(bound, t, { item: noor, source: 'people', ctx: content });
   assert.equal(out.title, 'Noor Vermeer');
   assert.equal(out.body, `${noor.role} in Amsterdam`);
-  assert.equal(out.config.href, noor.slug);
+  assert.equal(out.config.link, noor.slug);
   assert.deepEqual(bound.title, { bind: 'title' }); // not changed in place
   assert.equal(bindTypeOf(t.fields[0]), 'text');
   assert.equal(bindTypeOf(BLOCK_TYPES.hero.fields.find((f) => f.key === 'photos')), 'photos');
   assert.equal(bindTypeOf(BLOCK_TYPES.about.fields.find((f) => f.key === 'body')), null);
-  assert.equal(bindTypeOf({ key: 'href', type: 'text' }, { config: true }), 'link');
+  assert.equal(bindTypeOf({ key: 'link', type: 'link' }, { config: true }), 'link');
   assert.ok(isBound({ bind: 'a' }) && !isBound('{{a}}') && !isBound(''));
 });
 
@@ -220,6 +220,7 @@ test('validation: the shape of bindings and items', () => {
   const ids = new Set();
   const page = (patch, type = 'heading') => ({
     version: 1,
+    id: 'pg-t004',
     sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
   });
   const F = 'pages/x/index.json';
@@ -230,7 +231,7 @@ test('validation: the shape of bindings and items', () => {
     ),
     [],
   );
-  assert.deepEqual(checkContent(F, page({ config: { href: { bind: 'slug' } } })), []);
+  assert.deepEqual(checkContent(F, page({ config: { link: { bind: 'slug' } } })), []);
   assert.deepEqual(checkContent(F, page({ item: { source: 'people', id: 'p-aaaa' } })), []);
   const one = (p, type) => checkContent(F, page(p, type)).join('; ');
   assert.match(one({ title: { bind: '' } }), /"title" must be \{ "bind": "<field>", "format"/);
@@ -261,10 +262,11 @@ test('Save refuses bindings that do not fit the schema', () => {
   }
   const F = 'pages/x/index.json';
   fs.mkdirSync(path.join(root, 'content/en/pages/x'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'content/en', F), '{ "version": 1 }');
+  fs.writeFileSync(path.join(root, 'content/en', F), '{ "version": 1, "id": "pg-xxxx" }');
   const ids = new Set();
   const page = (title) => ({
     version: 1,
+    id: 'pg-t005',
     sections: [
       newSection(ids, [
         { ...newBlock('heading', ids), title, item: { source: 'people', id: 'p-qw7b' } },

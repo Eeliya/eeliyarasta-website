@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "id": "pg-078h",
   "curtain": "Not found",
   "meta": {
     "title": "Not found",
@@ -20,8 +21,10 @@
           "body": "This page doesn't exist (yet).",
           "cta": "Back home",
           "config": {
-            "href": "/",
-            "center": true
+            "center": true,
+            "link": {
+              "page": "pg-boha"
+            }
           },
           "pos": {
             "col": 1,

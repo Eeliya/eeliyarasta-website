@@ -45,9 +45,10 @@ import {
   schemaIdOf,
   sourceFile,
   sourceIdOf,
+  contentFromFiles,
 } from '../src/site/files.js';
 import { checkItems, photoChecker, schemaOf } from '../src/site/schemas.js';
-import { NAMED_VIEWS, pathOfId } from '../src/site/routes.js';
+import { NAMED_VIEWS, getRoutes, pathOfId } from '../src/site/routes.js';
 import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
 import {
@@ -69,6 +70,7 @@ import {
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
+import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
 import { motionProblems } from '../src/site/layout/motion.js';
 import { BLOCK_TYPES } from '../src/site/blocks/index.js';
@@ -200,6 +202,17 @@ export function pagesOp(
     };
   }
 
+  /** A page id no page has (the content on disk): links point at pages by it. */
+  const newPageId = () =>
+    newId(
+      'pg',
+      new Set(
+        Object.values(readContentDir(root))
+          .map((d) => d?.id)
+          .filter(Boolean),
+      ),
+    );
+
   if (!['add', 'template', 'rename', 'delete'].includes(op))
     return fail(400, `Unknown pages op "${op ?? ''}"`);
   if (op === 'add' || op === 'template') {
@@ -220,7 +233,7 @@ export function pagesOp(
         title: t,
       };
       const section = newSection(ids, [heading]);
-      write(file, { version: VERSION, curtain: t, sections: [section] });
+      write(file, { version: VERSION, id: newPageId(), curtain: t, sections: [section] });
       return done({ id: join(parent, name), created: [file] });
     }
     if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
@@ -232,6 +245,7 @@ export function pagesOp(
     const ids = new Set();
     write(pageFile(pid), {
       version: VERSION,
+      id: newPageId(),
       template: { source },
       section: titleCase(source),
       next: 'Next',
@@ -274,7 +288,23 @@ export function pagesOp(
       return fail(400, `No page "${target}" to redirect to`);
     if (moves.has(pathKey(target))) return fail(400, `${target} is deleted too: pick another page`);
   }
-  plan = { moves, ...moveLinks(before, moves, { hash: op === 'rename' }) };
+  // deleted: links to its pages (by id) go to the page it redirects to, its items' are broken
+  const gone = op === 'delete' ? (template ? [pageFile(id)] : filesIn(id)) : [];
+  const targetPid =
+    typeof target === 'string'
+      ? getRoutes(contentFromFiles(before)).find((r) => r.path === pathKey(target) && !r.template)
+          ?.pid
+      : undefined;
+  const pages = new Map(
+    gone
+      .map((f) => before[f]?.id)
+      .filter(Boolean)
+      .map((pid) => [pid, targetPid ?? null]),
+  );
+  const sources = new Set(
+    gone.filter((f) => f.endsWith(`${TEMPLATE}.json`)).map((f) => before[f]?.template?.source),
+  );
+  plan = { moves, ...moveLinks(before, moves, { hash: op === 'rename', pages, sources }) };
 
   if (op === 'rename') {
     const to = join(parentOf(id), name);

@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "id": "pg-h6eg",
   "template": {
     "source": "places"
   },
@@ -21,11 +22,15 @@
           "meta": [
             {
               "label": "Location",
-              "value": { "bind": "location" }
+              "value": {
+                "bind": "location"
+              }
             },
             {
               "label": "Year",
-              "value": { "bind": "year" }
+              "value": {
+                "bind": "year"
+              }
             }
           ],
           "body": {

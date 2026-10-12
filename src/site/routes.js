@@ -125,6 +125,7 @@ export function buildRoutes(content) {
     routes.push({
       path: pathOfId(id),
       id,
+      pid: page.id,
       page: page.view || NAMED_VIEWS[id] || 'page',
       ...(id === '404' ? { out: '404.html' } : {}),
       title,

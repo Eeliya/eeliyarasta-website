@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "id": "pg-gk6t",
   "template": {
     "source": "people"
   },
@@ -21,19 +22,27 @@
           "meta": [
             {
               "label": "Role",
-              "value": { "bind": "role" }
+              "value": {
+                "bind": "role"
+              }
             },
             {
               "label": "Agency",
-              "value": { "bind": "agency" }
+              "value": {
+                "bind": "agency"
+              }
             },
             {
               "label": "Location",
-              "value": { "bind": "location" }
+              "value": {
+                "bind": "location"
+              }
             },
             {
               "label": "Year",
-              "value": { "bind": "year" }
+              "value": {
+                "bind": "year"
+              }
             }
           ],
           "body": {

@@ -14,6 +14,7 @@
  * projects) by title and kind, linking to their spot on the item's page, or to their own site
  * when "linkOut" is on. The menu, close and clock labels are in strings.json "nav".
  */
+import { hrefOf } from '../hrefs.js';
 import {
   html,
   esc,
@@ -36,13 +37,13 @@ const caret =
   '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
 const arrowNE = '<span class="arrow-ne" aria-hidden="true">↗</span>';
 
-/** Where a menu item links: its page (warns when there is no such page) or its href. */
+/** Where a menu item links (a link, src/site/hrefs.js): '#' and a warning when nowhere. */
 export function linkOf(ctx, item) {
-  if (item.page === undefined) return item.href || '#';
-  if (!(ctx.routes || []).some((r) => r.path === item.page))
-    warnOnce(`content/en/${NAV}: "${item.label}" links to "${item.page}", which is no page`, 'nav');
-  return item.page;
+  return hrefOf(ctx, item, `content/en/${NAV}: "${item.label}"`) || '#';
 }
+
+/** The site path a menu item marks as current (data-nav): its page's or item's; '' for an href. */
+const navPath = (ctx, item) => (item.page || item.item ? linkOf(ctx, item) : '');
 
 /** The items of an item's source ("items": "people"), with how to link and show them. */
 function itemsOf(ctx, item) {
@@ -117,13 +118,16 @@ const hrefAttrs = (href) => `href="${esc(href)}"${extAttrs(href)}`;
 function navItem(ctx, item, i) {
   const at = ['header', i];
   const href = linkOf(ctx, item);
-  const own = item.page ? ` data-nav="${esc(item.page)}"` : '';
+  const own = navPath(ctx, item) ? ` data-nav="${esc(navPath(ctx, item))}"` : '';
   const children = item.children || [];
   const items = itemsOf(ctx, item);
   if (!children.length && !items)
     return html`<a class="nav__item" ${hrefAttrs(href)}${own}>${label([...at, 'label'], item.label)}</a>`;
-  const id = `dd-${slugify(item.page || item.label) || i}`;
-  const section = [item.page, ...children.map((c) => c.page)].filter(Boolean).join(',');
+  const id = `dd-${slugify(navPath(ctx, item) || item.label) || i}`;
+  const section = [item, ...children]
+    .map((c) => navPath(ctx, c))
+    .filter(Boolean)
+    .join(',');
   const all = item.all
     ? html`
             <a class="dropdown__all" ${hrefAttrs(href)}>${label([...at, 'all'], item.all)} <span aria-hidden="true">→</span></a>`
@@ -181,7 +185,7 @@ export function header(ctx) {
 function mmItem(ctx, item, i) {
   const at = ['header', i];
   const href = linkOf(ctx, item);
-  const own = item.page ? ` data-nav="${esc(item.page)}"` : '';
+  const own = navPath(ctx, item) ? ` data-nav="${esc(navPath(ctx, item))}"` : '';
   const children = item.children || [];
   const items = itemsOf(ctx, item);
   const big = (attrs) =>

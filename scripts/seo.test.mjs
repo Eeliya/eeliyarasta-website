@@ -159,12 +159,17 @@ test('warnings: indexable pages without a description, long titles and descripti
 
 test('validation: page meta and site defaults', () => {
   assert.deepEqual(
-    checkContent('pages/a/index.json', { version: 1, meta: { noindex: true, title: 'A' } }),
+    checkContent('pages/a/index.json', {
+      version: 1,
+      id: 'pg-t009',
+      meta: { noindex: true, title: 'A' },
+    }),
     [],
   );
-  assert.deepEqual(checkContent('pages/a/index.json', { version: 1, meta: { noindex: 'yes' } }), [
-    'meta: "noindex" must be a boolean, not a string',
-  ]);
+  assert.deepEqual(
+    checkContent('pages/a/index.json', { version: 1, id: 'pg-t010', meta: { noindex: 'yes' } }),
+    ['meta: "noindex" must be a boolean, not a string'],
+  );
   const s = (more) =>
     checkContent('settings/site.json', { version: 1, name: 'S', url: 'u', ...more });
   assert.deepEqual(s({ robots: 'index', titleTemplate: '{page}', lang: 'en' }), []);

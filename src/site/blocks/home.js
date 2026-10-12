@@ -15,6 +15,7 @@ import {
   coverOf,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
+import { hrefOf } from '../hrefs.js';
 import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
@@ -29,7 +30,7 @@ const heroPhoto = (ctx, b, p, i) => {
   if (!p.src) return '';
   return html` <a
     class="scatter scatter--${p.layer === 'front' ? 'front' : 'back'}${mobile ? '' : ' scatter--desktop'}"
-    href="${esc(p.link)}"
+    href="${esc(hrefOf(ctx, p.link, 'a hero photo'))}"
     style="${style}"
     data-depth="${p.depth}"
     aria-label="${esc(p.label)}"
@@ -54,7 +55,7 @@ export const hero = {
     {
       key: 'photos',
       label: 'Photos',
-      list: { src: 'image' },
+      list: { src: 'image', link: { type: 'link', label: 'Link' } },
       // a new photo: in the middle, behind the name (x / y / w in % of the hero; see heroPhoto)
       item: { src: '', x: 40, y: 30, w: 16, depth: 1, layer: 'back' },
     },

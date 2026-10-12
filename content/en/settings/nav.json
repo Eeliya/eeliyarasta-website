@@ -3,56 +3,56 @@
   "header": [
     {
       "label": "Home",
-      "page": "/"
+      "page": "pg-boha"
     },
     {
       "label": "Photography",
-      "page": "/photography/",
+      "page": "pg-evsk",
       "all": "All photography",
       "children": [
         {
           "label": "People",
-          "page": "/people/",
+          "page": "pg-yzuw",
           "items": "people"
         },
         {
           "label": "Places",
-          "page": "/places/",
+          "page": "pg-rugs",
           "items": "places"
         }
       ]
     },
     {
       "label": "Projects",
-      "page": "/projects/",
+      "page": "pg-cwyg",
       "all": "All projects",
       "items": "projects"
     },
     {
       "label": "About",
-      "page": "/about/"
+      "page": "pg-lyos"
     }
   ],
   "footer": [
     {
       "label": "Home",
-      "page": "/"
+      "page": "pg-boha"
     },
     {
       "label": "People",
-      "page": "/people/"
+      "page": "pg-yzuw"
     },
     {
       "label": "Places",
-      "page": "/places/"
+      "page": "pg-rugs"
     },
     {
       "label": "Projects",
-      "page": "/projects/"
+      "page": "pg-cwyg"
     },
     {
       "label": "About",
-      "page": "/about/"
+      "page": "pg-lyos"
     }
   ]
 }

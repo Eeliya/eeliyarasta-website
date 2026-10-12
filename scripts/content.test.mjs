@@ -16,7 +16,7 @@ function tree(files = {}) {
   const all = {
     'settings/site.json': site,
     'settings/animations.json': animations,
-    'pages/index.json': { version: 1 },
+    'pages/index.json': { version: 1, id: 'pg-t041' },
     'sources/people.json': { version: 1, items: [{ name: 'Noor' }] },
     ...files,
   };
@@ -76,22 +76,30 @@ test('checkContent per kind', () => {
   assert.deepEqual(checkContent('settings/site.json', { name: 'S', url: 'u' }), [
     '"version" must be 1 (the content\'s shape)',
   ]);
-  assert.deepEqual(checkContent('pages/about/index.json', { version: 1, sections: {} }), [
-    '"sections" must be an array, not an object',
-  ]);
-  assert.equal(checkContent('pages/people/[slug].json', { version: 1 }).length, 1);
   assert.deepEqual(
-    checkContent('pages/people/[slug].json', { version: 1, template: { source: 'people' } }),
+    checkContent('pages/about/index.json', { version: 1, id: 'pg-t042', sections: {} }),
+    ['"sections" must be an array, not an object'],
+  );
+  assert.equal(checkContent('pages/people/[slug].json', { version: 1, id: 'pg-t043' }).length, 1);
+  assert.deepEqual(
+    checkContent('pages/people/[slug].json', {
+      version: 1,
+      id: 'pg-t044',
+      template: { source: 'people' },
+    }),
     [],
   );
-  assert.equal(checkContent('pages/about/index.json', { version: 1, template: {} }).length, 1);
+  assert.equal(
+    checkContent('pages/about/index.json', { version: 1, id: 'pg-t045', template: {} }).length,
+    1,
+  );
 });
 
 test('save: rejects bad shapes and writes nothing', () => {
   const root = tree();
   const before = read(root, 'pages/index.json');
   const r = save(root, {
-    'pages/index.json': { version: 1, title: 'New' },
+    'pages/index.json': { version: 1, id: 'pg-t046', title: 'New' },
     'settings/animations.json': [],
   });
   assert.equal(r.status, 400);
@@ -106,11 +114,18 @@ test('save: rejects bad shapes and writes nothing', () => {
 test('save: writes every file, formatted, with no temporary files left', () => {
   const root = tree();
   let writes = 0;
-  const r = save(root, { 'pages/index.json': { version: 1, title: 'New' } }, () => writes++);
+  const r = save(
+    root,
+    { 'pages/index.json': { version: 1, id: 'pg-t047', title: 'New' } },
+    () => writes++,
+  );
   assert.equal(r.status, 200);
   assert.deepEqual(r.body.written, ['pages/index.json']);
   assert.equal(writes, 1);
-  assert.equal(read(root, 'pages/index.json'), '{ "version": 1, "title": "New" }\n');
+  assert.equal(
+    read(root, 'pages/index.json'),
+    '{ "version": 1, "id": "pg-t047", "title": "New" }\n',
+  );
   assert.deepEqual(fs.readdirSync(path.join(root, 'content/en', 'pages')), ['index.json']);
 });
 
@@ -131,10 +146,10 @@ test('site.json with only name and url builds every page', async () => {
   const { buildRoutes } = await import('../src/site/routes.js');
   const { renderRoute } = await import('../src/site/render.js');
   const files = {
-    'pages/index.json': { version: 1 },
-    'pages/about/index.json': { version: 1 },
-    'pages/photography/index.json': { version: 1 },
-    'pages/404/index.json': { version: 1 },
+    'pages/index.json': { version: 1, id: 'pg-t048' },
+    'pages/about/index.json': { version: 1, id: 'pg-t049' },
+    'pages/photography/index.json': { version: 1, id: 'pg-t050' },
+    'pages/404/index.json': { version: 1, id: 'pg-t051' },
   };
   const content = loadContent(tree(files));
   for (const route of buildRoutes(content).routes) {
@@ -279,6 +294,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   const r = draftOp(root, drafts, {
     'pages/index.json': {
       version: 1,
+      id: 'pg-t052',
       sections: [
         {
           id: 's-aaaa',
@@ -300,7 +316,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   assert.deepEqual(r.body.files, ['pages/index.json']);
   assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
   assert.equal(loadContent(root, drafts).pages.home.sections[0].blocks[0].text, 'Draft');
-  assert.deepEqual(loadContent(root).pages.home, { version: 1 });
+  assert.deepEqual(loadContent(root).pages.home, { version: 1, id: 'pg-t041' });
   draftOp(root, drafts, {});
   assert.deepEqual(drafts, {});
   assert.equal(draftOp(root, drafts, null).status, 400);

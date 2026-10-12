@@ -40,6 +40,7 @@ import { linkProblems } from './layout/links.js';
 import { checkScale, checkTypography } from './layout/type.js';
 import { checkLayout } from './layout/contain.js';
 import { isId } from './layout/ids.js';
+import { linkProblem } from './hrefs.js';
 import { checkMotion } from './layout/motion.js';
 import { bindTypeOf, FORMAT_TYPES, isBinding } from './layout/bindings.js';
 
@@ -128,7 +129,7 @@ function checkForms(f) {
 }
 
 /**
- * nav.json: { header: [items], footer: [items] }, item { label, page | href, all?, items?,
+ * nav.json: { header: [items], footer: [items] }, item { label, page | item | href, all?, items?,
  * children? }. Header items can have one level of children; footer items are plain links.
  * Whether a page exists needs the routes: the templates warn about that (header.js linkOf).
  */
@@ -139,12 +140,8 @@ function checkNav(d) {
     const name = `${where}${typeof item.label === 'string' ? ` ("${item.label}")` : ''}`;
     const bad = (msg) => out.push(`${name}: ${msg}`);
     if (typeof item.label !== 'string') bad('needs a "label"');
-    if ((item.page === undefined) === (item.href === undefined))
-      bad('needs a "page" (a path like /about/) or an "href" (a link), one of them');
-    else if (item.page !== undefined && !/^\/([\w-]+\/)*$/.test(String(item.page)))
-      bad(`"page" must be a page path like /about/, not "${item.page}"`);
-    else if (item.href !== undefined && typeof item.href !== 'string')
-      bad('"href" must be a string');
+    const link = linkProblem(item, ['label', 'all', 'items', 'children']);
+    if (link) bad(link);
     out.push(...optional(item, { all: 'string', items: 'string' }).map((p) => `${name}: ${p}`));
     if (menu === 'footer' && ['children', 'items', 'all'].some((k) => item[k] !== undefined))
       bad('footer links are plain links (no "children", "items" or "all")');
@@ -211,6 +208,8 @@ function checkAnimations(d) {
 
 function checkPage(file, d) {
   const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
+  // its stable id: what links point at (its folder, the URL, can change)
+  if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
     out.push('"template.source" must name a source (a [slug] page makes a page per item)');
   if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
@@ -358,6 +357,8 @@ function checkBlock(b, where) {
           const type = (isObject(sub) ? sub.type : sub) || 'text';
           if (isBinding(sv))
             bindShape(`${f.key}.${i}.${k}`, sv, FORMAT_TYPES.includes(type) ? type : null);
+          else if (type === 'link' && sv !== undefined && linkProblem(sv))
+            bad(`${f.key}.${i}.${k}`, linkProblem(sv));
         }),
       );
     if (!f.list) {
@@ -377,6 +378,11 @@ function checkBlock(b, where) {
   for (const c of t.config || []) {
     const v = b.config[c.key];
     if (v === undefined || (c.empty && v === '') || isBinding(v)) continue;
+    if (c.type === 'link') {
+      const p = linkProblem(v);
+      if (p) bad(`config.${c.key}`, p);
+      continue;
+    }
     if (typeof v !== (CONFIG_TYPES[c.type] || 'string'))
       bad(`config.${c.key}`, `a ${CONFIG_TYPES[c.type] || 'string'}`);
     else if (c.options && !c.options.some(([o]) => o === v))

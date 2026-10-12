@@ -13,12 +13,13 @@ import {
   creditOf,
   firstPhotos,
 } from '../helpers.js';
+import { hrefOf } from '../hrefs.js';
 import { albumCard } from '../templates/partials.js';
 import { sourceList, sourcePage } from './data.js';
 
 /**
  * A page's heading: eyebrow, big title (with the item count of a source: config.count), body,
- * and a button (cta, to config.href). config.center: centred on the screen (404);
+ * and a button (cta, to config.link). config.center: centred on the screen (404);
  * config.numbered: the eyebrow starts with its number among the page's numbered headings (01).
  */
 export const heading = {
@@ -33,7 +34,7 @@ export const heading = {
   ],
   config: [
     { key: 'count', label: 'Count of', type: 'source', empty: 'No count' },
-    { key: 'href', label: 'Button link', type: 'text' },
+    { key: 'link', label: 'Button link', type: 'link' },
     { key: 'center', label: 'Centred', type: 'boolean' },
     { key: 'numbered', label: 'Numbered (01)', type: 'boolean' },
   ],
@@ -46,7 +47,7 @@ export const heading = {
     <span class="label page-head__crumb">${c.numbered ? `(${pad(b.number)}) ` : ''}<span${b.ed('eyebrow')}>${esc(s.eyebrow)}</span></span>
     <h1 class="page-title" data-anim="page.title"><span${b.ed('title')}>${esc(s.title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
     ${s.body ? html`<p class="page-intro" data-anim="page.intro" ${b.ed('body', 'block')}>${lines(s.body)}</p>` : ''}
-    ${s.cta ? html`<a class="btn glass" href="${esc(c.href || '/')}"><span${b.ed('cta')}>${esc(s.cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
+    ${s.cta ? html`<a class="btn glass" href="${esc(hrefOf(ctx, c.link, 'a heading button') || '/')}"><span${b.ed('cta')}>${esc(s.cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
   </div>`;
   },
 };

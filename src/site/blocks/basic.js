@@ -2,6 +2,7 @@
  * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
  */
 import { html, esc, img, extAttrs } from '../helpers.js';
+import { hrefOf } from '../hrefs.js';
 
 /** Paragraphs (a blank line starts a new one) under an optional title. */
 export const text = {
@@ -45,16 +46,20 @@ export const photo = {
     </div>`,
 };
 
-/** A button linking somewhere (config.href: a path on the site or a full URL). */
+/** A button linking somewhere (config.link: a page, an item or a URL; src/site/hrefs.js). */
 export const button = {
   type: 'button',
   label: 'Button',
   icon: 'arrow-right',
   fields: [{ key: 'label', label: 'Label' }],
-  config: [{ key: 'href', label: 'Link (/path/ or https://…)', type: 'text' }],
-  defaults: { label: 'Get in touch', config: { href: '/about/' }, motion: { anim: 'fade-in' } },
+  config: [{ key: 'link', label: 'Link', type: 'link' }],
+  defaults: {
+    label: 'Get in touch',
+    config: { link: { href: '/about/' } },
+    motion: { anim: 'fade-in' },
+  },
   render: (s, ctx, b) => {
-    const href = s.config?.href || '/';
+    const href = hrefOf(ctx, s.config?.link, 'a button') || '/';
     return html` <div class="buttonblock">
       <a class="btn glass" href="${esc(href)}"${extAttrs(href)}><span${b.ed('label')}>${esc(s.label)}</span> <span aria-hidden="true">→</span></a>
     </div>`;

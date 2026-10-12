@@ -7,6 +7,7 @@
 -->
 <script>
   import Field from './Field.svelte';
+  import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
   import Section from './Section.svelte';
   import Select from './Select.svelte';
@@ -17,17 +18,13 @@
   let { live } = $props();
 
   const uid = $props.id();
-  const EXTERNAL = '(external)';
 
   const MENUS = [
     ['header', 'Header', 'The nav at the top and the mobile menu. An item can open a dropdown.'],
     ['footer', 'Footer', 'The links of the Index column in the footer.'],
   ];
 
-  // the pages a link can go to (not item pages or 404), and the sources a dropdown can list
-  const pages = $derived(
-    ui.pages.filter((p) => p.kind === 'page' && !p.items && p.path !== '/404/'),
-  );
+  // the sources a dropdown can list
   const sources = $derived.by(() => {
     live.version;
     return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
@@ -61,23 +58,20 @@
     change(menu, (list) => siblings(list, path).splice(path.at(-1), 1));
   const add = (menu, path) =>
     change(menu, (list) => {
-      const item = { label: 'New link', page: '/' };
+      const home = ui.pages.find((p) => p.path === '/')?.pid;
+      const item = { label: 'New link', ...(home ? { page: home } : { href: '/' }) };
       if (path.length) (list[path[0]].children ||= []).push(item);
       else list.push(item);
     });
 
-  /** The link Select: a page path, or EXTERNAL for an href. */
-  const linkOf = (item) => (item.href !== undefined ? EXTERNAL : (item.page ?? ''));
-  function setLink(menu, path, value) {
+  /** A menu item's link: { page } | { item } | { href } (src/site/hrefs.js), in place. */
+  function setLink(menu, path, link) {
     change(menu, (list) => {
       const item = at(list, path);
-      if (value === EXTERNAL) {
-        item.href = item.href ?? 'https://';
-        delete item.page;
-      } else {
-        item.page = value;
-        delete item.href;
-      }
+      delete item.page;
+      delete item.item;
+      delete item.href;
+      Object.assign(item, link);
     });
   }
 
@@ -99,14 +93,6 @@
     live.store.set(NAV, ptr, value, { key: `text:${NAV}#${ptr}`, source: 'panel', structure });
   }
 
-  const linkOptions = (item) => [
-    ...pages.map((p) => ({ value: p.path, label: p.title, hint: p.path })),
-    // a link to a page that isn't there (any more) stays, marked
-    ...(item.page && !pages.some((p) => p.path === item.page)
-      ? [{ value: item.page, label: `${item.page} (no page)` }]
-      : []),
-    { value: EXTERNAL, label: 'External URL' },
-  ];
   const nameOf = (item) => item.label || '(no label)';
 </script>
 
@@ -129,23 +115,13 @@
     changed={live.changed(NAV, ptr('label'))}
     onvalue={(v) => setText(menu, path, 'label', v)}
   />
-  {@render select(
-    `${id}-link`,
-    'Link',
-    linkOf(entry),
-    linkOptions(entry),
-    live.changed(NAV, ptr('page')) || live.changed(NAV, ptr('href')),
-    (v) => setLink(menu, path, v),
-  )}
-  {#if entry.href !== undefined}
-    <Field
-      edit="{NAV}#{ptr('href')}"
-      label="URL (opens in a new tab)"
-      value={entry.href}
-      changed={live.changed(NAV, ptr('href'))}
-      onvalue={(v) => setText(menu, path, 'href', v.trim())}
-    />
-  {/if}
+  <LinkField
+    {live}
+    edit="{NAV}#{ptr('page')}"
+    value={entry}
+    changed={['page', 'item', 'href'].some((k) => live.changed(NAV, ptr(k)))}
+    onvalue={(link) => setLink(menu, path, link)}
+  />
   {#if menu === 'header' && !entry.children?.length}
     {@render select(
       `${id}-items`,

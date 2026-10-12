@@ -13,6 +13,7 @@
 <script>
   import Button from './Button.svelte';
   import Field from './Field.svelte';
+  import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
@@ -105,6 +106,19 @@
         onchange={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
       />
     </div>
+  {:else if f.type === 'link'}
+    <LinkField
+      {live}
+      edit={f.edit}
+      label={f.label}
+      value={live.get(f.file, f.ptr)}
+      changed={live.changed(f.file, f.ptr)}
+      empty="No link"
+      binds={bindings ? bindings.binds('link') : null}
+      onfocus={() => bridge.focusEdit(f.edit)}
+      onvalue={(value) =>
+        live.store.set(f.file, f.ptr, value, { source: 'panel', structure: true })}
+    />
   {:else}
     <Field
       {...f}
@@ -177,15 +191,16 @@
     {#each options as c (c.key)}{@render option(c)}{/each}
   </div>
 {/if}
-{#each g.config?.filter((c) => c.type === 'text') ?? [] as c (c.key)}
-  <Field
+{#each g.config?.filter((c) => c.type === 'link') ?? [] as c (c.key)}
+  <LinkField
+    {live}
     edit="{g.file}#{c.ptr}"
     label={c.label}
     value={live.get(g.file, c.ptr)}
     changed={live.changed(g.file, c.ptr)}
-    onvalue={(value) => setConfig(c, value)}
+    empty="No link"
     binds={bindings ? bindings.binds('link') : null}
-    resolved={bindings?.resolved({ file: g.file, ptr: c.ptr, type: 'link' }) ?? ''}
+    onvalue={(value) => setConfig(c, value)}
   />
 {/each}
 

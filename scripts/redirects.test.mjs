@@ -27,34 +27,45 @@ function site(redirects = []) {
   put('settings/nav.json', {
     version: 1,
     header: [
-      { label: 'People', page: '/people/', children: [{ label: 'Team', page: '/people/team/' }] },
-      { label: 'About', page: '/about/' },
+      { label: 'People', page: 'pg-peop', children: [{ label: 'Team', page: 'pg-team' }] },
+      { label: 'About', page: 'pg-abou' },
     ],
-    footer: [{ label: 'Noor', page: '/people/noor/' }],
+    footer: [{ label: 'Noor', item: { source: 'people', id: 'p-noor' } }],
   });
   put('settings/redirects.json', { version: 1, redirects });
   put(
     'pages/index.json',
-    page({ type: 'button', label: 'Team', config: { href: '/people/team/#join' } }),
+    page('pg-home', {
+      type: 'button',
+      label: 'Team',
+      config: { link: { href: '/people/team/#join' } },
+    }),
   );
-  put('pages/404/index.json', { version: 1 });
+  put('pages/404/index.json', { version: 1, id: 'pg-t404' });
   put(
     'pages/about/index.json',
-    page({ type: 'button', label: 'x', config: { href: '/peoples/' } }),
+    page('pg-abou', { type: 'button', label: 'x', config: { link: { href: '/peoples/' } } }),
   );
-  put('pages/people/index.json', { version: 1 });
-  put('pages/people/[slug].json', { version: 1, template: { source: 'people' } });
-  put('pages/people/team/index.json', { version: 1 });
+  put('pages/people/index.json', { version: 1, id: 'pg-peop' });
+  put('pages/people/[slug].json', { version: 1, id: 'pg-pslg', template: { source: 'people' } });
+  put('pages/people/team/index.json', { version: 1, id: 'pg-team' });
   put('sources/people.json', {
     version: 1,
-    items: [{ slug: 'noor', name: 'Noor' }, { name: 'Daan' }],
+    items: [
+      { id: 'p-noor', slug: 'noor', name: 'Noor' },
+      { id: 'p-daan', name: 'Daan' },
+    ],
   });
   return root;
 }
 /** A page with one section holding `block`. */
-function page(block) {
+function page(id, block) {
   const pos = { col: 1, span: 24, row: 1, rows: 1 };
-  return { version: 1, sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }] };
+  return {
+    version: 1,
+    id,
+    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', pos, ...block }] }],
+  };
 }
 const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 
@@ -66,21 +77,19 @@ test('rename: every path of the folder redirects (items by pattern), links follo
     { from: '/people/', to: '/models/' },
     { from: '/people/:slug/', to: '/models/:slug/' }, // also /people/team/ (one segment)
   ]);
+  // links by id (the menus) need nothing; an href path follows
   const nav = read(root, 'settings/nav.json');
-  assert.equal(nav.header[0].page, '/models/');
-  assert.equal(nav.header[0].children[0].page, '/models/team/');
-  assert.equal(nav.footer[0].page, '/models/noor/');
+  assert.equal(nav.header[0].page, 'pg-peop');
   assert.equal(
-    read(root, 'pages/index.json').sections[0].blocks[0].config.href,
+    read(root, 'pages/index.json').sections[0].blocks[0].config.link.href,
     '/models/team/#join',
   );
-  assert.equal(read(root, 'pages/about/index.json').sections[0].blocks[0].config.href, '/peoples/'); // not a match
-  assert.equal(r.body.links, 4);
-  assert.deepEqual(r.body.changed.sort(), [
-    'pages/index.json',
-    'settings/nav.json',
-    'settings/redirects.json',
-  ]);
+  assert.equal(
+    read(root, 'pages/about/index.json').sections[0].blocks[0].config.link.href,
+    '/peoples/',
+  ); // not a match
+  assert.equal(r.body.links, 1);
+  assert.deepEqual(r.body.changed.sort(), ['pages/index.json', 'settings/redirects.json']);
 });
 
 test('chain collapse, self-loops and a redirect from a page again', () => {
@@ -116,9 +125,9 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
     { from: '/crew/', to: '/people/' },
     { from: '/people/team/', to: '/people/' },
   ]);
-  // links to it go to the target, without the #hash
-  assert.equal(read(root, 'pages/index.json').sections[0].blocks[0].config.href, '/people/');
-  assert.equal(read(root, 'settings/nav.json').header[0].children[0].page, '/people/');
+  // links to it go to the target (a page link: the target's id), without the #hash
+  assert.equal(read(root, 'pages/index.json').sections[0].blocks[0].config.link.href, '/people/');
+  assert.equal(read(root, 'settings/nav.json').header[0].children[0].page, 'pg-peop');
 
   root = site();
   r = pagesOp(root, { op: 'delete', id: 'people/[slug]', redirect: '/about/' });
@@ -126,7 +135,12 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
   assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/people/:slug/', to: '/about/' },
   ]);
-  assert.equal(read(root, 'settings/nav.json').footer[0].page, '/about/');
+  // an item link of a deleted [slug] page: broken (the build warns), not rewritten
+  assert.deepEqual(read(root, 'settings/nav.json').footer[0].item, {
+    source: 'people',
+    id: 'p-noor',
+  });
+  assert.equal(r.body.broken, 1);
   assert.equal(
     pagesOp(site(), { op: 'delete', id: 'people', redirect: '/people/team/' }).status,
     400,
@@ -140,7 +154,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
   assert.equal(r.body.links, 0);
 });
 
-test('an item slug change: its page redirects, links follow', () => {
+test('an item slug change: its page redirects; links by id need nothing', () => {
   const root = site();
   const before = Object.fromEntries(
     [
@@ -161,10 +175,7 @@ test('an item slug change: its page redirects, links follow', () => {
       ['/people/daan/', '/people/daan-o/'],
     ],
   );
-  const { edits } = moveLinks(after, moves);
-  assert.deepEqual(edits, [
-    { file: 'settings/nav.json', parts: ['footer', '0', 'page'], value: '/people/noor-v/' },
-  ]);
+  assert.deepEqual(moveLinks(after, moves).edits, []); // the menu links the item by its id
   const { list } = moveRedirects([], moves);
   assert.deepEqual(pruneRedirects(list, sitePaths(after)).list, [
     { from: '/people/noor/', to: '/people/noor-v/' },
@@ -227,9 +238,9 @@ test('validation: redirects.json', () => {
 test('"See all" links go to the page that shows the source, wherever it is', async () => {
   const { sourcePage } = await import('../src/site/blocks/data.js');
   const pages = {
-    home: page({ type: 'grid', config: { source: 'people' } }),
+    home: page('pg-home', { type: 'grid', config: { source: 'people' } }),
     'models/[slug]': { template: { source: 'people' } },
-    work: page({ type: 'projects', config: { source: 'projects' } }),
+    work: page('pg-work', { type: 'projects', config: { source: 'projects' } }),
   };
   assert.equal(sourcePage({ pages }, 'people'), '/models/');
   assert.equal(sourcePage({ pages }, 'projects'), '/work/');

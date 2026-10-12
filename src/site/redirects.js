@@ -61,15 +61,29 @@ function eachString(data, fn, parts = []) {
 /**
  * The paths that move: a Map of old path -> new path (null: gone, no redirect). `hash`: links
  * keep their #hash and ?query (a rename; not when sent to another page).
+ * Links by id (src/site/hrefs.js) don't move with a path: `pages` (deleted page id -> the id
+ * of the page it redirects to, or null) sends { page } links on, and `sources` (sources whose
+ * [slug] page is deleted) makes their { item } links broken.
  * Returns the link edits [{ file, parts, value }] (redirects.json and photos.json aside) and
- * `broken`, the number of links to gone paths, which stay as they are.
+ * `broken`, the number of links to gone paths or pages, which stay as they are.
  */
-export function moveLinks(files, moves, { hash = true } = {}) {
+export function moveLinks(
+  files,
+  moves,
+  { hash = true, pages = new Map(), sources = new Set() } = {},
+) {
   const edits = [];
   let broken = 0;
   for (const [file, data] of Object.entries(files)) {
     if (file === REDIRECTS || file === PHOTOS) continue;
     eachString(data, (s, parts) => {
+      if (parts.at(-1) === 'page' && pages.has(s)) {
+        if (pages.get(s) === null) broken++;
+        else edits.push({ file, parts, value: pages.get(s) });
+        return;
+      }
+      if (parts.at(-2) === 'item' && parts.at(-1) === 'source' && sources.has(s))
+        return void broken++;
       if (!isPath(s) || !moves.has(pathKey(s))) return;
       const to = moves.get(pathKey(s));
       if (to === null) broken++;
@@ -136,8 +150,8 @@ export function pageMoves(files, { id, name, to }) {
 
 /**
  * Item pages whose path changed between two versions of the content (an item's slug or name
- * changed): old path -> new path. An item is found by its name (or title), else at the same
- * place in its list.
+ * changed): old path -> new path. An item is found by its id, else its name (or title), else
+ * at the same place in its list.
  */
 export function itemMoves(before, after) {
   const items = (files) => getRoutes(contentFromFiles(files)).filter((r) => r.album);
@@ -149,6 +163,7 @@ export function itemMoves(before, after) {
     if (paths.has(r.path)) continue;
     const same = now.filter((n) => n.id === r.id);
     const match =
+      same.find((n) => n.album?.id && n.album.id === r.album?.id) ||
       same.find((n) => nameOf(n) !== undefined && nameOf(n) === nameOf(r)) ||
       same.find((n) => n.index === r.index);
     if (match && !moves.has(r.path)) moves.set(r.path, match.path);

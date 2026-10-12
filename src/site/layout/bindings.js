@@ -48,16 +48,15 @@ const formatted = (v, format) =>
     : format.replaceAll('{value}', typeof v === 'object' ? '' : String(v));
 
 /**
- * The bind type of a field definition: its type, 'link' for a config text field (an href),
+ * The bind type of a field definition: its type, 'link' for a config link field,
  * 'photos' for a list of { src } objects; null when it can't bind as a whole (other lists).
  */
 export function bindTypeOf(def, { config = false } = {}) {
   if (!def) return null;
-  if (config) return def.type === 'text' ? 'link' : null;
+  if (config) return def.type === 'link' ? 'link' : null;
   if (!def.list) return def.type || 'text';
   if (def.list === 'image') return 'photos';
-  const subs = isObject(def.list) ? Object.keys(def.list) : [];
-  return subs.length === 1 && subs[0] === 'src' ? 'photos' : null;
+  return def.list.src === 'image' ? 'photos' : null;
 }
 
 /** The item a block shows: { item, source } (item null when there is none or it is missing). */
@@ -138,7 +137,7 @@ export function resolveBlock(block, t, { item, source, ctx, at, placeholders = f
   if (isObject(block.config)) {
     out.config = { ...block.config };
     for (const c of t.config || [])
-      if (c.type === 'text' && out.config[c.key] !== undefined)
+      if (c.type === 'link' && out.config[c.key] !== undefined)
         out.config[c.key] = resolve(out.config[c.key], {
           item,
           keys,
@@ -151,7 +150,7 @@ export function resolveBlock(block, t, { item, source, ctx, at, placeholders = f
 
 /**
  * The bound values of a block: [{ path, bind }] with each one's bind type
- * (bindTypeOf); path: from the block, e.g. ['title'] or ['config', 'href'] or ['meta', 0, 'value'].
+ * (bindTypeOf); path: from the block, e.g. ['title'] or ['config', 'link'] or ['meta', 0, 'value'].
  */
 function bindingsOf(block, t) {
   const out = [];

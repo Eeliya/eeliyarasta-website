@@ -14,12 +14,12 @@ function site() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
-  put('pages/index.json', { version: 1 });
-  put('pages/404/index.json', { version: 1 });
-  put('pages/about/index.json', { version: 1, title: 'About' });
-  put('pages/people/index.json', { version: 1, title: 'People' });
-  put('pages/people/[slug].json', { version: 1, template: { source: 'people' } });
-  put('pages/people/team/index.json', { version: 1, title: 'Team' });
+  put('pages/index.json', { version: 1, id: 'pg-t035' });
+  put('pages/404/index.json', { version: 1, id: 'pg-t036' });
+  put('pages/about/index.json', { version: 1, id: 'pg-t037', title: 'About' });
+  put('pages/people/index.json', { version: 1, id: 'pg-t038', title: 'People' });
+  put('pages/people/[slug].json', { version: 1, id: 'pg-t039', template: { source: 'people' } });
+  put('pages/people/team/index.json', { version: 1, id: 'pg-t040', title: 'Team' });
   put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
   return root;
 }
@@ -29,6 +29,12 @@ const pages = (root) => [...editableFiles(root)].filter((f) => f.startsWith('pag
 test('add: a folder with its index.json, valid slugs only, no overwrites', () => {
   const root = site();
   const r = pagesOp(root, { op: 'add', parent: 'people', name: 'new-one', title: 'New one' });
+  assert.match(
+    JSON.parse(
+      fs.readFileSync(path.join(root, 'content/en/pages/people/new-one/index.json'), 'utf8'),
+    ).id,
+    /^pg-[a-z0-9]{4}$/,
+  );
   assert.equal(r.status, 200);
   assert.equal(r.body.id, 'people/new-one');
   assert.deepEqual(r.body.created, ['pages/people/new-one/index.json']);

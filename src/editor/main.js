@@ -148,6 +148,7 @@ function pageEntries(routes) {
         kind: 'page',
         path: r.path,
         title: r.title.split('|')[0].trim(),
+        pid: r.pid,
         group: groupOf(r.id),
       });
   }

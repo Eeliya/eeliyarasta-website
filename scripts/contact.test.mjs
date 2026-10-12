@@ -205,6 +205,7 @@ test('the block: where it sends, its form, its validation', () => {
   const pos = { col: 1, span: 24, row: 1, rows: 1 };
   const page = (fields) => ({
     version: 1,
+    id: 'pg-t034',
     sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, pos }] }],
   });
   assert.deepEqual(checkContent('pages/contact/index.json', page(s.fields)), []);
