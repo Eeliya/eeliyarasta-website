@@ -10,6 +10,7 @@
 -->
 <script>
   import { tick } from 'svelte';
+  import { dropTarget } from '../drag-target.js';
   import Button from './Button.svelte';
   import Field from './Field.svelte';
   import Section from './Section.svelte';
@@ -64,56 +65,63 @@
   // it lifts and follows the pointer, a line shows where it lands; one undo step. A drag
   // isn't a click (no block opens). Alt+↑/↓ on a row moves it by one.
   let drag = $state(null); // { id, at, j, y, dy, moving, over: { at, j, side } }
-  let dragged = false; // the click after a drag
+  // the rows' places when it starts (the lifted row moves; its own place still counts)
+  const listsNow = () =>
+    [...document.querySelectorAll('[data-list]')].map((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        at: Number(el.dataset.list),
+        top: r.top,
+        bottom: r.bottom,
+        rows: [...el.querySelectorAll(':scope > [data-row]')].map((row) => {
+          const b = row.getBoundingClientRect();
+          return { top: b.top, bottom: b.bottom };
+        }),
+      };
+    });
+  // only its handle starts a drag
   function grab(e, id, at, j) {
-    if (e.button !== 0 || e.target.closest('input, .btn')) return;
-    drag = { id, at, j, y: e.clientY, dy: 0, moving: false, over: null };
+    if (e.button !== 0) return;
+    e.preventDefault();
+    drag = { id, at, j, y: e.clientY, dy: 0, moving: false, over: null, lists: listsNow() };
     window.addEventListener('pointermove', follow);
     window.addEventListener('pointerup', drop, { once: true });
-    window.addEventListener('pointercancel', drop, { once: true });
+    window.addEventListener('pointercancel', cancel, { once: true });
+    window.addEventListener('keydown', escape);
   }
   function follow(e) {
     const dy = e.clientY - drag.y;
     if (!drag.moving && Math.abs(dy) < 4) return;
     drag.moving = true;
     drag.dy = dy;
-    drag.over = targetAt(e.clientY);
+    drag.over = dropTarget(drag.lists, drag, e.clientY);
   }
-  // where a block let go at y lands: before or after the nearest other row (or in an empty list)
-  function targetAt(y) {
-    let best = null;
-    for (const el of document.querySelectorAll('[data-row]')) {
-      const [at, j] = el.dataset.row.split(':').map(Number);
-      if (at === drag.at && j === drag.j) continue;
-      const r = el.getBoundingClientRect();
-      const d = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
-      if (!best || d < best.d)
-        best = { d, at, j, side: y < r.top + r.height / 2 ? 'before' : 'after' };
-    }
-    for (const el of document.querySelectorAll('[data-list]')) {
-      if (el.querySelector('[data-row]')) continue;
-      const r = el.getBoundingClientRect();
-      const d = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
-      if (!best || d < best.d) best = { d, at: Number(el.dataset.list), j: 0, side: 'before' };
-    }
-    return best;
-  }
-  function drop() {
+  function stop() {
     window.removeEventListener('pointermove', follow);
+    window.removeEventListener('pointerup', drop);
+    window.removeEventListener('pointercancel', cancel);
+    window.removeEventListener('keydown', escape);
     const d = drag;
     drag = null;
-    if (!d?.moving) return;
-    dragged = true;
-    setTimeout(() => (dragged = false));
-    const o = d.over;
-    if (!o) return;
-    let to = o.j + (o.side === 'after' ? 1 : 0);
-    if (o.at === d.at && d.j < to) to--; // its own place is gone from the list
-    if (o.at !== d.at || to !== d.j) moveBlockTo(live.store, file, d.at, d.j, o.at, to);
+    return d;
+  }
+  const cancel = () => stop();
+  function escape(e) {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation();
+    stop();
+  }
+  // its own place (or no section's blocks under the pointer): nothing moves, no undo step
+  function drop() {
+    const d = stop();
+    if (d?.moving && d.over) moveBlockTo(live.store, file, d.at, d.j, d.over.at, d.over.to);
   }
   // the drop line's class on row j of section at
   const dropAt = (at, j) =>
-    drag?.moving && drag.over?.at === at && drag.over.j === j ? `is-drop-${drag.over.side}` : '';
+    drag?.moving && drag.over?.at === at && drag.over.line.j === j
+      ? `is-drop-${drag.over.line.side}`
+      : '';
   async function nudge(e, at, j, n) {
     if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
@@ -427,7 +435,7 @@
       <ul class="blocks" aria-label="Blocks of section {at + 1}" data-list={at}>
         {#each s.blocks || [] as b, j (b.id)}
           {@const label = typeOf(b)?.label || `Unknown type "${b.type}"`}
-          <!-- the row takes the drag and Alt+↑/↓ (keys from its focused buttons) -->
+          <!-- the row takes Alt+↑/↓ (keys from its focused buttons); its handle the drag -->
           <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
           <li
             class={[
@@ -439,14 +447,20 @@
             ]}
             style:translate={drag?.id === b.id && drag.moving ? `0 ${drag.dy}px` : null}
             data-row="{at}:{j}"
-            onpointerdown={(e) => grab(e, b.id, at, j)}
             onkeydown={(e) => nudge(e, at, j, s.blocks.length)}
           >
+            <span
+              class="block__grip"
+              title="Drag to move (Alt+↑/↓ on the row)"
+              aria-hidden="true"
+              onpointerdown={(e) => grab(e, b.id, at, j)}
+              ><i class="fa-solid fa-grip-vertical"></i></span
+            >
             <button
               type="button"
               class="block__open"
-              title="Open {label} (drag to reorder; Alt+↑/↓ moves it)"
-              onclick={(e) => (dragged ? e.preventDefault() : onopen(b.id))}
+              title="Open {label} (Alt+↑/↓ moves it)"
+              onclick={() => onopen(b.id)}
             >
               {label}
             </button>
@@ -472,12 +486,7 @@
               onchange={(e) => setBlockOn(at, j, e.currentTarget.checked)}
             />
             {#if nameOf(b)}
-              <button
-                type="button"
-                class="block__title"
-                tabindex="-1"
-                onclick={(e) => (dragged ? e.preventDefault() : onopen(b.id))}
-              >
+              <button type="button" class="block__title" tabindex="-1" onclick={() => onopen(b.id)}>
                 {nameOf(b)}
               </button>
             {/if}
@@ -611,14 +620,12 @@
   .block {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-columns: 20px minmax(0, 1fr) auto auto auto;
     align-items: center;
     column-gap: var(--space-1);
     padding-right: var(--space-1);
     border-radius: var(--radius-md);
     background: var(--c-surface-2);
-    touch-action: none;
-    user-select: none;
 
     &.is-active {
       box-shadow: inset 0 0 0 1px var(--c-accent);
@@ -682,8 +689,23 @@
     }
   }
 
+  // the drag handle, on the type's line; the title under the type
+  .block__grip {
+    display: grid;
+    place-items: center;
+    height: var(--size-control);
+    color: var(--c-text-faint);
+    font-size: var(--fs-sm);
+    cursor: grab;
+    touch-action: none;
+
+    .is-lifted & {
+      cursor: grabbing;
+    }
+  }
+
   .block__title {
-    grid-column: 1 / -1;
+    grid-column: 2 / -1;
     margin-bottom: var(--space-2);
     color: var(--c-link);
   }
