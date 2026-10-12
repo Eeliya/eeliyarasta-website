@@ -212,36 +212,40 @@ kbd {
   }
 }
 
-// Unsaved changes: a 6px accent dot before the label (a field, a picker) or the title (a
-// section card: its switch or content changed), drawn by an absolute ::before in the left
-// padding, so it never moves anything; centered on the first line. Explorer rows and Motion
-// parts (has its own values) get it in their left padding.
-:is(.tf, .opt).is-changed > .tf__label,
-.sec.is-changed > .sec__bar > .sec__toggle,
+// Unsaved changes: a 6px accent dot (mock A). A field's or picker's label: an inline dot first,
+// the label row's gap after it, the label white. A section card: the bar's first item before
+// the caret (the bar's 4px gap), on the title line; the toggle is flex: 1, so the title gives
+// up the room and the buttons and switch on the right don't move. Explorer rows and Motion
+// parts (has its own values): centered in their left padding, absolute.
+:is(.tf, .opt).is-changed > .tf__label::before,
+.sec.is-changed > .sec__bar::before,
+:is(.xrow, .mlist__part).is-changed::before {
+  content: '';
+  flex: none;
+  order: -1;
+  width: var(--size-changed);
+  height: var(--size-changed);
+  border-radius: var(--radius-round);
+  background: var(--c-accent);
+  pointer-events: none;
+}
+
+:is(.tf, .opt).is-changed > .tf__label {
+  color: var(--c-text);
+}
+
+.sec.is-changed > .sec__bar::before {
+  margin: calc((20px - var(--size-changed)) / 2) 0;
+}
+
 :is(.xrow, .mlist__part).is-changed {
   position: relative;
 
   &::before {
-    content: '';
     position: absolute;
     top: calc(50% - var(--size-changed) / 2);
-    left: calc(-1 * var(--size-changed) - 1px);
-    width: var(--size-changed);
-    height: var(--size-changed);
-    border-radius: var(--radius-round);
-    background: var(--c-accent);
-    pointer-events: none;
+    left: calc((var(--space-3) - var(--size-changed)) / 2);
   }
-}
-
-// a section's title line is its first 20px
-.sec.is-changed > .sec__bar > .sec__toggle::before {
-  top: calc((20px - var(--size-changed)) / 2);
-}
-
-// inside their own padding
-:is(.xrow, .mlist__part).is-changed::before {
-  left: calc((var(--space-3) - var(--size-changed)) / 2);
 }
 
 // ------------------------------------------------------------ groups & fields
