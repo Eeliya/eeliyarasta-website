@@ -35,7 +35,7 @@ html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [
 .__ed-box--hover { border: 1px dashed rgb(255 255 255 / .6); }
 .__ed-box--sel { border: 1.5px solid ${T.accent}; box-shadow: 0 0 0 4px color-mix(in srgb, ${T.accent} 14%, transparent), inset 0 0 0 9999px color-mix(in srgb, ${T.accent} 4%, transparent); }
 .__ed-box span { position: absolute; left: -1.5px; bottom: 100%; margin-bottom: 4px; font: 500 ${T.fsXs}/1 ${T.font}; letter-spacing: .04em; padding: 4px 8px; border-radius: ${T.radiusSm}; white-space: nowrap; }
-.__ed-box--hover span { background: rgb(20 20 20 / .85); color: ${T.white}; border: 1px solid rgb(255 255 255 / .2); }
+.__ed-box--hover span { background: ${T.black}; color: ${T.white}; border: 1px solid rgb(255 255 255 / .2); }
 .__ed-box--sel span { background: ${T.accent}; color: ${T.onAccent}; }
 .__ed-box.is-low span { bottom: auto; top: 100%; margin: 4px 0 0; }
 `;

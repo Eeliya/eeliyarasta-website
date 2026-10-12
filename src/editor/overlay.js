@@ -76,7 +76,7 @@ const STYLE = `
 .sel { border: 2px solid ${T.accent}; }
 .sel.is-dragging { background: ${T.accent}; background: rgb(${T.accentRgb} / .08); }
 .label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.accent}; color: ${T.black}; white-space: nowrap; }
-.handle { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: ${T.radiusXs}; background: ${T.black}; pointer-events: auto; }
+.handle { position: absolute; width: 12px; height: 12px; translate: -50% -50%; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: ${T.radiusXs}; background: ${T.black}; pointer-events: auto; }
 .handle[data-h='n'], .handle[data-h='s'] { left: 50%; cursor: ns-resize; }
 .handle[data-h='e'], .handle[data-h='w'] { top: 50%; cursor: ew-resize; }
 .handle[data-h='n'], .handle[data-h='ne'], .handle[data-h='nw'] { top: 0; }
@@ -86,7 +86,7 @@ const STYLE = `
 .handle[data-h='ne'], .handle[data-h='sw'] { cursor: nesw-resize; }
 .handle[data-h='nw'], .handle[data-h='se'] { cursor: nwse-resize; }
 .sel.is-free .handle:not([data-h='e']):not([data-h='w']) { display: none; }
-.dot { position: absolute; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: 50%; background: ${T.black}; pointer-events: auto; }
+.dot { position: absolute; left: 50%; width: 12px; height: 12px; translate: -50% -50%; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: 50%; background: ${T.black}; pointer-events: auto; }
 .dot[data-dot='top'] { top: -${DOT}px; cursor: grab; }
 .dot[data-dot='bottom'] { top: calc(100% + ${DOT}px); }
 .dot.is-linked { background: ${T.accent}; }
@@ -94,11 +94,11 @@ const STYLE = `
 .sel.is-dragging .dot, .is-linking .box .dot { display: none; }
 .target { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: 50%; background: ${T.black}; }
 .target.is-near { background: ${T.accent}; box-shadow: 0 0 0 4px rgb(${T.accentRgb} / .35); }
-.secrow { position: absolute; height: 12px; margin-top: -6px; pointer-events: auto; cursor: row-resize; }
-.secrow::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: rgb(255 255 255 / .75); box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
-.secrow::after { content: ''; position: absolute; left: calc(50% - 18px); top: 2px; width: 36px; height: 8px; box-sizing: border-box; border-radius: ${T.radiusSm}; background: ${T.white}; box-shadow: 0 0 0 1px rgb(0 0 0 / .45); }
-.secrow:hover::before, .secrow.is-dragging::before { background: ${T.white}; }
-.secrow .count { position: absolute; left: calc(50% + 26px); bottom: 100%; margin-bottom: 2px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.white}; color: ${T.black}; white-space: nowrap; }
+.secrow { position: absolute; height: 12px; translate: 0 -50%; pointer-events: auto; cursor: row-resize; }
+.secrow::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 0; border-top: 2px solid rgb(255 255 255 / .75); translate: 0 -50%; box-shadow: 0 0 0 1px rgb(0 0 0 / .35); }
+.secrow::after { content: ''; position: absolute; left: 50%; top: 50%; width: 36px; height: 8px; translate: -50% -50%; box-sizing: border-box; border-radius: ${T.radiusSm}; background: ${T.white}; box-shadow: 0 0 0 1px rgb(0 0 0 / .45); }
+.secrow:hover::before, .secrow.is-dragging::before { border-top-color: ${T.white}; }
+.secrow .count { position: absolute; left: calc(50% + 28px); bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.white}; color: ${T.black}; white-space: nowrap; }
 .secrow:not(.is-dragging) .count { display: none; }
 svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .link { fill: none; stroke: ${T.accent}; stroke-width: 2; }
