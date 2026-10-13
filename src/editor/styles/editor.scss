@@ -217,6 +217,7 @@ kbd {
 // parts (has its own values): centered in their left padding, absolute.
 :is(.tf, .opt).is-changed > .tf__label::before,
 .opt.is-changed .sc__label::before,
+.tf.is-changed .photo__label::before,
 .sec.is-changed > .sec__bar::before,
 :is(.xrow, .mlist__part).is-changed::before {
   content: '';
@@ -230,7 +231,8 @@ kbd {
 }
 
 :is(.tf, .opt).is-changed > .tf__label,
-.opt.is-changed .sc__label {
+.opt.is-changed .sc__label,
+.tf.is-changed .photo__label {
   color: var(--c-text);
 }
 

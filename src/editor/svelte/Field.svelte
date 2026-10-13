@@ -3,8 +3,9 @@
   its file, e.g. people.json, that opens it in the Source Explorer) with an input, or a
   textarea for longer text, a switch (boolean) or a Select (select, options [[value, label]]).
   bare: no label row (label is the input's aria-label; say it in the placeholder); help: a hint under it; half: it shares a row with the next field (the parent's grid).
-  type 'image': a photo (its media/ path or R2 key) as a thumbnail with its file name and
-  sizes; the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
+  type 'image': a photo (its media/ path or R2 key) as a 64px card: the photo, its label
+  (inside), file name and sizes, Media and ✕ (clears it; remove: the parent's, a list item's);
+  grab: a pointerdown on the photo (a list's drag handle, PhotoList.svelte); the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
   stores the photo picked there in this field: one undo step. No text input.
   Used by the Content panel, the Sources modal and Settings.
   Bindings (a block's field, src/site/layout/bindings.js):
@@ -58,6 +59,8 @@
     formats = false,
     resolved = '',
     bare = false,
+    grab = null,
+    remove = null,
   } = $props();
 
   const uid = $props.id();
@@ -65,6 +68,8 @@
   const photo = $derived(type === 'image');
   // a label element around an input, a switch; photos and Selects label their own buttons
   const tag = $derived(photo || type === 'select' || bound ? 'div' : 'label');
+  // a photo's label goes inside its card, unless the label row has more (a Source switch, a file)
+  const inner = $derived(photo && !bound && !(binds && binds.length) && !source);
 
   /** Show the stored value, except while the user is typing in the field. */
   const show = (value) => (el) => {
@@ -115,7 +120,7 @@
   class={['tf', changed && 'is-changed', selected && 'is-selected', half && 'is-half']}
   data-edit={edit}
 >
-  {#if !bare}<span class="tf__label">
+  {#if !bare && !inner}<span class="tf__label">
       {label}
       {#if type === 'boolean'}
         <input
@@ -172,24 +177,41 @@
       />
     {/if}
   {:else if photo}
-    <div class="photo">
+    <div class={['photo', !value && 'is-empty']}>
       <button
         type="button"
-        class="photo__thumb"
+        class={['photo__thumb', grab && 'is-grab']}
         aria-label={value ? `Change ${label}: ${photoInfo(value).name}` : `Choose ${label}`}
+        title={grab ? 'Drag to move (Alt+↑/↓), click to change' : undefined}
+        aria-keyshortcuts={grab ? 'Alt+ArrowUp Alt+ArrowDown' : undefined}
+        onpointerdown={grab}
         onclick={change}
       >
         {#if value}
-          <img src={thumbUrl(value)} alt="" {@attach fallback(value)} />
+          <img src={thumbUrl(value)} alt="" draggable="false" {@attach fallback(value)} />
         {:else}
           <i class="fa-solid fa-plus" aria-hidden="true"></i>
         {/if}
       </button>
       <span class="photo__info">
+        {#if inner && !bare}<span class="photo__label">{label}</span>{/if}
         <span class="photo__name" title={value}>{value ? photoInfo(value).name : 'No photo'}</span>
-        <span class="photo__meta">{value ? photoLine(value) : 'Choose one in Media'}</span>
+        {#if value}<span class="photo__meta">{photoLine(value)}</span>{/if}
       </span>
-      <Button size="small" onclick={change}>{value ? 'Change' : 'Choose'}</Button>
+      <Button
+        icon="images"
+        iconOnly
+        label={value ? `Change ${label} in Media` : `Choose ${label} in Media`}
+        onclick={change}
+      />
+      {#if remove || value}
+        <Button
+          icon="xmark"
+          iconOnly
+          label="Remove {label}"
+          onclick={remove ?? (() => onvalue(''))}
+        />
+      {/if}
     </div>
   {:else if type === 'select'}
     <Select
@@ -245,11 +267,19 @@
     margin-top: var(--space-2);
   }
 
-  // a photo: 64px thumbnail (or a + tile), its file name and sizes, Change
+  // a photo: a card as an input (its background, line, 8px corners), 64px in every state:
+  // the photo its full height on the left (a + tile when empty; a list's drag handle), its
+  // label, file name and sizes, then Media (change) and ✕ (remove), icon-only
   .photo {
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    height: 64px;
+    padding-right: var(--space-2);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--c-input);
+    box-shadow: inset 0 0 0 1px var(--c-line);
   }
 
   .photo__thumb {
@@ -260,14 +290,17 @@
     height: 64px;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
     overflow: hidden;
     cursor: pointer;
-    color: var(--c-text-muted);
-    background: var(--c-control);
-    box-shadow: inset 0 0 0 1px var(--c-line);
-    font-size: var(--fs-xl);
+    color: var(--c-text-faint);
+    background: var(--c-switch);
+    font-size: var(--fs-lg);
     transition: background 0.2s;
+
+    &.is-grab {
+      cursor: grab;
+    }
 
     &:hover {
       color: var(--c-text);
@@ -281,13 +314,14 @@
     &:focus-visible,
     .is-selected & {
       outline: none;
-      box-shadow: var(--focus-ring);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      -webkit-user-drag: none;
     }
   }
 
@@ -295,16 +329,35 @@
     flex: 1;
     min-width: 0;
     display: grid;
-    gap: var(--space-1);
     font-size: var(--fs-base);
     line-height: 16px;
   }
 
-  .photo__name {
+  // (changed: the dot before it, editor.scss)
+  .photo__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-sm);
+    color: var(--c-text-muted);
+  }
+
+  .photo__label,
+  .photo__name,
+  .photo__meta {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: var(--c-text);
+  }
+
+  .photo__name {
+    color: var(--c-text-strong);
+    font-weight: 500;
+
+    .is-empty & {
+      color: var(--c-text-muted);
+      font-weight: 400;
+    }
   }
 
   .photo__meta {

@@ -14,6 +14,7 @@
   import Field from './Field.svelte';
   import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
+  import PhotoList from './PhotoList.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { runsOf, isSource } from './content-groups.js';
@@ -61,6 +62,10 @@
       openMedia({ pick: `${f.edit}/${list.length}${f.photo ? `/${f.photo}` : ''}` });
   }
 
+  /** A list whose items have a photo (the Hero's): PhotoList.svelte, the photo first. */
+  const photoList = (f) => f.photo !== null && f.items.every((fs) => fs.some(isPhoto));
+  const isPhoto = (sub) => sub.type === 'image';
+
   /** A list item's name in its bar: its label or title, else "<list> <n>". */
   function itemName(f, fields, i) {
     const own = fields.find((sub) => /\/(label|title)$/.test(sub.ptr));
@@ -97,7 +102,7 @@
 
 <!-- one field: a Field (text, photo, switch, choice), or a source field (a list item's
      source, ItemPicker.svelte); `own` = the group names the source file, so the field doesn't -->
-{#snippet field(f, half)}
+{#snippet field(f, half, extra = {})}
   {#if f.type === 'source'}
     <ItemPicker
       store={live.store}
@@ -137,6 +142,7 @@
       binds={bindings && f.bindType && f.type !== 'boolean' ? bindings.binds(f.bindType) : null}
       formats={!!bindings && f.textual}
       resolved={bindings?.resolved(f) ?? ''}
+      {...extra}
     />
   {/if}
 {/snippet}
@@ -214,17 +220,35 @@
     {@render rows(run.fields)}
   {:else}
     {@const f = run.list}
-    <ListField
-      label={f.label}
-      items={f.items}
-      name={(fields, i) => itemName(f, fields, i)}
-      addLabel={f.photo === null ? 'Add' : 'Add photo'}
-      onmove={(from, to) => moveItem(f, from, to)}
-      onremove={(i) => removeItem(f, i)}
-      onadd={() => addItem(f)}
-    >
-      {#snippet item(fields)}{@render rows(fields)}{/snippet}
-    </ListField>
+    {#if photoList(f)}
+      <PhotoList
+        label={f.label}
+        items={f.items}
+        addLabel="Add photo"
+        onmove={(from, to) => moveItem(f, from, to)}
+        onremove={(i) => removeItem(f, i)}
+        onadd={() => addItem(f)}
+      >
+        {#snippet row(fields, i, ctl)}
+          {@render field(fields.find(isPhoto), false, { ...ctl, label: `${f.label} ${i + 1}` })}
+          {#if fields.some((sub) => !isPhoto(sub))}{@render rows(
+              fields.filter((sub) => !isPhoto(sub)),
+            )}{/if}
+        {/snippet}
+      </PhotoList>
+    {:else}
+      <ListField
+        label={f.label}
+        items={f.items}
+        name={(fields, i) => itemName(f, fields, i)}
+        addLabel={f.photo === null ? 'Add' : 'Add photo'}
+        onmove={(from, to) => moveItem(f, from, to)}
+        onremove={(i) => removeItem(f, i)}
+        onadd={() => addItem(f)}
+      >
+        {#snippet item(fields)}{@render rows(fields)}{/snippet}
+      </ListField>
+    {/if}
   {/if}
 {/each}
 
