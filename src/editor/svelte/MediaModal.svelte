@@ -28,6 +28,7 @@
   } from './media.svelte.js';
   import { labelFor, splitEdit } from './content-groups.js';
   import { photoUses } from '../lib/photo-uses.js';
+  import { appendPhotos } from '../lib/photo-list.js';
   import { parse } from '../lib/pointer.js';
   import { mediaOp, upload } from '../source.js';
   import { toast } from './toasts.svelte.js';
@@ -67,6 +68,22 @@
   });
   const pick = $derived(ui.media.pick ? splitEdit(ui.media.pick) : null);
   const current = $derived(pick ? live.get(pick.file, pick.ptr) : undefined);
+  // a photo list's Add photo (openMedia multi): clicks toggle, in pick order; Add appends them
+  const multi = $derived(ui.media.multi?.list ? ui.media.multi : null);
+  let picked = $state([]);
+  const n = $derived(picked.length);
+
+  function toggle(k) {
+    picked = picked.includes(k) ? picked.filter((p) => p !== k) : [...picked, k];
+    select(picked.includes(k) ? k : (picked.at(-1) ?? ''));
+  }
+
+  function addPicked() {
+    const { file, ptr } = splitEdit(multi.list);
+    const list = appendPhotos(live.get(file, ptr), picked, multi);
+    live.store.set(file, ptr, list, { source: 'panel', structure: true });
+    close();
+  }
 
   function select(next) {
     ui.media.key = next;
@@ -77,6 +94,7 @@
 
   /** Open the window (on its photo); pick: see openMedia in media.svelte.js. */
   export function open() {
+    picked = [];
     select(ui.media.key);
     flushSync();
     if (!dialog.open) dialog.showModal();
@@ -334,13 +352,21 @@
         <li>
           <button
             type="button"
-            class={['mtile', k === key && 'is-selected', k === current && 'is-current']}
+            class={[
+              'mtile',
+              (multi ? picked.includes(k) : k === key) && 'is-selected',
+              k === current && 'is-current',
+            ]}
             title="{k} · {photoLine(k)}"
             aria-label={photoInfo(k).name}
-            aria-current={k === key}
-            onclick={() => select(k)}
+            aria-current={!multi && k === key}
+            aria-pressed={multi ? picked.includes(k) : undefined}
+            onclick={() => (multi ? toggle(k) : select(k))}
           >
             <img src={thumbUrl(k)} alt="" loading="lazy" {@attach fallback(k)} />
+            {#if multi && picked.includes(k)}
+              <span class="mtile__num">{picked.indexOf(k) + 1}</span>
+            {/if}
           </button>
         </li>
       {/each}
@@ -445,12 +471,25 @@
       <p class="hint">{key} is not in media/ or R2 any more.</p>
     {:else}
       <p class="hint">
-        {pick
-          ? 'Pick a photo on the left, or upload one, then Use this photo.'
-          : 'Every photo the site can use: uploaded to R2, or in media/. Pick one to see where it is used and to edit its alt text. Drop photos on this window to upload them.'}
+        {multi
+          ? 'Pick the photos to add, in order: each one you click gets its number. Click it again to leave it out.'
+          : pick
+            ? 'Pick a photo on the left, or upload one, then Use this photo.'
+            : 'Every photo the site can use: uploaded to R2, or in media/. Pick one to see where it is used and to edit its alt text. Drop photos on this window to upload them.'}
       </p>
     {/if}
   </section>
+
+  {#if multi}
+    <!-- a fixed height: the count left, the buttons right -->
+    <footer class="md-foot">
+      <span class="hint small">{n ? `${n} picked` : 'None picked'}</span>
+      <Button size="small" onclick={close}>Cancel</Button>
+      <Button variant="primary" size="small" icon="plus" disabled={!n} onclick={addPicked}>
+        {n ? `Add ${n} photo${n === 1 ? '' : 's'}` : 'Add photos'}
+      </Button>
+    </footer>
+  {/if}
 </dialog>
 
 <style lang="scss">
@@ -460,7 +499,7 @@
     height: min(720px, calc(100vh - 64px));
     display: grid;
     grid-template-columns: minmax(320px, 1fr) minmax(320px, 400px);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto; // the last: the multi-pick footer
     padding: 0;
     overflow: hidden;
 
@@ -538,6 +577,39 @@
       line-height: 16px;
       color: var(--c-on-light);
       background: var(--c-text);
+    }
+  }
+
+  // the pick order (multi-pick): a solid accent badge, top left
+  .mtile__num {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-on-accent);
+    background: var(--c-accent);
+  }
+
+  // the multi-pick footer: a fixed height, the count left, the buttons right
+  .md-foot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    height: 56px;
+    padding: 0 var(--space-4);
+    border-top: 1px solid var(--c-line);
+
+    .hint {
+      margin: 0 auto 0 0;
     }
   }
 

@@ -61,11 +61,9 @@
     list.splice(i, 1);
     setPhotos(list);
   }
-  /** Media opens to pick the next photo (it lands at the end of the list). */
+  /** Media opens to pick photos (they land at the end of the list, in the order picked). */
   function add() {
-    if (!Array.isArray(live.get(file, '/backdrop/photos')))
-      live.store.set(file, '/backdrop', { ...b, photos: [] }, { source: 'panel' });
-    openMedia({ pick: `${file}#/backdrop/photos/${photos.length}` });
+    openMedia({ multi: { list: `${file}#/backdrop/photos`, item: '', photo: '' } });
   }
 
   const name = $derived(

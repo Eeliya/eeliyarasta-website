@@ -55,12 +55,11 @@
     setList(f, list);
   }
 
-  /** A new item at the end; a photo item opens the Media window to pick its photo. */
+  /** A new item at the end; a photo list opens the Media window to pick its photos instead. */
   function addItem(f) {
-    const list = listOf(f);
-    setList(f, [...list, structuredClone(f.item)]);
     if (f.photo !== null)
-      openMedia({ pick: `${f.edit}/${list.length}${f.photo ? `/${f.photo}` : ''}` });
+      return openMedia({ multi: { list: f.edit, item: f.item, photo: f.photo || '' } });
+    setList(f, [...listOf(f), structuredClone(f.item)]);
   }
 
   /** A list whose items have a photo (the Hero's): PhotoList.svelte, the photo first. */

@@ -74,8 +74,11 @@ export const fallback = (key) => (img) => {
 
 /**
  * Open the Media window (MediaModal.svelte) on photo `key`; with `pick` (a field's data-edit,
- * "file#/pointer") it offers "Use this photo", which stores the key in that field.
+ * "file#/pointer") it offers "Use this photo", which stores the key in that field. With `multi`
+ * (a photo list's Add photo: { list: "file#/pointer" of the list, item: a new item, photo: the
+ * item's photo key, "" when the item is the photo itself }) clicks pick several photos, in order,
+ * and "Add N photos" appends them (one undo step).
  */
-export function openMedia({ key = '', pick = '' } = {}) {
-  ui.media = { ...ui.media, open: true, key, pick };
+export function openMedia({ key = '', pick = '', multi = null } = {}) {
+  ui.media = { ...ui.media, open: true, key, pick: multi ? '' : pick, multi };
 }
