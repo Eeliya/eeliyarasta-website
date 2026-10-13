@@ -5,17 +5,39 @@
  * everything below reads `version` first, so a component that uses it re-renders after
  * each edit, undo, save, ... without knowing about store events.
  */
+import { contentFromFiles } from '../../site/files.js';
+import { getRoutes } from '../../site/routes.js';
+
 const copy = (value) => (value === undefined ? undefined : JSON.parse(JSON.stringify(value)));
 
 export function createLive(store) {
   let version = $state(0);
   store.on(() => version++);
+  // the site's routes, built once per store change for everyone who asks (not per reader)
+  let routesAt = -1;
+  let routes = [];
+  const routesNow = () => {
+    if (routesAt !== version) {
+      routes = getRoutes(contentFromFiles(store.current));
+      routesAt = version;
+    }
+    return routes;
+  };
 
   return {
     store,
     /** Read it to re-run after every store change (e.g. to re-read something outside the store). */
     get version() {
       return version;
+    },
+    /** Every route of the site with the edits (routes.js), shared: built once per change. */
+    get routes() {
+      version;
+      return routesNow();
+    },
+    /** The route of `path` ("/about/"), or undefined. */
+    routeOf(path) {
+      return this.routes.find((r) => r.path === path);
     },
     /** A copy of a file's edited value. A new object each time, so Svelte sees in-place edits. */
     current(file) {

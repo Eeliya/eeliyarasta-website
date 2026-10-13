@@ -115,9 +115,10 @@ tags, and works with JavaScript disabled.
 
 `src/client/router.js` intercepts internal link clicks, fetches the target's prerendered HTML
 (prefetched on hover), runs the page-leave transition (a curtain showing the destination's
-name; its text and an optional per-page `transition` live in the page's file `pages/<page>/index.json`,
-or in the album's item in `sources/`: `{ "preset": "curtain", "overrides": { … } }`, the site's
-curtain with some of its fields changed, or `{ "preset": "none" }`; missing: the site's curtain),
+name; its text, `curtainText`, lives in the page's file `pages/<page>/index.json` or in the
+item in `sources/`: missing, the page's title; `""`, no label. The curtain's timing is the
+site's alone (settings/animations.json); a page's `transition` is only `{ "preset": "none" }`
+(no curtain: a fade), on its `[slug].json` for every item page; missing: the site's curtain),
 swaps `<main data-router-view>`, updates
 title/meta/history, scrolls to top and re-mounts animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
 in one `gsap.context` and are reverted on leave. If anything fails it falls back to a normal
@@ -143,7 +144,7 @@ site settings can live side by side):
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                               |
 | `content/en/settings/photos.json`     | the **photo library**: every photo's `alt`, `credit` (`{ name, url?, source?, license? }`) and optional `focal` (`{ x, y }`, 0–100), keyed by media/ path or R2 key (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads |
 
-| `content/en/pages/people/[slug].json` | the people pages: `template.source` and the labels they share (`section`, `next`); see "Pages and URLs" |
+| `content/en/pages/people/[slug].json` | the people pages: `template.source` (the source with a page per item), then sections and blocks like any page; see "Pages and URLs" |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
@@ -554,7 +555,8 @@ move. A page's own file is
   `people/[slug]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
   page file: `pages/about.json` or `pages/people/x.json` are ignored.
 - **Templates:** `[slug].json` says which list it shows, `{ "template": { "source": "people" } }`,
-  plus the labels its pages share (`"section": "People"`, the back link; `"next": "Next person"`).
+  and nothing else: its pages are sections and blocks like any page (the album's back link
+  names the folder's page, its heading's title).
   An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
   `noor-vermeer`). Items without one, with an invalid one or with a duplicate get no page and a
   build warning (`[routes] ...`). A template page is an album (the person/place look):
@@ -570,7 +572,7 @@ move. A page's own file is
   site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"
   goes to the page that shows its source (the folder of its `[slug]` page, else the first page
-  with a block of it), so they follow a folder rename. A new page isn't in the menu by itself: add it in Settings > Menu (see "Menu").
+  with a block of it), so they follow a folder rename. A new page isn't in the menu by itself: add it in Content › Header (see "Menu").
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
@@ -984,7 +986,9 @@ renders just the sections it touched from the editor's copy of the page (`POST
 Other pages render from the unsaved edits too: the editor sends them to the dev server (`POST
 /__editor/draft`, cleared on Save), which renders dev pages from them.
 
-**Settings > Menu** edits `nav.json`: the Header menu with its items: label,
+**Content › Header** (a site part: the page picker's **Site** group, or click the header in the
+preview) edits `nav.json` and the header's labels (`strings.json` `nav`: the menu and close
+buttons, the clock). The menu with its items: label,
 link (a page from the page tree, or External URL with its URL), ↑ / ↓ / Remove, **Add link**,
 and a dropdown: the items of a source, or **Dropdown links** (one level) and the
 "all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[slug]` page the **Item** dropdown next

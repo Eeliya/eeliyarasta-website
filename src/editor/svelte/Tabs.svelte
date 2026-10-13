@@ -10,20 +10,49 @@
     role    'tablist' (they switch a panel; role=tab, aria-selected) or 'group' (a view filter;
             aria-pressed)
     class   extra class on the row
+    id      the tabs' ids are "<id>-<value>" (tablist: the panel's aria-labelledby)
+    panel   the id of the panel they switch (tablist: aria-controls)
+  A tablist is one Tab stop: ←/→ (Home/End) move to the next tab and pick it.
   Used by the block card (Content / Layout / Motion), the Motion panel (Elements / Animations)
   and the Media window's filter (All / R2 / Local). Not the mode bar (.seg--pill).
 -->
 <script>
-  let { tabs, value, onpick, label, role = 'tablist', class: cls = '' } = $props();
+  let {
+    tabs,
+    value,
+    onpick,
+    label,
+    role = 'tablist',
+    class: cls = '',
+    id: idProp = '',
+    panel = undefined,
+  } = $props();
+  const uid = $props.id();
+  const id = $derived(idProp || uid);
   const isTab = $derived(role === 'tablist');
+
+  function onkeydown(e) {
+    if (!isTab) return;
+    const at = tabs.findIndex(([v]) => v === value);
+    const n = tabs.length;
+    const to = { ArrowRight: at + 1, ArrowLeft: at - 1, Home: 0, End: n - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    const [v] = tabs[(to + n) % n];
+    onpick(v);
+    e.currentTarget.querySelector(`#${CSS.escape(`${id}-${v}`)}`)?.focus();
+  }
 </script>
 
-<div class={['tabs', cls]} {role} aria-label={label}>
+<div class={['tabs', cls]} {role} aria-label={label} {onkeydown}>
   {#each tabs as [v, text] (v)}
     <button
       type="button"
+      id="{id}-{v}"
       role={isTab ? 'tab' : undefined}
       aria-selected={isTab ? value === v : undefined}
+      aria-controls={isTab ? panel : undefined}
+      tabindex={isTab && value !== v ? -1 : undefined}
       aria-pressed={isTab ? undefined : value === v}
       class={['tabs__btn', value === v && 'is-active']}
       onclick={() => onpick(v)}>{text}</button

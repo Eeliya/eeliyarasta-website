@@ -12,7 +12,6 @@
   import Field from './Field.svelte';
   import { ui } from './ui.svelte.js';
   import { imageSrcset, imageUrl, media } from './media.svelte.js';
-  import { getRoutes } from '../../site/routes.js';
   import { DESCRIPTION_MAX, TITLE_MAX, seoOf } from '../../site/seo.js';
   import { TEMPLATE, contentFromFiles, pageIdOf } from '../../site/files.js';
 
@@ -25,9 +24,9 @@
   // the preview's page as the build sees it, with the editor's changes
   const seo = $derived.by(() => {
     live.version;
-    const content = contentFromFiles(live.store.current);
-    const route = getRoutes(content).find((r) => r.path === ui.path);
+    const route = live.routeOf(ui.path);
     if (!route) return null;
+    const content = contentFromFiles(live.store.current);
     const ctx = { ...content, media: media.manifest, photos: media.photos };
     return { ...seoOf(ctx, route), src: route.image || content.site?.ogImage || '' };
   });

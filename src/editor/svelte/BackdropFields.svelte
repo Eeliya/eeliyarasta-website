@@ -103,7 +103,7 @@
     onchange={(e) => set('enabled', e.currentTarget.checked)}
   />
 </h3>
-<div class="fields">
+<div class={['fields', has && !on && 'bd--off']}>
   {#if !has}
     <p class="hint small bd__hint">
       Photos behind the sections, one after another: the first at the top, the last until the end.
@@ -207,6 +207,11 @@
 </div>
 
 <style lang="scss">
+  // switched off: the labels and values go quiet (colour only: nothing moves)
+  .bd--off :global(:is(.tf__label, .photo__label, .bd__val, .seg__btn)) {
+    color: var(--c-text-faint);
+  }
+
   .bd__hint,
   .bd__note {
     margin: 0;
