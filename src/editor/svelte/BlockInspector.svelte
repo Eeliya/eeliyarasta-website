@@ -108,7 +108,7 @@
   });
 </script>
 
-<!-- its section: Back, its title (dim when only "Section N") and Locate; its settings -->
+<!-- its section: Back, its title (dim when only "Section N") and Locate; its settings in an outlined box -->
 <div class="sec-top">
   <div class="sec-head">
     <Button
@@ -128,7 +128,7 @@
       onclick={() => locate(bridge, sections[at]?.id)}
     />
   </div>
-  <SectionSettings {live} file={g.file} {at} {sections} />
+  <div class="sec-box"><SectionSettings {live} file={g.file} {at} {sections} /></div>
 </div>
 
 <!-- the block, in a card: its type and title, its tabs and fields -->
@@ -211,6 +211,14 @@
     display: grid;
     gap: var(--space-3);
     margin-bottom: var(--space-5);
+    margin-inline: -8px; // as wide as the list's section cards
+  }
+
+  // its settings in a 1px outlined box, no fill (the block below is a filled card)
+  .sec-box {
+    padding: var(--space-3);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-lg);
   }
 
   .sec-head {
@@ -237,6 +245,7 @@
 
   // the side padding is on its parts, so the tabs' line runs edge to edge
   .card {
+    margin-inline: -8px;
     padding: var(--space-3) 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);

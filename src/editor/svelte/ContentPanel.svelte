@@ -19,7 +19,8 @@
   of that text, highlights its field and scrolls to it.
 -->
 <script>
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
+  import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
   import HeaderPart from './HeaderPart.svelte';
   import BackdropFields from './BackdropFields.svelte';
@@ -107,6 +108,61 @@
       ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
+  // Sections: the list and the block view side by side in a clipping wrapper. Opening a block
+  // slides the list out to the left and the block in from the right (Back: the reverse), the
+  // wrapper's height eased between them; the list's scroll comes back on Back. Block to block
+  // swaps in place; a new slide kills a running one; reduced motion: instant.
+  let held = $state(null); // the block shown, kept while it slides out
+  let moving = $state(false); // both panes shown (a slide)
+  let slideEl = $state();
+  let listEl = $state();
+  let blockEl = $state();
+  let tl = null;
+  let saved = 0; // the list's scroll
+  const atBlock = $derived(!!open);
+  $effect(() => {
+    if (open) held = open;
+  });
+  let first = true;
+  $effect(() => {
+    const to = atBlock;
+    untrack(() => slide(to));
+  });
+
+  async function slide(to) {
+    if (first) return void (first = false);
+    const settled = !moving;
+    tl?.kill();
+    tl = null;
+    if (to && settled && panel) saved = panel.scrollTop;
+    if (!slideEl || matchMedia('(prefers-reduced-motion: reduce)').matches) return done(to);
+    const from = slideEl.offsetHeight;
+    moving = true;
+    await tick();
+    if (!listEl || !blockEl || atBlock !== to) return to === atBlock && done(to);
+    const w = slideEl.clientWidth;
+    if (settled) {
+      gsap.set(listEl, { x: to ? 0 : -w, y: -saved });
+      gsap.set(blockEl, { x: to ? w : 0 });
+      panel.scrollTop = 0;
+    }
+    const target = (to ? blockEl : listEl).offsetHeight;
+    tl = gsap
+      .timeline({ defaults: { duration: 0.35, ease: 'power2.out' }, onComplete: () => done(to) })
+      .to(listEl, { x: to ? -w : 0 }, 0)
+      .to(blockEl, { x: to ? 0 : w }, 0)
+      .fromTo(slideEl, { height: from }, { height: target }, 0);
+  }
+
+  async function done(to) {
+    tl = null;
+    moving = false;
+    if (!to) held = null;
+    for (const el of [slideEl, listEl, blockEl]) if (el) gsap.set(el, { clearProps: 'all' });
+    await tick();
+    if (panel) panel.scrollTop = to ? 0 : saved;
+  }
+
   $effect(() => {
     const { edit, quiet } = ui.selection || {};
     if (edit && !quiet) reveal(edit);
@@ -133,20 +189,33 @@
 >
   {#if waiting}
     <p class="hint">Waiting for the preview…</p>
-  {:else if open}
-    <BlockInspector
-      g={open}
-      {live}
-      {bridge}
-      {sourceIds}
-      {onsource}
-      onback={() => (ui.block = null)}
-      onmotion={(el) => actions.editMotion(el)}
-      onlibrary={(name) => {
-        ui.library = { open: true, name };
-        actions.setMode('motion');
-      }}
-    />
+  {:else if file && shownTab === 'sections'}
+    <div class="slide" bind:this={slideEl}>
+      <div
+        class={['slide__pane', atBlock && !moving && 'is-away']}
+        bind:this={listEl}
+        inert={atBlock}
+      >
+        <SectionsList {live} {bridge} {file} onopen={openBlock} />
+      </div>
+      {#if held}
+        <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
+          <BlockInspector
+            g={held}
+            {live}
+            {bridge}
+            {sourceIds}
+            {onsource}
+            onback={() => (ui.block = null)}
+            onmotion={(el) => actions.editMotion(el)}
+            onlibrary={(name) => {
+              ui.library = { open: true, name };
+              actions.setMode('motion');
+            }}
+          />
+        </div>
+      {/if}
+    </div>
   {:else}
     {#if isPage && tab === 'transitions'}
       <BackdropFields {live} {file} />
@@ -154,8 +223,6 @@
       <PageCurtain {live} onsettings={() => actions.setMode('settings')} />
     {:else if isPage && tab === 'seo'}
       <SeoSection {live} {file} />
-    {:else if file}
-      <SectionsList {live} {bridge} {file} onopen={openBlock} />
     {:else if ui.target.id === 'header'}
       <HeaderPart {live} />
     {:else}
@@ -170,5 +237,27 @@
   // the tabs' line runs the panel's full width, above the scrolling body
   :global(.page-tabs) {
     flex: none;
+  }
+
+  // the panes share one cell; the cards' -8px margins stay inside the clip
+  .slide {
+    display: grid;
+    flex: none;
+    margin-inline: -8px;
+    padding-inline: 8px;
+    overflow: clip;
+  }
+
+  .slide__pane {
+    display: flex;
+    grid-area: 1 / 1;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+    align-self: start;
+
+    &.is-away {
+      display: none;
+    }
   }
 </style>
