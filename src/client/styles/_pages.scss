@@ -25,6 +25,10 @@
   font-size: clamp(72px, 15vw, 250px);
   line-height: 0.82;
   letter-spacing: -0.02em;
+  // a phone: 72px made "Photography" wider than the screen
+  @media (width <= 480px) {
+    font-size: 13vw;
+  }
   &__count {
     font-size: 13px;
     margin-left: 0.4em;

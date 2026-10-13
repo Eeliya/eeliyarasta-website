@@ -11,6 +11,11 @@ html {
   text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  // nothing wider than the screen widens the page: on a phone, anything past its edge (even
+  // for a moment, as a photo sliding in) made the browser zoom out to fit it, and then the
+  // window stayed wider and taller than the screen (scroll animations ended too early).
+  // body's overflow-x alone doesn't stop that; clip (not hidden) keeps sticky working.
+  overflow-x: clip;
 }
 html.is-locked {
   overflow: hidden;
@@ -181,6 +186,14 @@ html.anim-pending [data-motion] > * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+// SplitText's lines are spans (splitOpts in anim/types.js): a line under the next one, as
+// lines are. Inline, a split heading's lines ran on in one row (the footer's "Let's make" and
+// "something." side by side, past a phone's edge: "makesomethi" cut off).
+.split-line-mask,
+.split-line {
+  display: block;
 }
 
 // SplitText masks clip at the line box; pad it so descenders survive tight line-heights.
