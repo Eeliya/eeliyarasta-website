@@ -315,12 +315,11 @@
 
   // [ Editor | mobile | undo | redo ], then the tabs and the page menu on full rows
   .ed-head {
-    padding: var(--space-4) var(--space-4) var(--space-3);
+    padding: var(--space-4) var(--space-2) 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr) repeat(3, auto);
     align-items: center;
     gap: var(--space-3) var(--space-1);
-    border-bottom: 1px solid var(--c-line);
 
     > .seg,
     > .ed-bar {

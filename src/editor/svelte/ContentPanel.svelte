@@ -237,6 +237,7 @@
   // the tabs' line runs the panel's full width, above the scrolling body
   :global(.page-tabs) {
     flex: none;
+    padding: 12px 0 0;
   }
 
   // the panes share one cell; the cards' -8px margins stay inside the clip

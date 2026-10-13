@@ -210,7 +210,6 @@
   .sec-top {
     display: grid;
     gap: var(--space-3);
-    margin-bottom: var(--space-5);
     margin-inline: -8px; // as wide as the list's section cards
   }
 
