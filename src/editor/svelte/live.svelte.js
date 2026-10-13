@@ -40,7 +40,7 @@ export function createLive(store) {
     /** Does the value at file#ptr differ from the saved one? */
     changed(file, ptr) {
       version;
-      return JSON.stringify(store.get(file, ptr)) !== JSON.stringify(store.getBase(file, ptr));
+      return store.changedAt(file, ptr);
     },
     get canUndo() {
       version;

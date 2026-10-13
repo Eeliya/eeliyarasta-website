@@ -56,3 +56,25 @@ test('a [slug] page: its labels in "template"; "grid" and top-level labels are g
     '"template" has only "source", "section" and "next"',
   ]);
 });
+
+test('changes: a layout value at its default is no change (a block moved back)', async () => {
+  const { createStore } = await import('../src/editor/store.js');
+  const store = createStore();
+  const F2 = 'pages/y/index.json';
+  store.load({
+    [F2]: {
+      version: 1,
+      id: 'pg-t120',
+      sections: [{ id: 's-t120', blocks: [{ id: 'b-t121', type: 'heading' }] }],
+    },
+  });
+  const ptr = '/sections/0/blocks/0/layout';
+  store.set(F2, ptr, { base: { col: 13, span: 108, row: 4 } });
+  assert.deepEqual(store.dirtyFiles(), [F2]);
+  assert.ok(store.changedAt(F2, `${ptr}/base/col`));
+  store.set(F2, ptr, { base: { col: 1, span: 120, row: 1 } });
+  assert.deepEqual(store.dirtyFiles(), []);
+  assert.deepEqual(store.changes(F2), []);
+  assert.ok(!store.changedAt(F2, `${ptr}/base/col`));
+  assert.ok(!store.changedAt(F2, ptr));
+});

@@ -14,6 +14,7 @@
 import { get, set, remove } from './lib/pointer.js';
 import { clone, equal, diff, patch } from './lib/diff.js';
 import { formatJSON } from './lib/json-format.js';
+import { omitDefaults } from '../site/defaults.js';
 
 export function createStore() {
   const base = {};
@@ -23,8 +24,18 @@ export function createStore() {
   let future = [];
   let batchEntry = null;
 
-  const emit = (files, source, structure = false) =>
+  // a file as Save writes it (defaults left out): what "changed" compares, so a value equal to
+  // its default is the same as none (a block moved back to col 1). Cached until the next change (emit).
+  let tidied = new WeakMap();
+  const tidy = (file, data) => {
+    if (data === undefined || data === null || typeof data !== 'object') return data;
+    if (!tidied.has(data)) tidied.set(data, omitDefaults(file, data));
+    return tidied.get(data);
+  };
+  const emit = (files, source, structure = false) => {
+    tidied = new WeakMap(); // the files change in place
     listeners.forEach((fn) => fn({ files: [...new Set(files)], source, structure }));
+  };
 
   const write = (c, value) => {
     // ptr "" is the whole file (e.g. a source list after adding or deleting an item).
@@ -69,6 +80,9 @@ export function createStore() {
       emit(Object.keys(files), 'load');
     },
     get: (file, ptr) => get(current[file], ptr),
+    /** Does file#ptr differ from the saved value, defaults left out on both sides? */
+    changedAt: (file, ptr) =>
+      !equal(get(tidy(file, current[file]), ptr), get(tidy(file, base[file]), ptr)),
     getBase: (file, ptr) => get(base[file], ptr),
 
     /** Set (or with value === undefined, remove) a value. */
@@ -133,9 +147,11 @@ export function createStore() {
     canRedo: () => future.length > 0,
 
     dirtyFiles: () =>
-      Object.keys(current).filter((f) => formatJSON(current[f]) !== formatJSON(base[f])),
+      Object.keys(current).filter(
+        (f) => formatJSON(tidy(f, current[f])) !== formatJSON(tidy(f, base[f])),
+      ),
     /** Leaf changes per file, for the "changes" list. */
-    changes: (file) => diff(base[file], current[file]),
+    changes: (file) => diff(tidy(file, base[file]), tidy(file, current[file])),
     serialize: (file) => formatJSON(current[file]),
 
     /** The source now holds `files` (after a save): they become the new base. */
