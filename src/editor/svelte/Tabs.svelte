@@ -14,7 +14,7 @@
     panel   the id of the panel they switch (tablist: aria-controls)
   A tablist is one Tab stop: ←/→ (Home/End) move to the next tab and pick it.
   Used by the block card (Content / Layout / Motion), the Motion panel (Elements / Animations)
-  and the Media window's filter (All / R2 / Local). Not the mode bar (.seg--pill).
+  and the Media window's filter (All / R2 / Local). Not the mode tabs (App.svelte .ed-modes).
 -->
 <script>
   let {

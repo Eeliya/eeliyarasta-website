@@ -1,6 +1,7 @@
 <!--
   The editor shell: the site preview on the left, the side panel on the right with the
-  tabs, the toolbar, the current tab's panel and the Save / Publish footer. Also the
+  toolbar (page menu; Sources, Media, Pages | phone, undo, redo; the mode tabs), the current
+  tab's panel and the Save / Publish footer. Also the
   publish dialog, the toasts and the keyboard shortcuts.
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
@@ -40,7 +41,7 @@
     ['browse', 'Browse'],
     ['text', 'Content'],
     ['motion', 'Motion'],
-    ['settings', 'Settings', 'fa-gear'],
+    ['settings', 'Settings'],
   ];
   const mobile = $derived(ui.viewport === 'mobile');
   const unpublished = $derived(ui.pub?.files || []);
@@ -139,49 +140,22 @@
 
   <aside class="ed-panel">
     <header class="ed-head">
-      <!-- Editor | mobile view, undo, redo -->
-      <h1 class="ed-brand">Editor</h1>
-      <!-- a toggle: the phone view, on (the accent) or off -->
-      <Button
-        icon="mobile-screen-button"
-        iconOnly
-        label="Phone view"
-        aria-pressed={mobile}
-        onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
-      />
-      <Button
-        icon="rotate-left"
-        iconOnly
-        label="Undo ({MOD}+Z)"
-        disabled={!live.canUndo}
-        onclick={() => live.store.undo()}
-      />
-      <Button
-        icon="rotate-right"
-        iconOnly
-        label="Redo ({MOD}+Shift+Z)"
-        disabled={!live.canRedo}
-        onclick={() => live.store.redo()}
-      />
-
-      <nav class="seg seg--pill" aria-label="Mode">
-        {#each TABS as [mode, label, icon] (mode)}
-          <button
-            type="button"
-            class={['seg__btn', icon && 'seg__btn--icon', ui.mode === mode && 'is-active']}
-            aria-label={icon && label}
-            title={icon && label}
-            onclick={() => actions.setMode(mode)}
-          >
-            {#if icon}<i class={['fa-solid', icon]} aria-hidden="true"></i>{:else}{label}{/if}
-          </button>
-        {/each}
-      </nav>
-
-      <!-- [ page / site part | Sources | Pages | Media ] (quiet icon buttons), then the item of
-           a [slug] page on its own row -->
-      <div class="ed-bar">
+      <!-- the page or site part shown, full width; the item of a [slug] page under it -->
+      <div class="ed-row">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
+      </div>
+      {#if ui.target?.items}
+        <div class="ed-row">
+          <Select
+            aria-label="Item"
+            value={ui.path}
+            options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
+            onchange={(path) => actions.pickTarget(ui.target, path)}
+          />
+        </div>
+      {/if}
+      <!-- [ Sources | Media | Pages ] ... [ phone | undo | redo ] (quiet icon buttons) -->
+      <div class="ed-row ed-tools">
         <Button
           icon="database"
           iconOnly
@@ -190,31 +164,56 @@
           onclick={openSources}
         />
         <Button
-          icon="sitemap"
-          iconOnly
-          label="Pages"
-          title="Pages: add, rename, delete"
-          onclick={() => pagesModal.open()}
-        />
-        <Button
           icon="images"
           iconOnly
           label="Media"
           title="Media: every photo, upload, alt text"
           onclick={() => openMedia({ key: ui.media.key })}
         />
-        {#if ui.target?.items}
-          <!-- a [slug] page: which item's page the preview shows -->
-          <div class="ed-bar__item">
-            <Select
-              aria-label="Item"
-              value={ui.path}
-              options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
-              onchange={(path) => actions.pickTarget(ui.target, path)}
-            />
-          </div>
-        {/if}
+        <Button
+          icon="sitemap"
+          iconOnly
+          label="Pages"
+          title="Pages: add, rename, delete"
+          onclick={() => pagesModal.open()}
+        />
+        <span class="ed-tools__gap"></span>
+        <!-- a toggle: the phone view, on (the accent) or off -->
+        <Button
+          icon="mobile-screen-button"
+          iconOnly
+          label="Phone view"
+          aria-pressed={mobile}
+          onclick={() => (ui.viewport = mobile ? 'desktop' : 'mobile')}
+        />
+        <Button
+          icon="rotate-left"
+          iconOnly
+          label="Undo ({MOD}+Z)"
+          disabled={!live.canUndo}
+          onclick={() => live.store.undo()}
+        />
+        <Button
+          icon="rotate-right"
+          iconOnly
+          label="Redo ({MOD}+Shift+Z)"
+          disabled={!live.canRedo}
+          onclick={() => live.store.redo()}
+        />
       </div>
+      <!-- the modes: evenly spread, the picked one with a white line; their line ends the toolbar -->
+      <nav class="ed-modes" aria-label="Mode">
+        {#each TABS as [mode, label] (mode)}
+          <button
+            type="button"
+            class={['ed-modes__btn', ui.mode === mode && 'is-active']}
+            aria-current={ui.mode === mode ? 'page' : undefined}
+            onclick={() => actions.setMode(mode)}
+          >
+            {label}
+          </button>
+        {/each}
+      </nav>
     </header>
 
     {#if ui.mode === 'text'}
@@ -313,39 +312,77 @@
     min-width: 0;
   }
 
-  // [ Editor | mobile | undo | redo ], then the tabs and the page menu on full rows
+  // [ page menu ], [ Sources Media Pages ... phone undo redo ], then the modes; 16px edges
   .ed-head {
-    padding: var(--space-4) var(--space-2) 0;
+    flex: none;
+    padding-top: var(--space-4);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
-    align-items: center;
-    gap: var(--space-3) var(--space-1);
+    gap: var(--space-2);
+  }
 
-    > .seg,
-    > .ed-bar {
-      grid-column: 1 / -1;
+  .ed-row {
+    display: flex;
+    min-width: 0;
+    padding-inline: var(--space-4);
+
+    > :global(*) {
+      flex: 1;
+      min-width: 0;
     }
   }
 
-  .ed-brand {
-    margin: 0;
-    font-family: var(--f-display);
-    font-size: var(--fs-2xl);
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: -0.01em;
-  }
-
-  .ed-bar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+  // icon buttons: their glyphs on the 16px edges (a quiet 32px button, its icon 16px)
+  .ed-tools {
     align-items: center;
     gap: var(--space-1);
+    padding-inline: var(--space-2);
+
+    > :global(*) {
+      flex: none;
+    }
   }
 
-  .ed-bar__item {
-    grid-column: 1 / -1;
+  .ed-tools__gap {
+    flex: 1 !important;
+  }
+
+  .ed-modes {
     display: flex;
+    margin-top: var(--space-1);
+    box-shadow: inset 0 -1px 0 var(--c-line);
+  }
+
+  .ed-modes__btn {
+    flex: 1;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    font-weight: 600; // every mode: no width change when picked
+    letter-spacing: 0.06em;
+    line-height: 16px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      color 0.2s,
+      box-shadow 0.2s;
+
+    &:hover {
+      color: var(--c-text);
+    }
+
+    &:focus-visible {
+      outline: none;
+      color: var(--c-text);
+      box-shadow: inset 0 0 0 1px var(--c-accent);
+    }
+
+    &.is-active {
+      color: var(--c-text-strong);
+      box-shadow: inset 0 -2px 0 var(--c-text-strong);
+    }
   }
 
   // [ status line | Save | Publish ]

@@ -99,7 +99,7 @@ kbd {
 // ------------------------------------------------------------ controls
 // tabs (.seg), inputs, buttons
 // A segmented selector in the panel (Global / Custom / Off, ...): shaped like the input
-// fields below (8px corners). The editor's main tabs are pills: .seg--pill.
+// fields below (8px corners). The editor's mode tabs: App.svelte .ed-modes.
 .seg {
   display: flex;
   border-radius: var(--radius-md);
