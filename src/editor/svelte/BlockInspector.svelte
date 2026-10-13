@@ -183,6 +183,7 @@
           }}
           nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
           onpick={setItem}
+          onclear={() => setItem(undefined)}
         />
       {/snippet}
       <GroupFields

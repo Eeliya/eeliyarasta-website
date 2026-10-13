@@ -79,6 +79,30 @@ test('registry: every block type has a label, an icon and renders its defaults',
   }
 });
 
+test("a block whose source or item is cleared (the editor's ✕) still renders, and validates", () => {
+  for (const [type, t] of Object.entries(BLOCK_TYPES)) {
+    const route = t.item ? item : page;
+    const ids = new Set();
+    const b = newBlock(type, ids);
+    for (const c of t.config || []) if (c.type === 'source') delete b.config?.[c.key];
+    for (const f of t.fields || []) if (f.type === 'source') delete b[f.key];
+    delete b.item;
+    const list = [newSection(ids, [b])];
+    assert.doesNotThrow(() => renderSections(ctxOf(route), route, F, list), type);
+    assert.deepEqual(checkContent(F, { version: 1, id: 'pg-t007', sections: list }), [], type);
+  }
+});
+
+test('a list block without a source: its head without a link, no items (not a default list)', () => {
+  for (const type of ['grid', 'projects', 'albums']) {
+    const ids = new Set();
+    const b = newBlock(type, ids);
+    b.config = { ...b.config, source: undefined };
+    const out = renderSections(ctxOf(page), page, F, [newSection(ids, [b])]);
+    assert.doesNotMatch(out, /section__cta|<img/, type);
+  }
+});
+
 test('render: sections are grids, blocks carry their area; off is hidden', () => {
   const list = [
     section([

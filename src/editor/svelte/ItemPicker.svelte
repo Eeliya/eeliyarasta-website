@@ -8,7 +8,8 @@
                        one highlighted; it shows "people.json"
     value, changed (its changed dot), none (the label of no value, null: none can't be
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
-    onpick(value | undefined); store: the editor's store (the sources' schemas: a list's name, an
+    onpick(value | undefined); onclear(): back to empty (the ✕ beside Change, when picked);
+    store: the editor's store (the sources' schemas: a list's name, an
     item's photo)
     onsource(file, index, edit, then): open the Source Explorer (SourcesModal.svelte); each
               row's edit button closes this window and opens it there, and this window opens
@@ -33,6 +34,7 @@
     nameOf = () => '',
     onpick,
     onsource,
+    onclear = null,
     store = null,
   } = $props();
 
@@ -167,6 +169,16 @@
       tabindex="-1"
       onclick={(e) => (e.stopPropagation(), open())}>{card ? 'Change' : 'Choose'}</Button
     >
+    {#if card && onclear}
+      <!-- like the photo card's ✕: back to none -->
+      <Button
+        size="small"
+        icon="xmark"
+        iconOnly
+        label={items_ ? 'Clear the item' : 'Clear the source list'}
+        onclick={(e) => (e.stopPropagation(), onclear())}
+      />
+    {/if}
   </div>
 </div>
 

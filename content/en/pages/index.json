@@ -196,7 +196,8 @@
           "eyebrow": "Projects",
           "title": "Things I build",
           "cta": "All projects",
-          "motion": { "anim": "list-up", "trigger": "load" }
+          "motion": { "anim": "list-up", "trigger": "load" },
+          "config": { "source": "projects" }
         }
       ]
     }

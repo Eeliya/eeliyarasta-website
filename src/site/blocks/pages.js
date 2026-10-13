@@ -71,10 +71,10 @@ export const albums = {
   ],
   defaults: { config: { source: 'people', layout: 'portrait' }, motion: { anim: 'grid-reveal' } },
   render: (s, ctx) => {
-    const source = s.config?.source || 'people';
+    const source = s.config?.source || ''; // none: no cards
     const landscape = s.config?.layout === 'landscape';
     return html` <div class="agrid${landscape ? ' agrid--landscape' : ''}">
-      ${sourceList(ctx, source).map((p, index) => albumCard(ctx, source, p, { landscape, index }))}
+      ${(source ? sourceList(ctx, source) : []).map((p, index) => albumCard(ctx, source, p, { landscape, index }))}
     </div>`;
   },
 };

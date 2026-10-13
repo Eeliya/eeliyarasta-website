@@ -119,6 +119,7 @@
       {itemsOf}
       {onsource}
       onpick={(v) => live.store.set(f.file, f.ptr, v, { source: 'panel', structure: true })}
+      onclear={() => live.store.remove(f.file, f.ptr, { source: 'panel', structure: true })}
     />
   {:else if f.type === 'link'}
     <LinkField
@@ -175,6 +176,7 @@
       {itemsOf}
       {onsource}
       onpick={(v) => setConfig(c, v ?? '')}
+      onclear={() => setConfig(c, undefined)}
     />
   {:else if c.type === 'link'}
     <LinkField

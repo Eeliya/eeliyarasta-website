@@ -170,12 +170,13 @@ export const grid = {
     motion: { anim: 'grid-reveal' },
   },
   render: (s, ctx, b) => {
-    const source = s.config?.source || 'people';
+    // no source (cleared in the editor): its head without a link, and no tiles
+    const source = s.config?.source || '';
     const look = GRID_LOOKS[source] || photoTiles;
     const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
     return html` <div class="gridblock gridblock--${esc(source)}">
-      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
-      ${look(ctx, source, sourceList(ctx, source), layout)}
+      ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
+      ${look(ctx, source, source ? sourceList(ctx, source) : [], layout)}
     </div>`;
   },
 };
@@ -202,14 +203,14 @@ export const projects = {
     motion: { anim: 'list-up' },
   },
   render: (s, ctx, b) => {
-    const source = s.config?.source || 'projects';
-    const list = sourceList(ctx, source);
+    const source = s.config?.source || ''; // none: an empty list
+    const list = source ? sourceList(ctx, source) : [];
     if (!s.title)
       return html` <div class="projectsblock">
         ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2 })}
       </div>`;
     return html` <div class="projectsblock">
-      ${sectionHead({ at: b.ed, ...s, href: sourcePage(ctx, source) })}
+      ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
       ${projectList(ctx, list, { id: `projects-${b.id}`, source })}
     </div>`;
   },
