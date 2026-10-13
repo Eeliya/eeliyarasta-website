@@ -876,24 +876,37 @@ export async function publish(root, message) {
   };
 }
 
+/** A preview's draft marker: the editor tab's session id (?draft=<session> on its pages). */
+export const DRAFT_PARAM = 'draft';
+const isSession = (s) => typeof s === 'string' && /^[\w-]{1,64}$/.test(s);
+const MAX_SESSIONS = 20; // editor tabs whose drafts are kept (the oldest go)
+
+/** The drafts of one editor session ({} for none, or no session: the saved files). */
+export const draftsFor = (drafts, session) =>
+  (isSession(session) && Object.hasOwn(drafts, session) && drafts[session]) || {};
+
 /**
- * The editor's unsaved edits, for the preview: `drafts` (the plugin's, shared with its page
- * renderer, scripts/vite-plugin-static-site.mjs) becomes `files`, { "pages/index.json": data }.
- * Dev pages then render from them instead of the files on disk, so a new section or menu item
- * shows without Save. Only existing content files with a valid shape are kept; {} clears it
- * (after a save, or when the editor opens).
+ * The editor's unsaved edits, for its preview only: `drafts` (the plugin's, shared with its
+ * page renderer, scripts/vite-plugin-static-site.mjs) holds them per editor session (one per
+ * tab), drafts[session] = files, { "pages/index.json": data }. Pages requested with
+ * ?draft=<session> render from them instead of the files on disk, so a new section or menu
+ * item shows without Save; every other request (the site in another tab, another editor) gets
+ * the saved files. Only existing content files with a valid shape are kept; {} clears it.
  */
-export function draftOp(root, drafts, files) {
+export function draftOp(root, drafts, files, session) {
+  if (!isSession(session)) return { status: 400, body: { error: 'No draft session' } };
   if (!files || typeof files !== 'object' || Array.isArray(files))
     return { status: 400, body: { error: 'No files' } };
   const known = new Set(Object.keys(readContentFiles(root)));
-  const kept = Object.entries(files).filter(
-    ([f, data]) => known.has(f) && checkContent(f, data).length === 0,
+  const kept = Object.fromEntries(
+    Object.entries(files).filter(([f, data]) => known.has(f) && checkContent(f, data).length === 0),
   );
-  for (const f of Object.keys(drafts)) delete drafts[f];
-  Object.assign(drafts, Object.fromEntries(kept));
-  const skipped = Object.keys(files).filter((f) => !(f in drafts));
-  return { status: 200, body: { ok: true, files: Object.keys(drafts), skipped } };
+  delete drafts[session]; // re-added last: the newest
+  if (Object.keys(kept).length) drafts[session] = kept;
+  const sessions = Object.keys(drafts);
+  for (const s of sessions.slice(0, Math.max(0, sessions.length - MAX_SESSIONS))) delete drafts[s];
+  const skipped = Object.keys(files).filter((f) => !(f in kept));
+  return { status: 200, body: { ok: true, files: Object.keys(kept), skipped } };
 }
 
 /**
@@ -902,12 +915,12 @@ export function draftOp(root, drafts, files) {
  * sections after a structure edit (src/editor/layout-sync.js). render: src/site/render.js.
  * { path, file, data, ids } -> { ok, html: { [section id]: html } }
  */
-export function renderOp(render, root, drafts, { path: at, file, data, ids } = {}) {
+export function renderOp(render, root, drafts, { path: at, file, data, ids, session } = {}) {
   if (typeof file !== 'string' || !Array.isArray(ids))
     return { status: 400, body: { error: 'No file or ids' } };
   const problems = checkContent(file, data);
   if (problems.length) return { status: 400, body: { error: problems.join('; ') } };
-  const content = loadContent(root, { ...drafts, [file]: data });
+  const content = loadContent(root, { ...draftsFor(drafts, session), [file]: data });
   const route = render.getRoutes(content).find((r) => r.path === at);
   if (!route || pageFile(route.id) !== file)
     return { status: 400, body: { error: `${at} is not a page of ${file}` } };
@@ -959,7 +972,8 @@ export function editorMiddleware({
       }
 
       if (route === 'POST /draft') {
-        const { status, body } = draftOp(root, drafts, (await readJSON(req)).files);
+        const { files, session } = await readJSON(req);
+        const { status, body } = draftOp(root, drafts, files, session);
         return sendJSON(res, status, body);
       }
 

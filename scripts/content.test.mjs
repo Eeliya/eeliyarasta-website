@@ -289,37 +289,51 @@ test('photo library: no alt or credit in pages or sources, every photo they use 
 });
 
 test('draft: pages render the unsaved edits; only existing, valid files; {} clears', async () => {
-  const { draftOp } = await import('./editor-server.mjs');
+  const { draftOp, draftsFor } = await import('./editor-server.mjs');
   const root = tree();
   const drafts = {};
-  const r = draftOp(root, drafts, {
-    'pages/index.json': {
-      version: 1,
-      id: 'pg-t052',
+  const r = draftOp(
+    root,
+    drafts,
+    {
+      'pages/index.json': {
+        version: 1,
+        id: 'pg-t052',
 
-      sections: [
-        {
-          id: 's-aaaa',
-          blocks: [
-            {
-              id: 'b-aaaa',
-              type: 'text',
-              text: 'Draft',
-              layout: { base: { col: 1, span: 24, row: 1 } },
-            },
-          ],
-        },
-      ],
+        sections: [
+          {
+            id: 's-aaaa',
+            blocks: [
+              {
+                id: 'b-aaaa',
+                type: 'text',
+                text: 'Draft',
+                layout: { base: { col: 1, span: 24, row: 1 } },
+              },
+            ],
+          },
+        ],
+      },
+      'settings/animations.json': [],
+      'pages/nope/index.json': {},
     },
-    'settings/animations.json': [],
-    'pages/nope/index.json': {},
-  });
+    'tab-a',
+  );
   assert.equal(r.status, 200);
   assert.deepEqual(r.body.files, ['pages/index.json']);
   assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
-  assert.equal(loadContent(root, drafts).pages.home.sections[0].blocks[0].text, 'Draft');
-  assert.deepEqual(loadContent(root).pages.home, { version: 1, id: 'pg-t041' });
-  draftOp(root, drafts, {});
+  const home = (session) => loadContent(root, draftsFor(drafts, session)).pages.home;
+  assert.equal(home('tab-a').sections[0].blocks[0].text, 'Draft');
+  // only that session's preview: no marker, another tab or an unknown one get the saved file
+  const saved = { version: 1, id: 'pg-t041' };
+  for (const s of [null, undefined, 'tab-b', '__proto__', 'constructor'])
+    assert.deepEqual(home(s), saved);
+  // another tab's drafts leave tab-a's alone
+  draftOp(root, drafts, {}, 'tab-b');
+  assert.equal(home('tab-a').sections[0].blocks[0].text, 'Draft');
+  draftOp(root, drafts, {}, 'tab-a');
   assert.deepEqual(drafts, {});
-  assert.equal(draftOp(root, drafts, null).status, 400);
+  assert.equal(draftOp(root, drafts, null, 'tab-a').status, 400);
+  assert.equal(draftOp(root, drafts, {}).status, 400); // no session
+  assert.equal(draftOp(root, drafts, {}, '../x').status, 400);
 });

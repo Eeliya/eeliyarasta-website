@@ -40,14 +40,27 @@ export const saveDev = (files) =>
   });
 
 /**
- * The unsaved edits the preview renders from (POST /__editor/draft, draftOp in
+ * This editor tab's draft session: its preview loads pages with ?draft=<session> and only those
+ * render its unsaved edits (another tab, the site itself: the saved files). New per page load.
+ */
+export const session = crypto.randomUUID();
+
+/** A preview URL (a path) with this tab's draft marker. */
+export function withDraft(path) {
+  const url = new URL(path, location.origin);
+  url.searchParams.set('draft', session);
+  return url.pathname + url.search + url.hash;
+}
+
+/**
+ * The unsaved edits this tab's preview renders from (POST /__editor/draft, draftOp in
  * scripts/editor-server.mjs): { "pages/index.json": data, ... }; {} after a save.
  */
 export const draft = (files) =>
   json('/__editor/draft', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ files }),
+    body: JSON.stringify({ files, session }),
   });
 
 /**
@@ -58,7 +71,7 @@ export const render = ({ path, file, data, ids }) =>
   json('/__editor/render', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, file, data, ids }),
+    body: JSON.stringify({ path, file, data, ids, session }),
   });
 
 /**

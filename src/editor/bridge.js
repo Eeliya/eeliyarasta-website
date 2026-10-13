@@ -14,6 +14,7 @@
  *  - a bound value ([data-bound], src/site/layout/bindings.js) is not typed in the preview:
  *    its field in the panel shows the binding.
  */
+import { withDraft } from './source.js';
 import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
@@ -95,7 +96,7 @@ export function createBridge({ store, labelFor }) {
       iframe.addEventListener('load', () => {
         try {
           const cw = iframe.contentWindow;
-          if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = '/';
+          if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = withDraft('/');
         } catch {
           /* cross-origin or frame not ready */
         }
@@ -103,7 +104,7 @@ export function createBridge({ store, labelFor }) {
     },
 
     load(path) {
-      iframe.src = path;
+      iframe.src = withDraft(path);
     },
     /** Reload the preview page (a fresh render from disk) at the same scroll and selection. */
     reload() {
@@ -138,7 +139,7 @@ export function createBridge({ store, labelFor }) {
     },
     navigate(path) {
       if (api && win.location.pathname !== path) api.navigate(path);
-      else if (!api) iframe.src = path;
+      else if (!api) iframe.src = withDraft(path);
     },
 
     setMode(next) {

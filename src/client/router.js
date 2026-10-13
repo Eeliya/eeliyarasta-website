@@ -46,10 +46,25 @@ function curtainLabel(incoming, doc) {
   return doc.title.split('|')[0].trim();
 }
 
+/**
+ * The editor's preview (dev): its pages carry ?draft=<session> (the editor tab's unsaved edits,
+ * scripts/editor-server.mjs draftOp); every page it opens keeps it. Never on the public site.
+ */
+const draftOf = () => new URLSearchParams(location.search).get('draft');
+function keepDraft(url) {
+  const d = draftOf();
+  if (d && url.origin === location.origin && !url.searchParams.has('draft'))
+    url.searchParams.set('draft', d);
+  return url;
+}
+
 function getPage(pathname) {
   const key = normalize(pathname);
   if (!cache.has(key)) {
-    const p = fetch(key, { headers: { Accept: 'text/html' } }).then((r) => {
+    const d = draftOf();
+    const p = fetch(d ? `${key}?draft=${encodeURIComponent(d)}` : key, {
+      headers: { Accept: 'text/html' },
+    }).then((r) => {
       if (!r.ok && r.status !== 404) throw new Error(`HTTP ${r.status}`);
       return r.text();
     });
@@ -219,7 +234,7 @@ function mountView(view) {
 }
 
 export async function navigate(href, { push = true } = {}) {
-  const url = new URL(href, location.href);
+  const url = keepDraft(new URL(href, location.href));
   if (busy) {
     queued = { href, push };
     return;

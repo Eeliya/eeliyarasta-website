@@ -27,7 +27,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadEnv } from 'vite';
 import { loadContent } from './content.mjs';
-import { editorMiddleware } from './editor-server.mjs';
+import { DRAFT_PARAM, draftsFor, editorMiddleware } from './editor-server.mjs';
 import { contactMiddleware } from './contact-dev.mjs';
 import { pageFile } from '../src/site/files.js';
 import { checkSources } from '../src/site/schemas.js';
@@ -55,7 +55,8 @@ export default function staticSite() {
 
     configureServer(server) {
       const root = config.root;
-      // The editor's unsaved edits: dev pages render from them (POST /__editor/draft)
+      // The editor's unsaved edits per editor session (POST /__editor/draft): only its preview's
+      // pages (?draft=<session>) render from them, every other request from the saved files
       const drafts = {};
       // Content and media manifest changes re-render pages (see handleHotUpdate).
       server.watcher.add([path.join(root, 'content/en'), path.join(root, '.generated')]);
@@ -93,7 +94,7 @@ export default function staticSite() {
         if (url.pathname.startsWith('/edit/')) return next(); // editor app (edit/index.html)
         try {
           const { getRoutes, renderRoute } = await server.ssrLoadModule(RENDER_MODULE);
-          const content = loadContent(root, drafts);
+          const content = loadContent(root, draftsFor(drafts, url.searchParams.get(DRAFT_PARAM)));
           const routes = getRoutes(content);
           let pathname = url.pathname.replace(/index\.html$/, '');
           if (!pathname.endsWith('/')) pathname += '/';
