@@ -104,8 +104,8 @@ export function buildRoutes(content) {
 
   // Curtain text and transition of a page live in its own file, content/en/pages/<id>/index.json.
   const pageCurtain = (id, title) => ({
-    curtain: curtainOf(pages[id]?.curtain, title),
-    curtainEdit: curtainEditOf(pageFile(id), ['curtain']),
+    curtain: curtainOf(pages[id]?.curtainText, title),
+    curtainEdit: curtainEditOf(pageFile(id), ['curtainText']),
     transition: pages[id]?.transition,
     transitionEdit: curtainEditOf(pageFile(id), ['transition']),
   });
@@ -199,8 +199,8 @@ export function buildRoutes(content) {
           image: coverOf(item) || meta.image || undefined,
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
-          curtain: curtainOf(item.curtain, title),
-          curtainEdit: curtainEditOf(sourceFile(source), ['items', index, 'curtain']),
+          curtain: curtainOf(item.curtainText, title),
+          curtainEdit: curtainEditOf(sourceFile(source), ['items', index, 'curtainText']),
           transition: item.transition,
           transitionEdit: curtainEditOf(sourceFile(source), ['items', index, 'transition']),
         };

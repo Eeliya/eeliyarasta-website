@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-cwyg",
-  "curtain": "Projects",
+  "curtainText": "Projects",
   "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." },
   "sections": [
     {

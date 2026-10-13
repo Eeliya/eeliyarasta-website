@@ -22,7 +22,7 @@
         "places/kasteel-de-haar/07.jpg",
         "places/kasteel-de-haar/08.jpg"
       ],
-      "curtain": "Kasteel de Haar"
+      "curtainText": "Kasteel de Haar"
     },
     {
       "id": "p-lyke",
@@ -45,7 +45,7 @@
         "places/concrete-studies/07.jpg",
         "places/concrete-studies/08.jpg"
       ],
-      "curtain": "Concrete Studies"
+      "curtainText": "Concrete Studies"
     }
   ]
 }

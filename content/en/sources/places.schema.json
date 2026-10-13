@@ -56,7 +56,7 @@
       "help": "#rrggbb; empty: the site accent"
     },
     {
-      "key": "curtain",
+      "key": "curtainText",
       "label": "Curtain text",
       "type": "text",
       "help": "The page transition label; empty: none"

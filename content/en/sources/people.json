@@ -24,7 +24,7 @@
         "people/noor-vermeer/07.jpg",
         "people/noor-vermeer/08.jpg"
       ],
-      "curtain": "Noor Vermeer"
+      "curtainText": "Noor Vermeer"
     },
     {
       "id": "p-3pdk",
@@ -48,7 +48,7 @@
         "people/daan-okafor/06.jpg",
         "people/daan-okafor/07.jpg"
       ],
-      "curtain": "Daan Okafor"
+      "curtainText": "Daan Okafor"
     },
     {
       "id": "p-hx4p",
@@ -69,7 +69,7 @@
         "people/noor-vermeer/07.jpg",
         "people/noor-vermeer/08.jpg"
       ],
-      "curtain": "Mila Example"
+      "curtainText": "Mila Example"
     },
     {
       "id": "p-y8gp",
@@ -89,7 +89,7 @@
         "people/daan-okafor/06.jpg",
         "people/daan-okafor/07.jpg"
       ],
-      "curtain": "Joris Placeholder"
+      "curtainText": "Joris Placeholder"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-evsk",
-  "curtain": "Photography",
+  "curtainText": "Photography",
   "meta": { "description": "People and places photographed by Eeliya Rasta." },
   "sections": [
     {

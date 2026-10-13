@@ -237,7 +237,7 @@ export function pagesOp(
       write(file, {
         version: VERSION,
         id: newPageId(),
-        curtain: t,
+        curtainText: t,
         sections: [section],
       });
       return done({ id: join(parent, name), created: [file] });

@@ -261,7 +261,7 @@ export function groupFor(store, { file, ptr }, page) {
   const parts = parse(ptr);
   const pageId = pageIdOf(file);
   if (pageId !== null) {
-    if (parts[0] === 'curtain') return TRANSITION;
+    if (parts[0] === 'curtainText') return TRANSITION;
     if (parts[0] === 'sections') return null; // in its block's group
     // people/[slug]: the labels every item page shares (section, next)
     return {

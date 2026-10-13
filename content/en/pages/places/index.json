@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-rugs",
-  "curtain": "Places",
+  "curtainText": "Places",
   "meta": { "description": "Places and architecture photographed by Eeliya Rasta." },
   "sections": [
     {

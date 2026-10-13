@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-boha",
-  "curtain": "Eeliya Rasta",
+  "curtainText": "Eeliya Rasta",
   "transition": {
     "preset": "curtain",
     "overrides": {
