@@ -335,7 +335,7 @@
   .ed-tools {
     align-items: center;
     gap: var(--space-1);
-    padding-inline: var(--space-2);
+    padding-inline: var(--space-3);
 
     > :global(*) {
       flex: none;

@@ -497,6 +497,7 @@
     font-size: var(--fs-sm);
     cursor: grab;
     touch-action: none;
+    grid-row: span 2;
 
     .is-lifted & {
       cursor: grabbing;
