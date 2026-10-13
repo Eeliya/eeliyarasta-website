@@ -607,6 +607,9 @@ async function boot() {
     return;
   }
   store.load(loaded.files);
+  // A new editor has no unsaved edits: drafts an earlier one left on the dev server (a closed
+  // tab, a headless test run) would show in the preview and the site, so they go first.
+  await source.draft({}).catch(() => {});
   ui.status = `Content: ${loaded.from}`;
   updatePages();
   refreshStatus();
