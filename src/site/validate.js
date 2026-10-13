@@ -44,6 +44,7 @@ import { checkLayout } from './layout/contain.js';
 import { isId } from './layout/ids.js';
 import { linkProblem } from './hrefs.js';
 import { checkMotion } from './layout/motion.js';
+import { checkBackdrop } from './backdrop.js';
 import { bindTypeOf, FORMAT_TYPES, isBinding } from './layout/bindings.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -211,7 +212,11 @@ function checkAnimations(d) {
 }
 
 function checkPage(file, d) {
-  const out = [...optional(d, { meta: 'object', sections: 'array' }), ...checkMeta(d.meta)];
+  const out = [
+    ...optional(d, { meta: 'object', sections: 'array' }),
+    ...checkMeta(d.meta),
+    ...checkBackdrop(d.backdrop),
+  ];
   // its stable id: what links point at (its folder, the URL, can change)
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
   // the grid is always COLS (120) columns: not stored

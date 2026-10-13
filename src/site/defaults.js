@@ -6,6 +6,8 @@
  *   section  enabled: true, width: "contained", height: "fit"
  *   block    size: "auto", config.enabled: true
  *   hero     photos[].layer: "back"
+ *   backdrop the page's (src/site/backdrop.js BACKDROP_DEFAULTS); and the other transition's
+ *            options, and a backdrop without photos, are left out too
  *
  * omitDefaults also tidies (not a validation error): no empty "config" or "meta", and a block's
  * area without col 1, row 1 or a span to the last column (no "layout": full width at row 1).
@@ -15,6 +17,7 @@
  */
 import { pageIdOf } from './files.js';
 import { COLS } from './layout/grid.js';
+import { tidyBackdrop } from './backdrop.js';
 
 export const DEFAULTS = {
   section: { enabled: true, width: 'contained', height: 'fit' },
@@ -46,6 +49,7 @@ const isEmpty = (v) => isObject(v) && !Object.keys(v).length;
 
 /** Strip the DEFAULTS values from a page's `data` in place, calling found(where, message) for each. */
 function strip(data, found) {
+  tidyBackdrop(data, (message) => found('backdrop', message));
   for (const [obj, defs, where] of places(data))
     for (const [k, v] of Object.entries(defs))
       if (obj[k] === v) {
