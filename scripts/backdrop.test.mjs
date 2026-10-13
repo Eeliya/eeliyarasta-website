@@ -82,6 +82,7 @@ test('renderBackdrop: a fixed layer with its photos and settings', () => {
   assert.equal(renderBackdrop(ctx, undefined), '');
   const out = renderBackdrop(ctx, { photos: P, transition: 'fade', through: 'none' });
   assert.match(out, /class="backdrop backdrop--fade"/);
+  assert.match(out, /<\/div>\s*<div class="backdrop__shade"><\/div>\s*<\/div>$/); // over the track
   assert.doesNotMatch(out, /data-portal/); // its own layer #backdrop, not the portal
   assert.match(out, /--n:3/);
   assert.equal(out.match(/<img/g).length, 3);

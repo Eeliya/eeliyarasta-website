@@ -131,5 +131,6 @@ export function renderBackdrop(ctx, b) {
         )
         .join('')}
     </div>
+    <div class="backdrop__shade"></div>
   </div>`;
 }

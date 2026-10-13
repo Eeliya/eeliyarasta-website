@@ -18,13 +18,15 @@
   &--black {
     background: #000;
   }
-  // a dim over the photos, so the text on them reads
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgb(0 0 0 / 0.45);
-  }
+}
+
+// a dim over the photos (above the track, under the view), so the text on them reads; an
+// element of its own, not ::after
+.backdrop__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(0 0 0 / 0.45);
 }
 
 .backdrop__photo {
