@@ -4,7 +4,7 @@
   import Field from '../../src/editor/svelte/Field.svelte';
   import PhotoList from '../../src/editor/svelte/PhotoList.svelte';
 
-  let { state = 'scroll', caption = '' } = $props();
+  let { state = 'scroll', caption = '', shade = '' } = $props(); // shade: '' | seg | slider
   const PHOTOS = ['places/kasteel-de-haar/02.jpg', 'people/noor-vermeer/02.jpg', 'people/daan-okafor/02.jpg'];
   const photos = $derived(state === 'empty' ? [] : PHOTOS);
   const items = $derived(photos.map((src, i) => [{ edit: `mock#/backdrop/${i}`, type: 'image', label: `Photo ${i + 1}`, value: src }]));
@@ -60,6 +60,21 @@
               <p class="hint small slot__hint">The photos scroll by with the page; the last is fully in view at its end.</p>
             {/if}
           </div>
+          <!-- Shade: how dark the dim over the photos is (both transitions) -->
+          {#if shade === 'seg'}
+            <div class="tf">
+              <span class="tf__label">Shade</span>
+              {@render seg(['None', '25%', '45%', '65%'], '45%', 'Shade')}
+            </div>
+          {:else if shade === 'slider'}
+            <div class="tf">
+              <span class="tf__label">Shade</span>
+              <div class="f__row shade">
+                <input type="range" class="f__range" min="0" max="80" step="5" value="45" aria-label="Shade" />
+                <span class="shade__val">45%</span>
+              </div>
+            </div>
+          {/if}
         {/if}
       </div>
     </Section>
@@ -73,10 +88,14 @@
 
 <style lang="scss">
   .col { width: 384px; display: flex; flex-direction: column; gap: 12px; }
-  .cap { margin: 0; min-height: 32px; color: var(--c-text-muted); font-size: var(--fs-sm); line-height: 16px; }
+  .cap { margin: 0; min-height: 48px; color: var(--c-text-muted); font-size: var(--fs-sm); line-height: 16px; }
   .panel { display: flex; flex-direction: column; gap: 12px; padding: 0 8px; }
   .line { margin: 4px 0; border: 0; border-top: 1px solid var(--c-line); }
   .empty { margin: 0; }
+  // the value label has a fixed width ("100%" fits), so dragging never moves the slider
+  .shade { display: flex; align-items: center; gap: 12px; height: 32px; }
+  .shade .f__range { flex: 1; }
+  .shade__val { width: 40px; text-align: right; font-variant-numeric: tabular-nums; color: var(--c-text); }
 
   // Scroll's and Fade's options in one slot of a fixed height (the taller's: a 32px choice and
   // a 32px switch row), so switching never moves what is under it
