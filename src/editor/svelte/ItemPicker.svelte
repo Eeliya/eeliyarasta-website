@@ -121,7 +121,7 @@
   </div>
 {/snippet}
 
-<div class={['opt', changed && 'is-changed']}>
+<div class={['tf', changed && 'is-changed']}>
   <!-- a click anywhere on the card opens the picker; the keyboard has its main button -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class={['sc', !card && 'is-empty']} onclick={() => open()}>
@@ -244,11 +244,8 @@
 </dialog>
 
 <style lang="scss">
-  .opt {
-    grid-column: 1 / -1;
+  .tf {
     min-width: 0;
-    padding: var(--space-1);
-
   }
 
   // the card: [ tile | label / name / meta | edit | Change ], styled as an input (its

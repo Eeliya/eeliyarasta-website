@@ -168,26 +168,35 @@
       {/key}
     {:else}
       <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
-      {#if !g.config?.some((c) => c.type === 'source') && (g.fields.length || g.config?.some((c) => c.type === 'text'))}
-        <div class="opts">
-          <ItemPicker
-            store={live.store}
-            value={ref}
-            changed={live.changed(g.file, `${base}/item`)}
-            {sourceIds}
-            {onsource}
-            none={template ? "This page's item" : 'None'}
-            itemsOf={(id) => {
-              live.version;
-              const list = live.get(sourceFile(id), '/items');
-              return Array.isArray(list) ? list : [];
-            }}
-            nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
-            onpick={setItem}
-          />
-        </div>
-      {/if}
-      <GroupFields {g} {live} {bridge} {sourceIds} {onsource} {bindings} />
+      {#snippet item()}
+        <ItemPicker
+          store={live.store}
+          value={ref}
+          changed={live.changed(g.file, `${base}/item`)}
+          {sourceIds}
+          {onsource}
+          none={template ? "This page's item" : 'None'}
+          itemsOf={(id) => {
+            live.version;
+            const list = live.get(sourceFile(id), '/items');
+            return Array.isArray(list) ? list : [];
+          }}
+          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
+          onpick={setItem}
+        />
+      {/snippet}
+      <GroupFields
+        {g}
+        {live}
+        {bridge}
+        {sourceIds}
+        {onsource}
+        {bindings}
+        lead={!g.config?.some((c) => c.type === 'source') &&
+        (g.fields.length || g.config?.some((c) => c.type === 'text'))
+          ? item
+          : undefined}
+      />
       {#if !g.fields.length && !g.config?.length}
         <p class="hint small">No texts or settings in this block.</p>
       {/if}
@@ -263,10 +272,5 @@
 
   .card__body {
     padding-inline: var(--space-3);
-  }
-
-  // the item: its source field (ItemPicker.svelte)
-  .opts {
-    margin-bottom: var(--space-4);
   }
 </style>

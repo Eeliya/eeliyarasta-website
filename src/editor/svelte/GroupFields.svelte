@@ -9,13 +9,15 @@
     onsource  (file, item?, edit?): open the Source Explorer
     bindings  a block's: { binds(type), resolved(f) } for its fields' Source switch and a
               bound text's format (BlockInspector.svelte, Field.svelte); null: none
+    lead      snippet: a setting first in the grid (the block's item, BlockInspector.svelte)
+  Settings and content share one .fields grid (all through Field, the same labels and gaps),
+  a 1px line between them when both are there.
 -->
 <script>
   import Field from './Field.svelte';
   import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
   import PhotoList from './PhotoList.svelte';
-  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { runsOf, isSource } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
@@ -25,8 +27,7 @@
   import { sourceFile } from '../../site/files.js';
   import { isBound } from '../../site/layout/bindings.js';
 
-  let { g, live, bridge, sourceIds, onsource, bindings = null } = $props();
-  const uid = $props.id();
+  let { g, live, bridge, sourceIds, onsource, bindings = null, lead } = $props();
 
   // a setting changes what the block shows: the preview renders it again (structure)
   function setConfig(c, value) {
@@ -97,7 +98,12 @@
   };
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
   const own = $derived(!!g.source);
-  const options = $derived(g.config?.filter((c) => c.options || c.type === 'boolean') ?? []);
+  // the settings shown: a source, a choice, a switch, a link (in the config's order)
+  const settings = $derived(
+    g.config?.filter(
+      (c) => c.type === 'source' || c.type === 'link' || c.options || c.type === 'boolean',
+    ) ?? [],
+  );
 </script>
 
 <!-- one field: a Field (text, photo, switch, choice), or a source field (a list item's
@@ -156,7 +162,7 @@
 {/snippet}
 
 <!-- a block setting (config): a source field (ItemPicker.svelte: its source only), a Select
-     (select) or a switch (boolean), labelled -->
+     (select), a switch (boolean) through Field, or a link (LinkField) -->
 {#snippet option(c)}
   {@const value = live.get(g.file, c.ptr)}
   {#if c.type === 'source'}
@@ -171,101 +177,80 @@
       {onsource}
       onpick={(v) => setConfig(c, v ?? '')}
     />
+  {:else if c.type === 'link'}
+    <LinkField
+      {live}
+      edit="{g.file}#{c.ptr}"
+      label={c.label}
+      {value}
+      changed={live.changed(g.file, c.ptr)}
+      empty="No link"
+      binds={bindings ? bindings.binds('link') : null}
+      onvalue={(v) => setConfig(c, v)}
+    />
   {:else}
-    <div class={['opt', live.changed(g.file, c.ptr) && 'is-changed']}>
-      <label class="tf__label" for="{uid}-{c.key}">
-        {c.label}
-      </label>
-      {#if c.type === 'boolean'}
-        <input
-          id="{uid}-{c.key}"
-          type="checkbox"
-          class="switch"
-          checked={!!value}
-          onchange={(e) => setConfig(c, e.currentTarget.checked)}
-        />
-      {:else}
-        <Select
-          id="{uid}-{c.key}"
-          value={value ?? ''}
-          placeholder="Pick…"
-          options={c.options.map(([v, label]) => ({ value: v, label }))}
-          onchange={(v) => setConfig(c, v)}
-        />
-      {/if}
-    </div>
+    <Field
+      edit="{g.file}#{c.ptr}"
+      label={c.label}
+      type={c.type === 'boolean' ? 'boolean' : 'select'}
+      value={c.type === 'boolean' ? !!value : (value ?? '')}
+      options={c.options ?? []}
+      changed={live.changed(g.file, c.ptr)}
+      onvalue={(v) => setConfig(c, v)}
+    />
   {/if}
 {/snippet}
 
-{#if options.length}
-  <div class="opts">
-    {#each options as c (c.key)}{@render option(c)}{/each}
-  </div>
-{/if}
-{#each g.config?.filter((c) => c.type === 'link') ?? [] as c (c.key)}
-  <LinkField
-    {live}
-    edit="{g.file}#{c.ptr}"
-    label={c.label}
-    value={live.get(g.file, c.ptr)}
-    changed={live.changed(g.file, c.ptr)}
-    empty="No link"
-    binds={bindings ? bindings.binds('link') : null}
-    onvalue={(value) => setConfig(c, value)}
-  />
-{/each}
-
-{#each runsOf(g.fields) as run (run.list?.edit ?? run.fields[0].edit)}
-  {#if run.fields}
-    {@render rows(run.fields)}
-  {:else}
-    {@const f = run.list}
-    {#if photoList(f)}
-      <PhotoList
-        label={f.label}
-        items={f.items}
-        addLabel="Add photo"
-        onmove={(from, to) => moveItem(f, from, to)}
-        onremove={(i) => removeItem(f, i)}
-        onadd={() => addItem(f)}
-      >
-        {#snippet row(fields, i, ctl)}
-          {@render field(fields.find(isPhoto), false, { ...ctl, label: `${f.label} ${i + 1}` })}
-          {#if fields.some((sub) => !isPhoto(sub))}{@render rows(
-              fields.filter((sub) => !isPhoto(sub)),
-            )}{/if}
-        {/snippet}
-      </PhotoList>
+<!-- one grid (.fields): the settings (the block's item, `lead`, and its config), a line, then
+     the content fields; a list field takes a whole row -->
+<div class="fields">
+  {@render lead?.()}
+  {#each settings as c (c.key)}{@render option(c)}{/each}
+  {#if (lead || settings.length) && g.fields.length}<hr class="fields__line" />{/if}
+  {#each runsOf(g.fields) as run (run.list?.edit ?? run.fields[0].edit)}
+    {#if run.fields}
+      {@const halves = pairedHalves(run.fields)}
+      {#each run.fields as f (f.edit)}{@render field(f, halves.has(f.edit))}{/each}
     {:else}
-      <ListField
-        label={f.label}
-        items={f.items}
-        name={(fields, i) => itemName(f, fields, i)}
-        addLabel={f.photo === null ? 'Add' : 'Add photo'}
-        onmove={(from, to) => moveItem(f, from, to)}
-        onremove={(i) => removeItem(f, i)}
-        onadd={() => addItem(f)}
-      >
-        {#snippet item(fields)}{@render rows(fields)}{/snippet}
-      </ListField>
+      {@const f = run.list}
+      {#if photoList(f)}
+        <PhotoList
+          label={f.label}
+          items={f.items}
+          addLabel="Add photo"
+          onmove={(from, to) => moveItem(f, from, to)}
+          onremove={(i) => removeItem(f, i)}
+          onadd={() => addItem(f)}
+        >
+          {#snippet row(fields, i, ctl)}
+            {@render field(fields.find(isPhoto), false, { ...ctl, label: `${f.label} ${i + 1}` })}
+            {#if fields.some((sub) => !isPhoto(sub))}{@render rows(
+                fields.filter((sub) => !isPhoto(sub)),
+              )}{/if}
+          {/snippet}
+        </PhotoList>
+      {:else}
+        <ListField
+          label={f.label}
+          items={f.items}
+          name={(fields, i) => itemName(f, fields, i)}
+          addLabel={f.photo === null ? 'Add' : 'Add photo'}
+          onmove={(from, to) => moveItem(f, from, to)}
+          onremove={(i) => removeItem(f, i)}
+          onadd={() => addItem(f)}
+        >
+          {#snippet item(fields)}{@render rows(fields)}{/snippet}
+        </ListField>
+      {/if}
     {/if}
-  {/if}
-{/each}
+  {/each}
+</div>
 
 <style lang="scss">
-  .opts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
-  }
-
-  .opt {
-    position: relative;
-    min-width: 0;
-    padding: var(--space-1);
-
-    .tf__label {
-      min-height: 24px;
-    }
+  // between the settings and the content: a full row, 1px
+  .fields__line {
+    margin: var(--space-1) 0;
+    border: 0;
+    border-top: 1px solid var(--c-line);
   }
 </style>
