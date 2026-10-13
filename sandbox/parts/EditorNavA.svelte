@@ -56,7 +56,25 @@
 <div class="col">
   <p class="cap">{caption}</p>
   <div class={['ptp', `is-${v}`]}>
-    {#if v === 'r1' || v === 'r2'}
+    {#if v.startsWith('m')}
+      <div class="row one">{@render picker()}</div>
+      <div class="row two">
+        <Button icon="database" iconOnly label="Sources" onclick={nop} />
+        <Button icon="images" iconOnly label="Media" onclick={nop} />
+        <Button icon="sitemap" iconOnly label="Pages" onclick={nop} />
+        <span></span>
+        {@render tools()}
+      </div>
+      <div class={['mt', `mt--${v}`]} role="tablist" aria-label="Mode">
+        {#each MODES as [m, l] (m)}<button
+            type="button"
+            role="tab"
+            aria-selected={m === 'text'}
+            class={['mt__btn', m === 'text' && 'is-active']}>{l}</button
+          >{/each}
+      </div>
+      <div class={v === 'm2' || v === 'm4' ? 'gap8' : 'gap12'}>{@render ptabs('al')}</div>
+    {:else if v === 'r1' || v === 'r2'}
       <div class="row one">{@render picker()}</div>
       <div class="row two">
         {#if v === 'r1'}
@@ -197,6 +215,92 @@
   }
   .two .qb:first-child {
     margin-left: calc(-1 * var(--space-2));
+  }
+  // the main mode tabs, restyled (m1..m5); the page tabs below stay Tabs.svelte
+  .mt {
+    display: flex;
+    margin-top: var(--space-3);
+    padding-inline: var(--space-4);
+  }
+  .mt__btn {
+    flex: 1;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .mt__btn.is-active {
+    color: var(--c-text-strong);
+  }
+  // m1: evenly spread full width, accent underline, the line full width
+  .mt--m1 {
+    padding-inline: 0;
+    box-shadow: inset 0 -1px 0 var(--c-line);
+  }
+  .mt--m1 .is-active {
+    box-shadow: inset 0 -2px 0 var(--c-accent);
+  }
+  // m2: a solid strip in another tone, the active tab filled
+  .mt--m2 {
+    gap: var(--space-1);
+    margin-inline: var(--space-4);
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    background: var(--c-card);
+  }
+  .mt--m2 .mt__btn {
+    height: 24px;
+    border-radius: var(--radius-sm);
+  }
+  .mt--m2 .is-active {
+    background: var(--c-fill-active);
+  }
+  // m3: as Tabs, but the active one in the accent (text and line), sentence case
+  .mt--m3 {
+    padding-inline: var(--space-1);
+    box-shadow: inset 0 -1px 0 var(--c-line);
+  }
+  .mt--m3 .mt__btn {
+    flex: none;
+    padding: 0 var(--space-3);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: var(--fs-base);
+  }
+  .mt--m3 .is-active {
+    color: var(--c-accent);
+    box-shadow: inset 0 -2px 0 var(--c-accent);
+  }
+  // m4: an equal-width segmented strip with a 1px outline
+  .mt--m4 {
+    margin-inline: var(--space-4);
+    padding: 0;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--c-line);
+    overflow: hidden;
+  }
+  .mt--m4 .mt__btn + .mt__btn {
+    box-shadow: inset 1px 0 0 var(--c-line);
+  }
+  .mt--m4 .is-active {
+    background: var(--c-fill-active);
+    color: var(--c-accent);
+  }
+  // m5: centred, a thicker accent underline under the label only, no full-width line
+  .mt--m5 {
+    justify-content: center;
+    gap: var(--space-4);
+  }
+  .mt--m5 .mt__btn {
+    flex: none;
+    padding: 0;
+  }
+  .mt--m5 .is-active {
+    box-shadow: inset 0 -2px 0 var(--c-accent);
   }
   .libs {
     display: flex;
