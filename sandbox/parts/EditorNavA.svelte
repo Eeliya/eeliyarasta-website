@@ -56,7 +56,30 @@
 <div class="col">
   <p class="cap">{caption}</p>
   <div class={['ptp', `is-${v}`]}>
-    {#if v === 'a0'}
+    {#if v === 'r1' || v === 'r2'}
+      <div class="row one">{@render picker()}</div>
+      <div class="row two">
+        {#if v === 'r1'}
+          <Button icon="database" iconOnly label="Sources" onclick={nop} />
+          <Button icon="images" iconOnly label="Media" onclick={nop} />
+          <Button icon="sitemap" iconOnly label="Pages" onclick={nop} />
+        {:else}
+          <button type="button" class="qb"
+            ><i class="fa-solid fa-database" aria-hidden="true"></i>Sources</button
+          >
+          <button type="button" class="qb"
+            ><i class="fa-solid fa-images" aria-hidden="true"></i>Media</button
+          >
+          <button type="button" class="qb"
+            ><i class="fa-solid fa-sitemap" aria-hidden="true"></i>Pages</button
+          >
+        {/if}
+        <span></span>
+        {@render tools()}
+      </div>
+      <div class="gap12">{@render modes('al')}</div>
+      <div class="gap12">{@render ptabs('al')}</div>
+    {:else if v === 'a0'}
       <div class="row r8">{@render picker()}{@render tools()}</div>
       <div class="gap12">{@render modes()}</div>
       <div class="row libs r8">{@render libs()}</div>
@@ -148,6 +171,32 @@
   }
   .row.lp {
     grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+  }
+  .one {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .two {
+    grid-template-columns: repeat(3, auto) minmax(0, 1fr) repeat(3, auto);
+    padding-top: var(--space-2);
+  }
+  // a quiet labelled utility: icon + text, no fill, 32px
+  .qb {
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    &:hover {
+      color: var(--c-text);
+    }
+  }
+  .two .qb:first-child {
+    margin-left: calc(-1 * var(--space-2));
   }
   .libs {
     display: flex;
