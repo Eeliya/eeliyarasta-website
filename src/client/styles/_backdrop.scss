@@ -26,7 +26,8 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: rgb(0 0 0 / 0.45);
+  background: #000;
+  opacity: 0.45; // the page's shade (style, src/site/backdrop.js)
 }
 
 .backdrop__photo {

@@ -7,6 +7,7 @@
  *     "direction": "vertical" | "horizontal",             scroll only, default "vertical"
  *     "through": "none" | "black",                        fade only, default "black"
  *     "parallax": true, "scrub": true,                    fade only, default false
+ *     "shade": 0.3,                                       the dim over the photos, 0 to 0.8, default 0.45
  *     "enabled": false                                    the editor's switch, default true
  *   }
  *
@@ -31,8 +32,10 @@ export const BACKDROP_DEFAULTS = {
   through: 'black',
   parallax: false,
   scrub: false,
+  shade: 0.45,
   enabled: true,
 };
+export const SHADE_MAX = 0.8;
 // a transition's own options: the other's are left out
 const OWN = { scroll: ['direction'], fade: ['through', 'parallax', 'scrub'] };
 const KEYS = ['photos', ...Object.keys(BACKDROP_DEFAULTS)];
@@ -60,6 +63,11 @@ export function checkBackdrop(b) {
   if (b.direction !== undefined && !DIRECTIONS.includes(b.direction))
     bad('direction', DIRECTIONS.join(' or '));
   if (b.through !== undefined && !THROUGH.includes(b.through)) bad('through', THROUGH.join(' or '));
+  if (
+    b.shade !== undefined &&
+    !(typeof b.shade === 'number' && b.shade >= 0 && b.shade <= SHADE_MAX)
+  )
+    bad('shade', `a number from 0 to ${SHADE_MAX}`);
   for (const k of ['parallax', 'scrub', 'enabled'])
     if (b[k] !== undefined && typeof b[k] !== 'boolean') bad(k, 'true or false');
   const t = TRANSITIONS.includes(b.transition) ? b.transition : 'scroll';
@@ -131,6 +139,6 @@ export function renderBackdrop(ctx, b) {
         )
         .join('')}
     </div>
-    <div class="backdrop__shade"></div>
+    <div class="backdrop__shade" style="opacity:${v.shade}"></div>
   </div>`;
 }

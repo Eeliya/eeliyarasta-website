@@ -28,6 +28,9 @@
   const has = $derived(photos.some(Boolean));
   const transition = $derived(b.transition === 'fade' ? 'fade' : 'scroll');
   const on = $derived(b.enabled !== false);
+  const shade = $derived(
+    Math.round((typeof b.shade === 'number' ? b.shade : BACKDROP_DEFAULTS.shade) * 100),
+  );
   const items = $derived(
     photos.map((_, i) => [
       {
@@ -148,6 +151,23 @@
         ],
         transition,
       )}
+      <!-- the dim over the photos, for both transitions; the value has a fixed width -->
+      <div class={['tf', changed('shade') && 'is-changed']}>
+        <span class="tf__label">Shade</span>
+        <div class="bd__shade">
+          <input
+            type="range"
+            class="f__range"
+            min="0"
+            max="80"
+            step="5"
+            aria-label="Shade"
+            value={shade}
+            oninput={(e) => set('shade', Math.round(+e.currentTarget.value) / 100)}
+          />
+          <span class="bd__val">{shade}%</span>
+        </div>
+      </div>
       <!-- the transition's options: one slot of a fixed height (a choice, then a 40px row) -->
       <div class="bd__slot">
         {#if transition === 'fade'}
@@ -219,6 +239,25 @@
 
   .bd__note {
     align-self: center;
+  }
+
+  .bd__shade {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: 32px;
+
+    .f__range {
+      flex: 1;
+    }
+  }
+
+  // a fixed width ("80%" fits), so dragging never moves the slider
+  .bd__val {
+    width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-text);
   }
 
   .bd__pair {

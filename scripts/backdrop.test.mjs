@@ -70,6 +70,7 @@ test('backdropOf fills in defaults; off or without photos: none', () => {
     through: 'black',
     parallax: false,
     scrub: false,
+    shade: 0.45,
     enabled: true,
   });
   assert.equal(backdropOf({ photos: P, enabled: false }), null);
@@ -82,7 +83,7 @@ test('renderBackdrop: a fixed layer with its photos and settings', () => {
   assert.equal(renderBackdrop(ctx, undefined), '');
   const out = renderBackdrop(ctx, { photos: P, transition: 'fade', through: 'none' });
   assert.match(out, /class="backdrop backdrop--fade"/);
-  assert.match(out, /<\/div>\s*<div class="backdrop__shade"><\/div>\s*<\/div>$/); // over the track
+  assert.match(out, /<\/div>\s*<div class="backdrop__shade"[^>]*><\/div>\s*<\/div>$/); // over the track
   assert.doesNotMatch(out, /data-portal/); // its own layer #backdrop, not the portal
   assert.match(out, /--n:3/);
   assert.equal(out.match(/<img/g).length, 3);
@@ -111,4 +112,18 @@ test('layers: the ground, the backdrop, the view, the portal, the curtain (in th
     at.every((i, k) => i > 0 && (k === 0 || i > at[k - 1])),
     String(at),
   );
+});
+
+test('shade: a number from 0 to 0.8, 0.45 left out on save, on the shade element', () => {
+  const ctx = { site: {}, media: {}, photos: {} };
+  assert.deepEqual(checkBackdrop({ photos: P, shade: 0.2 }), []);
+  for (const shade of [-0.1, 0.9, '0.3'])
+    assert.ok(checkBackdrop({ photos: P, shade }).some((p) => p.includes('"shade"')));
+  assert.deepEqual(omitDefaults(FILE, page({ photos: P, shade: 0.45 })).backdrop, { photos: P });
+  assert.deepEqual(omitDefaults(FILE, page({ photos: P, shade: 0 })).backdrop, {
+    photos: P,
+    shade: 0,
+  });
+  assert.match(renderBackdrop(ctx, { photos: P }), /backdrop__shade" style="opacity:0.45"/);
+  assert.match(renderBackdrop(ctx, { photos: P, shade: 0.2 }), /style="opacity:0.2"/);
 });
