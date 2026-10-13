@@ -65,7 +65,16 @@
         <span></span>
         {@render tools()}
       </div>
-      <div class={['mt', `mt--${v}`]} role="tablist" aria-label="Mode">
+      <div
+        class={[
+          'mt',
+          `mt--${v.replace(/-\d+$/, '')}`,
+          v.endsWith('-600') && 'w6',
+          v.endsWith('-700') && 'w7',
+        ]}
+        role="tablist"
+        aria-label="Mode"
+      >
         {#each MODES as [m, l] (m)}<button
             type="button"
             role="tab"
@@ -301,6 +310,20 @@
   }
   .mt--m5 .is-active {
     box-shadow: inset 0 -2px 0 var(--c-accent);
+  }
+  // m1b: m1 with a heavier weight (the same for every tab: no width shift) and a white underline
+  .mt--m1b {
+    padding-inline: 0;
+    box-shadow: inset 0 -1px 0 var(--c-line);
+  }
+  .mt--m1b .is-active {
+    box-shadow: inset 0 -2px 0 var(--c-text-strong);
+  }
+  .w6 .mt__btn {
+    font-weight: 600;
+  }
+  .w7 .mt__btn {
+    font-weight: 700;
   }
   .libs {
     display: flex;
