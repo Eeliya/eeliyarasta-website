@@ -9,7 +9,6 @@ import {
   NAV,
   SITE,
   STRINGS,
-  TEMPLATE,
   pageIdOf,
   sourceIdOf,
 } from '../../site/files.js';
@@ -71,10 +70,8 @@ export function labelFor(store, { file, ptr }) {
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-/** Labels of the texts outside blocks: a template's shared labels, the menu. */
+/** Labels of the texts outside blocks: the menu's. */
 const LABELS = {
-  section: 'Back link',
-  next: 'Next link',
   label: 'Label',
   menu: 'Menu button',
   close: 'Close button',
@@ -126,8 +123,6 @@ function described(store, f) {
     ...(sf.options ? { options: sf.options.map((o) => [o, o]) } : {}),
   };
 }
-
-const TRANSITION = { id: 'transition', title: 'Page transition', name: 'Curtain' };
 
 /** The sections of page file `file` (its "sections" list). */
 function sectionsOf(store, file) {
@@ -259,35 +254,20 @@ function blockGroup(store, file, at, j) {
   };
 }
 
-/** Which group a preview field belongs to: { id, title }; null for a block's own fields. */
-export function groupFor(store, { file, ptr }, page) {
+/**
+ * Which group a preview field belongs to: { id, title }; null for a block's own fields (a
+ * page or the footer is only sections of blocks: any other text of theirs has no group).
+ * A source list item's text (a name in a list block) is edited in the Sources modal:
+ * "source:<id>", never a group of its own.
+ */
+export function groupFor(store, { file, ptr }) {
   const parts = parse(ptr);
-  const pageId = pageIdOf(file);
-  if (pageId !== null) {
-    if (parts[0] === 'curtainText') return TRANSITION;
-    if (parts[0] === 'sections') return null; // in its block's group
-    // people/[slug]: the labels every item page shares (section, next)
-    return {
-      id: 'page-body',
-      title: pageId.endsWith(TEMPLATE) ? 'Item pages' : labelOf(pageId),
-    };
-  }
-  if (file === FOOTER_FILE)
-    return parts[0] === 'sections' ? null : { id: 'content', title: 'Content' };
+  if (isItemPtr(file, parts))
+    return { id: `source:${sourceIdOf(file)}`, title: `${sourceIdOf(file)}.json` };
+  if (pageIdOf(file) !== null || file === FOOTER_FILE) return null;
   if (file === NAV && parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
   if (file === STRINGS && parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
-  if (file === SITE && parts[0] === 'social') return { id: 'social', title: 'Social links' };
-  if (isItemPtr(file, parts)) {
-    // List items shown on the home page are edited in the Sources modal, not in a group.
-    if (page === 'home')
-      return { id: `source:${sourceIdOf(file)}`, title: `${sourceIdOf(file)}.json` };
-    const item = store.current[file]?.items?.[parts[1]];
-    return {
-      id: `${file}-${parts[1]}`,
-      title: item ? itemName(item, schemaFor(store, file)) : `#${Number(parts[1]) + 1}`,
-    };
-  }
-  return { id: 'content', title: 'Content' };
+  return null;
 }
 
 /**
@@ -335,13 +315,11 @@ function fieldsOf(store, bridge, target) {
 }
 
 /**
- * The Content tab's groups for `target`, in panel order: the page's blocks (in section and
- * block order; `block`: { at, j }, where it is), then the other texts in the preview (list
- * items, the shared labels of item pages), then the page transition.
+ * The Content tab's groups for `target`, in panel order: the page's (or footer's) blocks (in
+ * section and block order; `block`: { at, j }, where it is); the Menu's labels.
  * [{ id, title, name?, block?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
  */
 export function contentGroups(store, bridge, target) {
-  const page = previewPage(bridge);
   const file = targetFile(target, bridge.doc);
   const groups = new Map();
   const add = (group) => {
@@ -358,7 +336,7 @@ export function contentGroups(store, bridge, target) {
   );
 
   for (const f of fieldsOf(store, bridge, target)) {
-    const group = groupFor(store, f, page);
+    const group = groupFor(store, f);
     if (group?.id.startsWith('source:')) continue;
     if (group) add(group).fields.push(described(store, f));
     else {
@@ -370,17 +348,6 @@ export function contentGroups(store, bridge, target) {
     }
   }
 
-  // The page transition text is an attribute of the page, not a [data-edit] element.
-  const curtain = bridge.doc?.querySelector('[data-router-view]')?.dataset.curtainEdit;
-  if (target.kind === 'page' && curtain) {
-    add(TRANSITION).fields.push({
-      edit: curtain,
-      ...splitEdit(curtain),
-      type: 'text',
-      label: 'Curtain text',
-      placeholder: 'Leave empty to hide the label',
-    });
-  }
   // A group whose fields all come from one source file names it once, in its bar.
   for (const g of groups.values()) {
     const files = new Set(allFields(g).map((f) => f.file));

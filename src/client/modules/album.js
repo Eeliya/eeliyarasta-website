@@ -128,7 +128,7 @@ export function album(view) {
       gsap.set(outEls, { clearProps: 'all' });
       if (m === 'grid') {
         gsap.fromTo(
-          grid.querySelectorAll('.gcell, .album__nextlink'),
+          grid.querySelectorAll('.gcell'),
           { autoAlpha: 0, y: 60 },
           { autoAlpha: 1, y: 0, duration: T.view.duration, ease: T.view.ease, stagger: 0.04 },
         );

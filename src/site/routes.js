@@ -148,7 +148,8 @@ export function buildRoutes(content) {
       warnings.push(`${file}: template.source "${source ?? ''}" is not a source list`);
       return [];
     }
-    const section = tpl.template?.section ?? titleCase(source);
+    // its section: the folder's page title ("People"), else the source's name
+    const section = pageTitle(pages[folder.slice(0, -1)] || {}) || titleCase(source);
     const schema = schemaOf(content, source);
     const meta = tpl.meta || {}; // defaults of its item pages
     const seen = new Set();
@@ -173,8 +174,6 @@ export function buildRoutes(content) {
     return items
       .filter(({ slug }) => !exists.has(folder + slug)) // a fixed page wins over the template
       .map(({ item, index, slug, path }) => {
-        const k = items.findIndex((x) => x.item === item);
-        const next = items[(k + 1) % items.length];
         const name = itemTitle(item, schema) ?? slug;
         const title = fillTitle(site, `${name} | ${section}`);
         return {
@@ -188,12 +187,9 @@ export function buildRoutes(content) {
           name,
           parent,
           section,
-          nextLabel: tpl.template?.next ?? 'Next',
           album: item,
           index,
           file: sourceFile(source),
-          next: next.item,
-          nextPath: next.path,
           title,
           description: item.body || meta.description || site.description,
           image: coverOf(item) || meta.image || undefined,
@@ -201,8 +197,9 @@ export function buildRoutes(content) {
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
           curtain: curtainOf(item.curtainText, title),
           curtainEdit: curtainEditOf(sourceFile(source), ['items', index, 'curtainText']),
-          transition: item.transition,
-          transitionEdit: curtainEditOf(sourceFile(source), ['items', index, 'transition']),
+          // one curtain choice for every item page: its template's
+          transition: tpl.transition,
+          transitionEdit: curtainEditOf(file, ['transition']),
         };
       });
   }

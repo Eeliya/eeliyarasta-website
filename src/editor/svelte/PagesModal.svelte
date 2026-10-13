@@ -389,7 +389,7 @@
         <p class="hint small">
           A page per item of sources/{data(sel).template?.source}.json, at /{parentOf(
             sel,
-          )}/&lt;slug&gt;/ (the item's slug, else its name). Its labels are in the Content tab.
+          )}/&lt;slug&gt;/ (the item's slug, else its name), built from its sections.
         </p>
       {:else if fixed}
         <p class="hint small">

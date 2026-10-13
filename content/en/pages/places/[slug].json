@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-h6eg",
-  "template": { "source": "places", "section": "Places", "next": "Next place" },
+  "template": { "source": "places" },
   "sections": [
     {
       "id": "s-gaii",

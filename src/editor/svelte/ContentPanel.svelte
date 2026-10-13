@@ -1,9 +1,12 @@
 <!--
   Content tab: the page in the preview (or the Menu / Footer). A page is a list of sections
-  holding blocks (src/site/layout/): SectionsList.svelte lists them with their settings, and
-  a block opens in BlockInspector.svelte (ui.block: its Content, Layout and Motion). Below the
-  sections (and above them the page's Backdrop, BackdropCard.svelte), the page's other texts (a [slug] page's shared labels, the curtain: groups from
-  content-groups.js) and its SEO (SeoSection.svelte). While this tab is open the preview is a
+  holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
+  the open one kept per page in ui.sections["pagetab:<file>"]):
+    Sections     SectionsList.svelte: the section cards and the dashed Add section card; a
+                 block opens in BlockInspector.svelte (ui.block: its Content, Layout, Motion)
+    Transitions  the Backdrop (BackdropFields.svelte) and the Curtain (PageCurtain.svelte)
+    SEO          SeoSection.svelte
+  The footer is sections only; the Menu its labels (groups from content-groups.js). While this tab is open the preview is a
   layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
   a double click edits a text in place (bridge.js); links and buttons don't follow; a click on
   empty space or Esc drops the selection. The selected block's section shows its grid (faint
@@ -20,7 +23,7 @@
   import { ui } from './ui.svelte.js';
 
   // Groups that start open; once toggled, the state is kept in ui.sections (Section.svelte).
-  const OPEN = ['transition', 'nav', 'footer', 'page-body', 'content'];
+  const OPEN = ['nav'];
   const keyOf = (g) => `text:${g.id}`;
   const isOpen = (g) => ui.sections[keyOf(g)] ?? OPEN.includes(g.id);
 </script>
@@ -28,14 +31,16 @@
 <script>
   import Button from './Button.svelte';
   import { tick } from 'svelte';
-  import BackdropCard from './BackdropCard.svelte';
+  import BackdropFields from './BackdropFields.svelte';
+  import PageCurtain from './PageCurtain.svelte';
+  import Tabs from './Tabs.svelte';
   import BlockInspector from './BlockInspector.svelte';
   import GroupFields from './GroupFields.svelte';
   import Section from './Section.svelte';
   import SectionsList from './SectionsList.svelte';
   import SeoSection from './SeoSection.svelte';
   import SourcesModal from './SourcesModal.svelte';
-  import { allFields, contentGroups, groupFor, previewPage, splitEdit } from './content-groups.js';
+  import { allFields, contentGroups, groupFor, splitEdit } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
   import { targetFile } from '../layout-sync.js';
   import { baseName, sourceIdOf } from '../../site/files.js';
@@ -71,6 +76,16 @@
     return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
   });
 
+  // a page's tabs, the open one per page file
+  const TABS = [
+    ['sections', 'Sections'],
+    ['transitions', 'Transitions'],
+    ['seo', 'SEO'],
+  ];
+  const isPage = $derived(!!file && ui.target.kind === 'page');
+  const tab = $derived((isPage && ui.sections[`pagetab:${file}`]) || 'sections');
+  const pickTab = (v) => (ui.sections[`pagetab:${file}`] = v);
+
   const onsource = (f, item, edit, then) => sourcesModal.open(f, item, edit, then);
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
 
@@ -86,11 +101,12 @@
     if (!group) {
       const { file, ptr } = splitEdit(edit);
       // A list item shown on the home page (a person's name): edit it in the modal.
-      if (groupFor(live.store, { file, ptr }, previewPage(bridge))?.id.startsWith('source:'))
+      if (groupFor(live.store, { file, ptr })?.id.startsWith('source:'))
         sourcesModal.open(file, itemOf({ ptr }), edit);
       return;
     }
     if (group.block) {
+      if (isPage && tab !== 'sections') pickTab('sections');
       if (ui.block !== group.id || ui.blockTab !== 'content') openBlock(group.id);
     } else ui.sections[keyOf(group)] = true;
     await tick();
@@ -105,6 +121,9 @@
   });
 </script>
 
+{#if isPage && !open}
+  <Tabs tabs={TABS} value={tab} onpick={pickTab} label="Page" class="page-tabs" />
+{/if}
 <section class="ed-body" bind:this={panel}>
   {#if waiting}
     <p class="hint">Waiting for the preview…</p>
@@ -123,8 +142,15 @@
       }}
     />
   {:else}
-    {#if file && ui.target.kind === 'page'}<BackdropCard {live} {file} />{/if}
-    {#if file}<SectionsList {live} {bridge} {file} onopen={openBlock} />{/if}
+    {#if isPage && tab === 'transitions'}
+      <BackdropFields {live} {file} />
+      <hr class="pane__line" />
+      <PageCurtain {live} onsettings={() => actions.setMode('settings')} />
+    {:else if isPage && tab === 'seo'}
+      <SeoSection {live} {file} />
+    {:else if file}
+      <SectionsList {live} {bridge} {file} onopen={openBlock} />
+    {/if}
     {#each others as g (g.id)}
       <Section id={g.id} key={keyOf(g)} title={g.title} name={g.name} open={isOpen(g)}>
         {#snippet bar()}
@@ -146,13 +172,17 @@
     {:else}
       {#if !file}<p class="hint">No editable content here.</p>{/if}
     {/each}
-    {#if file}<SeoSection {live} {file} />{/if}
   {/if}
 
   <SourcesModal bind:this={sourcesModal} {live} {bridge} />
 </section>
 
 <style lang="scss">
+  // the tabs' line runs the panel's full width, above the scrolling body
+  :global(.page-tabs) {
+    flex: none;
+  }
+
   .count {
     color: var(--c-text-faint);
     font-size: var(--fs-xs);

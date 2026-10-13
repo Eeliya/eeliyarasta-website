@@ -188,23 +188,6 @@
       display: none;
     }
   }
-  &__nextlink {
-    grid-column: 1 / -1;
-    display: grid;
-    gap: 10px;
-    margin-top: 40px;
-    padding-top: 28px;
-    border-top: 1px solid var(--line);
-  }
-  &__nextname {
-    font-family: var(--f-display);
-    font-size: clamp(40px, 6vw, 100px);
-    line-height: 0.9;
-    transition: color 0.4s;
-  }
-  &__nextlink:hover &__nextname {
-    color: var(--accent);
-  }
 }
 
 .slide {

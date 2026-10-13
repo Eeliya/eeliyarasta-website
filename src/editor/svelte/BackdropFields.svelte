@@ -1,9 +1,9 @@
 <!--
-  The page's backdrop (src/site/backdrop.js): photos behind its sections as it scrolls, at the
-  top of the Content tab above Section 1. Its photos (PhotoList.svelte: drag a photo to move
+  The page's backdrop (src/site/backdrop.js): photos behind its sections as it scrolls, in the
+  Content tab's Transitions pane, plain fields under a "Backdrop" heading. Its photos (PhotoList.svelte: drag a photo to move
   it, Media to change, ✕ to remove, Add photo opens Media), then its transition: Scroll (a
   direction) or Fade (direct or through black, Parallax, Scrub). The options sit in one slot of
-  a fixed height, so switching Scroll and Fade moves nothing under it. The bar's switch turns
+  a fixed height, so switching Scroll and Fade moves nothing under it. The heading's switch turns
   it off (enabled: false) without losing its photos. Every change is one undo step; a value
   set back to its default is left out (BACKDROP_DEFAULTS), and so is an empty backdrop on
   save. The preview shows it at once (main.js syncBackdrop).
@@ -12,7 +12,6 @@
 <script>
   import Field from './Field.svelte';
   import PhotoList from './PhotoList.svelte';
-  import Section from './Section.svelte';
   import { openMedia } from './media.svelte.js';
   import { BACKDROP_DEFAULTS } from '../../site/backdrop.js';
 
@@ -91,129 +90,121 @@
   </div>
 {/snippet}
 
-<Section
-  id="backdrop"
-  key="text:{file}#backdrop"
-  title="Backdrop"
-  {name}
-  dim={!has}
-  off={has && !on}
-  changed={live.changed(file, '/backdrop')}
->
-  {#snippet bar()}
-    <input
-      type="checkbox"
-      class="switch"
-      aria-label="Show the backdrop"
-      title={!has ? 'Add a photo first' : on ? 'Shown behind the sections' : 'Hidden'}
-      disabled={!has}
-      checked={has && on}
-      onchange={(e) => set('enabled', e.currentTarget.checked)}
-    />
-  {/snippet}
-  <div class="fields">
-    {#if !has}
-      <p class="hint small bd__hint">
-        Photos behind the sections, one after another: the first at the top, the last until the end.
-        Section backgrounds sit on top.
-      </p>
-    {/if}
-    <PhotoList
-      label="Photos"
-      {items}
-      addLabel="Add photo"
-      onmove={move}
-      onremove={removeAt}
-      onadd={add}
-    >
-      {#snippet row(fields, i, ctl)}
-        {@const f = fields[0]}
-        <Field
-          {...f}
-          value={photos[i]}
-          changed={live.changed(file, f.ptr)}
-          grab={ctl.grab}
-          remove={ctl.remove}
-          onvalue={(v) => (v ? live.store.set(file, f.ptr, v, { source: 'panel' }) : removeAt(i))}
+<h3 class={['pane__head', live.changed(file, '/backdrop') && 'is-changed']} id="backdrop">
+  Backdrop
+  {#if name}<span class="pane__name">{name}</span>{/if}
+  <input
+    type="checkbox"
+    class="switch"
+    aria-label="Show the backdrop"
+    title={!has ? 'Add a photo first' : on ? 'Shown behind the sections' : 'Hidden'}
+    disabled={!has}
+    checked={has && on}
+    onchange={(e) => set('enabled', e.currentTarget.checked)}
+  />
+</h3>
+<div class="fields">
+  {#if !has}
+    <p class="hint small bd__hint">
+      Photos behind the sections, one after another: the first at the top, the last until the end.
+      Section backgrounds sit on top.
+    </p>
+  {/if}
+  <PhotoList
+    label="Photos"
+    {items}
+    addLabel="Add photo"
+    onmove={move}
+    onremove={removeAt}
+    onadd={add}
+  >
+    {#snippet row(fields, i, ctl)}
+      {@const f = fields[0]}
+      <Field
+        {...f}
+        value={photos[i]}
+        changed={live.changed(file, f.ptr)}
+        grab={ctl.grab}
+        remove={ctl.remove}
+        onvalue={(v) => (v ? live.store.set(file, f.ptr, v, { source: 'panel' }) : removeAt(i))}
+      />
+    {/snippet}
+  </PhotoList>
+  {#if has}
+    <hr class="bd__line" />
+    {@render choice(
+      'transition',
+      'Transition',
+      [
+        ['scroll', 'Scroll'],
+        ['fade', 'Fade'],
+      ],
+      transition,
+    )}
+    <!-- the dim over the photos, for both transitions; the value has a fixed width -->
+    <div class={['tf', changed('shade') && 'is-changed']}>
+      <span class="tf__label">Shade</span>
+      <div class="bd__shade">
+        <input
+          type="range"
+          class="f__range"
+          min="0"
+          max="80"
+          step="5"
+          aria-label="Shade"
+          value={shade}
+          oninput={(e) => set('shade', Math.round(+e.currentTarget.value) / 100)}
         />
-      {/snippet}
-    </PhotoList>
-    {#if has}
-      <hr class="bd__line" />
-      {@render choice(
-        'transition',
-        'Transition',
-        [
-          ['scroll', 'Scroll'],
-          ['fade', 'Fade'],
-        ],
-        transition,
-      )}
-      <!-- the dim over the photos, for both transitions; the value has a fixed width -->
-      <div class={['tf', changed('shade') && 'is-changed']}>
-        <span class="tf__label">Shade</span>
-        <div class="bd__shade">
-          <input
-            type="range"
-            class="f__range"
-            min="0"
-            max="80"
-            step="5"
-            aria-label="Shade"
-            value={shade}
-            oninput={(e) => set('shade', Math.round(+e.currentTarget.value) / 100)}
+        <span class="bd__val">{shade}%</span>
+      </div>
+    </div>
+    <!-- the transition's options: one slot of a fixed height (a choice, then a 40px row) -->
+    <div class="bd__slot">
+      {#if transition === 'fade'}
+        {@render choice(
+          'through',
+          'Fade',
+          [
+            ['none', 'Direct'],
+            ['black', 'Through black'],
+          ],
+          b.through === 'none' ? 'none' : 'black',
+        )}
+        <div class="bd__pair">
+          <Field
+            edit="{file}#/backdrop/parallax"
+            label="Parallax"
+            type="boolean"
+            value={b.parallax === true}
+            changed={changed('parallax')}
+            onvalue={(v) => set('parallax', v)}
           />
-          <span class="bd__val">{shade}%</span>
+          <Field
+            edit="{file}#/backdrop/scrub"
+            label="Scrub"
+            type="boolean"
+            value={b.scrub === true}
+            changed={changed('scrub')}
+            onvalue={(v) => set('scrub', v)}
+          />
         </div>
-      </div>
-      <!-- the transition's options: one slot of a fixed height (a choice, then a 40px row) -->
-      <div class="bd__slot">
-        {#if transition === 'fade'}
-          {@render choice(
-            'through',
-            'Fade',
-            [
-              ['none', 'Direct'],
-              ['black', 'Through black'],
-            ],
-            b.through === 'none' ? 'none' : 'black',
-          )}
-          <div class="bd__pair">
-            <Field
-              edit="{file}#/backdrop/parallax"
-              label="Parallax"
-              type="boolean"
-              value={b.parallax === true}
-              changed={changed('parallax')}
-              onvalue={(v) => set('parallax', v)}
-            />
-            <Field
-              edit="{file}#/backdrop/scrub"
-              label="Scrub"
-              type="boolean"
-              value={b.scrub === true}
-              changed={changed('scrub')}
-              onvalue={(v) => set('scrub', v)}
-            />
-          </div>
-        {:else}
-          {@render choice(
-            'direction',
-            'Direction',
-            [
-              ['vertical', 'Vertical'],
-              ['horizontal', 'Horizontal'],
-            ],
-            b.direction === 'horizontal' ? 'horizontal' : 'vertical',
-          )}
-          <p class="hint small bd__note">
-            The photos scroll by with the page; the last is fully in view at its end.
-          </p>
-        {/if}
-      </div>
-    {/if}
-  </div>
-</Section>
+      {:else}
+        {@render choice(
+          'direction',
+          'Direction',
+          [
+            ['vertical', 'Vertical'],
+            ['horizontal', 'Horizontal'],
+          ],
+          b.direction === 'horizontal' ? 'horizontal' : 'vertical',
+        )}
+        <p class="hint small bd__note">
+          The photos scroll by with the page; the last is fully in view at its end.
+        </p>
+      {/if}
+    </div>
+  {/if}
+</div>
 
 <style lang="scss">
   .bd__hint,

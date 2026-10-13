@@ -1,7 +1,7 @@
 {
   "version": 1,
   "id": "pg-gk6t",
-  "template": { "source": "people", "section": "People", "next": "Next person" },
+  "template": { "source": "people" },
   "sections": [
     {
       "id": "s-2jiz",

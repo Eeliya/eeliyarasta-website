@@ -109,7 +109,6 @@ function checkSite(d) {
       lang: 'string',
       timezone: 'string',
       social: 'array',
-      labels: 'object',
       forms: 'object',
     }),
     ...checkForms(d.forms),
@@ -219,31 +218,14 @@ function checkPage(file, d) {
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
   // the grid is always COLS (120) columns: not stored
   if (d.grid !== undefined) out.push(`"grid" must be left out: the page grid is always ${COLS}`);
-  // a [slug] page's shared labels are in "template"
-  for (const k of ['section', 'next'])
-    if (d[k] !== undefined) out.push(`"${k}" must be left out: it is "template.${k}"`);
-  // its page transition: { preset: "curtain", overrides? } or { preset: "none" }
+  // its page transition: none (the site's curtain) or { preset: "none" } (no curtain)
   const t = d.transition;
-  if (t !== undefined) {
-    if (!isObject(t) || !['curtain', 'none'].includes(t.preset))
-      out.push(
-        '"transition" must be { "preset": "curtain", "overrides"?: {…} } or { "preset": "none" }',
-      );
-    else if (t.overrides !== undefined && (t.preset !== 'curtain' || !isObject(t.overrides)))
-      out.push('"transition.overrides" must be an object, only with the "curtain" preset');
-    else if (Object.keys(t).some((k) => k !== 'preset' && k !== 'overrides'))
-      out.push('"transition" has only "preset" and "overrides"');
-  }
+  if (t !== undefined && !(isObject(t) && t.preset === 'none' && Object.keys(t).length === 1))
+    out.push('"transition" must be { "preset": "none" } or left out (the site\'s curtain)');
   if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
     out.push('"template.source" must name a source (a [slug] page makes a page per item)');
-  else if (isObject(d.template)) {
-    // its shared labels: the back link (its section's name) and the next link
-    out.push(
-      ...optional(d.template, { section: 'string', next: 'string' }).map((p) => `template: ${p}`),
-    );
-    if (Object.keys(d.template).some((k) => !['source', 'section', 'next'].includes(k)))
-      out.push('"template" has only "source", "section" and "next"');
-  }
+  else if (isObject(d.template) && Object.keys(d.template).some((k) => k !== 'source'))
+    out.push('"template" has only "source"');
   if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
     out.push('"template" is only for [slug] pages');
   return [...out, ...checkSections(d.sections)];

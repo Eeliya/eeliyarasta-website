@@ -36,7 +36,7 @@ test('folders mirror URLs, in tree order', () => {
 test('[slug] template: a page per item, slug field or slugified name', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[slug].json': { template: { source: 'people' }, section: 'People' },
+    'pages/people/[slug].json': { template: { source: 'people' } },
     'sources/people.json': {
       version: 1,
       id: 'pg-t029',
@@ -52,8 +52,8 @@ test('[slug] template: a page per item, slug field or slugified name', () => {
   const noor = r[1];
   assert.equal(noor.page, 'album');
   assert.equal(noor.template, 'pages/people/[slug].json');
-  assert.equal(noor.nextPath, '/people/daan-okafor/');
-  assert.equal(r[2].nextPath, '/people/noor/');
+  assert.equal(noor.section, 'People');
+  assert.ok(!('nextPath' in noor)); // no next link (it comes back as a block)
   assert.equal(noor.title, 'Noor | People | Site');
   assert.equal(itemHref({ ...c, routes: r }, 'people', c.people[1]), '/people/daan-okafor/');
 });
@@ -80,7 +80,7 @@ test('a fixed page beats the template for the same slug', () => {
       ['/people/daan/', 'album'],
     ],
   );
-  assert.equal(r[1].nextPath, '/people/noor/'); // still the item's URL
+  assert.equal(r[1].path, '/people/daan/');
 });
 
 test('missing, invalid and duplicate slugs warn and get no page', () => {

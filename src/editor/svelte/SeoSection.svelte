@@ -1,5 +1,5 @@
 <!--
-  Content > SEO: what search engines and share cards say about the page in the preview, from
+  Content > SEO (a tab of the page panel), plain fields: what search engines and share cards say about the page in the preview, from
   its file's "meta" (src/site/seo.js). A page: title, description, share image, noindex and
   canonical. A [slug] page: its template's defaults for every item page (an item's own name,
   summary and cover come first). Below, a search result and a share card as the build makes
@@ -10,7 +10,6 @@
 <script>
   import Button from './Button.svelte';
   import Field from './Field.svelte';
-  import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { imageSrcset, imageUrl, media } from './media.svelte.js';
   import { getRoutes } from '../../site/routes.js';
@@ -44,7 +43,7 @@
     });
 </script>
 
-<Section key="text:{file}#seo" title="Page" name="SEO" icon="magnifying-glass" open={false}>
+<div class="seo fields">
   <p class="hint">
     {template
       ? 'Defaults for every item page. Each item page is titled with its name and uses its own summary and cover first.'
@@ -141,7 +140,7 @@
       <span class="seo__desc">{seo.description}</span>
     </div>
   {/if}
-</Section>
+</div>
 
 <style lang="scss">
   .seo__row {

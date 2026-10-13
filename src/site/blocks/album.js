@@ -70,7 +70,7 @@ function albumOf(s, ctx, route, b) {
   return html` <div class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
       <a class="album__back label" href="${esc(route.parent)}"
-        ><span aria-hidden="true">←</span> <span${ed(route.template, ['template', 'section'])}>${esc(route.section)}</span></a
+        ><span aria-hidden="true">←</span> <span>${esc(route.section)}</span></a
       >
       <h1 class="album__title" data-anim="album.title" ${b.ed('title')}>${esc(title)}</h1>
       <div class="album__details" data-anim="album.meta">
@@ -167,12 +167,6 @@ function albumOf(s, ctx, route, b) {
             >
           </button>`,
       )}
-      <a class="album__nextlink" href="${esc(route.nextPath)}">
-        <span class="label"${ed(route.template, ['template', 'next'])}>${esc(route.nextLabel)}</span>
-        <span class="album__nextname"
-          >${esc(route.next.title)} <span aria-hidden="true">→</span></span
-        >
-      </a>
     </div>
 
     <div class="viewtoggle glass" data-portal role="group" aria-label="View mode">

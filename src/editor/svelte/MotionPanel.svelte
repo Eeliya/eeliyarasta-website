@@ -1,7 +1,7 @@
 <!--
   Motion tab, two sub-tabs (ui.library.open: Animations):
-  Elements    nothing picked: the page's curtain (Global / Custom / Off, CurtainSection; the
-              global curtain itself is in the Settings tab), then the page's blocks, a box per
+  Elements    nothing picked: the page's blocks (its curtain is in Content > Transitions, the
+              curtain itself in Settings), a box per
               section, each with its animation and its parts that have their own (data-anim
               inside it: the hero's photos, a heading's title, ...), then the animated elements
               outside the blocks (fixed parts).
@@ -16,19 +16,16 @@
   import BlockMotion from './BlockMotion.svelte';
   import Button from './Button.svelte';
   import Tabs from './Tabs.svelte';
-  import CurtainSection from './CurtainSection.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
-  import { nameOf, splitEdit } from './content-groups.js';
+  import { nameOf } from './content-groups.js';
   import { targetFile } from '../layout-sync.js';
-  import { getRoutes } from '../../site/routes.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { ANIMATIONS, contentFromFiles } from '../../site/files.js';
+  import { ANIMATIONS } from '../../site/files.js';
   import { animationOf, partOf } from './motion.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
-  // onsettings: switch to the Settings tab
-  let { live, bridge, onsettings } = $props();
+  let { live, bridge } = $props();
 
   const TABS = [
     [false, 'Elements'],
@@ -44,15 +41,6 @@
   $effect(() => {
     if (ui.anim && ui.anim !== picked) ui.library.open = false;
     picked = ui.anim;
-  });
-
-  // Where the previewed page's "transition" is stored ({ file, ptr }), null on other URLs.
-  const page = $derived.by(() => {
-    ui.previewVersion;
-    live.version;
-    const path = bridge.path();
-    const route = getRoutes(contentFromFiles(live.store.current)).find((r) => r.path === path);
-    return route ? splitEdit(route.transitionEdit) : null;
   });
 
   const cfg = $derived(live.current(ANIMATIONS));
@@ -180,7 +168,6 @@
         />
       {/key}
     {:else}
-      {#if page}<CurtainSection {live} {bridge} {gsap} {page} {onsettings} />{/if}
       <p class="hint">
         Click a block or an animated part of it in the preview, or pick one below. Hold Alt to click
         through to links.
