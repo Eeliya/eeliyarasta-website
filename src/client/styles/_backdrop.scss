@@ -1,0 +1,67 @@
+// The page's backdrop (src/site/backdrop.js, modules/backdrop.js): photos in a fixed layer
+// over the site's glow (.backdrop) and under everything else; the sections have no background
+// of their own. A screen tall (the large viewport: phones' address bar doesn't resize it).
+.pbd {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 100lvh;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  &--black {
+    background: #000;
+  }
+  // a dim over the photos, so the text on them reads
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.45);
+  }
+}
+
+.pbd__photo {
+  overflow: hidden;
+  img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+// scroll: a strip of n screens, moved by the script
+.pbd--scroll .pbd__track {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% * var(--n));
+  will-change: transform;
+}
+
+.pbd--scroll.pbd--horizontal .pbd__track {
+  flex-direction: row;
+  width: calc(100% * var(--n));
+  height: 100%;
+}
+
+.pbd--scroll .pbd__photo {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+// fade: stacked, the first on top until the script takes over
+.pbd--fade .pbd__track {
+  position: absolute;
+  inset: 0;
+}
+
+.pbd--fade .pbd__photo {
+  position: absolute;
+  inset: 0;
+  &:not(:first-child) {
+    visibility: hidden;
+    opacity: 0;
+  }
+}

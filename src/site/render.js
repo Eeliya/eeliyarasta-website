@@ -11,6 +11,7 @@ import { pageFile } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
 import { motionProblems } from './layout/motion.js';
 import { BLOCK_TYPES } from './blocks/index.js';
+import { renderBackdrop } from './backdrop.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
 export { getRoutes, buildRoutes, sitemapXml };
@@ -32,7 +33,9 @@ export function renderRoute(route, content, { editable = false } = {}) {
   setEditable(editable);
   const ctx = contextOf(route, content);
   const file = pageFile(route.id);
-  const view = renderSections(ctx, route, file, content.pages[route.id]?.sections);
+  const page = content.pages[route.id];
+  const view =
+    renderBackdrop(ctx, page?.backdrop) + renderSections(ctx, route, file, page?.sections);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
   const html = body(ctx, route, accent, view, file);
   anchorClashes(route, content.pages[route.id]?.sections, html);
@@ -65,8 +68,11 @@ function contextOf(route, content) {
 
 /**
  * The editor's HTML of the sections `ids` of a route's page, by id (the dev server's
- * /__editor/render, so the preview swaps sections without loading the page again).
+ * /__editor/render, so the preview swaps sections without loading the page again). The id
+ * BACKDROP ("__backdrop") is the page's backdrop ('' without one, src/site/backdrop.js).
  */
+export const BACKDROP = '__backdrop';
+
 export function renderRouteSections(route, content, ids) {
   setEditable(true);
   const ctx = contextOf(route, content);
@@ -77,5 +83,7 @@ export function renderRouteSections(route, content, ids) {
   list.forEach((s, at) => {
     if (ids.includes(s?.id)) out[s.id] = renderSection(ctx, route, file, s, at, numbers);
   });
+  if (ids.includes(BACKDROP))
+    out[BACKDROP] = renderBackdrop(ctx, content.pages[route.id]?.backdrop);
   return out;
 }

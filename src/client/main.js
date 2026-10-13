@@ -24,6 +24,7 @@ import { contactForms } from './modules/form.js';
 import { placements } from './modules/placements.js';
 import { watchRows } from './modules/rows.js';
 import { anchors } from './modules/anchors.js';
+import { backdrop } from './modules/backdrop.js';
 
 const pageModules = [imageFade, album, projects, cards, toTop, contactForms, placements, anchors];
 // Editor hooks (see connectEditor below); always empty on the public site.
@@ -58,8 +59,10 @@ function mount(view, { first = false } = {}) {
     portal,
     anim,
     rows,
+    backdrop: backdrop(),
     revert() {
       rows.stop();
+      this.backdrop?.();
       cleanups.forEach((fn) => fn());
       this.anim.revert();
       portal.replaceChildren();
@@ -126,6 +129,18 @@ function connectEditor() {
     },
     /** ScrollTrigger.refresh, the scroll position kept (in the editor it could come back stale). */
     refresh: () => keepScroll(() => ScrollTrigger.refresh()),
+    /** The editor changed the page's backdrop: its HTML ('' for none) in place of the old one. */
+    setBackdrop(markup) {
+      if (!current) return;
+      current.backdrop?.();
+      current.portal.querySelector('[data-backdrop]')?.remove();
+      const tpl = document.createElement('template');
+      tpl.innerHTML = markup || '';
+      const el = tpl.content.firstElementChild;
+      if (el) current.portal.prepend(el);
+      current.backdrop = backdrop();
+      keepScroll(() => ScrollTrigger.refresh());
+    },
     /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
     remountView() {
       if (!current) return;
