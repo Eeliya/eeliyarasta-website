@@ -72,8 +72,9 @@ const HEX = /#[0-9a-f]{3,8}\b/i;
 
 const raw = createPlugin(RAW, (on) => (root, result) => {
   if (!on) return;
-  // token files set the raw values
-  if (/(^|\/)_tokens\.scss$/.test(root.source?.input?.file || '')) return;
+  // token files set the raw values (the path with / on every OS: Windows gives back-slashes)
+  const file = (root.source?.input?.file || '').replaceAll('\\', '/');
+  if (/(^|\/)_tokens\.scss$/.test(file)) return;
   const messages = ruleMessages(RAW, {
     hex: (prop) => `${prop}: no raw hex colour, use a colour token (--c-*)`,
     size: () => 'font-size: no px size, use a type size token (--fs-*)',
