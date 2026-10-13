@@ -18,13 +18,13 @@ export const ui = $state({
   /** Footer status line, e.g. "Saved 2 files · 12:40:03". */
   status: '',
   /**
-   * Page menu items: every page, then the Menu and Footer components. A [slug] template is
+   * Page menu items: the site parts (Header, Footer), then every page. A [slug] template is
    * one item with `template` (its page id) and `items` ([{ path, title }], its pages).
    */
   pages: [],
   /** The path shown in the preview ("/people/noor-vermeer/"). */
   path: '/',
-  /** What the Content tab edits: a page { kind: 'page', path, title } or a component. */
+  /** What the Content tab edits: a page { kind: 'page', path, title } or a site part { kind: 'part', id: 'header' | 'footer', title }. */
   target: { kind: 'page', path: '/', title: 'Home' },
   /** Bumped when the preview shows a (new) page: the Content tab re-reads its texts. */
   previewVersion: 0,

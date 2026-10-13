@@ -1,23 +1,16 @@
 /**
  * What the Content tab shows: the editable texts of the page in the preview (or of the
- * Menu, or the footer's blocks), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
+ * footer's blocks), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
  * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import {
-  FOOTER as FOOTER_FILE,
-  NAV,
-  SITE,
-  STRINGS,
-  pageIdOf,
-  sourceIdOf,
-} from '../../site/files.js';
+import { sourceIdOf } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
 import { BLOCK_TYPES } from '../../site/blocks/index.js';
 import { bindTypeOf } from '../../site/layout/bindings.js';
 import { targetFile } from '../layout-sync.js';
-import { WIDGETS, itemName, schemaFor } from './source-items.js';
+import { itemName, schemaFor } from './source-items.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
 export const SITE_SETTINGS = [
@@ -70,59 +63,22 @@ export function labelFor(store, { file, ptr }) {
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-/** Labels of the texts outside blocks: the menu's. */
-const LABELS = {
-  label: 'Label',
-  menu: 'Menu button',
-  close: 'Close button',
-  clock: 'Clock label',
-  handle: 'Handle',
-};
-
 /**
- * A field's label: a source field's from its schema, else a known text's (LABELS), else its
- * key made readable; a photo in a list (".../photos/1/src") is "Photo 2".
+ * A field's label: its key made readable; a photo in a list (".../photos/1/src") is "Photo 2",
+ * a column's title "<Name> column title".
  */
-function fieldLabel(store, f) {
+function fieldLabel(f) {
   const parts = parse(f.ptr);
-  // a menu label: "Item 2", "Item 2 › 1" (a dropdown link), "Item 2: all link"
-  if (f.file === NAV) {
-    const [, i, key, j] = parts;
-    const item = `Item ${Number(i) + 1}`;
-    return key === 'children'
-      ? `${item} › ${Number(j) + 1}`
-      : key === 'all'
-        ? `${item}: all link`
-        : item;
-  }
   if (f.type === 'image' && parts.at(-1) === 'src' && /^\d+$/.test(parts.at(-2)))
     return `Photo ${Number(parts.at(-2)) + 1}`;
   if (f.type === 'image' && parts.at(-2) === 'images' && /^\d+$/.test(parts.at(-1)))
     return `Photo ${Number(parts.at(-1)) + 1}`;
-  const key = parts.at(-1);
-  if (f.file === SITE && parts[0] === 'social') return `Social ${Number(parts[1]) + 1} ${key}`;
   if (parts.at(-3) === 'columns') return `${labelOf(parts.at(-2))} column title`;
-  return LABELS[key] ?? labelOf(key);
+  return labelOf(parts.at(-1));
 }
 
-/**
- * A preview field as the panel shows it: its label, and for a source item's field what its
- * schema says (widget, half width, help, choices).
- */
-function described(store, f) {
-  const parts = parse(f.ptr);
-  const own = isItemPtr(f.file, parts) && parts.length === 3;
-  const sf = own && schemaFor(store, f.file).fields.find((x) => x.key === parts[2]);
-  if (!sf) return { ...f, label: fieldLabel(store, f) };
-  return {
-    ...f,
-    label: sf.label || labelOf(sf.key),
-    type: WIDGETS[sf.type] || f.type,
-    half: sf.width === 'half',
-    help: sf.help || '',
-    ...(sf.options ? { options: sf.options.map((o) => [o, o]) } : {}),
-  };
-}
+/** A preview field as the panel shows it: with its label. */
+const described = (f) => ({ ...f, label: fieldLabel(f) });
 
 /** The sections of page file `file` (its "sections" list). */
 function sectionsOf(store, file) {
@@ -261,62 +217,26 @@ function blockGroup(store, file, at, j) {
  * "source:<id>", never a group of its own.
  */
 export function groupFor(store, { file, ptr }) {
-  const parts = parse(ptr);
-  if (isItemPtr(file, parts))
-    return { id: `source:${sourceIdOf(file)}`, title: `${sourceIdOf(file)}.json` };
-  if (pageIdOf(file) !== null || file === FOOTER_FILE) return null;
-  if (file === NAV && parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
-  if (file === STRINGS && parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
-  return null;
+  return isItemPtr(file, parse(ptr))
+    ? { id: `source:${sourceIdOf(file)}`, title: `${sourceIdOf(file)}.json` }
+    : null;
 }
 
 /**
- * Menu fields, known up front (the preview may not show them all): the labels of the header
- * menu in nav.json (its links and order are edited in Settings > Menu) and the menu's texts
- * in strings.json. [file, pointer, type]
+ * The preview's fields of `target`'s file (the page's or the footer's): { edit, file, ptr,
+ * type }. The Header has none here (HeaderPart.svelte edits it).
  */
-function menuFields(store) {
-  const nav = store.current[NAV] || {};
-  return [
-    ...(Array.isArray(nav.header) ? nav.header : []).flatMap((item, i) => [
-      [NAV, `/header/${i}/label`, 'text'],
-      ...(item?.all !== undefined ? [[NAV, `/header/${i}/all`, 'text']] : []),
-      ...(Array.isArray(item?.children) ? item.children : []).map((_, j) => [
-        NAV,
-        `/header/${i}/children/${j}/label`,
-        'text',
-      ]),
-    ]),
-    ...['menu', 'close', 'clock'].map((k) => [STRINGS, `/nav/${k}`, 'text']),
-  ];
-}
-
-/** The fields to edit for `target`: { edit, file, ptr, type }. */
-function fieldsOf(store, bridge, target) {
-  const fields = () =>
-    bridge
-      .editFields()
-      .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
-      .filter((f) => !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
-  // the footer: its blocks' texts in the preview (a page's sections, like a page's)
-  if (target.kind === 'component' && target.id === 'footer')
-    return fields().filter((f) => f.file === FOOTER_FILE);
-  if (target.kind === 'component') {
-    return menuFields(store)
-      .map(([file, ptr, type]) => ({ edit: `${file}#${ptr}`, file, ptr, type }))
-      .filter(
-        (f) => store.get(f.file, f.ptr) !== undefined || store.getBase(f.file, f.ptr) !== undefined,
-      );
-  }
-  // Page content only: the menu's texts are edited under Menu, the footer's under Footer.
-  return fields()
-    .filter((f) => f.file !== NAV && f.file !== STRINGS && f.file !== FOOTER_FILE)
-    .filter((f) => f.file !== SITE || parse(f.ptr)[0] !== 'social');
+function fieldsOf(bridge, file) {
+  if (!file) return [];
+  return bridge
+    .editFields()
+    .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
+    .filter((f) => f.file === file && !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
 }
 
 /**
- * The Content tab's groups for `target`, in panel order: the page's (or footer's) blocks (in
- * section and block order; `block`: { at, j }, where it is); the Menu's labels.
+ * The Content tab's groups for `target`: the page's (or footer's) blocks, in section and
+ * block order (`block`: { at, j }, where it is), each with its fields.
  * [{ id, title, name?, block?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
  */
 export function contentGroups(store, bridge, target) {
@@ -335,24 +255,11 @@ export function contentGroups(store, bridge, target) {
     }),
   );
 
-  for (const f of fieldsOf(store, bridge, target)) {
-    const group = groupFor(store, f);
-    if (group?.id.startsWith('source:')) continue;
-    if (group) add(group).fields.push(described(store, f));
-    else {
-      // a block's text its type doesn't list (e.g. a photo credit): added to its group
-      const [, i, , j] = parse(f.ptr);
-      const g = at[`${i}/${j}`];
-      if (g && f.file === g.file && !allFields(g).some((x) => x.edit === f.edit))
-        g.fields.push(described(store, f));
-    }
-  }
-
-  // A group whose fields all come from one source file names it once, in its bar.
-  for (const g of groups.values()) {
-    const files = new Set(allFields(g).map((f) => f.file));
-    const [only] = files;
-    if (files.size === 1 && isSource(only)) g.source = only;
+  // a block's text its type doesn't list (e.g. a photo credit): added to its group
+  for (const f of fieldsOf(bridge, file)) {
+    const [, i, , j] = parse(f.ptr);
+    const g = at[`${i}/${j}`];
+    if (g && !allFields(g).some((x) => x.edit === f.edit)) g.fields.push(described(f));
   }
   return [...groups.values()];
 }

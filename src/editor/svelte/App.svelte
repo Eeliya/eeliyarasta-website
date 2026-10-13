@@ -68,7 +68,7 @@
   });
   const branch = $derived(ui.pub?.branch ? `origin/${ui.pub.branch}` : 'GitHub');
 
-  // The tab, Menu/Footer, the open Source Explorer item and library animation in the URL (persist.js).
+  // The tab, Header/Footer, the open Source Explorer item and library animation in the URL (persist.js).
   $effect(writeUrl);
 
   $effect(() => {
@@ -112,8 +112,8 @@
           else if (ui.block) {
             ui.selection = null;
             ui.block = null;
-          } else if (!picked) actions.lockFooter(); // nothing picked, the footer open: locked
-        } else if (ui.mode === 'motion' && !inField && !picked) actions.lockFooter();
+          } else if (!picked) actions.lockPart(); // nothing picked, a site part open: locked
+        } else if (ui.mode === 'motion' && !inField && !picked) actions.lockPart();
       }
     }
   }
@@ -178,7 +178,7 @@
         {/each}
       </nav>
 
-      <!-- [ page / component | Sources | Pages | Media ] (quiet icon buttons), then the item of
+      <!-- [ page / site part | Sources | Pages | Media ] (quiet icon buttons), then the item of
            a [slug] page on its own row -->
       <div class="ed-bar">
         <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />

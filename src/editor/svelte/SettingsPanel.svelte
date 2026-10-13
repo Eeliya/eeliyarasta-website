@@ -6,15 +6,12 @@
   fade (settings/animations.json), where uploaded photos are served from (site.json mediaUrl)
   and the text styles scaled text uses (Typography: site.json typography, in cells,
   src/site/layout/type.js; the preview follows them as they are typed).
-  Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
-  Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
-  dropdowns) are in Menu (MenuSettings.svelte), redirects.json in Redirects
-  (RedirectSettings.svelte); Menu copy is also in Content: it is
-  text you click in the preview.
+  Per-page things stay in Content (sections, the backdrop and curtain, SEO) and Motion (its
+  animations); the header's menu and labels are the Header site part in Content
+  (HeaderPart.svelte). redirects.json is in Redirects (RedirectSettings.svelte).
 -->
 <script>
   import Field from './Field.svelte';
-  import MenuSettings from './MenuSettings.svelte';
   import RedirectSettings from './RedirectSettings.svelte';
   import Section from './Section.svelte';
   import Select from './Select.svelte';
@@ -95,8 +92,8 @@
 <section class="ed-body">
   <Section key="settings:site" title="Site" name="Name & details">
     <p class="hint">
-      Used on every page: the clock and search engines' details about you. The preview
-      shows them after Save.
+      Used on every page: the clock and search engines' details about you. The preview shows them
+      after Save.
     </p>
     {#each SITE_SETTINGS as [key, label, type] (key)}
       <Field
@@ -126,9 +123,7 @@
       />
     {/each}
     <div class={['tf', live.changed(SITE, '/robots') && 'is-changed']}>
-      <label class="tf__label" for="{uid}-robots"
-        >Search engines</label
-      >
+      <label class="tf__label" for="{uid}-robots">Search engines</label>
       <Select
         id="{uid}-robots"
         value={live.get(SITE, '/robots') || 'index'}
@@ -148,9 +143,7 @@
       "Contact form"). In npm run dev it only logs the message.
     </p>
     <div class={['tf', live.changed(SITE, '/forms/target') && 'is-changed']}>
-      <label class="tf__label" for="{uid}-forms"
-        >Forms send to</label
-      >
+      <label class="tf__label" for="{uid}-forms">Forms send to</label>
       <Select
         id="{uid}-forms"
         value={live.get(SITE, '/forms/target') || 'function'}
@@ -225,8 +218,6 @@
       </div>
     {/each}
   </Section>
-
-  <MenuSettings {live} />
 
   <RedirectSettings {live} />
 

@@ -1,6 +1,8 @@
 <!--
-  Settings > Menu: the menu of content/en/settings/nav.json (src/site/templates/header.js):
-  Header (the nav pill and the mobile menu). (The footer is page-like: settings/footer.json.)
+  Content > Header, a site part (picked in the page picker's "Site" group, or by clicking the
+  header in the preview): the menu of content/en/settings/nav.json (src/site/templates/header.js:
+  the nav pill and the mobile menu), then the header's labels (strings.json "nav": the menu
+  and close buttons, the clock). (The footer is page-like: settings/footer.json.)
   Each item: its label, its link (a page of the site, or an external URL), and a dropdown: links one level deep, or the items of a source. Every change is one undo step;
   the preview renders the menu again.
 -->
@@ -8,10 +10,9 @@
   import Field from './Field.svelte';
   import LinkField from './LinkField.svelte';
   import ListField from './ListField.svelte';
-  import Section from './Section.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { NAV, sourceIdOf } from '../../site/files.js';
+  import { NAV, STRINGS, sourceIdOf } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js)
   let { live } = $props();
@@ -154,9 +155,26 @@
   {/if}
 {/snippet}
 
+<!-- the header's labels (strings.json "nav"): one undo step while typing each -->
+{#snippet label(key, title, fallback)}
+  <Field
+    edit="{STRINGS}#/nav/{key}"
+    label={title}
+    placeholder={fallback}
+    value={live.get(STRINGS, `/nav/${key}`)}
+    changed={live.changed(STRINGS, `/nav/${key}`)}
+    onvalue={(v) =>
+      live.store.set(STRINGS, `/nav/${key}`, v || undefined, {
+        source: 'panel',
+        key: `strings:nav/${key}`,
+      })}
+  />
+{/snippet}
+
 {#each MENUS as [menu, title, hint] (menu)}
-  <Section key="settings:menu-{menu}" title="Menu" name={title} open={false}>
-    <p class="hint">{hint}</p>
+  <h3 class="pane__head">Menu</h3>
+  <p class="hint">{hint}</p>
+  <div class="fields">
     <ListField
       label="{title} links"
       items={listOf(menu)}
@@ -168,5 +186,13 @@
     >
       {#snippet item(it, i)}{@render fields(menu, it, [i])}{/snippet}
     </ListField>
-  </Section>
+  </div>
 {/each}
+
+<hr class="pane__line" />
+<h3 class="pane__head">Labels</h3>
+<div class="fields">
+  {@render label('menu', 'Menu button (phones)', 'Menu')}
+  {@render label('close', 'Close button (phones)', 'Close')}
+  {@render label('clock', 'Clock label', '')}
+</div>

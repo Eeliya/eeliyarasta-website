@@ -96,7 +96,6 @@
     return Array.isArray(list) ? list : [];
   };
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
-  const own = $derived(!!g.source);
   // the settings shown: a source, a choice, a switch, a link (in the config's order)
   const settings = $derived(
     g.config?.filter(
@@ -106,7 +105,7 @@
 </script>
 
 <!-- one field: a Field (text, photo, switch, choice), or a source field (a list item's
-     source, ItemPicker.svelte); `own` = the group names the source file, so the field doesn't -->
+     source, ItemPicker.svelte) -->
 {#snippet field(f, half, extra = {})}
   {#if f.type === 'source'}
     <ItemPicker
@@ -141,7 +140,7 @@
       value={live.get(f.file, f.ptr)}
       changed={live.changed(f.file, f.ptr)}
       selected={ui.selection?.edit === f.edit}
-      source={!own && isSource(f.file) ? f.file : ''}
+      source={isSource(f.file) ? f.file : ''}
       onsource={() => onsource(f.file, itemOf(f), f.edit)}
       onfocus={() => bridge.focusEdit(f.edit)}
       onvalue={(value) => setValue(f, value)}

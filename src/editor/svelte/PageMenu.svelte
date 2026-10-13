@@ -1,24 +1,22 @@
 <!--
-  Page picker in the toolbar. A page navigates the preview; a component (Menu, Footer)
-  keeps the page and switches the Content tab to its fields. A Select: the title (and in the
+  Page picker in the toolbar. First a "Site" group with the site parts (Header, Footer): one
+  keeps the page and switches the Content tab to it; then the pages, which navigate the preview. A Select: the title (and in the
   list the path under it) on the left, the kind as a badge at the right edge.
 -->
 <script>
   import Select from './Select.svelte';
 
-  // items: [{ kind: 'page', path, title, group, items? } | { kind: 'component', id, title }]
+  // items: [{ kind: 'part', id, title } | { kind: 'page', path, title, group, items? }]
   // (a [slug] template has items: its pages)
   // value: the current item; onchange(item): an item was picked
   let { items, value, onchange } = $props();
 
-  const key = (item) =>
-    item?.kind === 'component' ? `component:${item.id}` : `page:${item?.path}`;
-  const kindName = (item) =>
-    item?.kind === 'component' ? 'Component' : item?.items ? 'Template' : 'Page';
-  // Pages by folder (item.group: "Pages" or "/people/"), then Components
+  const key = (item) => (item?.kind === 'part' ? `part:${item.id}` : `page:${item?.path}`);
+  const kindName = (item) => (item?.kind === 'part' ? 'Site' : item?.items ? 'Template' : 'Page');
+  // the site parts ("Site"), then the pages by folder (item.group: "Pages" or "/people/")
   const options = $derived(
     Object.entries(
-      Object.groupBy(items, (i) => (i.kind === 'component' ? 'Components' : i.group || 'Pages')),
+      Object.groupBy(items, (i) => (i.kind === 'part' ? 'Site' : i.group || 'Pages')),
     ).map(([group, list]) => ({
       group,
       options: list.map((item) => ({ value: key(item), label: item.title, item })),
@@ -27,7 +25,7 @@
 </script>
 
 {#snippet badge(item)}
-  <span class={['pm__badge', item.kind === 'component' && 'is-component']}>{kindName(item)}</span>
+  <span class={['pm__badge', item.kind === 'part' && 'is-part']}>{kindName(item)}</span>
 {/snippet}
 
 <Select aria-label="Page" value={key(value)} {options} onchange={(_, o) => onchange(o.item)}>
@@ -35,7 +33,7 @@
   {#snippet option(o)}
     <span class="pm__title">
       {o.label}
-      {#if o.item.path}<span class="pm__path">{o.item.path}</span>{/if}
+      {#if o.item.kind === 'page'}<span class="pm__path">{o.item.path}</span>{/if}
     </span>
     {@render badge(o.item)}
   {/snippet}
@@ -68,7 +66,7 @@
     color: var(--c-text-faint);
     box-shadow: inset 0 0 0 1px var(--c-line);
 
-    &.is-component {
+    &.is-part {
       color: var(--c-warm);
       box-shadow: inset 0 0 0 1px var(--sand-200-a35);
     }

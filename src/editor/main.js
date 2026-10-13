@@ -55,7 +55,7 @@ import { compile } from './lib/pointer.js';
 import {
   markRendered,
   previewFile,
-  setFooterOpen,
+  setPartOpen,
   swapSections,
   syncLayout,
   syncRoots,
@@ -111,14 +111,14 @@ mount(App, {
   props: {
     live,
     bridge,
-    actions: { setMode, pickTarget, lockFooter, save, refreshStatus, pagesOp, editMotion },
+    actions: { setMode, pickTarget, lockPart, save, refreshStatus, pagesOp, editMotion },
   },
 });
 
 // ---------------------------------------------------------------- ui
 /** The preview's router gets the draft per-page curtains: they apply to the next page change. */
 function pushCurtains() {
-  bridge.api?.setPageCurtains?.(curtainOverrides(getRoutes(contentFromFiles(store.current))));
+  bridge.api?.setPageCurtains?.(curtainOverrides(live.routes));
 }
 
 /**
@@ -166,36 +166,38 @@ function pageEntries(routes) {
   return entries;
 }
 
-/** The page menu: every page of the site (404 included: it has its own file), then Menu and Footer. */
+/** The page menu: the site parts (Header, Footer), then every page of the site (404 included: it has its own file). */
 function updatePages() {
   const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
-  const routes = getRoutes(contentFromFiles(store.current));
+  const routes = live.routes;
   ui.pages = [
+    { kind: 'part', id: 'header', title: 'Header', path: '---' },
+    { kind: 'part', id: 'footer', title: 'Footer', path: '---' },
     ...pageEntries(routes),
-    { kind: 'component', id: 'menu', title: 'Menu', path: '---' },
-    { kind: 'component', id: 'footer', title: 'Footer', path: '---' },
   ];
-  // Menu / Footer stay picked; otherwise follow the page shown in the preview.
-  if (ui.target?.kind !== 'component') ui.target = shownPage(path);
+  // Header / Footer stay picked; otherwise follow the page shown in the preview.
+  if (ui.target?.kind !== 'part') ui.target = shownPage(path);
 }
 
 /** The page menu's entry of the page shown (a template page: the template's entry). */
 function shownPage(path = bridge.path() || '/') {
   const shows = (i) => i.path === path || i.items?.some((it) => it.path === path);
-  return ui.pages.find((i) => i.kind === 'page' && shows(i)) || ui.pages[0];
+  return (
+    ui.pages.find((i) => i.kind === 'page' && shows(i)) || ui.pages.find((i) => i.kind === 'page')
+  );
 }
 
 /**
- * The footer in the preview follows the target: open while the Footer is picked (its
- * sections and blocks can be picked, the page's can't), locked otherwise. Switching drops
- * the block picked in the other one.
+ * The site parts in the preview follow the target: the Header or Footer picked is open (its
+ * texts, and the footer's sections and blocks, can be picked; the page's can't), the other
+ * locked. Switching drops the block picked in the other one.
  */
-let footerShown = false;
-function applyFooter() {
-  const open = ui.target?.kind === 'component' && ui.target.id === 'footer';
-  setFooterOpen(bridge.doc, open);
-  if (open === footerShown) return;
-  footerShown = open;
+let partShown = '';
+function applyPart() {
+  const open = ui.target?.kind === 'part' ? ui.target.id : '';
+  setPartOpen(bridge.doc, open);
+  if (open === partShown) return;
+  partShown = open;
   ui.block = null;
   ui.selection = null;
   ui.link = null;
@@ -203,21 +205,21 @@ function applyFooter() {
   overlay.refresh();
 }
 
-/** Esc or a click outside it: the footer locks again, the page shown is the target. */
-function lockFooter() {
-  if (ui.target?.kind !== 'component' || ui.target.id !== 'footer') return false;
+/** Esc or a click outside it: the site part locks again, the page shown is the target. */
+function lockPart() {
+  if (ui.target?.kind !== 'part') return false;
   ui.target = shownPage();
-  applyFooter();
+  applyPart();
   return true;
 }
 
 /**
  * The page menu picked a page (navigate the preview), a template (one of its item pages:
- * `path`, else the one shown, else the first) or a component (Menu, Footer).
+ * `path`, else the one shown, else the first) or a site part (Header, Footer).
  */
 function pickTarget(item, path) {
   ui.target = item;
-  applyFooter();
+  applyPart();
   if (item.kind !== 'page') return;
   const items = item.items;
   const to = !items
@@ -366,7 +368,7 @@ function editMotion(el) {
 bridge.on('connect', () => {
   bridge.setMode(previewMode());
   overlay.attach(bridge.doc.defaultView);
-  applyFooter();
+  applyPart();
   pushCurtains();
   ui.previewVersion++;
 });
@@ -470,12 +472,12 @@ bridge.on('navigate', (path) => {
   const url = new URL(location.href);
   url.searchParams.set('path', path);
   history.replaceState(null, '', url);
-  // Keep Menu/Footer selection; only sync target when browsing pages.
-  if (ui.target?.kind !== 'component') {
+  // Keep Header/Footer selection; only sync target when browsing pages.
+  if (ui.target?.kind !== 'part') {
     ui.target = { kind: 'page', path, title: path === '/' ? 'Home' : path };
   }
   updatePages();
-  applyFooter();
+  applyPart();
   ui.previewVersion++;
   ui.anim = null;
 });
@@ -486,10 +488,10 @@ bridge.on('select', (sel) => {
       sel?.kind === 'text' ? { edit: sel.el.dataset.edit ?? sel.el.dataset.bound } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
-// a click on the locked footer opens it (the Footer is the target), one outside locks it
-bridge.on('footer', (open) => {
-  if (!open) return void lockFooter();
-  pickTarget(ui.pages.find((i) => i.kind === 'component' && i.id === 'footer'));
+// a click on a locked site part opens it (the Header or Footer is the target), one outside locks it
+bridge.on('part', (id, open) => {
+  if (!open) return void lockPart();
+  pickTarget(ui.pages.find((i) => i.kind === 'part' && i.id === id));
 });
 // After the handlers above: the selection and scroll from before a refresh.
 bridge.on('navigate', restorePlace);

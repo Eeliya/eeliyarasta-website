@@ -4,7 +4,7 @@
  *   The URL (shareable): /edit/?tab=motion&path=/people/
  *     tab     browse | content | motion | settings
  *     path    the page in the preview (main.js keeps it up to date)
- *     view    menu | footer, when the page menu shows one of those instead of a page
+ *     view    header | footer, when the page menu shows a site part instead of a page
  *     source  + item (+ field): the Source Explorer, open on that file and item, with that field
  *             highlighted (&source=people&item=noor-vermeer&field=summary; item is the
  *             slug, or the number without one)
@@ -34,7 +34,7 @@ import { sourceIdOf } from '../../site/files.js';
 const KEY = 'editor:ui';
 // URL tab name -> ui.mode
 const TABS = { browse: 'browse', content: 'text', motion: 'motion', settings: 'settings' };
-const VIEWS = { menu: 'Menu', footer: 'Footer' };
+const VIEWS = { header: 'Header', footer: 'Footer' };
 
 let bridge, live; // the preview (../bridge.js) and the content (live.svelte.js)
 let saved = null; // what to put back, until the preview shows the page
@@ -53,8 +53,8 @@ function readState() {
   const q = new URLSearchParams(location.search);
   if (q.has('tab')) state.mode = TABS[q.get('tab')] || 'browse';
   if (q.has('view'))
-    state.component = VIEWS[q.get('view')] && {
-      kind: 'component',
+    state.part = VIEWS[q.get('view')] && {
+      kind: 'part',
       id: q.get('view'),
       title: VIEWS[q.get('view')],
     };
@@ -91,7 +91,7 @@ export function restoreUi(preview, content) {
   saved = readState();
   if (Object.values(TABS).includes(saved.mode)) ui.mode = saved.mode;
   if (['text', 'motion'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
-  if (saved.component) ui.target = saved.component; // Menu or Footer (pages: ?path=)
+  if (saved.part) ui.target = saved.part; // Header or Footer (pages: ?path=)
   ui.sections = saved.sections || {};
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
   if (saved.library) ui.library = saved.library;
@@ -104,7 +104,7 @@ export function restoreUi(preview, content) {
       JSON.stringify({
         mode: ui.mode,
         lastEdit: ui.lastEdit,
-        component: ui.target?.kind === 'component' ? ui.target : null,
+        part: ui.target?.kind === 'part' ? ui.target : null,
         sections: ui.sections,
         explorer: ui.explorer,
         library: ui.library,
@@ -171,7 +171,7 @@ export function writeUrl() {
     'tab',
     Object.keys(TABS).find((tab) => TABS[tab] === ui.mode),
   );
-  set('view', ui.target?.kind === 'component' && ui.target.id);
+  set('view', ui.target?.kind === 'part' && ui.target.id);
   const { open, file, index } = ui.explorer;
   const list = open && file ? live.current(file)?.items : null;
   set('source', list && sourceIdOf(file));

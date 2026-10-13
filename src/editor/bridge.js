@@ -30,13 +30,15 @@ html.__ed-text [data-edit].__ed-invalid { outline-color: ${T.error} !important; 
 html.__ed-text [data-block], html.__ed-text [data-block] *:not([contenteditable], [contenteditable] *) { cursor: default !important; }
 [data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
-:is(html.__ed-text, html.__ed-motion) [data-footer]:not([data-ed-open]) *, :is(html.__ed-text, html.__ed-motion):has([data-footer][data-ed-open]) [data-router-view] * { pointer-events: none !important; }
-:is(html.__ed-text, html.__ed-motion) [data-footer]:not([data-ed-open]) { cursor: pointer; }
-:is(html.__ed-text, html.__ed-motion) [data-footer]:not([data-ed-open]):hover { outline: 1px dashed rgb(255 255 255 / .6); outline-offset: -1px; }
-:is(html.__ed-text, html.__ed-motion) [data-footer][data-ed-open] { outline: 2px solid ${T.accent}; outline-offset: -2px; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer]):not([data-ed-open]) *, :is(html.__ed-text, html.__ed-motion):has([data-ed-open]) [data-router-view] * { pointer-events: none !important; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer]):not([data-ed-open]) { cursor: pointer; pointer-events: auto; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer]):not([data-ed-open]):hover { outline: 1px dashed rgb(255 255 255 / .6); outline-offset: -1px; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer])[data-ed-open] { outline: 2px solid ${T.accent}; outline-offset: -2px; }
 :is(html.__ed-text, html.__ed-motion) [data-footer]:not(:has([data-sec])) { min-height: 96px; }
-:is(html.__ed-text, html.__ed-motion) [data-footer]::before { content: 'Footer'; position: absolute; left: 8px; top: 8px; z-index: 30; padding: 4px 8px; border-radius: ${T.radiusSm}; font: 500 ${T.fsXs}/1 ${T.font}; letter-spacing: .04em; background: ${T.black}; color: ${T.white}; pointer-events: none; }
-:is(html.__ed-text, html.__ed-motion) [data-footer][data-ed-open]::before { background: ${T.accent}; color: ${T.onAccent}; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer])::before { position: absolute; left: 8px; top: 8px; z-index: 30; padding: 4px 8px; border-radius: ${T.radiusSm}; font: 500 ${T.fsXs}/1 ${T.font}; letter-spacing: .04em; background: ${T.black}; color: ${T.white}; pointer-events: none; }
+:is(html.__ed-text, html.__ed-motion) [data-footer]::before { content: 'Footer'; }
+:is(html.__ed-text, html.__ed-motion) [data-header]:is(:hover, [data-ed-open])::before { content: 'Header'; top: auto; bottom: -28px; }
+:is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer])[data-ed-open]::before { background: ${T.accent}; color: ${T.onAccent}; }
 html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-block], html.__ed-motion [data-block] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: ${T.radiusSm}; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
@@ -63,7 +65,7 @@ const parseEdit = (attr) => {
  * The preview iframe is attached later: App.svelte calls bridge.attach(iframe) when it renders.
  */
 export function createBridge({ store, labelFor }) {
-  const handlers = { connect: [], navigate: [], select: [], key: [], textFocus: [], footer: [] };
+  const handlers = { connect: [], navigate: [], select: [], key: [], textFocus: [], part: [] };
   const emit = (name, ...args) => handlers[name].forEach((fn) => fn(...args));
   let iframe = null;
   let api = null;
@@ -456,15 +458,21 @@ export function createBridge({ store, labelFor }) {
       (e) => {
         if (mode === 'browse' || e.altKey) return;
         const t = e.target instanceof win.Element ? e.target : null;
-        // The footer: a click on it (locked) opens it, picking nothing in it yet; a click
-        // outside it (open) locks it again (the page is picked from the next click)
-        const foot = doc.querySelector('[data-footer]');
-        const open = !!foot?.hasAttribute('data-ed-open');
-        if (foot && (open ? !foot.contains(t) : t === foot)) {
-          e.preventDefault();
-          e.stopPropagation();
-          emit('footer', !open);
-          return;
+        // A site part (the header, the footer): a click on it (locked) opens it, picking
+        // nothing in it yet; a click outside it (open) locks it again (the page is picked
+        // from the next click)
+        for (const [id, sel] of [
+          ['header', '[data-header]'],
+          ['footer', '[data-footer]'],
+        ]) {
+          const part = doc.querySelector(sel);
+          const open = !!part?.hasAttribute('data-ed-open');
+          if (part && (open ? !part.contains(t) : t === part)) {
+            e.preventDefault();
+            e.stopPropagation();
+            emit('part', id, !open);
+            return;
+          }
         }
         if (mode === 'text') {
           if (t?.closest('[contenteditable]')) {

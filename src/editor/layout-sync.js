@@ -52,7 +52,7 @@ export const previewFile = (doc) => pageView(doc)?.dataset.pageFile || '';
 
 /**
  * The file the editor edits for `target` (ui.target): the page's in the preview, the
- * footer's for the Footer, '' for the Menu (or no preview yet).
+ * footer's for the Footer, '' for the Header (no sections; or no preview yet).
  */
 export const targetFile = (target, doc) =>
   target?.kind === 'page'
@@ -62,14 +62,13 @@ export const targetFile = (target, doc) =>
       : '';
 
 /**
- * Open (or lock) the footer in the preview: open, its sections and blocks can be hovered and
- * picked and the page's can't (bridge.js INJECTED_CSS: data-ed-open); locked, a click on it
- * opens it. Returns the footer element.
+ * Open one site part in the preview ('header' | 'footer', or none: ''), lock the other: open,
+ * its texts (and the footer's sections and blocks) can be hovered and picked and the page's
+ * can't (bridge.js INJECTED_CSS: data-ed-open); locked, a click on it opens it.
  */
-export function setFooterOpen(doc, open) {
-  const el = footerOf(doc);
-  el?.toggleAttribute('data-ed-open', !!open);
-  return el;
+export function setPartOpen(doc, id) {
+  doc?.querySelector('[data-header]')?.toggleAttribute('data-ed-open', id === 'header');
+  footerOf(doc)?.toggleAttribute('data-ed-open', id === 'footer');
 }
 
 /** The elements whose sections follow a file: the page's view and the footer. */

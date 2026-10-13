@@ -235,8 +235,9 @@ export function createOverlay({
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
   const secOf = (el) => el?.closest('[data-sec]');
-  /** Is a section editable now: the footer's while it is open, the page's otherwise. */
+  /** Is a section editable now: the footer's while it is open, the page's while no site part is. */
   const live = (sec) =>
+    !doc.querySelector('[data-header][data-ed-open]') &&
     !!sec.closest('[data-footer]') === !!doc.querySelector('[data-footer][data-ed-open]');
   const secById = (id) => doc.querySelector(`[data-sec="${CSS.escape(id)}"]:not([hidden])`);
   /** The section under the pointer in the preview: its row in the Content tab shows it. */
