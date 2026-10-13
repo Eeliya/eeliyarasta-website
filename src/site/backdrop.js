@@ -95,7 +95,7 @@ export function tidyBackdrop(page, found = () => {}) {
 }
 
 /**
- * The backdrop's HTML: a fixed layer (moved out of the view, [data-portal]) with its photos,
+ * The backdrop's HTML: a fixed layer (rendered in the view; main.js moves it into #backdrop) with its photos,
  * cover and centred, and its settings for the script. '' without one. The first photo loads
  * first (eager, high priority), the next eagerly too, the rest lazily (the script loads them
  * once the page is idle).
@@ -109,20 +109,19 @@ export function renderBackdrop(ctx, b) {
       ? { direction: v.direction }
       : { through: v.through, parallax: v.parallax, scrub: v.scrub }),
   };
-  const dir = v.transition === 'scroll' ? ` pbd--${v.direction}` : '';
-  const black = v.transition === 'fade' && v.through === 'black' ? ' pbd--black' : '';
+  const dir = v.transition === 'scroll' ? ` backdrop--${v.direction}` : '';
+  const black = v.transition === 'fade' && v.through === 'black' ? ' backdrop--black' : '';
   return html`<div
-    class="pbd pbd--${v.transition}${dir}${black}"
-    data-portal
+    class="backdrop backdrop--${v.transition}${dir}${black}"
     data-backdrop="${esc(JSON.stringify(opts))}"
     style="--n:${v.photos.length}"
     aria-hidden="true"
   >
-    <div class="pbd__track">
+    <div class="backdrop__track">
       ${v.photos
         .map(
           (src, i) =>
-            html`<div class="pbd__photo">
+            html`<div class="backdrop__photo">
               ${img(ctx, src, {
                 decorative: true,
                 loading: i < 2 ? 'eager' : 'lazy',

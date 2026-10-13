@@ -86,10 +86,11 @@ export function body(ctx, route, accent, view, file) {
     ? `${route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : ''} data-page-file="${esc(file)}"`
     : '';
   const page = html` <a class="skip-link" href="#main">Skip to content</a>
-    <div class="backdrop" aria-hidden="true">
-      <div class="backdrop__glow"></div>
-      <div class="backdrop__grain"></div>
+    <div class="ground" aria-hidden="true">
+      <div class="ground__glow"></div>
+      <div class="ground__grain"></div>
     </div>
+    <div id="backdrop"></div>
     ${header(ctx)} ${mobileMenu(ctx)}
     <main
       id="main"

@@ -1,11 +1,18 @@
-// The page's backdrop (src/site/backdrop.js, modules/backdrop.js): photos in a fixed layer
-// over the site's glow (.backdrop) and under everything else; the sections have no background
-// of their own. A screen tall (the large viewport: phones' address bar doesn't resize it).
-.pbd {
+// The page's backdrop (src/site/backdrop.js, modules/backdrop.js): photos in its own fixed
+// layer #backdrop, over the ground (glow and grain) and under the view; the sections have no
+// background of their own. A screen tall (the large viewport: phones' address bar doesn't
+// resize it). Layers (body): .ground 0 < #backdrop 1 < .view 2 < #portal 3 < .curtain 80.
+#backdrop {
   position: fixed;
   inset: 0 0 auto;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0 0 auto;
   height: 100lvh;
-  z-index: -1;
   overflow: hidden;
   pointer-events: none;
   &--black {
@@ -20,7 +27,7 @@
   }
 }
 
-.pbd__photo {
+.backdrop__photo {
   overflow: hidden;
   img {
     width: 100%;
@@ -32,32 +39,32 @@
 }
 
 // scroll: a strip of n screens, moved by the script
-.pbd--scroll .pbd__track {
+.backdrop--scroll .backdrop__track {
   display: flex;
   flex-direction: column;
   height: calc(100% * var(--n));
   will-change: transform;
 }
 
-.pbd--scroll.pbd--horizontal .pbd__track {
+.backdrop--scroll.backdrop--horizontal .backdrop__track {
   flex-direction: row;
   width: calc(100% * var(--n));
   height: 100%;
 }
 
-.pbd--scroll .pbd__photo {
+.backdrop--scroll .backdrop__photo {
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
 }
 
 // fade: stacked, the first on top until the script takes over
-.pbd--fade .pbd__track {
+.backdrop--fade .backdrop__track {
   position: absolute;
   inset: 0;
 }
 
-.pbd--fade .pbd__photo {
+.backdrop--fade .backdrop__photo {
   position: absolute;
   inset: 0;
   &:not(:first-child) {

@@ -8,15 +8,14 @@
  *           follow the scroll; else each plays as a short timed fade once its point is passed.
  *           parallax: a slow zoom and drift over the whole page
  * Reduced motion: no movement, each photo shows in its share and changes at once.
- * Returns its cleanup (or null without a backdrop).
+ * el: the layer (in #backdrop). Returns its cleanup (or null without a backdrop).
  */
 import { gsap, ScrollTrigger, reducedMotion } from '../lib/env.js';
 
 const FADE = 0.8; // s, a timed fade (half of it each way through black)
 const SPAN = 0.5; // of a share, a scrubbed fade
 
-export function backdrop() {
-  const el = document.querySelector('#portal [data-backdrop]');
+export function backdrop(el) {
   if (!el) return null;
   let opts = {};
   try {
@@ -24,8 +23,8 @@ export function backdrop() {
   } catch {
     /* none */
   }
-  const track = el.querySelector('.pbd__track');
-  const photos = [...el.querySelectorAll('.pbd__photo')];
+  const track = el.querySelector('.backdrop__track');
+  const photos = [...el.querySelectorAll('.backdrop__photo')];
   const imgs = photos.map((p) => p.querySelector('img'));
   const n = photos.length;
   // the rest load once the page is idle (lazy ones far down the strip would show late)

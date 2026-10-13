@@ -81,8 +81,8 @@ test('renderBackdrop: a fixed layer with its photos and settings', () => {
   const ctx = { site: {}, media: {}, photos: {} };
   assert.equal(renderBackdrop(ctx, undefined), '');
   const out = renderBackdrop(ctx, { photos: P, transition: 'fade', through: 'none' });
-  assert.match(out, /class="pbd pbd--fade"/);
-  assert.match(out, /data-portal/);
+  assert.match(out, /class="backdrop backdrop--fade"/);
+  assert.doesNotMatch(out, /data-portal/); // its own layer #backdrop, not the portal
   assert.match(out, /--n:3/);
   assert.equal(out.match(/<img/g).length, 3);
   assert.match(out, /fetchpriority="high"/);
@@ -91,7 +91,23 @@ test('renderBackdrop: a fixed layer with its photos and settings', () => {
   assert.deepEqual(opts, { transition: 'fade', through: 'none', parallax: false, scrub: false });
   assert.match(
     renderBackdrop(ctx, { photos: P, direction: 'horizontal' }),
-    /pbd--scroll pbd--horizontal/,
+    /backdrop--scroll backdrop--horizontal/,
   );
-  assert.match(renderBackdrop(ctx, { photos: P, transition: 'fade' }), /pbd--black/);
+  assert.match(renderBackdrop(ctx, { photos: P, transition: 'fade' }), /backdrop--black/);
+});
+
+test('layers: the ground, the backdrop, the view, the portal, the curtain (in this order)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/site/templates/layout.js', import.meta.url), 'utf8');
+  const at = [
+    'class="ground"',
+    'id="backdrop"',
+    'data-router-view',
+    'id="portal"',
+    'class="curtain"',
+  ].map((s) => src.indexOf(s));
+  assert.ok(
+    at.every((i, k) => i > 0 && (k === 0 || i > at[k - 1])),
+    String(at),
+  );
 });

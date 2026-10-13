@@ -136,11 +136,11 @@ html.anim-pending [data-motion] > * {
   color: var(--muted);
 }
 
-// Fixed background: accent glow + film grain. Tints with the album accent.
-.backdrop {
+// The ground: fixed accent glow + film grain under everything. Tints with the album accent.
+.ground {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background: var(--bg);
   &__glow {
@@ -169,6 +169,7 @@ html.anim-pending [data-motion] > * {
 
 .view {
   position: relative;
+  z-index: 2;
   min-height: 100svh;
 }
 
@@ -187,4 +188,10 @@ html.anim-pending [data-motion] > * {
 .split-word {
   padding-bottom: 0.14em;
   margin-bottom: -0.14em;
+}
+
+// floating UI moved out of the view (main.js movePortals): over the view, under the curtain
+#portal {
+  position: relative;
+  z-index: 3;
 }

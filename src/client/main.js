@@ -39,6 +39,18 @@ function movePortals(view) {
   return portal;
 }
 
+/**
+ * Put the page's backdrop (rendered in the view, or given) in its own fixed layer #backdrop,
+ * in place of the last one (none: empty), and run it; the view mounted again keeps its own.
+ * Returns its cleanup.
+ */
+const backdrops = new WeakMap(); // view -> its backdrop layer, once moved out of it
+function showBackdrop(view, el = view.querySelector('[data-backdrop]') ?? backdrops.get(view)) {
+  backdrops.set(view, el || null);
+  document.getElementById('backdrop').replaceChildren(...(el ? [el] : []));
+  return backdrop(el);
+}
+
 const noop = { revert() {} };
 const startAnimations = (view, portal) =>
   frozen ? noop : mountAnimations(view, { extraRoots: [portal] });
@@ -59,7 +71,7 @@ function mount(view, { first = false } = {}) {
     portal,
     anim,
     rows,
-    backdrop: backdrop(),
+    backdrop: showBackdrop(view),
     revert() {
       rows.stop();
       this.backdrop?.();
@@ -133,12 +145,9 @@ function connectEditor() {
     setBackdrop(markup) {
       if (!current) return;
       current.backdrop?.();
-      current.portal.querySelector('[data-backdrop]')?.remove();
       const tpl = document.createElement('template');
       tpl.innerHTML = markup || '';
-      const el = tpl.content.firstElementChild;
-      if (el) current.portal.prepend(el);
-      current.backdrop = backdrop();
+      current.backdrop = showBackdrop(current.view, tpl.content.firstElementChild);
       keepScroll(() => ScrollTrigger.refresh());
     },
     /** The editor swapped sections of the view (src/editor/layout-sync.js): mount it again. */
