@@ -9,7 +9,7 @@
   Per-page things stay in Content (texts, the curtain text) and Motion (the page's curtain:
   Global, Custom or Off, and its animations). The menus (settings/nav.json: links, order,
   dropdowns) are in Menu (MenuSettings.svelte), redirects.json in Redirects
-  (RedirectSettings.svelte); Menu and Footer copy is also in Content: it is
+  (RedirectSettings.svelte); Menu copy is also in Content: it is
   text you click in the preview.
 -->
 <script>
@@ -95,7 +95,7 @@
 <section class="ed-body">
   <Section key="settings:site" title="Site" name="Name & details">
     <p class="hint">
-      Used on every page: the footer, the clock and search engines' details about you. The preview
+      Used on every page: the clock and search engines' details about you. The preview
       shows them after Save.
     </p>
     {#each SITE_SETTINGS as [key, label, type] (key)}

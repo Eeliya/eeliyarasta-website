@@ -407,64 +407,9 @@
 }
 
 /* ---------------- Footer ---------------- */
-.footer {
-  padding: 16vh var(--pad) 28px;
-  border-top: 1px solid var(--line);
-
-  &__cta {
-    display: grid;
-    gap: 18px;
-  }
-
-  &__big {
-    font-family: var(--f-display);
-    font-size: clamp(56px, 10.5vw, 190px);
-    line-height: 0.88;
-    letter-spacing: -0.01em;
-    transition: color 0.5s var(--ease-out);
-
-    &:hover {
-      color: var(--accent);
-    }
-  }
-
-  &__cols {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 32px;
-    margin-top: 12vh;
-
-    ul {
-      display: grid;
-      gap: 6px;
-      margin-top: 14px;
-      font-size: 14px;
-    }
-
-    a {
-      transition: color 0.3s;
-
-      &:hover {
-        color: var(--accent);
-      }
-    }
-  }
-
-  &__base {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-top: 10vh;
-    padding-top: 22px;
-    border-top: 1px solid var(--line);
-    font-size: 12px;
-  }
-
-  @media (max-width: $bp-sm) {
-    &__cols {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
+// settings/footer.json's sections (templates/footer.js), under the view: in the view's layer
+// (.view 2), not its own, so a block's z-index in it stacks like a page's.
+.site-footer {
+  position: relative;
+  z-index: 2;
 }

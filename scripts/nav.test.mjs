@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { loadContent } from './content.mjs';
 import { buildRoutes } from '../src/site/routes.js';
 import { header, mobileMenu } from '../src/site/templates/header.js';
-import { footer } from '../src/site/templates/footer.js';
 import { checkContent } from '../src/site/validate.js';
 import { setEditable } from '../src/site/helpers.js';
 
@@ -30,9 +29,9 @@ test('nav.json: the shipped menus are valid', () => {
   assert.deepEqual(checkContent(NAV, base.nav), []);
 });
 
-test('nav.json validation: links, nesting depth, footer links are plain', () => {
+test('nav.json validation: links, nesting depth; no footer menu', () => {
   const problems = (nav) => checkContent(NAV, { version: 1, ...nav });
-  assert.deepEqual(problems({ header: [{ label: 'A', page: 'pg-aaaa' }], footer: [] }), []);
+  assert.deepEqual(problems({ header: [{ label: 'A', page: 'pg-aaaa' }] }), []);
   assert.deepEqual(
     problems({ header: [{ label: 'A', item: { source: 'people', id: 'p-aaaa' } }] }),
     [],
@@ -53,12 +52,12 @@ test('nav.json validation: links, nesting depth, footer links are plain', () => 
   const both = { label: 'A', page: 'pg-aaaa', children: [], items: 'people' };
   assert.match(problems({ header: [both] })[0], /not both/);
   assert.match(
-    problems({ footer: [{ label: 'A', page: 'pg-aaaa', items: 'people' }] })[0],
-    /plain links/,
+    problems({ footer: [{ label: 'A', page: 'pg-aaaa' }] })[0],
+    /"footer" is gone: the footer is settings\/footer\.json/,
   );
 });
 
-test('render: the header, mobile menu and footer follow nav.json', () => {
+test('render: the header and mobile menu follow nav.json', () => {
   const nav = {
     header: [
       {
@@ -70,10 +69,6 @@ test('render: the header, mobile menu and footer follow nav.json', () => {
       { label: 'Shop', href: 'https://shop.example.com' },
       { label: 'Me', page: 'pg-lyos' },
       { label: 'Noor', item: { source: 'people', id: 'p-qw7b' } },
-    ],
-    footer: [
-      { label: 'Bio', page: 'pg-lyos' },
-      { label: 'Ext', href: 'https://x.example.com' },
     ],
   };
   const ctx = ctxWith(nav);
@@ -110,13 +105,10 @@ test('render: the header, mobile menu and footer follow nav.json', () => {
   );
   assert.match(m, /mmenu__sub--single/);
   assert.match(m, /<a class="mmenu__big" href="\/about\/" data-nav="\/about\/" data-mm-item>/);
-  const f = footer(ctx);
-  assert.match(f, /<li><a href="\/about\/"><span>Bio<\/span><\/a><\/li>/);
-  assert.match(f, /href="https:\/\/x\.example\.com" target="_blank" rel="noopener"><span>Ext/);
 });
 
 test('render: a link to no page warns; labels are marked for the editor', () => {
-  const ctx = ctxWith({ header: [{ label: 'Gone', page: 'pg-gone' }], footer: [] });
+  const ctx = ctxWith({ header: [{ label: 'Gone', page: 'pg-gone' }] });
   const [h, seen] = warnings(() => header(ctx));
   assert.match(h, /href="#"/);
   assert.match(seen.join('\n'), /"Gone" points at page "pg-gone", which is no page/);

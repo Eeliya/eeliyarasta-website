@@ -1,7 +1,6 @@
 /** Small page behaviours: album-card hover cycling, back-to-top, image fade-in. */
 import { finePointer } from '../lib/env.js';
 import { interactions } from '../anim/engine.js';
-import { scrollToTop } from '../scroll.js';
 
 export function cards(view) {
   if (!finePointer()) return null;
@@ -30,13 +29,6 @@ export function cards(view) {
     });
   });
   return () => off.forEach((f) => f());
-}
-
-export function toTop(view) {
-  const btns = [...view.querySelectorAll('[data-to-top]')];
-  const fn = () => scrollToTop(false);
-  btns.forEach((b) => b.addEventListener('click', fn));
-  return () => btns.forEach((b) => b.removeEventListener('click', fn));
 }
 
 export function imageFade(view) {

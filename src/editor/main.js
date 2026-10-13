@@ -52,7 +52,15 @@ import {
   sitePaths,
 } from '../site/redirects.js';
 import { compile } from './lib/pointer.js';
-import { markRendered, previewFile, swapSections, syncLayout } from './layout-sync.js';
+import {
+  markRendered,
+  previewFile,
+  setFooterOpen,
+  swapSections,
+  syncLayout,
+  syncRoots,
+  targetFile,
+} from './layout-sync.js';
 import { linkBlock, placeBlock, placeMobile, setSectionRows } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
@@ -84,7 +92,7 @@ const overlay = createOverlay({
   },
   // a Custom section's bottom edge dragged: its rows (one undo step)
   onrows(id, rows, { mobile = false } = {}) {
-    const file = previewFile(bridge.doc);
+    const file = targetFile(ui.target, bridge.doc);
     const at = (store.current[file]?.sections || []).findIndex((s) => s?.id === id);
     if (at >= 0) setSectionRows(store, file, at, rows, { phone: mobile });
   },
@@ -103,7 +111,7 @@ mount(App, {
   props: {
     live,
     bridge,
-    actions: { setMode, pickTarget, save, refreshStatus, pagesOp, editMotion },
+    actions: { setMode, pickTarget, lockFooter, save, refreshStatus, pagesOp, editMotion },
   },
 });
 
@@ -168,10 +176,39 @@ function updatePages() {
     { kind: 'component', id: 'footer', title: 'Footer', path: '---' },
   ];
   // Menu / Footer stay picked; otherwise follow the page shown in the preview.
-  // (a template page: the template's entry)
+  if (ui.target?.kind !== 'component') ui.target = shownPage(path);
+}
+
+/** The page menu's entry of the page shown (a template page: the template's entry). */
+function shownPage(path = bridge.path() || '/') {
   const shows = (i) => i.path === path || i.items?.some((it) => it.path === path);
-  if (ui.target?.kind !== 'component')
-    ui.target = ui.pages.find((i) => i.kind === 'page' && shows(i)) || ui.pages[0];
+  return ui.pages.find((i) => i.kind === 'page' && shows(i)) || ui.pages[0];
+}
+
+/**
+ * The footer in the preview follows the target: open while the Footer is picked (its
+ * sections and blocks can be picked, the page's can't), locked otherwise. Switching drops
+ * the block picked in the other one.
+ */
+let footerShown = false;
+function applyFooter() {
+  const open = ui.target?.kind === 'component' && ui.target.id === 'footer';
+  setFooterOpen(bridge.doc, open);
+  if (open === footerShown) return;
+  footerShown = open;
+  ui.block = null;
+  ui.selection = null;
+  ui.link = null;
+  if (bridge.selected) bridge.select(null);
+  overlay.refresh();
+}
+
+/** Esc or a click outside it: the footer locks again, the page shown is the target. */
+function lockFooter() {
+  if (ui.target?.kind !== 'component' || ui.target.id !== 'footer') return false;
+  ui.target = shownPage();
+  applyFooter();
+  return true;
 }
 
 /**
@@ -180,6 +217,7 @@ function updatePages() {
  */
 function pickTarget(item, path) {
   ui.target = item;
+  applyFooter();
   if (item.kind !== 'page') return;
   const items = item.items;
   const to = !items
@@ -308,7 +346,7 @@ function setMode(mode) {
 // ---------------------------------------------------------------- layout overlay
 /** Where block `id` is in the preview's page file: { file, at, j }, or null. */
 function blockAt(id) {
-  const file = previewFile(bridge.doc);
+  const file = targetFile(ui.target, bridge.doc);
   const list = store.current[file]?.sections || [];
   for (const [at, s] of list.entries()) {
     const j = (s.blocks || []).findIndex((b) => b.id === id);
@@ -328,6 +366,7 @@ function editMotion(el) {
 bridge.on('connect', () => {
   bridge.setMode(previewMode());
   overlay.attach(bridge.doc.defaultView);
+  applyFooter();
   pushCurtains();
   ui.previewVersion++;
 });
@@ -338,8 +377,11 @@ bridge.on('connect', () => {
  * and swapped in (src/editor/layout-sync.js). One render at a time, in order.
  */
 let rendering = Promise.resolve();
-function syncSections({ structure = false } = {}) {
-  const stale = syncLayout(bridge.doc, store, { structure });
+function syncSections(
+  { structure = false } = {},
+  root = bridge.doc?.querySelector('[data-router-view]'),
+) {
+  const stale = syncLayout(bridge.doc, store, { structure, root });
   if (stale.remount && !stale.length) bridge.api?.remountView();
   // a block's motion changed: its animation plays again (the whole page's when it lost it)
   else if (!stale.length) for (const el of stale.motion) bridge.replayOne(el);
@@ -350,7 +392,7 @@ function syncSections({ structure = false } = {}) {
     bridge.api?.reflow?.();
     bridge.api?.refresh?.();
   }
-  renderSections(stale);
+  renderSections(stale, root);
 }
 
 /**
@@ -388,22 +430,28 @@ function syncBackdrop() {
  * show was edited (after its draft reached the dev server, see pushDraft).
  */
 function rebind() {
-  const ids = [...(bridge.doc?.querySelectorAll('[data-sec]') || [])]
-    .filter((s) => s.querySelector('[data-bound]'))
-    .map((s) => s.dataset.sec);
-  renderSections(ids);
+  for (const root of syncRoots(bridge.doc))
+    renderSections(
+      [...root.querySelectorAll('[data-sec]')]
+        .filter((s) => s.querySelector('[data-bound]'))
+        .map((s) => s.dataset.sec),
+      root,
+    );
 }
 
-/** Sections `ids` of the previewed page rendered by the dev server and swapped in, in turn. */
-function renderSections(stale) {
-  if (!stale.length) return;
+/**
+ * Sections `ids` of `root` (the previewed page's view, or the footer) rendered by the dev
+ * server and swapped in, in turn.
+ */
+function renderSections(stale, root = bridge.doc?.querySelector('[data-router-view]')) {
+  if (!stale.length || !root) return;
   rendering = rendering.then(async () => {
-    const file = previewFile(bridge.doc);
+    const file = root.dataset.pageFile;
     const path = bridge.path();
     try {
       const { html } = await source.render({ path, file, data: store.current[file], ids: stale });
-      if (previewFile(bridge.doc) !== file || bridge.path() !== path) return;
-      swapSections(bridge.doc, store, html);
+      if (!root.isConnected || bridge.path() !== path) return;
+      swapSections(bridge.doc, store, html, root);
       bridge.api?.remountView();
     } catch (err) {
       toast(`Preview: ${err.message}`, { kind: 'error' });
@@ -415,8 +463,10 @@ bridge.on('navigate', (path) => {
   ui.path = path;
   backdropShown = null;
   syncBackdrop(); // what the page was rendered with (the drafts)
-  markRendered(bridge.doc, store);
-  syncSections();
+  for (const root of syncRoots(bridge.doc)) {
+    markRendered(bridge.doc, store, root);
+    syncSections({}, root);
+  }
   const url = new URL(location.href);
   url.searchParams.set('path', path);
   history.replaceState(null, '', url);
@@ -425,6 +475,7 @@ bridge.on('navigate', (path) => {
     ui.target = { kind: 'page', path, title: path === '/' ? 'Home' : path };
   }
   updatePages();
+  applyFooter();
   ui.previewVersion++;
   ui.anim = null;
 });
@@ -435,6 +486,11 @@ bridge.on('select', (sel) => {
       sel?.kind === 'text' ? { edit: sel.el.dataset.edit ?? sel.el.dataset.bound } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
+// a click on the locked footer opens it (the Footer is the target), one outside locks it
+bridge.on('footer', (open) => {
+  if (!open) return void lockFooter();
+  pickTarget(ui.pages.find((i) => i.kind === 'component' && i.id === 'footer'));
+});
 // After the handlers above: the selection and scroll from before a refresh.
 bridge.on('navigate', restorePlace);
 
@@ -483,18 +539,20 @@ function pushDraft({ refresh = false, sources = false } = {}) {
 let animTimer = 0;
 store.on(({ files, source: src, structure }) => {
   const page = previewFile(bridge.doc);
+  // the files whose sections the preview swaps in place: the page's and the footer's
+  const roots = syncRoots(bridge.doc);
+  const inPlace = roots.map((r) => r.dataset.pageFile);
   if (files.some((f) => f !== ANIMATIONS))
     pushDraft({
-      refresh: structure && files.some((f) => f !== page),
+      refresh: structure && files.some((f) => !inPlace.includes(f)),
       sources: files.some((f) => sourceIdOf(f) || schemaIdOf(f)),
     });
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
-  if (files.includes(page)) {
-    syncSections({ structure });
-    syncBackdrop();
-  }
+  for (const root of roots)
+    if (files.includes(root.dataset.pageFile)) syncSections({ structure }, root);
+  if (files.includes(page)) syncBackdrop();
   if (textChanged) {
     pushCurtains();
     const fromPreview = src && src.nodeType === 1;

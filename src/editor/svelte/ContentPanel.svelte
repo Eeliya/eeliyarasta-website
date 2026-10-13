@@ -37,7 +37,7 @@
   import SourcesModal from './SourcesModal.svelte';
   import { allFields, contentGroups, groupFor, previewPage, splitEdit } from './content-groups.js';
   import { parse } from '../lib/pointer.js';
-  import { previewFile } from '../layout-sync.js';
+  import { targetFile } from '../layout-sync.js';
   import { baseName, sourceIdOf } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
@@ -56,12 +56,12 @@
   });
   const waiting = $derived.by(() => {
     ui.previewVersion;
-    return ui.target.kind === 'page' && !bridge.doc;
+    return ui.target.id !== 'menu' && !bridge.doc;
   });
-  // the page file of the preview, whose sections are listed
+  // the file whose sections are listed: the page's in the preview, or the footer's
   const file = $derived.by(() => {
     ui.previewVersion;
-    return ui.target.kind === 'page' ? previewFile(bridge.doc) : '';
+    return targetFile(ui.target, bridge.doc);
   });
   const others = $derived(groups.filter((g) => !g.block));
   const open = $derived(file && groups.find((g) => g.block && g.id === ui.block));

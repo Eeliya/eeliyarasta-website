@@ -19,14 +19,17 @@ import { initClock, updateClocks } from './ui/clock.js';
 import { applyAccent } from './theme.js';
 import { album } from './modules/album.js';
 import { projects } from './modules/projects.js';
-import { cards, toTop, imageFade } from './modules/misc.js';
+import { cards, imageFade } from './modules/misc.js';
 import { contactForms } from './modules/form.js';
 import { placements } from './modules/placements.js';
 import { watchRows } from './modules/rows.js';
 import { anchors } from './modules/anchors.js';
 import { backdrop } from './modules/backdrop.js';
 
-const pageModules = [imageFade, album, projects, cards, toTop, contactForms, placements, anchors];
+const pageModules = [imageFade, album, projects, cards, contactForms, placements, anchors];
+// the footer's blocks: the modules of blocks it can have (no album, project list or anchors:
+// those are the page's, once)
+const footerModules = [imageFade, cards, contactForms, placements];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;
@@ -51,9 +54,13 @@ function showBackdrop(view, el = view.querySelector('[data-backdrop]') ?? backdr
   return backdrop(el);
 }
 
+/** The footer (settings/footer.json's sections): under every page, outside the view. */
+const footerEl = () => document.querySelector('[data-footer]');
+
 const noop = { revert() {} };
+// the footer's animations go with each page's: they start (and are measured) on that page
 const startAnimations = (view, portal) =>
-  frozen ? noop : mountAnimations(view, { extraRoots: [portal] });
+  frozen ? noop : mountAnimations(view, { extraRoots: [portal, footerEl()].filter(Boolean) });
 
 function mount(view, { first = false } = {}) {
   const portal = movePortals(view);
@@ -63,17 +70,30 @@ function mount(view, { first = false } = {}) {
   updateClocks();
   document.documentElement.dataset.page = view.dataset.page;
   // real rows first (modules/rows.js): animations and pins measure the page as it is laid out
-  const rows = watchRows(view, { onchange: () => keepScroll(() => ScrollTrigger.refresh()) });
+  const onchange = () => keepScroll(() => ScrollTrigger.refresh());
+  const foot = footerEl();
+  const rows = watchRows(view, { onchange });
+  const footRows = foot ? watchRows(foot, { onchange }) : null;
   const anim = startAnimations(view, portal);
-  const cleanups = pageModules.map((m) => m(view)).filter(Boolean);
+  const cleanups = [
+    ...pageModules.map((m) => m(view)),
+    ...(foot ? footerModules.map((m) => m(foot)) : []),
+  ].filter(Boolean);
   current = {
     view,
     portal,
     anim,
-    rows,
+    rows: {
+      reflow: () =>
+        [rows, footRows]
+          .filter(Boolean)
+          .map((r) => r.reflow())
+          .some(Boolean),
+      stop: () => [rows, footRows].forEach((r) => r?.stop()),
+    },
     backdrop: showBackdrop(view),
     revert() {
-      rows.stop();
+      this.rows.stop();
       this.backdrop?.();
       cleanups.forEach((fn) => fn());
       this.anim.revert();

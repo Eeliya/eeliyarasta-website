@@ -9,7 +9,8 @@
  *   content/en/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/en/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
  *   content/en/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
- *                               animations.json, redirects.json: a list), and photos.json:
+ *                               animations.json, redirects.json: a list, footer.json: the
+ *                               footer's sections, like a page's), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
  *                               sizes of photos uploaded to R2; written by the editor's Media
  *                               window and the upload (not by Save), committed by Publish
@@ -52,6 +53,14 @@ export const ANIMATIONS = settingsFile('animations');
 export const PHOTOS = settingsFile('photos');
 export const REDIRECTS = settingsFile('redirects');
 export const STRINGS = 'strings.json';
+/**
+ * The footer: a page-like file ({ version, sections }: the same sections, blocks, grid and
+ * motion as a page) rendered under every page, outside the view (templates/footer.js).
+ */
+export const FOOTER = settingsFile('footer');
+
+/** A file of sections and blocks: a page's, or the footer's. */
+export const hasSections = (file) => file === FOOTER || !!pageIdOf(file);
 
 /**
  * A page file's id (pageFile backwards): "pages/index.json" -> "home",
@@ -124,7 +133,8 @@ export function contentFromFiles(files) {
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
     photos: files[PHOTOS]?.photos || {},
     redirects: Array.isArray(files[REDIRECTS]?.redirects) ? files[REDIRECTS].redirects : [],
-    // UI text of the templates (footer, menu): { footer: {...}, nav: {...} }
+    footer: files[FOOTER] || { sections: [] },
+    // UI text of the templates (the menu): { nav: {...} }
     strings: files[STRINGS] || {},
   };
 }

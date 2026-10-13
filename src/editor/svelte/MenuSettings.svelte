@@ -1,8 +1,7 @@
 <!--
-  Settings > Menu: the menus of content/en/settings/nav.json (src/site/templates/header.js), a
-  Section each: Header (the nav pill and the mobile menu) and Footer (its Index column).
-  Each item: its label, its link (a page of the site, or an external URL), and in the header
-  a dropdown: links one level deep, or the items of a source. Every change is one undo step;
+  Settings > Menu: the menu of content/en/settings/nav.json (src/site/templates/header.js):
+  Header (the nav pill and the mobile menu). (The footer is page-like: settings/footer.json.)
+  Each item: its label, its link (a page of the site, or an external URL), and a dropdown: links one level deep, or the items of a source. Every change is one undo step;
   the preview renders the menu again.
 -->
 <script>
@@ -21,7 +20,6 @@
 
   const MENUS = [
     ['header', 'Header', 'The nav at the top and the mobile menu. An item can open a dropdown.'],
-    ['footer', 'Footer', 'The links of the Index column in the footer.'],
   ];
 
   // the sources a dropdown can list

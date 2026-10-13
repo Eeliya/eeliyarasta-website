@@ -1,15 +1,23 @@
 /**
  * What the Content tab shows: the editable texts of the page in the preview (or of the
- * Menu / Footer), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
+ * Menu, or the footer's blocks), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
  * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { NAV, SITE, STRINGS, TEMPLATE, pageIdOf, sourceIdOf } from '../../site/files.js';
+import {
+  FOOTER as FOOTER_FILE,
+  NAV,
+  SITE,
+  STRINGS,
+  TEMPLATE,
+  pageIdOf,
+  sourceIdOf,
+} from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
 import { BLOCK_TYPES } from '../../site/blocks/index.js';
 import { bindTypeOf } from '../../site/layout/bindings.js';
-import { previewFile } from '../layout-sync.js';
+import { targetFile } from '../layout-sync.js';
 import { WIDGETS, itemName, schemaFor } from './source-items.js';
 
 /** site.json values edited in the Settings tab: [key, label, field type]. */
@@ -63,16 +71,11 @@ export function labelFor(store, { file, ptr }) {
   return parts.map((p) => (/^\d+$/.test(p) ? `#${Number(p) + 1}` : p)).join(' / ');
 }
 
-/** Labels of the texts outside blocks: a template's shared labels, the footer, the menu. */
+/** Labels of the texts outside blocks: a template's shared labels, the menu. */
 const LABELS = {
   section: 'Back link',
   next: 'Next link',
   label: 'Label',
-  cta: 'Call to action',
-  note: 'Note',
-  toTop: 'Back to top',
-  email: 'Email',
-  location: 'Location',
   menu: 'Menu button',
   close: 'Close button',
   clock: 'Clock label',
@@ -269,18 +272,11 @@ export function groupFor(store, { file, ptr }, page) {
       title: pageId.endsWith(TEMPLATE) ? 'Item pages' : labelOf(pageId),
     };
   }
-  if (file === NAV) {
-    if (parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
-    if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
-  }
-  if (file === STRINGS) {
-    if (parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
-    if (parts[0] === 'footer') return { id: 'footer', title: 'Footer' };
-  }
-  if (file === SITE) {
-    if (parts[0] === 'social') return { id: 'social', title: 'Social links' };
-    if (parts[0] === 'email' || parts[0] === 'location') return { id: 'footer', title: 'Footer' };
-  }
+  if (file === FOOTER_FILE)
+    return parts[0] === 'sections' ? null : { id: 'content', title: 'Content' };
+  if (file === NAV && parts[0] === 'header') return { id: 'nav', title: 'Navigation labels' };
+  if (file === STRINGS && parts[0] === 'nav') return { id: 'nav', title: 'Navigation labels' };
+  if (file === SITE && parts[0] === 'social') return { id: 'social', title: 'Social links' };
   if (isItemPtr(file, parts)) {
     // List items shown on the home page are edited in the Sources modal, not in a group.
     if (page === 'home')
@@ -295,66 +291,47 @@ export function groupFor(store, { file, ptr }, page) {
 }
 
 /**
- * Menu / Footer fields, known up front (the preview may not show them all): the labels of
- * the menus in nav.json (their links and order are edited in Settings > Menu), and the
- * header and footer texts of site.json. [file, pointer, type]
+ * Menu fields, known up front (the preview may not show them all): the labels of the header
+ * menu in nav.json (its links and order are edited in Settings > Menu) and the menu's texts
+ * in strings.json. [file, pointer, type]
  */
-function componentFields(store, id) {
+function menuFields(store) {
   const nav = store.current[NAV] || {};
-  const labels = (menu) =>
-    (Array.isArray(nav[menu]) ? nav[menu] : []).flatMap((item, i) => [
-      [NAV, `/${menu}/${i}/label`, 'text'],
-      ...(item?.all !== undefined ? [[NAV, `/${menu}/${i}/all`, 'text']] : []),
+  return [
+    ...(Array.isArray(nav.header) ? nav.header : []).flatMap((item, i) => [
+      [NAV, `/header/${i}/label`, 'text'],
+      ...(item?.all !== undefined ? [[NAV, `/header/${i}/all`, 'text']] : []),
       ...(Array.isArray(item?.children) ? item.children : []).map((_, j) => [
         NAV,
-        `/${menu}/${i}/children/${j}/label`,
+        `/header/${i}/children/${j}/label`,
         'text',
       ]),
-    ]);
-  if (id === 'menu')
-    return [
-      ...labels('header'),
-      ...['menu', 'close', 'clock'].map((k) => [STRINGS, `/nav/${k}`, 'text']),
-    ];
-  return [
-    ...FOOTER.map(([ptr, type]) => [ptr.startsWith('/footer/') ? STRINGS : SITE, ptr, type]),
-    ...labels('footer'),
-    ...[0, 1, 2].flatMap((i) => [
-      [SITE, `/social/${i}/label`, 'text'],
-      [SITE, `/social/${i}/handle`, 'text'],
     ]),
+    ...['menu', 'close', 'clock'].map((k) => [STRINGS, `/nav/${k}`, 'text']),
   ];
 }
-const FOOTER = [
-  ['/footer/label', 'text'],
-  ['/footer/cta', 'block'],
-  ['/footer/note', 'text'],
-  ['/footer/toTop', 'text'],
-  ['/footer/columns/social/title', 'text'],
-  ['/footer/columns/index/title', 'text'],
-  ['/footer/columns/contact/title', 'text'],
-  ['/footer/columns/time/title', 'text'],
-  ['/email', 'text'],
-  ['/location', 'text'],
-];
 
 /** The fields to edit for `target`: { edit, file, ptr, type }. */
 function fieldsOf(store, bridge, target) {
+  const fields = () =>
+    bridge
+      .editFields()
+      .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
+      .filter((f) => !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
+  // the footer: its blocks' texts in the preview (a page's sections, like a page's)
+  if (target.kind === 'component' && target.id === 'footer')
+    return fields().filter((f) => f.file === FOOTER_FILE);
   if (target.kind === 'component') {
-    return componentFields(store, target.id)
+    return menuFields(store)
       .map(([file, ptr, type]) => ({ edit: `${file}#${ptr}`, file, ptr, type }))
       .filter(
         (f) => store.get(f.file, f.ptr) !== undefined || store.getBase(f.file, f.ptr) !== undefined,
       );
   }
-  // Page content only: the header and footer texts are edited under Menu / Footer.
-  const shared = ['social', 'email', 'location'];
-  return bridge
-    .editFields()
-    .map(({ edit, file, ptr, type }) => ({ edit, file, ptr, type }))
-    .filter((f) => f.file !== NAV && f.file !== STRINGS)
-    .filter((f) => f.file !== SITE || !shared.includes(parse(f.ptr)[0]))
-    .filter((f) => !f.ptr.endsWith('/enabled')); // on/off flags have their own toggle
+  // Page content only: the menu's texts are edited under Menu, the footer's under Footer.
+  return fields()
+    .filter((f) => f.file !== NAV && f.file !== STRINGS && f.file !== FOOTER_FILE)
+    .filter((f) => f.file !== SITE || parse(f.ptr)[0] !== 'social');
 }
 
 /**
@@ -365,7 +342,7 @@ function fieldsOf(store, bridge, target) {
  */
 export function contentGroups(store, bridge, target) {
   const page = previewPage(bridge);
-  const file = target.kind === 'page' ? previewFile(bridge.doc) : '';
+  const file = targetFile(target, bridge.doc);
   const groups = new Map();
   const add = (group) => {
     if (!groups.has(group.id)) groups.set(group.id, { fields: [], ...group });

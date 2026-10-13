@@ -1,0 +1,71 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { loadContent } from './content.mjs';
+import { renderOp } from './editor-server.mjs';
+import * as render from '../src/site/render.js';
+import { FOOTER, STRINGS, contentFromFiles } from '../src/site/files.js';
+import { checkContent } from '../src/site/validate.js';
+import { newBlock, newSection } from '../src/site/layout/index.js';
+
+const content = loadContent('.');
+
+test('footer.json: sections only, checked like a page', () => {
+  assert.deepEqual(checkContent(FOOTER, { version: 1, sections: [] }), []);
+  assert.deepEqual(checkContent(FOOTER, { version: 1 }), []);
+  assert.match(checkContent(FOOTER, { version: 1, sections: [], meta: {} })[0], /only "sections"/);
+  assert.ok(checkContent(FOOTER, { version: 1, sections: [{ id: 'x', blocks: [] }] }).length);
+  const taken = new Set();
+  const s = newSection(taken, [newBlock('heading', taken)]);
+  const twice = checkContent(FOOTER, { version: 1, sections: [s, { ...s }] });
+  assert.ok(twice.includes(`the id "${s.id}" is used twice`));
+  // the old footer texts and menu are gone
+  assert.match(checkContent(STRINGS, { version: 1, footer: {} })[0], /"footer" is gone/);
+  // no footer file: an empty footer
+  assert.deepEqual(contentFromFiles({}).footer, { sections: [] });
+});
+
+test('footer: shipped empty, rendered under every page, outside the view', () => {
+  assert.deepEqual(content.footer.sections, []);
+  for (const route of render.getRoutes(content).slice(0, 4)) {
+    const { body } = render.renderRoute(route, content, { editable: true });
+    const main = body.indexOf('</main>');
+    const foot = body.indexOf('<footer class="site-footer" data-footer');
+    assert.ok(main > 0 && foot > main && foot < body.indexOf('id="portal"'), route.path);
+    assert.match(body, /data-page-file="settings\/footer\.json"><\/footer>/);
+    assert.doesNotMatch(body, /Let's make|footer__cta|data-to-top/);
+  }
+  // public: no editor markers
+  const [home] = render.getRoutes(content);
+  assert.doesNotMatch(render.renderRoute(home, content).body, /data-page-file="settings/);
+});
+
+test('footer: its sections render on every page, and the editor renders them on any page', () => {
+  const taken = new Set();
+  const block = newBlock('heading', taken);
+  block.title = 'Say hello';
+  const s = newSection(taken, [block]);
+  const data = { version: 1, sections: [s] };
+  const withFooter = { ...content, footer: data };
+  const routes = render.getRoutes(withFooter);
+  for (const route of [routes[0], routes.at(-1)]) {
+    const { body } = render.renderRoute(route, withFooter, { editable: true });
+    const foot = body.slice(body.indexOf('<footer class="site-footer"'));
+    assert.match(foot, new RegExp(`data-sec="${s.id}"`));
+    assert.match(foot, /Say hello/);
+    assert.match(foot, /data-edit="settings\/footer\.json#\/sections\/0\/blocks\/0\/title"/);
+  }
+  for (const path of ['/', '/about/']) {
+    const r = renderOp(render, '.', {}, { path, file: FOOTER, data, ids: [s.id] });
+    assert.equal(r.status, 200, path);
+    assert.match(r.body.html[s.id], /Say hello/);
+  }
+  // another page's file still only renders on its page
+  const about = { ...content.pages.about };
+  const bad = renderOp(
+    render,
+    '.',
+    {},
+    { path: '/', file: 'pages/about/index.json', data: about, ids: [] },
+  );
+  assert.equal(bad.status, 400);
+});

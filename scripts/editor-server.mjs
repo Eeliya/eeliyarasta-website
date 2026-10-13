@@ -41,6 +41,7 @@ import {
   itemsOf,
   isSlug,
   pageFile,
+  FOOTER,
   schemaFile,
   schemaIdOf,
   sourceFile,
@@ -922,9 +923,11 @@ export function renderOp(render, root, drafts, { path: at, file, data, ids, sess
   if (problems.length) return { status: 400, body: { error: problems.join('; ') } };
   const content = loadContent(root, { ...draftsFor(drafts, session), [file]: data });
   const route = render.getRoutes(content).find((r) => r.path === at);
-  if (!route || pageFile(route.id) !== file)
+  // the footer's sections render on any page (under it)
+  if (!route || (file !== FOOTER && pageFile(route.id) !== file))
     return { status: 400, body: { error: `${at} is not a page of ${file}` } };
-  return { status: 200, body: { ok: true, html: render.renderRouteSections(route, content, ids) } };
+  const html = render.renderRouteSections(route, content, ids, file);
+  return { status: 200, body: { ok: true, html } };
 }
 
 const sendJSON = (res, status, data) => {

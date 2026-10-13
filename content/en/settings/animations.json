@@ -327,14 +327,6 @@
     "about.body": {
       "preset": "stagger-up",
       "stagger": 0.1
-    },
-    "footer.cta": {
-      "preset": "split-lines",
-      "start": "top 90%"
-    },
-    "footer.cols": {
-      "preset": "stagger-up",
-      "start": "top 95%"
     }
   },
   "interactions": {

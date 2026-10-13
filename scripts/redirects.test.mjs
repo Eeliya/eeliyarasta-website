@@ -29,8 +29,8 @@ function site(redirects = []) {
     header: [
       { label: 'People', page: 'pg-peop', children: [{ label: 'Team', page: 'pg-team' }] },
       { label: 'About', page: 'pg-abou' },
+      { label: 'Noor', item: { source: 'people', id: 'p-noor' } },
     ],
-    footer: [{ label: 'Noor', item: { source: 'people', id: 'p-noor' } }],
   });
   put('settings/redirects.json', { version: 1, redirects });
   put(
@@ -142,7 +142,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
     { from: '/people/:slug/', to: '/about/' },
   ]);
   // an item link of a deleted [slug] page: broken (the build warns), not rewritten
-  assert.deepEqual(read(root, 'settings/nav.json').footer[0].item, {
+  assert.deepEqual(read(root, 'settings/nav.json').header[2].item, {
     source: 'people',
     id: 'p-noor',
   });

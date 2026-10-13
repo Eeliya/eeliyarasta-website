@@ -102,8 +102,9 @@ export function body(ctx, route, accent, view, file) {
       data-curtain="${esc(curtain)}"
       ${curtainEdit}
     >
-      ${view} ${route.page === 'album' ? '' : footer(ctx, route)}
+      ${view}
     </main>
+    ${footer(ctx, route)}
     <div id="portal"></div>
     <div class="curtain" aria-hidden="true">
       <div class="curtain__panel"></div>

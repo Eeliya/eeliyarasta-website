@@ -43,9 +43,37 @@ function setAttr(node, name, value) {
   return true;
 }
 
+/** The preview's page view (<main>), and its footer (settings/footer.json's sections). */
+export const pageView = (doc) => doc?.querySelector('[data-router-view]') || null;
+export const footerOf = (doc) => doc?.querySelector('[data-footer]') || null;
+
 /** The page file of the page in the preview ("pages/about/index.json"), or ''. */
-export const previewFile = (doc) =>
-  doc?.querySelector('[data-router-view]')?.dataset.pageFile || '';
+export const previewFile = (doc) => pageView(doc)?.dataset.pageFile || '';
+
+/**
+ * The file the editor edits for `target` (ui.target): the page's in the preview, the
+ * footer's for the Footer, '' for the Menu (or no preview yet).
+ */
+export const targetFile = (target, doc) =>
+  target?.kind === 'page'
+    ? previewFile(doc)
+    : target?.id === 'footer'
+      ? footerOf(doc)?.dataset.pageFile || ''
+      : '';
+
+/**
+ * Open (or lock) the footer in the preview: open, its sections and blocks can be hovered and
+ * picked and the page's can't (bridge.js INJECTED_CSS: data-ed-open); locked, a click on it
+ * opens it. Returns the footer element.
+ */
+export function setFooterOpen(doc, open) {
+  const el = footerOf(doc);
+  el?.toggleAttribute('data-ed-open', !!open);
+  return el;
+}
+
+/** The elements whose sections follow a file: the page's view and the footer. */
+export const syncRoots = (doc) => [pageView(doc), footerOf(doc)].filter(Boolean);
 
 // What each section element was rendered from: its index and its blocks' content (kindOf).
 const rendered = new WeakMap();
@@ -57,9 +85,8 @@ const sectionsIn = (view) =>
   new Map([...view.querySelectorAll('[data-sec]')].map((el) => [el.dataset.sec, el]));
 
 /** After the page is rendered (a navigation, a reload): its sections show the store's file. */
-export function markRendered(doc, store) {
-  const view = doc?.querySelector('[data-router-view]');
-  const sections = store.current[previewFile(doc)]?.sections;
+export function markRendered(doc, store, view = pageView(doc)) {
+  const sections = store.current[view?.dataset.pageFile]?.sections;
   if (!view || !Array.isArray(sections)) return;
   const els = sectionsIn(view);
   const numbers = headingNumbers(sections);
@@ -124,16 +151,16 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
 }
 
 /**
- * Sync the preview's sections with the store's file: order, layout, removed sections.
+ * Sync the preview's sections (`root`'s: the page's view, or the footer) with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
  * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
  * `remount` set when a pin changed (the view's modules need mounting again), `motion`: the
  * block elements whose motion changed, and `layout`: whether anything the rows and scroll
  * triggers measure changed (a name alone changes the id only).
  */
-export function syncLayout(doc, store, { structure = false } = {}) {
-  const view = doc?.querySelector('[data-router-view]');
-  const sections = store.current[previewFile(doc)]?.sections;
+export function syncLayout(doc, store, { structure = false, root = pageView(doc) } = {}) {
+  const view = root;
+  const sections = store.current[view?.dataset.pageFile]?.sections;
   if (!view || !Array.isArray(sections)) return [];
   const els = sectionsIn(view);
   const ids = new Set(sections.map((s) => s?.id));
@@ -167,9 +194,8 @@ export function syncLayout(doc, store, { structure = false } = {}) {
 }
 
 /** Put freshly rendered sections ({ id: html }) into the preview, in the file's order. */
-export function swapSections(doc, store, html) {
-  const view = doc.querySelector('[data-router-view]');
-  const sections = store.current[previewFile(doc)]?.sections || [];
+export function swapSections(doc, store, html, view = pageView(doc)) {
+  const sections = store.current[view?.dataset.pageFile]?.sections || [];
   const numbers = headingNumbers(sections);
   const els = sectionsIn(view);
   let prev = null;

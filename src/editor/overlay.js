@@ -235,6 +235,9 @@ export function createOverlay({
   const mobile = () => win.innerWidth <= MOBILE;
   const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
   const secOf = (el) => el?.closest('[data-sec]');
+  /** Is a section editable now: the footer's while it is open, the page's otherwise. */
+  const live = (sec) =>
+    !!sec.closest('[data-footer]') === !!doc.querySelector('[data-footer][data-ed-open]');
   const secById = (id) => doc.querySelector(`[data-sec="${CSS.escape(id)}"]:not([hidden])`);
   /** The section under the pointer in the preview: its row in the Content tab shows it. */
   const peekAt = (sec) => {
@@ -357,7 +360,7 @@ export function createOverlay({
     els.links.setAttribute('height', h.scrollHeight);
     if (arranging())
       for (const sec of doc.querySelectorAll('[data-sec]:not([hidden])'))
-        for (const el of blocksIn(sec)) {
+        for (const el of live(sec) ? blocksIn(sec) : []) {
           const l = linkOfEl(el);
           if (!l || el.hidden || linking?.el === el) continue;
           const lead = blocksIn(sec).find((n) => n.dataset.block === l.to);

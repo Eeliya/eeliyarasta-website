@@ -17,6 +17,16 @@ const tweenVars = (spec, extra = {}) => ({
 });
 
 /**
+ * A scroll position in the footer, kept where the page can scroll to (ScrollTrigger's clamp()):
+ * the footer is the end of every page, so "top 85%" of its blocks may lie past the last scroll
+ * position, and their reveal would never play (or a scrubbed one stay hidden).
+ */
+const reach = (pos, trigger) =>
+  typeof pos === 'string' && !pos.startsWith('clamp(') && trigger?.closest?.('[data-footer]')
+    ? `clamp(${pos})`
+    : pos;
+
+/**
  * trigger "load": play immediately. trigger "scroll": play once when `start` is reached,
  * or, with `scrub` (true or seconds of lag), tie progress to scrolling from `start` to `end`.
  * In the editor preview, one-shot reveals reset when scrolled back above `start` so they
@@ -26,12 +36,20 @@ const scrollVars = (spec, trigger) => {
   if (spec.trigger !== 'scroll') return {};
   if (spec.scrub) {
     const scrub = spec.scrub === true ? true : Number(spec.scrub) || true;
-    return { scrollTrigger: { trigger, start: spec.start, end: spec.end || 'top 40%', scrub } };
+    return {
+      scrollTrigger: {
+        trigger,
+        start: reach(spec.start, trigger),
+        end: reach(spec.end || 'top 40%', trigger),
+        scrub,
+      },
+    };
   }
+  const start = reach(spec.start, trigger);
   return {
     scrollTrigger: flags.preview
-      ? { trigger, start: spec.start, toggleActions: 'play none none reset' }
-      : { trigger, start: spec.start, once: true },
+      ? { trigger, start, toggleActions: 'play none none reset' }
+      : { trigger, start, once: true },
   };
 };
 
@@ -68,8 +86,8 @@ function scroll(el, spec, ctx) {
     stagger: spec.stagger || 0,
     scrollTrigger: {
       trigger: ctx.trigger || el,
-      start: spec.start || 'top bottom',
-      end: spec.end || 'bottom top',
+      start: reach(spec.start || 'top bottom', ctx.trigger || el),
+      end: reach(spec.end || 'bottom top', ctx.trigger || el),
       scrub,
       invalidateOnRefresh: true,
     },
@@ -135,8 +153,8 @@ function scrubWords(el, spec, ctx) {
             stagger: 0.1,
             scrollTrigger: {
               trigger: ctx.trigger || t,
-              start: spec.start,
-              end: spec.end,
+              start: reach(spec.start, ctx.trigger || t),
+              end: reach(spec.end, ctx.trigger || t),
               scrub: spec.scrub === undefined || spec.scrub === false ? true : spec.scrub,
             },
           },
@@ -160,8 +178,8 @@ function parallax(el, spec, ctx) {
         ease: 'none',
         scrollTrigger: {
           trigger: ctx.trigger || t.parentElement,
-          start: spec.start || 'top bottom',
-          end: spec.end || 'bottom top',
+          start: reach(spec.start || 'top bottom', ctx.trigger || t.parentElement),
+          end: reach(spec.end || 'bottom top', ctx.trigger || t.parentElement),
           scrub: spec.scrub === true ? true : Number(spec.scrub) || true,
         },
       },

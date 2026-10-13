@@ -11,7 +11,7 @@
  * pinned: its own box doesn't scroll by).
  *
  * An element (parts of a block type with their own markup: the hero's photos and title,
- * album parts, the project preview; and the footer):
+ * album parts, the project preview):
  *
  *   spec = presets[preset] ⟵ targets[id] ⟵ its block's parts[id] ⟵ data-anim-options (JSON)
  *

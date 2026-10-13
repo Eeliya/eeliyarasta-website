@@ -22,6 +22,7 @@ import {
   TEMPLATE,
   isSlug,
   pageIdOf,
+  FOOTER,
   schemaIdOf,
   sourceIdOf,
 } from './files.js';
@@ -132,13 +133,15 @@ function checkForms(f) {
 }
 
 /**
- * nav.json: { header: [items], footer: [items] }, item { label, page | item | href, all?, items?,
- * children? }. Header items can have one level of children; footer items are plain links.
- * Whether a page exists needs the routes: the templates warn about that (header.js linkOf).
+ * nav.json: { header: [items] }, item { label, page | item | href, all?, items?, children? }.
+ * Items can have one level of children. Whether a page exists needs the routes: the templates
+ * warn about that (header.js linkOf).
  */
 function checkNav(d) {
-  const out = optional(d, { header: 'array', footer: 'array' });
-  const check = (item, where, { nest, menu }) => {
+  const out = optional(d, { header: 'array' });
+  if (d.footer !== undefined)
+    out.push('"footer" is gone: the footer is settings/footer.json, sections like a page');
+  const check = (item, where, { nest }) => {
     if (!isObject(item)) return out.push(`${where} must be an object`);
     const name = `${where}${typeof item.label === 'string' ? ` ("${item.label}")` : ''}`;
     const bad = (msg) => out.push(`${name}: ${msg}`);
@@ -146,19 +149,14 @@ function checkNav(d) {
     const link = linkProblem(item, ['label', 'all', 'items', 'children']);
     if (link) bad(link);
     out.push(...optional(item, { all: 'string', items: 'string' }).map((p) => `${name}: ${p}`));
-    if (menu === 'footer' && ['children', 'items', 'all'].some((k) => item[k] !== undefined))
-      bad('footer links are plain links (no "children", "items" or "all")');
     if (item.children === undefined) return;
     if (!nest) return bad('"children" go one level deep');
     if (!Array.isArray(item.children)) return bad('"children" must be a list');
     if (item.items !== undefined) bad('has "children" or "items", not both');
-    item.children.forEach((c, j) => check(c, `${name} child ${j + 1}`, { nest: false, menu }));
+    item.children.forEach((c, j) => check(c, `${name} child ${j + 1}`, { nest: false }));
   };
-  for (const menu of ['header', 'footer'])
-    if (Array.isArray(d[menu]))
-      d[menu].forEach((item, i) =>
-        check(item, `${menu} item ${i + 1}`, { nest: menu === 'header', menu }),
-      );
+  if (Array.isArray(d.header))
+    d.header.forEach((item, i) => check(item, `header item ${i + 1}`, { nest: true }));
   return out;
 }
 
@@ -248,6 +246,21 @@ function checkPage(file, d) {
   }
   if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
     out.push('"template" is only for [slug] pages');
+  return [...out, ...checkSections(d.sections)];
+}
+
+/** The footer (settings/footer.json): only sections, checked like a page's. */
+function checkFooter(d) {
+  const out = optional(d, { sections: 'array' });
+  for (const k of Object.keys(d))
+    if (k !== 'sections') out.push(`"${k}" must be left out: the footer has only "sections"`);
+  return [...out, ...checkSections(d.sections)];
+}
+
+/** A page's (or the footer's) sections: each one, their names, links and ids. */
+function checkSections(sections) {
+  const d = { sections };
+  const out = [];
   if (!Array.isArray(d.sections)) return out;
   out.push(...d.sections.flatMap(checkSection));
   // names: their anchors (ids) unique on the page, and ids at all
@@ -522,7 +535,14 @@ export function checkContent(file, data) {
   if (file === SITE) return checkSite(d);
   if (file === ANIMATIONS) return checkAnimations(d);
   if (file === NAV) return checkNav(d);
-  if (file === STRINGS) return optional(d, { footer: 'object', nav: 'object' });
+  if (file === STRINGS)
+    return [
+      ...optional(d, { nav: 'object' }),
+      ...(d.footer !== undefined
+        ? ['"footer" is gone: the footer is settings/footer.json, sections like a page']
+        : []),
+    ];
+  if (file === FOOTER) return checkFooter(d);
   if (file === PHOTOS)
     return isObject(d.photos) ? checkPhotos(d.photos) : ['"photos" must be an object'];
   if (pageIdOf(file)) return checkPage(file, d);

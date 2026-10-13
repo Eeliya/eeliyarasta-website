@@ -4,7 +4,7 @@
               global curtain itself is in the Settings tab), then the page's blocks, a box per
               section, each with its animation and its parts that have their own (data-anim
               inside it: the hero's photos, a heading's title, ...), then the animated elements
-              outside the blocks (the footer).
+              outside the blocks (fixed parts).
               A block picked (ui.anim.block, from the preview or the list): its motion
               (BlockMotion). A part or element picked: its animation (AnimEditor).
   Animations  the library (AnimLibrary): every animation, edit one with the preview in view.
@@ -20,7 +20,7 @@
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { nameOf, splitEdit } from './content-groups.js';
-  import { previewFile } from '../layout-sync.js';
+  import { targetFile } from '../layout-sync.js';
   import { getRoutes } from '../../site/routes.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { ANIMATIONS, contentFromFiles } from '../../site/files.js';
@@ -70,7 +70,7 @@
   // The page's sections and blocks (its file), each block with its element and parts.
   const file = $derived.by(() => {
     ui.previewVersion;
-    return previewFile(bridge.doc);
+    return targetFile(ui.target, bridge.doc);
   });
   const sections = $derived.by(() => {
     ui.previewVersion;
@@ -213,7 +213,7 @@
         </Section>
       {/each}
       {#if outside.length}
-        <Section key="motion:elements" title="Outside the blocks" name="Footer and fixed parts">
+        <Section key="motion:elements" title="Outside the blocks" name="Fixed parts">
           {#snippet bar()}<span class="mlist__count">{outside.length}</span>{/snippet}
           <ol class="list">
             {#each outside as it (it.el)}{@render part(it)}{/each}

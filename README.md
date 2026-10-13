@@ -53,7 +53,8 @@ content/            ← all text, albums, projects, animation config (JSON)
   sources/          ← lists that grids pull from (people, places, projects): { version, items: [...] },
                       plus <id>.schema.json: the fields of its items (see "Sources & schemas")
   settings/         ← site-wide settings (site.json, nav.json, animations.json, photos.json, redirects.json)
-  strings.json      ← UI text of the templates: footer labels, the menu's Menu / Close / clock label
+                      and footer.json: the footer's sections (see "Footer")
+  strings.json      ← UI text of the templates: the menu's Menu / Close / clock label
 media/              ← source photos (jpg), committed
 scripts/
   images.mjs        ← media/ → public/media/*.webp sizes + .generated/media.json
@@ -68,7 +69,7 @@ src/
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
     layout/         ← sections and blocks on the square 120-column grid, real rows, ids (see "Layout")
     blocks/         ← the block registry: every block type (see "Layout")
-    templates/      ← layout, header/menu, footer, partials
+    templates/      ← layout, header/menu, footer (its sections), partials
   client/           ← browser code
     main.js         ← boot: menu, router, per-page mount
     router.js       ← SPA navigation over the prerendered HTML
@@ -129,8 +130,9 @@ site settings can live side by side):
 
 | file                                  | what                                                                                                                                                                                                                                                                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content/en/settings/nav.json`        | the **menus**: header (nav pill, dropdowns, mobile menu) and footer links (see "Menu")                                                                                                                                                                                                                            |
-| `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`), footer copy (`footer.label`, `footer.cta`, `footer.note`, `footer.toTop`, `footer.columns.*.title`)                                                                                                            |
+| `content/en/settings/nav.json`        | the **menus**: the header (nav pill, dropdowns, mobile menu; see "Menu")                                                                                                                                                                                                                                          |
+| `content/en/settings/footer.json`     | the **footer**: `{ version, sections }`, sections and blocks exactly like a page's, under every page (see "Footer")                                                                                                                                                                                               |
+| `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`)                                                                                                                                                                                                                 |
 | `content/en/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, `timezone` of the clock, `jobTitle` / `country` (structured data on home)                                            |
 | `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                   |
 | `content/en/pages/index.json`         | home: its `sections` of blocks (the hero first: the big name, its text and the **scattered hero photos**, position `x/y/w` in %, `phone` over them (`{ x?, y?, w? }`, `null`: hidden on phones), `depth`, `layer` back/front), curtain text                                                                       |
@@ -484,8 +486,8 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 
 ### Menu
 
-`content/en/settings/nav.json` holds the menus: `header` (the nav pill, its dropdowns and the
-mobile menu) and `footer` (the footer's Index column). An item is a link (see Links) with a
+`content/en/settings/nav.json` holds the menu: `header` (the nav pill, its dropdowns and the
+mobile menu). An item is a link (see Links) with a
 label: to a page by its id (`page`), to an item's page (`item`), or anywhere else (`href`,
 opens in a new tab). A page or item that isn't there gives a `[links]` build warning and `#`:
 
@@ -497,6 +499,22 @@ opens in a new tab). A page or item that isn't there gives a `[links]` build war
   "children": [{ "label": "People", "page": "pg-yzuw", "items": "people" }, …] }
 { "label": "Projects", "page": "pg-cwyg", "all": "All projects", "items": "projects" }
 ```
+
+### Footer
+
+`content/en/settings/footer.json` is the footer: `{ "version": 1, "sections": [] }`, sections of
+blocks exactly like a page's (the same grid, blocks, phone layout and motion; validated and tidied
+like a page's), rendered under every page by `src/site/templates/footer.js`. It starts empty
+(nothing shows). It sits outside the page's view, right after `<main>`, so page transitions swap
+the page and leave the footer be; it is in the view's layer (`.site-footer`: z-index 2, between
+`#backdrop` and `#portal`; the curtain covers it). Its rows, animations and block scripts mount
+with each page (`src/client/main.js`).
+
+In the editor the footer is **Footer** in the page menu, or click it in the preview: a locked
+footer (a dashed outline on hover, its label) picks nothing inside; the first click opens it
+(a solid outline, the Footer is the target) and its sections and blocks are picked and dragged
+like a page's, while the page's are locked. Esc with nothing picked, or a click outside it,
+locks it again. An empty footer shows a 96px placeholder in the editor to click.
 
 ### Links
 
@@ -513,8 +531,7 @@ A header item with `children` (one level deep) or `items` opens a dropdown on cl
 labels the link to the item's own page at its end. `items` names a source
 (`content/en/sources/<id>.json`) and lists its items: with their photo and photo count when the
 source has item pages (a `[slug].json` shows it), else by title and type, linking to their spot
-on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. Footer items are
-plain links. The menu button and clock labels stay in `site.json` (`nav`).
+on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. The menu button and clock labels stay in `site.json` (`nav`).
 `src/site/templates/header.js` renders it; `checkContent` validates its shape.
 
 ### Pages and URLs
@@ -548,7 +565,7 @@ move. A page's own file is
 - **Views:** a page is its sections of blocks. Its view name (`view--<name>` on `<main>`, `data-page` on
   `<html>`, for styles and scripts) is its `view` field, else its own name for the built-in
   pages (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else `page`.
-  A template's is `album` (no footer). New pages start with a section holding a heading block.
+  A template's is `album`. New pages start with a section holding a heading block.
 - **Head:** title, description, share image and robots come from the page's `meta` and the
   site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"
@@ -847,7 +864,7 @@ Only the types that work on any markup can go on a block (`BLOCK_ANIM_TYPES`: re
 scroll, scrub-words, parallax); `scatter`, `hero-title` and `hover-preview` stay on their
 `data-anim` parts.
 
-`data-anim` is still used for what is not a block (curtain, header, menu, footer) and for the
+`data-anim` is still used for what is not a block (curtain, header, menu) and for the
 **parts** of composite blocks (hero photos/title/meta, a heading's title and intro, about,
 album, section heads). The old per-element hooks blocks replace (text, photo, form title,
 intro, grids, album grids/panels, projects list) are gone: their targets were removed from
@@ -967,9 +984,9 @@ renders just the sections it touched from the editor's copy of the page (`POST
 Other pages render from the unsaved edits too: the editor sends them to the dev server (`POST
 /__editor/draft`, cleared on Save), which renders dev pages from them.
 
-**Settings > Menu** edits `nav.json`: a box per menu (Header, Footer) with its items: label,
+**Settings > Menu** edits `nav.json`: the Header menu with its items: label,
 link (a page from the page tree, or External URL with its URL), ↑ / ↓ / Remove, **Add link**,
-and in the header a dropdown: the items of a source, or **Dropdown links** (one level) and the
+and a dropdown: the items of a source, or **Dropdown links** (one level) and the
 "all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[slug]` page the **Item** dropdown next
 to the page picks which item's page the preview shows.
 
@@ -1016,7 +1033,7 @@ form acts). Hold **Alt** to click through.
 In the editor a preset is called an **animation** (`presets` in `animations.json`). The
 Motion tab's **Elements** list is the page's **blocks**, grouped by section (each with its
 animation or "none", and the `data-anim` parts inside it nested below), then **Outside the
-blocks** (curtain, header, footer…). Selecting a block in the preview selects it in the list
+blocks** (curtain, header…). Selecting a block in the preview selects it in the list
 and the other way round; a block selected in the Content tab is the one shown when you switch
 to Motion. A **block** shows its Animation (none or any block animation; the edit button opens
 it in the library), its timing (Custom switches, stored in the block's `motion`) and **Use the
@@ -1027,7 +1044,7 @@ or global element is edited as before; choose where its edits go:
   `"motion": { "parts": { "hero.title": { "preset": "stagger-up" } } }`. Only the parts with
   that `data-anim` name inside this block. This is how you give a block's part a different
   animation without touching templates (`preset`, plus timing only). A block with only parts
-  has no `anim`. Parts outside the blocks (header, footer) only have **All**.
+  has no `anim`. Parts outside the blocks (header) only have **All**.
 - **All "target"**: `targets["about.headline"]`. Every element with that `data-anim`.
 
 Timing fields (`TIMING_KEYS` in `src/editor/svelte/motion.js`) each have a **Custom**
@@ -1060,7 +1077,7 @@ undo/redo, **Esc** deselects (a dialog first, then the selected link, then the b
 JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
-in each page's `pages/<page>/index.json`, shared copy (nav, footer) in `settings/site.json`, for this reason. The editor only ever writes
+in each page's `pages/<page>/index.json`, shared copy (nav) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/en/pages/`, `content/en/sources/` and `content/en/settings/` (see
 `src/editor/config.js`); only the Pages window creates or deletes files, and only page files.
 These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-block`,

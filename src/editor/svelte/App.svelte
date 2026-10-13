@@ -105,14 +105,15 @@
       const open = document.querySelector('dialog[open]');
       if (open) open.close();
       else {
-        if (bridge.selected) bridge.select(null);
+        const picked = !!bridge.selected;
+        if (picked) bridge.select(null);
         if (ui.mode === 'text' && !inField) {
           if (ui.link) ui.link = null;
           else if (ui.block) {
             ui.selection = null;
             ui.block = null;
-          }
-        }
+          } else if (!picked) actions.lockFooter(); // nothing picked, the footer open: locked
+        } else if (ui.mode === 'motion' && !inField && !picked) actions.lockFooter();
       }
     }
   }
