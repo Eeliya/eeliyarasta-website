@@ -354,6 +354,36 @@ function syncSections({ structure = false } = {}) {
 }
 
 /**
+ * The page's backdrop (src/site/backdrop.js) after an edit: rendered by the dev server and put
+ * in place in the preview (its script mounted again, the scroll kept), only when it changed.
+ */
+const BACKDROP = '__backdrop'; // render.js BACKDROP: the id that renders the backdrop
+let backdropShown = null; // { file, path, json } the preview shows
+function syncBackdrop() {
+  const file = previewFile(bridge.doc);
+  const path = bridge.path();
+  if (!file || !path) return;
+  const json = JSON.stringify(store.current[file]?.backdrop ?? null);
+  const shown = backdropShown;
+  backdropShown = { file, path, json };
+  if (!shown || shown.file !== file || shown.path !== path || shown.json === json) return;
+  rendering = rendering.then(async () => {
+    try {
+      const { html } = await source.render({
+        path,
+        file,
+        data: store.current[file],
+        ids: [BACKDROP],
+      });
+      if (previewFile(bridge.doc) !== file || bridge.path() !== path) return;
+      bridge.api?.setBackdrop?.(html[BACKDROP]);
+    } catch (err) {
+      toast(`Preview: ${err.message}`, { kind: 'error' });
+    }
+  });
+}
+
+/**
  * Sections showing bound values (src/site/layout/bindings.js) rendered again: a source they
  * show was edited (after its draft reached the dev server, see pushDraft).
  */
@@ -383,6 +413,8 @@ function renderSections(stale) {
 
 bridge.on('navigate', (path) => {
   ui.path = path;
+  backdropShown = null;
+  syncBackdrop(); // what the page was rendered with (the drafts)
   markRendered(bridge.doc, store);
   syncSections();
   const url = new URL(location.href);
@@ -459,7 +491,10 @@ store.on(({ files, source: src, structure }) => {
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
-  if (files.includes(page)) syncSections({ structure });
+  if (files.includes(page)) {
+    syncSections({ structure });
+    syncBackdrop();
+  }
   if (textChanged) {
     pushCurtains();
     const fromPreview = src && src.nodeType === 1;

@@ -79,6 +79,7 @@ export function checkBackdrop(b) {
 export function tidyBackdrop(page, found = () => {}) {
   const b = page?.backdrop;
   if (!isObject(b)) return;
+  if (Array.isArray(b.photos)) b.photos = b.photos.filter((p) => typeof p === 'string' && p);
   if (!Array.isArray(b.photos) || !b.photos.length) {
     delete page.backdrop;
     return;

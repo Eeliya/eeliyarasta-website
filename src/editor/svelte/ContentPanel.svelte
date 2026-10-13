@@ -2,7 +2,7 @@
   Content tab: the page in the preview (or the Menu / Footer). A page is a list of sections
   holding blocks (src/site/layout/): SectionsList.svelte lists them with their settings, and
   a block opens in BlockInspector.svelte (ui.block: its Content, Layout and Motion). Below the
-  sections, the page's other texts (a [slug] page's shared labels, the curtain: groups from
+  sections (and above them the page's Backdrop, BackdropCard.svelte), the page's other texts (a [slug] page's shared labels, the curtain: groups from
   content-groups.js) and its SEO (SeoSection.svelte). While this tab is open the preview is a
   layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
   a double click edits a text in place (bridge.js); links and buttons don't follow; a click on
@@ -28,6 +28,7 @@
 <script>
   import Button from './Button.svelte';
   import { tick } from 'svelte';
+  import BackdropCard from './BackdropCard.svelte';
   import BlockInspector from './BlockInspector.svelte';
   import GroupFields from './GroupFields.svelte';
   import Section from './Section.svelte';
@@ -69,13 +70,6 @@
     live.version;
     return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
   });
-  const hint = $derived(
-    ui.target.kind === 'page'
-      ? 'Click a block in the preview to open it, drag it to move it, drag its handles to resize it; double-click a text to edit it in place. Click empty space or press Esc to close it. Alt+click follows a link.'
-      : ui.target.id === 'menu'
-        ? 'Editing Menu labels. Changes show in the header and mobile menu of the preview.'
-        : 'Editing Footer copy. Scroll the preview to the bottom to see changes.',
-  );
 
   const onsource = (f, item, edit, then) => sourcesModal.open(f, item, edit, then);
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
@@ -129,7 +123,7 @@
       }}
     />
   {:else}
-    <p class="hint">{hint}</p>
+    {#if file && ui.target.kind === 'page'}<BackdropCard {live} {file} />{/if}
     {#if file}<SectionsList {live} {bridge} {file} onopen={openBlock} />{/if}
     {#each others as g (g.id)}
       <Section id={g.id} key={keyOf(g)} title={g.title} name={g.name} open={isOpen(g)}>
