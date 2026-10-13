@@ -12,6 +12,7 @@
   import { tick } from 'svelte';
   import { SLACK, dropTarget } from '../drag-target.js';
   import { locate } from '../locate.js';
+  import AddSectionModal from './AddSectionModal.svelte';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
   import SectionSettings from './SectionSettings.svelte';
@@ -34,6 +35,7 @@
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, bridge, file, onopen } = $props();
+  let addModal = $state();
   let deleting = $state(''); // the id of the section or block asking "Delete?"
 
   // ---- a block's row dragged to another place (its own section's order, or another section):
@@ -392,19 +394,15 @@
   </Section>
 {/each}
 
-<div class="add">
-  <Select
-    aria-label="Add section"
-    value={null}
-    placeholder="Add section…"
-    options={[{ value: '', label: 'Empty section', icon: 'square' }, ...types]}
-    onchange={add}
-  >
-    {#snippet option(o)}
-      <i class="fa-solid fa-{o.icon} type" aria-hidden="true"></i>{o.label}
-    {/snippet}
-  </Select>
-</div>
+<button type="button" class="add" aria-haspopup="dialog" onclick={() => addModal.open()}>
+  <i class="fa-solid fa-plus" aria-hidden="true"></i>Add section
+</button>
+<AddSectionModal
+  bind:this={addModal}
+  {types}
+  after={sections.length ? `Section ${sections.length}` : ''}
+  onpick={add}
+/>
 
 <style lang="scss">
   // the blocks, under the card's line (Section's foot)
@@ -531,9 +529,33 @@
     }
   }
 
+  // Add section: a dashed card the section cards' width (their -8px bleed), + and its name centred
   .add {
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--c-line);
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: calc(100% + 16px);
+    height: 40px;
+    margin-inline: -8px;
+    border: 1px dashed var(--c-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--c-text);
+    font: inherit;
+    font-size: var(--fs-base);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--c-accent);
+      color: var(--c-text-strong);
+      outline: none;
+    }
   }
 
   .type {
