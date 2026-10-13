@@ -349,7 +349,7 @@
   .ed-modes {
     display: flex;
     margin-top: var(--space-1);
-    box-shadow: inset 0 -1px 0 var(--c-line);
+    box-shadow: inset 0 -2px 0 var(--c-line);
   }
 
   .ed-modes__btn {
