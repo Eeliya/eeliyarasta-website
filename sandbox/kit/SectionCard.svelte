@@ -7,6 +7,10 @@
     over    snippet: drawn over the card, its exact box (a confirm, a scrim…); `.kit-over`
             covers the whole card, add `.kit-over--bar` for the header's height only
     children  replaces the body (SectionSettings)
+    fields  false: no settings body (a part's section: just the header and blocks)
+    rows    the tools on their own row under the title (the title wraps, full width)
+    height  a fixed height for the card (e.g. '140px' while confirming), its content clipped
+    changed the changed dot before the title
 -->
 <script>
   import Section from '../../src/editor/svelte/Section.svelte';
@@ -16,14 +20,35 @@
   import { FILE } from './sample.js';
   import { LIST } from './styles.js';
 
-  let { live, at = 0, open = true, red = false, tools, over, children } = $props();
+  let {
+    live,
+    at = 0,
+    open = true,
+    red = false,
+    fields = true,
+    rows = false,
+    height = '',
+    changed = false,
+    tools,
+    over,
+    children,
+  } = $props();
   const sections = $derived((live.version, live.store.current[FILE].sections));
   const s = $derived(sections[at]);
   const title = $derived(s.name?.trim() || `Section ${at + 1}`);
 </script>
 
-<div class={[LIST, 'kit-card', red && 'kit-card--red']}>
-  <Section id={s.id} {title} dim={!s.name?.trim()} {open}>
+<div
+  class={[
+    LIST,
+    'kit-card',
+    red && 'kit-card--red',
+    rows && 'kit-card--rows',
+    height && 'kit-card--fixed',
+  ]}
+  style:--card-h={height || null}
+>
+  <Section id={s.id} {title} dim={!s.name?.trim()} {open} {changed}>
     {#snippet bar()}
       {#if tools}{@render tools()}{:else}
         <Button size="small" icon="crosshairs" iconOnly label="Show in preview" />
@@ -45,7 +70,7 @@
         />
       {/if}
     {/snippet}
-    {#if children}{@render children()}{:else}<SectionSettings
+    {#if children}{@render children()}{:else if fields}<SectionSettings
         {live}
         file={FILE}
         {at}
@@ -87,5 +112,31 @@
   .kit-card > :global(.kit-over--bar) {
     bottom: auto;
     height: 46px;
+  }
+
+  // the tools on their own row: the title takes the whole first row (and wraps); the tools
+  // start under the title's text (the caret's 20px + 4px in), the switch at the right
+  .kit-card--rows > :global(.sec > .sec__bar) {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+  .kit-card--rows > :global(.sec > .sec__bar > .sec__toggle) {
+    flex: 1 0 100%;
+  }
+  // with the changed dot first: the title takes the rest of the first row
+  .kit-card--rows > :global(.sec.is-changed > .sec__bar > .sec__toggle) {
+    flex-basis: calc(100% - var(--size-changed) - var(--space-1));
+  }
+  .kit-card--rows > :global(.sec > .sec__bar > .sec__toggle + *) {
+    margin-left: 18px;
+  }
+  .kit-card--rows > :global(.sec > .sec__bar > :last-child) {
+    margin-left: auto;
+  }
+
+  // a fixed height (a confirm): the card keeps it, its content clipped under the overlay
+  .kit-card--fixed > :global(.sec) {
+    height: var(--card-h);
+    overflow: hidden;
   }
 </style>
