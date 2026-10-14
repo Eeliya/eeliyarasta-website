@@ -4,7 +4,7 @@
 .header {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 50;
+  z-index: $z-header;
   height: var(--header-h);
   padding: 0 var(--pad);
   display: grid;
@@ -294,7 +294,7 @@
 .mmenu {
   position: fixed;
   inset: 0;
-  z-index: 45;
+  z-index: $z-mmenu;
   padding: calc(var(--header-h) + 4px) 10px 10px;
   background: rgb(0 0 0 / 0.35);
 
@@ -373,7 +373,7 @@
 .curtain {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: $z-curtain;
   pointer-events: none;
   display: grid;
   place-items: center;
@@ -411,5 +411,5 @@
 // (.view 2), not its own, so a block's z-index in it stacks like a page's.
 .site-footer {
   position: relative;
-  z-index: 2;
+  z-index: $z-view;
 }

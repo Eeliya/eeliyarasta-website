@@ -285,7 +285,7 @@
   position: fixed;
   left: 50%;
   bottom: 22px;
-  z-index: 40;
+  z-index: $z-viewtoggle;
   translate: -50% 0;
   display: inline-flex;
   padding: 4px;
