@@ -1,21 +1,13 @@
 <!--
-  Add section: a modal of what the new section starts with, "Empty section" first, then a
-  tile per block type (a sketch of the block, its icon, name and one line). A search filters
-  them; the pointer or the arrow keys pick one (a 2px accent ring: nothing moves), Enter or a
-  click adds it, Esc or the backdrop closes. Opened by the dashed Add section card
-  (SectionsList.svelte), which adds the section after the last one.
+  Add block: a modal of the block types, a tile each (a sketch of the block, its icon, name and
+  one line, all from the registry). A search filters them; the pointer or the arrow keys pick
+  one (a 2px accent ring: nothing moves), Enter or a click adds it, Esc or the backdrop closes.
+  Opened by a section's dashed Add block button (SectionsList.svelte), which appends the block
+  to that section and opens it.
     types   [{ value, label, icon, line, sketch }] the block types on offer (the registry's)
-    after   the label of the section it lands after ("Section 3"), '' on an empty page
-    onpick  (type) => …   '' is an empty section
+    onpick  (type, at) => …   at: the section index open() was given
 -->
 <script module>
-  const EMPTY = {
-    value: '',
-    label: 'Empty section',
-    icon: 'square',
-    line: 'Nothing in it yet: add blocks later',
-    sketch: '',
-  };
   const COLS = 5;
 </script>
 
@@ -24,20 +16,22 @@
   import Button from './Button.svelte';
   import ExplorerHead from './ExplorerHead.svelte';
 
-  let { types, after = '', onpick } = $props();
+  let { types, onpick } = $props();
 
   let dialog = $state();
   let query = $state('');
   let active = $state(0);
+  let at = $state(0); // the section the block goes to
 
-  const all = $derived([EMPTY, ...types]);
   const shown = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter((t) => `${t.label} ${t.line || ''}`.toLowerCase().includes(q));
+    if (!q) return types;
+    return types.filter((t) => `${t.label} ${t.line || ''}`.toLowerCase().includes(q));
   });
 
-  export function open() {
+  /** Open it for section `section` (its index). */
+  export function open(section) {
+    at = section;
     query = '';
     active = 0;
     flushSync();
@@ -47,7 +41,7 @@
 
   function pick(t) {
     dialog.close();
-    onpick(t.value);
+    onpick(t.value, at);
   }
 
   async function focusTile() {
@@ -80,9 +74,8 @@
 
 <!-- a block's sketch: grey shapes, 2:1 -->
 {#snippet sketch(type)}
-  <span class="as-sk as-sk--{type || 'empty'}" aria-hidden="true">
-    {#if type === ''}<i class="fa-solid fa-plus"></i>
-    {:else if type === 'heading'}<b class="w70 h12"></b><b class="w50 h4"></b><b class="w40 h4"></b>
+  <span class="as-sk as-sk--{type}" aria-hidden="true">
+    {#if type === 'heading'}<b class="w70 h12"></b><b class="w50 h4"></b><b class="w40 h4"></b>
     {:else if type === 'text'}<b class="w40 h8"></b><b class="w90 h4"></b><b class="w80 h4"></b><b
         class="w60 h4"
       ></b>
@@ -118,15 +111,15 @@
 <!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->
 <dialog
   class="modal__box as-modal"
-  aria-label="Add section"
+  aria-label="Add block to section {at + 1}"
   bind:this={dialog}
   onclick={(e) => e.target === dialog && dialog.close()}
   {onkeydown}
 >
   <ExplorerHead
-    title="Add section"
+    title="Add block to Section {at + 1}"
     icon="fa-plus"
-    crumbs={after ? [{ label: `after ${after}` }] : []}
+    crumbs={[{ label: 'after its last block' }]}
     onclose={() => dialog.close()}
   />
   <div class="as-body">
@@ -139,7 +132,7 @@
       oninput={() => (active = 0)}
     />
     {#if shown.length}
-      <ul class="as-tiles" role="listbox" aria-label="Section types">
+      <ul class="as-tiles" role="listbox" aria-label="Block types">
         {#each shown as t, i (t.value)}
           <li role="presentation">
             <button
@@ -166,9 +159,7 @@
     {/if}
   </div>
   <footer class="as-foot">
-    <span class="hint small"
-      >Click or Enter adds it{after ? ` after ${after}` : ''} · arrows pick</span
-    >
+    <span class="hint small">Click or Enter adds it to Section {at + 1} · arrows pick</span>
     <Button size="small" onclick={() => dialog.close()}>Cancel</Button>
   </footer>
 </dialog>
@@ -388,13 +379,6 @@
         gap: 4px;
       }
     }
-  }
-
-  .as-sk--empty {
-    align-items: center;
-    background: none;
-    box-shadow: inset 0 0 0 1px var(--c-line);
-    color: var(--c-text-faint);
   }
 
   .as-sk--grid,

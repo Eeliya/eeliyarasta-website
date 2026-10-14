@@ -4,19 +4,18 @@
   under it; then side by side its minimum height as four quiet icon buttons: fit content, 1/3,
   1/2 or the full screen, its content always centred, and its width as two: contained or full
   width) and its blocks, in order (the order they stack in on
-  phones). Sections and blocks can be added,
-  moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
+  phones), then a dashed Add block button (BlocksModal.svelte). The dashed Add section card
+  adds an empty section after the last one. Sections and blocks can be added, moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
   opens in the block inspector (BlockInspector.svelte, onopen).
 -->
 <script>
   import { tick } from 'svelte';
   import { SLACK, dropTarget } from '../drag-target.js';
   import { locate } from '../locate.js';
-  import AddSectionModal from './AddSectionModal.svelte';
+  import BlocksModal from './BlocksModal.svelte';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
   import SectionSettings from './SectionSettings.svelte';
-  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { nameOf } from './content-groups.js';
   import {
@@ -35,7 +34,7 @@
   import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
   let { live, bridge, file, onopen } = $props();
-  let addModal = $state();
+  let blocksModal = $state();
   let deleting = $state(''); // the id of the section or block asking "Delete?"
 
   // ---- a block's row dragged to another place (its own section's order, or another section):
@@ -197,10 +196,19 @@
     );
   }
 
-  function add(type) {
+  // Add section: an empty section after the last one, open and scrolled into view
+  async function add() {
     deleting = '';
-    if (type === '') addSection(live.store, file);
-    else addSection(live.store, file, type);
+    addSection(live.store, file);
+    await tick();
+    const s = sections.at(-1);
+    if (!s) return;
+    ui.sections[`text:${file}#${s.id}`] = true;
+    await tick();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document
+      .querySelector(`[data-section="${CSS.escape(s.id)}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
   }
 
   // hover sync: a section row the pointer is over shows its section in the preview
@@ -379,30 +387,23 @@
           <li class={['hint', 'small', dropAt(at, 0)]}>No blocks yet.</li>
         {/each}
       </ul>
-      <Select
-        aria-label="Add a block to section {at + 1}"
-        value={null}
-        placeholder="Add block…"
-        options={types}
-        onchange={(type) => addTo(at, type)}
+      <button
+        type="button"
+        class="add add--block"
+        aria-haspopup="dialog"
+        aria-label="Add block to section {at + 1}"
+        onclick={() => blocksModal.open(at)}
       >
-        {#snippet option(o)}
-          <i class="fa-solid fa-{o.icon} type" aria-hidden="true"></i>{o.label}
-        {/snippet}
-      </Select>
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>Add block
+      </button>
     {/snippet}
   </Section>
 {/each}
 
-<button type="button" class="add" aria-haspopup="dialog" onclick={() => addModal.open()}>
+<button type="button" class="add" onclick={add}>
   <i class="fa-solid fa-plus" aria-hidden="true"></i>Add section
 </button>
-<AddSectionModal
-  bind:this={addModal}
-  {types}
-  after={sections.length ? `Section ${sections.length}` : ''}
-  onpick={add}
-/>
+<BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
 
 <style lang="scss">
   // the blocks, under the card's line (Section's foot)
@@ -559,9 +560,10 @@
     }
   }
 
-  .type {
-    width: 16px;
-    color: var(--c-text-muted);
-    text-align: center;
+  // a section's Add block: the same dashed card, the blocks' width (no bleed), 32px
+  .add--block {
+    width: 100%;
+    height: 32px;
+    margin-inline: 0;
   }
 </style>
