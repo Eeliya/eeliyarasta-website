@@ -19,7 +19,7 @@ Open `/edit/sandbox/?mock=<name>` (`?mock=a,b,c` stacks several with their names
 
     npm run mock -- <name> [<name> ...] [--width N] [--out path] [--bare]
 
-Prints the PNG path: `/workspace/mocks/<name>.png` by default, or `<first>+N.png` for
+Prints the PNG path: `$MOCK_DIR/<name>.png` (default `../mocks`, next to the checkout), or `<first>+N.png` for
 several (stacked, labelled). It reuses a dev server on `MOCK_PORT` (5173) or starts one in
 the background, and drives headless Chrome (`CHROME`, default `/usr/bin/google-chrome`) over
 the DevTools protocol at 2x. About 2 s per call with the server up.

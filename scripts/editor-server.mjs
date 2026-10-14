@@ -6,6 +6,9 @@
  *   GET  /__editor/content  → all editable content files, the media manifest's URLs and the
  *                             R2 photos (settings/photos.json)
  *   POST /__editor/save     → write content files to disk ({ files: { name: json } }): a draft
+ *   POST /__editor/draft    → this tab's unsaved edits ({ files, session }), which its preview's
+ *                             pages (?draft=<session>) render from (draftOp); cleared on Save
+ *   POST /__editor/render   → sections of a page rendered from those edits (renderOp)
  *   GET  /__editor/status   → saved-but-unpublished content files (git status vs HEAD) and
  *                             commits not pushed yet
  *   POST /__editor/upload   → one image (the raw bytes, its Content-Type, X-Filename): resized,

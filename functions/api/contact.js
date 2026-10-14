@@ -1,5 +1,5 @@
 /**
- * POST /api/contact: the contact form (src/site/sections/form.js) on Cloudflare Pages.
+ * POST /api/contact: the contact form (src/site/blocks/form.js) on Cloudflare Pages.
  * A Pages Function: Cloudflare runs it for this path; nothing secret is in the site or its
  * content. It checks the submission, drops spam, and emails it through Resend's HTTP API.
  *
@@ -17,7 +17,7 @@
  *
  * Answers JSON ({ ok, error?, fields? }) to the page's script (Accept: application/json),
  * and a small HTML page to a form sent without JavaScript. The dev server runs the same
- * handler (scripts/vite-plugin-static-site.mjs), with a fetch that only logs.
+ * handler (scripts/contact-dev.mjs), with a fetch that only logs.
  */
 
 export const MIN_SECONDS = 3;

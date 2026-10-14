@@ -3,8 +3,8 @@
  *
  *   npm run mock -- <name> [<name> ...] [--width N] [--out path] [--bare]
  *
- * One name: /workspace/mocks/<name>.png. Several: stacked with their names in one image
- * (/workspace/mocks/<first>+N.png, or --out). It reuses the dev server on MOCK_PORT (5173) or
+ * One name: <MOCK_DIR>/<name>.png (MOCK_DIR: default ../mocks, next to the checkout). Several:
+ * stacked with their names in one image (<MOCK_DIR>/<first>+N.png, or --out). It reuses the dev server on MOCK_PORT (5173) or
  * starts one (left running for the next call), drives headless Chrome (CHROME, default
  * /usr/bin/google-chrome) over the DevTools protocol and prints the PNG's path.
  */
@@ -142,7 +142,8 @@ try {
     captureBeyondViewport: true,
   });
   const out = resolve(
-    opt.out || `/workspace/mocks/${names[0]}${names.length > 1 ? `+${names.length - 1}` : ''}.png`,
+    opt.out ||
+      `${process.env.MOCK_DIR || resolve('..', 'mocks')}/${names[0]}${names.length > 1 ? `+${names.length - 1}` : ''}.png`,
   );
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, Buffer.from(data, 'base64'));

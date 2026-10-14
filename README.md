@@ -15,11 +15,15 @@ npm run build     # → dist/ (one index.html per route + 404.html, sitemap.xml,
 npm run preview   # serve dist/ on http://localhost:4173
 npm test          # unit tests (R2 upload and delete against a local mock S3, ...)
 npm run lint      # ESLint + Stylelint (npm run lint:fix fixes what it can)
+npm run images    # media/ → public/media/*.webp sizes (dev and build run it first)
+npm run check:links  # after a build: every internal link in dist/ points at a file
+npm run mock -- <name>  # screenshot an editor UI mock (sandbox/README.md)
 ```
 
 Visual editor (dev only): `http://localhost:5173/edit/` while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
 
-Requires Node 20.19+ (Vite 8).
+Requires Node `^20.19.0 || >=22.12.0` (Vite 8's engines). `npm run mock` passes
+`--experimental-websocket`, which only Node 20 needs.
 
 ### Linting
 
@@ -28,11 +32,12 @@ Requires Node 20.19+ (Vite 8).
   (`console.warn`/`error` are fine), anything goes in `scripts/`.
 - **Stylelint** (`stylelint.config.mjs`): standard SCSS rules, relaxed (blank lines, alpha notation
   and vendor prefixes are free), BEM class names (`block__elem--mod`), Svelte `<style>` blocks too.
-- **Editor-only rules** (`scripts/stylelint-4px.mjs`, for `src/editor/**`):
+- **Editor-only rules** (`scripts/stylelint-4px.mjs`, three, for `src/editor/**`):
   `local/grid-4px`: padding, margin, gap, sizes, radius, offsets, inset and translate in multiples
   of 4px (0, 1px and 999px pills are fine; font sizes, line heights, borders and %/em/vw are not
   checked). `local/no-alpha-text-color`: no transparent text colors (`rgb(… / .5)`, `#rrggbbaa`);
-  it can't see `opacity` on text or colors behind variables.
+  it can't see `opacity` on text or colors behind variables. `local/no-raw-tokens`: no raw hex
+  colours or px font sizes outside the token files.
 - Prettier owns formatting; neither linter checks style.
 - Disable a rule only inline, for one line, with the reason:
   `// eslint-disable-next-line no-console -- why` or `/* stylelint-disable-next-line local/grid-4px -- why */`.
@@ -59,20 +64,42 @@ media/              ← source photos (jpg), committed
 scripts/
   images.mjs        ← media/ → public/media/*.webp sizes + .generated/media.json
   content.mjs       ← loads content/en/<folder>/*.json and strings.json + media manifest (Node)
+  image-variants.mjs ← the webp sizes (sharp), for images.mjs and r2.mjs
+  r2.mjs            ← editor uploads: resized, stored in Cloudflare R2, listed in photos.json
   vite-plugin-static-site.mjs  ← the "static site builder" (dev render + build prerender)
-  editor-server.mjs ← dev-only editor endpoints: load / save / status / publish / pages (localhost only)
+  editor-server.mjs ← dev-only editor endpoints: content / save / draft / render / status /
+                      upload / media / pages / publish (localhost only)
+  git-env.mjs       ← git's environment without a hook's GIT_DIR & co. (Publish)
+  contact-dev.mjs   ← the dev server's POST /api/contact (logs instead of sending)
   check-links.mjs   ← npm run check:links: every internal link in dist/ points at a file
+  mock.mjs          ← npm run mock: screenshots of sandbox/mocks
+  stylelint-4px.mjs ← the editor's local stylelint rules
+  test-layout.mjs   ← shared test helpers
+  *.test.mjs        ← the unit tests (node --test)
+functions/api/contact.js ← the contact form's Cloudflare Pages Function (emails via Resend)
+sandbox/            ← editor UI mocks (mocks/, kit/) and their harness; edit/sandbox/ serves it
 src/
   site/             ← isomorphic templates (no Node APIs, run at build time AND in a browser)
     routes.js       ← list of pages, from the files in content/en/pages/
     render.js       ← renderRoute(route, content) → { head, body }
     helpers.js      ← html``, esc(), img() with srcset/LQIP, accent colours
+    is.js           ← isObject, isExternal (a leaf module: anything can import it)
+    files.js        ← the content files by kind, VERSION, contentFromFiles
+    validate.js     ← checkContent: what the build and Save refuse
+    defaults.js     ← default values, left out of saved files
+    schemas.js      ← sources' schemas (fields of their items)
+    seo.js          ← titles, descriptions, canonical, Open Graph
+    redirects.js    ← redirects.json → _redirects, moved items
+    hrefs.js        ← links to pages, items and anchors
+    backdrop.js     ← a page's photo backdrop
     layout/         ← sections and blocks on the square 120-column grid, real rows, ids (see "Layout")
     blocks/         ← the block registry: every block type (see "Layout")
     templates/      ← layout, header/menu, footer (its sections), partials
   client/           ← browser code
     main.js         ← boot: menu, router, per-page mount
     router.js       ← SPA navigation over the prerendered HTML
+    theme.js        ← the accent colour
+    scroll.js       ← native scroll and ScrollTrigger
     anim/engine.js  ← reads content/en/settings/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
     modules/        ← real rows, album slider, project accordion, card hover, misc
@@ -83,7 +110,8 @@ src/
     store.js        ← in-memory content copies, dirty state, undo/redo, rebase
     bridge.js       ← talks to the site inside the iframe (text overrides, selection, replay)
     source.js       ← talks to the dev-server endpoints (load, save, status, publish)
-    ui/             ← text panel, motion panel, ease picker, fields
+    svelte/         ← the editor UI (Svelte 5): panels, fields, modals
+    lib/            ← small editor helpers (pointers, diff, format, show-value, dialog)
 index.html          ← HTML shell with <!--ssr-head--> / <!--ssr-body--> markers
 edit/index.html     ← editor entry (served by `npm run dev` only)
 ```
@@ -100,13 +128,13 @@ of one of the item's own photos (empty: the first).
 
 ### Build / prerender ("SSR but static")
 
-`vite-plugin-static-site.mjs` is the whole builder (~100 lines):
+`vite-plugin-static-site.mjs` is the whole builder (~200 lines):
 
 - **dev**: a middleware renders any HTML request from the `content/en/` JSON files with `src/site/render.js`
   (through Vite's SSR loader, so template edits reload instantly). Unknown URLs get the 404 page.
 - **build**: Vite bundles the client from `index.html` (hashed JS/CSS). Then, in `closeBundle`,
   every route from `routes.js` is rendered into that shell and written to
-  `dist/<route>/index.html`, plus `dist/404.html`, `sitemap.xml` and `robots.txt`.
+  `dist/<route>/index.html`, plus `dist/404.html`, `sitemap.xml`, `robots.txt` and `_redirects`.
 
 Every page is real, crawlable HTML with its own `<title>`, description, canonical and Open Graph
 tags, and works with JavaScript disabled.
@@ -305,8 +333,8 @@ every section is a grid of **blocks** (`src/site/layout/`):
   be one of the page's own ids (`main`, `portal`, `page-curtains`, `accent-init`,
   `mobile-menu`), and be unique on the page; a clash with another id on the rendered page (a
   project row's slug, say) is a build warning (`[anchors]`). Without a name: no id.
-- **A page** says its grid: `"grid": 120` (the columns its blocks are placed on; required on
-  a page with sections, and 120 is the only value).
+- **A page** has no grid setting: the page grid is always 120 columns (a `grid` key is
+  refused).
 - **A block:** its `type` and content (below), `layout` (below), `z` (its layer when blocks
   overlap), `size`, `scale` (text blocks, below) and an optional `motion`
   (`{ "anim": "fade-scrub", "start": "top 70%" }`: an animation from the library plus its own
@@ -512,7 +540,7 @@ A header item with `children` (one level deep) or `items` opens a dropdown on cl
 labels the link to the item's own page at its end. `items` names a source
 (`content/en/sources/<id>.json`) and lists its items: with their photo and photo count when the
 source has item pages (a `[slug].json` shows it), else by title and type, linking to their spot
-on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. The menu button and clock labels stay in `site.json` (`nav`).
+on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. The menu button and clock labels are in `strings.json` (`nav`).
 `src/site/templates/header.js` renders it; `checkContent` validates its shape.
 
 ### Pages and URLs
@@ -814,8 +842,8 @@ The page scrolls natively (`src/client/scroll.js`); every ScrollTrigger reads th
 scroll position.
 
 The final spec for an element is
-`preset ← target overrides ← element overrides ← data-anim-options`. Element overrides
-(`elements`, keyed `"<page path>|<target>|<n>"`) are mostly written by the visual editor. With
+`preset ← target overrides ← its block's part overrides ← data-anim-options`. Part overrides
+are a block's `motion.parts` (`{ "<target>": { … } }`), written by the visual editor. With
 `"trigger": "scroll"`, reveals play once at `start`, or follow the scrollbar between `start` and
 `end` when `"scrub"` is `true` or a number (seconds of smoothing).
 Types (`src/client/anim/types.js`): `reveal`, `split` (SplitText chars/words/lines, masked),
@@ -857,7 +885,7 @@ build (`motionProblems`). Saving `animations.json` checks every page, so removin
 that blocks still use is refused.
 
 `prefers-reduced-motion` is respected everywhere: no block motion, drift/parallax/splits or
-scroll scrubs (content is simply shown), no pinning, instant album slides, a quick crossfade
+scroll scrubs (content is simply shown), instant album slides, a quick crossfade
 between pages.
 
 ### Visual editor (`/edit/`, dev only)
@@ -1093,8 +1121,8 @@ These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-block`,
 - The panel footer always shows how many **saved changes aren't published** yet (and commits
   not pushed).
 
-The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/status`,
-`/upload`, `/media`, `/pages`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
+The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/draft`,
+`/render`, `/status`, `/upload`, `/media`, `/pages`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
 (loopback address, localhost `Host`, same-origin `Origin`), and only touch the files listed in
 `src/editor/config.js`. Git runs without a shell and never prompts in the terminal, so pushing
 needs a working git login for GitHub on the machine running `npm run dev` (e.g. `gh auth login`
