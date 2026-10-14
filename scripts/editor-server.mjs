@@ -49,7 +49,7 @@ import {
   contentFromFiles,
 } from '../src/site/files.js';
 import { checkItems, photoChecker, schemaOf } from '../src/site/schemas.js';
-import { NAMED_VIEWS, getRoutes, pathOfId } from '../src/site/routes.js';
+import { NAMED_VIEWS, getRoutes, pathOfId, titleCase } from '../src/site/routes.js';
 import { MAX_UPLOAD, deletePhoto, uploadPhoto, writePhotos } from './r2.mjs';
 import { photoUses } from '../src/editor/lib/photo-uses.js';
 import {
@@ -101,12 +101,6 @@ export function editableFiles(root) {
 // Root names that are not pages: the editor, Vite's assets, the photos, and the two specials.
 const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
 const PROTECTED = new Set(['home', '404']); // no rename or delete
-
-const titleCase = (s) =>
-  String(s)
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 
 /**
  * The Pages window (src/editor/svelte/PagesModal.svelte): the pages in content/en/pages/. Every
@@ -253,7 +247,7 @@ export function pagesOp(
     write(pageFile(pid), {
       version: VERSION,
       id: newPageId(),
-      template: { source, section: titleCase(source), next: 'Next' },
+      template: { source },
       // the item's album, filling the screen
       sections: [
         {

@@ -69,11 +69,16 @@ export const pageTitle = (page) => {
   return typeof title === 'string' && !isBound(title) ? title : undefined;
 };
 
-const titleCase = (s) =>
+/** "photo-walks" → "Photo Walks": a name from a slug. */
+export const titleCase = (s) =>
   String(s)
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+
+/** A [slug] page's section label: its folder's page title ("People"), else its source's name. */
+export const templateSection = (folderPage, source) =>
+  pageTitle(folderPage || {}) || titleCase(source);
 
 /** Page ids in tree order: home first, 404 last, a page before the pages in its folder, templates last. */
 const byTree = (a, b) => {
@@ -148,8 +153,7 @@ export function buildRoutes(content) {
       warnings.push(`${file}: template.source "${source ?? ''}" is not a source list`);
       return [];
     }
-    // its section: the folder's page title ("People"), else the source's name
-    const section = pageTitle(pages[folder.slice(0, -1)] || {}) || titleCase(source);
+    const section = templateSection(pages[folder.slice(0, -1)], source);
     const schema = schemaOf(content, source);
     const meta = tpl.meta || {}; // defaults of its item pages
     const seen = new Set();

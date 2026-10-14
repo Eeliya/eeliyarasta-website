@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pagesOp, editableFiles } from './editor-server.mjs';
 import { rowsOf } from '../src/site/layout/index.js';
+import { checkContent } from '../src/site/validate.js';
 
 /** content/ in a temp dir: home, 404, about, people (+ [slug] and team) and a people source. */
 function site() {
@@ -79,7 +80,12 @@ test('template: [slug].json in a page folder, one per folder, not at the root', 
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'nope' }).status, 400);
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug].json']);
-  assert.equal(read(root, 'pages/about/[slug].json').template.source, 'people');
+  assert.deepEqual(read(root, 'pages/about/[slug].json').template, { source: 'people' });
+  // what the editor writes passes the validator (its Save refuses anything else)
+  assert.deepEqual(
+    checkContent('pages/about/[slug].json', read(root, 'pages/about/[slug].json')),
+    [],
+  );
   const [album] = read(root, 'pages/about/[slug].json').sections;
   assert.deepEqual(
     album.blocks.map((b) => b.type),

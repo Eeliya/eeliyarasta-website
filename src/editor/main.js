@@ -32,7 +32,7 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
-import { curtainOverrides, pathOfId } from '../site/routes.js';
+import { curtainOverrides, pathOfId, templateSection } from '../site/routes.js';
 import { BACKDROP } from '../site/backdrop.js';
 import {
   ANIMATIONS,
@@ -162,7 +162,11 @@ function pageEntries(routes) {
   }
   // a template whose source has no items yet has no pages, but is still a page to pick
   for (const id of ids)
-    if (id.endsWith(TEMPLATE)) template(id, store.current[pageFile(id)]?.template?.section);
+    if (id.endsWith(TEMPLATE)) {
+      const folder = id.slice(0, -TEMPLATE.length - 1); // "people"
+      const source = store.current[pageFile(id)]?.template?.source;
+      template(id, templateSection(store.current[pageFile(folder)], source));
+    }
   return entries;
 }
 
