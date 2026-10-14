@@ -20,7 +20,11 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
-    foot      optional: more body under a line across the whole card (a page section's blocks)
+    foot      optional: more body under the bar or body (a page section's blocks)
+    stack     the bar in two rows: the title alone on the first (it wraps in full), the `bar`
+              snippet's controls on a second, from the left edge, the last one (a switch) at the right
+    danger    the card's border red (a delete confirm over it)
+    over      snippet: drawn over the whole card at its size (a confirm), inside its border
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -43,6 +47,9 @@
     bar,
     children,
     foot,
+    stack = false,
+    danger = false,
+    over,
   } = $props();
 
   const uid = $props.id();
@@ -82,7 +89,17 @@
   }
 </script>
 
-<section class={['sec', off && 'is-off', changed && 'is-changed', cls]} data-section={id}>
+<section
+  class={[
+    'sec',
+    off && 'is-off',
+    changed && 'is-changed',
+    stack && 'sec--stack',
+    danger && 'is-danger',
+    cls,
+  ]}
+  data-section={id}
+>
   <div class="sec__bar">
     <button
       type="button"
@@ -108,6 +125,7 @@
       {#if foot}<div class="sec__foot">{@render foot()}</div>{/if}
     </div>
   </div>
+  {@render over?.()}
 </section>
 
 <style lang="scss">
@@ -116,9 +134,15 @@
     flex-direction: column;
     padding: var(--space-3) 0; // the sides: the bar's and the inner's (a foot's line is edge to edge)
     margin-inline: -8px;
+    position: relative;
     border: 1px solid transparent;
     background: var(--c-card);
     border-radius: var(--radius-lg);
+
+    // its own 1px border, red: no size change
+    &.is-danger {
+      border-color: var(--c-danger);
+    }
 
     &:first-of-type {
       // border-top-color: transparent;
@@ -247,7 +271,34 @@
     gap: var(--space-3);
     margin-top: var(--space-4);
     padding: var(--space-3) var(--space-2) 0;
-    border-top: 1px solid var(--c-line);
+  }
+
+  // no body (a list card: its blocks only): the foot right under the bar
+  .sec__inner:empty {
+    display: none;
+  }
+
+  .sec__inner:empty + .sec__foot {
+    margin-top: 0;
+  }
+
+  // two rows: the title alone (wraps), then the controls from the left, the last at the right
+  .sec--stack > .sec__bar {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+
+    > .sec__toggle {
+      flex: 1 0 100%;
+    }
+
+    > :global(:last-child:not(.sec__toggle)) {
+      margin-left: auto;
+    }
+  }
+
+  // the changed dot first: the title takes the rest of its row
+  .sec--stack.is-changed > .sec__bar > .sec__toggle {
+    flex-basis: calc(100% - var(--size-changed) - var(--space-1));
   }
 
   .sec.is-off {

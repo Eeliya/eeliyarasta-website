@@ -1,12 +1,12 @@
 <!--
-  The page's sections in the Content tab (src/site/layout/): each a panel Section ("Section N",
-  and its name when it has one) with its settings (its name, the whole row, its #anchor shown
-  under it; then side by side its minimum height as four quiet icon buttons: fit content, 1/3,
-  1/2 or the full screen, its content always centred, and its width as two: contained or full
-  width) and its blocks, in order (the order they stack in on
-  phones), then a dashed Add block button (BlocksModal.svelte). The dashed Add section card
-  adds an empty section after the last one. Sections and blocks can be added, moved, duplicated, deleted and turned on/off (layout-ops.js: one undo step each); a block
-  opens in the block inspector (BlockInspector.svelte, onopen).
+  The page's sections in the Content tab (src/site/layout/): each a panel Section in two rows
+  (its title, "Section N" or its name in full; then its tools: Show, up, down, Duplicate,
+  Delete and the switch at the right), then its blocks, in order (the order they stack in on
+  phones), and a dashed Add block button (BlocksModal.svelte). No settings here: a section's
+  name, height and width are in its block view (BlockInspector.svelte). Delete asks over the
+  card at its size (its border red). The dashed Add section card adds an empty section after
+  the last one. Sections and blocks can be added, moved, duplicated, deleted and turned on/off
+  (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
 -->
 <script>
   import { tick } from 'svelte';
@@ -15,7 +15,6 @@
   import BlocksModal from './BlocksModal.svelte';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
-  import SectionSettings from './SectionSettings.svelte';
   import { ui } from './ui.svelte.js';
   import { nameOf } from './content-groups.js';
   import {
@@ -230,6 +229,9 @@
     };
   });
 
+  // a section's delete confirm: Cancel takes the focus (Enter does not delete by accident)
+  const focusCancel = (el) => el.querySelector('button')?.focus();
+
   function addTo(at, type) {
     const b = addBlock(live.store, file, at, type);
     onopen(b.id);
@@ -262,6 +264,8 @@
     off={s.enabled === false}
     changed={live.changed(file, `/sections/${at}`)}
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
+    stack
+    danger={deleting === s.id}
   >
     {#snippet bar()}
       <Button
@@ -313,11 +317,34 @@
       />
     {/snippet}
 
-    {#if deleting === s.id}{@render confirm('section', () =>
-        removeSection(live.store, file, at),
-      )}{/if}
-
-    <SectionSettings {live} {file} {at} {sections} />
+    {#snippet over()}
+      {#if deleting === s.id}
+        {@const name = (typeof s.name === 'string' && s.name.trim()) || ''}
+        <!-- over the card at its size: the question at the top, Cancel / Delete at the bottom -->
+        <div
+          class="ask"
+          role="alertdialog"
+          tabindex="-1"
+          aria-label={name ? `Delete “${name}”?` : `Delete Section ${at + 1}?`}
+          {@attach focusCancel}
+          onkeydown={(e) => e.key === 'Escape' && (e.stopPropagation(), (deleting = ''))}
+        >
+          <p class="ask__msg">{name ? `Delete “${name}”?` : `Delete Section ${at + 1}?`}</p>
+          <div class="ask__btns">
+            <Button size="small" onclick={() => (deleting = '')}>Cancel</Button>
+            <Button
+              size="small"
+              variant="danger"
+              icon="trash"
+              onclick={() => {
+                deleting = '';
+                removeSection(live.store, file, at);
+              }}>Delete</Button
+            >
+          </div>
+        </div>
+      {/if}
+    {/snippet}
 
     {#snippet foot()}
       <ul class="blocks" aria-label="Blocks of section {at + 1}" data-list={at}>
@@ -529,6 +556,40 @@
     span {
       flex: 1;
     }
+  }
+
+  // a section's delete confirm, over its card at the card's size (no shift): the card's colour
+  // at 80% hides what is under it; the question at the top, Cancel / Delete at the bottom, 8px in
+  .ask {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    overflow: auto;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--c-card) 80%, transparent);
+  }
+
+  .ask__msg {
+    margin: 0;
+    color: var(--c-text-strong);
+    font-size: var(--fs-base);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    line-height: 20px;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  .ask__btns {
+    display: flex;
+    flex: none;
+    justify-content: flex-end;
+    gap: var(--space-2);
   }
 
   // Add section: a dashed card the section cards' width (their -8px bleed), + and its name centred
