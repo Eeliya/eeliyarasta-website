@@ -135,22 +135,6 @@ kbd {
       background: var(--c-text);
       color: var(--c-on-light);
     }
-
-    // an icon-only tab (Settings) takes only the room it needs
-    &--icon {
-      flex: none;
-      padding-inline: var(--space-3);
-    }
-  }
-
-  // the main tabs (Browse, Content, Motion, Settings): round, with a gap around the buttons
-  &--pill {
-    padding: var(--space-1);
-    border-radius: var(--radius-pill);
-  }
-
-  &--pill &__btn {
-    border-radius: var(--radius-pill);
   }
 }
 
