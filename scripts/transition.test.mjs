@@ -16,13 +16,14 @@ test('page transition: the site curtain or none; its timing is the site curtain 
 
 test('page transition: validation and the editor modes', () => {
   const F = 'pages/x/index.json';
-  const of = (transition) => checkContent(F, { version: 1, id: 'pg-xxxx', transition });
+  const of = (transition) =>
+    checkContent(F, { version: 1, kind: 'page', id: 'pg-xxxx', transition });
   assert.deepEqual(of({ preset: 'none' }), []);
   assert.equal(of({ preset: 'curtain', overrides: { total: 2 } }).length, 1); // no per-page timing
   assert.equal(of({ mode: 'custom' }).length, 1);
   assert.equal(of({ preset: 'none', overrides: {} }).length, 1);
   const store = createStore();
-  store.load({ [F]: { version: 1, id: 'pg-xxxx' } });
+  store.load({ [F]: { version: 1, kind: 'page', id: 'pg-xxxx' } });
   const page = { file: F, ptr: '/transition' };
   setCurtainMode(store, page, 'off');
   assert.deepEqual(store.current[F].transition, { preset: 'none' });

@@ -205,6 +205,7 @@ test('the block: where it sends, its form, its validation', () => {
   const layout = { base: { col: 1, span: 24, row: 1 } };
   const page = (fields) => ({
     version: 1,
+    kind: 'page',
     id: 'pg-t034',
 
     sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, layout }] }],

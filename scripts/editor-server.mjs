@@ -44,7 +44,7 @@ import {
   itemsOf,
   isSlug,
   pageFile,
-  FOOTER,
+  docKindOf,
   schemaFile,
   schemaIdOf,
   sourceFile,
@@ -234,6 +234,7 @@ export function pagesOp(
       const section = newSection(ids, [heading]);
       write(file, {
         version: VERSION,
+        kind: 'page',
         id: newPageId(),
         curtainText: t,
         sections: [section],
@@ -249,6 +250,7 @@ export function pagesOp(
     const ids = new Set();
     write(pageFile(pid), {
       version: VERSION,
+      kind: 'page',
       id: newPageId(),
       template: { source },
       // the item's album, filling the screen
@@ -917,7 +919,7 @@ export function renderOp(render, root, drafts, { path: at, file, data, ids, sess
   const content = loadContent(root, { ...draftsFor(drafts, session), [file]: data });
   const route = render.getRoutes(content).find((r) => r.path === at);
   // the footer's sections render on any page (under it)
-  if (!route || (file !== FOOTER && pageFile(route.id) !== file))
+  if (!route || (docKindOf(file) !== 'part' && pageFile(route.id) !== file))
     return { status: 400, body: { error: `${at} is not a page of ${file}` } };
   const html = render.renderRouteSections(route, content, ids, file);
   return { status: 200, body: { ok: true, html } };

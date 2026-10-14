@@ -50,12 +50,14 @@ function project() {
   write('content/en/settings/site.json', { version: 1, name: 'S', url: 'https://x.com' });
   write('content/en/pages/index.json', {
     version: 1,
+    kind: 'page',
     id: 'pg-t027',
 
     hero: { photos: [{ src: 'a/used.jpg' }] },
   });
   write('content/en/sources/people.json', {
     version: 1,
+    kind: 'page',
     id: 'pg-t028',
 
     items: [{ name: 'N', images: ['photos/used-1600.webp'] }],

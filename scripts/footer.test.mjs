@@ -9,19 +9,32 @@ import { newBlock, newSection } from '../src/site/layout/index.js';
 
 const content = loadContent('.');
 
-test('footer.json: sections only, checked like a page', () => {
-  assert.deepEqual(checkContent(FOOTER, { version: 1, sections: [] }), []);
-  assert.deepEqual(checkContent(FOOTER, { version: 1 }), []);
-  assert.match(checkContent(FOOTER, { version: 1, sections: [], meta: {} })[0], /only "sections"/);
-  assert.ok(checkContent(FOOTER, { version: 1, sections: [{ id: 'x', blocks: [] }] }).length);
+test("footer.json: a part, its sections checked like a page's; the kind is the file's", () => {
+  assert.deepEqual(checkContent(FOOTER, { version: 1, kind: 'part', sections: [] }), []);
+  assert.deepEqual(checkContent(FOOTER, { version: 1, kind: 'part' }), []);
+  assert.match(
+    checkContent(FOOTER, { version: 1, kind: 'part', sections: [], meta: {} })[0],
+    /only "sections"/,
+  );
+  assert.ok(
+    checkContent(FOOTER, { version: 1, kind: 'part', sections: [{ id: 'x', blocks: [] }] }).length,
+  );
   const taken = new Set();
   const s = newSection(taken, [newBlock('heading', taken)]);
-  const twice = checkContent(FOOTER, { version: 1, sections: [s, { ...s }] });
+  const twice = checkContent(FOOTER, { version: 1, kind: 'part', sections: [s, { ...s }] });
   assert.ok(twice.includes(`the id "${s.id}" is used twice`));
+  // one document type: the file decides the kind
+  assert.match(checkContent(FOOTER, { version: 1, sections: [] })[0], /"kind" must be "part"/);
+  assert.match(
+    checkContent(FOOTER, { version: 1, kind: 'page', sections: [] })[0],
+    /"kind" must be "part"/,
+  );
+  const page = { version: 1, kind: 'part', id: 'pg-t300', sections: [] };
+  assert.match(checkContent('pages/x/index.json', page).join(), /"kind" must be "page"/);
   // the old footer texts and menu are gone
   assert.match(checkContent(STRINGS, { version: 1, footer: {} })[0], /"footer" is gone/);
   // no footer file: an empty footer
-  assert.deepEqual(contentFromFiles({}).footer, { sections: [] });
+  assert.deepEqual(contentFromFiles({}).footer, { kind: 'part', sections: [] });
 });
 
 test('footer: shipped empty, rendered under every page, outside the view', () => {
@@ -44,7 +57,7 @@ test('footer: its sections render on every page, and the editor renders them on 
   const block = newBlock('heading', taken);
   block.title = 'Say hello';
   const s = newSection(taken, [block]);
-  const data = { version: 1, sections: [s] };
+  const data = { version: 1, kind: 'part', sections: [s] };
   const withFooter = { ...content, footer: data };
   const routes = render.getRoutes(withFooter);
   for (const route of [routes[0], routes.at(-1)]) {

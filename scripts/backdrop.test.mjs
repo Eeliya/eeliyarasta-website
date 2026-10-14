@@ -5,7 +5,7 @@ import { checkContent } from '../src/site/validate.js';
 import { omitDefaults, storedDefaults } from '../src/site/defaults.js';
 
 const FILE = 'pages/index.json';
-const page = (backdrop) => ({ version: 1, id: 'pg-t001', sections: [], backdrop });
+const page = (backdrop) => ({ version: 1, kind: 'page', id: 'pg-t001', sections: [], backdrop });
 const P = ['a/1.jpg', 'a/2.jpg', 'a/3.jpg'];
 
 test('a valid backdrop passes; bad values are named', () => {

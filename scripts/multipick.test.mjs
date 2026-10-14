@@ -13,7 +13,9 @@ test('multi-pick: photos appended in pick order, as items or keys; one undo step
   assert.equal(item.src, ''); // the template untouched
   const store = createStore();
   const F = 'pages/x/index.json';
-  store.load({ [F]: { version: 1, id: 'pg-t200', backdrop: { transition: 'fade' } } });
+  store.load({
+    [F]: { version: 1, kind: 'page', id: 'pg-t200', backdrop: { transition: 'fade' } },
+  });
   store.set(F, '/backdrop/photos', appendPhotos(store.get(F, '/backdrop/photos'), ['p1', 'p2']));
   assert.deepEqual(store.get(F, '/backdrop'), { transition: 'fade', photos: ['p1', 'p2'] });
   store.undo();

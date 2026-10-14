@@ -10,7 +10,7 @@
  *   content/en/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
  *   content/en/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
  *                               animations.json, redirects.json: a list, footer.json: the
- *                               footer's sections, like a page's), and photos.json:
+ *                               footer, a document like a page's: kind "part"), and photos.json:
  *                               every photo's alt text (media/ paths and R2 keys) plus the
  *                               sizes of photos uploaded to R2; written by the editor's Media
  *                               window and the upload (not by Save), committed by Publish
@@ -54,13 +54,21 @@ export const PHOTOS = settingsFile('photos');
 export const REDIRECTS = settingsFile('redirects');
 export const STRINGS = 'strings.json';
 /**
- * The footer: a page-like file ({ version, sections }: the same sections, blocks, grid and
- * motion as a page) rendered under every page, outside the view (templates/footer.js).
+ * The footer: a site part, rendered under every page, outside the view (templates/footer.js).
  */
 export const FOOTER = settingsFile('footer');
 
-/** A file of sections and blocks: a page's, or the footer's. */
-export const hasSections = (file) => file === FOOTER || !!pageIdOf(file);
+/**
+ * Documents: the files of sections and blocks, one shape ({ version, kind, sections, ... }).
+ * "kind" says which: "page" (a page file; its id, meta, backdrop, template, ...) or "part" (a
+ * site part shown on every page: the footer; only sections). The file decides the kind.
+ */
+export const DOC_KINDS = ['page', 'part'];
+export const docKindOf = (file) => (pageIdOf(file) ? 'page' : file === FOOTER ? 'part' : null);
+
+/** The document a file holds in the render content (a page's, or a part's), else undefined. */
+export const docOf = (content, file) =>
+  docKindOf(file) === 'part' ? content.footer : content.pages?.[pageIdOf(file)];
 
 /**
  * A page file's id (pageFile backwards): "pages/index.json" -> "home",
@@ -131,7 +139,7 @@ export function contentFromFiles(files) {
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
     photos: files[PHOTOS]?.photos || {},
     redirects: Array.isArray(files[REDIRECTS]?.redirects) ? files[REDIRECTS].redirects : [],
-    footer: files[FOOTER] || { sections: [] },
+    footer: files[FOOTER] || { kind: 'part', sections: [] },
     // UI text of the templates (the menu): { nav: {...} }
     strings: files[STRINGS] || {},
   };

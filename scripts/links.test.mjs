@@ -104,6 +104,7 @@ test('links: loops are found; validation rejects unknown, other sections, self, 
   const F = 'pages/t/index.json';
   const page = (s1, s2 = []) => ({
     version: 1,
+    kind: 'page',
     id: 'pg-t001',
 
     sections: [
@@ -151,6 +152,7 @@ test('editor: link, drag a follower (its gap changes), unlink; new blocks are fr
   store.load({
     [F]: {
       version: 1,
+      kind: 'page',
       id: 'pg-t002',
 
       sections: [
@@ -199,6 +201,7 @@ test('editor: phone links are separate; the first phone move brings the desktop 
   store.load({
     [F]: {
       version: 1,
+      kind: 'page',
       id: 'pg-t003',
 
       sections: [

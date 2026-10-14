@@ -21,6 +21,7 @@ const content = loadContent('.');
 const presets = content.animations.presets;
 const pageWith = (motion) => ({
   version: 1,
+  kind: 'page',
   id: 'pg-t011',
 
   sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'text', text: 'x', motion }] }],
@@ -146,6 +147,7 @@ test('block parts: shape, attributes; defaults and comments are refused', async 
   const F = 'pages/x/index.json';
   const page = {
     version: 1,
+    kind: 'page',
     id: 'pg-aaaa',
 
     sections: [{ id: 's-aaaa', enabled: true, height: 'fit', blocks: [] }],

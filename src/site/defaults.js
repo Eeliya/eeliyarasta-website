@@ -15,7 +15,7 @@
  * The animation library (animations.json presets) is not covered: each animation carries every
  * value it uses (there is no global layer to fall back on).
  */
-import { hasSections } from './files.js';
+import { docKindOf } from './files.js';
 import { COLS } from './layout/grid.js';
 import { tidyBackdrop } from './backdrop.js';
 import { isObject } from './is.js';
@@ -81,7 +81,7 @@ function tidy(data) {
 
 /** A copy of a content file's data without its default values (only page files have any). */
 export function omitDefaults(file, data) {
-  if (!hasSections(file) || !isObject(data)) return data;
+  if (!docKindOf(file) || !isObject(data)) return data;
   const copy = structuredClone(data);
   strip(copy, () => {});
   tidy(copy);
@@ -90,7 +90,7 @@ export function omitDefaults(file, data) {
 
 /** Problems for values stored that equal their default: ["section 1: \"enabled\" is the default (true): leave it out"]. */
 export function storedDefaults(file, data) {
-  if (!hasSections(file) || !isObject(data)) return [];
+  if (!docKindOf(file) || !isObject(data)) return [];
   const out = [];
   strip(structuredClone(data), (where, message) => out.push(`${where}: ${message}`));
   return out;

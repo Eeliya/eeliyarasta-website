@@ -16,17 +16,18 @@ function site() {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(data));
   };
-  put('pages/index.json', { version: 1, id: 'pg-t035' });
-  put('pages/404/index.json', { version: 1, id: 'pg-t036' });
-  put('pages/about/index.json', { version: 1, id: 'pg-t037', title: 'About' });
-  put('pages/people/index.json', { version: 1, id: 'pg-t038', title: 'People' });
+  put('pages/index.json', { version: 1, kind: 'page', id: 'pg-t035' });
+  put('pages/404/index.json', { version: 1, kind: 'page', id: 'pg-t036' });
+  put('pages/about/index.json', { version: 1, kind: 'page', id: 'pg-t037', title: 'About' });
+  put('pages/people/index.json', { version: 1, kind: 'page', id: 'pg-t038', title: 'People' });
   put('pages/people/[slug].json', {
     version: 1,
+    kind: 'page',
     id: 'pg-t039',
 
     template: { source: 'people' },
   });
-  put('pages/people/team/index.json', { version: 1, id: 'pg-t040', title: 'Team' });
+  put('pages/people/team/index.json', { version: 1, kind: 'page', id: 'pg-t040', title: 'Team' });
   put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
   return root;
 }

@@ -65,7 +65,11 @@ test('registry: every block type has a label, an icon and renders its defaults',
     const list = [newSection(ids, [newBlock(type, ids)])];
     const out = renderSections(ctxOf(route), route, F, list);
     assert.match(out, new RegExp(`<div class="blk blk--${type} blk--auto"`), type); // auto: the default
-    assert.deepEqual(checkContent(F, { version: 1, id: 'pg-t006', sections: list }), [], type);
+    assert.deepEqual(
+      checkContent(F, { version: 1, kind: 'page', id: 'pg-t006', sections: list }),
+      [],
+      type,
+    );
   }
 });
 
@@ -79,7 +83,11 @@ test("a block whose source or item is cleared (the editor's ✕) still renders, 
     delete b.item;
     const list = [newSection(ids, [b])];
     assert.doesNotThrow(() => renderSections(ctxOf(route), route, F, list), type);
-    assert.deepEqual(checkContent(F, { version: 1, id: 'pg-t007', sections: list }), [], type);
+    assert.deepEqual(
+      checkContent(F, { version: 1, kind: 'page', id: 'pg-t007', sections: list }),
+      [],
+      type,
+    );
   }
 });
 
@@ -198,7 +206,8 @@ test('render: an unknown type, or an item type off a [slug] page, warns and is s
 });
 
 test('validation: the layout, then each block against its type', () => {
-  const problems = (sections) => checkContent(F, { version: 1, id: 'pg-t007', sections });
+  const problems = (sections) =>
+    checkContent(F, { version: 1, kind: 'page', id: 'pg-t007', sections });
   const ok = (more) => section([block('text')], more);
   assert.deepEqual(problems([ok()]), []);
   assert.deepEqual(problems([3]), ['section 1 must be an object']);
@@ -255,7 +264,7 @@ test('anchors: a named section renders its id; a clash with another id on the pa
 
 test('ops: sections and blocks added, copied, moved, removed; one undo step each', () => {
   const store = createStore();
-  store.load({ [F]: { version: 1, id: 'pg-t008', sections: [] } });
+  store.load({ [F]: { version: 1, kind: 'page', id: 'pg-t008', sections: [] } });
   const sections = () => store.current[F].sections;
   const types = () => sections().map((s) => s.blocks.map((b) => b.type).join('+'));
   addSection(store, F, 'heading');
@@ -323,7 +332,10 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
     fs.copyFileSync(path.join('content/en', f), path.join(root, 'content/en', f));
   }
   fs.mkdirSync(path.join(root, 'content/en/pages/test'));
-  fs.writeFileSync(path.join(root, 'content/en', F), '{ "version": 1, "id": "pg-xxxx" }');
+  fs.writeFileSync(
+    path.join(root, 'content/en', F),
+    '{ "version": 1, "kind": "page", "id": "pg-xxxx" }',
+  );
   assert.equal(save(root, { [F]: store.current[F] }).status, 200);
   const saved = JSON.parse(fs.readFileSync(path.join(root, 'content/en', F), 'utf8'));
   assert.deepEqual(

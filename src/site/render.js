@@ -7,7 +7,7 @@
 import { accentOf, setEditable, warnOnce } from './helpers.js';
 import { head, body } from './templates/layout.js';
 import { renderSections, renderSection, headingNumbers, sectionAnchor } from './layout/index.js';
-import { pageFile, FOOTER } from './files.js';
+import { docKindOf, docOf, pageFile } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
 import { motionProblems } from './layout/motion.js';
 import { BLOCK_TYPES } from './blocks/index.js';
@@ -74,13 +74,14 @@ export { BACKDROP };
 export function renderRouteSections(route, content, ids, file = pageFile(route.id)) {
   setEditable(true);
   const ctx = contextOf(route, content);
-  const list = (file === FOOTER ? content.footer : content.pages[route.id])?.sections || [];
+  const doc = docOf(content, file);
+  const list = doc?.sections || [];
   const numbers = headingNumbers(list);
   const out = {};
   list.forEach((s, at) => {
     if (ids.includes(s?.id)) out[s.id] = renderSection(ctx, route, file, s, at, numbers);
   });
-  if (ids.includes(BACKDROP) && file !== FOOTER)
-    out[BACKDROP] = renderBackdrop(ctx, content.pages[route.id]?.backdrop);
+  if (ids.includes(BACKDROP) && docKindOf(file) === 'page')
+    out[BACKDROP] = renderBackdrop(ctx, doc?.backdrop);
   return out;
 }

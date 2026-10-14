@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "kind": "page",
   "id": "pg-h6eg",
   "template": { "source": "places" },
   "sections": [

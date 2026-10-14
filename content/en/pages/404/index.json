@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "kind": "page",
   "id": "pg-078h",
   "curtainText": "Not found",
   "meta": { "title": "Not found", "description": "Page not found." },

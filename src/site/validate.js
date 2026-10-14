@@ -22,7 +22,8 @@ import {
   TEMPLATE,
   isSlug,
   pageIdOf,
-  FOOTER,
+  DOC_KINDS,
+  docKindOf,
   schemaIdOf,
   sourceIdOf,
 } from './files.js';
@@ -207,12 +208,22 @@ function checkAnimations(d) {
   return out;
 }
 
-function checkPage(file, d) {
-  const out = [
-    ...optional(d, { meta: 'object', sections: 'array' }),
-    ...checkMeta(d.meta),
-    ...checkBackdrop(d.backdrop),
-  ];
+/**
+ * A document (src/site/files.js DOC_KINDS): "kind" as its file says, its sections, and what its
+ * kind has: a page its id, meta, backdrop, transition and template; a part only sections.
+ */
+function checkDoc(file, d) {
+  const kind = docKindOf(file);
+  const out = optional(d, { sections: 'array' });
+  if (d.kind !== kind)
+    out.push(`"kind" must be "${kind}" (${DOC_KINDS.join(' or ')}: this file's)`);
+  if (kind === 'part') {
+    for (const k of Object.keys(d))
+      if (k !== 'kind' && k !== 'sections')
+        out.push(`"${k}" must be left out: a part has only "sections"`);
+    return [...out, ...checkSections(d.sections)];
+  }
+  out.push(...optional(d, { meta: 'object' }), ...checkMeta(d.meta), ...checkBackdrop(d.backdrop));
   // its stable id: what links point at (its folder, the URL, can change)
   if (!isId(d.id, 'pg')) out.push('"id" must be a page id like "pg-k3x9"');
   // the grid is always COLS (120) columns: not stored
@@ -221,24 +232,16 @@ function checkPage(file, d) {
   const t = d.transition;
   if (t !== undefined && !(isObject(t) && t.preset === 'none' && Object.keys(t).length === 1))
     out.push('"transition" must be { "preset": "none" } or left out (the site\'s curtain)');
-  if (pageIdOf(file).endsWith(TEMPLATE) && typeof d.template?.source !== 'string')
+  const template = pageIdOf(file).endsWith(TEMPLATE);
+  if (template && typeof d.template?.source !== 'string')
     out.push('"template.source" must name a source (a [slug] page makes a page per item)');
   else if (isObject(d.template) && Object.keys(d.template).some((k) => k !== 'source'))
     out.push('"template" has only "source"');
-  if (!pageIdOf(file).endsWith(TEMPLATE) && d.template !== undefined)
-    out.push('"template" is only for [slug] pages');
+  if (!template && d.template !== undefined) out.push('"template" is only for [slug] pages');
   return [...out, ...checkSections(d.sections)];
 }
 
-/** The footer (settings/footer.json): only sections, checked like a page's. */
-function checkFooter(d) {
-  const out = optional(d, { sections: 'array' });
-  for (const k of Object.keys(d))
-    if (k !== 'sections') out.push(`"${k}" must be left out: the footer has only "sections"`);
-  return [...out, ...checkSections(d.sections)];
-}
-
-/** A page's (or the footer's) sections: each one, their names, links and ids. */
+/** A document's sections: each one, their names, links and ids. */
 function checkSections(sections) {
   const out = [];
   if (!Array.isArray(sections)) return out;
@@ -517,10 +520,9 @@ export function checkContent(file, data) {
         ? ['"footer" is gone: the footer is settings/footer.json, sections like a page']
         : []),
     ];
-  if (file === FOOTER) return checkFooter(d);
   if (file === PHOTOS)
     return isObject(d.photos) ? checkPhotos(d.photos) : ['"photos" must be an object'];
-  if (pageIdOf(file)) return checkPage(file, d);
+  if (docKindOf(file)) return checkDoc(file, d);
   return [];
 }
 

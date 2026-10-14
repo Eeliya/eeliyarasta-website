@@ -219,6 +219,7 @@ test('validation: the shape of bindings and items', () => {
   const ids = new Set();
   const page = (patch, type = 'heading') => ({
     version: 1,
+    kind: 'page',
     id: 'pg-t004',
 
     sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
@@ -262,10 +263,14 @@ test('Save refuses bindings that do not fit the schema', () => {
   }
   const F = 'pages/x/index.json';
   fs.mkdirSync(path.join(root, 'content/en/pages/x'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'content/en', F), '{ "version": 1, "id": "pg-xxxx" }');
+  fs.writeFileSync(
+    path.join(root, 'content/en', F),
+    '{ "version": 1, "kind": "page", "id": "pg-xxxx" }',
+  );
   const ids = new Set();
   const page = (title) => ({
     version: 1,
+    kind: 'page',
     id: 'pg-t005',
 
     sections: [

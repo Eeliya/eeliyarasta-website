@@ -160,7 +160,7 @@ site settings can live side by side):
 | file                                  | what                                                                                                                                                                                                                                                                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `content/en/settings/nav.json`        | the **menus**: the header (nav pill, dropdowns, mobile menu; see "Menu")                                                                                                                                                                                                                                          |
-| `content/en/settings/footer.json`     | the **footer**: `{ version, sections }`, sections and blocks exactly like a page's, under every page (see "Footer")                                                                                                                                                                                               |
+| `content/en/settings/footer.json`     | the **footer**: `{ version, kind: "part", sections }`, sections and blocks exactly like a page's, under every page (see "Footer")                                                                                                                                                                                 |
 | `content/en/strings.json`             | UI text of the templates: the menu button and clock labels (`nav.menu`, `nav.close`, `nav.clock`)                                                                                                                                                                                                                 |
 | `content/en/settings/site.json`       | name, the **SEO defaults** (`title`, `titleTemplate`, `description`, `ogImage`, `url`, `robots`, `lang`; see "SEO"), `forms` (where contact forms send, see "Contact form"), socials, email, `timezone` of the clock, `jobTitle` / `country` (structured data on home)                                            |
 | `content/en/settings/animations.json` | **every animation** (see below)                                                                                                                                                                                                                                                                                   |
@@ -511,8 +511,10 @@ opens in a new tab). A page or item that isn't there gives a `[links]` build war
 
 ### Footer
 
-`content/en/settings/footer.json` is the footer: `{ "version": 1, "sections": [] }`, sections of
-blocks exactly like a page's (the same grid, blocks, phone layout and motion; validated and tidied
+`content/en/settings/footer.json` is the footer: `{ "version": 1, "kind": "part", "sections": [] }`.
+Pages and the footer are one document type (`src/site/files.js` `docKindOf`, `docOf`): `"kind"` is
+`"page"` in a page file and `"part"` (a site part: only `sections`) here, and must match the file.
+Its sections are blocks exactly like a page's (the same grid, blocks, phone layout and motion; validated and tidied
 like a page's), rendered under every page by `src/site/templates/footer.js`. It starts empty
 (nothing shows). It sits outside the page's view, right after `<main>`, so page transitions swap
 the page and leave the footer be; it is in the view's layer (`.site-footer`: z-index 2, between
@@ -545,8 +547,8 @@ on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. 
 
 ### Pages and URLs
 
-Every page is a folder in `content/en/pages/`, and the folders are the URLs. Each page file has
-a stable `"id"` (`"pg-k3x9"`, given when the page is made): links point at it, so the folder can
+Every page is a folder in `content/en/pages/`, and the folders are the URLs. Each page file is a
+document of `"kind": "page"` (see "Footer") with a stable `"id"` (`"pg-k3x9"`, given when the page is made): links point at it, so the folder can
 move. A page's own file is
 `index.json` in its folder; home's folder is `content/en/pages/` itself:
 

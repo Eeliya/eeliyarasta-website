@@ -16,7 +16,7 @@ function tree(files = {}) {
   const all = {
     'settings/site.json': site,
     'settings/animations.json': animations,
-    'pages/index.json': { version: 1, id: 'pg-t041' },
+    'pages/index.json': { version: 1, kind: 'page', id: 'pg-t041' },
     'sources/people.json': { version: 1, items: [{ name: 'Noor' }] },
     ...files,
   };
@@ -77,13 +77,22 @@ test('checkContent per kind', () => {
     '"version" must be 1 (the content\'s shape)',
   ]);
   assert.deepEqual(
-    checkContent('pages/about/index.json', { version: 1, id: 'pg-t042', sections: {} }),
+    checkContent('pages/about/index.json', {
+      version: 1,
+      kind: 'page',
+      id: 'pg-t042',
+      sections: {},
+    }),
     ['"sections" must be an array, not an object'],
   );
-  assert.equal(checkContent('pages/people/[slug].json', { version: 1, id: 'pg-t043' }).length, 1);
+  assert.equal(
+    checkContent('pages/people/[slug].json', { version: 1, kind: 'page', id: 'pg-t043' }).length,
+    1,
+  );
   assert.deepEqual(
     checkContent('pages/people/[slug].json', {
       version: 1,
+      kind: 'page',
       id: 'pg-t044',
 
       template: { source: 'people' },
@@ -91,7 +100,12 @@ test('checkContent per kind', () => {
     [],
   );
   assert.equal(
-    checkContent('pages/about/index.json', { version: 1, id: 'pg-t045', template: {} }).length,
+    checkContent('pages/about/index.json', {
+      version: 1,
+      kind: 'page',
+      id: 'pg-t045',
+      template: {},
+    }).length,
     1,
   );
 });
@@ -100,7 +114,7 @@ test('save: rejects bad shapes and writes nothing', () => {
   const root = tree();
   const before = read(root, 'pages/index.json');
   const r = save(root, {
-    'pages/index.json': { version: 1, id: 'pg-t046', title: 'New' },
+    'pages/index.json': { version: 1, kind: 'page', id: 'pg-t046', title: 'New' },
     'settings/animations.json': [],
   });
   assert.equal(r.status, 400);
@@ -117,7 +131,7 @@ test('save: writes every file, formatted, with no temporary files left', () => {
   let writes = 0;
   const r = save(
     root,
-    { 'pages/index.json': { version: 1, id: 'pg-t047', title: 'New' } },
+    { 'pages/index.json': { version: 1, kind: 'page', id: 'pg-t047', title: 'New' } },
     () => writes++,
   );
   assert.equal(r.status, 200);
@@ -125,7 +139,7 @@ test('save: writes every file, formatted, with no temporary files left', () => {
   assert.equal(writes, 1);
   assert.equal(
     read(root, 'pages/index.json'),
-    '{ "version": 1, "id": "pg-t047", "title": "New" }\n',
+    '{ "version": 1, "kind": "page", "id": "pg-t047", "title": "New" }\n',
   );
   assert.deepEqual(fs.readdirSync(path.join(root, 'content/en', 'pages')), ['index.json']);
 });
@@ -147,10 +161,10 @@ test('site.json with only name and url builds every page', async () => {
   const { buildRoutes } = await import('../src/site/routes.js');
   const { renderRoute } = await import('../src/site/render.js');
   const files = {
-    'pages/index.json': { version: 1, id: 'pg-t048' },
-    'pages/about/index.json': { version: 1, id: 'pg-t049' },
-    'pages/photography/index.json': { version: 1, id: 'pg-t050' },
-    'pages/404/index.json': { version: 1, id: 'pg-t051' },
+    'pages/index.json': { version: 1, kind: 'page', id: 'pg-t048' },
+    'pages/about/index.json': { version: 1, kind: 'page', id: 'pg-t049' },
+    'pages/photography/index.json': { version: 1, kind: 'page', id: 'pg-t050' },
+    'pages/404/index.json': { version: 1, kind: 'page', id: 'pg-t051' },
   };
   const content = loadContent(tree(files));
   for (const route of buildRoutes(content).routes) {
@@ -298,6 +312,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
     {
       'pages/index.json': {
         version: 1,
+        kind: 'page',
         id: 'pg-t052',
 
         sections: [
@@ -325,7 +340,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   const home = (session) => loadContent(root, draftsFor(drafts, session)).pages.home;
   assert.equal(home('tab-a').sections[0].blocks[0].text, 'Draft');
   // only that session's preview: no marker, another tab or an unknown one get the saved file
-  const saved = { version: 1, id: 'pg-t041' };
+  const saved = { version: 1, kind: 'page', id: 'pg-t041' };
   for (const s of [null, undefined, 'tab-b', '__proto__', 'constructor'])
     assert.deepEqual(home(s), saved);
   // another tab's drafts leave tab-a's alone

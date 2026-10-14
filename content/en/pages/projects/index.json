@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "kind": "page",
   "id": "pg-cwyg",
   "curtainText": "Projects",
   "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." },

@@ -161,6 +161,7 @@ test('validation: page meta and site defaults', () => {
   assert.deepEqual(
     checkContent('pages/a/index.json', {
       version: 1,
+      kind: 'page',
       id: 'pg-t009',
 
       meta: { noindex: true, title: 'A' },
@@ -170,6 +171,7 @@ test('validation: page meta and site defaults', () => {
   assert.deepEqual(
     checkContent('pages/a/index.json', {
       version: 1,
+      kind: 'page',
       id: 'pg-t010',
 
       meta: { noindex: 'yes' },

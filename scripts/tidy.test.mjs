@@ -8,6 +8,7 @@ const F = 'pages/x/index.json';
 test('save tidies a page: no empty config or meta, an area without its defaults', () => {
   const page = {
     version: 1,
+    kind: 'page',
     id: 'pg-t100',
     meta: {},
     sections: [
@@ -43,7 +44,7 @@ test('save tidies a page: no empty config or meta, an area without its defaults'
 
 test('a [slug] page: "template" names only its source; "grid" is gone', () => {
   const T = 'pages/people/[slug].json';
-  const base = { version: 1, id: 'pg-t110', sections: [] };
+  const base = { version: 1, kind: 'page', id: 'pg-t110', sections: [] };
   const ok = { ...base, template: { source: 'people' } };
   assert.deepEqual(checkContent(T, ok), []);
   assert.deepEqual(checkContent(T, { ...ok, grid: 120 }), [
@@ -62,6 +63,7 @@ test('changes: a layout value at its default is no change (a block moved back)',
   store.load({
     [F2]: {
       version: 1,
+      kind: 'page',
       id: 'pg-t120',
       sections: [{ id: 's-t120', blocks: [{ id: 'b-t121', type: 'heading' }] }],
     },

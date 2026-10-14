@@ -195,6 +195,7 @@ test('routes: slug and title from the schema', () => {
     'pages/bands/[slug].json': { template: { source: 'bands' }, section: 'Bands' },
     'sources/bands.json': {
       version: 1,
+      kind: 'page',
       id: 'pg-t033',
 
       items: [

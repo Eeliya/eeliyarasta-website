@@ -42,19 +42,20 @@ function site(redirects = []) {
       config: { link: { href: '/people/team/#join' } },
     }),
   );
-  put('pages/404/index.json', { version: 1, id: 'pg-t404' });
+  put('pages/404/index.json', { version: 1, kind: 'page', id: 'pg-t404' });
   put(
     'pages/about/index.json',
     page('pg-abou', { type: 'button', label: 'x', config: { link: { href: '/peoples/' } } }),
   );
-  put('pages/people/index.json', { version: 1, id: 'pg-peop' });
+  put('pages/people/index.json', { version: 1, kind: 'page', id: 'pg-peop' });
   put('pages/people/[slug].json', {
     version: 1,
+    kind: 'page',
     id: 'pg-pslg',
 
     template: { source: 'people' },
   });
-  put('pages/people/team/index.json', { version: 1, id: 'pg-team' });
+  put('pages/people/team/index.json', { version: 1, kind: 'page', id: 'pg-team' });
   put('sources/people.json', {
     version: 1,
     items: [
@@ -69,6 +70,7 @@ function page(id, block) {
   const layout = { base: { col: 1, span: 24, row: 1 } };
   return {
     version: 1,
+    kind: 'page',
     id,
 
     sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', layout, ...block }] }],
