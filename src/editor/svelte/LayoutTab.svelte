@@ -35,6 +35,7 @@
   } from '../../site/layout/index.js';
   import { SCALE_TYPES, adjustOf } from '../../site/layout/type.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { COLS, MCOLS } from '../../site/layout/grid.js';
   import { nameOf } from './content-groups.js';
 
   // el: the block's element in the preview (its resolved rows), or null
@@ -157,7 +158,7 @@
 <div class="where">
   <span
     class="tf__label"
-    title={phone ? 'Phone layout (60 columns)' : 'Desktop layout (120 columns)'}
+    title={phone ? `Phone layout (${MCOLS} columns)` : `Desktop layout (${COLS} columns)`}
   >
     col {area.col} · row {area.row} · {area.span} × {area.rows}
   </span>

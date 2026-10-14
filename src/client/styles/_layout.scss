@@ -52,12 +52,12 @@
 .sec {
   // a contained section's side margins: --contain (site.json layout.contained, 115 by default:
   // src/site/layout/contain.js) columns of the full-width cell, centred, at least --pad
-  --cpad: max(var(--pad), calc((120 - var(--contain, 115)) * 100vw / 240));
-  --cell: calc((100vw - 2 * var(--cpad)) / 120);
+  --cpad: max(var(--pad), calc((var(--cols) - var(--contain, 115)) * 100vw / (2 * var(--cols))));
+  --cell: calc((100vw - 2 * var(--cpad)) / var(--cols));
   --tcell: var(--cell);
 
   display: grid;
-  grid-template-columns: repeat(120, var(--cell));
+  grid-template-columns: repeat(var(--cols), var(--cell));
   grid-template-rows: repeat(var(--frows, var(--rows)), var(--cell));
   gap: 0;
   // its columns centred (the few px left over); its rows centred when it is taller than them
@@ -67,7 +67,7 @@
   padding: 0 var(--cpad);
   scroll-margin-top: var(--header-h);
   &--full {
-    --cell: calc(100vw / 120);
+    --cell: calc(100vw / var(--cols));
 
     padding-inline: 0;
   }
@@ -198,18 +198,18 @@
   // the phone grid: 60 square columns; text scales by the 120-column cell (half of one)
   .sec {
     --cpad: var(--pad); // contained on a phone: the side margins only (no --contain)
-    --cell: calc((100vw - 2 * var(--pad)) / 60);
+    --cell: calc((100vw - 2 * var(--pad)) / var(--mcols));
     --tcell: calc(var(--cell) / 2);
 
-    grid-template-columns: repeat(60, var(--cell));
+    grid-template-columns: repeat(var(--mcols), var(--cell));
     grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
     > .blk {
-      grid-column: var(--mc, 1) / span var(--ms, 60);
+      grid-column: var(--mc, 1) / span var(--ms, var(--mcols));
       grid-row: var(--fr, var(--mr, 1)) / span var(--frs, var(--mrs, 1));
     }
   }
   .sec--full {
-    --cell: calc(100vw / 60);
+    --cell: calc(100vw / var(--mcols));
   }
   // a phone height of its own (section.phone.height): instead of the desktop's
   .sec--mh-fit,
@@ -227,7 +227,7 @@
   }
   // a placed block's columns and rows: the phone's
   .blk {
-    --p-s: var(--ms, 60);
+    --p-s: var(--ms, var(--mcols));
     --p-rs: var(--mrs, 1);
   }
   @include placed('m-');

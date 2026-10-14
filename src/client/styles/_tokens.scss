@@ -4,6 +4,9 @@ $bp-md: 900px;
 $bp-sm: 760px;
 
 :root {
+  // the square grid's columns: COLS and MCOLS in src/site/layout/grid.js (keep them equal)
+  --cols: 120;
+  --mcols: 60;
   --bg: #050505;
   --bg-2: #101010;
   --fg: #f2efe9;
