@@ -9,7 +9,7 @@ block rows), that component's own styles, read from its source and compiled in t
 | Piece | What it draws |
 | --- | --- |
 | `Panel` | the side panel: page menu, tools row, mode tabs, page tabs, scroll body, Save / Publish (`mode`, `tab`, `tabs`, `height`, `changes`) |
-| `SectionCard` | a section card on the sample page: real Section + SectionSettings, its blocks, Add block (`at`, `open`, `red`, `fields`, `rows`, `height`, `changed`, snippets `tools`, `over`, `children`) |
+| `SectionCard` | a section card on the sample page: real Section + SectionSettings, its blocks, Add block (`at`, `open`, `red`, `fields`, `rows`, `height`, `changed`, `line`, `spread`, snippets `tools`, `over`, `children`) |
 | `BlockCard` | a block's row (`block`, snippet `tools`) |
 | `Modal` | a modal shell in place: `.modal__box` + ExplorerHead, body, `foot` snippet |
 | `Compare` / `Variant` | a title and labelled variants side by side (`cols`, `width`; `label`, `note`) |

@@ -11,6 +11,9 @@
     rows    the tools on their own row under the title (the title wraps, full width)
     height  a fixed height for the card (e.g. '140px' while confirming), its content clipped
     changed the changed dot before the title
+    line    false: no line between the settings and the blocks (its space kept)
+    spread  with rows: the tools row 'left' (icons from the left edge, the switch at the right)
+            or 'even' (spread evenly across the card); default: under the title's text
 -->
 <script>
   import Section from '../../src/editor/svelte/Section.svelte';
@@ -29,6 +32,8 @@
     rows = false,
     height = '',
     changed = false,
+    line = true,
+    spread = '',
     tools,
     over,
     children,
@@ -45,6 +50,8 @@
     red && 'kit-card--red',
     rows && 'kit-card--rows',
     height && 'kit-card--fixed',
+    !line && 'kit-card--noline',
+    spread && `kit-card--${spread}`,
   ]}
   style:--card-h={height || null}
 >
@@ -138,5 +145,21 @@
   .kit-card--fixed > :global(.sec) {
     height: var(--card-h);
     overflow: hidden;
+  }
+
+  // the tools row full width: from the card's left edge, or spread evenly
+  .kit-card--left > :global(.sec > .sec__bar > .sec__toggle + *),
+  .kit-card--even > :global(.sec > .sec__bar > .sec__toggle + *) {
+    margin-left: 0;
+  }
+  .kit-card--even > :global(.sec > .sec__bar) {
+    justify-content: space-between;
+  }
+  .kit-card--even > :global(.sec > .sec__bar > :last-child) {
+    margin-left: 0;
+  }
+
+  .kit-card--noline > :global(.sec .sec__foot) {
+    border-top-color: transparent;
   }
 </style>
