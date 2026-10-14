@@ -240,22 +240,21 @@ function checkFooter(d) {
 
 /** A page's (or the footer's) sections: each one, their names, links and ids. */
 function checkSections(sections) {
-  const d = { sections };
   const out = [];
-  if (!Array.isArray(d.sections)) return out;
-  out.push(...d.sections.flatMap(checkSection));
+  if (!Array.isArray(sections)) return out;
+  out.push(...sections.flatMap(checkSection));
   // names: their anchors (ids) unique on the page, and ids at all
-  nameProblems(d.sections).forEach((p, at) => p && out.push(`section ${at + 1}: "name" ${p}`));
+  nameProblems(sections).forEach((p, at) => p && out.push(`section ${at + 1}: "name" ${p}`));
   // links: within their section, to a block that is there, no loops (layout/links.js)
   const all = new Set(
-    d.sections.flatMap((s) => (Array.isArray(s?.blocks) ? s.blocks.map((b) => b?.id) : [])),
+    sections.flatMap((s) => (Array.isArray(s?.blocks) ? s.blocks.map((b) => b?.id) : [])),
   );
-  d.sections.forEach((s, at) => {
+  sections.forEach((s, at) => {
     if (!Array.isArray(s?.blocks)) return;
     out.push(...linkProblems(s.blocks, all).map((p) => `section ${at + 1}: ${p}`));
   });
   const seen = new Set();
-  for (const id of d.sections.flatMap((s) => [s?.id, ...(s?.blocks || []).map((b) => b?.id)]))
+  for (const id of sections.flatMap((s) => [s?.id, ...(s?.blocks || []).map((b) => b?.id)]))
     if (typeof id === 'string' && seen.has(id)) out.push(`the id "${id}" is used twice`);
     else seen.add(id);
   return out;
@@ -298,8 +297,7 @@ function checkBlockLayout(b) {
     return [...out, '"layout" must be an object { base, phone? }'];
   const rows = storesRows(b);
   const part = (o, key, cols, whole) => {
-    if (!isObject(o))
-      return [`"${key}" must be an object { col, span, row, rows?, link? }`];
+    if (!isObject(o)) return [`"${key}" must be an object { col, span, row, rows?, link? }`];
     const res = [];
     const extra = Object.keys(o).filter((k) => !AREA_KEYS.includes(k) && k !== 'link');
     if (extra.length) res.push(`"${key}.${extra[0]}" must be left out (area and link only)`);

@@ -35,8 +35,7 @@ export function placeOf(pos, cols = COLS) {
 }
 
 /** Does a block's `phone` hold an area (it can hold only a link)? */
-export const hasMobileArea = (m) =>
-  !!m && ['col', 'span', 'row', 'rows'].some((k) => m[k] !== undefined);
+export const hasMobileArea = (m) => !!m && AREA_KEYS.some((k) => m[k] !== undefined);
 
 /**
  * A desktop area halved onto the phone grid: the cells it covers, half as many (its first
@@ -88,10 +87,4 @@ export function setPhone(b, patch) {
   if (Object.keys(next).length) layout.phone = next;
   else delete layout.phone;
   b.layout = layout;
-}
-/** Drop stored rows a block no longer keeps (after its size changed). */
-export function tidyRows(b) {
-  if (storesRows(b)) return;
-  if (baseOf(b).rows !== undefined) setBase(b, {});
-  if (phoneOf(b)?.rows !== undefined) setPhone(b, {});
 }

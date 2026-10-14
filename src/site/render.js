@@ -19,12 +19,10 @@ export { seoWarnings } from './seo.js';
 export { buildRedirects, pathsOf, redirectsText } from './redirects.js';
 
 /** Schema-aware checks of the pages' bindings: [{ level, message }] (layout/bindings.js). */
-export const bindingChecks = (content, files = null) =>
-  bindingProblems(content, { types: BLOCK_TYPES, pageFile, files });
+export const bindingChecks = (content) => bindingProblems(content, { types: BLOCK_TYPES });
 
 /** Blocks whose animation isn't in the library (or can't play on a block): messages. */
-export const motionChecks = (content, files = null) =>
-  motionProblems(content, { pageFile, files }).map((p) => p.message);
+export const motionChecks = (content) => motionProblems(content);
 
 /**
  * { head, body, lang } of a route; lang: <html lang>.
@@ -38,7 +36,7 @@ export function renderRoute(route, content, { editable = false } = {}) {
     renderBackdrop(ctx, page?.backdrop) + renderSections(ctx, route, file, page?.sections);
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
   const html = body(ctx, route, accent, view, file);
-  anchorClashes(route, content.pages[route.id]?.sections, html);
+  anchorClashes(route, page?.sections, html);
   return { head: head(ctx, route, accent), body: html, lang: content.site.lang || 'en' };
 }
 

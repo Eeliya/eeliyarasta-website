@@ -1,4 +1,4 @@
-/** Small page behaviours: album-card hover cycling, back-to-top, image fade-in. */
+/** Small page behaviours: album-card hover cycling, image fade-in. */
 import { finePointer } from '../lib/env.js';
 import { interactions } from '../anim/engine.js';
 

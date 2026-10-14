@@ -54,11 +54,6 @@ export function createLive(store) {
       version;
       return store.get(file, ptr);
     },
-    /** One last saved value. */
-    getBase(file, ptr) {
-      version;
-      return store.getBase(file, ptr);
-    },
     /** Does the value at file#ptr differ from the saved one? */
     changed(file, ptr) {
       version;

@@ -119,16 +119,12 @@ export function contentFromFiles(files) {
         .filter(([id]) => id),
     );
   const sources = byId(sourceIdOf, itemsOf);
-  const list = (id) => (Array.isArray(sources[id]) ? sources[id] : []);
   return {
     site: files[SITE],
     nav: files[NAV] || {},
     pages: byId(pageIdOf),
     sources,
     schemas: byId(schemaIdOf),
-    people: list('people'),
-    places: list('places'),
-    projects: list('projects'),
     animations: files[ANIMATIONS] || {},
     // { path or key: { alt, and for R2 photos width, height, srcset, color, lqip } }
     photos: files[PHOTOS]?.photos || {},

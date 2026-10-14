@@ -43,10 +43,6 @@ export function splitEdit(edit) {
   return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
 }
 
-/** The page shown in the preview ('home', 'people', ...), from its router view. */
-export const previewPage = (bridge) =>
-  bridge.doc?.querySelector('[data-router-view]')?.dataset.page;
-
 /**
  * Human label for a pointer, e.g. sources/people.json#/items/0/name -> "Noor Vermeer / Name": a
  * source item by its name and its field by the schema's label.

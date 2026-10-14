@@ -173,7 +173,6 @@ export function syncLayout(doc, store, { structure = false, root = pageView(doc)
 
   const numbers = headingNumbers(sections);
   const stale = [];
-  stale.moved = moved;
   stale.motion = [];
   const touched = { layout: false };
   sections.forEach((s, at) => {
@@ -183,7 +182,7 @@ export function syncLayout(doc, store, { structure = false, root = pageView(doc)
   });
   // the layout changed (classes, CSS variables, links, on/off, order, a section gone): the
   // rows and the scroll triggers need working out again
-  stale.layout = touched.layout || stale.moved || stale.remount || stale.motion.length > 0;
+  stale.layout = touched.layout || moved || stale.remount || stale.motion.length > 0;
   return stale;
 }
 

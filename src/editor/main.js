@@ -575,10 +575,6 @@ store.on(({ files, source: src, structure }) => {
 
 // ---------------------------------------------------------------- saving
 /**
- * Write the changed files to content/ (a draft). quiet: no toast (the publish dialog saves
- * first and shows its own result). Returns false when it failed.
- */
-/**
  * Before a Save: item pages whose path changed (a slug or name edited in a source) get a
  * redirect from the old path, and links to it follow. One undo step. Returns what changed.
  */
@@ -599,6 +595,10 @@ function followItems() {
   return { links: edits.length, added: moved.added, pruned, moves };
 }
 
+/**
+ * Write the changed files to content/ (a draft). quiet: no toast (the publish dialog saves
+ * first and shows its own result). Returns false when it failed.
+ */
 async function save({ quiet = false } = {}) {
   const followed = ui.saving ? null : followItems();
   const dirty = store.dirtyFiles();

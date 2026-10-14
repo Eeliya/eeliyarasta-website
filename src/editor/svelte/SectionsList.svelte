@@ -83,7 +83,6 @@
   );
 
   const typeOf = (b) => BLOCK_TYPES[b?.type];
-  const changed = (at, key) => live.changed(file, `/sections/${at}/${key}`);
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   function setBlockOn(at, j, on) {
     const b = sections[at].blocks[j];
@@ -206,7 +205,6 @@
         label="Delete section {at + 1}"
         onclick={() => (deleting = s.id)}
       />
-      {#if changed(at, 'enabled')}{/if}
       <input
         type="checkbox"
         class="switch"

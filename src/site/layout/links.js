@@ -23,7 +23,7 @@ const linkShape = (l) =>
     : null;
 
 /** Half a gap, for the phone grid (rounded half away from zero, so -3 -> -2 like 3 -> 2). */
-export const halfGap = (g) => Math.sign(g) * Math.round(Math.abs(g) / 2);
+const halfGap = (g) => Math.sign(g) * Math.round(Math.abs(g) / 2);
 
 /** The link a block follows on the desktop grid, or on the phone grid (`phone`); null: free. */
 export function linkOf(b, phone = false) {

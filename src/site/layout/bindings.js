@@ -19,14 +19,12 @@
  * source field types (src/site/schemas.js) fit each block field type.
  */
 import { schemaOf } from '../schemas.js';
+import { pageFile } from '../files.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /** { "bind": "<field>" } */
 export const isBinding = (v) => isObject(v) && typeof v.bind === 'string';
-
-/** A value that comes from the item: { bind }. */
-export const isBound = isBinding;
 
 /** Block field types -> the source field types (schemas.js) that fit a { bind }. */
 export const BIND_TYPES = {
@@ -119,8 +117,8 @@ export function resolve(
 const hasBindings = (block, t) =>
   [...(t?.fields || []).map((f) => block?.[f.key]), ...Object.values(block?.config || {})].some(
     (v) =>
-      isBound(v) ||
-      (Array.isArray(v) && v.some((e) => isObject(e) && Object.values(e).some(isBound))),
+      isBinding(v) ||
+      (Array.isArray(v) && v.some((e) => isObject(e) && Object.values(e).some(isBinding))),
   );
 
 /**
@@ -180,7 +178,7 @@ function bindingsOf(block, t) {
  * 'warn': a block's item that isn't in its source, a binding without an item (it renders
  * empty). files: only pages of these files (all: null).
  */
-export function bindingProblems(content, { types, pageFile, files = null }) {
+export function bindingProblems(content, { types, files = null }) {
   const out = [];
   for (const [id, page] of Object.entries(content?.pages || {})) {
     const file = pageFile(id);

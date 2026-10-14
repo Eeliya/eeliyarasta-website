@@ -25,6 +25,7 @@
  * data-anim-parts (JSON) on the block's element. `anim` is left out when only parts are set.
  */
 import { esc } from '../helpers.js';
+import { pageFile } from '../files.js';
 
 /** The values a block (or any element) may set for itself: when and how fast, not what. */
 export const TIMING_KEYS = [
@@ -91,9 +92,9 @@ function timingProblems(t, pre) {
 
 /**
  * Blocks whose animation isn't in the library, or can't play on a block:
- * [{ file, message }]. content: loadContent()'s; files: only these page files (null: all).
+ * messages. content: loadContent()'s; files: only these page files (null: all).
  */
-export function motionProblems(content, { pageFile, files = null } = {}) {
+export function motionProblems(content, { files = null } = {}) {
   const presets = content.animations?.presets || {};
   const out = [];
   for (const [id, page] of Object.entries(content.pages || {})) {
@@ -106,19 +107,15 @@ export function motionProblems(content, { pageFile, files = null } = {}) {
         if (isObject(parts))
           for (const [name, p] of Object.entries(parts))
             if (typeof p?.preset === 'string' && !presets[p.preset])
-              out.push({
-                file,
-                message: `${where}: part "${name}" uses unknown animation "${p.preset}"`,
-              });
+              out.push(`${where}: part "${name}" uses unknown animation "${p.preset}"`);
         const anim = b?.motion?.anim;
         if (typeof anim !== 'string') return;
         const p = presets[anim];
-        if (!p) out.push({ file, message: `${where}: unknown animation "${anim}"` });
+        if (!p) out.push(`${where}: unknown animation "${anim}"`);
         else if (!BLOCK_ANIM_TYPES.includes(p.type))
-          out.push({
-            file,
-            message: `${where}: the animation "${anim}" (${p.type}) needs its own markup, not a block`,
-          });
+          out.push(
+            `${where}: the animation "${anim}" (${p.type}) needs its own markup, not a block`,
+          );
       }),
     );
   }

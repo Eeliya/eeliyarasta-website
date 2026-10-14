@@ -72,14 +72,7 @@ export function resolve(id, el) {
     console.warn(`[anim] "${key || id}" uses unknown preset "${presetName}"`);
     return null;
   }
-  let inline = null;
-  if (el?.dataset.animOptions) {
-    try {
-      inline = JSON.parse(el.dataset.animOptions);
-    } catch {
-      /* ignore */
-    }
-  }
+  const inline = parse(el?.dataset.animOptions);
   // target and own may name a preset: that was resolved above, the rest overrides it
   return merge(preset, target, own, inline, {
     id,

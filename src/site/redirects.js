@@ -157,14 +157,13 @@ export function itemMoves(before, after) {
   const items = (files) => getRoutes(contentFromFiles(files)).filter((r) => r.album);
   const now = items(after);
   const paths = new Set(now.map((r) => r.path));
-  const nameOf = (r) => r.name;
   const moves = new Map();
   for (const r of items(before)) {
     if (paths.has(r.path)) continue;
     const same = now.filter((n) => n.id === r.id);
     const match =
       same.find((n) => n.album?.id && n.album.id === r.album?.id) ||
-      same.find((n) => nameOf(n) !== undefined && nameOf(n) === nameOf(r)) ||
+      same.find((n) => n.name !== undefined && n.name === r.name) ||
       same.find((n) => n.index === r.index);
     if (match && !moves.has(r.path)) moves.set(r.path, match.path);
   }

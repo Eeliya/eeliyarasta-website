@@ -26,12 +26,12 @@
  * "robots": "noindex") get <meta name="robots" content="noindex"> and stay out of sitemap.xml.
  */
 import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
-import { coverOf, itemSlug } from './helpers.js';
+import { coverOf, itemSlug, pointer } from './helpers.js';
 import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
 import { blocksOf } from './layout/ids.js';
-import { isBound } from './layout/bindings.js';
+import { isBinding } from './layout/bindings.js';
 
 /** Curtain label shown during page transitions. Explicit "" means no text; missing falls back to the title. */
 function curtainOf(explicit, title) {
@@ -42,10 +42,7 @@ function curtainOf(explicit, title) {
 }
 
 /** Edit pointer ("file#/json/pointer") of a page value, e.g. its curtain text. */
-function curtainEditOf(file, parts) {
-  const ptr = parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
-  return `${file}#${ptr}`;
-}
+const curtainEditOf = (file, parts) => `${file}#${pointer(parts)}`;
 
 /** Views (style hooks) of pages named after them. */
 export const NAMED_VIEWS = {
@@ -66,7 +63,7 @@ export const pathOfId = (id) =>
 export const pageTitle = (page) => {
   const title = blocksOf(page).find((b) => b?.type === 'heading')?.title;
   // a bound title (layout/bindings.js) names the item, not the page
-  return typeof title === 'string' && !isBound(title) ? title : undefined;
+  return typeof title === 'string' && !isBinding(title) ? title : undefined;
 };
 
 /** "photo-walks" → "Photo Walks": a name from a slug. */

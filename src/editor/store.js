@@ -152,7 +152,6 @@ export function createStore() {
       ),
     /** Leaf changes per file, for the "changes" list. */
     changes: (file) => diff(tidy(file, base[file]), tidy(file, current[file])),
-    serialize: (file) => formatJSON(current[file]),
 
     /** The source now holds `files` (after a save): they become the new base. */
     markSaved(files) {

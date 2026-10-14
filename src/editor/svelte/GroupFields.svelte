@@ -25,7 +25,7 @@
   import { pairedHalves } from './source-items.js';
   import ItemPicker from './ItemPicker.svelte';
   import { sourceFile } from '../../site/files.js';
-  import { isBound } from '../../site/layout/bindings.js';
+  import { isBinding } from '../../site/layout/bindings.js';
 
   let { g, live, bridge, sourceIds, onsource, bindings = null, lead } = $props();
 
@@ -79,8 +79,8 @@
     const structure =
       f.type === 'boolean' ||
       f.type === 'select' ||
-      isBound(value) ||
-      isBound(live.get(f.file, f.ptr));
+      isBinding(value) ||
+      isBinding(live.get(f.file, f.ptr));
     const typed = f.type !== 'boolean' && f.type !== 'select' && typeof value !== 'object';
     live.store.set(f.file, f.ptr, value, {
       source: 'panel',

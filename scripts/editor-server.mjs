@@ -390,10 +390,7 @@ function albumBlock(root, source, ids) {
 function motionErrors(root, files) {
   const names = Object.keys(files);
   const content = loadContent(root, files);
-  return motionProblems(content, {
-    pageFile,
-    files: names.includes(ANIMATIONS) ? null : new Set(names),
-  }).map((p) => p.message);
+  return motionProblems(content, { files: names.includes(ANIMATIONS) ? null : new Set(names) });
 }
 
 /**
@@ -407,7 +404,6 @@ function bindingErrors(root, files) {
   const content = loadContent(root, files);
   return bindingProblems(content, {
     types: BLOCK_TYPES,
-    pageFile,
     files: all ? null : new Set(names),
   })
     .filter((p) => p.level === 'error')

@@ -5,7 +5,6 @@
   tabs and the Animations library. .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
 
     title     the bar title (small caps)
-    icon      optional: a Font Awesome icon name before the title (a page section's type)
     name      optional: what it is, on a second line in the accent color
               ("Page transition" / "Curtain")
     key       remembers open/closed in ui.sections (also kept across a refresh, persist.js),
@@ -35,7 +34,6 @@
 
   let {
     title,
-    icon = '',
     name = '',
     key = '',
     open = true,
@@ -110,7 +108,6 @@
     >
       <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
       <span class={[dim && 'sec__title--dim']}>
-        {#if icon}<i class="fa-solid fa-{icon} sec__icon" aria-hidden="true"></i>{/if}
         {title}
       </span>
       {#if name}<strong>{name}</strong>{/if}
@@ -143,11 +140,6 @@
     &.is-danger {
       border-color: var(--c-danger);
     }
-
-    &:first-of-type {
-      // border-top-color: transparent;
-      // padding-top: 0;
-    }
   }
 
   // the toggle, then on the right whatever the `bar` snippet adds; every item is 20px tall
@@ -178,7 +170,6 @@
     z-index: 1;
     margin: -8px 0;
     padding: var(--space-2);
-    // background: var(--c-surface);
   }
 
   // caret | title, with the name under the title
@@ -233,12 +224,6 @@
 
   .sec__title--dim {
     color: var(--c-text-faint);
-  }
-
-  .sec__icon {
-    width: 16px;
-    margin-right: var(--space-1);
-    text-align: center;
   }
 
   // the body's row: open 1fr, closed (inert) 0fr; the bar's gap is the inner's padding, so

@@ -13,7 +13,13 @@
   import Field from './Field.svelte';
   import PhotoList from './PhotoList.svelte';
   import { openMedia } from './media.svelte.js';
-  import { BACKDROP_DEFAULTS, SHADE_MAX } from '../../site/backdrop.js';
+  import {
+    BACKDROP_DEFAULTS,
+    DIRECTIONS,
+    SHADE_MAX,
+    THROUGH,
+    TRANSITIONS,
+  } from '../../site/backdrop.js';
 
   let { live, file } = $props();
 
@@ -25,7 +31,18 @@
   });
   const photos = $derived(Array.isArray(b.photos) ? [...b.photos] : []);
   const has = $derived(photos.some(Boolean));
-  const transition = $derived(b.transition === 'fade' ? 'fade' : 'scroll');
+  // a stored value, or its default when it isn't one of the choices
+  const valueOf = (key, list) => (list.includes(b[key]) ? b[key] : BACKDROP_DEFAULTS[key]);
+  const LABELS = {
+    scroll: 'Scroll',
+    fade: 'Fade',
+    none: 'Direct',
+    black: 'Through black',
+    vertical: 'Vertical',
+    horizontal: 'Horizontal',
+  };
+  const options = (list) => list.map((v) => [v, LABELS[v]]);
+  const transition = $derived(valueOf('transition', TRANSITIONS));
   const on = $derived(b.enabled !== false);
   const shade = $derived(
     Math.round((typeof b.shade === 'number' ? b.shade : BACKDROP_DEFAULTS.shade) * 100),
@@ -66,9 +83,7 @@
   }
 
   const name = $derived(
-    has
-      ? `${photos.length} photo${photos.length === 1 ? '' : 's'} · ${transition === 'fade' ? 'Fade' : 'Scroll'}`
-      : '',
+    has ? `${photos.length} photo${photos.length === 1 ? '' : 's'} · ${LABELS[transition]}` : '',
   );
 </script>
 
@@ -132,15 +147,7 @@
   </PhotoList>
   {#if has}
     <hr class="bd__line" />
-    {@render choice(
-      'transition',
-      'Transition',
-      [
-        ['scroll', 'Scroll'],
-        ['fade', 'Fade'],
-      ],
-      transition,
-    )}
+    {@render choice('transition', 'Transition', options(TRANSITIONS), transition)}
     <!-- the dim over the photos, for both transitions; the value has a fixed width -->
     <div class={['tf', changed('shade') && 'is-changed']}>
       <span class="tf__label">Shade</span>
@@ -161,15 +168,7 @@
     <!-- the transition's options: one slot of a fixed height (a choice, then a 40px row) -->
     <div class="bd__slot">
       {#if transition === 'fade'}
-        {@render choice(
-          'through',
-          'Fade',
-          [
-            ['none', 'Direct'],
-            ['black', 'Through black'],
-          ],
-          b.through === 'none' ? 'none' : 'black',
-        )}
+        {@render choice('through', 'Fade', options(THROUGH), valueOf('through', THROUGH))}
         <div class="bd__pair">
           <Field
             edit="{file}#/backdrop/parallax"
@@ -192,11 +191,8 @@
         {@render choice(
           'direction',
           'Direction',
-          [
-            ['vertical', 'Vertical'],
-            ['horizontal', 'Horizontal'],
-          ],
-          b.direction === 'horizontal' ? 'horizontal' : 'vertical',
+          options(DIRECTIONS),
+          valueOf('direction', DIRECTIONS),
         )}
         <p class="hint small bd__note">
           The photos scroll by with the page; the last is fully in view at its end.

@@ -11,7 +11,6 @@
     addLabel  the Add button's text
     onmove(from, to), onremove(i), onadd()
     item      snippet (item, i): the item's fields
-    extra     snippet (item, i): more buttons in the item's bar
 -->
 <script>
   import { tick } from 'svelte';
@@ -27,7 +26,6 @@
     onremove,
     onadd,
     item,
-    extra,
   } = $props();
 
   let list = $state();
@@ -77,7 +75,6 @@
             ><i class="fa-solid fa-grip-vertical" aria-hidden="true"></i></button
           >
           <span class="lf__name">{name(it, i)}</span>
-          {@render extra?.(it, i)}
           <Button
             size="small"
             icon="xmark"

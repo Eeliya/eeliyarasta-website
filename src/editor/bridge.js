@@ -15,7 +15,6 @@
  *    its field in the panel shows the binding.
  */
 import { withDraft } from './source.js';
-import { parse } from './lib/pointer.js';
 import { words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
@@ -86,9 +85,6 @@ export function createBridge({ store, labelFor }) {
     },
     get doc() {
       return doc;
-    },
-    get mode() {
-      return mode;
     },
     get selected() {
       return selected;
@@ -628,6 +624,5 @@ export function createBridge({ store, labelFor }) {
     },
   };
 
-  bridge.parsePtr = parse;
   return bridge;
 }

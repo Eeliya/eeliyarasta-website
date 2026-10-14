@@ -57,7 +57,7 @@ import { esc, ed, editable, pointer, slugify, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
-import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
+import { isBinding, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
 import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, scaled } from './type.js';
@@ -65,7 +65,6 @@ import { adjustOf, scaled } from './type.js';
 export {
   COLS,
   MCOLS,
-  cellOf,
   halfArea,
   hasMobileArea,
   phoneAreaOf,
@@ -75,9 +74,8 @@ export {
   setBase,
   setPhone,
   storesRows,
-  tidyRows,
 } from './grid.js';
-export { linkOf, linkProblems, makesLoop, halfGap } from './links.js';
+export { linkOf, linkProblems, makesLoop } from './links.js';
 /** A section's minimum height: its content, or a third, a half or all of the screen's. */
 export const HEIGHTS = ['custom', 'fit', 'third', 'half', 'full'];
 /** The most rows a custom height can ask for. */
@@ -147,7 +145,13 @@ export function newSection(taken, blocks = []) {
 /** The rows a section has: down to its lowest block (1 when it has none). */
 export function rowsOf(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
-  return Math.max(1, ...blocks.map((b) => placeOf(baseOf(b)).row + placeOf(baseOf(b)).rows - 1));
+  return Math.max(
+    1,
+    ...blocks.map((b) => {
+      const p = placeOf(baseOf(b));
+      return p.row + p.rows - 1;
+    }),
+  );
 }
 
 /**
@@ -316,7 +320,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
     number: numbers[block.id] || 0,
     ed: (path, type) => {
       const value = [path].flat().reduce((v, k) => v?.[k], block);
-      if (!isBound(value)) return ed(file, parts(path), type);
+      if (!isBinding(value)) return ed(file, parts(path), type);
       return editable ? bound(value, path) : '';
     },
   };

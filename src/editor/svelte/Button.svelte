@@ -8,7 +8,6 @@
               background, a little dim, brighter on hover; with aria-pressed it is a toggle,
               --c-accent while on. label is its aria-label and title
     label     the text when there are no children
-    href      renders an <a> instead of a <button>
   Also disabled, type ('button'), title, onclick; anything else (aria-*, data-*, attachments)
   goes on the element. Hover only brightens the background; nothing moves.
 -->
@@ -19,7 +18,6 @@
     icon = '',
     iconOnly = false,
     label = '',
-    href,
     disabled = false,
     type = 'button',
     title,
@@ -42,27 +40,15 @@
   {#if !iconOnly}{#if children}{@render children()}{:else}{label}{/if}{/if}
 {/snippet}
 
-{#if href}
-  <a
-    class={classes}
-    href={disabled ? undefined : href}
-    aria-disabled={disabled || undefined}
-    aria-label={name}
-    title={title ?? name}
-    {onclick}
-    {...rest}>{@render content()}</a
-  >
-{:else}
-  <button
-    {type}
-    class={classes}
-    {disabled}
-    aria-label={name}
-    title={title ?? name}
-    {onclick}
-    {...rest}>{@render content()}</button
-  >
-{/if}
+<button
+  {type}
+  class={classes}
+  {disabled}
+  aria-label={name}
+  title={title ?? name}
+  {onclick}
+  {...rest}>{@render content()}</button
+>
 
 <style lang="scss">
   .btn {

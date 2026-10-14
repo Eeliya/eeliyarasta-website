@@ -14,17 +14,16 @@ import { newBlock, newSection, renderSections } from '../src/site/layout/index.j
 import {
   bindTypeOf,
   bindingProblems,
-  isBound,
+  isBinding,
   itemOf,
   resolve,
   resolveBlock,
 } from '../src/site/layout/bindings.js';
-import { pageFile } from '../src/site/files.js';
 import { createStore } from '../src/editor/store.js';
 
 const content = loadContent('.');
 const { routes } = buildRoutes(content);
-const noor = content.people.find((p) => p.slug === 'noor-vermeer');
+const noor = content.sources.people.find((p) => p.slug === 'noor-vermeer');
 const keys = new Set(['title', 'role', 'year', 'body', 'images']);
 const warnings = () => {
   const list = [];
@@ -98,11 +97,11 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
   assert.equal(bindTypeOf(BLOCK_TYPES.hero.fields.find((f) => f.key === 'photos')), 'photos');
   assert.equal(bindTypeOf(BLOCK_TYPES.about.fields.find((f) => f.key === 'body')), null);
   assert.equal(bindTypeOf({ key: 'link', type: 'link' }, { config: true }), 'link');
-  assert.ok(isBound({ bind: 'a' }) && !isBound('{{a}}') && !isBound(''));
+  assert.ok(isBinding({ bind: 'a' }) && !isBinding('{{a}}') && !isBinding(''));
 });
 
 test('item resolution: the block item, else the [slug] page item', () => {
-  const daan = content.people.find((p) => p.slug === 'daan-okafor');
+  const daan = content.sources.people.find((p) => p.slug === 'daan-okafor');
   assert.deepEqual(itemOf(content, {}, { item: { source: 'people', id: 'p-3pdk' } }), {
     item: daan,
     source: 'people',
@@ -199,7 +198,7 @@ test('bindingProblems: schema-aware errors and warnings', () => {
       },
     },
   };
-  const out = bindingProblems(c, { types: BLOCK_TYPES, pageFile });
+  const out = bindingProblems(c, { types: BLOCK_TYPES });
   const at = (j) => out.filter((p) => p.message.includes(`blocks/${j})`)).map((p) => p.level);
   assert.deepEqual(at(0), []);
   assert.deepEqual(at(1), ['error']);

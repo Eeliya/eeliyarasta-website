@@ -26,10 +26,7 @@ const pageWith = (motion) => ({
   sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'text', text: 'x', motion }] }],
 });
 const problems = (motion) =>
-  motionProblems(
-    { animations: content.animations, pages: { t: pageWith(motion) } },
-    { pageFile: (id) => `pages/${id}/index.json` },
-  ).map((p) => p.message);
+  motionProblems({ animations: content.animations, pages: { t: pageWith(motion) } });
 
 test('checkMotion: an animation id and only timing keys of the right kind', () => {
   assert.deepEqual(checkMotion({ anim: 'fade-in' }), []);
