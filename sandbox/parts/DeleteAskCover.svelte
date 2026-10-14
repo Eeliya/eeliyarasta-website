@@ -5,19 +5,37 @@
 <script>
   import Button from '../../src/editor/svelte/Button.svelte';
 
-  let { text, band = true } = $props(); // band: false, no solid band: the dim is the only background
+  // band: false, no solid band (the dim the only background); pinned: the message at the top,
+  // Cancel / Delete at the overlay's bottom, one padding (pad) all round; dim: its % of --c-card
+  let { text, band = true, pinned = false, dim = 65, pad = '12px' } = $props();
 </script>
 
-<div class="kit-over cover" role="alertdialog" aria-label={text}>
-  <div class={['cover__band', !band && 'cover__band--flat']}>
+{#if pinned}
+  <div
+    class="kit-over cover cover--pinned"
+    role="alertdialog"
+    aria-label={text}
+    style:--dim="{dim}%"
+    style:--pad={pad}
+  >
     <p class="cover__msg">{text}</p>
     <span class="cover__btns">
       <Button size="small">Cancel</Button>
       <Button size="small" variant="danger" icon="trash">Delete</Button>
     </span>
   </div>
-  <span class="cover__dim" aria-hidden="true"></span>
-</div>
+{:else}
+  <div class="kit-over cover" role="alertdialog" aria-label={text}>
+    <div class={['cover__band', !band && 'cover__band--flat']}>
+      <p class="cover__msg">{text}</p>
+      <span class="cover__btns">
+        <Button size="small">Cancel</Button>
+        <Button size="small" variant="danger" icon="trash">Delete</Button>
+      </span>
+    </div>
+    <span class="cover__dim" aria-hidden="true"></span>
+  </div>
+{/if}
 
 <style lang="scss">
   .cover:has(.cover__band--flat) {
@@ -67,5 +85,12 @@
   .cover__dim {
     flex: 1;
     background: color-mix(in srgb, var(--c-card) 65%, transparent);
+  }
+
+  .cover--pinned {
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--pad);
+    background: color-mix(in srgb, var(--c-card) var(--dim), transparent);
   }
 </style>
