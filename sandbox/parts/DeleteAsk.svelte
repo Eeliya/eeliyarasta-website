@@ -1,10 +1,10 @@
 <!-- mock: a section's delete question over its card (the kit's SectionCard `over`).
      bar: only the header's height, in one row; look: solid | blur (Eeliya's exception: a
-     backdrop blur under a light tint) -->
+     backdrop blur under a light tint); trash: where the trash icon goes, 'title' or 'button' (in Delete) -->
 <script>
   import Button from '../../src/editor/svelte/Button.svelte';
 
-  let { bar = false, look = 'solid', name = 'Section 6', blocks = 2 } = $props();
+  let { bar = false, look = 'solid', name = 'Section 6', blocks = 2, trash = 'title' } = $props();
 </script>
 
 <div
@@ -12,14 +12,14 @@
   role="alertdialog"
   aria-label="Delete {name}?"
 >
-  <span class="ask__icon"><i class="fa-solid fa-trash"></i></span>
+  {#if trash === 'title'}<span class="ask__icon"><i class="fa-solid fa-trash"></i></span>{/if}
   <p class="ask__msg">
     {#if bar}Delete {name}?{:else}Delete <b>{name}</b> and its {blocks} blocks?{/if}
   </p>
   {#if !bar}<p class="ask__sub">Undo brings it back.</p>{/if}
   <span class="ask__btns">
     <Button size="small">Cancel</Button>
-    <Button size="small" variant="danger">Delete</Button>
+    <Button size="small" variant="danger" icon={trash === 'button' ? 'trash' : ''}>Delete</Button>
   </span>
 </div>
 
