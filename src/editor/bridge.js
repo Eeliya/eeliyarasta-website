@@ -403,7 +403,7 @@ export function createBridge({ store, labelFor }) {
   function attachListeners() {
     const style = doc.createElement('style');
     style.id = '__ed-style';
-    // (its colours: ui-tokens.js, the same as the editor's styles/_tokens.scss)
+    // (its colours: ui-tokens.js, read from the editor's styles/_tokens.scss)
     style.textContent = INJECTED_CSS;
     doc.head.append(style);
     const mk = (cls) => {

@@ -1,17 +1,11 @@
 /**
  * The editor's tokens for CSS it injects into the preview (overlay.js's Shadow DOM, bridge.js's
- * <style>), where the editor's stylesheet doesn't reach: the same values as
- * styles/_tokens.scss (scripts/ui-tokens.test.mjs keeps them in step).
+ * <style>), where the editor's stylesheet doesn't reach. Read from the token files themselves
+ * (styles/_tokens.scss over the site's src/client/styles/_tokens.scss), so they are the one
+ * source: no copy here.
  */
-export const T = {
-  accent: '#3cf', // --c-accent (--cyan-400)
-  accentRgb: '51 204 255', // the accent as rgb channels, for its tints
-  onAccent: '#000', // --c-on-accent
-  error: '#ff8a7a', // --c-error (--red-300)
-  white: '#fff', // --white
-  black: '#000', // --black
-  font: "'DM Mono', ui-monospace, monospace", // the site's --f-mono
-  fsXs: '10px', // --fs-xs
-  radiusXs: '2px', // --radius-xs
-  radiusSm: '4px', // --radius-sm
-};
+import site from '../client/styles/_tokens.scss?raw';
+import editor from './styles/_tokens.scss?raw';
+import { uiTokens } from './lib/css-tokens.js';
+
+export const T = uiTokens(site, editor);

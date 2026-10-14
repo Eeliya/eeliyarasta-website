@@ -5,8 +5,8 @@
 //   semantic    what components use: --c-* colours, --space-*, --radius-*, --fs-*, --size-*
 // Builds on the site's tokens (src/client/styles/_tokens.scss: --fg, --line, fonts, easing).
 // Raw hex colours and px font sizes are only allowed in token files (stylelint
-// local/no-raw-tokens). The preview's injected CSS (overlay.js, bridge.js) takes its values
-// from ../ui-tokens.js, which mirrors the accent and overlay colours here.
+// local/no-raw-tokens). The preview's injected CSS (overlay.js, bridge.js) reads its values
+// from this file (../ui-tokens.js, lib/css-tokens.js): keep them plain declarations.
 :root {
   // ---- primitives: greys (named by their hex level)
   --white: #fff;
