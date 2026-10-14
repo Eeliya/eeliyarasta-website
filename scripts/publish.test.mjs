@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { useTestEnv } from './git-env.mjs';
+import { useTestEnv } from './test-layout.mjs';
 import { contentStatus, publish } from './editor-server.mjs';
 
 // Run from a git hook (pre-push), GIT_DIR & co. point at the real repo: every git here (and the

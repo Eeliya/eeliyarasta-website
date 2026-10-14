@@ -1,5 +1,6 @@
 /**
- * Regression: tests that run git (publish.test.mjs) never touch the repo a hook points at.
+ * Regression: tests that run git (publish.test.mjs) and the editor's git never touch the repo a
+ * hook points at.
  * The pre-push hook runs `npm test` with GIT_DIR (and GIT_INDEX_FILE, GIT_WORK_TREE) set to the
  * repo being pushed; publish.test.mjs once re-initialised that repo (core.bare=true), set a
  * "Test" identity in its config and committed onto the pushed branch.
@@ -9,12 +10,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { REPO_VARS, repoEnv, testEnv } from './git-env.mjs';
+import { execFileSync } from 'node:child_process';
+import { REPO_VARS, repoEnv } from './git-env.mjs';
+import { testEnv } from './test-layout.mjs';
 
-// fileURLToPath, not URL.pathname: on Windows that is "/S:/…", a cwd spawn can't use (ENOENT)
-const here = path.dirname(fileURLToPath(import.meta.url));
 const git = (cwd, ...args) =>
   execFileSync('git', args, { cwd, env: testEnv(), encoding: 'utf8' }).trim();
 
@@ -29,7 +28,7 @@ test('repoEnv / testEnv drop the variables that choose a repo', () => {
   assert.equal(t.GIT_AUTHOR_NAME, 'Test');
 });
 
-test('publish.test.mjs under a hook environment leaves the hook repo untouched', () => {
+test('git run as tests and Publish run it, under a hook environment, leaves the hook repo untouched', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sentinel-'));
   git(dir, 'init', '-q', '-b', 'main');
   fs.writeFileSync(path.join(dir, 'keep.txt'), 'sentinel\n');
@@ -46,9 +45,6 @@ test('publish.test.mjs under a hook environment leaves the hook repo untouched',
     files: fs.readdirSync(dir).sort().join(),
   });
   const before = snapshot();
-  // NODE_TEST_CONTEXT (set for this file by the test runner) would make the child report to us
-  // and exit 0 whatever happens: run it as a test run of its own
-  const { NODE_TEST_CONTEXT: _, ...base } = process.env; // eslint-disable-line no-unused-vars
   // what git exports to a hook: GIT_DIR alone (absolute, as in a linked worktree), and with the
   // index and work tree too
   const hooks = [
@@ -56,15 +52,24 @@ test('publish.test.mjs under a hook environment leaves the hook repo untouched',
     { GIT_DIR: gitDir, GIT_INDEX_FILE: path.join(gitDir, 'index'), GIT_WORK_TREE: dir },
   ];
   for (const vars of hooks) {
-    const r = spawnSync(process.execPath, ['--test', path.join(here, 'publish.test.mjs')], {
-      cwd: path.dirname(here),
-      env: { ...base, ...vars, GIT_PREFIX: '' },
+    const hook = { ...process.env, ...vars, GIT_PREFIX: '' };
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hooked-'));
+    // a test's git (testEnv, as publish.test.mjs's useTestEnv): what once rewrote the hook repo
+    const t = (...args) =>
+      execFileSync('git', args, { cwd: tmp, env: testEnv(hook), encoding: 'utf8' }).trim();
+    t('init', '-q', '-b', 'main');
+    t('config', 'user.name', 'Test');
+    fs.writeFileSync(path.join(tmp, 'x.txt'), 'x\n');
+    t('add', '.');
+    t('commit', '-qm', 'x');
+    assert.equal(fs.realpathSync(t('rev-parse', '--show-toplevel')), fs.realpathSync(tmp));
+    // the editor's git (repoEnv): the repo of its cwd
+    const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: tmp,
+      env: repoEnv(hook),
       encoding: 'utf8',
-    });
-    // a spawn that failed (r.error: ENOENT, a timeout …) says why
-    assert.equal(r.error, undefined, `spawn failed: ${r.error?.code} ${r.error?.message}`);
-    assert.equal(r.status, 0, `status ${r.status} signal ${r.signal}\n${r.stdout}${r.stderr}`);
-    assert.match(r.stdout, /^# pass 1$/m);
+    }).trim();
+    assert.equal(fs.realpathSync(top), fs.realpathSync(tmp));
     assert.deepEqual(snapshot(), before, Object.keys(vars).join());
   }
 });
