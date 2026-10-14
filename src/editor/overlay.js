@@ -55,9 +55,10 @@ import {
   sizeOf,
 } from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
+import { PHONE_MAX } from '../site/layout/grid.js';
 import { T } from './ui-tokens.js';
 
-const MOBILE = 760;
+const MOBILE = PHONE_MAX;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 /** How far a link circle sits outside its block's edge, px (clear of the n / s handles). */
 const DOT = 12;

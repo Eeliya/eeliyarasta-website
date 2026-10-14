@@ -13,6 +13,7 @@ import {
   firstPhotos,
   ed,
   coverOf,
+  sizes,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
 import { hrefOf } from '../hrefs.js';
@@ -39,7 +40,7 @@ const heroPhoto = (ctx, b, p, i) => {
   >
     <span class="scatter__drift"
       ><span class="scatter__frame">
-        ${img(ctx, p.src, { decorative: true, sizes: `(max-width: 760px) ${mobile ? ph.w : 30}vw, ${p.w}vw`, ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
+        ${img(ctx, p.src, { decorative: true, sizes: sizes(`${mobile ? ph.w : 30}vw`, `${p.w}vw`), ...firstPhotos(i), attrs: b.ed(['photos', i, 'src'], 'image') })}
       </span></span
     >
   </a>`;
@@ -112,7 +113,7 @@ const photoTiles = (ctx, source, items, layout) => {
     ${interleave(items).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
-        <span class="tile__media">${img(ctx, image, { sizes: '(max-width: 760px) 50vw, 25vw' })}</span>
+        <span class="tile__media">${img(ctx, image, { sizes: sizes('50vw', '25vw') })}</span>
         <span class="tile__cap"><span${ed(sourceFile(source), ['items', at, title])}>${esc(item[title])}</span><span>${pad(index + 1)}</span></span>
       </a>`,
     )}
@@ -128,7 +129,7 @@ const placeCards = (ctx, source, items, layout) =>
       const cover = coverOf(p);
       return html`
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
-        <span class="placecard__media">${cover ? img(ctx, cover, { sizes: '(max-width: 760px) 100vw, 50vw', attrs: 'data-anim="place.card.image"' }) : ''}</span>
+        <span class="placecard__media">${cover ? img(ctx, cover, { sizes: sizes('100vw', '50vw'), attrs: 'data-anim="place.card.image"' }) : ''}</span>
         <span class="placecard__info">
           <span class="placecard__name"${ed(sourceFile(source), ['items', i, 'title'])}>${esc(p.title)}</span>
           <span class="label"><span${ed(sourceFile(source), ['items', i, 'location'])}>${esc(p.location)}</span> · <span${ed(sourceFile(source), ['items', i, 'year'], 'number')}>${esc(p.year)}</span> · ${pad(imagesOf(p).length)} photos</span>

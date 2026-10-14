@@ -18,6 +18,7 @@ import {
   ed,
   lines,
   imagesOf,
+  sizes,
 } from '../helpers.js';
 
 export const album = {
@@ -100,7 +101,7 @@ function albumOf(s, ctx, route, b) {
             aria-label="${i + 1} of ${n}"
             ${i === 0 ? '' : ' aria-hidden="true"'}
           >
-            ${img(ctx, im, { sizes: '(max-width: 760px) 100vw, 70vw', priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
+            ${img(ctx, im, { sizes: sizes('100vw', '70vw'), priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
           </figure>`,
       )}
       <button
@@ -163,7 +164,7 @@ function albumOf(s, ctx, route, b) {
           >
             <span class="gcell__num">${pad(i + 1)}</span>
             <span class="gcell__media"
-              >${img(ctx, im, { sizes: '(max-width: 760px) 50vw, 20vw', attrs: photo(i) })}</span
+              >${img(ctx, im, { sizes: sizes('50vw', '20vw'), attrs: photo(i) })}</span
             >
           </button>`,
       )}

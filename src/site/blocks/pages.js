@@ -12,6 +12,7 @@ import {
   creditText,
   creditOf,
   firstPhotos,
+  sizes,
 } from '../helpers.js';
 import { hrefOf } from '../hrefs.js';
 import { albumCard } from '../templates/partials.js';
@@ -106,7 +107,7 @@ export const panels = {
       const cover = list.map(coverOf).find(Boolean);
       return html` <a class="ppanel" href="${esc(sourcePage(ctx, source))}" data-anim-item>
       <span class="ppanel__media"
-        >${cover ? img(ctx, cover, { sizes: '(max-width: 760px) 100vw, 50vw', ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
+        >${cover ? img(ctx, cover, { sizes: sizes('100vw', '50vw'), ...firstPhotos(i), attrs: 'data-anim="place.card.image"' }) : ''}</span
       >
       <span class="ppanel__info"
         ><span class="ppanel__title"${b.ed(['panels', i, 'title'])}>${esc(title)}</span
@@ -151,7 +152,7 @@ export const about = {
   render: (a, ctx, b) => html` <div class="about">
     <div class="about__media">
       <figure class="about__figure" data-anim="about.image">
-        ${a.image ? img(ctx, a.image, { sizes: '(max-width: 760px) 100vw, 45vw', priority: true, attrs: b.ed('image', 'image') }) : ''}
+        ${a.image ? img(ctx, a.image, { sizes: sizes('100vw', '45vw'), priority: true, attrs: b.ed('image', 'image') }) : ''}
       </figure>
       <figcaption class="label muted">
         ${esc(creditText(creditOf(ctx, a.image)))}

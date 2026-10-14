@@ -10,6 +10,7 @@ import {
   lines,
   itemHref,
   firstPhotos,
+  sizes,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
 
@@ -32,9 +33,9 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
   const meta = [['role'], ['location'], ['year', 'number']].filter(([f]) => album[f]);
   const cover = coverOf(album);
   const first = [cover, ...imagesOf(album).filter((p) => p !== cover)].filter(Boolean).slice(0, 4);
-  const sizes = landscape
-    ? '(max-width: 760px) 100vw, 50vw'
-    : '(max-width: 760px) 100vw, (max-width: 1200px) 50vw, 40vw';
+  const widths = landscape
+    ? sizes('100vw', '50vw')
+    : sizes('100vw', '(max-width: 1200px) 50vw, 40vw');
   return html` <a
     class="acard ${landscape ? 'acard--landscape' : ''}"
     href="${esc(itemHref(ctx, kind, album))}"
@@ -42,7 +43,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
     data-card-cycle
   >
     <div class="acard__media">
-      ${first.map((im, i) => img(ctx, im, { decorative: i > 0, sizes, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
+      ${first.map((im, i) => img(ctx, im, { decorative: i > 0, sizes: widths, cls: i === 0 ? 'is-active' : '', ...(i === 0 ? firstPhotos(index) : {}) }))}
       <span class="acard__count">${pad(imagesOf(album).length)}</span>
     </div>
     <div class="acard__info">
@@ -76,7 +77,7 @@ export const projectList = (
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
-          <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: '(max-width: 760px) 100vw, 30vw', attrs: ed(PROJECTS, ['items', i, 'image'], 'image') }) : ''}</div>
+          <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: sizes('100vw', '30vw'), attrs: ed(PROJECTS, ['items', i, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
             <p${ed(PROJECTS, ['items', i, 'body'], 'block')}>${lines(p.body)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}

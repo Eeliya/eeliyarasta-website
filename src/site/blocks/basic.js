@@ -1,7 +1,7 @@
 /**
  * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
  */
-import { html, esc, img, extAttrs } from '../helpers.js';
+import { html, esc, img, extAttrs, sizes } from '../helpers.js';
 import { hrefOf } from '../hrefs.js';
 
 /** Paragraphs (a blank line starts a new one) under an optional title. */
@@ -40,7 +40,7 @@ export const photo = {
   render: (s, ctx, b) =>
     html` <div class="photoblock">
       <figure class="photoblock__figure">
-        ${s.src ? img(ctx, s.src, { sizes: '(max-width: 760px) 100vw, 60vw', attrs: b.ed('src', 'image') }) : ''}
+        ${s.src ? img(ctx, s.src, { sizes: sizes('100vw', '60vw'), attrs: b.ed('src', 'image') }) : ''}
         ${s.caption ? html`<figcaption class="label muted" ${b.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
       </figure>
     </div>`,

@@ -25,9 +25,9 @@
  * short of the screen, its content still is).
  */
 import { resolveRows, rowsFor } from '../../site/layout/flow.js';
-import { COLS, MCOLS, cellOf } from '../../site/layout/grid.js';
+import { COLS, MCOLS, PHONE_MQ, cellOf } from '../../site/layout/grid.js';
 
-const PHONE = '(max-width: 760px)';
+const PHONE = PHONE_MQ;
 const VARS = ['--fr', '--frs'];
 const SECTION_VARS = ['--frows'];
 

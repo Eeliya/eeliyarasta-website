@@ -7,6 +7,7 @@
 
 /** Escape text for HTML text/attribute context. Always use for content values. */
 import { itemTitle, schemaOf } from './schemas.js';
+import { PHONE_MQ } from './layout/grid.js';
 
 export const esc = (value = '') =>
   String(value ?? '').replace(
@@ -185,6 +186,9 @@ export function altOf(ctx, src) {
  * placeholder from photoOf(), for media/ and R2 photos alike. The alt text is the photo's own
  * (altOf); `decorative` photos (thumbnails next to their text, repeats) get alt="".
  */
+/** An <img> sizes: its width on phones (PHONE_MQ), else on wider screens. */
+export const sizes = (phone, wider) => `${PHONE_MQ} ${phone}, ${wider}`;
+
 export function img(
   ctx,
   src,

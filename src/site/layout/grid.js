@@ -9,6 +9,10 @@ export const COLS = 120;
  * desktop layout scaled down, ~6px cells at 390px.
  */
 export const MCOLS = 60;
+/** The widest phone (px): at or below it the phone grid, the phone placements and image sizes. */
+export const PHONE_MAX = 760;
+/** PHONE_MAX as a media query, for matchMedia and an <img> sizes. */
+export const PHONE_MQ = `(max-width: ${PHONE_MAX}px)`;
 /**
  * The size of a cell in px: a section's content width over its columns, floored to the
  * browser's layout unit (1/64 px) so a column and a row come out exactly as wide as tall

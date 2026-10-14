@@ -9,9 +9,10 @@
  *   sticky centred  .blk--sticky.blk--v-center: its height as --bh, to centre it on screen.
  */
 import { gsap, ScrollTrigger } from '../lib/env.js';
+import { PHONE_MQ } from '../../site/layout/grid.js';
 
 const DESKTOP = '(min-width: 761px)';
-const PHONE = '(max-width: 760px)';
+const PHONE = PHONE_MQ;
 
 /** --stick-top in px (a calc() of the header's height and --edge, so resolved by a probe). */
 function offsetOf() {
