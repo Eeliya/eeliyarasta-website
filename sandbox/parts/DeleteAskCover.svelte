@@ -5,11 +5,11 @@
 <script>
   import Button from '../../src/editor/svelte/Button.svelte';
 
-  let { text } = $props();
+  let { text, band = true } = $props(); // band: false, no solid band: the dim is the only background
 </script>
 
 <div class="kit-over cover" role="alertdialog" aria-label={text}>
-  <div class="cover__band">
+  <div class={['cover__band', !band && 'cover__band--flat']}>
     <p class="cover__msg">{text}</p>
     <span class="cover__btns">
       <Button size="small">Cancel</Button>
@@ -20,6 +20,14 @@
 </div>
 
 <style lang="scss">
+  .cover:has(.cover__band--flat) {
+    background: color-mix(in srgb, var(--c-card) 65%, transparent);
+
+    .cover__dim {
+      background: none;
+    }
+  }
+
   .cover {
     display: flex;
     flex-direction: column;
@@ -49,6 +57,10 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--space-2);
+  }
+
+  .cover__band--flat {
+    background: none;
   }
 
   // Eeliya's exception: the card's own colour, translucent, over the rest of the card

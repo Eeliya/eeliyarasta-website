@@ -51,6 +51,7 @@
     rows && 'kit-card--rows',
     height && 'kit-card--fixed',
     !line && 'kit-card--noline',
+    !fields && !children && 'kit-card--nofields',
     spread && `kit-card--${spread}`,
   ]}
   style:--card-h={height || null}
@@ -161,5 +162,13 @@
 
   .kit-card--noline > :global(.sec .sec__foot) {
     border-top-color: transparent;
+  }
+
+  // no settings: no empty body above the blocks; they start 12px under the tools row
+  .kit-card--nofields > :global(.sec .sec__inner) {
+    display: none;
+  }
+  .kit-card--nofields > :global(.sec .sec__foot) {
+    margin-top: 0;
   }
 </style>
