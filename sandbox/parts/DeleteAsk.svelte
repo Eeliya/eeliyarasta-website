@@ -1,20 +1,28 @@
 <!-- mock: a section's delete question over its card (the kit's SectionCard `over`).
      bar: only the header's height, in one row; look: solid | blur (Eeliya's exception: a
-     backdrop blur under a light tint); trash: where the trash icon goes, 'title' or 'button' (in Delete) -->
+     backdrop blur under a light tint); strip: only the header's 46px (default: bar; false covers a closed card whatever its height); text: the question (default "Delete <name>?"); trash: where the trash icon goes, 'title' or 'button' (in Delete) -->
 <script>
   import Button from '../../src/editor/svelte/Button.svelte';
 
-  let { bar = false, look = 'solid', name = 'Section 6', blocks = 2, trash = 'title' } = $props();
+  let {
+    bar = false,
+    look = 'solid',
+    name = 'Section 6',
+    blocks = 2,
+    trash = 'title',
+    text = '',
+    strip = bar,
+  } = $props();
 </script>
 
 <div
-  class={['kit-over', bar && 'kit-over--bar', 'ask', `ask--${look}`, bar && 'ask--row']}
+  class={['kit-over', strip && 'kit-over--bar', 'ask', `ask--${look}`, bar && 'ask--row']}
   role="alertdialog"
   aria-label="Delete {name}?"
 >
   {#if trash === 'title'}<span class="ask__icon"><i class="fa-solid fa-trash"></i></span>{/if}
   <p class="ask__msg">
-    {#if bar}Delete {name}?{:else}Delete <b>{name}</b> and its {blocks} blocks?{/if}
+    {#if text}{text}{:else if bar}Delete {name}?{:else}Delete <b>{name}</b> and its {blocks} blocks?{/if}
   </p>
   {#if !bar}<p class="ask__sub">Undo brings it back.</p>{/if}
   <span class="ask__btns">
@@ -93,6 +101,10 @@
 
     .ask__msg {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
       font-size: var(--fs-sm);
       font-weight: 500;
       letter-spacing: 0.06em;
