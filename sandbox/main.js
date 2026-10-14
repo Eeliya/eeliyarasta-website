@@ -1,11 +1,13 @@
 /**
- * Editor UI sandbox (dev only: /edit/sandbox/, never built). Renders mocks from
+ * Editor UI sandbox (dev only: /edit/sandbox/, never built; npm run mock:serve). Renders mocks from
  * sandbox/mocks/<name>.svelte (or .html) on the editor's panel, with the editor's real styles,
  * tokens, fonts and icons, so they can import its real components.
  *
  *   ?mock=name          one mock      ?mock=a,b,c   several, stacked with their names
  *   ?width=400          the panel's width (default: the editor's, --panel-w)
  *   ?bare=1             no panel around it (the editor's page background only)
+ *
+ *   (none)              the viewer: the mocks, newest first, to open or delete (Viewer.svelte)
  *
  * When everything is drawn (fonts too) window.__mockReady is true; scripts/mock.mjs waits for
  * it and screenshots #sandbox.
@@ -15,11 +17,14 @@ import '@fortawesome/fontawesome-free/css/fontawesome.css';
 import '@fortawesome/fontawesome-free/css/solid.css';
 import './sandbox.scss';
 import { mount } from 'svelte';
+import Viewer from './Viewer.svelte';
 
-const svelteMocks = import.meta.glob('./mocks/*.svelte');
+// this machine's mocks (sandbox/mocks/: git-ignored), and the kit's demo (tracked) as "kit-demo"
+const svelteMocks = {
+  ...import.meta.glob('./mocks/*.svelte'),
+  './mocks/kit-demo.svelte': () => import('./kit/demo.svelte'),
+};
 const htmlMocks = import.meta.glob('./mocks/*.html', { query: '?raw', import: 'default' });
-const nameOf = (path) => path.replace(/^.*\/|\.(svelte|html)$/g, '');
-const all = [...Object.keys(svelteMocks), ...Object.keys(htmlMocks)].map(nameOf).sort();
 
 const params = new URLSearchParams(location.search);
 const names = (params.get('mock') || '').split(',').filter(Boolean);
@@ -38,9 +43,10 @@ async function render(name, into) {
 
 async function main() {
   if (!names.length) {
-    root.innerHTML = `<div class="sb-panel"><h3 class="modal__title">Mocks</h3>${all
-      .map((n) => `<p><a href="?mock=${n}">${n}</a></p>`)
-      .join('')}</div>`;
+    const panel = document.createElement('div');
+    panel.className = 'sb-panel';
+    root.append(panel);
+    mount(Viewer, { target: panel });
   }
   for (const name of names) {
     const item = document.createElement('section');

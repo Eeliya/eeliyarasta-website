@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import staticSite from './scripts/vite-plugin-static-site.mjs';
+import { mocksPlugin } from './scripts/mock-api.mjs';
 
 export default defineConfig({
   plugins: [
+    // the mock sandbox's list and deletes (dev only: scripts/mock-api.mjs), before the site's pages
+    mocksPlugin(),
     staticSite(),
     // Svelte is editor-only (src/editor/svelte, and the editor's mock sandbox: sandbox/). The public site never imports it.
     // vitePreprocess: components can use <style lang="scss">. Runes mode everywhere (also for a

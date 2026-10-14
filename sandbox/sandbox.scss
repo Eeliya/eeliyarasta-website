@@ -40,3 +40,36 @@ body {
     box-shadow: none;
   }
 }
+
+// the viewer (Viewer.svelte): one row per mock, on the 32px control line
+.sb-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: var(--size-control);
+
+  > a {
+    flex: 1;
+    color: var(--c-accent);
+  }
+
+  > .hint {
+    margin: 0;
+  }
+}
+
+.sb-days {
+  width: 64px;
+}
+
+.sb-error {
+  color: var(--c-error);
+}

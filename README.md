@@ -77,7 +77,7 @@ scripts/
   test-layout.mjs   ← shared test helpers
   *.test.mjs        ← the unit tests (node --test)
 functions/api/contact.js ← the contact form's Cloudflare Pages Function (emails via Resend)
-sandbox/            ← editor UI mocks (mocks/, kit/) and their harness; edit/sandbox/ serves it
+sandbox/            ← editor UI mock builder (kit/, viewer; mocks/ is local, git-ignored): npm run mock:serve
 src/
   site/             ← isomorphic templates (no Node APIs, run at build time AND in a browser)
     routes.js       ← list of pages, from the files in content/en/pages/

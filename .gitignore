@@ -12,3 +12,8 @@ public/media
 .env*.local
 # Cloudflare wrangler: local secrets for functions/
 .dev.vars
+# the mock sandbox's mocks, their history and thumbnails: local to the machine that makes them
+# (the kit, the viewer and sandbox/kit/demo.svelte are tracked)
+sandbox/mocks/
+sandbox/history/
+sandbox/thumbs/

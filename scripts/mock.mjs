@@ -6,7 +6,7 @@
  * One name: <MOCK_DIR>/<name>.png (MOCK_DIR: default ../mocks, next to the checkout). Several:
  * stacked with their names in one image (<MOCK_DIR>/<first>+N.png, or --out). It reuses the dev server on MOCK_PORT (5173) or
  * starts one (left running for the next call), drives headless Chrome (CHROME, default
- * /usr/bin/google-chrome) over the DevTools protocol and prints the PNG's path.
+ * Chrome's usual path on Windows / macOS, else /usr/bin/google-chrome) over the DevTools protocol and prints the PNG's path.
  */
 import { spawn } from 'node:child_process';
 import {
@@ -35,7 +35,7 @@ if (!names.length) {
   process.exit(1);
 }
 for (const n of names)
-  if (!['svelte', 'html'].some((x) => existsSync(`sandbox/mocks/${n}.${x}`))) {
+  if (n !== 'kit-demo' && !['svelte', 'html'].some((x) => existsSync(`sandbox/mocks/${n}.${x}`))) {
     console.error(`No mock sandbox/mocks/${n}.svelte (or .html)`);
     process.exit(1);
   }
@@ -51,7 +51,9 @@ const up = () =>
 // the dev server: reuse it, or start one in the background (it stays up for the next mock)
 if (!(await up())) {
   const log = openSync(join(tmpdir(), `mock-vite-${port}.log`), 'a');
-  spawn('npx', ['vite', '--port', String(port), '--strictPort'], {
+  // node + Vite's own script (no npx, no shell): the same on Windows
+  const vite = resolve('node_modules', 'vite', 'bin', 'vite.js');
+  spawn(process.execPath, [vite, '--port', String(port), '--strictPort'], {
     detached: true,
     stdio: ['ignore', log, log],
   }).unref();
@@ -59,10 +61,22 @@ if (!(await up())) {
   if (!(await up())) throw new Error(`The dev server didn't start on port ${port}`);
 }
 
+/** Chrome where it usually is (CHROME overrides). */
+function defaultChrome() {
+  const win = [
+    process.env.PROGRAMFILES,
+    process.env['PROGRAMFILES(X86)'],
+    process.env.LOCALAPPDATA,
+  ].map((d) => d && join(d, 'Google', 'Chrome', 'Application', 'chrome.exe'));
+  const mac = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  const list = process.platform === 'win32' ? win : process.platform === 'darwin' ? [mac] : [];
+  return list.find((p) => p && existsSync(p)) || '/usr/bin/google-chrome';
+}
+
 // headless Chrome with the DevTools protocol on a free port
 const profile = mkdtempSync(join(tmpdir(), 'mock-chrome-'));
 const chrome = spawn(
-  process.env.CHROME || '/usr/bin/google-chrome',
+  process.env.CHROME || defaultChrome(),
   [
     '--headless=new',
     '--remote-debugging-port=0',

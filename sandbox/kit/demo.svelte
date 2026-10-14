@@ -1,6 +1,6 @@
 <!-- mock: the kit itself: the panel with real section cards, a closed card, and a modal -->
 <script>
-  import { Compare, Variant, Panel, SectionCard, Modal, sampleLive } from '../kit/index.js';
+  import { Compare, Variant, Panel, SectionCard, Modal, sampleLive } from './index.js';
   const live = sampleLive();
 </script>
 
