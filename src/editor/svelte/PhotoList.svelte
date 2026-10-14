@@ -11,103 +11,24 @@
 <script>
   import { tick } from 'svelte';
   import Button from './Button.svelte';
-  import { SLACK, dropTarget } from '../drag-target.js';
+  import { listDrag, rowsOf } from './list-drag.svelte.js';
 
   let { label, items = [], addLabel = 'Add photo', onmove, onremove, onadd, row } = $props();
   const uid = $props.id();
 
-  let drag = $state(null); // { j, y, py, dy, moving, over, lists, n, scroller, top0 }
   let list = $state();
-
-  const listsNow = () => {
-    const r = list.getBoundingClientRect();
-    return [
-      {
-        at: 0,
-        top: r.top,
-        bottom: r.bottom,
-        rows: [...list.querySelectorAll(':scope > [data-prow]')].map((el) => {
-          const b = el.getBoundingClientRect();
-          return { top: b.top, bottom: b.bottom };
-        }),
-      },
-    ];
-  };
-  function scrollerOf(el) {
-    for (let n = el.parentElement; n; n = n.parentElement)
-      if (/(auto|scroll)/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight)
-        return n;
-    return document.scrollingElement;
-  }
-
-  function grab(e, j) {
-    if (e.button !== 0) return;
-    e.preventDefault(); // no text selection; the click (open Media) still comes when it isn't a drag
-    const scroller = scrollerOf(list);
-    drag = {
-      j,
-      y: e.clientY,
-      py: e.clientY,
-      dy: 0,
-      moving: false,
-      over: null,
-      lists: listsNow(),
-      n: items.length,
-      scroller,
-      top0: scroller.scrollTop,
-    };
-    window.addEventListener('pointermove', follow);
-    window.addEventListener('pointerup', drop, { once: true });
-    window.addEventListener('pointercancel', cancel, { once: true });
-    window.addEventListener('keydown', escape, true);
-    scroller.addEventListener('scroll', place);
-  }
-  function place() {
-    if (!drag) return;
-    const scrolled = drag.scroller.scrollTop - drag.top0;
-    const dy = drag.py - drag.y + scrolled;
-    if (!drag.moving && Math.abs(dy) < SLACK) return;
-    if (!drag.moving) document.documentElement.classList.add('is-grabbing');
-    drag.moving = true;
-    drag.dy = dy;
-    drag.over = dropTarget(drag.lists, { at: 0, j: drag.j }, drag.py + scrolled);
-  }
-  function follow(e) {
-    drag.py = e.clientY;
-    place();
-  }
-  function stop() {
-    window.removeEventListener('pointermove', follow);
-    window.removeEventListener('pointerup', drop);
-    window.removeEventListener('pointercancel', cancel);
-    window.removeEventListener('keydown', escape, true);
-    document.documentElement.classList.remove('is-grabbing');
-    const d = drag;
-    d?.scroller.removeEventListener('scroll', place);
-    drag = null;
-    if (d?.moving) {
-      // a drag isn't a click: the thumbnail's click (open Media) that follows is swallowed
-      const swallow = (e) => (e.stopPropagation(), e.preventDefault());
-      window.addEventListener('click', swallow, { capture: true, once: true });
-      setTimeout(() => window.removeEventListener('click', swallow, true));
-    }
-    return d;
-  }
-  const cancel = () => stop();
-  function escape(e) {
-    if (e.key !== 'Escape') return;
-    e.preventDefault();
-    e.stopPropagation();
-    stop();
-  }
-  // its own place: nothing moves; the list changed under it (an undo): nothing either
-  function drop() {
-    const d = stop();
-    if (!d?.moving || !d.over || d.n !== items.length) return;
-    onmove(d.j, d.over.to);
-  }
-  const dropAt = (j) =>
-    drag?.moving && drag.over?.line.j === j ? `is-drop-${drag.over.line.side}` : '';
+  // the drag (list-drag.svelte.js); its thumbnail's click opens Media, so a drag swallows it
+  const ld = listDrag({
+    lists: () => [rowsOf(list, '[data-prow]')],
+    shape: () => String(items.length),
+    ondrop: (d) => onmove(d.j, d.over.to),
+    scroller: () => list,
+    grabbing: true,
+    swallowClick: true,
+  });
+  const drag = $derived(ld.drag);
+  const grab = (e, j) => ld.grab(e, { j });
+  const dropAt = (j) => ld.dropAt(j);
 
   async function nudge(e, j) {
     if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;

@@ -10,12 +10,12 @@
 -->
 <script>
   import { tick } from 'svelte';
-  import { SLACK, dropTarget } from '../drag-target.js';
   import { locate } from '../locate.js';
   import BlocksModal from './BlocksModal.svelte';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
+  import { listDrag, rowsOf } from './list-drag.svelte.js';
   import { nameOf } from './content-groups.js';
   import {
     addBlock,
@@ -39,125 +39,25 @@
   // ---- a block's row dragged to another place (its own section's order, or another section):
   // it lifts and follows the pointer, a line shows where it lands; one undo step. A drag
   // isn't a click (no block opens). Alt+↑/↓ on a row moves it by one.
-  let drag = $state(null); // { id, at, j, y, dy, moving, over: { at, to, line }, lists, … }
-  // the rows' places when it starts (the lifted row moves; its own place still counts)
-  const listsNow = () =>
-    [...document.querySelectorAll('[data-list]')].map((el) => {
-      const r = el.getBoundingClientRect();
-      return {
-        at: Number(el.dataset.list),
-        top: r.top,
-        bottom: r.bottom,
-        rows: [...el.querySelectorAll(':scope > [data-row]')].map((row) => {
-          const b = row.getBoundingClientRect();
-          return { top: b.top, bottom: b.bottom };
-        }),
-      };
-    });
-  // the sections and their blocks' ids: a drop only lands when they are as they were at the start
+  // (list-drag.svelte.js: every section's blocks one of its lists, the panel scrolls at its
+  // edges; a drop lands only when the sections and their blocks are as they were at the start)
   const shape = () => sections.map((s) => (s.blocks || []).map((b) => b.id).join(',')).join('|');
-  // the panel that scrolls the list (the nearest scrolling ancestor)
-  function scrollerOf(el) {
-    for (let n = el.parentElement; n; n = n.parentElement)
-      if (/(auto|scroll)/.test(getComputedStyle(n).overflowY) && n.scrollHeight > n.clientHeight)
-        return n;
-    return document.scrollingElement;
-  }
-  const EDGE = 32; // px from the panel's top or bottom where a drag scrolls it
-  const SPEED = 12; // px per frame at the very edge
+  const ld = listDrag({
+    lists: () =>
+      [...document.querySelectorAll('[data-list]')].map((el) =>
+        rowsOf(el, '[data-row]', Number(el.dataset.list)),
+      ),
+    shape,
+    ondrop: (d) => {
+      if (sections[d.at]?.blocks?.[d.j]?.id !== d.id) return;
+      moveBlockTo(live.store, file, d.at, d.j, d.over.at, d.over.to);
+    },
+    edgeScroll: true,
+  });
+  const drag = $derived(ld.drag);
   // only its handle starts a drag
-  function grab(e, id, at, j) {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    const scroller = scrollerOf(e.currentTarget);
-    drag = {
-      id,
-      at,
-      j,
-      y: e.clientY,
-      py: e.clientY,
-      dy: 0,
-      moving: false,
-      over: null,
-      lists: listsNow(),
-      shape: shape(),
-      scroller,
-      top0: scroller.scrollTop,
-      raf: 0,
-    };
-    window.addEventListener('pointermove', follow);
-    window.addEventListener('pointerup', drop, { once: true });
-    window.addEventListener('pointercancel', cancel, { once: true });
-    window.addEventListener('keydown', escape, true);
-    scroller.addEventListener('scroll', place);
-  }
-  // where the pointer is on the rows as they were at the start: its y plus how far the panel scrolled
-  function place() {
-    if (!drag) return;
-    const scrolled = drag.scroller.scrollTop - drag.top0;
-    const dy = drag.py - drag.y + scrolled;
-    if (!drag.moving && Math.abs(dy) < SLACK) return;
-    drag.moving = true;
-    drag.dy = dy;
-    drag.over = dropTarget(drag.lists, drag, drag.py + scrolled);
-  }
-  function follow(e) {
-    drag.py = e.clientY;
-    place();
-    if (drag.moving && !drag.raf) drag.raf = requestAnimationFrame(edge);
-  }
-  // near the panel's top or bottom edge: scroll it (faster the closer), every frame until away
-  function edge() {
-    if (!drag) return;
-    drag.raf = 0;
-    const s = drag.scroller;
-    const r =
-      s === document.scrollingElement ? { top: 0, bottom: innerHeight } : s.getBoundingClientRect();
-    const v =
-      drag.py < r.top + EDGE
-        ? -Math.ceil(((r.top + EDGE - drag.py) / EDGE) * SPEED)
-        : drag.py > r.bottom - EDGE
-          ? Math.ceil(((drag.py - r.bottom + EDGE) / EDGE) * SPEED)
-          : 0;
-    if (!v) return;
-    const before = s.scrollTop;
-    s.scrollTop += Math.max(-SPEED, Math.min(SPEED, v));
-    if (s.scrollTop !== before) drag.raf = requestAnimationFrame(edge);
-  }
-  function stop() {
-    window.removeEventListener('pointermove', follow);
-    window.removeEventListener('pointerup', drop);
-    window.removeEventListener('pointercancel', cancel);
-    window.removeEventListener('keydown', escape, true);
-    const d = drag;
-    if (d) {
-      d.scroller.removeEventListener('scroll', place);
-      cancelAnimationFrame(d.raf);
-    }
-    drag = null;
-    return d;
-  }
-  const cancel = () => stop();
-  // Esc ends the drag before anything else hears it (capture: a panel or dialog stays open)
-  function escape(e) {
-    if (e.key !== 'Escape') return;
-    e.preventDefault();
-    e.stopPropagation();
-    stop();
-  }
-  // its own place (or no section's blocks under the pointer): nothing moves, no undo step; the
-  // page changed under it (an undo, a redo): nothing moves either (the places are old)
-  function drop() {
-    const d = stop();
-    if (!d?.moving || !d.over || d.shape !== shape()) return;
-    if (sections[d.at]?.blocks?.[d.j]?.id !== d.id) return;
-    moveBlockTo(live.store, file, d.at, d.j, d.over.at, d.over.to);
-  }
-  // the drop line's class on row j of section at
-  const dropAt = (at, j) =>
-    drag?.moving && drag.over?.at === at && drag.over.line.j === j
-      ? `is-drop-${drag.over.line.side}`
-      : '';
+  const grab = (e, id, at, j) => ld.grab(e, { id, at, j });
+  const dropAt = (j, at) => ld.dropAt(j, at);
   async function nudge(e, at, j, n) {
     if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
@@ -358,7 +258,7 @@
               ui.block === b.id && 'is-active',
               b.config?.enabled === false && 'is-off',
               drag?.id === b.id && drag.moving && 'is-lifted',
-              dropAt(at, j),
+              dropAt(j, at),
             ]}
             style:translate={drag?.id === b.id && drag.moving ? `0 ${drag.dy}px` : null}
             data-row="{at}:{j}"
@@ -411,7 +311,7 @@
               removeBlock(live.store, file, at, j),
             )}{/if}
         {:else}
-          <li class={['hint', 'small', dropAt(at, 0)]}>No blocks yet.</li>
+          <li class={['hint', 'small', dropAt(0, at)]}>No blocks yet.</li>
         {/each}
       </ul>
       <button
