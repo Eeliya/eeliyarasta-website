@@ -2,6 +2,7 @@
  * The square grid's numbers and areas, without the rest of the layout engine (the page's
  * src/client/modules/rows.js imports them): see ./index.js.
  */
+import { isObject } from '../is.js';
 export const COLS = 120;
 /**
  * Columns of the phone grid (a block's `phone` area): 60, half of 120, so a block without a
@@ -60,13 +61,12 @@ export const phoneAreaOf = (b) =>
  * block's height isn't its content's (size "aspect" or "rows"): an auto block's rows are
  * measured on the page (src/client/modules/rows.js), never stored.
  */
-const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 /** The keys of an area. */
 export const AREA_KEYS = ['col', 'span', 'row', 'rows'];
 /** A block's base layout ({} without one). */
-export const baseOf = (b) => (isObj(b?.layout?.base) ? b.layout.base : {});
+export const baseOf = (b) => (isObject(b?.layout?.base) ? b.layout.base : {});
 /** A block's phone layout (undefined without one). */
-export const phoneOf = (b) => (isObj(b?.layout?.phone) ? b.layout.phone : undefined);
+export const phoneOf = (b) => (isObject(b?.layout?.phone) ? b.layout.phone : undefined);
 /** Does a block store its rows (its height isn't its content's)? */
 export const storesRows = (b) => b?.size === 'aspect' || b?.size === 'rows';
 
@@ -78,12 +78,12 @@ function tidy(b, o) {
 }
 /** Merge `patch` into a block's base (a key set to undefined is removed). */
 export function setBase(b, patch) {
-  b.layout = { ...(isObj(b.layout) ? b.layout : {}), base: tidy(b, { ...baseOf(b), ...patch }) };
+  b.layout = { ...(isObject(b.layout) ? b.layout : {}), base: tidy(b, { ...baseOf(b), ...patch }) };
 }
 /** Merge `patch` into a block's phone layout; removed when nothing is left (null: removed). */
 export function setPhone(b, patch) {
   const next = patch === null ? {} : tidy(b, { ...phoneOf(b), ...patch });
-  const layout = { ...(isObj(b.layout) ? b.layout : {}) };
+  const layout = { ...(isObject(b.layout) ? b.layout : {}) };
   if (Object.keys(next).length) layout.phone = next;
   else delete layout.phone;
   b.layout = layout;

@@ -30,10 +30,11 @@
   import SectionsList from './SectionsList.svelte';
   import SeoSection from './SeoSection.svelte';
   import SourcesModal from './SourcesModal.svelte';
-  import { allFields, contentGroups, groupFor, splitEdit } from './content-groups.js';
+  import { allFields, contentGroups, groupFor } from './content-groups.js';
+  import { splitEdit } from '../../site/helpers.js';
   import { parse } from '../lib/pointer.js';
   import { targetFile } from '../layout-sync.js';
-  import { sourceIdOf } from '../../site/files.js';
+  import { sourceIds as sourceIdsOf } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // actions: main.js (editMotion: open an element in the Motion tab)
@@ -62,7 +63,7 @@
   // the files in content/en/sources/, for a list item's source
   const sourceIds = $derived.by(() => {
     live.version;
-    return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
+    return sourceIdsOf(live.store.current);
   });
 
   // a page's tabs, the open one per page file

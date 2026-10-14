@@ -32,10 +32,13 @@ const reach = (pos, trigger) =>
  * In the editor preview, one-shot reveals reset when scrolled back above `start` so they
  * can be watched again.
  */
+/** A scrubbed animation's scrub: true (locked to the scroll) or seconds of smoothing. */
+const scrubOf = (spec) => (spec.scrub === true ? true : Number(spec.scrub) || true);
+
 const scrollVars = (spec, trigger) => {
   if (spec.trigger !== 'scroll') return {};
   if (spec.scrub) {
-    const scrub = spec.scrub === true ? true : Number(spec.scrub) || true;
+    const scrub = scrubOf(spec);
     return {
       scrollTrigger: {
         trigger,
@@ -180,7 +183,7 @@ function parallax(el, spec, ctx) {
           trigger: ctx.trigger || t.parentElement,
           start: reach(spec.start || 'top bottom', ctx.trigger || t.parentElement),
           end: reach(spec.end || 'bottom top', ctx.trigger || t.parentElement),
-          scrub: spec.scrub === true ? true : Number(spec.scrub) || true,
+          scrub: scrubOf(spec),
         },
       },
     );

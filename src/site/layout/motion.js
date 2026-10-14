@@ -26,6 +26,8 @@
  */
 import { esc } from '../helpers.js';
 import { pageFile } from '../files.js';
+import { isObject } from '../is.js';
+import { eachBlock } from './ids.js';
 
 /** The values a block (or any element) may set for itself: when and how fast, not what. */
 export const TIMING_KEYS = [
@@ -42,7 +44,6 @@ export const TIMING_KEYS = [
 /** Animation types that work on any block. */
 export const BLOCK_ANIM_TYPES = ['reveal', 'split', 'scroll', 'scrub-words', 'parallax'];
 
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const num = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 
 /** Shape problems of a block's `motion` (not whether its animation exists: motionProblems). */
@@ -100,24 +101,20 @@ export function motionProblems(content, { files = null } = {}) {
   for (const [id, page] of Object.entries(content.pages || {})) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
-    (page?.sections || []).forEach((s, at) =>
-      (s?.blocks || []).forEach((b, j) => {
-        const where = `content/en/${file}: section ${at + 1}, block ${j + 1} (${b.type})`;
-        const parts = b?.motion?.parts;
-        if (isObject(parts))
-          for (const [name, p] of Object.entries(parts))
-            if (typeof p?.preset === 'string' && !presets[p.preset])
-              out.push(`${where}: part "${name}" uses unknown animation "${p.preset}"`);
-        const anim = b?.motion?.anim;
-        if (typeof anim !== 'string') return;
-        const p = presets[anim];
-        if (!p) out.push(`${where}: unknown animation "${anim}"`);
-        else if (!BLOCK_ANIM_TYPES.includes(p.type))
-          out.push(
-            `${where}: the animation "${anim}" (${p.type}) needs its own markup, not a block`,
-          );
-      }),
-    );
+    for (const [b, , at, j] of eachBlock(page?.sections)) {
+      const where = `content/en/${file}: section ${at + 1}, block ${j + 1} (${b.type})`;
+      const parts = b?.motion?.parts;
+      if (isObject(parts))
+        for (const [name, p] of Object.entries(parts))
+          if (typeof p?.preset === 'string' && !presets[p.preset])
+            out.push(`${where}: part "${name}" uses unknown animation "${p.preset}"`);
+      const anim = b?.motion?.anim;
+      if (typeof anim !== 'string') continue;
+      const p = presets[anim];
+      if (!p) out.push(`${where}: unknown animation "${anim}"`);
+      else if (!BLOCK_ANIM_TYPES.includes(p.type))
+        out.push(`${where}: the animation "${anim}" (${p.type}) needs its own markup, not a block`);
+    }
   }
   return out;
 }

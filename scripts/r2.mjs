@@ -29,6 +29,7 @@ import { FORMAT, loadSharp, makeVariants, uprightSize, widthsFor } from './image
 import { formatJSON } from '../src/editor/lib/json-format.js';
 import { writeFileAtomic } from './content.mjs';
 import { VERSION } from '../src/site/files.js';
+import { slugify } from '../src/site/helpers.js';
 
 /** Image types an upload can be (they are stored as WebP). */
 const IMAGE_TYPES = new Set([
@@ -59,18 +60,12 @@ export function r2Config(env) {
   };
 }
 
-const slug = (s) =>
-  String(s || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'photo';
+// a photo key's name part: the site's slug, at most 60 characters
+const slug = (s) => slugify(s).slice(0, 60) || 'photo';
 
 /** "Noor Vermeer 01.JPG" + bytes -> "photos/noor-vermeer-01-3f9a0c1b2d" (sizes add "-<width>.webp") */
 export function photoBase(name, body) {
-  const hash = crypto.createHash('sha256').update(body).digest('hex').slice(0, 10);
+  const hash = sha256(body).slice(0, 10);
   return `photos/${slug(String(name || '').replace(/\.[a-z0-9]+$/i, ''))}-${hash}`;
 }
 

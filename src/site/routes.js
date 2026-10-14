@@ -26,7 +26,7 @@
  * "robots": "noindex") get <meta name="robots" content="noindex"> and stay out of sitemap.xml.
  */
 import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
-import { coverOf, itemSlug, pointer } from './helpers.js';
+import { coverOf, editRef, itemSlug } from './helpers.js';
 import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
@@ -40,9 +40,6 @@ function curtainOf(explicit, title) {
     .split('|')[0]
     .trim();
 }
-
-/** Edit pointer ("file#/json/pointer") of a page value, e.g. its curtain text. */
-const curtainEditOf = (file, parts) => `${file}#${pointer(parts)}`;
 
 /** Views (style hooks) of pages named after them. */
 export const NAMED_VIEWS = {
@@ -107,9 +104,9 @@ export function buildRoutes(content) {
   // Curtain text and transition of a page live in its own file, content/en/pages/<id>/index.json.
   const pageCurtain = (id, title) => ({
     curtain: curtainOf(pages[id]?.curtainText, title),
-    curtainEdit: curtainEditOf(pageFile(id), ['curtainText']),
+    curtainEdit: editRef(pageFile(id), ['curtainText']),
     transition: pages[id]?.transition,
-    transitionEdit: curtainEditOf(pageFile(id), ['transition']),
+    transitionEdit: editRef(pageFile(id), ['transition']),
   });
 
   for (const id of ids) {
@@ -197,10 +194,10 @@ export function buildRoutes(content) {
           // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
           noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
           curtain: curtainOf(item.curtainText, title),
-          curtainEdit: curtainEditOf(sourceFile(source), ['items', index, 'curtainText']),
+          curtainEdit: editRef(sourceFile(source), ['items', index, 'curtainText']),
           // one curtain choice for every item page: its template's
           transition: tpl.transition,
-          transitionEdit: curtainEditOf(file, ['transition']),
+          transitionEdit: editRef(file, ['transition']),
         };
       });
   }

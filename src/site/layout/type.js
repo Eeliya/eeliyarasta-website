@@ -19,7 +19,7 @@
  * title "title", its eyebrow "label", its body "paragraph". With `scale` off (the default) a
  * text has its style's normal fixed size (the site's stylesheets).
  */
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+import { isObject } from '../is.js';
 
 /** The text styles and their defaults (sizes in cells; at 1440px a cell is ~11.3px). */
 export const TEXT_STYLES = {

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { pagesOp, editableFiles } from './editor-server.mjs';
 import { rowsOf } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
+import { read } from './test-layout.mjs';
 
 /** content/ in a temp dir: home, 404, about, people (+ [slug] and team) and a people source. */
 function site() {
@@ -29,7 +30,6 @@ function site() {
   put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
   return root;
 }
-const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 const pages = (root) => [...editableFiles(root)].filter((f) => f.startsWith('pages/'));
 
 test('add: a folder with its index.json, valid slugs only, no overwrites', () => {

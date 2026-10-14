@@ -12,6 +12,7 @@
 </script>
 
 <script>
+  import { closeOnBackdrop } from '../lib/dialog.js';
   import { flushSync, tick } from 'svelte';
   import Button from './Button.svelte';
   import ExplorerHead from './ExplorerHead.svelte';
@@ -108,12 +109,11 @@
   </span>
 {/snippet}
 
-<!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->
 <dialog
   class="modal__box as-modal"
   aria-label="Add block to section {at + 1}"
   bind:this={dialog}
-  onclick={(e) => e.target === dialog && dialog.close()}
+  {@attach closeOnBackdrop}
   {onkeydown}
 >
   <ExplorerHead

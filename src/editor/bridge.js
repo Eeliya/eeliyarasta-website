@@ -15,7 +15,7 @@
  *    its field in the panel shows the binding.
  */
 import { withDraft } from './source.js';
-import { words } from '../site/helpers.js';
+import { splitEdit, words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
 import { T } from './ui-tokens.js';
@@ -55,10 +55,6 @@ const MOTION_PICK = '[data-anim], [data-block]';
 const ACTIVE = 'a, button, [role="button"], label, summary, input, select, textarea';
 
 const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const parseEdit = (attr) => {
-  const i = attr.indexOf('#');
-  return { file: attr.slice(0, i), ptr: attr.slice(i + 1) };
-};
 
 /**
  * The preview iframe is attached later: App.svelte calls bridge.attach(iframe) when it renders.
@@ -173,7 +169,7 @@ export function createBridge({ store, labelFor }) {
         if (!seen.has(edit))
           seen.set(edit, {
             edit,
-            ...parseEdit(edit),
+            ...splitEdit(edit),
             type: el.dataset.editType || 'text',
             els: [],
           });
@@ -204,7 +200,7 @@ export function createBridge({ store, labelFor }) {
       if (!doc) return;
       const pending = [];
       for (const el of doc.querySelectorAll('[data-edit]')) {
-        const { file, ptr } = parseEdit(el.dataset.edit);
+        const { file, ptr } = splitEdit(el.dataset.edit);
         const value = store.get(file, ptr);
         if (value === undefined || value === null) continue;
         if (el === skip) {
@@ -217,7 +213,7 @@ export function createBridge({ store, labelFor }) {
       // Keep the page-transition label on <main> in sync with the draft content.
       const view = doc.querySelector('[data-router-view]');
       if (view?.dataset.curtainEdit) {
-        const { file, ptr } = parseEdit(view.dataset.curtainEdit);
+        const { file, ptr } = splitEdit(view.dataset.curtainEdit);
         const curtainVal = store.get(file, ptr);
         if (curtainVal !== undefined && curtainVal !== null)
           view.setAttribute('data-curtain', String(curtainVal));
@@ -365,7 +361,7 @@ export function createBridge({ store, labelFor }) {
     if (kind === 'text') {
       // a bound value: its field's label, "from the item"
       const edit = el.dataset.edit ?? el.dataset.bound;
-      const label = labelFor?.(parseEdit(edit)) || edit;
+      const label = labelFor?.(splitEdit(edit)) || edit;
       return el.dataset.bound ? `${label} · from the item` : label;
     }
     if (el.dataset.anim === undefined) {
@@ -523,7 +519,7 @@ export function createBridge({ store, labelFor }) {
       if (mode !== 'text' || !el) return;
       // Word-split text (hero name) is edited as plain text and re-split on blur.
       if (el.dataset.editType === 'words') {
-        const { file, ptr } = parseEdit(el.dataset.edit);
+        const { file, ptr } = splitEdit(el.dataset.edit);
         el.textContent = String(store.get(file, ptr) ?? el.textContent.replace(/\s+/g, ' ').trim());
         const sel = win.getSelection();
         sel.selectAllChildren(el);
@@ -541,7 +537,7 @@ export function createBridge({ store, labelFor }) {
       if (edited) endEdit(edited);
       const el = e.target.closest?.('[data-edit-type="words"]');
       if (!el) return;
-      const { file, ptr } = parseEdit(el.dataset.edit);
+      const { file, ptr } = splitEdit(el.dataset.edit);
       const value = store.get(file, ptr);
       if (value === undefined || value === null) return;
       el.classList.remove('__ed-invalid');
@@ -555,7 +551,7 @@ export function createBridge({ store, labelFor }) {
       const value = readValue(el);
       el.classList.toggle('__ed-invalid', value === undefined);
       if (value === undefined) return;
-      const { file, ptr } = parseEdit(el.dataset.edit);
+      const { file, ptr } = splitEdit(el.dataset.edit);
       store.set(file, ptr, value, { key: `text:${el.dataset.edit}`, source: el });
     });
 

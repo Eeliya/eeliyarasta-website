@@ -28,7 +28,7 @@
   {/if}
   <span class="xrow__name">{name}</span>
   <span class="xrow__meta">{meta}</span>
-  
+
   {#if enter}<i class="fa-solid fa-chevron-right xrow__enter" aria-hidden="true"></i>{/if}
 </button>
 
@@ -48,7 +48,6 @@
     text-align: left;
     cursor: pointer;
     color: var(--c-text);
-
 
     &:hover {
       background: var(--white-a05);

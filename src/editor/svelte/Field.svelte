@@ -30,6 +30,8 @@
 </script>
 
 <script>
+  import { isBinding } from '../../site/layout/bindings.js';
+  import { showValue } from '../lib/show-value.js';
   import Button from './Button.svelte';
   import Select from './Select.svelte';
   import { baseName } from '../../site/files.js';
@@ -72,10 +74,7 @@
   const inner = $derived(photo && !bound && !(binds && binds.length) && !source);
 
   /** Show the stored value, except while the user is typing in the field. */
-  const show = (value) => (el) => {
-    const text = String(value ?? '');
-    if (document.activeElement !== el && el.value !== text) el.value = text;
-  };
+  const show = (value) => showValue(String(value ?? ''));
 
   function oninput(e) {
     const next = parseValue(type, e.currentTarget.value);
@@ -84,7 +83,7 @@
   }
 
   // ---- bindings
-  const bound = $derived(!!value && typeof value === 'object' && typeof value.bind === 'string');
+  const bound = $derived(isBinding(value));
   const bindOptions = $derived.by(() => {
     const list = binds || [];
     return bound && !list.some((o) => o.value === value.bind)

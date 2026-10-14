@@ -22,6 +22,7 @@
  * other transition's options and a backdrop without photos (tidyBackdrop).
  */
 import { esc, html, img } from './helpers.js';
+import { isObject } from './is.js';
 
 export const TRANSITIONS = ['scroll', 'fade'];
 export const DIRECTIONS = ['vertical', 'horizontal'];
@@ -42,8 +43,6 @@ export const SHADE_MAX = 0.8;
 // a transition's own options: the other's are left out
 const OWN = { scroll: ['direction'], fade: ['through', 'parallax', 'scrub'] };
 const KEYS = ['photos', ...Object.keys(BACKDROP_DEFAULTS)];
-
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /** A backdrop with every value filled in (defaults), or null: none, off, or no photos. */
 export function backdropOf(b) {

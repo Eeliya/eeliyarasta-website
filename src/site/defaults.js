@@ -18,6 +18,8 @@
 import { hasSections } from './files.js';
 import { COLS } from './layout/grid.js';
 import { tidyBackdrop } from './backdrop.js';
+import { isObject } from './is.js';
+import { eachBlock } from './layout/ids.js';
 
 export const DEFAULTS = {
   section: { enabled: true, width: 'contained', height: 'fit' },
@@ -25,8 +27,6 @@ export const DEFAULTS = {
   config: { enabled: true },
   heroPhoto: { layer: 'back' },
 };
-
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 /** Every [object, defaults, where] of a page's data that can hold a default. */
 function* places(data) {
@@ -66,18 +66,17 @@ function strip(data, found) {
  */
 function tidy(data) {
   if (isEmpty(data.meta)) delete data.meta;
-  for (const s of Array.isArray(data.sections) ? data.sections : [])
-    for (const b of Array.isArray(s?.blocks) ? s.blocks : []) {
-      if (!isObject(b)) continue;
-      if (isEmpty(b.config)) delete b.config;
-      const base = b.layout?.base;
-      if (!isObject(base)) continue;
-      const col = Number.isInteger(base.col) ? base.col : 1;
-      if (base.col === 1) delete base.col;
-      if (base.row === 1) delete base.row;
-      if (Number.isInteger(base.span) && col + base.span - 1 === COLS) delete base.span;
-      if (isEmpty(base) && Object.keys(b.layout).length === 1) delete b.layout;
-    }
+  for (const [b] of eachBlock(data.sections)) {
+    if (!isObject(b)) continue;
+    if (isEmpty(b.config)) delete b.config;
+    const base = b.layout?.base;
+    if (!isObject(base)) continue;
+    const col = Number.isInteger(base.col) ? base.col : 1;
+    if (base.col === 1) delete base.col;
+    if (base.row === 1) delete base.row;
+    if (Number.isInteger(base.span) && col + base.span - 1 === COLS) delete base.span;
+    if (isEmpty(base) && Object.keys(b.layout).length === 1) delete b.layout;
+  }
 }
 
 /** A copy of a content file's data without its default values (only page files have any). */

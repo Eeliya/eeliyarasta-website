@@ -18,6 +18,7 @@
  * Paths are relative to content/ and are also the keys the editor uses
  * (data-edit="pages/index.json#/hero/title").
  */
+import { isObject } from './is.js';
 export const FOLDERS = ['pages', 'sources', 'settings'];
 /**
  * The shape version of every content file: its first key, "version": 1. A file whose top level
@@ -27,8 +28,7 @@ export const FOLDERS = ['pages', 'sources', 'settings'];
 export const VERSION = 1;
 
 /** A source file's list (its "items"); anything else as it is, for the warnings. */
-export const itemsOf = (data) =>
-  data && typeof data === 'object' && !Array.isArray(data) && 'items' in data ? data.items : data;
+export const itemsOf = (data) => (isObject(data) && 'items' in data ? data.items : data);
 
 /** Content files at the top of the locale's folder (content/en/strings.json: UI text). */
 export const ROOT_FILES = ['strings.json'];
@@ -91,6 +91,8 @@ const CONTENT_FILE = new RegExp(
 
 /** "sources/people.json" -> "people" (null for anything else, schema files too). */
 export const sourceIdOf = (file) => SOURCE.exec(file || '')?.[1] ?? null;
+/** The ids of the sources among `files` (a { file: data } map, e.g. the store's), sorted. */
+export const sourceIds = (files) => Object.keys(files).map(sourceIdOf).filter(Boolean).sort();
 
 /** "sources/people.schema.json" -> "people" (null for anything else). */
 export const schemaIdOf = (file) => SCHEMA.exec(file || '')?.[1] ?? null;

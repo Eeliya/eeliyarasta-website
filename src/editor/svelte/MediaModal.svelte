@@ -11,6 +11,7 @@
   Where it is lives in ui.media (persist.js).
 -->
 <script>
+  import { plural } from '../lib/format.js';
   import Button from './Button.svelte';
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
@@ -26,7 +27,8 @@
     photoLine,
     thumbUrl,
   } from './media.svelte.js';
-  import { labelFor, splitEdit } from './content-groups.js';
+  import { labelFor } from './content-groups.js';
+  import { splitEdit } from '../../site/helpers.js';
   import { photoUses } from '../lib/photo-uses.js';
   import { appendPhotos } from '../lib/photo-list.js';
   import { parse } from '../lib/pointer.js';
@@ -430,9 +432,7 @@
 
       <div class="md-uses">
         <span class="tf__label"
-          >{uses.length
-            ? `Used in ${uses.length} place${uses.length === 1 ? '' : 's'}`
-            : 'Not used'}</span
+          >{uses.length ? `Used in ${plural(uses.length, 'place')}` : 'Not used'}</span
         >
         <ul class="list">
           {#each uses as u (`${u.file}#${u.ptr}`)}
@@ -486,7 +486,7 @@
       <span class="hint small">{n ? `${n} picked` : 'None picked'}</span>
       <Button size="small" onclick={close}>Cancel</Button>
       <Button variant="primary" size="small" icon="plus" disabled={!n} onclick={addPicked}>
-        {n ? `Add ${n} photo${n === 1 ? '' : 's'}` : 'Add photos'}
+        {n ? `Add ${plural(n, 'photo')}` : 'Add photos'}
       </Button>
     </footer>
   {/if}

@@ -100,9 +100,7 @@
         />
       {/if}
       <div class={['tf', live.changed(REDIRECTS, `/redirects/${i}/status`) && 'is-changed']}>
-        <label class="tf__label" for="{uid}-status-{i}"
-          >Status</label
-        >
+        <label class="tf__label" for="{uid}-status-{i}">Status</label>
         <Select
           id="{uid}-status-{i}"
           value={r.status ?? 301}

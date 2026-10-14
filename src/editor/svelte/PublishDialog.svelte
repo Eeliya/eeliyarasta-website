@@ -5,6 +5,7 @@
   retried. App.svelte calls open().
 -->
 <script>
+  import { closeOnBackdrop } from '../lib/dialog.js';
   import Button from './Button.svelte';
   import { tick } from 'svelte';
   import PubFiles from './PubFiles.svelte';
@@ -120,12 +121,11 @@
   }
 </script>
 
-<!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->
 <dialog
   class="modal__box"
   aria-label="Publish to GitHub"
   bind:this={dialog}
-  onclick={(e) => e.target === dialog && dialog.close()}
+  {@attach closeOnBackdrop}
 >
   <h3 class="modal__title">Publish to GitHub</h3>
   {#if pub}

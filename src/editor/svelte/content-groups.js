@@ -4,7 +4,7 @@
  * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
-import { sourceIdOf } from '../../site/files.js';
+import { sourceIdOf, sourceIds } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
 import { BLOCK_TYPES } from '../../site/blocks/index.js';
@@ -36,12 +36,6 @@ export const isSource = (file) => sourceIdOf(file) !== null;
 
 /** Pointer parts into an item of a source file: ["items", "2", ...]. */
 const isItemPtr = (file, parts) => isSource(file) && parts[0] === 'items' && /^\d+$/.test(parts[1]);
-
-/** "pages/index.json#/sections/0/blocks/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/blocks/0/title' } */
-export function splitEdit(edit) {
-  const i = edit.indexOf('#');
-  return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
-}
 
 /**
  * Human label for a pointer, e.g. sources/people.json#/items/0/name -> "Noor Vermeer / Name": a
@@ -178,7 +172,7 @@ const TEXT_TYPES = ['text', 'words', 'block'];
 function blockGroup(store, file, at, j) {
   const s = sectionsOf(store, file)[at].blocks[j];
   const t = BLOCK_TYPES[s?.type];
-  const sources = Object.keys(store.current).map(sourceIdOf).filter(Boolean).sort();
+  const sources = sourceIds(store.current);
   const base = `/sections/${at}/blocks/${j}`;
   return {
     id: s.id,

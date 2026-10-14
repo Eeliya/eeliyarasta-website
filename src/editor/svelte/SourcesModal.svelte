@@ -9,6 +9,9 @@
   src/site/schemas.js): the fields, their labels, widgets, widths and help, its name and slug.
 -->
 <script>
+  import { plural } from '../lib/format.js';
+  import { closeOnBackdrop } from '../lib/dialog.js';
+  import { showValue } from '../lib/show-value.js';
   import Button from './Button.svelte';
   import { tick, flushSync } from 'svelte';
   import Field from './Field.svelte';
@@ -66,10 +69,7 @@
   const fileChanged = (f) => !same(live.current(f), live.base(f));
 
   /** Show the stored value in an input, except while the user is typing in it. */
-  const show = (value) => (el) => {
-    const text = String(value ?? '');
-    if (document.activeElement !== el && el.value !== text) el.value = text;
-  };
+  const show = (value) => showValue(String(value ?? ''));
 
   function select(i) {
     if (i !== ui.explorer.index) ui.explorer.field = '';
@@ -151,12 +151,11 @@
   });
 </script>
 
-<!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->
 <dialog
   class="modal__box src-modal"
   aria-label="Sources"
   bind:this={dialog}
-  onclick={(e) => e.target === dialog && dialog.close()}
+  {@attach closeOnBackdrop}
   onclose={() => {
     ui.explorer.open = false;
     const then = after;
@@ -200,7 +199,7 @@
     <nav class="src-list" aria-label="Items">
       {#if isList}
         <header class="row src-list__head">
-          {list.length} item{list.length === 1 ? '' : 's'}
+          {plural(list.length, 'item')}
           <Button size="small" icon="plus" onclick={add}>Add</Button>
         </header>
         <ul class="list src-list__items">

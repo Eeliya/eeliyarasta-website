@@ -11,7 +11,7 @@
   import Field from './Field.svelte';
   import { ui } from './ui.svelte.js';
   import { setCurtainMode } from './curtain-edit.js';
-  import { splitEdit } from './content-groups.js';
+  import { splitEdit } from '../../site/helpers.js';
   import { CURTAIN_MODES, curtainMode } from '../../client/anim/curtain.js';
 
   let { live, onsettings } = $props();

@@ -25,6 +25,7 @@
  */
 import { isSlug } from './files.js';
 import { isId, newId } from './layout/ids.js';
+import { isObject, isExternal } from './is.js';
 
 export const FIELD_TYPES = [
   'text',
@@ -38,8 +39,6 @@ export const FIELD_TYPES = [
   'date',
 ];
 
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
-const isExternal = (s) => /^https?:\/\//.test(s);
 const PHOTO = /^[\w-][\w./-]*\.(?:jpe?g|png|webp|avif|gif)$/i;
 const LINK = /^(?:https?:\/\/|\/|mailto:)\S*$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;

@@ -28,6 +28,7 @@
 import config from '../../../content/en/settings/animations.json';
 import { gsap, reducedMotion } from '../lib/env.js';
 import { types } from './types.js';
+import { isObject } from '../../site/is.js';
 
 const merge = (...objs) => {
   const out = {};
@@ -112,12 +113,11 @@ function assignKeys(els, page = pageKey()) {
  * which other modules imported). Used by the visual editor's live preview.
  */
 export function setConfig(next) {
-  const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
   const assign = (target, src) => {
     for (const k of Object.keys(target)) if (!(k in src)) delete target[k];
     for (const [k, v] of Object.entries(src)) {
-      if (isObj(v) && isObj(target[k])) assign(target[k], v);
-      else target[k] = isObj(v) || Array.isArray(v) ? structuredClone(v) : v;
+      if (isObject(v) && isObject(target[k])) assign(target[k], v);
+      else target[k] = isObject(v) || Array.isArray(v) ? structuredClone(v) : v;
     }
   };
   assign(config, next);

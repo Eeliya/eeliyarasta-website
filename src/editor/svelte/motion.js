@@ -14,18 +14,18 @@
  * Shown with MotionField.svelte. No DOM here.
  */ import { compile } from '../lib/pointer.js';
 import { BLOCK_ANIM_TYPES, TIMING_KEYS as TIMING_LIST } from '../../site/layout/motion.js';
+import { isObject } from '../../site/is.js';
 
 // Presets that work on any element or block; special ones (scatter, hero-title,
 // hover-preview) need their markup.
 export const GENERIC_TYPES = new Set(BLOCK_ANIM_TYPES);
 
-const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
 const merge = (...objs) => {
   const out = {};
   for (const o of objs) {
     if (!o) continue;
     for (const [k, v] of Object.entries(o))
-      out[k] = isObj(v) && isObj(out[k]) ? merge(out[k], v) : v;
+      out[k] = isObject(v) && isObject(out[k]) ? merge(out[k], v) : v;
   }
   return out;
 };

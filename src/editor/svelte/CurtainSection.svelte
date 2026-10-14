@@ -5,6 +5,7 @@
   (settings/animations.json); a page only turns it off (Content > Transitions, PageCurtain.svelte).
 -->
 <script>
+  import { showValue } from '../lib/show-value.js';
   import Button from './Button.svelte';
   import CurtainTimeline from './CurtainTimeline.svelte';
   import EasePicker from './EasePicker.svelte';
@@ -48,10 +49,7 @@
   const partial = (raw) => /^-?\d*\.?$/.test(raw.trim()) && !/\d$/.test(raw.trim());
 
   /** Show the value, except while the user is typing in the field. */
-  const show = (v) => (el) => {
-    const text = v == null ? '' : fmtS(v);
-    if (document.activeElement !== el && el.value !== text) el.value = text;
-  };
+  const show = (v) => showValue(v == null ? '' : fmtS(v));
 
   function oninput(rel, e) {
     const raw = e.currentTarget.value.trim();

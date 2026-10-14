@@ -13,8 +13,7 @@
  * halved; one with a phone area has only its own phone link.
  */
 import { baseOf, hasMobileArea, phoneOf } from './grid.js';
-
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+import { isObject } from '../is.js';
 
 /** A link as stored, checked for shape only: { to, gap } or null. */
 const linkShape = (l) =>

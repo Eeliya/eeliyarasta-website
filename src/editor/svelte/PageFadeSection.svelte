@@ -5,6 +5,7 @@
   panel, the new one comes in as the panel lifts). Same fields as the curtain's Advanced.
 -->
 <script>
+  import { showValue } from '../lib/show-value.js';
   import EasePicker from './EasePicker.svelte';
   import Section from './Section.svelte';
   import { fmtS } from './curtain-edit.js';
@@ -36,10 +37,7 @@
   const partial = (raw) => /^\d*\.?$/.test(raw) && !/\d$/.test(raw);
 
   /** Show the value, except while the user is typing in the field. */
-  const show = (v) => (el) => {
-    const text = v == null ? '' : fmtS(v);
-    if (document.activeElement !== el && el.value !== text) el.value = text;
-  };
+  const show = (v) => showValue(v == null ? '' : fmtS(v));
 
   function oninput(step, e) {
     const raw = e.currentTarget.value.trim();

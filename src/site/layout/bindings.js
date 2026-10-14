@@ -20,8 +20,8 @@
  */
 import { schemaOf } from '../schemas.js';
 import { pageFile } from '../files.js';
-
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+import { isObject } from '../is.js';
+import { eachBlock } from './ids.js';
 
 /** { "bind": "<field>" } */
 export const isBinding = (v) => isObject(v) && typeof v.bind === 'string';
@@ -184,40 +184,43 @@ export function bindingProblems(content, { types, files = null }) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
     const pageSource = id.endsWith('[slug]') ? page?.template?.source : null;
-    (Array.isArray(page?.sections) ? page.sections : []).forEach((s, at) =>
-      (Array.isArray(s?.blocks) ? s.blocks : []).forEach((b, j) => {
-        const t = types[b?.type];
-        if (!t || !isObject(b)) return;
-        const where = `content/en/${file} (sections/${at}/blocks/${j})`;
-        const problem = (level, msg) => out.push({ level, message: `${where}: ${msg}` });
-        let source = pageSource;
-        if (isObject(b.item)) {
-          source = b.item.source;
-          const list = content.sources?.[source];
-          if (!Array.isArray(list)) return problem('error', `item: "${source}" is not a source`);
-          if (!list.some((it) => it?.id === b.item.id))
-            problem('warn', `item: "${b.item.id}" is not in ${source}: its bound fields are empty`);
+    for (const [b, , at, j] of eachBlock(page?.sections)) {
+      const t = types[b?.type];
+      if (!t || !isObject(b)) continue;
+      const where = `content/en/${file} (sections/${at}/blocks/${j})`;
+      const problem = (level, msg) => out.push({ level, message: `${where}: ${msg}` });
+      let source = pageSource;
+      if (isObject(b.item)) {
+        source = b.item.source;
+        const list = content.sources?.[source];
+        if (!Array.isArray(list)) {
+          problem('error', `item: "${source}" is not a source`);
+          continue;
         }
-        const uses = bindingsOf(b, t);
-        if (!uses.length) return;
-        if (!source)
-          return problem(
-            'warn',
-            'has bound fields but no item (set one in its Content tab): they are empty',
+        if (!list.some((it) => it?.id === b.item.id))
+          problem('warn', `item: "${b.item.id}" is not in ${source}: its bound fields are empty`);
+      }
+      const uses = bindingsOf(b, t);
+      if (!uses.length) continue;
+      if (!source) {
+        problem(
+          'warn',
+          'has bound fields but no item (set one in its Content tab): they are empty',
+        );
+        continue;
+      }
+      const fields = schemaOf(content, source)?.fields || [];
+      for (const u of uses) {
+        const name = u.path.join('.');
+        const f = fields.find((x) => x.key === u.bind);
+        if (!f) problem('error', `${name}: ${source} has no field "${u.bind}"`);
+        else if (!(BIND_TYPES[u.type] || []).includes(f.type))
+          problem(
+            'error',
+            `${name}: ${source}.${u.bind} (${f.type}) doesn't fit a ${u.type || 'list'} field`,
           );
-        const fields = schemaOf(content, source)?.fields || [];
-        for (const u of uses) {
-          const name = u.path.join('.');
-          const f = fields.find((x) => x.key === u.bind);
-          if (!f) problem('error', `${name}: ${source} has no field "${u.bind}"`);
-          else if (!(BIND_TYPES[u.type] || []).includes(f.type))
-            problem(
-              'error',
-              `${name}: ${source}.${u.bind} (${f.type}) doesn't fit a ${u.type || 'list'} field`,
-            );
-        }
-      }),
-    );
+      }
+    }
   }
   return out;
 }

@@ -14,6 +14,7 @@ import {
   sitePaths,
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
+import { read } from './test-layout.mjs';
 
 /** content/ in a temp dir: home, 404, people (+ [slug] and team), about, a menu and redirects. */
 function site(redirects = []) {
@@ -73,7 +74,6 @@ function page(id, block) {
     sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', layout, ...block }] }],
   };
 }
-const read = (root, f) => JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
 
 test('rename: every path of the folder redirects (items by pattern), links follow', () => {
   const root = site();

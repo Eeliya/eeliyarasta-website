@@ -13,8 +13,8 @@
 import { isId } from './layout/ids.js';
 import { isSlug } from './files.js';
 import { itemHref, warnOnce } from './helpers.js';
+import { isObject } from './is.js';
 
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const KINDS = ['page', 'item', 'href'];
 
 /** Which kind of link `v` holds ('page' | 'item' | 'href'), or null. */

@@ -4,6 +4,8 @@
  * back (flat) for assertions. And a git environment for tests that run git (testEnv,
  * useTestEnv; see git-env.mjs for why).
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { storesRows } from '../src/site/layout/grid.js';
 
 const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
@@ -57,3 +59,19 @@ export function useTestEnv() {
   for (const k of Object.keys(process.env)) if (!(k in clean)) delete process.env[k];
   Object.assign(process.env, clean);
 }
+
+/** [fn()'s result, the console.warn messages it printed]. */
+export function warnings(fn) {
+  const seen = [];
+  const warn = console.warn;
+  console.warn = (...a) => seen.push(a.join(' '));
+  try {
+    return [fn(), seen];
+  } finally {
+    console.warn = warn;
+  }
+}
+
+/** A temp site's content file (content/en/<f>), parsed. */
+export const read = (root, f) =>
+  JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));

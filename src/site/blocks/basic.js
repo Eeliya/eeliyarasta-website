@@ -1,7 +1,7 @@
 /**
  * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
  */
-import { html, esc, img, extAttrs, sizes } from '../helpers.js';
+import { html, esc, img, extAttrs, lines, sizes } from '../helpers.js';
 import { hrefOf } from '../hrefs.js';
 
 /** Paragraphs (a blank line starts a new one) under an optional title. */
@@ -23,7 +23,7 @@ export const text = {
     return html` <div class="textblock">
       ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
       <div class="textblock__body" ${b.ed('body', 'block')}>
-        ${paragraphs.map((p) => html`<p>${esc(p.trim()).replace(/\r?\n/g, '<br>')}</p>`)}
+        ${paragraphs.map((p) => html`<p>${lines(p.trim())}</p>`)}
       </div>
     </div>`;
   },

@@ -1,4 +1,5 @@
 /** JSON Pointer (RFC 6901) helpers: "/sections/people/title" <-> ['sections', 'people', 'title']. */
+import { isObject } from '../../site/is.js';
 export const parse = (ptr) =>
   !ptr
     ? []
@@ -7,8 +8,8 @@ export const parse = (ptr) =>
         .split('/')
         .map((t) => t.replace(/~1/g, '/').replace(/~0/g, '~'));
 
-export const compile = (parts) =>
-  parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
+/** Parts -> pointer: the site's pointer() (helpers.js). */
+export { pointer as compile } from '../../site/helpers.js';
 
 export function get(obj, ptr) {
   let cur = obj;
@@ -48,8 +49,7 @@ export function remove(obj, ptr, { keep = 0 } = {}) {
   else delete parent[parts.at(-1)];
   for (let i = parts.length - 1; i > keep; i--) {
     const node = chain[i];
-    if (node && typeof node === 'object' && !Array.isArray(node) && !Object.keys(node).length)
-      delete chain[i - 1][parts[i - 1]];
+    if (isObject(node) && !Object.keys(node).length) delete chain[i - 1][parts[i - 1]];
     else break;
   }
 }

@@ -16,6 +16,7 @@
               again on the same source or item when the Source Explorer closes (then)
 -->
 <script>
+  import { closeOnBackdrop } from '../lib/dialog.js';
   import { tick } from 'svelte';
   import Button from './Button.svelte';
   import ExplorerHead from './ExplorerHead.svelte';
@@ -182,12 +183,7 @@
   </div>
 </div>
 
-<dialog
-  class="modal__box ip-modal"
-  aria-label={label}
-  bind:this={dialog}
-  onclick={(e) => e.target === dialog && dialog.close()}
->
+<dialog class="modal__box ip-modal" aria-label={label} bind:this={dialog} {@attach closeOnBackdrop}>
   <ExplorerHead
     title={label}
     icon="fa-database"

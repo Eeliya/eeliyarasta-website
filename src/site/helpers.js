@@ -8,6 +8,7 @@
 /** Escape text for HTML text/attribute context. Always use for content values. */
 import { itemTitle, schemaOf } from './schemas.js';
 import { PHONE_MQ } from './layout/grid.js';
+import { isExternal } from './is.js';
 
 export const esc = (value = '') =>
   String(value ?? '').replace(
@@ -47,6 +48,15 @@ export const words = (text) =>
 export const pointer = (parts) =>
   parts.map((p) => '/' + String(p).replace(/~/g, '~0').replace(/\//g, '~1')).join('');
 
+/** An edit reference "file#/json/pointer" (data-edit, data-bound, a curtain's edit). */
+export const editRef = (file, parts) => `${file}#${pointer(parts)}`;
+
+/** "pages/index.json#/sections/0/title" -> { file: 'pages/index.json', ptr: '/sections/0/title' } */
+export function splitEdit(edit) {
+  const i = edit.indexOf('#');
+  return { file: edit.slice(0, i), ptr: edit.slice(i + 1) };
+}
+
 /**
  * Editor markers (data-edit, data-edit-type, data-section, data-section-kind,
  * data-curtain-edit) are only rendered for the dev server, where the editor's preview needs
@@ -65,7 +75,7 @@ export const setEditable = (on) => (editable = !!on);
  */
 export const ed = (file, parts, type = 'text') =>
   editable
-    ? ` data-edit="${esc(file + '#' + pointer(parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`
+    ? ` data-edit="${esc(editRef(file, parts))}"${type === 'text' ? '' : ` data-edit-type="${type}"`}`
     : '';
 
 /** "Noor Vermeer" -> "noor-vermeer". */
@@ -100,7 +110,7 @@ export const itemHref = (ctx, source, item) => {
 export const pad = (n, len = 2) => String(n).padStart(len, '0');
 
 /** Is this an external (absolute http) URL? */
-export const isExternal = (url = '') => /^https?:\/\//.test(url);
+export { isExternal };
 
 /** Attributes for links that leave the site. */
 export const extAttrs = (url) => (isExternal(url) ? ' target="_blank" rel="noopener"' : '');

@@ -3,15 +3,15 @@
  * remote version of a file before committing (so nobody's changes get clobbered).
  */
 import { set, remove } from './pointer.js';
+import { isObject } from '../../site/is.js';
 
-const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 export const clone = (v) => (v === undefined ? undefined : structuredClone(v));
 export const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Leaf-level operations turning `a` into `b`: [{ path: [...], value }] (value undefined = delete). */
 export function diff(a, b, path = []) {
   if (equal(a, b)) return [];
-  if (isObj(a) && isObj(b)) {
+  if (isObject(a) && isObject(b)) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
     return [...keys].flatMap((k) =>
       k in b ? diff(a[k], b[k], [...path, k]) : [{ path: [...path, k], value: undefined }],

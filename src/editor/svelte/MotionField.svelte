@@ -17,6 +17,7 @@
     actions  snippet for the end of the top row
 -->
 <script>
+  import { showValue } from '../lib/show-value.js';
   import EasePicker from './EasePicker.svelte';
   import { formatValue } from './motion.js';
 
@@ -26,10 +27,7 @@
   const list = `dl-motion-${uid}`;
 
   /** Show the stored value, except in the input the user is typing in or dragging. */
-  const show = (v) => (el) => {
-    const text = String(v ?? '');
-    if (document.activeElement !== el && el.value !== text) el.value = text;
-  };
+  const show = (v) => showValue(String(v ?? ''));
   /** A number input: store valid numbers only. */
   const number = (path) => (e) => {
     const raw = e.currentTarget.value;

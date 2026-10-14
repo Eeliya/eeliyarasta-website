@@ -10,6 +10,7 @@
     live  reactive store; file  the page file
 -->
 <script>
+  import { plural } from '../lib/format.js';
   import Field from './Field.svelte';
   import PhotoList from './PhotoList.svelte';
   import { openMedia } from './media.svelte.js';
@@ -20,6 +21,7 @@
     THROUGH,
     TRANSITIONS,
   } from '../../site/backdrop.js';
+  import { isObject } from '../../site/is.js';
 
   let { live, file } = $props();
 
@@ -27,7 +29,7 @@
     live.version;
     const v = live.get(file, '/backdrop');
     // a copy: the store changes its objects in place, and a derived of the same object stays put
-    return v && typeof v === 'object' && !Array.isArray(v) ? { ...v } : {};
+    return isObject(v) ? { ...v } : {};
   });
   const photos = $derived(Array.isArray(b.photos) ? [...b.photos] : []);
   const has = $derived(photos.some(Boolean));
@@ -82,9 +84,7 @@
     openMedia({ multi: { list: `${file}#/backdrop/photos`, item: '', photo: '' } });
   }
 
-  const name = $derived(
-    has ? `${photos.length} photo${photos.length === 1 ? '' : 's'} · ${LABELS[transition]}` : '',
-  );
+  const name = $derived(has ? `${plural(photos.length, 'photo')} · ${LABELS[transition]}` : '');
 </script>
 
 <!-- a value picker (not tabs): a group of buttons, the picked one filled -->

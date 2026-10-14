@@ -42,13 +42,7 @@ export const itemMeta = (item, schema) =>
 
 export const pad = (i) => String(i + 1).padStart(2, '0');
 
-export const slugify = (s) =>
-  String(s || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+export { slugify } from '../../site/helpers.js';
 
 /**
  * What the editor shows for schema field `f` (a value at `path` in item i of `file`):

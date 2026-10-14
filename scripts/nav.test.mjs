@@ -5,6 +5,7 @@ import { buildRoutes } from '../src/site/routes.js';
 import { header, mobileMenu } from '../src/site/templates/header.js';
 import { checkContent } from '../src/site/validate.js';
 import { setEditable } from '../src/site/helpers.js';
+import { warnings } from './test-layout.mjs';
 
 const NAV = 'settings/nav.json';
 const base = loadContent('.');
@@ -14,16 +15,6 @@ const ctxWith = (nav) => {
 };
 
 /** Console warnings while fn runs. */
-function warnings(fn) {
-  const seen = [];
-  const warn = console.warn;
-  console.warn = (...a) => seen.push(a.join(' '));
-  try {
-    return [fn(), seen];
-  } finally {
-    console.warn = warn;
-  }
-}
 
 test('nav.json: the shipped menus are valid', () => {
   assert.deepEqual(checkContent(NAV, base.nav), []);

@@ -46,8 +46,8 @@ import { linkProblem } from './hrefs.js';
 import { checkMotion } from './layout/motion.js';
 import { checkBackdrop } from './backdrop.js';
 import { bindTypeOf, FORMAT_TYPES, isBinding } from './layout/bindings.js';
+import { isObject } from './is.js';
 
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const typeOf = (v) =>
   v === null
     ? 'null'

@@ -53,9 +53,9 @@
  *            on a [slug] page they show the page's item without one)
  * Positions become CSS variables on the elements; src/client/styles/_layout.scss lays them out.
  */
-import { esc, ed, editable, pointer, slugify, warnOnce } from '../helpers.js';
+import { esc, ed, editRef, editable, slugify, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
-import { newId } from './ids.js';
+import { eachBlock, newId } from './ids.js';
 import { motionAttrs } from './motion.js';
 import { isBinding, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
 import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
@@ -282,12 +282,14 @@ const linkAttrs = (b) =>
 export function headingNumbers(sections) {
   const numbers = {};
   let n = 0;
-  for (const s of Array.isArray(sections) ? sections : []) {
-    if (s?.enabled === false) continue;
-    for (const b of Array.isArray(s?.blocks) ? s.blocks : [])
-      if (b?.type === 'heading' && b.config?.numbered && b.config.enabled !== false)
-        numbers[b.id] = ++n;
-  }
+  for (const [b, s] of eachBlock(sections))
+    if (
+      s.enabled !== false &&
+      b?.type === 'heading' &&
+      b.config?.numbered &&
+      b.config.enabled !== false
+    )
+      numbers[b.id] = ++n;
   return numbers;
 }
 
@@ -311,7 +313,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
   const bound = (value, path) => {
     let missing = false;
     resolve(value, { item, keys, onwarn: () => (missing = true) });
-    const attr = ` data-bound="${esc(file + '#' + pointer(parts(path)))}"`;
+    const attr = ` data-bound="${esc(editRef(file, parts(path)))}"`;
     return missing ? `${attr} data-bound-missing` : attr;
   };
   const b = {

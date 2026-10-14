@@ -17,6 +17,15 @@ export function newId(kind, taken = new Set()) {
   }
 }
 
+/**
+ * Every block of `sections` (a page's or the footer's), in order, as [block, section, at, j]
+ * (section `at`, its block `j`); a section without a blocks list has none.
+ */
+export function* eachBlock(sections) {
+  for (const [at, s] of (Array.isArray(sections) ? sections : []).entries())
+    if (Array.isArray(s?.blocks)) for (const [j, b] of s.blocks.entries()) yield [b, s, at, j];
+}
+
 /** Every block of a page (its sections' blocks, in order). */
 export const blocksOf = (page) =>
   (Array.isArray(page?.sections) ? page.sections : []).flatMap((s) =>

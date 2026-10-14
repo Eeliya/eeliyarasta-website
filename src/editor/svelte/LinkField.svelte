@@ -6,11 +6,12 @@
   Used by block settings and list fields (GroupFields.svelte) and the header's menu (HeaderPart).
 -->
 <script>
+  import { isBinding } from '../../site/layout/bindings.js';
   import Field from './Field.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { itemName, schemaFor } from './source-items.js';
-  import { sourceFile, sourceIdOf } from '../../site/files.js';
+  import { sourceFile, sourceIds } from '../../site/files.js';
   import { linkKind } from '../../site/hrefs.js';
 
   let {
@@ -26,7 +27,7 @@
   } = $props();
   const uid = $props.id();
 
-  const bound = $derived(!!value && typeof value === 'object' && typeof value.bind === 'string');
+  const bound = $derived(isBinding(value));
   const kind = $derived(bound ? 'bind' : linkKind(value));
   const key = $derived(
     kind === 'page'
@@ -45,21 +46,17 @@
   );
   const items = $derived.by(() => {
     live.version;
-    return Object.keys(live.store.current)
-      .map(sourceIdOf)
-      .filter(Boolean)
-      .sort()
-      .flatMap((source) => {
-        const list = live.get(sourceFile(source), '/items');
-        const schema = schemaFor(live.store, sourceFile(source));
-        return (Array.isArray(list) ? list : [])
-          .filter((it) => it?.id)
-          .map((it) => ({
-            value: `item:${source}:${it.id}`,
-            label: itemName(it, schema),
-            hint: `${source}.json`,
-          }));
-      });
+    return sourceIds(live.store.current).flatMap((source) => {
+      const list = live.get(sourceFile(source), '/items');
+      const schema = schemaFor(live.store, sourceFile(source));
+      return (Array.isArray(list) ? list : [])
+        .filter((it) => it?.id)
+        .map((it) => ({
+          value: `item:${source}:${it.id}`,
+          label: itemName(it, schema),
+          hint: `${source}.json`,
+        }));
+    });
   });
   const options = $derived.by(() => {
     const out = [

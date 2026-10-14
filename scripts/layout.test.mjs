@@ -1,4 +1,4 @@
-import { flat, lay } from './test-layout.mjs';
+import { flat, lay, warnings } from './test-layout.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -43,16 +43,6 @@ const block = (type, more = {}) => lay({ id: id('b'), type, ...more });
 const section = (blocks, more = {}) => ({ id: id('s'), blocks, ...more });
 
 /** Console warnings while fn runs. */
-function warnings(fn) {
-  const seen = [];
-  const warn = console.warn;
-  console.warn = (...a) => seen.push(a.join(' '));
-  try {
-    return [fn(), seen];
-  } finally {
-    console.warn = warn;
-  }
-}
 
 test('ids: s-/b- with 4+ letters or digits, new ones never taken', () => {
   assert.ok(isId('s-k3x9', 's'));

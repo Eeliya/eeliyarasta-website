@@ -10,13 +10,14 @@
   ui.pagesWin (persist.js).
 -->
 <script>
+  import { closeOnBackdrop } from '../lib/dialog.js';
   import Button from './Button.svelte';
   import { tick, flushSync } from 'svelte';
   import ExplorerHead from './ExplorerHead.svelte';
   import ExplorerRow from './ExplorerRow.svelte';
   import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { TEMPLATE, isSlug, pageFile, pageIdOf, sourceIdOf } from '../../site/files.js';
+  import { TEMPLATE, isSlug, pageFile, pageIdOf, sourceIds } from '../../site/files.js';
   import { pageTitle, pathOfId } from '../../site/routes.js';
   import { slugify } from '../../site/helpers.js';
   import { plural } from '../lib/format.js';
@@ -52,7 +53,7 @@
   });
   const sources = $derived.by(() => {
     live.version;
-    return Object.keys(live.store.current).map(sourceIdOf).filter(Boolean).sort();
+    return sourceIds(live.store.current);
   });
   // the pages in this folder (home is the root's own page), 404 last
   const rank = (id) => (id === '404' ? 1 : 0);
@@ -211,12 +212,11 @@
   });
 </script>
 
-<!-- Esc closes a modal <dialog> by itself; a click on the backdrop lands on the dialog. -->
 <dialog
   class="modal__box pg-modal"
   aria-label="Pages"
   bind:this={dialog}
-  onclick={(e) => e.target === dialog && dialog.close()}
+  {@attach closeOnBackdrop}
   onclose={() => (ui.pagesWin.open = false)}
 >
   <ExplorerHead
