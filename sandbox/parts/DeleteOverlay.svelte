@@ -1,10 +1,10 @@
 <!-- mock: a section's delete confirmation over the card itself, its size kept.
-     v: solid | red | scrim | compact; closed: the card closed -->
+     v: solid | red | scrim | compact | blur; card: the card's own border turns red (not the overlay's); closed: the card closed -->
 <script>
   import Section from '../../src/editor/svelte/Section.svelte';
   import Button from '../../src/editor/svelte/Button.svelte';
 
-  let { v = 'solid', closed = false, caption = '' } = $props();
+  let { v = 'solid', closed = false, card = false, caption = '' } = $props();
   // a closed card (or the compact one) asks in one row, the header's height
   const row = $derived(closed || v === 'compact');
 </script>
@@ -29,7 +29,7 @@
   <div class="panel">
     <Section title="Section 5" open={false}>{#snippet bar()}{@render tools()}{/snippet}</Section>
 
-    <div class="wrap">
+    <div class={['wrap', card && 'wrap--red']}>
       <Section title="Section 6" open={!closed} {foot}>
         {#snippet bar()}{@render tools()}{/snippet}
         <input class="tf__input" placeholder="Name" aria-label="Name" />
@@ -42,7 +42,7 @@
         role="alertdialog"
         aria-label="Delete Section 6 and its 2 blocks?"
       >
-        {#if v === 'red' || v === 'compact' || (row && v !== 'scrim')}
+        {#if card || v === 'red' || v === 'compact' || (row && v !== 'scrim')}
           <span class="ov__icon"><i class="fa-solid fa-trash"></i></span>
         {/if}
         <p class="ov__msg">
@@ -256,5 +256,24 @@
   }
   .ov--scrim.ov--row {
     padding-left: 16px;
+  }
+
+  // the card's own border turns red (.sec has a 1px transparent border: no size change); the
+  // overlay sits inside it (1px in) with no edge of its own
+  .wrap--red > :global(.sec) {
+    border-color: var(--c-danger);
+  }
+  .wrap--red > .ov {
+    inset: 1px -7px;
+    box-shadow: none;
+    border-radius: calc(var(--radius-lg) - 1px);
+  }
+  .wrap--red > .ov--compact {
+    height: 46px;
+  }
+  // blur (Eeliya's exception): the content blurred under a light tint
+  .ov--blur {
+    background: rgb(20 20 20 / 35%);
+    backdrop-filter: blur(6px);
   }
 </style>
