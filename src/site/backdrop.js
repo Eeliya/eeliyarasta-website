@@ -35,6 +35,9 @@ export const BACKDROP_DEFAULTS = {
   shade: 0.45,
   enabled: true,
 };
+/** The id the editor asks /__editor/render for to get the page's backdrop (render.js). */
+export const BACKDROP = '__backdrop';
+
 export const SHADE_MAX = 0.8;
 // a transition's own options: the other's are left out
 const OWN = { scroll: ['direction'], fade: ['through', 'parallax', 'scrub'] };

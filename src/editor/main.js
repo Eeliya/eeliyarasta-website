@@ -32,12 +32,12 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
-import { getRoutes, curtainOverrides, pathOfId } from '../site/routes.js';
+import { curtainOverrides, pathOfId } from '../site/routes.js';
+import { BACKDROP } from '../site/backdrop.js';
 import {
   ANIMATIONS,
   REDIRECTS,
   TEMPLATE,
-  contentFromFiles,
   pageFile,
   pageIdOf,
   schemaIdOf,
@@ -269,7 +269,7 @@ async function pagesOp(body) {
   // Show the new page, follow a renamed one, leave a deleted one.
   const shown = ui.path;
   const oldPath = body.id && pathOfId(body.id);
-  const routes = getRoutes(contentFromFiles(store.current));
+  const routes = live.routes;
   let to = null;
   if (body.op === 'add') to = pathOfId(res.id);
   else if (body.op === 'template') to = routes.find((r) => r.id === res.id)?.path;
@@ -401,7 +401,6 @@ function syncSections(
  * The page's backdrop (src/site/backdrop.js) after an edit: rendered by the dev server and put
  * in place in the preview (its script mounted again, the scroll kept), only when it changed.
  */
-const BACKDROP = '__backdrop'; // render.js BACKDROP: the id that renders the backdrop
 let backdropShown = null; // { file, path, json } the preview shows
 function syncBackdrop() {
   const file = previewFile(bridge.doc);

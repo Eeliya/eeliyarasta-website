@@ -13,7 +13,7 @@
   import Field from './Field.svelte';
   import PhotoList from './PhotoList.svelte';
   import { openMedia } from './media.svelte.js';
-  import { BACKDROP_DEFAULTS } from '../../site/backdrop.js';
+  import { BACKDROP_DEFAULTS, SHADE_MAX } from '../../site/backdrop.js';
 
   let { live, file } = $props();
 
@@ -149,7 +149,7 @@
           type="range"
           class="f__range"
           min="0"
-          max="80"
+          max={Math.round(SHADE_MAX * 100)}
           step="5"
           aria-label="Shade"
           value={shade}

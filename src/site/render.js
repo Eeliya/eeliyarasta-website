@@ -11,7 +11,7 @@ import { pageFile, FOOTER } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
 import { motionProblems } from './layout/motion.js';
 import { BLOCK_TYPES } from './blocks/index.js';
-import { renderBackdrop } from './backdrop.js';
+import { BACKDROP, renderBackdrop } from './backdrop.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
 export { getRoutes, buildRoutes, sitemapXml };
@@ -71,7 +71,7 @@ function contextOf(route, content) {
  * /__editor/render, so the preview swaps sections without loading the page again). The id
  * BACKDROP ("__backdrop") is the page's backdrop ('' without one, src/site/backdrop.js).
  */
-export const BACKDROP = '__backdrop';
+export { BACKDROP };
 
 export function renderRouteSections(route, content, ids, file = pageFile(route.id)) {
   setEditable(true);
