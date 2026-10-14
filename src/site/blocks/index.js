@@ -11,6 +11,8 @@
  *
  *   type      its name in the content
  *   label     its name in the editor; icon: a Font Awesome icon name (no "fa-")
+ *   line      one line on what it is, under its name in the editor's Add block modal
+ *   sketch    the modal's drawing of it: a type's name (album draws as 'photo')
  *   fields    its content fields for the editor: [{ key, label, type?, width?, list?, item? }]
  *               type: 'text' (default) | 'block' (multi-line) | 'words' | 'number' | 'image'
  *               width: 'half' shares a row with a half field next to it (short texts)

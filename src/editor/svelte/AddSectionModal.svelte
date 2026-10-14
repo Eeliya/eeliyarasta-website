@@ -4,27 +4,17 @@
   them; the pointer or the arrow keys pick one (a 2px accent ring: nothing moves), Enter or a
   click adds it, Esc or the backdrop closes. Opened by the dashed Add section card
   (SectionsList.svelte), which adds the section after the last one.
-    types   [{ value, label, icon }] the block types on offer
+    types   [{ value, label, icon, line, sketch }] the block types on offer (the registry's)
     after   the label of the section it lands after ("Section 3"), '' on an empty page
     onpick  (type) => …   '' is an empty section
 -->
 <script module>
-  // one line per block type; a type without one shows none
-  const LINES = {
-    '': 'Nothing in it yet: add blocks later',
-    heading: 'A big title with a short intro',
-    text: 'Paragraphs, with a title if you like',
-    photo: 'One photo, with a caption',
-    button: 'A link to a page or a site',
-    form: 'Name, email and a message',
-    hero: 'Your name over scattered photos',
-    intro: 'One large line of text',
-    grid: 'Photos from a source list',
-    albums: 'A card per album, to its page',
-    panels: 'Big panels to your lists',
-    projects: 'Rows that open each project',
-    about: 'A portrait with your story',
-    album: 'The item: its title, facts and photos',
+  const EMPTY = {
+    value: '',
+    label: 'Empty section',
+    icon: 'square',
+    line: 'Nothing in it yet: add blocks later',
+    sketch: '',
   };
   const COLS = 5;
 </script>
@@ -40,11 +30,11 @@
   let query = $state('');
   let active = $state(0);
 
-  const all = $derived([{ value: '', label: 'Empty section', icon: 'square' }, ...types]);
+  const all = $derived([EMPTY, ...types]);
   const shown = $derived.by(() => {
     const q = query.trim().toLowerCase();
     if (!q) return all;
-    return all.filter((t) => `${t.label} ${LINES[t.value] || ''}`.toLowerCase().includes(q));
+    return all.filter((t) => `${t.label} ${t.line || ''}`.toLowerCase().includes(q));
   });
 
   export function open() {
@@ -96,7 +86,7 @@
     {:else if type === 'text'}<b class="w40 h8"></b><b class="w90 h4"></b><b class="w80 h4"></b><b
         class="w60 h4"
       ></b>
-    {:else if type === 'photo' || type === 'album'}<b class="img"></b><b class="w40 h4"></b>
+    {:else if type === 'photo'}<b class="img"></b><b class="w40 h4"></b>
     {:else if type === 'button'}<b class="pill"></b>
     {:else if type === 'form'}<b class="w90 h8 box"></b><b class="w90 h8 box"></b><b
         class="w90 h16 box"
@@ -162,11 +152,11 @@
               onfocus={() => (active = i)}
               onclick={() => pick(t)}
             >
-              {@render sketch(t.value)}
+              {@render sketch(t.sketch)}
               <span class="as-tile__name"
                 ><i class="fa-solid fa-{t.icon}" aria-hidden="true"></i>{t.label}</span
               >
-              <span class="as-tile__line">{LINES[t.value] || ''}</span>
+              <span class="as-tile__line">{t.line || ''}</span>
             </button>
           </li>
         {/each}

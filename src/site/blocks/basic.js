@@ -9,6 +9,8 @@ export const text = {
   type: 'text',
   label: 'Text',
   icon: 'align-left',
+  line: 'Paragraphs, with a title if you like',
+  sketch: 'text',
   fields: [
     { key: 'title', label: 'Title (empty: none)' },
     { key: 'body', label: 'Text (a blank line starts a paragraph)', type: 'block' },
@@ -32,6 +34,8 @@ export const photo = {
   type: 'photo',
   label: 'Photo',
   icon: 'image',
+  line: 'One photo, with a caption',
+  sketch: 'photo',
   fields: [
     { key: 'src', label: 'Photo', type: 'image' },
     { key: 'caption', label: 'Caption (empty: none)' },
@@ -51,6 +55,8 @@ export const button = {
   type: 'button',
   label: 'Button',
   icon: 'arrow-right',
+  line: 'A link to a page or a site',
+  sketch: 'button',
   fields: [{ key: 'label', label: 'Label' }],
   config: [{ key: 'link', label: 'Link', type: 'link' }],
   defaults: {

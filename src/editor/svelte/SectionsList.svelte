@@ -181,7 +181,7 @@
   const types = $derived(
     Object.values(BLOCK_TYPES)
       .filter((t) => !t.item || pageIdOf(file)?.endsWith(TEMPLATE))
-      .map((t) => ({ value: t.type, label: t.label, icon: t.icon })),
+      .map(({ type, label, icon, line, sketch }) => ({ value: type, label, icon, line, sketch })),
   );
 
   const typeOf = (b) => BLOCK_TYPES[b?.type];

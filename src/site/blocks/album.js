@@ -25,6 +25,8 @@ export const album = {
   type: 'album',
   label: 'Album (the item)',
   icon: 'film',
+  line: 'The item: its title, facts and photos',
+  sketch: 'photo',
   item: true,
   fields: [
     { key: 'title', label: 'Title' },

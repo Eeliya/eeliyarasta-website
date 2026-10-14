@@ -51,6 +51,8 @@ export const hero = {
   type: 'hero',
   label: 'Hero',
   icon: 'star',
+  line: 'Your name over scattered photos',
+  sketch: 'hero',
   fields: [
     { key: 'title', label: 'Name', type: 'words', width: 'half' },
     { key: 'eyebrow', label: 'Eyebrow', width: 'half' },
@@ -87,6 +89,8 @@ export const intro = {
   type: 'intro',
   label: 'Statement',
   icon: 'quote-left',
+  line: 'One large line of text',
+  sketch: 'intro',
   fields: [{ key: 'body', label: 'Text', type: 'block' }],
   defaults: { body: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
   render: (s, ctx, b) =>
@@ -146,6 +150,8 @@ export const grid = {
   type: 'grid',
   label: 'Photo grid',
   icon: 'table-cells',
+  line: 'Photos from a source list',
+  sketch: 'grid',
   fields: [
     { key: 'eyebrow', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title', width: 'half' },
@@ -190,6 +196,8 @@ export const projects = {
   type: 'projects',
   label: 'Project list',
   icon: 'list',
+  line: 'Rows that open each project',
+  sketch: 'projects',
   fields: [
     { key: 'eyebrow', label: 'Label', width: 'half' },
     { key: 'title', label: 'Title (empty: no heading)', width: 'half' },

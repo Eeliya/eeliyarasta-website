@@ -27,6 +27,8 @@ export const heading = {
   type: 'heading',
   label: 'Page heading',
   icon: 'heading',
+  line: 'A big title with a short intro',
+  sketch: 'heading',
   fields: [
     { key: 'eyebrow', label: 'Eyebrow' },
     { key: 'title', label: 'Title' },
@@ -58,6 +60,8 @@ export const albums = {
   type: 'albums',
   label: 'Album cards',
   icon: 'images',
+  line: 'A card per album, to its page',
+  sketch: 'albums',
   config: [
     { key: 'source', label: 'Source', type: 'source' },
     {
@@ -85,6 +89,8 @@ export const panels = {
   type: 'panels',
   label: 'Photo panels',
   icon: 'table-columns',
+  line: 'Big panels to your lists',
+  sketch: 'panels',
   fields: [
     {
       key: 'panels',
@@ -126,6 +132,8 @@ export const about = {
   type: 'about',
   label: 'Bio',
   icon: 'user',
+  line: 'A portrait with your story',
+  sketch: 'about',
   fields: [
     { key: 'image', label: 'Photo', type: 'image' },
     { key: 'eyebrow', label: 'Eyebrow' },
