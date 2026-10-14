@@ -7,8 +7,19 @@ import assert from 'node:assert/strict';
 import { resolveRows } from '../src/site/layout/flow.js';
 import { halfArea, phoneAreaOf } from '../src/site/layout/grid.js';
 import { linkOf } from '../src/site/layout/links.js';
-import { areaOf, linkOfEl, widthOf } from '../src/client/modules/rows.js';
-import { flowAreas, linesOf, nearest, rectOf, tracksOf } from '../src/editor/overlay.js';
+import {
+  areaOfEl as areaOf,
+  halfArea as halfAreaG,
+  phoneAreaOf as phoneAreaOfG,
+  flowAreas,
+  linesOf,
+  linkOfEl,
+  nearest,
+  parseLink,
+  rectOf,
+  tracksOf,
+  widthOf,
+} from '../src/site/layout/geometry.js';
 
 const it = (id, row, rows, need = null, link = null) => ({ id, row, rows, need, link });
 const style = (vars) => ({ getPropertyValue: (k) => (k in vars ? String(vars[k]) : '') });
@@ -233,4 +244,13 @@ test('overlay: where blocks are now, the real rows over the stored area (own sec
     a: { col: 1, span: 30, row: 3, rows: 9 },
     b: { col: 31, span: 30, row: 1, rows: 3 },
   });
+});
+
+test('geometry: one link parse; grid helpers re-exported as they are', () => {
+  assert.deepEqual(parseLink('b-1 -3'), { to: 'b-1', gap: -3 });
+  assert.deepEqual(parseLink('b-1   4'), { to: 'b-1', gap: 4 });
+  for (const v of ['', undefined, 'b-1', 'b-1 x', 'b-1 1.5', ' b-1 2'])
+    assert.equal(parseLink(v), null);
+  assert.equal(halfAreaG, halfArea);
+  assert.equal(phoneAreaOfG, phoneAreaOf);
 });

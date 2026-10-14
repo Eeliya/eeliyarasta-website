@@ -26,6 +26,7 @@
  */
 import { resolveRows, rowsFor } from '../../site/layout/flow.js';
 import { COLS, MCOLS, PHONE_MQ, cellOf } from '../../site/layout/grid.js';
+import { areaOfEl, linkOfEl, widthOf } from '../../site/layout/geometry.js';
 
 const PHONE = PHONE_MQ;
 const VARS = ['--fr', '--frs'];
@@ -33,30 +34,6 @@ const SECTION_VARS = ['--frows'];
 
 /** The blocks of a section: its children. */
 const blocksOf = (sec) => [...sec.children].filter((n) => n.matches('.blk'));
-
-const int = (v, fallback) => {
-  const n = parseInt(v, 10);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
-};
-
-/** A block's stored area on the layout that applies (the phone grid's, or the desktop's). */
-export function areaOf(el, phone) {
-  const s = el.style;
-  if (phone) {
-    return {
-      col: int(s.getPropertyValue('--mc'), 1),
-      span: int(s.getPropertyValue('--ms'), MCOLS),
-      row: int(s.getPropertyValue('--mr'), 1),
-      rows: int(s.getPropertyValue('--mrs'), 1),
-    };
-  }
-  return {
-    col: int(s.getPropertyValue('--c'), 1),
-    span: int(s.getPropertyValue('--s'), COLS),
-    row: int(s.getPropertyValue('--r'), 1),
-    rows: int(s.getPropertyValue('--rs'), 1),
-  };
-}
 
 function set(el, name, value) {
   if (el.style.getPropertyValue(name) === String(value)) return false;
@@ -80,25 +57,6 @@ function clear(sec) {
   return changed;
 }
 
-/** The link a block's element follows on this grid: { to, gap } or null (free). */
-export function linkOfEl(el, phone) {
-  const v = phone ? el.dataset.mlink : el.dataset.link;
-  const m = v && /^(\S+)\s+(-?\d+)$/.exec(v);
-  return m ? { to: m[1], gap: Number(m[2]) } : null;
-}
-
-/** A section's content width now (its used width inside padding and border; 0 when hidden). */
-export function widthOf(cs) {
-  let width = parseFloat(cs.width) || 0; // its used width (not transformed, not rounded)
-  if (cs.boxSizing === 'border-box')
-    width -=
-      parseFloat(cs.paddingLeft) +
-      parseFloat(cs.paddingRight) +
-      parseFloat(cs.borderLeftWidth) +
-      parseFloat(cs.borderRightWidth);
-  return width;
-}
-
 /** The height a section has at least (its min-height), inside its padding (else Infinity). */
 function minHeightOf(sec, cs) {
   const min = parseFloat(cs.minHeight); // 'auto' (fit): NaN
@@ -115,7 +73,7 @@ function readSection(sec, phone, row) {
   const els = new Map();
   for (const el of blocksOf(sec)) {
     if (el.hidden) continue;
-    const area = areaOf(el, phone);
+    const area = areaOfEl(el, phone);
     const id = el.dataset.block || `b${els.size}`;
     const kind = el.classList.contains('blk--aspect')
       ? 'aspect'
