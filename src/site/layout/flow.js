@@ -19,7 +19,7 @@
 
 /**
  * items: [{ id, row, rows, need, link }]: a block's stored rows, the rows it needs now (null or
- * undefined: its stored rows, e.g. a sticky block) and the link it follows ({ to, gap } or
+ * undefined: its stored rows) and the link it follows ({ to, gap } or
  * null). sectionRows: the section's stored row count. Returns { rows, at: { id: { row, rows } } }.
  */
 export function resolveRows(items, sectionRows = 1) {

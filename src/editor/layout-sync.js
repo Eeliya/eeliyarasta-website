@@ -5,7 +5,7 @@
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
  * sections' name (their id), height, width, rows and on/off (their classes and CSS variables) and the
- * blocks' places, sizes, links, text scale, placements, phone areas, layers, on/off and motion (data-motion,
+ * blocks' places, sizes, links, text scale, phone areas, layers, on/off and motion (data-motion,
  * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
  * copied, a block's content or config changed after a structure edit, a section whose index
  * moved, so its editor markers point elsewhere) it reports: the editor fetches those
@@ -95,13 +95,10 @@ export function markRendered(doc, store, view = pageView(doc)) {
   });
 }
 
-// placements the site's script sets up (src/client/modules/placements.js)
-const SCRIPTED = /pinned|v-center/;
-
 /**
- * Apply a section's layout (and its blocks') to its element. True when a block's placement
- * changed in a way the site's script handles (a pin): the view needs mounting again. Blocks
- * whose motion changed are added to `moved` (their animation plays again).
+ * Apply a section's layout (and its blocks') to its element. True when a block's animated
+ * parts changed: the view needs mounting again. Blocks whose motion changed are added to
+ * `moved` (their animation plays again).
  */
 function applyLayout(el, s, moved = [], touched = { layout: false }) {
   // (only what differs is written: a name typed changes the id alone, nothing to lay out)
@@ -122,15 +119,13 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
   if (el.className + '|' + el.style.cssText + el.hidden !== was) touched.layout = true;
   let remount = false;
   for (const b of s.blocks || []) {
-    // (a pinned block sits in the pin's spacer)
+    // (its own block, not one of a nested section's)
     const node = el.querySelector(`[data-block="${b?.id}"]`);
     if (!node || node.closest('[data-sec]') !== el) continue;
     const cls = blockClass(b);
-    if (node.className !== cls && (SCRIPTED.test(node.className) || SCRIPTED.test(cls)))
-      remount = true;
     const wasNode = node.className + '|' + node.style.cssText + node.hidden;
     node.className = cls;
-    const kept = ['--bh', '--fr', '--frs']
+    const kept = ['--fr', '--frs']
       .map((v) => [v, node.style.getPropertyValue(v)])
       .filter(([, x]) => x)
       .map(([v, x]) => `;${v}:${x}`)
@@ -153,7 +148,7 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
  * Sync the preview's sections (`root`'s: the page's view, or the footer) with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
  * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
- * `remount` set when a pin changed (the view's modules need mounting again), `motion`: the
+ * `remount` set when a block's animated parts changed (the view's modules need mounting again), `motion`: the
  * block elements whose motion changed, and `layout`: whether anything the rows and scroll
  * triggers measure changed (a name alone changes the id only).
  */

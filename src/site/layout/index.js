@@ -34,12 +34,11 @@
  *   enabled  false: off: not on the public page at all; in the editor's preview rendered hidden
  *            (so it can be turned on live)
  * A block (its content: src/site/blocks/index.js):
- *   layout   { base, phone? }: where it sits. base: { col, span, row, rows?, link?, place? }:
- *            its grid area (columns 1-120, rows (cells) from 1), its link and placement.
- *            phone (optional, below 760px): any of the same keys over the phone grid of 60
- *            columns: an area of its own (without one: base's area halved), its phone link
- *            (without a phone area: base's, the gap halved) and place (without one it is in its
- *            area: no sticky, fixed, pin). `rows` is stored only for size "aspect" / "rows";
+ *   layout   { base, phone? }: where it sits. base: { col, span, row, rows?, link? }: its
+ *            grid area (columns 1-120, rows (cells) from 1) and its link. phone (optional,
+ *            below 760px): any of the same keys over the phone grid of 60 columns: an area of
+ *            its own (without one: base's area halved) and its phone link (without a phone
+ *            area: base's, the gap halved). `rows` is stored only for size "aspect" / "rows";
  *            an auto block's rows are measured on the page (rows.js, ./flow.js).
  *   size     'auto' (default): as tall as its content | 'aspect': as tall as its columns'
  *            width × `aspect` ("4:5", "16:9", any "w:h") | 'rows': exactly its base rows (fixed)
@@ -47,12 +46,6 @@
  *            top `gap` cells below that block's bottom (negative: overlapping); without one it
  *            is free, at its row whatever the blocks above do (./links.js)
  *   scale    optional { on, adjust }: a text block's text in cells (./type.js)
- *   place    (in base / phone) 'none' (default) | 'sticky-<corner>': held at a screen edge
- *            while its section scrolls by | 'fixed-<corner>': at a screen corner the whole time
- *            | 'fullscreen': covers the screen the whole time (behind the page unless its z is
- *            set: a background) | 'pinned': pinned (GSAP) while the rest of its section
- *            scrolls by. Corners: top-left, top-center, top-right, center, bottom-left,
- *            bottom-center, bottom-right
  *   z        its layer when blocks overlap (higher is in front)
  *   motion   optional { anim, ...timing }: its animation from the library and its own timing
  *            (./motion.js)
@@ -65,7 +58,7 @@ import { BLOCK_TYPES } from '../blocks/index.js';
 import { newId } from './ids.js';
 import { motionAttrs } from './motion.js';
 import { isBound, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
-import { COLS, baseOf, phoneAreaOf, phoneOf, placeOf, setBase } from './grid.js';
+import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, scaled } from './type.js';
 
@@ -124,23 +117,6 @@ const isAnchor = (a) => /^[a-z][a-z0-9-]*$/.test(a) && !RESERVED_IDS.includes(a)
 /** A block's height: its content (the default), its width × an aspect ratio, or fixed rows. */
 export const SIZES = ['auto', 'aspect', 'rows'];
 export const ASPECTS = ['1:1', '4:5', '3:4', '2:3', '3:2', '16:9', '21:9'];
-const CORNERS = [
-  'top-left',
-  'top-center',
-  'top-right',
-  'center',
-  'bottom-left',
-  'bottom-center',
-  'bottom-right',
-];
-/** Where a block is held while the page scrolls (see _layout.scss and modules/placements.js). */
-export const PLACES = [
-  'none',
-  ...CORNERS.map((c) => `sticky-${c}`),
-  ...CORNERS.map((c) => `fixed-${c}`),
-  'fullscreen',
-  'pinned',
-];
 
 /** "16:9" -> [16, 9]; null unless two positive numbers. */
 export function ratioOf(text) {
@@ -246,19 +222,9 @@ export function sectionAnchor(s) {
   return isAnchor(a) ? a : '';
 }
 
-/** A placement's classes: kind (sticky, fixed, full, pinned) and corner, `m` for the phone's. */
-function placeClass(place, m = '') {
-  if (!PLACES.includes(place) || place === 'none') return '';
-  if (place === 'fullscreen') return ` blk--${m}full`;
-  if (place === 'pinned') return ` blk--${m}pinned`;
-  const [kind, ...corner] = place.split('-');
-  const [v, h = 'center'] = corner.join('-') === 'center' ? ['center'] : corner;
-  return ` blk--${m}${kind} blk--${m}v-${v} blk--${m}h-${h}`;
-}
-
 /**
  * The classes of a block's element: its type, size mode (blk--aspect, blk--auto; fixed rows:
- * neither), scaled text and placements (desktop, phone).
+ * neither), scaled text, hidden on phones.
  */
 export function blockClass(b) {
   const size = sizeOf(b);
@@ -267,8 +233,6 @@ export function blockClass(b) {
     `blk blk--${b?.type}` +
     (aspect ? ' blk--aspect' : size === 'auto' || size === 'aspect' ? ' blk--auto' : '') +
     (scaled(b) ? ' blk--scale' : '') +
-    placeClass(baseOf(b).place) +
-    placeClass(phoneOf(b)?.place, 'm-') +
     (b?.layout?.phone === null ? ' blk--m-hidden' : '')
   );
 }

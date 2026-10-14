@@ -5,10 +5,8 @@
  *
  * A block: spec = presets[data-motion] ⟵ data-motion-options (the block's own timing). It
  * plays on the block's content: its children, or the animation's `children` inside it, never
- * on the block's element itself (that one may be sticky, fixed or pinned). Scroll positions
- * are measured on what moves (a reveal: its first target; a split: each target; scroll: the
- * block), or on the block's section when the block is placed (sticky / fixed / fullscreen /
- * pinned: its own box doesn't scroll by).
+ * on the block's element itself. Scroll positions are measured on what moves (a reveal: its
+ * first target; a split: each target; scroll: the block).
  *
  * An element (parts of a block type with their own markup: the hero's photos and title,
  * album parts, the project preview):
@@ -101,22 +99,9 @@ export function resolveBlock(el) {
   return merge(preset, parse(el.dataset.motionOptions), { id: name, preset: name, block: true });
 }
 
-/** Is a block held in place (its own box doesn't scroll with the page)? */
-function isPlaced(el) {
-  const pos = getComputedStyle(el).position;
-  return (
-    pos === 'sticky' ||
-    pos === 'fixed' ||
-    el.matches('.blk--pinned, .blk--m-pinned') ||
-    !!el.closest('.pin-spacer')
-  );
-}
-
-/** What a block's animation moves, and what its scroll positions are measured on. */
+/** What a block's animation moves (each type measures its scroll positions on them, or the block). */
 function blockTargets(el, spec) {
-  const targets = spec.children ? [...el.querySelectorAll(spec.children)] : [...el.children];
-  // placed: its section; else each type measures its targets (or the block)
-  return { targets, trigger: isPlaced(el) ? el.closest('.sec') || el : undefined };
+  return { targets: spec.children ? [...el.querySelectorAll(spec.children)] : [...el.children] };
 }
 
 /** Stamp every [data-anim] element with its stable key (see header). */

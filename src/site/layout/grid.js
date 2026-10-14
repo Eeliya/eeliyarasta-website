@@ -9,7 +9,7 @@ export const COLS = 120;
  * desktop layout scaled down, ~6px cells at 390px.
  */
 export const MCOLS = 60;
-/** The widest phone (px): at or below it the phone grid, the phone placements and image sizes. */
+/** The widest phone (px): at or below it the phone grid and image sizes. */
 export const PHONE_MAX = 760;
 /** PHONE_MAX as a media query, for matchMedia and an <img> sizes. */
 export const PHONE_MQ = `(max-width: ${PHONE_MAX}px)`;
@@ -34,7 +34,7 @@ export function placeOf(pos, cols = COLS) {
   };
 }
 
-/** Does a block's `phone` hold an area (it can hold only a placement or a link)? */
+/** Does a block's `phone` hold an area (it can hold only a link)? */
 export const hasMobileArea = (m) =>
   !!m && ['col', 'span', 'row', 'rows'].some((k) => m[k] !== undefined);
 
@@ -56,8 +56,8 @@ export const phoneAreaOf = (b) =>
 
 /*
  * A block's layout: { base, phone? } (./index.js). base: its area on the page grid
- * { col, span, row, rows? } plus its `link` and `place`; phone: what changes on phones, any of
- * the same keys on the phone grid (an area, a link, a place). `rows` is stored only when the
+ * { col, span, row, rows? } plus its `link`; phone: what changes on phones, any of the same
+ * keys on the phone grid (an area, a link). `rows` is stored only when the
  * block's height isn't its content's (size "aspect" or "rows"): an auto block's rows are
  * measured on the page (src/client/modules/rows.js), never stored.
  */

@@ -3,7 +3,7 @@
     Content  its item (the source item its bound fields show, src/site/layout/bindings.js; on
              a [slug] page the page's own by default), settings and texts (GroupFields.svelte)
              with each field's Source switch
-    Layout   its size (rows, aspect, auto), placement and layer, for the desktop or the phone
+    Layout   its size (rows, aspect, auto) and layer, for the desktop or the phone
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)

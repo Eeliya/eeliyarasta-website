@@ -1,4 +1,4 @@
-/** Phase 3 of the layout engine: block sizes, placements, the phone grid. */
+/** Phase 3 of the layout engine: block sizes, the phone grid. */
 import { flat, lay } from './test-layout.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +6,6 @@ import { checkContent } from '../src/site/validate.js';
 import {
   HEIGHTS,
   MCOLS,
-  PLACES,
   anchorOf,
   blockClass,
   blockVars,
@@ -25,7 +24,6 @@ import { createStore } from '../src/editor/store.js';
 import {
   placeBlock,
   placeMobile,
-  placeOnPhone,
   resetMobile,
   setBlock,
   setPhoneHeight,
@@ -61,24 +59,6 @@ test('sizes: auto by default; every block spans its stored rows (rows.js works o
   assert.equal(rowsOf(sec([blk()], { rows: 1 })), 5);
 });
 
-test('placements: classes per kind and corner, the phone ones prefixed m-', () => {
-  const cls = (place, mobile) =>
-    blockClass(blk({ place, phone: mobile })).replace('blk blk--text blk--auto', '');
-  assert.equal(cls('none'), '');
-  assert.equal(cls('wobbly'), '');
-  assert.equal(cls('sticky-top-left'), ' blk--sticky blk--v-top blk--h-left');
-  assert.equal(cls('sticky-center'), ' blk--sticky blk--v-center blk--h-center');
-  assert.equal(cls('fixed-bottom-center'), ' blk--fixed blk--v-bottom blk--h-center');
-  assert.equal(cls('fullscreen'), ' blk--full');
-  assert.equal(cls('pinned'), ' blk--pinned');
-  assert.equal(cls(undefined, { place: 'pinned' }), ' blk--m-pinned');
-  assert.equal(
-    cls('sticky-top-right', { place: 'fixed-top-right' }),
-    ' blk--sticky blk--v-top blk--h-right blk--m-fixed blk--m-v-top blk--m-h-right',
-  );
-  assert.equal(PLACES.length, 1 + 7 + 7 + 2);
-});
-
 test('phone grid: 60 columns; a block without a phone area shows its desktop area halved', () => {
   const placed = blk({ size: 'rows', phone: { col: 55, span: 9, row: 3, rows: 4 } }); // span cut at column 60
   assert.equal(blockVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:55;--ms:6;--mr:3;--mrs:4');
@@ -86,8 +66,8 @@ test('phone grid: 60 columns; a block without a phone area shows its desktop are
   assert.equal(mobileRowsOf(s), 12); // b-bbbb halved: rows 3-12
   assert.match(sectionVars(s), /;--mrows:12$/);
   assert.equal(sectionClass(s), 'sec'); // nothing stacks
-  // a placement alone: the halved area
-  const only = sec([blk({ size: 'rows', phone: { place: 'sticky-top-left' } })]);
+  // a phone layout without an area: the halved area
+  const only = sec([blk({ size: 'rows', phone: {} })]);
   assert.match(blockVars(only.blocks[0]), new RegExp(`${HALF}$`));
   assert.equal(phoneAreaOf(only.blocks[0]).span, 5);
   // halving: the cells it covers (first rounded down, last up), at least one
@@ -180,27 +160,23 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
   );
 });
 
-test('validation: size, aspect, place, mobile', () => {
+test('validation: size, aspect, mobile', () => {
   const one = (b) => checkContent(F, { version: 1, id: 'pg-t021', sections: [sec([blk(b)])] });
   const of = (s) => checkContent(F, { version: 1, id: 'pg-t022', sections: [sec([], s)] });
   assert.deepEqual(
     one({
       size: 'aspect',
       aspect: '4:5',
-      place: 'pinned',
-      phone: { col: 1, span: 12, row: 1, rows: 3, place: 'fixed-top-left' },
+      phone: { col: 1, span: 12, row: 1, rows: 3 },
     }),
     [],
   );
-  assert.deepEqual(one({ phone: { place: 'sticky-center' } }), []);
   const where = 'section 1, block 1 (Text)';
   assert.deepEqual(one({ size: 'big' }), [`${where}: "size" must be auto, aspect, rows`]);
   assert.deepEqual(one({ size: 'aspect' }), [`${where}: "aspect" must be a ratio like "4:5"`]);
-  assert.deepEqual(one({ place: 'sticky' }), [
-    `${where}: "layout.base.place" must be a placement (see layout)`,
-  ]);
-  assert.deepEqual(one({ phone: { place: 'up' } }), [
-    `${where}: "layout.phone.place" must be a placement (see layout)`,
+  // placements are gone: `place` is left out of an area
+  assert.deepEqual(one({ phone: { place: 'pinned' } }), [
+    `${where}: "layout.phone.place" must be left out (area and link only)`,
   ]);
   assert.deepEqual(one({ phone: { col: 56, span: 6, row: 1 } }), [
     `${where}: "layout.phone" must end by column 60 (col 56 + span 6)`,
@@ -213,18 +189,15 @@ test('validation: size, aspect, place, mobile', () => {
   ]);
 });
 
-test('ops: block settings, a phone area of its own, phone placement, reset; one undo each', () => {
+test('ops: block settings, a phone area of its own, reset; one undo each', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', layout: { base: { col: 1, span: 24, row: 1 } } };
   const b = { id: 'b-bbbb', type: 'text', layout: { base: { col: 1, span: 24, row: 11 } } };
   store.load({ [F]: { version: 1, id: 'pg-t023', sections: [sec([a, b])] } });
   const blocks = () => store.current[F].sections[0].blocks;
 
-  setBlock(store, F, 0, 0, { size: 'aspect', aspect: '3:2', place: 'sticky-center' });
-  assert.deepEqual(
-    [blocks()[0].size, blocks()[0].aspect, flat(blocks()[0]).place],
-    ['aspect', '3:2', 'sticky-center'],
-  );
+  setBlock(store, F, 0, 0, { size: 'aspect', aspect: '3:2' });
+  assert.deepEqual([blocks()[0].size, blocks()[0].aspect], ['aspect', '3:2']);
   setBlock(store, F, 0, 0, { size: undefined, aspect: undefined });
   assert.ok(!('size' in blocks()[0]) && !('aspect' in blocks()[0]));
 
@@ -234,10 +207,6 @@ test('ops: block settings, a phone area of its own, phone placement, reset; one 
   assert.ok(!('phone' in blocks()[0].layout));
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 });
   assert.deepEqual(flat(blocks()[0]).pos, { col: 1, span: 24, row: 1 }); // the desktop is untouched
-  placeOnPhone(store, F, 0, 0, 'pinned');
-  assert.equal(blocks()[0].layout.phone.place, 'pinned');
-  placeOnPhone(store, F, 0, 0, 'none');
-  assert.ok(!('place' in blocks()[0].layout.phone));
 
   assert.equal(resetMobile(store, F, 0), true);
   assert.ok(blocks().every((x) => !('phone' in x.layout)));

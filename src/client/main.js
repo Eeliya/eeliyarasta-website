@@ -21,15 +21,14 @@ import { album } from './modules/album.js';
 import { projects } from './modules/projects.js';
 import { cards, imageFade } from './modules/misc.js';
 import { contactForms } from './modules/form.js';
-import { placements } from './modules/placements.js';
 import { watchRows } from './modules/rows.js';
 import { anchors } from './modules/anchors.js';
 import { backdrop } from './modules/backdrop.js';
 
-const pageModules = [imageFade, album, projects, cards, contactForms, placements, anchors];
+const pageModules = [imageFade, album, projects, cards, contactForms, anchors];
 // the footer's blocks: the modules of blocks it can have (no album, project list or anchors:
 // those are the page's, once)
-const footerModules = [imageFade, cards, contactForms, placements];
+const footerModules = [imageFade, cards, contactForms];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;
@@ -69,7 +68,7 @@ function mount(view, { first = false } = {}) {
   updateActiveNav(location.pathname);
   updateClocks();
   document.documentElement.dataset.page = view.dataset.page;
-  // real rows first (modules/rows.js): animations and pins measure the page as it is laid out
+  // real rows first (modules/rows.js): animations measure the page as it is laid out
   const onchange = () => keepScroll(() => ScrollTrigger.refresh());
   const foot = footerEl();
   const rows = watchRows(view, { onchange });

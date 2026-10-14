@@ -31,15 +31,8 @@ const PHONE = PHONE_MQ;
 const VARS = ['--fr', '--frs'];
 const SECTION_VARS = ['--frows'];
 
-/** The blocks of a section: its children, a pinned one inside its pin's spacer. */
-const blocksOf = (sec) =>
-  [...sec.children].flatMap((n) =>
-    n.classList.contains('pin-spacer')
-      ? [...n.children].filter((k) => k.matches('.blk'))
-      : n.matches('.blk')
-        ? [n]
-        : [],
-  );
+/** The blocks of a section: its children. */
+const blocksOf = (sec) => [...sec.children].filter((n) => n.matches('.blk'));
 
 const int = (v, fallback) => {
   const n = parseInt(v, 10);
@@ -123,21 +116,18 @@ function readSection(sec, phone, row) {
   for (const el of blocksOf(sec)) {
     if (el.hidden) continue;
     const area = areaOf(el, phone);
-    const pos = getComputedStyle(el).position;
-    if (pos === 'fixed') continue; // fixed, fullscreen: not in the grid
     const id = el.dataset.block || `b${els.size}`;
     const kind = el.classList.contains('blk--aspect')
       ? 'aspect'
       : el.classList.contains('blk--auto')
         ? 'auto'
         : 'rows';
-    // a sticky block reaches to its section's end: it keeps its rows
-    const h = pos === 'sticky' ? null : el.getBoundingClientRect().height;
-    let fit = h === null ? null : rowsFor(h, row);
+    const h = el.getBoundingClientRect().height;
+    let fit = rowsFor(h, row);
     // it fits the section's minimum height: not taller than the rows that holds
-    if (fit !== null && h <= avail + 0.5) fit = Math.min(fit, Math.max(1, cap - area.row + 1));
+    if (h <= avail + 0.5) fit = Math.min(fit, Math.max(1, cap - area.row + 1));
     // fixed rows: its own, whatever its content
-    const need = fit === null || kind === 'rows' ? null : fit;
+    const need = kind === 'rows' ? null : fit;
     items.push({ id, ...area, need, link: linkOfEl(el, phone) });
     els.set(id, el);
   }
@@ -159,9 +149,6 @@ function writeSection(sec, phone, { items, els }) {
     const a = at[id];
     if (set(el, '--fr', a.row)) changed = true;
     if (set(el, '--frs', a.rows)) changed = true;
-    const spacer = el.parentElement;
-    if (spacer?.classList.contains('pin-spacer'))
-      spacer.style.gridRow = `${a.row} / span ${a.rows}`;
   }
   return changed;
 }

@@ -59,7 +59,7 @@ export const BLOCK_TYPES = Object.fromEntries(
 
 /**
  * What the preview can't show without rendering the block again: its type, content and
- * config, but not on/off, where it sits, its size, link, text scale, placement or motion (the
+ * config, but not on/off, where it sits, its size, link, text scale or motion (the
  * editor applies those).
  */
 export function kindOf(block) {

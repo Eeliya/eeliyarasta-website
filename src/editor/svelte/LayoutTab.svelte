@@ -12,24 +12,20 @@
                       (src/site/layout/flow.js)
     Scale text        (text blocks) its text in cells, relative to its styles (Settings >
                       Typography), and its % of them (src/site/layout/type.js)
-    Placement         in the grid, sticky, fixed, fullscreen or pinned (desktop, or on phones)
     Layer             down / up, for blocks that overlap (desktop)
     Reset phone       (phone) the section's blocks show their desktop layout halved again
 -->
 <script>
   import Button from './Button.svelte';
   import Field from './Field.svelte';
-  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
-  import { layerBlock, placeOnPhone, resetMobile, setBlock } from '../layout-ops.js';
+  import { layerBlock, resetMobile, setBlock } from '../layout-ops.js';
   import {
     ASPECTS,
-    PLACES,
     linkOf,
     phoneAreaOf,
     placeOf,
     baseOf,
-    phoneOf,
     ratioOf,
     sizeOf,
   } from '../../site/layout/index.js';
@@ -88,44 +84,6 @@
   const ratioPick = $derived(
     custom || (block.aspect && !ASPECTS.includes(block.aspect)) ? CUSTOM : (block.aspect ?? '4:5'),
   );
-
-  const NAMES = {
-    'top-left': 'top left',
-    'top-center': 'top',
-    'top-right': 'top right',
-    center: 'centre',
-    'bottom-left': 'bottom left',
-    'bottom-center': 'bottom',
-    'bottom-right': 'bottom right',
-  };
-  const placeLabel = (p) => {
-    if (p === 'none') return 'None (in the grid)';
-    if (p === 'fullscreen') return 'Fullscreen (behind, a background)';
-    if (p === 'pinned') return 'Pinned (while its section scrolls)';
-    const [kind, ...corner] = p.split('-');
-    return `${kind === 'sticky' ? 'Sticky' : 'Fixed'}: ${NAMES[corner.join('-')]}`;
-  };
-  const places = [
-    { group: '', options: [{ value: 'none', label: placeLabel('none') }] },
-    {
-      group: 'Sticky (in its section)',
-      options: PLACES.filter((p) => p.startsWith('sticky-')).map((p) => ({
-        value: p,
-        label: placeLabel(p),
-      })),
-    },
-    {
-      group: 'Fixed (the whole page)',
-      options: PLACES.filter((p) => p.startsWith('fixed-')).map((p) => ({
-        value: p,
-        label: placeLabel(p),
-      })),
-    },
-    {
-      group: 'Screen',
-      options: ['fullscreen', 'pinned'].map((p) => ({ value: p, label: placeLabel(p) })),
-    },
-  ];
 
   const key = (k) => `layout:${g.file}#${base}/${k}`;
 
@@ -235,15 +193,6 @@
 {/if}
 
 {#if !phone}
-  <div class="opt">
-    <span class="tf__label">Placement</span>
-    <Select
-      aria-label="Placement"
-      value={baseOf(block).place ?? 'none'}
-      options={places}
-      onchange={(v) => setBlock(live.store, g.file, at, j, { place: v === 'none' ? undefined : v })}
-    />
-  </div>
   <div class="line">
     <span class="tf__label">Layer</span>
     <Button
@@ -260,15 +209,6 @@
     >
   </div>
 {:else}
-  <div class="opt">
-    <span class="tf__label">Placement on phones</span>
-    <Select
-      aria-label="Placement on phones"
-      value={phoneOf(block)?.place ?? 'none'}
-      options={places}
-      onchange={(v) => placeOnPhone(live.store, g.file, at, j, v)}
-    />
-  </div>
   <div class="line">
     <span class="tf__label">{phoneSet ? 'Phone layout set' : 'Desktop layout, halved'}</span>
     <Button

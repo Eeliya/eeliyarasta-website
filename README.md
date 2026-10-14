@@ -75,7 +75,7 @@ src/
     router.js       ← SPA navigation over the prerendered HTML
     anim/engine.js  ← reads content/en/settings/animations.json, wires every [data-anim]
     anim/types.js   ← animation types (reveal, split, parallax, scatter, …)
-    modules/        ← real rows, placements, album slider, project accordion, card hover, misc
+    modules/        ← real rows, album slider, project accordion, card hover, misc
     ui/             ← menu (click-only), clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
   editor/           ← the visual editor app (/edit/), dev server only, never built or shipped
@@ -317,11 +317,11 @@ every section is a grid of **blocks** (`src/site/layout/`):
   block spans the rows its height needs at the page's width. Only `aspect` and `rows` blocks
   store `rows`; an auto block's rows are never stored: the page's script measures them (before
   it runs an auto block spans one row).
-- **Layout** (`layout`, `src/site/layout/grid.js`): `{ "base": { col, span, row, rows?, link?,
-place? }, "phone"?: { …the same keys… } | null }`. `base`: its area on the 120-column grid
-  (first column 1–120, columns, first row; without a layout it is full width in row 1), its
-  `link` and `place`. `phone`: only what changes on phones, over what it would show there (its
-  base area halved, its base link with the gap halved, no placement); `null`: hidden on phones.
+- **Layout** (`layout`, `src/site/layout/grid.js`): `{ "base": { col, span, row, rows?, link? },
+"phone"?: { …the same keys… } | null }`. `base`: its area on the 120-column grid
+  (first column 1–120, columns, first row; without a layout it is full width in row 1), and its
+  `link`. `phone`: only what changes on phones, over what it would show there (its
+  base area halved, its base link with the gap halved); `null`: hidden on phones.
   The same rule as hero photos (`x/y/w` plus `phone`).
 - **Free blocks and links** (`src/site/layout/links.js`): blocks are **free**: each stays at
   the row it was placed on whatever the blocks above it do, and blocks may overlap (`z` orders
@@ -357,33 +357,14 @@ place? }, "phone"?: { …the same keys… } | null }`. `base`: its area on the 1
   sizes at 1440px. On phones a style's cell is half a 60-column cell (the 120 grid's), so the
   text scales like the layout and the minimum takes over. Off (default): the style's normal
   fixed size from the stylesheets.
-- **Placement** (`layout.base.place` / `layout.phone.place`, CSS in `_layout.scss`, pinning in `src/client/modules/placements.js`):
-  _Unused in content as of 2026-10-12 (no block sets `place`); a deletion candidate._
-  - `none` (default): in the grid.
-  - `sticky-top-left` … `sticky-bottom-right` (7: `top-left top-center top-right center
-bottom-left bottom-center bottom-right`): held on screen while its **section** scrolls by
-    (it reaches to the section's end; its rows are its minimum height), `--stick-top` (the
-    header's height + `--edge`) from the top, `--edge` from the bottom, or centred. It keeps its
-    columns: sticky only works vertically, so `-left/-center/-right` don't move it sideways.
-  - `fixed-top-left` … `fixed-bottom-right` (the same 7): fixed to that screen corner for the
-    whole page, as wide as its columns; z 20 by default (above the page, below the menu).
-  - `fullscreen`: fixed, covering the screen for the whole page, behind the page by default (z
-    -1: a background); give it a `z` to put it in front.
-  - `pinned`: pinned with GSAP ScrollTrigger from when its top reaches `--stick-top` until its
-    section's end scrolls up to its bottom (no spacing added). With `prefers-reduced-motion` it
-    stays in the flow.
-  - Its `z` still orders it among the blocks (every block is `position: relative`, so they
-    paint over a fullscreen background); sticky blocks default to z 2 so they pass over the
-    others. Desktop placements apply **above 760px** only.
 - **Phones** (below 760px): every section is a **60-column** square grid (`--cell` = width /
   60, ~6px at 390px; its rows `--mrows`). Nothing stacks: a block without a phone area of its
   own shows its **desktop area halved** (columns and rows, rounded to the cells it covers:
   `grid.js` `halfArea`), so a phone starts as the desktop layout scaled down, and its desktop
   link comes along with the gap halved. A block's `layout.phone` changes that:
-  `{ "col": 1, "span": 60, "row": 1, "rows": 20, "link": { "to": "b-…", "gap": 2 }, "place":
-"sticky-top-left" }`: its own phone area and its own phone link (desktop and phone links are
-  separate once it has a phone area), and a phone placement (without one, desktop placements
-  don't apply on phones). Why 60: half of 120, so halving is exact; 120 columns on a 390px screen
+  `{ "col": 1, "span": 60, "row": 1, "rows": 20, "link": { "to": "b-…", "gap": 2 } }`: its own
+  phone area and its own phone link (desktop and phone links are separate once it has a phone
+  area). Why 60: half of 120, so halving is exact; 120 columns on a 390px screen
   would be 3px cells.
 - **Ids:** every section and block has a stable id (`s-…`, `b-…`), given once when it is made
   (`src/site/layout/ids.js`) and kept when it moves or changes. The editor finds them in the
@@ -391,9 +372,8 @@ bottom-left bottom-center bottom-right`): held on screen while its **section** s
 - **CSS:** positions are CSS variables on the elements (`--rows --mrows` on a section, its
   height preset a class: `.sec--h-third`, `.sec--h-half`, `.sec--h-full`,
   `--c --s --r --rs --z --ar --tk` and
-  `--mc --ms --mr --mrs` on a block), links as `data-link` / `data-mlink`, size, scaled text and
-  placement as classes (`.blk--aspect`, `.blk--auto`, `.blk--scale`,
-  `.blk--sticky.blk--v-top.blk--h-left`, `.blk--m-…` for the phone's), laid out by
+  `--mc --ms --mr --mrs` on a block), links as `data-link` / `data-mlink`, size and scaled text
+  as classes (`.blk--aspect`, `.blk--auto`, `.blk--scale`), laid out by
   `src/client/styles/_layout.scss`. Blocks carry no outer spacing of their own, and neither do
   sections (above and below): empty rows are the space.
 - **Validation:** Save and the build check the layout (ids, enums, whole numbers, a block
@@ -860,8 +840,7 @@ the animation does (type, from/to, split, …) only comes from the library. The 
 `data-motion="parallax-y"` and `data-motion-options` (its timing), and the engine
 (`src/client/anim/engine.js`) builds it as `preset ← motion`. It animates the block's
 **content** (its children, or the preset's `children` selector, e.g. `[data-prow]` for
-`list-up`), never the block element itself, so placements keep working: a sticky, fixed or
-pinned block (desktop or phone) is triggered by its section, the others by their own content.
+`list-up`), never the block element itself; scroll positions are measured on that content.
 Only the types that work on any markup can go on a block (`BLOCK_ANIM_TYPES`: reveal, split,
 scroll, scrub-words, parallax); `scatter`, `hero-title` and `hover-preview` stay on their
 `data-anim` parts.
@@ -966,9 +945,9 @@ where it is in cells (`col 61 · row 12 · 40 × 18`: its column, the row it sho
 the rows it spans, the phone's in the phone preview) and its link (`follows <block>, gap -10`,
 or free); links and gaps are dragged in the preview. Then **Size** as buttons (Auto | Aspect |
 Rows; with Aspect its ratio as buttons: 1:1 … 21:9 or Custom "w:h"), for text blocks **Scale
-text with the grid** and its **Text size (%)**, **Placement** (on phones: Placement on phones),
-the layer with Down / Up (desktop) and **Reset phone** (phone), which removes every phone area,
-link and placement of the section's blocks (they show their desktop layout halved again).
+text with the grid** and its **Text size (%)**,
+the layer with Down / Up (desktop) and **Reset phone** (phone), which removes every phone area
+and link of the section's blocks (they show their desktop layout halved again).
 **Settings › Typography** sets the text styles of scaled text (size and minimum, line height,
 tracking; the preview follows as you type).
 

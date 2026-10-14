@@ -349,19 +349,18 @@ export function layerBlock(store, file, at, j, dir) {
 }
 
 /**
- * Block `j` of section `at` changed by `patch` (size, aspect, scale; `place` and `rows` go to
- * its base layout; a key set to undefined is removed): one undo step; key: see writeSection.
+ * Block `j` of section `at` changed by `patch` (size, aspect, scale; `rows` goes to its base
+ * layout; a key set to undefined is removed): one undo step; key: see writeSection.
  * A size that stores rows (aspect, rows) keeps `rows` (the rows it shows); auto drops them.
  */
 export function setBlock(store, file, at, j, patch, key) {
   const section = listOf(store, file)[at];
   const block = section.blocks[j];
-  const { place, rows, ...rest } = patch;
+  const { rows, ...rest } = patch;
   for (const [k, v] of Object.entries(rest)) {
     if (v === undefined) delete block[k];
     else block[k] = v;
   }
-  if ('place' in patch) setBase(block, { place });
   if (storesRows(block) && rows !== undefined) setBase(block, { rows });
   if (storesRows(block) && baseOf(block).rows === undefined) setBase(block, { rows: 1 });
   if (!storesRows(block)) {
@@ -389,16 +388,9 @@ export function placeMobile(store, file, at, j, area, { key, flow, rows = 0 } = 
   return writeSection(store, file, at, section, key);
 }
 
-/** Block `j`'s placement on phones ('none' or undefined: in the flow). */
-export function placeOnPhone(store, file, at, j, place) {
-  const section = listOf(store, file)[at];
-  setPhone(section.blocks[j], { place: place && place !== 'none' ? place : undefined });
-  return writeSection(store, file, at, section);
-}
-
 /**
- * Section `at` back to its desktop layout on phones (halved): its blocks' phone areas, phone
- * links and phone placements removed.
+ * Section `at` back to its desktop layout on phones (halved): its blocks' phone areas and
+ * phone links removed.
  */
 export function resetMobile(store, file, at) {
   const section = listOf(store, file)[at];

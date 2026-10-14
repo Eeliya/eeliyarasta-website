@@ -8,8 +8,8 @@
  * a block only picks one and may override TIMING (duration, ease, delay, stagger, trigger,
  * start, end, scrub). It is rendered as data-motion (the animation) and data-motion-options
  * (the overrides, JSON) on the block's element, and played by src/client/anim/engine.js on the
- * block's content (its children, or the animation's `children` inside it), so the block's
- * own element stays free for its placement (sticky, fixed, pinned).
+ * block's content (its children, or the animation's `children` inside it), never on the
+ * block's own element.
  *
  * Animation types a block can use (BLOCK_ANIM_TYPES): entrances (`reveal`, `split`), and
  * scroll-linked ones (`scroll`, `scrub-words`, `parallax`). The others (scatter, hero-title,

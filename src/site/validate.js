@@ -33,7 +33,6 @@ import {
   HEIGHTS,
   MAX_MIN_ROWS,
   MCOLS,
-  PLACES,
   SIZES,
   WIDTHS,
   nameProblems,
@@ -285,12 +284,12 @@ function checkArea(p, key, cols = COLS, rows = true, defaults = false) {
 }
 
 /**
- * A block's "layout": { base: { col, span, row, rows?, link?, place? }, phone?: the same keys
+ * A block's "layout": { base: { col, span, row, rows?, link? }, phone?: the same keys
  * on the phone grid, or null (hidden on phones) }. Links are checked with their section.
  */
 function checkBlockLayout(b) {
   const out = [];
-  for (const k of ['pos', 'phone', 'place', 'link', 'mobile'])
+  for (const k of ['pos', 'phone', 'link', 'mobile'])
     if (b[k] !== undefined)
       out.push(`"${k}" must be left out: it is in "layout" ({ base, phone })`);
   const l = b.layout;
@@ -300,14 +299,10 @@ function checkBlockLayout(b) {
   const rows = storesRows(b);
   const part = (o, key, cols, whole) => {
     if (!isObject(o))
-      return [`"${key}" must be an object { col, span, row, rows?, link?, place? }`];
+      return [`"${key}" must be an object { col, span, row, rows?, link? }`];
     const res = [];
-    const extra = Object.keys(o).filter(
-      (k) => !AREA_KEYS.includes(k) && k !== 'link' && k !== 'place',
-    );
-    if (extra.length) res.push(`"${key}.${extra[0]}" must be left out (area, link and place only)`);
-    if (o.place !== undefined && !PLACES.includes(o.place))
-      res.push(`"${key}.place" must be a placement (see layout)`);
+    const extra = Object.keys(o).filter((k) => !AREA_KEYS.includes(k) && k !== 'link');
+    if (extra.length) res.push(`"${key}.${extra[0]}" must be left out (area and link only)`);
     if (whole || AREA_KEYS.some((k) => o[k] !== undefined))
       res.push(...checkArea(o, key, cols, rows, whole));
     return res;
