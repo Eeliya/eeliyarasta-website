@@ -40,7 +40,7 @@ const int = (v, fallback) => {
 };
 
 /** A block's stored area on the layout that applies (the phone grid's, or the desktop's). */
-function areaOf(el, phone) {
+export function areaOf(el, phone) {
   const s = el.style;
   if (phone) {
     return {
@@ -81,14 +81,14 @@ function clear(sec) {
 }
 
 /** The link a block's element follows on this grid: { to, gap } or null (free). */
-function linkOfEl(el, phone) {
+export function linkOfEl(el, phone) {
   const v = phone ? el.dataset.mlink : el.dataset.link;
   const m = v && /^(\S+)\s+(-?\d+)$/.exec(v);
   return m ? { to: m[1], gap: Number(m[2]) } : null;
 }
 
 /** A section's content width now (its used width inside padding and border; 0 when hidden). */
-function widthOf(cs) {
+export function widthOf(cs) {
   let width = parseFloat(cs.width) || 0; // its used width (not transformed, not rounded)
   if (cs.boxSizing === 'border-box')
     width -=

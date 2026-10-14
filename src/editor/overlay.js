@@ -113,7 +113,7 @@ svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: no
  * Where the blocks of a section are now, as the site's rows.js placed them: { id: area }
  * (the phone grid's on the phone: a block's own phone area, or its desktop area halved).
  */
-function flowAreas(sec, phone, blockOf) {
+export function flowAreas(sec, phone, blockOf) {
   const out = {};
   for (const el of sec.querySelectorAll('[data-block]')) {
     if (el.closest('[data-sec]') !== sec) continue;
@@ -128,7 +128,7 @@ function flowAreas(sec, phone, blockOf) {
 }
 
 /** The page-relative rect of an element. */
-function rectOf(el, win) {
+export function rectOf(el, win) {
   const r = el.getBoundingClientRect();
   return { x: r.left + win.scrollX, y: r.top + win.scrollY, w: r.width, h: r.height };
 }
@@ -139,7 +139,7 @@ const px = (v) => v.split(' ').map(parseFloat).filter(Number.isFinite);
  * A section's grid lines in page coordinates: cols[k] / colEnds[k] the left / right edge of
  * column k + 1; rows likewise, extended past the last track by rows of `row` px.
  */
-function linesOf(sec, win) {
+export function linesOf(sec, win) {
   const cs = win.getComputedStyle(sec);
   const r = rectOf(sec, win);
   const gap = parseFloat(cs.columnGap) || 0;
@@ -170,7 +170,7 @@ const share = (v) => (/center/.test(v) ? 0.5 : /end/.test(v) ? 1 : 0);
  * corner, moved by the free space justify-content / align-content give before them: the
  * square grid centres its columns, a screen section its rows), w, h their size, and the sizes.
  */
-function tracksOf(cs, r) {
+export function tracksOf(cs, r) {
   const cols = px(cs.gridTemplateColumns);
   const rows = px(cs.gridTemplateRows);
   const sum = (l) => l.reduce((a, b) => a + b, 0);
@@ -193,7 +193,7 @@ function tracksOf(cs, r) {
 }
 
 /** The 1-based index of the line in `starts` (or `ends`) nearest to `v`; past the end in steps of `step`. */
-function nearest(list, v, step) {
+export function nearest(list, v, step) {
   let best = 0;
   list.forEach((p, i) => {
     if (Math.abs(p - v) < Math.abs(list[best] - v)) best = i;
