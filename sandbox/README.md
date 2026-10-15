@@ -1,5 +1,8 @@
 # Editor mock sandbox
 
+**Making mocks (any agent or bot): start with [MOCKUP-PROTOCOL.md](MOCKUP-PROTOCOL.md)**: rules, the
+one-command push, the kit's every prop, a template and reference screenshots (`docs/`).
+
 Dev-only page for trying editor UI fast, with the editor's real styles (`editor.scss`, tokens,
 fonts), Font Awesome icons and Svelte components. Never built (`vite.config.js` builds
 `index.html` only).

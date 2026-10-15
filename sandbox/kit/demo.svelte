@@ -1,27 +1,31 @@
-<!-- mock: the kit itself: the panel with real section cards, a closed card, and a modal -->
+<!-- mock: the kit itself: the panel with real section cards, the list card's states, a delete confirm, and a modal -->
 <script>
-  import { Compare, Variant, Panel, SectionCard, Modal, sampleLive } from './index.js';
-  const live = sampleLive();
+  import { Compare, Variant, Panel, SectionCard, Ask, Modal, sampleLive } from './index.js';
+  const live = sampleLive('full');
 </script>
 
 <Compare
   title="Mock kit"
-  note="Panel, SectionCard (open / closed / red), Modal: real components and styles"
+  note="Panel, SectionCard (as built: fields={'{false}'} rows spread=&quot;left&quot;), Ask, Modal on sampleLive('full')"
   cols={3}
 >
   <Variant label="Panel" note="Toolbar, modes, page tabs, body, footer">
     <Panel height="760px" changes={2}>
-      <SectionCard {live} at={4} open={false} />
-      <SectionCard {live} at={5} />
+      <SectionCard {live} at={0} fields={false} rows spread="left" open={false} />
+      <SectionCard {live} at={1} fields={false} rows spread="left" changed />
+      <SectionCard {live} at={3} fields={false} rows spread="left" />
     </Panel>
   </Variant>
-  <Variant label="SectionCard" note="open={false}, then red">
-    <SectionCard {live} at={0} open={false} />
-    <SectionCard {live} at={2} red />
+  <Variant label="SectionCard" note="Closed, open with the settings, red with Ask over it">
+    <SectionCard {live} at={2} fields={false} rows spread="left" open={false} />
+    <SectionCard {live} at={1} />
+    <SectionCard {live} at={1} fields={false} rows spread="left" red>
+      {#snippet over()}<Ask question="Delete “Work”?" />{/snippet}
+    </SectionCard>
   </Variant>
   <Variant label="Modal" note="ExplorerHead and .modal__box">
     <Modal
-      title="Add block to Section 6"
+      title="Add block to Work"
       icon="fa-plus"
       crumbs={[{ label: 'after its last block' }]}
       width="384px"

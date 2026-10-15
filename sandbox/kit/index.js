@@ -5,4 +5,5 @@ export { default as BlockCard } from './BlockCard.svelte';
 export { default as Modal } from './Modal.svelte';
 export { default as Compare } from './Compare.svelte';
 export { default as Variant } from './Variant.svelte';
-export { FILE, PAGES, SECTIONS, labelOf, sampleLive } from './sample.js';
+export { default as Ask } from './Ask.svelte';
+export { FILE, PAGES, SECTIONS, block, labelOf, sampleLive, samplePage } from './sample.js';
