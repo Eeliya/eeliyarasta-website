@@ -11,13 +11,13 @@
 >
   <Variant label="Panel" note="Toolbar, modes, page tabs, body, footer">
     <Panel height="760px" changes={2}>
-      <SectionCard {live} at={0} fields={false} rows spread="left" open={false} />
+      <SectionCard {live} at={0} fields={false} rows spread="left" />
       <SectionCard {live} at={1} fields={false} rows spread="left" changed />
       <SectionCard {live} at={3} fields={false} rows spread="left" />
     </Panel>
   </Variant>
-  <Variant label="SectionCard" note="Closed, open with the settings, red with Ask over it">
-    <SectionCard {live} at={2} fields={false} rows spread="left" open={false} />
+  <Variant label="SectionCard" note="As built, with the settings, red with Ask over it">
+    <SectionCard {live} at={2} fields={false} rows spread="left" />
     <SectionCard {live} at={1} />
     <SectionCard {live} at={1} fields={false} rows spread="left" red>
       {#snippet over()}<Ask question="Delete “Work”?" />{/snippet}

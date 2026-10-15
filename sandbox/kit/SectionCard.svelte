@@ -2,18 +2,21 @@
   A page section's card as the Content tab draws it: the real Section, its real SectionSettings
   (on the sample live state), its blocks (BlockCard) and the dashed Add block.
     live    sampleLive() (one per mock)         at     its index in the sample page
-    open    open or closed (default true)       red    the card's own border red (no size change)
+  Always open, as built (dae1ba8): the real Section's onenter (no caret, the title a button with
+  the pointer; here it goes nowhere). Its hover keeps the title's brightness (the app's white
+  title hover is left out on purpose).
+    red     the card's own border red (no size change)
     tools   snippet: replaces the bar's tools (Show, up, down, Duplicate, Delete, switch)
     over    snippet: drawn over the card, its exact box (a confirm, a scrim…); `.kit-over`
             covers the whole card, add `.kit-over--bar` for the header's height only
     children  replaces the body (SectionSettings)
     fields  false: no settings body (a part's section: just the header and blocks)
-    rows    the tools on their own row under the title (the title wraps, full width)
+    rows    the tools on their own row under the title (the title wraps, full width): the
+            real Section's `stack`, tools from the left edge, the switch at the right
     height  a fixed height for the card (e.g. '140px' while confirming), its content clipped
     changed the changed dot before the title
     line    false: no line between the settings and the blocks (its space kept)
-    spread  with rows: the tools row 'left' (icons from the left edge, the switch at the right)
-            or 'even' (spread evenly across the card); default: under the title's text
+    spread  with rows: 'even' spreads the tools evenly across the card ('left' or '': as built)
 -->
 <script>
   import Section from '../../src/editor/svelte/Section.svelte';
@@ -26,7 +29,6 @@
   let {
     live,
     at = 0,
-    open = true,
     red = false,
     fields = true,
     rows = false,
@@ -48,15 +50,14 @@
     LIST,
     'kit-card',
     red && 'kit-card--red',
-    rows && 'kit-card--rows',
     height && 'kit-card--fixed',
     !line && 'kit-card--noline',
     !fields && !children && 'kit-card--nofields',
-    spread && `kit-card--${spread}`,
+    rows && spread === 'even' && 'kit-card--even',
   ]}
   style:--card-h={height || null}
 >
-  <Section id={s.id} {title} dim={!s.name?.trim()} {open} {changed}>
+  <Section id={s.id} {title} dim={!s.name?.trim()} {changed} stack={rows} onenter={() => {}}>
     {#snippet bar()}
       {#if tools}{@render tools()}{:else}
         <Button size="small" icon="crosshairs" iconOnly label="Show in preview" />
@@ -122,24 +123,14 @@
     height: 46px;
   }
 
-  // the tools on their own row: the title takes the whole first row (and wraps); the tools
-  // start under the title's text (the caret's 20px + 4px in), the switch at the right
-  .kit-card--rows > :global(.sec > .sec__bar) {
-    flex-wrap: wrap;
-    row-gap: var(--space-2);
+  // the title keeps its brightness on hover (not the app's white): its bar's colour, a default
+  // title its faint one
+  .kit-card > :global(.sec > .sec__bar > .sec__toggle.sec__toggle--enter:hover),
+  .kit-card > :global(.sec > .sec__bar > .sec__toggle.sec__toggle--enter:hover > span) {
+    color: inherit;
   }
-  .kit-card--rows > :global(.sec > .sec__bar > .sec__toggle) {
-    flex: 1 0 100%;
-  }
-  // with the changed dot first: the title takes the rest of the first row
-  .kit-card--rows > :global(.sec.is-changed > .sec__bar > .sec__toggle) {
-    flex-basis: calc(100% - var(--size-changed) - var(--space-1));
-  }
-  .kit-card--rows > :global(.sec > .sec__bar > .sec__toggle + *) {
-    margin-left: 18px;
-  }
-  .kit-card--rows > :global(.sec > .sec__bar > :last-child) {
-    margin-left: auto;
+  .kit-card > :global(.sec > .sec__bar > .sec__toggle.sec__toggle--enter:hover > .sec__title--dim) {
+    color: var(--c-text-faint);
   }
 
   // a fixed height (a confirm): the card keeps it, its content clipped under the overlay
@@ -148,15 +139,11 @@
     overflow: hidden;
   }
 
-  // the tools row full width: from the card's left edge, or spread evenly
-  .kit-card--left > :global(.sec > .sec__bar > .sec__toggle + *),
-  .kit-card--even > :global(.sec > .sec__bar > .sec__toggle + *) {
-    margin-left: 0;
-  }
+  // the tools row spread evenly
   .kit-card--even > :global(.sec > .sec__bar) {
     justify-content: space-between;
   }
-  .kit-card--even > :global(.sec > .sec__bar > :last-child) {
+  .kit-card--even > :global(.sec.sec--stack > .sec__bar > :last-child:not(.sec__toggle)) {
     margin-left: 0;
   }
 

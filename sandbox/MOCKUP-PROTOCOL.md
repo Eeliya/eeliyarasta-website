@@ -103,22 +103,24 @@ Tabs, ExplorerHead, …). `{live}` is required wherever listed.
 
 **SectionCard** — a page section's card (real `Section` + `SectionSettings`, its blocks, + Add block).
 
-| prop       | type                     | default  | meaning                                                                                                                            |
-| ---------- | ------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `live`     | sampleLive()             | required | the page state (one per mock, shared by the cards)                                                                                 |
-| `at`       | number                   | `0`      | the section's index in that page                                                                                                   |
-| `open`     | bool                     | `true`   | open or closed                                                                                                                     |
-| `fields`   | bool                     | `true`   | `false`: no settings body (**the list as built**)                                                                                  |
-| `rows`     | bool                     | `false`  | title on its own row (wraps), tools on a second row                                                                                |
-| `spread`   | `''`\|`'left'`\|`'even'` | `''`     | with `rows`: tools from the left edge, switch at the right (`left`, **as built**), or spread evenly; `''` = under the title's text |
-| `line`     | bool                     | `true`   | `false`: no line above the blocks (space kept)                                                                                     |
-| `changed`  | bool                     | `false`  | the 6px accent dot before the title                                                                                                |
-| `red`      | bool                     | `false`  | border red (no size change) — use with a delete confirm                                                                            |
-| `height`   | CSS length               | `''`     | fix the card's height, content clipped                                                                                             |
-| `tools`    | snippet                  | —        | replaces the bar's tools (Show, ↑, ↓, Duplicate, Delete, switch)                                                                   |
-| `over`     | snippet                  | —        | drawn over the card at its exact box; give the root `class="kit-over"` (whole card) + `kit-over--bar` (header only)                |
-| `children` | snippet                  | —        | replaces the settings body                                                                                                         |
+| prop       | type                     | default  | meaning                                                                                                             |
+| ---------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `live`     | sampleLive()             | required | the page state (one per mock, shared by the cards)                                                                  |
+| `at`       | number                   | `0`      | the section's index in that page                                                                                    |
+| `fields`   | bool                     | `true`   | `false`: no settings body (**the list as built**)                                                                   |
+| `rows`     | bool                     | `false`  | title on its own row (wraps), tools on a second row (the real Section's `stack`)                                    |
+| `spread`   | `''`\|`'left'`\|`'even'` | `''`     | with `rows`: `even` spreads the tools evenly; `''` / `left`: from the left edge, switch at the right (**as built**) |
+| `line`     | bool                     | `true`   | `false`: no line above the blocks (space kept)                                                                      |
+| `changed`  | bool                     | `false`  | the 6px accent dot before the title                                                                                 |
+| `red`      | bool                     | `false`  | border red (no size change) — use with a delete confirm                                                             |
+| `height`   | CSS length               | `''`     | fix the card's height, content clipped                                                                              |
+| `tools`    | snippet                  | —        | replaces the bar's tools (Show, ↑, ↓, Duplicate, Delete, switch)                                                    |
+| `over`     | snippet                  | —        | drawn over the card at its exact box; give the root `class="kit-over"` (whole card) + `kit-over--bar` (header only) |
+| `children` | snippet                  | —        | replaces the settings body                                                                                          |
 
+Always open, as built (dae1ba8): the real Section's `onenter`, so no caret and no open/closed;
+the title is a button (pointer) that opens the section in the app (in a mock it does nothing).
+In the kit its hover keeps the title's brightness (the app's white title hover is left out).
 Title: the section's `name`, else "Section N" dimmed. The switch reflects `enabled !== false`;
 ↑/↓ disable at the first/last section.
 
@@ -188,7 +190,7 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 - Each mock compares **2+ variants side by side**; the current version is labelled **"(current)"**.
 - Name: `<area>-<topic>.svelte` (e.g. `section-cards-noline`); first line a one-line
   `<!-- mock: what it compares -->` comment.
-- Show realistic cases: unnamed, short and very long names, open and closed (the sample pages have them).
+- Show realistic cases: unnamed, short and very long names, changed, empty (the sample pages have them).
 
 ### The current section card (decided, built in f214d8a)
 
@@ -196,6 +198,9 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 
 - No settings fields in the list's cards; title on row 1, tools on row 2 (Show, ↑, ↓,
   Duplicate, Delete from the left, the switch at the right); a line above the blocks.
+- Always open (dae1ba8): no caret; a click on the title (pointer, white on hover) opens the
+  section: its first block's view, or an empty section's own view. Hovered, the card's border
+  turns soft white (70%) and its section is outlined in the preview (be67424).
 - Changed: a 6px `#33ccff` dot before the title, no shift.
 - Delete confirm (`red` + `Ask` in `over`): over the card at its size, the card's colour at 80%
   dims it, red border, the question at the top (no background of its own), Cancel / Delete
