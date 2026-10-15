@@ -61,9 +61,10 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .pl {
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     justify-items: start;
 
     > .pl__list {
@@ -73,14 +74,12 @@
 
   // items apart (an item's own fields, e.g. a Link, sit 8px under its photo)
   .pl__list {
-    display: grid;
-    gap: var(--space-4);
+    @include stack(var(--space-4));
   }
 
   .pl__row {
     position: relative;
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     border-radius: var(--radius-md);
 
     // lifted while dragged: above the others, following the pointer

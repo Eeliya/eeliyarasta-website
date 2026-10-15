@@ -130,18 +130,16 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .bm__actions {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
+    @include row(var(--space-3));
     margin-bottom: var(--space-4);
   }
 
   .scrub {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     color: var(--c-text-muted);
   }
 

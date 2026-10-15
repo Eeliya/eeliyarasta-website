@@ -34,11 +34,11 @@
 </header>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .xhead {
     grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     padding: 20px var(--space-5) var(--space-4);
     border-bottom: 1px solid var(--c-line);
   }
@@ -58,8 +58,7 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0 var(--space-1);
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
     line-height: 16px;
 
     > i {

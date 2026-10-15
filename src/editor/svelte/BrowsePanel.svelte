@@ -139,6 +139,8 @@
 </section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .help {
     margin: 0 0 var(--space-3);
     padding-left: var(--space-4);
@@ -181,8 +183,7 @@
     list-style: none;
     margin: 0;
     padding: 0 0 0 var(--space-5);
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
   }
 
   .chg__path {

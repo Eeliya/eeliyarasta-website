@@ -178,6 +178,8 @@
 </Section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   /* Page transition: timeline (Motion tab, CurtainSection.svelte) */
   .tf__hint {
     display: block;
@@ -191,8 +193,7 @@
     padding: var(--space-2) var(--space-2) 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);
-    display: grid;
-    gap: var(--space-3);
+    @include stack(var(--space-3));
 
     > .tf {
       margin-bottom: 0;
@@ -233,11 +234,10 @@
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     background: none;
     font: inherit;
-    font-size: var(--fs-sm);
+    @include muted;
     line-height: 16px;
     letter-spacing: 0.04em;
     text-align: left;
-    color: var(--c-text-muted);
     cursor: pointer;
     user-select: none;
 
@@ -247,8 +247,7 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
   }
 
@@ -265,9 +264,8 @@
   }
 
   .ptg__advanced-body {
-    display: grid;
+    @include stack(var(--space-2));
     // Same 6px rhythm as .tf__label → control and .tf__hint (title / field / help).
-    gap: var(--space-2);
     padding: 0 var(--space-3) var(--space-3);
   }
 </style>

@@ -165,6 +165,8 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   dialog.as-modal {
     width: min(1000px, 92vw);
     height: min(760px, calc(100vh - 48px));
@@ -179,9 +181,8 @@
   }
 
   .as-body {
-    display: grid;
+    @include stack(var(--space-3));
     align-content: start;
-    gap: var(--space-3);
     padding: var(--space-4);
     overflow: auto;
   }
@@ -191,10 +192,8 @@
   }
 
   .as-foot {
-    display: flex;
-    align-items: center;
+    @include row(var(--space-3));
     justify-content: space-between;
-    gap: var(--space-3);
     height: 56px;
     padding: 0 var(--space-4);
     border-top: 1px solid var(--c-line);
@@ -215,8 +214,7 @@
 
   // the picked one: a ring (a shadow), so nothing moves or grows
   .as-tile {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     width: 100%;
     padding: var(--space-2) var(--space-2) var(--space-3);
     border: 0;
@@ -238,9 +236,7 @@
   }
 
   .as-tile__name {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     margin-top: var(--space-1);
     font-weight: 500;
 
@@ -253,8 +249,7 @@
 
   .as-tile__line {
     min-height: 32px;
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
     line-height: 16px;
   }
 
@@ -325,8 +320,7 @@
     }
 
     .g {
-      display: grid;
-      gap: 4px;
+      @include stack(4px);
       height: 100%;
 
       b {

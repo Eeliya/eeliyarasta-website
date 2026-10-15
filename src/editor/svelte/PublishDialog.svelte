@@ -213,15 +213,15 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .error {
     color: var(--c-error);
     margin: var(--space-2) 0 0;
   }
 
   .pub-save {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
+    @include row(var(--space-3));
     margin: 0 0 var(--space-4);
     padding: var(--space-3);
     border-radius: var(--radius-lg);
@@ -237,8 +237,7 @@
   .commits {
     margin: -4px 0 var(--space-3);
     gap: var(--space-1);
-    font-size: var(--fs-sm);
-    color: var(--c-text-muted);
+    @include muted;
 
     code {
       color: var(--c-link);

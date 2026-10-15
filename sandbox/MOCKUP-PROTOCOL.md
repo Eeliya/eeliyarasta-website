@@ -180,6 +180,9 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
   `var(--c-card)`, `var(--c-accent)`, Font Awesome `fa-solid fa-…`, the real `Button`. No new look.
 - Controls 32px (bar buttons `size="small"`), everything on a 4px grid (`--space-1` = 4px).
 - At most 5 classes per element, so the markup never looks like Tailwind (no long utility-class chains; style in SCSS instead); accent **#33ccff** (`--c-accent`).
+- Repeated declaration groups are SCSS mixins, not classes (`src/editor/styles/_mixins.scss`:
+  `row`, `stack`, `muted`, `ellipsis`, `focus-ring`; `@use '../styles/mixins' as *;` in a
+  `<style lang="scss">`). Only those five: don't add more for a mock.
 - **No layout shifts, ever**: hints, markers, dots, red borders and confirms must not push or
   resize anything (overlay them, reserve their space, or use a border that already exists).
 - Each mock compares **2+ variants side by side**; the current version is labelled **"(current)"**.

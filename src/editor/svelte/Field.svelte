@@ -248,6 +248,8 @@
 </svelte:element>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the Source switch's word, before it in the label row
   .tf__bind {
     margin-left: auto;
@@ -270,9 +272,7 @@
   // the photo its full height on the left (a + tile when empty; a list's drag handle), its
   // label, file name and sizes, then Media (change) and ✕ (remove), icon-only
   .photo {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     height: 64px;
     padding-right: var(--space-2);
     border-radius: var(--radius-md);
@@ -312,8 +312,7 @@
 
     &:focus-visible,
     .is-selected & {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
 
     img {
@@ -334,19 +333,14 @@
 
   // (changed: the dot before it, editor.scss)
   .photo__label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--fs-sm);
-    color: var(--c-text-muted);
+    @include row(var(--space-2));
+    @include muted;
   }
 
   .photo__label,
   .photo__name,
   .photo__meta {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    @include ellipsis;
   }
 
   .photo__name {
@@ -360,7 +354,6 @@
   }
 
   .photo__meta {
-    font-size: var(--fs-sm);
-    color: var(--c-text-muted);
+    @include muted;
   }
 </style>

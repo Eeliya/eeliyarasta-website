@@ -226,10 +226,11 @@
 </p>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // where it is: two small read-only lines
   .where {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     margin-bottom: var(--space-3);
 
     .tf__label {
@@ -240,8 +241,7 @@
 
   // label above its control
   .opt {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     margin: var(--space-3) 0;
 
     .tf__label {
@@ -261,9 +261,7 @@
   }
 
   .line {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     margin-top: var(--space-3);
 
     .tf__label {

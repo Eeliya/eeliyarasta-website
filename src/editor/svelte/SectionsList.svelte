@@ -331,10 +331,11 @@
 <BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the blocks, under the card's line (Section's foot)
   .blocks {
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     margin: 0;
     padding: 0;
     list-style: none;
@@ -392,15 +393,13 @@
   .block__title {
     min-width: 0;
     padding: 0 var(--space-2);
-    overflow: hidden;
+    @include ellipsis;
     border: 0;
     border-radius: var(--radius-md);
     background: none;
     font: inherit;
     font-size: var(--fs-base);
     text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: pointer;
   }
 
@@ -409,8 +408,7 @@
     color: var(--c-text);
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
   }
 
@@ -446,9 +444,7 @@
   }
 
   .confirm {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     font-size: var(--fs-base);
 
     span {
@@ -492,11 +488,9 @@
 
   // Add section: a dashed card the section cards' width (their -8px bleed), + and its name centred
   .add {
-    display: flex;
+    @include row(var(--space-2));
     flex: none;
-    align-items: center;
     justify-content: center;
-    gap: var(--space-2);
     width: calc(100% + 16px);
     height: 40px;
     margin-inline: -8px;

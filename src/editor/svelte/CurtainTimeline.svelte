@@ -298,9 +298,10 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .ptl {
-    display: grid;
-    gap: var(--space-3);
+    @include stack(var(--space-3));
     padding: 0;
     background: none;
     box-shadow: none;
@@ -313,8 +314,7 @@
 
   /* Label above bar so the track can use the full width. */
   .ptl__row {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
   }
 
   .ptl__name {
@@ -355,8 +355,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    display: flex;
-    align-items: center;
+    @include row;
     justify-content: center;
     overflow: hidden;
     box-sizing: border-box;
@@ -384,8 +383,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    display: flex;
-    align-items: center;
+    @include row;
     justify-content: center;
     overflow: hidden;
     pointer-events: none;

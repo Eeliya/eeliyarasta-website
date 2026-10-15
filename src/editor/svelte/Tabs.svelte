@@ -61,6 +61,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .tabs {
     display: flex;
     box-shadow: inset 0 -1px 0 var(--c-line);
@@ -72,12 +74,11 @@
     border: 0;
     background: none;
     cursor: pointer;
-    font-size: var(--fs-sm);
+    @include muted;
     letter-spacing: 0.06em;
     line-height: 16px;
     text-transform: uppercase;
     white-space: nowrap;
-    color: var(--c-text-muted);
     transition:
       color 0.2s,
       box-shadow 0.2s;
@@ -87,9 +88,8 @@
     }
 
     &:focus-visible {
-      outline: none;
+      @include focus-ring;
       color: var(--c-text);
-      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     &.is-active {

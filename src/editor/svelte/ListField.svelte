@@ -91,9 +91,10 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .lf {
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     justify-items: start;
 
     > :global(*) {
@@ -106,14 +107,12 @@
   }
 
   .lf__list {
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
   }
 
   .lf__item {
     position: relative;
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     padding: var(--space-2);
     border-radius: var(--radius-xl);
     border: 1px solid var(--c-line-strong);
@@ -171,19 +170,15 @@
   }
 
   .lf__bar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
+    @include row(var(--space-1));
     min-height: 24px;
   }
 
   .lf__name {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
+    @include ellipsis;
     font-size: var(--fs-sm);
     color: var(--c-text-dim);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 </style>

@@ -252,6 +252,8 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .tf {
     min-width: 0;
   }
@@ -260,9 +262,7 @@
   // background, line and 8px corners); empty or filled the same height (the 48px tile, the
   // text 3 x 16px at most)
   .sc {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     padding: var(--space-2);
     border-radius: var(--radius-md);
     background: var(--c-input);
@@ -276,10 +276,8 @@
 
   // the tile and the text: the keyboard's button
   .sc__main {
-    display: flex;
+    @include row(var(--space-3));
     flex: 1;
-    align-items: center;
-    gap: var(--space-3);
     min-width: 0;
     padding: 0;
     border: 0;
@@ -321,19 +319,14 @@
 
   // (changed: the dot before it, editor.scss)
   .sc__label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include row(var(--space-2));
+    @include muted;
   }
 
   .sc__label,
   .sc__name,
   .sc__meta {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include ellipsis;
   }
 
   .sc__name {
@@ -348,8 +341,7 @@
   }
 
   .sc__meta {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
 
     .is-empty & {
       white-space: normal;
@@ -383,16 +375,13 @@
   }
 
   .ip-list {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     overflow: auto;
   }
 
   // a row and its edit button
   .ip-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
+    @include row(var(--space-1));
 
     > :global(.xrow) {
       flex: 1;

@@ -40,11 +40,11 @@
 </Select>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the button: the title, cut with …, then the badge; the caret stays after it
   :global(.sel__value):has(> .pm__label) {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
   }
 
   .pm__label {
@@ -78,8 +78,7 @@
   }
 
   .pm__title {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     min-width: 0;
   }
 

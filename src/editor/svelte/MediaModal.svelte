@@ -493,6 +493,8 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // like the Pages and Sources windows: header on top, the photos left, the selected one right
   dialog.md-modal {
     width: min(1040px, 92vw);
@@ -600,10 +602,8 @@
   // the multi-pick footer: a fixed height, the count left, the buttons right
   .md-foot {
     grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
+    @include row(var(--space-3));
     justify-content: flex-end;
-    gap: var(--space-3);
     height: 56px;
     padding: 0 var(--space-4);
     border-top: 1px solid var(--c-line);
@@ -634,9 +634,8 @@
   .md-detail {
     overflow: auto;
     padding: var(--space-4) var(--space-5) var(--space-5);
-    display: grid;
+    @include stack(var(--space-3));
     align-content: start;
-    gap: var(--space-3);
 
     .hint {
       margin: 0;
@@ -645,9 +644,7 @@
   }
 
   .md-detail__head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     min-height: var(--size-control);
   }
 
@@ -655,9 +652,7 @@
     flex: 1;
     min-width: 0;
     margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include ellipsis;
     font-size: var(--fs-base);
     font-weight: 500;
     letter-spacing: 0.1em;

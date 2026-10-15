@@ -51,6 +51,8 @@
 >
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .btn {
     flex: none;
     display: inline-flex;
@@ -143,8 +145,7 @@
   .btn--icon.btn--small {
     width: 24px;
     height: 24px;
-    font-size: var(--fs-sm);
-    color: var(--c-text-muted);
+    @include muted;
     background: none;
     box-shadow: none;
 

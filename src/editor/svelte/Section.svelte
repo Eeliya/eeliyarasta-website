@@ -126,6 +126,8 @@
 </section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .sec {
     display: flex;
     flex-direction: column;
@@ -195,8 +197,7 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
 
     // the name under the title, like .grp__title strong

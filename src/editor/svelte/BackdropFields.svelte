@@ -203,6 +203,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // switched off: the labels and values go quiet (colour only: nothing moves)
   .bd--off :global(:is(.tf__label, .photo__label, .bd__val, .seg__btn)) {
     color: var(--c-text-faint);
@@ -232,9 +234,7 @@
   }
 
   .bd__shade {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     height: 32px;
 
     .f__range {

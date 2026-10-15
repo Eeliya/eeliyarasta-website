@@ -33,6 +33,8 @@
 </section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   @keyframes fade {
     from {
       opacity: 0;
@@ -48,8 +50,7 @@
     overflow: visible;
     color: inherit;
     background: none;
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
     max-width: min(460px, calc(100vw - var(--panel-w) - 72px));
   }
 

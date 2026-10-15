@@ -107,6 +107,8 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the field with its ✕ at the end of its input's row (the label row above stays the field's)
   .pc__field {
     display: grid;
@@ -116,8 +118,7 @@
   }
 
   .pc__row {
-    display: flex;
-    align-items: center;
+    @include row;
     justify-content: space-between;
     height: 32px;
   }

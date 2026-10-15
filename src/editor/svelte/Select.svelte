@@ -228,13 +228,13 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .sel {
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     padding: var(--space-2) var(--space-3);
     border: 0;
     border-radius: var(--radius-md);
@@ -268,9 +268,7 @@
   .sel__value {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include ellipsis;
 
     &.is-placeholder {
       color: var(--c-text-muted);

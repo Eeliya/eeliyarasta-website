@@ -33,6 +33,8 @@
 </button>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // lead | name / meta | chevron; changed: a dot in the left padding (.is-changed, editor.scss)
   .xrow {
     width: 100%;
@@ -54,8 +56,7 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
 
     &.is-selected {
@@ -83,13 +84,10 @@
   .xrow__name,
   .xrow__meta {
     grid-column: 2;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    @include ellipsis;
   }
 
   .xrow__meta {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
   }
 </style>

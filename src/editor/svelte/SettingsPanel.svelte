@@ -247,14 +247,14 @@
 </section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the contained width at each window size: window | px
   .widths {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     margin: var(--space-3) 0 0;
     padding: 0;
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
     list-style: none;
 
     li {

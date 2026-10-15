@@ -5,7 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { compile, compileModule, preprocess } from 'svelte/compiler';
 import * as sass from 'sass';
 
@@ -13,9 +14,12 @@ const files = (await readdir('src/editor', { recursive: true }))
   .filter((f) => /\.svelte(\.js)?$/.test(f))
   .map((f) => join('src/editor', f));
 
+// url: so a style block's relative @use (../styles/mixins) resolves, as in Vite
 const scss = {
-  style: ({ content, attributes }) =>
-    attributes.lang === 'scss' ? { code: sass.compileString(content).css } : undefined,
+  style: ({ content, attributes, filename }) =>
+    attributes.lang === 'scss'
+      ? { code: sass.compileString(content, { url: pathToFileURL(resolve(filename)) }).css }
+      : undefined,
 };
 
 const where = (e) => (e.start ? `:${e.start.line}:${e.start.column}` : '');

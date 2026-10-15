@@ -13,6 +13,8 @@ export default {
     'at-rule-empty-line-before': null,
     'comment-empty-line-before': null,
     'custom-property-empty-line-before': null,
+    // an @include (styles/_mixins.scss) sits among a rule's declarations, no blank line after it
+    'declaration-empty-line-before': null,
     'scss/double-slash-comment-empty-line-before': null,
     'alpha-value-notation': null,
     // Safari still needs -webkit-backdrop-filter and -webkit-user-select

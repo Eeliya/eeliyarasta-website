@@ -187,6 +187,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the settings, then the blocks
   // the name's #anchor hint at its right, under it
   .fields > :global(:first-child .tf__help) {
@@ -229,8 +231,7 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
   }
 
@@ -260,8 +261,7 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
   }
 </style>

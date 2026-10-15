@@ -212,14 +212,15 @@
 </section>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // Elements | Animations, above everything else in the tab
   :global(.mtabs) {
     margin-bottom: var(--space-4);
   }
 
   .msel__head {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     margin-bottom: var(--space-3);
     justify-items: start;
   }
@@ -242,8 +243,7 @@
   }
 
   .mlist__count {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
   }
 
   // motion panel

@@ -142,6 +142,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .seo__row {
     display: flex;
     justify-content: flex-end;
@@ -171,16 +173,13 @@
 
   .seo__url,
   .seo__domain {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
   }
 
   .seo__title {
-    overflow: hidden;
+    @include ellipsis;
     color: var(--c-link);
     font-size: var(--fs-md);
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 
   .seo__desc {

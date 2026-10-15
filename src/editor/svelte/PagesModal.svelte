@@ -426,6 +426,8 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // like the Sources modal: header on top, the folder left, the selected page right
   dialog.pg-modal {
     width: min(880px, 92vw);
@@ -459,9 +461,8 @@
   .pg-detail {
     overflow: auto;
     padding: var(--space-4) var(--space-5) var(--space-5);
-    display: grid;
+    @include stack(var(--space-3));
     align-content: start;
-    gap: var(--space-3);
 
     .hint {
       margin: 0;
@@ -469,16 +470,13 @@
   }
 
   .pg-detail__head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     min-height: var(--size-control);
   }
 
   // the delete question: what goes, then Cancel / Delete
   .pg-confirm {
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
   }
 
   .pg-detail__title {

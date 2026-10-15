@@ -259,6 +259,8 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .ed-stage {
     position: absolute;
     inset: 0 calc(var(--panel-w) + 24px) 0 0;
@@ -316,8 +318,7 @@
   .ed-head {
     flex: none;
     padding-top: var(--space-4);
-    display: grid;
-    gap: var(--space-2);
+    @include stack(var(--space-2));
   }
 
   .ed-row {
@@ -358,8 +359,7 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
     font-weight: 600; // every mode: no width change when picked
     letter-spacing: 0.06em;
     line-height: 16px;
@@ -374,9 +374,8 @@
     }
 
     &:focus-visible {
-      outline: none;
+      @include focus-ring;
       color: var(--c-text);
-      box-shadow: inset 0 0 0 1px var(--c-accent);
     }
 
     &.is-active {
@@ -398,17 +397,12 @@
   .ed-pending {
     min-width: 0;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--fs-sm);
+    @include row(var(--space-2));
+    @include muted;
     line-height: 16px;
-    color: var(--c-text-muted);
 
     span {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+      @include ellipsis;
     }
 
     &:is([data-kind='pending'], [data-kind='unsaved']) {

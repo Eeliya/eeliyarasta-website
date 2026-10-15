@@ -109,6 +109,8 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // Back | name | file
   .lib__head {
     display: grid;
@@ -132,8 +134,7 @@
 
   .lib__path {
     grid-area: path;
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
   }
 
   // icon | name / type and usage
@@ -163,14 +164,12 @@
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px var(--c-accent);
+      @include focus-ring;
     }
   }
 
   .lib__meta {
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
   }
 
   .lib__info {

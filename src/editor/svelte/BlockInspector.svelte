@@ -206,10 +206,11 @@
 </div>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // its section: a plain area (not a card), then the block's card
   .sec-top {
-    display: grid;
-    gap: var(--space-3);
+    @include stack(var(--space-3));
     margin-inline: -8px; // as wide as the list's section cards
   }
 
@@ -228,14 +229,12 @@
   }
 
   .sec-title {
-    overflow: hidden;
+    @include ellipsis;
     color: var(--c-text);
     font-size: var(--fs-base);
     font-weight: 500;
     letter-spacing: 0.1em;
-    text-overflow: ellipsis;
     text-transform: uppercase;
-    white-space: nowrap;
 
     &.is-default {
       color: var(--c-text-faint);
@@ -252,26 +251,20 @@
 
   // [ Type name ]
   .head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     margin-bottom: var(--space-3);
     padding-inline: var(--space-3);
   }
 
   .title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     min-width: 0;
     font-size: var(--fs-base);
 
     strong {
-      overflow: hidden;
+      @include ellipsis;
       color: var(--c-link);
       font-weight: 400;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
   }
 

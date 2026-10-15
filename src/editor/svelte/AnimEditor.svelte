@@ -167,9 +167,10 @@
 {/if}
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   .msel__head {
-    display: grid;
-    gap: var(--space-1);
+    @include stack(var(--space-1));
     margin-bottom: var(--space-3);
     justify-items: start;
   }
@@ -183,17 +184,13 @@
   }
 
   .msel__actions {
-    display: flex;
-    gap: var(--space-3);
-    align-items: center;
+    @include row(var(--space-3));
     margin-bottom: var(--space-4);
   }
 
   .scrub {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+    @include row(var(--space-2));
     color: var(--c-text-muted);
   }
 

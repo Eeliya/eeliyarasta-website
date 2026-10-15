@@ -285,6 +285,8 @@
 </dialog>
 
 <style lang="scss">
+  @use '../styles/mixins' as *;
+
   // the Sources modal is a <dialog>: header on top, item list left, item fields right
   dialog.src-modal {
     width: min(1100px, 92vw);
@@ -320,8 +322,7 @@
   .src-list__head {
     justify-content: space-between;
     padding: 0 var(--space-2) var(--space-3);
-    color: var(--c-text-muted);
-    font-size: var(--fs-sm);
+    @include muted;
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -339,15 +340,12 @@
     container-type: inline-size;
     overflow: auto;
     padding: var(--space-4) var(--space-5) var(--space-5);
-    display: grid;
+    @include stack(var(--space-3));
     align-content: start;
-    gap: var(--space-3);
   }
 
   .src-detail__head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
+    @include row(var(--space-3));
     min-height: var(--size-control);
     margin-bottom: var(--space-1);
 
