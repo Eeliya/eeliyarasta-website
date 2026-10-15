@@ -5,7 +5,8 @@
   phones), and a dashed Add block button (BlocksModal.svelte). No settings here: a section's
   name, height and width are in its block view (BlockInspector.svelte). Delete asks over the
   card at its size (its border red). The dashed Add section card adds an empty section after
-  the last one. Sections and blocks can be added, moved, duplicated, deleted and turned on/off
+  the last one. A double click on a card (not on its controls) goes into the section: its
+  first block's view (Section.svelte's onenter; none without blocks). Sections and blocks can be added, moved, duplicated, deleted and turned on/off
   (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
 -->
 <script>
@@ -165,6 +166,7 @@
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
     stack
     danger={deleting === s.id}
+    onenter={s.blocks?.length ? () => onopen(s.blocks[0].id) : null}
   >
     {#snippet bar()}
       <Button

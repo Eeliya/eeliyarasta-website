@@ -64,6 +64,8 @@ const DOT = 12;
 /** How near the pointer must come to a bottom circle to drop a link on it, px. */
 const REACH = 24;
 const SVG = 'http://www.w3.org/2000/svg';
+/** The room a section's name tag needs above its top edge, px; less: the tag goes inside. */
+const TAG_ROOM = 24;
 
 const STYLE = `
 :host { all: initial; }
@@ -72,7 +74,10 @@ const STYLE = `
 .cells { position: absolute; background-image: linear-gradient(to right, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .12) 1px, transparent 1px), linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); box-shadow: inset -1px -1px 0 rgb(255 255 255 / .12); }
 .box { position: absolute; box-sizing: border-box; border-radius: ${T.radiusXs}; }
 .hover { border: 1px dashed ${T.white}; opacity: .7; }
-.peek { border-radius: 0; background: rgb(255 255 255 / .03); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2); }
+.peek { border-radius: 0; border: 1px solid ${T.peekLine}; }
+.peek .tag { position: absolute; left: -1px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: rgb(255 255 255 / .9); color: ${T.black}; white-space: nowrap; }
+.peek.is-inside .tag { left: 4px; top: 4px; bottom: auto; margin: 0; }
+.dim { position: absolute; background: rgb(0 0 0 / .4); }
 .sel { border: 2px solid ${T.accent}; }
 .sel.is-dragging { background: ${T.accent}; background: rgb(${T.accentRgb} / .08); }
 .label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.accent}; color: ${T.black}; white-space: nowrap; }
@@ -113,7 +118,8 @@ svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: no
  * the block at `pos` (mobile: its phone area; flow: where the section's blocks are now, { id:
  * area }, and rows: the rows its content needs now); onlink(id, to, gap, { mobile }): block `id` follows `to`
  * with `gap` cells between them (to null: it is free again); blockOf(id): the stored block
- * (null when it isn't on the page); onrows(secId, rows, { mobile }): a Custom section's bottom
+ * (null when it isn't on the page); secNameOf(id): a section's name for its tag ("Section N"
+ * without one); onrows(secId, rows, { mobile }): a Custom section's bottom
  * edge was dragged to `rows` (the phone's rows when mobile).
  */
 export function createOverlay({
@@ -123,6 +129,7 @@ export function createOverlay({
   onlink = () => {},
   onrows = () => {},
   blockOf,
+  secNameOf = () => '',
 }) {
   let doc = null;
   let win = null;
@@ -166,12 +173,14 @@ export function createOverlay({
     host.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:2147483645;';
     const shadow = host.attachShadow({ mode: 'open' });
     const dots = '<i class="dot" data-dot="top"></i><i class="dot" data-dot="bottom"></i>';
-    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="box peek" hidden></div><div class="secrow" hidden><span class="count"></span></div><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
+    shadow.innerHTML = `<style>${STYLE}</style><div class="layer"><div class="grids"></div><svg class="links" xmlns="${SVG}"></svg><div class="dims"></div><div class="box peek" hidden><span class="tag"></span></div><div class="secrow" hidden><span class="count"></span></div><div class="box hover" hidden>${dots}</div><div class="box sel" hidden><span class="label"></span>${HANDLES.map((h) => `<i class="handle" data-h="${h}"></i>`).join('')}${dots}</div><div class="targets"></div></div>`;
     root = shadow.querySelector('.layer');
     els.grids = root.querySelector('.grids');
     els.links = root.querySelector('.links');
     els.hover = root.querySelector('.hover');
     els.peek = root.querySelector('.peek');
+    els.tag = root.querySelector('.tag');
+    els.dims = root.querySelector('.dims');
     els.sel = root.querySelector('.sel');
     els.label = root.querySelector('.label');
     els.targets = root.querySelector('.targets');
@@ -297,6 +306,35 @@ export function createOverlay({
     box.querySelector('[data-dot="top"]').classList.toggle('is-linked', !!(el && linkOfEl(el)));
   }
 
+  /**
+   * The section card hovered in the Content tab (`sec`, null: none): a soft white 1px line on
+   * its section and its name in a tag above its top edge, left (just inside it when there is
+   * no room above, e.g. the first section); the page's other sections dimmed to 60% by dark
+   * boxes over them. All on this layer: the page's own styles don't change (no reflow).
+   */
+  function drawPeek(sec) {
+    els.peek.hidden = !sec;
+    const others = sec
+      ? [...doc.querySelectorAll('[data-sec]:not([hidden])')].filter(
+          (s) => s !== sec && live(s) && !s.parentElement.closest('[data-sec]'),
+        )
+      : [];
+    const dims = els.dims.children;
+    while (dims.length > others.length) dims[dims.length - 1].remove();
+    while (dims.length < others.length) els.dims.append(doc.createElement('div'));
+    others.forEach((s, i) => {
+      dims[i].className = 'dim';
+      place(dims[i], rectOf(s, win));
+    });
+    if (!sec) return;
+    const r = rectOf(sec, win);
+    place(els.peek, r);
+    els.peek.classList.toggle('is-inside', r.y - win.scrollY < TAG_ROOM);
+    const name = secNameOf(sec.dataset.sec);
+    els.tag.hidden = !name;
+    if (els.tag.textContent !== name) els.tag.textContent = name;
+  }
+
   function frame() {
     raf = 0;
     if (!root?.isConnected) return;
@@ -313,10 +351,9 @@ export function createOverlay({
       els.label.textContent = drag?.label ?? labelOf(b, sel);
       dotsOf(els.sel, sel);
     }
-    // the section row hovered in the Content tab: its section, faintly (under the block boxes)
+    // the section card hovered in the Content tab: its section (under the block boxes)
     const p = arrange && !drag && ui.peek?.from === 'panel' ? secById(ui.peek.id) : null;
-    els.peek.hidden = !p;
-    if (p) place(els.peek, rectOf(p, win));
+    drawPeek(p);
     // a Custom section's bottom edge: the one being dragged, hovered, or the selected block's
     const rs =
       arrange && !drag && !linking

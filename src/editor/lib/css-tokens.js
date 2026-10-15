@@ -36,6 +36,7 @@ export function uiTokens(site, editor) {
     accentRgb: rgbOf(v('--c-accent')),
     onAccent: v('--c-on-accent'),
     error: v('--c-error'),
+    peekLine: v('--c-line-peek'),
     white: v('--white'),
     black: v('--black'),
     font: v('--f-mono'),

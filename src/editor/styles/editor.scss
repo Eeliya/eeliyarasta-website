@@ -789,8 +789,10 @@ dialog.modal__box {
   }
 }
 
-// a section row whose section the pointer is over in the preview (SectionsList.svelte): faint
-// white, not the accent (that is the selection's)
-[data-section].is-peek {
-  background: var(--c-card-peek) !important;
+// a page section's card (SectionsList.svelte) hovered, or its section hovered in the preview
+// (.is-peek): its own 1px border soft white (no size change), not the accent (that is the
+// selection's); a delete confirm's red border wins
+.sec[data-section^='s-']:not(.is-danger):hover,
+.sec[data-section].is-peek:not(.is-danger) {
+  border-color: var(--c-line-peek);
 }

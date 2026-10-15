@@ -24,6 +24,10 @@
               snippet's controls on a second, from the left edge, the last one (a switch) at the right
     danger    the card's border red (a delete confirm over it)
     over      snippet: drawn over the whole card at its size (a confirm), inside its border
+    onenter   optional: a double click on the card goes into it (a page section's block view).
+              Not on its controls (buttons, switches, fields, links, a block's row with its
+              drag handle, a confirm) nor while `danger`. On the title it doesn't toggle the
+              card either: the second click is ignored, the first one's toggle undone at once
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -48,6 +52,7 @@
     stack = false,
     danger = false,
     over,
+    onenter = null,
   } = $props();
 
   const uid = $props.id();
@@ -59,6 +64,7 @@
   // closed. Opening and closing tween grid-template-rows between them, then hand back to CSS.
   let body = $state();
   let first = true;
+  let snap = false; // the next open/close at once, no slide (a double click's toggle undone)
   $effect(() => {
     const opening = isOpen;
     untrack(() => {
@@ -68,6 +74,10 @@
   });
   function slide(opening) {
     gsap.killTweensOf(body);
+    if (snap) {
+      snap = false;
+      return void gsap.set(body, { clearProps: 'gridTemplateRows' });
+    }
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     gsap.fromTo(
       body,
@@ -81,12 +91,31 @@
     );
   }
 
-  function toggle() {
+  function toggle(e) {
+    if (onenter && e?.detail > 1) return; // a double click's second click (it goes in)
     if (key) ui.sections[key] = !isOpen;
     else toggled = !isOpen;
   }
+
+  // what a double click on the card leaves alone: its controls (the title's toggle aside)
+  const CONTROLS =
+    'a, input, select, textarea, label, [contenteditable], [data-row], [role="group"], [role="alertdialog"], button:not(.sec__toggle)';
+  const onControl = (e) => !!e.target.closest?.(CONTROLS);
+  function enter(e) {
+    if (!onenter || danger || e.button !== 0 || onControl(e)) return;
+    // the first click on the title toggled the card: back, at once
+    if (e.target.closest('.sec__toggle')) {
+      snap = true;
+      toggle();
+    }
+    onenter();
+  }
+  // no word selected by a double click on the card (its fields still select)
+  const noSelect = (e) => onenter && e.detail > 1 && !onControl(e) && e.preventDefault();
 </script>
 
+<!-- a double click is a mouse shortcut (onenter): the keyboard goes in by a block row's button -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <section
   class={[
     'sec',
@@ -97,6 +126,8 @@
     cls,
   ]}
   data-section={id}
+  ondblclick={enter}
+  onmousedown={noSelect}
 >
   <div class="sec__bar">
     <button

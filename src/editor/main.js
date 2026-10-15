@@ -100,6 +100,14 @@ const overlay = createOverlay({
     const b = blockAt(id);
     return b && store.current[b.file].sections[b.at].blocks[b.j];
   },
+  // a section's name for its tag in the preview: as its card's title (SectionsList.svelte)
+  secNameOf(id) {
+    const list = store.current[targetFile(ui.target, bridge.doc)]?.sections || [];
+    const at = list.findIndex((s) => s?.id === id);
+    if (at < 0) return '';
+    const name = list[at].name;
+    return (typeof name === 'string' && name.trim()) || `Section ${at + 1}`;
+  },
 });
 
 restoreUi(bridge, live); // the tab, sections, ...: from the URL and sessionStorage (svelte/persist.js)

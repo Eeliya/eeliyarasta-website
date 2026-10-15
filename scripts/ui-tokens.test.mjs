@@ -17,6 +17,7 @@ test('ui tokens: the values the injected CSS gets from the token files', () => {
     accentRgb: '51 204 255',
     onAccent: '#000',
     error: '#ff8a7a',
+    peekLine: 'rgb(255 255 255 / 0.7)',
     white: '#fff',
     black: '#000',
     font: "'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace",
