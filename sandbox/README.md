@@ -22,7 +22,9 @@ The same on Windows, macOS and Linux (plain Node, no shell). A Vite dev server w
 ## The viewer
 
 `/edit/sandbox/` lists the mocks newest first (name, last changed), plus the kit's demo
-(`kit-demo`, tracked). Click one to open it live. A new `sandbox/mocks/*.svelte` appears by
+(`kit-demo`, tracked). The viewer (the list, and the bar with "← Mocks" over a mock) has its own
+plain look (`viewer.css`, `Viewer.svelte`: the system font, no editor tokens or components);
+the editor's styles, icons and panel load only on a mock page, for the mock. Click one to open it live. A new `sandbox/mocks/*.svelte` appears by
 itself, and edits to an open mock hot-reload. Each mock has a delete button, and **Delete older
 than N days** removes every mock last changed before then (both ask first).
 
@@ -39,7 +41,8 @@ with made-up props, and copy only the piece the mock changes, so it can't drift 
 editor.
 
 Open `/edit/sandbox/?mock=<name>` (`?mock=a,b,c` stacks several with their names,
-`&width=N` sets the panel width, default `--panel-w`, `&bare=1` drops the panel).
+`&width=N` sets the panel width, default `--panel-w`, `&bare=1` drops the panel, `&shot=1`
+drops the viewer's bar: what `npm run mock` uses).
 
 ## Screenshot (optional)
 

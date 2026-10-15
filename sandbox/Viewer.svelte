@@ -2,11 +2,10 @@
   The sandbox index: this machine's mocks (sandbox/mocks/, git-ignored), newest first, each
   opening live (?mock=name); delete one, or every mock older than N days (/__mocks,
   scripts/mock-api.mjs). The kit's demo (sandbox/kit/demo.svelte, tracked) is listed first.
-  It refreshes by itself when a mock is added, changed or removed.
+  It refreshes by itself when a mock is added, changed or removed. Its own plain look: no
+  editor styles or components (those are for the mocks only).
 -->
 <script>
-  import Button from '../src/editor/svelte/Button.svelte';
-
   let mocks = $state([]);
   let days = $state(14);
   let error = $state('');
@@ -16,8 +15,7 @@
 
   async function load() {
     try {
-      const r = await fetch('/__mocks/list');
-      mocks = await r.json();
+      mocks = await (await fetch('/__mocks/list')).json();
       error = '';
     } catch (e) {
       error = `Could not list the mocks: ${e.message}`;
@@ -40,48 +38,81 @@
   import.meta.hot?.on('mocks:changed', load);
 </script>
 
-<h3 class="modal__title">Mocks</h3>
-<ul class="sb-list">
-  <li class="sb-row">
-    <a href="?mock=kit-demo">kit-demo</a>
-    <span class="hint">the kit (tracked)</span>
-  </li>
-  {#each mocks as m (m.file)}
-    <li class="sb-row">
-      <a href="?mock={encodeURIComponent(m.name)}">{m.name}</a>
-      <span class="hint">{when(m.mtime)}</span>
-      <Button
-        size="small"
-        icon="trash"
-        iconOnly
-        label="Delete {m.name}"
-        onclick={() => remove({ name: m.file }, `Delete sandbox/mocks/${m.file}?`)}
-      />
-    </li>
-  {:else}
-    <li class="sb-row">
-      <span class="hint">No mocks yet: add sandbox/mocks/&lt;name&gt;.svelte</span>
-    </li>
-  {/each}
-</ul>
-<div class="sb-row">
-  <span>Delete older than</span>
-  <input
-    class="tf__input sb-days"
-    type="number"
-    min="0"
-    step="1"
-    aria-label="Days"
-    bind:value={days}
-  />
-  <span>days</span>
-  <Button
-    size="small"
-    variant="danger"
-    label="Delete"
-    disabled={!(days >= 0)}
-    onclick={() =>
-      remove({ olderThanDays: days }, `Delete every mock last changed more than ${days} days ago?`)}
-  />
-</div>
-{#if error}<p class="hint sb-error">{error}</p>{/if}
+<main>
+  <h1>Mocks</h1>
+  <table>
+    <tbody>
+      <tr>
+        <td><a href="?mock=kit-demo">kit-demo</a></td>
+        <td class="muted">the kit (tracked)</td>
+        <td></td>
+      </tr>
+      {#each mocks as m (m.file)}
+        <tr>
+          <td><a href="?mock={encodeURIComponent(m.name)}">{m.name}</a></td>
+          <td class="muted">{when(m.mtime)}</td>
+          <td>
+            <button
+              type="button"
+              aria-label="Delete {m.name}"
+              onclick={() => remove({ name: m.file }, `Delete sandbox/mocks/${m.file}?`)}
+              >Delete</button
+            >
+          </td>
+        </tr>
+      {:else}
+        <tr
+          ><td colspan="3" class="muted">No mocks yet: add sandbox/mocks/&lt;name&gt;.svelte</td
+          ></tr
+        >
+      {/each}
+    </tbody>
+  </table>
+  <p>
+    Delete mocks older than
+    <input type="number" min="0" step="1" aria-label="Days" bind:value={days} /> days
+    <button
+      type="button"
+      disabled={!(days >= 0)}
+      onclick={() =>
+        remove(
+          { olderThanDays: days },
+          `Delete every mock last changed more than ${days} days ago?`,
+        )}>Delete old</button
+    >
+  </p>
+  {#if error}<p class="error">{error}</p>{/if}
+</main>
+
+<style>
+  main {
+    max-width: 640px;
+  }
+  h1 {
+    margin: 0 0 16px;
+    font-size: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  td {
+    padding: 6px 8px 6px 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  td:last-child {
+    text-align: right;
+  }
+  a {
+    color: #0366d6;
+  }
+  input {
+    width: 4em;
+  }
+  .muted {
+    color: #777;
+  }
+  .error {
+    color: #b00020;
+  }
+</style>

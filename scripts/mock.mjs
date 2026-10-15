@@ -134,7 +134,7 @@ try {
     deviceScaleFactor: 2,
     mobile: false,
   });
-  const q = new URLSearchParams({ mock: names.join(',') });
+  const q = new URLSearchParams({ mock: names.join(','), shot: '1' });
   if (opt.width) q.set('width', String(opt.width));
   if (opt.bare) q.set('bare', '1');
   await send('Page.navigate', { url: `${base}/edit/sandbox/?${q}` });
