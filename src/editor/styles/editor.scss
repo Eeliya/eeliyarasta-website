@@ -190,9 +190,9 @@ kbd {
 }
 
 // Unsaved changes: a 6px accent dot (mock A). A field's or picker's label: an inline dot first,
-// the label row's gap after it, the label white. A section card: the bar's first item before
-// the caret (the bar's 4px gap), on the title line; the toggle is flex: 1, so the title gives
-// up the room and the buttons and switch on the right don't move. Explorer rows and Motion
+// the label row's gap after it, the label white. A section card: the bar's first item, before
+// the title (the bar's 4px gap), on the title line; the title gives up the room, so the pen at
+// the row's end and the tools below don't move. Explorer rows and Motion
 // parts (has its own values): centered in their left padding, absolute.
 .tf.is-changed > .tf__label::before,
 .tf.is-changed .sc__label::before,

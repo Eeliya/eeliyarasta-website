@@ -1,7 +1,7 @@
 <!--
   The top of a section's view (BlockInspector.svelte, SectionView.svelte), plain (not a card):
   Back (to the list of sections, SectionsList.svelte; Esc or a click on empty space in the
-  preview also goes back), the section's title (dim when only "Section N") and Locate, then its
+  preview also goes back), the section's title (its name, else "Section N", one colour) and Locate, then its
   settings, editable, in an outlined box (SectionSettings.svelte).
     live, bridge, file, at (the section's index), onback
 -->
@@ -23,7 +23,7 @@
   });
 </script>
 
-<!-- its section: Back, its title (dim when only "Section N") and Locate; its settings in an outlined box -->
+<!-- its section: Back, its title and Locate; its settings in an outlined box -->
 <div class="sec-top">
   <div class="sec-head">
     <Button
@@ -33,7 +33,7 @@
       title="Back to sections"
       onclick={onback}
     />
-    <span class={['sec-title', !secTitle && 'is-default']}>{secTitle || `Section ${at + 1}`}</span>
+    <span class="sec-title">{secTitle || `Section ${at + 1}`}</span>
     <Button
       size="small"
       icon="location-crosshairs"
@@ -76,9 +76,5 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-
-    &.is-default {
-      color: var(--c-text-faint);
-    }
   }
 </style>
