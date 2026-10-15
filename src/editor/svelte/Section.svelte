@@ -22,7 +22,7 @@
     children  the section body
     foot      optional: more body under the bar or body (a page section's blocks)
     stack     the bar in two rows: the title alone on the first (it wraps in full), the `bar`
-              snippet's controls on a second, from the left edge, the last one (a switch) at the right
+              snippet's controls on a second, from the left edge
     danger    the card's border red (a delete confirm over it)
     over      snippet: drawn over the whole card at its size (a confirm), inside its border
     onenter   optional: the card doesn't collapse (always open, no caret, `key` and `open`
@@ -281,17 +281,13 @@
     margin-top: 0;
   }
 
-  // two rows: the title alone (wraps), then the controls from the left, the last at the right
+  // two rows: the title alone (wraps), then the controls from the left
   .sec--stack > .sec__bar {
     flex-wrap: wrap;
     row-gap: var(--space-2);
 
     > .sec__toggle {
       flex: 1 0 100%;
-    }
-
-    > :global(:last-child:not(.sec__toggle)) {
-      margin-left: auto;
     }
   }
 

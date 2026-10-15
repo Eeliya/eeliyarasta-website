@@ -551,7 +551,17 @@ kbd {
   line-height: 16px;
 }
 
-// On/off switch (Content section toggles, Settings): a checkbox drawn as a track, its knob a
+// a section's or block's eye (SectionsList.svelte): a toggle (aria-pressed while shown), but
+// quiet as the tools beside it, not the accent of a pressed icon button
+.btn.btn--icon.btn--small[data-eye][aria-pressed='true']:not(:disabled) {
+  color: var(--c-text-muted);
+
+  &:hover {
+    color: var(--c-text);
+  }
+}
+
+// On/off switch (Settings, a field's Source and Custom, SEO, the Backdrop): a checkbox drawn as a track, its knob a
 // radial gradient that slides right when checked. Off: dark track, grey knob. On: whitish
 // track, black knob.
 .switch {

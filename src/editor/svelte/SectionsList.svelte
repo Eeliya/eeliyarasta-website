@@ -1,7 +1,7 @@
 <!--
   The page's sections in the Content tab (src/site/layout/): each a panel Section in two rows
   (its title, "Section N" or its name in full; then its tools: Show, up, down, Duplicate,
-  Delete and the switch at the right), then its blocks, in order (the order they stack in on
+  Delete and its eye, from the left), then its blocks, in order (the order they stack in on
   phones), and a dashed Add block button (onadd: ContentPanel's BlocksModal.svelte). The cards
   are always open; a click on a card's title goes into its section (onsection: its first
   block's view, or the section's own when it has none). No settings here: a section's name,
@@ -121,6 +121,23 @@
   const focusCancel = (el) => el.querySelector('button')?.focus();
 </script>
 
+<!-- a section's or block's visibility: eye (shown) / eye-slash (hidden on the public page), a
+     toggle (aria-pressed: shown), quiet as the tools around it (data-eye, editor.scss) -->
+{#snippet eye(on, what, onset)}
+  <Button
+    size="small"
+    icon={on ? 'eye' : 'eye-slash'}
+    iconOnly
+    label="Show {what}"
+    title={on
+      ? `Visible: click to hide ${what}`
+      : `Hidden on the public page: click to show ${what}`}
+    aria-pressed={on}
+    data-eye
+    onclick={() => onset(!on)}
+  />
+{/snippet}
+
 {#snippet confirm(what, run)}
   <div class="confirm" role="group" aria-label="Delete this {what}?">
     <span>Delete this {what}?</span>
@@ -189,14 +206,9 @@
         label="Delete section {at + 1}"
         onclick={() => (deleting = s.id)}
       />
-      <input
-        type="checkbox"
-        class="switch"
-        aria-label="Show section {at + 1}"
-        title={s.enabled === false ? 'Hidden on the public page' : 'Visible'}
-        checked={s.enabled !== false}
-        onchange={(e) => set(at, { enabled: e.currentTarget.checked ? undefined : false })}
-      />
+      {@render eye(s.enabled !== false, `section ${at + 1}`, (on) =>
+        set(at, { enabled: on ? undefined : false }),
+      )}
     {/snippet}
 
     {#snippet over()}
@@ -262,6 +274,7 @@
             >
               {label}
             </button>
+            {@render eye(b.config?.enabled !== false, label, (on) => setBlockOn(at, j, on))}
             <Button
               size="small"
               icon="copy"
@@ -275,13 +288,6 @@
               iconOnly
               label="Delete {label}"
               onclick={() => (deleting = b.id)}
-            />
-            <input
-              type="checkbox"
-              class="switch"
-              aria-label="Show {label}"
-              checked={b.config?.enabled !== false}
-              onchange={(e) => setBlockOn(at, j, e.currentTarget.checked)}
             />
             {#if nameOf(b)}
               <button type="button" class="block__title" tabindex="-1" onclick={() => onopen(b.id)}>
@@ -324,7 +330,7 @@
     list-style: none;
   }
 
-  // [ Type          copy | trash | switch ]
+  // [ Type           eye | copy | trash ]
   // [ its title, the whole width          ]
   .block {
     position: relative;
