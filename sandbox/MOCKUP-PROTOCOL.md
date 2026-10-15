@@ -11,8 +11,8 @@ how to push them, the kit's every prop, a copy-paste template and reference scre
 - Mocks are **local only**: `sandbox/mocks/<name>.svelte` is git-ignored. Never commit, push or
   copy them into the repo's history. (The kit, viewer, scripts and this doc are tracked.)
 - Make them **on the PC Eeliya is using**, not on your own machine:
-  - Windows PC: repo at `S:\eeliyarasta-website` → `S:\eeliyarasta-website\sandbox\mocks\`
-  - WSL PC: repo at `~/work/eeliyarasta-website` inside WSL (commands start in Windows
+  - Home PC (Windows): repo at `S:\eeliyarasta-website` → `S:\eeliyarasta-website\sandbox\mocks\`
+  - Work PC (WSL): repo at `~/work/eeliyarasta-website` inside WSL (commands start in Windows
     PowerShell) → `~/work/eeliyarasta-website/sandbox/mocks/`
 - Don't touch Eeliya's uncommitted work on those PCs (e.g. untracked `content/pages/`).
 
@@ -22,7 +22,7 @@ Pack the mock files as a base64 tar.gz on your side:
 
     tar czf - section-cards-a.svelte section-cards-b.svelte | base64 -w0
 
-**WSL PC** (from PowerShell; `sandbox/mock-push.sh` writes, checks the server, prints timings):
+**Work PC (WSL)** (from PowerShell; `sandbox/mock-push.sh` writes, checks the server, prints timings):
 
 ```powershell
 wsl.exe bash -lc 'cd ~/work/eeliyarasta-website && echo <b64> | bash sandbox/mock-push.sh'
@@ -179,7 +179,7 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 - Real editor styles and icons only (they load inside a mock): tokens like `var(--space-2)`,
   `var(--c-card)`, `var(--c-accent)`, Font Awesome `fa-solid fa-…`, the real `Button`. No new look.
 - Controls 32px (bar buttons `size="small"`), everything on a 4px grid (`--space-1` = 4px).
-- At most 5 classes (the editor's style rule); accent **#33ccff** (`--c-accent`).
+- At most 5 classes per element, so the markup never looks like Tailwind (no long utility-class chains; style in SCSS instead); accent **#33ccff** (`--c-accent`).
 - **No layout shifts, ever**: hints, markers, dots, red borders and confirms must not push or
   resize anything (overlay them, reserve their space, or use a border that already exists).
 - Each mock compares **2+ variants side by side**; the current version is labelled **"(current)"**.
