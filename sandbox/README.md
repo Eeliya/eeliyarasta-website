@@ -53,3 +53,11 @@ Prints the PNG path: `$MOCK_DIR/<name>.png` (default `../mocks`, next to the che
 set `MOCK_PORT=5174` to use `mock:serve`'s) or starts one in the background, and drives
 headless Chrome over the DevTools protocol at 2x. Chrome: `CHROME`, else its usual install path
 on Windows or macOS, else `/usr/bin/google-chrome`. About 2 s per call with the server up.
+
+## Pushing mocks in one command
+
+`sandbox/mock-push.sh` reads a base64 tar.gz of `.svelte` files from stdin, writes them into `sandbox/mocks/`, and checks that the mock server lists them. Add `--rm a,b` to delete mocks first.
+
+```bash
+echo <base64> | bash sandbox/mock-push.sh --rm old-mock
+```
