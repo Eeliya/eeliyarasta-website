@@ -309,7 +309,7 @@ export function createOverlay({
   }
 
   /**
-   * The section card hovered in the Content tab (`sec`, null: none): a soft white 1px line on
+   * The section card hovered in the Content tab, else the one selected (`sec`, null: none): a soft white 1px line on
    * its section and its name in a tag above its top edge, left (just inside it when there is
    * no room above, e.g. the first section); the page's other sections dimmed to 60% by dark
    * boxes over them. All on this layer: the page's own styles don't change (no reflow).
@@ -353,8 +353,11 @@ export function createOverlay({
       els.label.textContent = drag?.label ?? labelOf(b, sel);
       dotsOf(els.sel, sel);
     }
-    // the section card hovered in the Content tab: its section (under the block boxes)
-    const p = arrange && !drag && ui.peek?.from === 'panel' ? secById(ui.peek.id) : null;
+    // the section card hovered in the Content tab, else the one selected while the list shows:
+    // its section (under the block boxes)
+    const peekId =
+      ui.peek?.from === 'panel' ? ui.peek.id : !ui.block && !ui.section && ui.selSection;
+    const p = arrange && !drag && peekId ? secById(peekId) : null;
     drawPeek(p);
     // a Custom section's bottom edge: the one being dragged, hovered, or the selected block's
     const rs =
@@ -702,7 +705,7 @@ export function createOverlay({
     ui.link = null;
     const el = e.target.closest?.('[data-block]');
     // empty space: nothing selected (the panel shows the sections, the grid hides)
-    if (!el) return void ((ui.block || ui.section) && onpick(null));
+    if (!el) return void ((ui.block || ui.section || ui.selSection) && onpick(null));
     if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
     onpick(el.dataset.block);
     start(e, el);

@@ -109,20 +109,20 @@ Tabs, ExplorerHead, …). `{live}` is required wherever listed.
 | `at`       | number                   | `0`      | the section's index in that page                                                                                    |
 | `fields`   | bool                     | `true`   | `false`: no settings body (**the list as built**)                                                                   |
 | `rows`     | bool                     | `false`  | title on its own row (wraps), tools on a second row (the real Section's `stack`)                                    |
-| `spread`   | `''`\|`'left'`\|`'even'` | `''`     | with `rows`: `even` spreads the tools evenly; `''` / `left`: from the left edge, switch at the right (**as built**) |
+| `spread`   | `''`\|`'left'`\|`'even'` | `''`     | with `rows`: `even` spreads the tools evenly; `''` / `left`: from the left edge (**as built**)                      |
 | `line`     | bool                     | `true`   | `false`: no line above the blocks (space kept)                                                                      |
 | `changed`  | bool                     | `false`  | the 6px accent dot before the title                                                                                 |
+| `selected` | bool                     | `false`  | the selected card: its border white 70%                                                                             |
 | `red`      | bool                     | `false`  | border red (no size change) — use with a delete confirm                                                             |
 | `height`   | CSS length               | `''`     | fix the card's height, content clipped                                                                              |
-| `tools`    | snippet                  | —        | replaces the bar's tools (Show, ↑, ↓, Duplicate, Delete, switch)                                                    |
+| `tools`    | snippet                  | —        | replaces the bar's tools (Show, ↑, ↓, Duplicate, Delete, eye)                                                       |
 | `over`     | snippet                  | —        | drawn over the card at its exact box; give the root `class="kit-over"` (whole card) + `kit-over--bar` (header only) |
 | `children` | snippet                  | —        | replaces the settings body                                                                                          |
 
-Always open, as built (dae1ba8): the real Section's `onenter`, so no caret and no open/closed;
-the title is a button (pointer) that opens the section in the app (in a mock it does nothing).
-In the kit its hover keeps the title's brightness (the app's white title hover is left out).
-Title: the section's `name`, else "Section N" dimmed. The switch reflects `enabled !== false`;
-↑/↓ disable at the first/last section.
+As built: the real Section's `onenter`, so always open (no caret), the pen (`pen-to-square`)
+at the title row's right end (in a mock it does nothing), hover a 40% white border. Title: the
+section's `name`, else "Section N", in one colour (muted when the section is hidden). The eye
+(`eye` / `eye-slash`) reflects `enabled !== false`; ↑/↓ disable at the first/last section.
 
 **Ask** — the section delete confirm as built, for `over` (add `red` to the card).
 
@@ -130,12 +130,12 @@ Title: the section's `name`, else "Section N" dimmed. The switch reflects `enabl
 | ---------- | ------ | ------------------------ | ------------------- |
 | `question` | string | `'Delete this section?'` | the line at the top |
 
-**BlockCard** — one block row (grip, name, Duplicate, Delete, switch, its title under). Inside a `<ul class="blocks">` in a `kit-list` scope (SectionCard does this).
+**BlockCard** — one block row (grip, name, eye, Duplicate, Delete, its title under). Inside a `<ul class="blocks">` in a `kit-list` scope (SectionCard does this).
 
-| prop    | type                       | default  | meaning                                 |
-| ------- | -------------------------- | -------- | --------------------------------------- |
-| `block` | `{id,type,title?,config?}` | required | `config.enabled === false` = switch off |
-| `tools` | snippet                    | —        | replaces Duplicate / Delete / switch    |
+| prop    | type                       | default  | meaning                                                     |
+| ------- | -------------------------- | -------- | ----------------------------------------------------------- |
+| `block` | `{id,type,title?,config?}` | required | `config.enabled === false` = hidden (eye-slash, faint name) |
+| `tools` | snippet                    | —        | replaces eye / Duplicate / Delete                           |
 
 **Panel** — the editor's side panel around your cards.
 
@@ -168,7 +168,7 @@ Title: the section's `name`, else "Section N" dimmed. The switch reflects `enabl
 - `samplePage.full`: 0 unnamed (intro) · 1 "Work" (grid, button) · 2 "Albums" (albums) ·
   3 "Selected portrait and editorial work from the last three years" (projects, grid "Places") ·
   4 unnamed (projects, button)
-- `samplePage.states`: 0 "Work" (grid, button) · 1 "Contact" switched off (button) · 2 unnamed, no blocks
+- `samplePage.states`: 0 "Work" (grid, button) · 1 "Contact" hidden (button) · 2 unnamed, no blocks
 - `SECTIONS`: the six-section home page · `PAGES`: the page menu items · `FILE`: `'pages/index.json'`
 - `block(id, type, title?)` builds a block; `labelOf(block)` its editor name. Block types:
   `hero`, `intro` ("Statement"), `grid` ("Photo grid"), `button`, `albums`, `projects` ("Project list"), …
@@ -196,11 +196,15 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 
 `<SectionCard {live} at={i} fields={false} rows spread="left" />`
 
-- No settings fields in the list's cards; title on row 1, tools on row 2 (Show, ↑, ↓,
-  Duplicate, Delete from the left, the switch at the right); a line above the blocks.
-- Always open (dae1ba8): no caret; a click on the title (pointer, white on hover) opens the
-  section: its first block's view, or an empty section's own view. Hovered, the card's border
-  turns soft white (70%) and its section is outlined in the preview (be67424).
+- No settings fields in the list's cards; title on row 1 with the pen at its right end, tools
+  on row 2 (Show, ↑, ↓, Duplicate, Delete, eye, from the left); a line above the blocks. A
+  block row: grip, name, eye, Duplicate, Delete.
+- Always open, no caret. A click on the card selects it (white 70% border, its section shown
+  in the preview); a double click or the pen opens it (its first block's view, or an empty
+  section's own view). Hovered: a 40% white border, its section outlined in the preview. The
+  title never changes colour; "Section N" is as bright as a name.
+- Visibility: `eye` / `eye-slash` (24px icon buttons). A hidden section: title muted, body at
+  55%; a hidden block: its name and title faint.
 - Changed: a 6px `#33ccff` dot before the title, no shift.
 - Delete confirm (`red` + `Ask` in `over`): over the card at its size, the card's colour at 80%
   dims it, red border, the question at the top (no background of its own), Cancel / Delete

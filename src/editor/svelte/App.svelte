@@ -114,6 +114,8 @@
             ui.selection = null;
             ui.block = null;
             ui.section = null;
+          } else if (ui.selSection) {
+            ui.selSection = null;
           } else if (!picked) actions.lockPart(); // nothing picked, a site part open: locked
         } else if (ui.mode === 'motion' && !inField && !picked) actions.lockPart();
       }

@@ -77,6 +77,7 @@ const overlay = createOverlay({
     if (ui.block !== id) ui.selection = null;
     ui.block = id;
     ui.section = null;
+    ui.selSection = null;
   },
   onplace(id, pos, { mobile = false, flow = {}, rows = 0 } = {}) {
     const b = blockAt(id);
@@ -213,6 +214,7 @@ function applyPart() {
   partShown = open;
   ui.block = null;
   ui.section = null;
+  ui.selSection = null;
   ui.selection = null;
   ui.link = null;
   if (bridge.selected) bridge.select(null);

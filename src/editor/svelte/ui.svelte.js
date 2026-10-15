@@ -47,6 +47,11 @@ export const ui = $state({
   anim: null,
   /** Content tab: the block open in the block inspector (its id), or null, and its tab. */
   block: null,
+  /**
+   * Content tab: the section card selected (its id; a click on it), or null: its section shows
+   * in the preview as a hovered one does (overlay.js) while the list shows.
+   */
+  selSection: null,
   /** Content tab: an empty section's own view open (its id; no block to open), or null. */
   section: null,
   /** 'content' | 'layout' | 'motion' */

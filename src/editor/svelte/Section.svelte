@@ -2,8 +2,8 @@
   A collapsible panel section: a bar (a toggle button with the caret and title, then the `bar`
   snippet's controls) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
   in the preview can be found and its section opened). Used by the Content, Motion and Settings
-  tabs and the Animations library (with onenter, an always open card whose title goes into it:
-  the page's section cards). .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
+  tabs and the Animations library (with onenter, an always open card a click selects and a
+  double click or its pen goes into: the page's section cards). .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
 
     title     the bar title (small caps)
     name      optional: what it is, on a second line in the accent color
@@ -14,7 +14,6 @@
     id        data-section, to find the section (e.g. scroll to it)
     off       dimmed: the section is turned off
     changed   unsaved changes in it: an accent dot before the title (no layout shift)
-    dim       the title is a default ("Section 1", no name yet): very dim
     class     extra class on the section
     bar       snippet: controls at the right of the bar (count, buttons, a switch), each 20px tall
               (24px for a file button). A panel's own sections keep their bar on top while
@@ -26,7 +25,13 @@
     danger    the card's border red (a delete confirm over it)
     over      snippet: drawn over the whole card at its size (a confirm), inside its border
     onenter   optional: the card doesn't collapse (always open, no caret, `key` and `open`
-              unused) and a click on its title goes into it (a page section's view)
+              unused; the title plain text, not a button) and goes into it (a page section's
+              view): a double click on the card, or its pen (pen-to-square, `enterLabel`) at the
+              title row's right end (24px, 2px over the 20px row: no height change)
+    onselect  optional, with onenter: a click on the card selects it
+    selected  its border white 70% (the selected card); hovered 40% (editor.scss)
+              Neither a click nor a double click on its controls (buttons, switches, fields,
+              links, a block's row, a confirm) or while `danger`
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -34,6 +39,7 @@
   import { untrack } from 'svelte';
   import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
+  import Button from './Button.svelte';
 
   let {
     title,
@@ -43,7 +49,6 @@
     id = null,
     off = false,
     changed = false,
-    dim = false,
     class: cls = '',
     bar,
     children,
@@ -52,6 +57,9 @@
     danger = false,
     over,
     onenter = null,
+    onselect = null,
+    selected = false,
+    enterLabel = 'Edit',
   } = $props();
 
   const uid = $props.id();
@@ -89,7 +97,25 @@
     if (key) ui.sections[key] = !isOpen;
     else toggled = !isOpen;
   }
+
+  // a card (onenter): a click selects it, a double click goes in; not on its controls
+  const CONTROLS =
+    'a, button, input, select, textarea, label, [contenteditable], [data-row], [role="group"], [role="alertdialog"]';
+  const free = (e) => !!onenter && !danger && !e.target.closest?.(CONTROLS);
+  const pick = (e) => free(e) && onselect?.();
+  const enter = (e) => free(e) && onenter();
+  // no word selected by a double click on the card (its fields still select)
+  const noSelect = (e) => e.detail > 1 && free(e) && e.preventDefault();
 </script>
+
+{#snippet head()}
+  {#if !onenter}<i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>{/if}
+  <span>{title}</span>
+  {#if name}<strong>{name}</strong>{/if}
+{/snippet}
+
+<!-- a card's click and double click are pointer shortcuts: the keyboard has its pen and tools -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 
 <section
   class={[
@@ -97,25 +123,37 @@
     off && 'is-off',
     changed && 'is-changed',
     stack && 'sec--stack',
-    danger && 'is-danger',
+    danger ? 'is-danger' : selected && 'is-selected',
     cls,
   ]}
   data-section={id}
+  onclick={onenter && pick}
+  ondblclick={onenter && enter}
+  onmousedown={onenter && noSelect}
 >
   <div class="sec__bar">
-    <button
-      type="button"
-      class={['sec__toggle', onenter && 'sec__toggle--enter']}
-      aria-expanded={onenter ? undefined : isOpen}
-      aria-controls={onenter ? undefined : `${uid}-body`}
-      onclick={onenter || toggle}
-    >
-      {#if !onenter}<i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>{/if}
-      <span class={[dim && 'sec__title--dim']}>
-        {title}
-      </span>
-      {#if name}<strong>{name}</strong>{/if}
-    </button>
+    {#if onenter}
+      <span class="sec__toggle sec__toggle--card">{@render head()}</span>
+      <span class="sec__enter"
+        ><Button
+          size="small"
+          icon="pen-to-square"
+          iconOnly
+          label={enterLabel}
+          onclick={onenter}
+        /></span
+      >
+    {:else}
+      <button
+        type="button"
+        class="sec__toggle"
+        aria-expanded={isOpen}
+        aria-controls="{uid}-body"
+        onclick={toggle}
+      >
+        {@render head()}
+      </button>
+    {/if}
     {@render bar?.()}
   </div>
   <div class="sec__body" id="{uid}-body" inert={!isOpen} bind:this={body}>
@@ -204,12 +242,13 @@
       @include focus-ring;
     }
 
-    // no caret: the title alone (and its name under it); hovered, a default title lights too
-    &.sec__toggle--enter {
+    // a card's title: plain text (no caret, not a button), its colour never changes
+    &.sec__toggle--card {
       grid-template-columns: minmax(0, 1fr);
+      cursor: default;
 
-      &:hover > span {
-        color: var(--c-text-strong);
+      &:hover {
+        color: inherit;
       }
     }
 
@@ -236,8 +275,12 @@
     }
   }
 
-  .sec__title--dim {
-    color: var(--c-text-faint);
+  // a card's pen at the title row's right end: 24px centred in a 20px slot, 2px over above
+  // and below (the row keeps its height)
+  .sec__enter {
+    display: flex;
+    align-items: center;
+    height: 20px;
   }
 
   // the body's row: open 1fr, closed (inert) 0fr; the bar's gap is the inner's padding, so
@@ -294,6 +337,15 @@
   // the changed dot first: the title takes the rest of its row
   .sec--stack.is-changed > .sec__bar > .sec__toggle {
     flex-basis: calc(100% - var(--size-changed) - var(--space-1));
+  }
+
+  // a card's pen after the title, on its row (the dot's and the pen's room taken off)
+  .sec--stack > .sec__bar > .sec__toggle--card {
+    flex-basis: calc(100% - 24px - var(--space-1));
+  }
+
+  .sec--stack.is-changed > .sec__bar > .sec__toggle--card {
+    flex-basis: calc(100% - var(--size-changed) - 24px - var(--space-2));
   }
 
   .sec.is-off {

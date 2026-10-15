@@ -799,10 +799,14 @@ dialog.modal__box {
   }
 }
 
-// a page section's card (SectionsList.svelte) hovered, or its section hovered in the preview
-// (.is-peek): its own 1px border soft white (no size change), not the accent (that is the
-// selection's); a delete confirm's red border wins
-.sec[data-section^='s-']:not(.is-danger):hover,
-.sec[data-section].is-peek:not(.is-danger) {
+// a page section's card (SectionsList.svelte), its own 1px border (no size change), white, not
+// the accent (that is a block's selection): hovered, or its section hovered in the preview
+// (.is-peek), 40%; selected (.is-selected) 70%; a delete confirm's red (.is-danger) wins
+.sec[data-section^='s-']:not(.is-danger, .is-selected):hover,
+.sec[data-section].is-peek {
+  border-color: var(--c-line-hover);
+}
+
+.sec[data-section^='s-'].is-selected {
   border-color: var(--c-line-peek);
 }

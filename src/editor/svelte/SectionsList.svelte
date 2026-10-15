@@ -3,12 +3,14 @@
   (its title, "Section N" or its name in full; then its tools: Show, up, down, Duplicate,
   Delete and its eye, from the left), then its blocks, in order (the order they stack in on
   phones), and a dashed Add block button (onadd: ContentPanel's BlocksModal.svelte). The cards
-  are always open; a click on a card's title goes into its section (onsection: its first
-  block's view, or the section's own when it has none). No settings here: a section's name,
+  are always open; a click on a card selects it (ui.selSection: its section shown in the
+  preview, overlay.js), a double click or its pen goes into its section (onsection: its first
+  block's view, or the section's own when it has none). A section's or block's eye shows or
+  hides it on the public page. No settings here: a section's name,
   height and width are in that view (BlockInspector.svelte, SectionView.svelte). Delete asks
   over the card at its size (its border red). The dashed Add section card adds an empty section
-  after the last one. Sections and blocks can be added, moved, duplicated, deleted and turned
-  on/off (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
+  after the last one. Sections and blocks can be added, moved, duplicated, deleted and shown or
+  hidden (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
 -->
 <script>
   import { tick } from 'svelte';
@@ -159,13 +161,20 @@
   <Section
     id={s.id}
     title={(typeof s.name === 'string' && s.name.trim()) || `Section ${at + 1}`}
-    dim={!(typeof s.name === 'string' && s.name.trim())}
     off={s.enabled === false}
     changed={live.changed(file, `/sections/${at}`)}
-    class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
+    class={ui.peek?.from === 'preview' &&
+    ui.peek.id === s.id &&
+    ui.selSection !== s.id &&
+    deleting !== s.id
+      ? 'is-peek'
+      : ''}
     stack
     danger={deleting === s.id}
+    selected={ui.selSection === s.id}
+    onselect={() => (ui.selSection = s.id)}
     onenter={() => onsection(s.id)}
+    enterLabel="Edit section"
   >
     {#snippet bar()}
       <Button

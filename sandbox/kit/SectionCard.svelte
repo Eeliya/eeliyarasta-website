@@ -2,17 +2,18 @@
   A page section's card as the Content tab draws it: the real Section, its real SectionSettings
   (on the sample live state), its blocks (BlockCard) and the dashed Add block.
     live    sampleLive() (one per mock)         at     its index in the sample page
-  Always open, as built (dae1ba8): the real Section's onenter (no caret, the title a button with
-  the pointer; here it goes nowhere). Its hover keeps the title's brightness (the app's white
-  title hover is left out on purpose).
+  As built: the real Section's onenter, always open (no caret), the title plain text in one
+  colour (a default "Section N" too), the pen at the title row's right end (here it goes
+  nowhere), hover a 40% white border, `selected` 70%; the visibility an eye in the tools.
     red     the card's own border red (no size change)
-    tools   snippet: replaces the bar's tools (Show, up, down, Duplicate, Delete, switch)
+    selected  the selected card's border (white 70%)
+    tools   snippet: replaces the bar's tools (Show, up, down, Duplicate, Delete, eye)
     over    snippet: drawn over the card, its exact box (a confirm, a scrim…); `.kit-over`
             covers the whole card, add `.kit-over--bar` for the header's height only
     children  replaces the body (SectionSettings)
     fields  false: no settings body (a part's section: just the header and blocks)
     rows    the tools on their own row under the title (the title wraps, full width): the
-            real Section's `stack`, tools from the left edge, the switch at the right
+            real Section's `stack`, tools from the left edge
     height  a fixed height for the card (e.g. '140px' while confirming), its content clipped
     changed the changed dot before the title
     line    false: no line between the settings and the blocks (its space kept)
@@ -30,6 +31,7 @@
     live,
     at = 0,
     red = false,
+    selected = false,
     fields = true,
     rows = false,
     height = '',
@@ -57,7 +59,16 @@
   ]}
   style:--card-h={height || null}
 >
-  <Section id={s.id} {title} dim={!s.name?.trim()} {changed} stack={rows} onenter={() => {}}>
+  <Section
+    id={s.id}
+    {title}
+    off={s.enabled === false}
+    {changed}
+    {selected}
+    stack={rows}
+    onenter={() => {}}
+    enterLabel="Edit section"
+  >
     {#snippet bar()}
       {#if tools}{@render tools()}{:else}
         <Button size="small" icon="crosshairs" iconOnly label="Show in preview" />
@@ -71,11 +82,13 @@
         />
         <Button size="small" icon="copy" iconOnly label="Duplicate" />
         <Button size="small" icon="trash" iconOnly label="Delete section {at + 1}" />
-        <input
-          type="checkbox"
-          class="switch"
-          aria-label="Show section {at + 1}"
-          checked={s.enabled !== false}
+        <Button
+          size="small"
+          icon={s.enabled === false ? 'eye-slash' : 'eye'}
+          iconOnly
+          label="Show section {at + 1}"
+          aria-pressed={s.enabled !== false}
+          data-eye
         />
       {/if}
     {/snippet}

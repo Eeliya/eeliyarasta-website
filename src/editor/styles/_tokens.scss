@@ -48,6 +48,7 @@
   --white-a14: rgb(255 255 255 / 0.14);
   --white-a18: rgb(255 255 255 / 0.18);
   --white-a20: rgb(255 255 255 / 0.2);
+  --white-a40: rgb(255 255 255 / 0.4);
   --white-a55: rgb(255 255 255 / 0.55);
   --white-a70: rgb(255 255 255 / 0.7);
   --black-a18: rgb(0 0 0 / 0.18);
@@ -90,8 +91,9 @@
   --c-text-dim: var(--solid-faint);
   --c-text-soft: var(--gray-c1);
   --c-line: var(--line);
-  // a hovered section card's border, and its section's line in the preview
+  // the selected section card's border, and the hovered or selected section's line in the preview
   --c-line-peek: var(--white-a70);
+  --c-line-hover: var(--white-a40); // a hovered section card's border (softer)
   --c-brand: var(--accent); // the site's warm accent
   --c-accent: var(--cyan-400); // focus and selection, everywhere (and the preview's outlines)
   --c-accent-bg: var(--cyan-950);
