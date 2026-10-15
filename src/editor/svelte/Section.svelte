@@ -2,7 +2,8 @@
   A collapsible panel section: a bar (a toggle button with the caret and title, then the `bar`
   snippet's controls) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
   in the preview can be found and its section opened). Used by the Content, Motion and Settings
-  tabs and the Animations library. .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
+  tabs and the Animations library (with onenter, an always open card whose title goes into it:
+  the page's section cards). .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
 
     title     the bar title (small caps)
     name      optional: what it is, on a second line in the accent color
@@ -24,10 +25,8 @@
               snippet's controls on a second, from the left edge, the last one (a switch) at the right
     danger    the card's border red (a delete confirm over it)
     over      snippet: drawn over the whole card at its size (a confirm), inside its border
-    onenter   optional: a double click on the card goes into it (a page section's block view).
-              Not on its controls (buttons, switches, fields, links, a block's row with its
-              drag handle, a confirm) nor while `danger`. On the title it doesn't toggle the
-              card either: the second click is ignored, the first one's toggle undone at once
+    onenter   optional: the card doesn't collapse (always open, no caret, `key` and `open`
+              unused) and a click on its title goes into it (a page section's view)
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -57,14 +56,13 @@
 
   const uid = $props.id();
   let toggled = $state(null); // open/closed of a section without a key
-  const isOpen = $derived((key ? ui.sections[key] : toggled) ?? open);
+  const isOpen = $derived(!!onenter || ((key ? ui.sections[key] : toggled) ?? open));
 
   // The body is a one-row grid: 1fr open, 0fr closed (CSS, by its inert); its inner element
   // (min-height: 0, overflow: hidden) is clipped to that row. It stays rendered, inert while
   // closed. Opening and closing tween grid-template-rows between them, then hand back to CSS.
   let body = $state();
   let first = true;
-  let snap = false; // the next open/close at once, no slide (a double click's toggle undone)
   $effect(() => {
     const opening = isOpen;
     untrack(() => {
@@ -74,10 +72,6 @@
   });
   function slide(opening) {
     gsap.killTweensOf(body);
-    if (snap) {
-      snap = false;
-      return void gsap.set(body, { clearProps: 'gridTemplateRows' });
-    }
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     gsap.fromTo(
       body,
@@ -91,31 +85,12 @@
     );
   }
 
-  function toggle(e) {
-    if (onenter && e?.detail > 1) return; // a double click's second click (it goes in)
+  function toggle() {
     if (key) ui.sections[key] = !isOpen;
     else toggled = !isOpen;
   }
-
-  // what a double click on the card leaves alone: its controls (the title's toggle aside)
-  const CONTROLS =
-    'a, input, select, textarea, label, [contenteditable], [data-row], [role="group"], [role="alertdialog"], button:not(.sec__toggle)';
-  const onControl = (e) => !!e.target.closest?.(CONTROLS);
-  function enter(e) {
-    if (!onenter || danger || e.button !== 0 || onControl(e)) return;
-    // the first click on the title toggled the card: back, at once
-    if (e.target.closest('.sec__toggle')) {
-      snap = true;
-      toggle();
-    }
-    onenter();
-  }
-  // no word selected by a double click on the card (its fields still select)
-  const noSelect = (e) => onenter && e.detail > 1 && !onControl(e) && e.preventDefault();
 </script>
 
-<!-- a double click is a mouse shortcut (onenter): the keyboard goes in by a block row's button -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <section
   class={[
     'sec',
@@ -126,18 +101,16 @@
     cls,
   ]}
   data-section={id}
-  ondblclick={enter}
-  onmousedown={noSelect}
 >
   <div class="sec__bar">
     <button
       type="button"
-      class="sec__toggle"
-      aria-expanded={isOpen}
-      aria-controls="{uid}-body"
-      onclick={toggle}
+      class={['sec__toggle', onenter && 'sec__toggle--enter']}
+      aria-expanded={onenter ? undefined : isOpen}
+      aria-controls={onenter ? undefined : `${uid}-body`}
+      onclick={onenter || toggle}
     >
-      <i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>
+      {#if !onenter}<i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>{/if}
       <span class={[dim && 'sec__title--dim']}>
         {title}
       </span>
@@ -231,9 +204,18 @@
       @include focus-ring;
     }
 
+    // no caret: the title alone (and its name under it); hovered, a default title lights too
+    &.sec__toggle--enter {
+      grid-template-columns: minmax(0, 1fr);
+
+      &:hover > span {
+        color: var(--c-text-strong);
+      }
+    }
+
     // the name under the title, like .grp__title strong
     strong {
-      grid-column: 2;
+      grid-column: -2;
       font-weight: 400;
       color: var(--c-brand);
     }

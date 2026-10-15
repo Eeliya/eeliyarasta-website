@@ -2,24 +2,23 @@
   The page's sections in the Content tab (src/site/layout/): each a panel Section in two rows
   (its title, "Section N" or its name in full; then its tools: Show, up, down, Duplicate,
   Delete and the switch at the right), then its blocks, in order (the order they stack in on
-  phones), and a dashed Add block button (BlocksModal.svelte). No settings here: a section's
-  name, height and width are in its block view (BlockInspector.svelte). Delete asks over the
-  card at its size (its border red). The dashed Add section card adds an empty section after
-  the last one. A double click on a card (not on its controls) goes into the section: its
-  first block's view (Section.svelte's onenter; none without blocks). Sections and blocks can be added, moved, duplicated, deleted and turned on/off
-  (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
+  phones), and a dashed Add block button (onadd: ContentPanel's BlocksModal.svelte). The cards
+  are always open; a click on a card's title goes into its section (onsection: its first
+  block's view, or the section's own when it has none). No settings here: a section's name,
+  height and width are in that view (BlockInspector.svelte, SectionView.svelte). Delete asks
+  over the card at its size (its border red). The dashed Add section card adds an empty section
+  after the last one. Sections and blocks can be added, moved, duplicated, deleted and turned
+  on/off (layout-ops.js: one undo step each); a block opens in the block inspector (onopen).
 -->
 <script>
   import { tick } from 'svelte';
   import { locate } from '../locate.js';
-  import BlocksModal from './BlocksModal.svelte';
   import Button from './Button.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { listDrag, rowsOf } from './list-drag.svelte.js';
   import { nameOf } from './content-groups.js';
   import {
-    addBlock,
     addSection,
     duplicateBlock,
     duplicateSection,
@@ -31,10 +30,8 @@
     setSection,
   } from '../layout-ops.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { TEMPLATE, pageIdOf } from '../../site/files.js';
 
-  let { live, bridge, file, onopen } = $props();
-  let blocksModal = $state();
+  let { live, bridge, file, onopen, onsection, onadd } = $props();
   let deleting = $state(''); // the id of the section or block asking "Delete?"
 
   // ---- a block's row dragged to another place (its own section's order, or another section):
@@ -76,13 +73,6 @@
     const list = live.current(file)?.sections;
     return Array.isArray(list) ? list : [];
   });
-  // the block types on offer: item types (the item of a [slug] page) only there
-  const types = $derived(
-    Object.values(BLOCK_TYPES)
-      .filter((t) => !t.item || pageIdOf(file)?.endsWith(TEMPLATE))
-      .map(({ type, label, icon, line, sketch }) => ({ value: type, label, icon, line, sketch })),
-  );
-
   const typeOf = (b) => BLOCK_TYPES[b?.type];
   const set = (at, patch, key) => setSection(live.store, file, at, patch, key);
   function setBlockOn(at, j, on) {
@@ -95,15 +85,13 @@
     );
   }
 
-  // Add section: an empty section after the last one, open and scrolled into view
+  // Add section: an empty section after the last one, scrolled into view
   async function add() {
     deleting = '';
     addSection(live.store, file);
     await tick();
     const s = sections.at(-1);
     if (!s) return;
-    ui.sections[`text:${file}#${s.id}`] = true;
-    await tick();
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     document
       .querySelector(`[data-section="${CSS.escape(s.id)}"]`)
@@ -131,11 +119,6 @@
 
   // a section's delete confirm: Cancel takes the focus (Enter does not delete by accident)
   const focusCancel = (el) => el.querySelector('button')?.focus();
-
-  function addTo(at, type) {
-    const b = addBlock(live.store, file, at, type);
-    onopen(b.id);
-  }
 </script>
 
 {#snippet confirm(what, run)}
@@ -158,7 +141,6 @@
   {@const last = at === sections.length - 1}
   <Section
     id={s.id}
-    key="text:{file}#{s.id}"
     title={(typeof s.name === 'string' && s.name.trim()) || `Section ${at + 1}`}
     dim={!(typeof s.name === 'string' && s.name.trim())}
     off={s.enabled === false}
@@ -166,7 +148,7 @@
     class={ui.peek?.from === 'preview' && ui.peek.id === s.id ? 'is-peek' : ''}
     stack
     danger={deleting === s.id}
-    onenter={s.blocks?.length ? () => onopen(s.blocks[0].id) : null}
+    onenter={() => onsection(s.id)}
   >
     {#snippet bar()}
       <Button
@@ -319,7 +301,7 @@
         class="add add--block"
         aria-haspopup="dialog"
         aria-label="Add block to section {at + 1}"
-        onclick={() => blocksModal.open(at)}
+        onclick={() => onadd(at)}
       >
         <i class="fa-solid fa-plus" aria-hidden="true"></i>Add block
       </button>
@@ -330,7 +312,6 @@
 <button type="button" class="add" onclick={add}>
   <i class="fa-solid fa-plus" aria-hidden="true"></i>Add section
 </button>
-<BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
 
 <style lang="scss">
   @use '../styles/mixins' as *;

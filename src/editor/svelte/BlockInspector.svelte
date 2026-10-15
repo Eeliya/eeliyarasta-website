@@ -7,13 +7,10 @@
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
-  At the top, plain (not a card): Back (to the list of sections, SectionsList.svelte; Esc or a
-  click on empty space in the preview also goes back), its section's title (dim when only
-  "Section N") and Locate, then the section's settings, editable (SectionSettings.svelte, as in
-  the list). Under them the block in a card: its type and title, the tabs and their fields.
+  At the top, plain (not a card): its section (SectionTop.svelte: Back, its title, Locate and
+  its settings). Under them the block in a card: its type and title, the tabs and their fields.
 -->
 <script>
-  import Button from './Button.svelte';
   import GroupFields from './GroupFields.svelte';
   import ItemPicker from './ItemPicker.svelte';
   import Tabs from './Tabs.svelte';
@@ -25,8 +22,7 @@
   import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
-  import SectionSettings from './SectionSettings.svelte';
-  import { locate } from '../locate.js';
+  import SectionTop from './SectionTop.svelte';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
@@ -41,16 +37,6 @@
   const block = $derived.by(() => {
     live.version;
     return live.get(g.file, base) || {};
-  });
-
-  // ---- its section: its settings editable at the top (SectionSettings.svelte, as in the list)
-  const sections = $derived.by(() => {
-    const list = live.current(g.file)?.sections;
-    return Array.isArray(list) ? list : [];
-  });
-  const secTitle = $derived.by(() => {
-    const n = sections[at]?.name;
-    return typeof n === 'string' && n.trim() ? n.trim() : '';
   });
 
   // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
@@ -108,28 +94,7 @@
   });
 </script>
 
-<!-- its section: Back, its title (dim when only "Section N") and Locate; its settings in an outlined box -->
-<div class="sec-top">
-  <div class="sec-head">
-    <Button
-      icon="arrow-left"
-      iconOnly
-      label="Back to sections"
-      title="Back to sections"
-      onclick={onback}
-    />
-    <span class={['sec-title', !secTitle && 'is-default']}>{secTitle || `Section ${at + 1}`}</span>
-    <Button
-      size="small"
-      icon="location-crosshairs"
-      iconOnly
-      label="Show this section in the preview"
-      title="Show in preview"
-      onclick={() => locate(bridge, sections[at]?.id)}
-    />
-  </div>
-  <div class="sec-box"><SectionSettings {live} file={g.file} {at} {sections} /></div>
-</div>
+<SectionTop {live} {bridge} file={g.file} {at} {onback} />
 
 <!-- the block, in a card: its type and title, its tabs and fields -->
 <div class="card">
@@ -207,39 +172,6 @@
 
 <style lang="scss">
   @use '../styles/mixins' as *;
-
-  // its section: a plain area (not a card), then the block's card
-  .sec-top {
-    @include stack(var(--space-3));
-    margin-inline: -8px; // as wide as the list's section cards
-  }
-
-  // its settings in a 1px outlined box, no fill (the block below is a filled card)
-  .sec-box {
-    padding: var(--space-3);
-    border: 1px solid var(--c-line);
-    border-radius: var(--radius-lg);
-  }
-
-  .sec-head {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .sec-title {
-    @include ellipsis;
-    color: var(--c-text);
-    font-size: var(--fs-base);
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-
-    &.is-default {
-      color: var(--c-text-faint);
-    }
-  }
 
   // the side padding is on its parts, so the tabs' line runs edge to edge
   .card {

@@ -110,9 +110,10 @@
         if (picked) bridge.select(null);
         if (ui.mode === 'text' && !inField) {
           if (ui.link) ui.link = null;
-          else if (ui.block) {
+          else if (ui.block || ui.section) {
             ui.selection = null;
             ui.block = null;
+            ui.section = null;
           } else if (!picked) actions.lockPart(); // nothing picked, a site part open: locked
         } else if (ui.mode === 'motion' && !inField && !picked) actions.lockPart();
       }

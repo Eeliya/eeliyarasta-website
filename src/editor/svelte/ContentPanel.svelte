@@ -3,7 +3,10 @@
   holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
   the open one kept per page in ui.sections["pagetab:<file>"]):
     Sections     SectionsList.svelte: the section cards and the dashed Add section card; a
-                 block opens in BlockInspector.svelte (ui.block: its Content, Layout, Motion)
+                 block opens in BlockInspector.svelte (ui.block: its Content, Layout, Motion),
+                 a card's title its first block, or an empty section's own view
+                 (SectionView.svelte, ui.section). The Add block modal (BlocksModal.svelte)
+                 serves both: the block added opens
     Transitions  the Backdrop (BackdropFields.svelte) and the Curtain (PageCurtain.svelte)
     SEO          SeoSection.svelte
   The footer is sections only (no tabs). While this tab is open the preview is a
@@ -27,6 +30,8 @@
   import PageCurtain from './PageCurtain.svelte';
   import Tabs from './Tabs.svelte';
   import BlockInspector from './BlockInspector.svelte';
+  import BlocksModal from './BlocksModal.svelte';
+  import SectionView from './SectionView.svelte';
   import SectionsList from './SectionsList.svelte';
   import SeoSection from './SeoSection.svelte';
   import SourcesModal from './SourcesModal.svelte';
@@ -34,7 +39,9 @@
   import { splitEdit } from '../../site/helpers.js';
   import { parse } from '../lib/pointer.js';
   import { targetFile } from '../layout-sync.js';
-  import { sourceIds as sourceIdsOf } from '../../site/files.js';
+  import { TEMPLATE, pageIdOf, sourceIds as sourceIdsOf } from '../../site/files.js';
+  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { addBlock } from '../layout-ops.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // actions: main.js (editMotion: open an element in the Motion tab)
@@ -59,7 +66,19 @@
     ui.previewVersion;
     return targetFile(ui.target, bridge.doc);
   });
-  const open = $derived(file && groups.find((g) => g.block && g.id === ui.block));
+  const sections = $derived.by(() => {
+    live.version;
+    const list = file && live.current(file)?.sections;
+    return Array.isArray(list) ? list : [];
+  });
+  // what the Sections tab shows over the list: the block open, else an empty section's view
+  // ({ section: its id }); none: the list (a block or section gone, e.g. undone: the list too)
+  const open = $derived(
+    (file && groups.find((g) => g.block && g.id === ui.block)) ||
+      (!ui.block && ui.section && sections.some((s) => s?.id === ui.section)
+        ? { section: ui.section }
+        : null),
+  );
   // the files in content/en/sources/, for a list item's source
   const sourceIds = $derived.by(() => {
     live.version;
@@ -77,7 +96,7 @@
   // a block open is in Sections: the row stays (nothing moves), another tab closes the block
   const shownTab = $derived(open ? 'sections' : tab);
   function pickTab(v) {
-    if (open && v !== 'sections') ui.block = null;
+    if (open && v !== 'sections') back();
     ui.sections[`pagetab:${file}`] = v;
   }
   const tabsId = $props.id();
@@ -86,9 +105,32 @@
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
 
   function openBlock(id) {
+    ui.section = null;
     ui.block = id;
     ui.blockTab = 'content';
   }
+  // a section card's title: its first block, or its own view when it has none
+  function openSection(id) {
+    const first = sections.find((s) => s?.id === id)?.blocks?.[0];
+    if (first) return openBlock(first.id);
+    ui.block = null;
+    ui.selection = null;
+    ui.section = id;
+  }
+  function back() {
+    ui.block = null;
+    ui.section = null;
+  }
+
+  // Add block (a section card's, or an empty section's view): the types on offer (item types,
+  // the item of a [slug] page, only there); the block added opens
+  let blocksModal = $state();
+  const types = $derived(
+    Object.values(BLOCK_TYPES)
+      .filter((t) => !t.item || pageIdOf(file)?.endsWith(TEMPLATE))
+      .map(({ type, label, icon, line, sketch }) => ({ value: type, label, icon, line, sketch })),
+  );
+  const addTo = (at, type) => openBlock(addBlock(live.store, file, at, type).id);
 
   /** Open the block holding `edit` and scroll to it (a Header label: its field); list items open the Sources modal. */
   async function reveal(edit) {
@@ -197,23 +239,41 @@
         bind:this={listEl}
         inert={atBlock}
       >
-        <SectionsList {live} {bridge} {file} onopen={openBlock} />
+        <SectionsList
+          {live}
+          {bridge}
+          {file}
+          onopen={openBlock}
+          onsection={openSection}
+          onadd={(at) => blocksModal.open(at)}
+        />
       </div>
       {#if held}
         <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
-          <BlockInspector
-            g={held}
-            {live}
-            {bridge}
-            {sourceIds}
-            {onsource}
-            onback={() => (ui.block = null)}
-            onmotion={(el) => actions.editMotion(el)}
-            onlibrary={(name) => {
-              ui.library = { open: true, name };
-              actions.setMode('motion');
-            }}
-          />
+          {#if held.section}
+            <SectionView
+              {live}
+              {bridge}
+              {file}
+              id={held.section}
+              onback={back}
+              onadd={(at) => blocksModal.open(at)}
+            />
+          {:else}
+            <BlockInspector
+              g={held}
+              {live}
+              {bridge}
+              {sourceIds}
+              {onsource}
+              onback={back}
+              onmotion={(el) => actions.editMotion(el)}
+              onlibrary={(name) => {
+                ui.library = { open: true, name };
+                actions.setMode('motion');
+              }}
+            />
+          {/if}
         </div>
       {/if}
     </div>
@@ -232,6 +292,7 @@
   {/if}
 
   <SourcesModal bind:this={sourcesModal} {live} {bridge} />
+  <BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
 </section>
 
 <style lang="scss">

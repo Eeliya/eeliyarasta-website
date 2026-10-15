@@ -47,6 +47,8 @@ export const ui = $state({
   anim: null,
   /** Content tab: the block open in the block inspector (its id), or null, and its tab. */
   block: null,
+  /** Content tab: an empty section's own view open (its id; no block to open), or null. */
+  section: null,
   /** 'content' | 'layout' | 'motion' */
   blockTab: 'content',
   /** Content tab: the link selected in the preview (its follower's block id), or null. */

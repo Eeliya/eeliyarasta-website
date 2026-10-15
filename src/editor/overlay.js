@@ -4,8 +4,8 @@
  *
  *   Grid      the square cells (120 columns, the phone grid's 60, and its rows, all one
  *             --cell: src/site/layout/flow.js) of the selected block's section only, while a
- *             block is selected (and so while it is dragged or resized), from the section's
- *             own computed grid: faint white lines, every 5th a little stronger. Nothing
+ *             block is selected (and so while it is dragged or resized) or an empty
+ *             section's view is open (ui.section), from the section's own computed grid: faint white lines, every 5th a little stronger. Nothing
  *             selected: no grid
  *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
  *             a click on empty space (no block, handle, circle or link line) or Esc (main /
@@ -224,7 +224,9 @@ export function createOverlay({
    * section, its size or its tracks change.
    */
   function drawGrids() {
-    const sec = arranging() ? drag?.sec || secOf(blockEl(ui.block)) : null;
+    const sec = arranging()
+      ? drag?.sec || secOf(blockEl(ui.block)) || (ui.section && secById(ui.section))
+      : null;
     const secs = sec && !sec.hidden ? [sec] : [];
     const info = secs.map((sec) => {
       const cs = win.getComputedStyle(sec);
@@ -700,7 +702,7 @@ export function createOverlay({
     ui.link = null;
     const el = e.target.closest?.('[data-block]');
     // empty space: nothing selected (the panel shows the sections, the grid hides)
-    if (!el) return void (ui.block && onpick(null));
+    if (!el) return void ((ui.block || ui.section) && onpick(null));
     if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
     onpick(el.dataset.block);
     start(e, el);
