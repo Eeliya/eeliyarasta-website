@@ -23,7 +23,7 @@
   });
 </script>
 
-<!-- its section: Back, its title and Locate; its settings in an outlined box -->
+<!-- its section: Back, its title and Locate; its settings in a box on the settings fill -->
 <div class="sec-top">
   <div class="sec-head">
     <Button
@@ -55,10 +55,12 @@
     margin-inline: -8px; // as wide as the list's section cards
   }
 
-  // its settings in a 1px outlined box, no fill (the block below is a filled card)
+  // its settings on the settings fill, no visible line (the 1px border kept, transparent: the
+  // content stays put); the block below is a grey card
   .sec-box {
     padding: var(--space-3);
-    border: 1px solid var(--c-line);
+    border: 1px solid transparent;
+    background: var(--c-settings);
     border-radius: var(--radius-lg);
   }
 

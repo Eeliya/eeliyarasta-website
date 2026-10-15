@@ -28,6 +28,7 @@
   --cyan-400: #3cf;
   --cyan-950: #0d222e;
   --slate-800: #283540;
+  --slate-900: #141a22;
   --red-50: #fff4f2;
   --red-200: #ffb4a8;
   --red-300: #ff8a7a;
@@ -77,6 +78,7 @@
   --c-surface: var(--bg-2); // inputs, lists
   --c-surface-2: var(--gray-14); // a nested panel
   --c-surface-3: var(--gray-1c);
+  --c-settings: var(--slate-900); // settings surfaces' one background (the section view's settings)
   --c-card: var(--solid-card); // toasts, menus
   --c-card-peek: var(--solid-card-peek);
   --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
