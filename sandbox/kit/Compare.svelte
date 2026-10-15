@@ -32,4 +32,9 @@
     gap: var(--space-5) var(--space-6);
     margin-top: var(--space-3);
   }
+
+  // each column at its width is what the editor's container queries see (like the panel)
+  .kit-compare__grid > :global(*) {
+    container-type: inline-size;
+  }
 </style>

@@ -1,4 +1,4 @@
-/* The viewer's own look (the list, the bar over a mock): plain and neutral, no editor styles
+/* The viewer's own look (the list, the bar over a mock): plain, black, no editor styles
    (a mock page loads those for the mock: main.js). */
 :root:not(.is-mock) body {
   margin: 0;
@@ -6,22 +6,24 @@
   font:
     14px/1.5 system-ui,
     sans-serif;
-  color: #222;
-  background: #fafafa;
+  color: #e6e6e6;
+  background: #000;
+  color-scheme: dark;
 }
 .vw-bar {
   display: flex;
   gap: 12px;
   padding: 8px 16px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #333;
   font:
     13px/1.5 system-ui,
     sans-serif;
   letter-spacing: normal;
   text-transform: none;
-  color: #666;
-  background: #fafafa;
+  color: #999;
+  background: #000;
+  color-scheme: dark;
 }
 .vw-bar a {
-  color: #0366d6;
+  color: #6cb6ff;
 }

@@ -23,7 +23,7 @@ The same on Windows, macOS and Linux (plain Node, no shell). A Vite dev server w
 
 `/edit/sandbox/` lists the mocks newest first (name, last changed), plus the kit's demo
 (`kit-demo`, tracked). The viewer (the list, and the bar with "← Mocks" over a mock) has its own
-plain look (`viewer.css`, `Viewer.svelte`: the system font, no editor tokens or components);
+plain look (`viewer.css`, `Viewer.svelte`: black, the system font, no editor tokens or components);
 the editor's styles, icons and panel load only on a mock page, for the mock. Click one to open it live. A new `sandbox/mocks/*.svelte` appears by
 itself, and edits to an open mock hot-reload. Each mock has a delete button, and **Delete older
 than N days** removes every mock last changed before then (both ask first).

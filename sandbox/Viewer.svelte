@@ -98,21 +98,21 @@
   }
   td {
     padding: 6px 8px 6px 0;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid #2a2a2a;
   }
   td:last-child {
     text-align: right;
   }
   a {
-    color: #0366d6;
+    color: #6cb6ff;
   }
   input {
     width: 4em;
   }
   .muted {
-    color: #777;
+    color: #999;
   }
   .error {
-    color: #b00020;
+    color: #ff7b72;
   }
 </style>
