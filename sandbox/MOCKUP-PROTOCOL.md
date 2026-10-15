@@ -32,13 +32,13 @@ wsl.exe bash -lc 'cd ~/work/eeliyarasta-website && echo <b64> | bash sandbox/moc
 Why base64: PowerShell rewrites `$…` and strips double quotes inside the command before WSL sees
 it. Base64 has neither, so the payload arrives intact; wrap the command in **single** quotes and
 put no `$` or `"` in it. Plain commands go as they are, e.g.
-`wsl.exe bash -lc 'curl -s localhost:5174/__mocks/list'`.
+`wsl.exe bash -lc 'curl -s localhost:5199/__mocks/list'`.
 
 **Windows PC** (plain PowerShell, no bash): write each file from its own base64 (no quoting
 problems either), one command for all files:
 
 ```powershell
-$d='S:\eeliyarasta-website\sandbox\mocks'; [IO.File]::WriteAllBytes("$d\section-cards-a.svelte",[Convert]::FromBase64String('<b64 of the file>')); Remove-Item "$d\old-a.svelte" -ErrorAction SilentlyContinue; (Invoke-WebRequest -UseBasicParsing http://localhost:5174/__mocks/list).Content
+$d='S:\eeliyarasta-website\sandbox\mocks'; [IO.File]::WriteAllBytes("$d\section-cards-a.svelte",[Convert]::FromBase64String('<b64 of the file>')); Remove-Item "$d\old-a.svelte" -ErrorAction SilentlyContinue; (Invoke-WebRequest -UseBasicParsing http://localhost:5199/__mocks/list).Content
 ```
 
 Output of `mock-push.sh`: `wrote: …`, `deleted: …`, `server: all listed` (or `missing …` / `not
@@ -47,12 +47,12 @@ optional (only when asked to redo or clear mocks).
 
 ## 3. View and screenshot
 
-    npm run mock:serve          # Vite on port 5174 (MOCK_PORT), HMR; new mocks appear by themselves
+    npm run mock:serve          # Vite on port 5199 (MOCK_PORT), HMR; new mocks appear by themselves
 
-- List: `http://localhost:5174/edit/sandbox/` · one mock: `…/?mock=<name>` · stacked:
+- List: `http://localhost:5199/edit/sandbox/` · one mock: `…/?mock=<name>` · stacked:
   `?mock=a,b` · panel width `&width=N` · no panel `&bare=1` · `/__mocks/list` (JSON).
-- Send Eeliya the links: `http://localhost:5174/edit/sandbox/?mock=<name>`.
-- Screenshot (headless Chrome, 2x): `MOCK_PORT=5174 npm run mock -- <name> [--bare] [--width N]
+- Send Eeliya the links: `http://localhost:5199/edit/sandbox/?mock=<name>`.
+- Screenshot (headless Chrome, 2x): `MOCK_PORT=5199 npm run mock -- <name> [--bare] [--width N]
 [--out file.png]` → `$MOCK_DIR/<name>.png` (default `../mocks/` next to the checkout).
   Chrome: `CHROME`, else the usual install path (`/usr/bin/google-chrome` on Linux).
 

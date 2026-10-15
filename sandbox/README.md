@@ -18,8 +18,8 @@ them.
     npm run mock:serve
 
 The same on Windows, macOS and Linux (plain Node, no shell). A Vite dev server with HMR on
-`MOCK_PORT` (default **5174**, so it runs next to `npm run dev` on 5173). It prints the URL:
-**http://localhost:5174/edit/sandbox/**. `npm run dev` serves the sandbox too, at
+`MOCK_PORT` (default **5199**, so it runs next to `npm run dev` on 5173). It prints the URL:
+**http://localhost:5199/edit/sandbox/**. `npm run dev` serves the sandbox too, at
 `/edit/sandbox/` on its own port.
 
 ## The viewer
@@ -53,7 +53,7 @@ drops the viewer's bar: what `npm run mock` uses).
 
 Prints the PNG path: `$MOCK_DIR/<name>.png` (default `../mocks`, next to the checkout), or
 `<first>+N.png` for several (stacked, labelled). It reuses a dev server on `MOCK_PORT` (5173;
-set `MOCK_PORT=5174` to use `mock:serve`'s) or starts one in the background, and drives
+set `MOCK_PORT=5199` to use `mock:serve`'s) or starts one in the background, and drives
 headless Chrome over the DevTools protocol at 2x. Chrome: `CHROME`, else its usual install path
 on Windows or macOS, else `/usr/bin/google-chrome`. About 2 s per call with the server up.
 

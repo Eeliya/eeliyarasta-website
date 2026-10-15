@@ -18,7 +18,7 @@ fi
 b=$(t)
 written=$(base64 -d | tar xzv)
 c=$(t)
-list=$(curl -s --max-time 3 "localhost:${MOCK_PORT:-5174}/__mocks/list" || true)
+list=$(curl -s --max-time 3 "localhost:${MOCK_PORT:-5199}/__mocks/list" || true)
 missing=""
 for f in $written; do
   n="${f%.svelte}"

@@ -79,7 +79,7 @@ test('mocks: delete one by name; older than N days', () => {
 function call(mw, { method = 'GET', url, body, headers = {} }) {
   return new Promise((ok) => {
     const req = new (class extends EventTarget {})();
-    Object.assign(req, { method, url, headers: { host: 'localhost:5174', ...headers } });
+    Object.assign(req, { method, url, headers: { host: 'localhost:5199', ...headers } });
     const handlers = {};
     req.on = (ev, fn) => ((handlers[ev] = fn), req);
     const res = {
@@ -123,7 +123,7 @@ test('mocks: the endpoints (JSON only, this origin only, traversal refused)', as
   const one = await call(mw, {
     method: 'POST',
     url: '/delete',
-    headers: { ...json, origin: 'http://localhost:5174' },
+    headers: { ...json, origin: 'http://localhost:5199' },
     body: '{"name":"new"}',
   });
   assert.deepEqual(one.body, { ok: true, deleted: ['new.svelte'] });
