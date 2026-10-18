@@ -9,6 +9,7 @@ import { transitions } from './anim/engine.js';
 import { normalizeCurtain, curtainPlan, curtainFor } from './anim/curtain.js';
 import { closeMenus } from './ui/menu.js';
 import { scrollToTop } from './scroll.js';
+import { finalUrl } from './lib/final-url.js';
 
 const cache = new Map();
 let busy = false;
@@ -58,15 +59,27 @@ function keepDraft(url) {
   return url;
 }
 
+/**
+ * A page's HTML, fetched once: { text, redirected, url } (url: where the fetch ended, when the
+ * server redirected it). A redirected page is cached under its final path too, so a link
+ * or prefetch there reuses it.
+ */
 function getPage(pathname) {
   const key = normalize(pathname);
   if (!cache.has(key)) {
     const d = draftOf();
     const p = fetch(d ? `${key}?draft=${encodeURIComponent(d)}` : key, {
       headers: { Accept: 'text/html' },
-    }).then((r) => {
+    }).then(async (r) => {
       if (!r.ok && r.status !== 404) throw new Error(`HTTP ${r.status}`);
-      return r.text();
+      const page = { text: await r.text(), redirected: r.redirected, url: r.url };
+      if (r.redirected) {
+        const to = new URL(r.url, location.href);
+        const at = normalize(to.pathname);
+        if (to.origin === location.origin && at !== key && !cache.has(at))
+          cache.set(at, Promise.resolve({ text: page.text, redirected: false, url: r.url }));
+      }
+      return page;
     });
     p.catch(() => cache.delete(key));
     cache.set(key, p);
@@ -196,21 +209,28 @@ export function replayCurtain(label, curtain) {
     .finally(() => (busy = false));
 }
 
-function parsePage(text) {
+function parsePage({ text }) {
   const doc = new DOMParser().parseFromString(text, 'text/html');
   const incoming = doc.querySelector('[data-router-view]');
   if (!incoming) throw new Error('No [data-router-view] in response');
   return { doc, incoming, label: curtainLabel(incoming, doc) };
 }
 
-/** Replace the old view with the new page's view and update history/head. Returns the new view. */
+/**
+ * Replace the old view with the new page's view and update history/head. Returns the new view.
+ * `url`: where the navigation ended (a redirect's target): the address bar shows it, also on
+ * back/forward (replaced, not pushed), so the page's hash and scroll read the real URL.
+ */
 function swapView(oldView, { doc, incoming }, url, push) {
   hooks.unmount(oldView);
   document.documentElement.classList.add('anim-pending');
   const view = document.importNode(incoming, true);
   oldView.replaceWith(view);
   hooks.prepare?.(view);
-  if (push) history.pushState({}, '', url.pathname + url.search + url.hash);
+  const href = url.pathname + url.search + url.hash;
+  if (push) history.pushState({}, '', href);
+  else if (href !== location.pathname + location.search + location.hash)
+    history.replaceState(history.state, '', href);
   document.title = doc.title;
   for (const sel of [
     'meta[name="description"]',
@@ -246,13 +266,18 @@ export async function navigate(href, { push = true } = {}) {
   const reduced = reducedMotion();
   const cc = reduced ? null : curtainCfg(url.pathname);
   try {
-    const ready = getPage(url.pathname).then(parsePage);
+    // the page, and where it ends: the URL asked for, or a redirect's (else a full load)
+    const ready = getPage(url.pathname).then((res) => {
+      const to = finalUrl(url, res);
+      if (!to) throw new Error(`redirected off the site: ${res.url}`);
+      return { ...parsePage(res), url: to };
+    });
     if (cc) {
       await runCurtain(cc, {
         leaveView: oldView,
         ready: ready.then((page) => ({
           label: page.label,
-          swap: () => swapView(oldView, page, url, push),
+          swap: () => swapView(oldView, page, page.url, push),
         })),
         onMount: mountView,
       });
@@ -261,7 +286,7 @@ export async function navigate(href, { push = true } = {}) {
         ? gsap.to(oldView, { autoAlpha: 0, duration: 0.2 })
         : gsap.to(oldView, { ...t.leave.to, duration: t.leave.duration, ease: t.leave.ease });
       const [page] = await Promise.all([ready, leave]);
-      const view = swapView(oldView, page, url, push);
+      const view = swapView(oldView, page, page.url, push);
       if (!reduced) gsap.set(view, t.enter.from);
       const tl = reduced
         ? gsap.fromTo(view, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25 })
@@ -342,5 +367,8 @@ export function initRouter(h) {
   });
   window.addEventListener('router:navigated', () => (lastPath = location.pathname));
 
-  cache.set(normalize(location.pathname), Promise.resolve(document.documentElement.outerHTML));
+  cache.set(
+    normalize(location.pathname),
+    Promise.resolve({ text: document.documentElement.outerHTML, redirected: false, url: '' }),
+  );
 }
