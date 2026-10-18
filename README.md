@@ -904,7 +904,7 @@ back to the page).
 
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
 dropdown (grouped by folder; a `[slug]` template is one entry, `/people/[slug]`, with an item
-picker next to it for which person to show), or click links in Browse mode.
+picker next to it for which person to show), or click links in Preview.
 
 **Pages window** (the sitemap button next to the page dropdown): the page folders, like the
 Source Explorer. A folder shows its own page first (the row `/` at the root, `/people/` in
@@ -967,7 +967,7 @@ a Shadow DOM). In the **phone preview** a drag edits the block's phone area on t
 grid, snapping to its cells, and links are the phone's: a block without a phone area starts
 from its desktop area halved, and its first phone drag or link gives it its own (its desktop
 link comes along, the gap halved). The Motion tab picks animated elements instead (no
-dragging); Browse uses the site normally.
+dragging); Preview uses the site normally.
 
 The **Layout** tab (`LayoutTab.svelte`) holds only what can't be dragged, for the layout the
 preview shows (switch it with the phone toggle in the panel's head). At the top, read only,
@@ -1029,14 +1029,14 @@ in the URL reopens it.
 
 **Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
 Explorer item, so a shared link opens the same view:
-`/edit/?path=/people/&tab=content&source=people&item=noor-vermeer` (`tab`: browse, content,
-motion, settings; `view`: menu, footer; `motion=animations`: the Motion tab's Animations sub-tab; `anim`: the animation open there). Open/closed sections, the selected field or Motion
+`/edit/?path=/photography/people/&tab=content&source=people&item=noor-vermeer` (`tab`: content,
+motion, settings, preview (the old `browse` opens Preview too); `view`: menu, footer; `motion=animations`: the Motion tab's Animations sub-tab; `anim`: the animation open there). Open/closed sections, the selected field or Motion
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.
 
 | mode        | what it does                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Browse**  | Use the site normally. Shows unsaved changes per file, plus _Discard all_.                                                                                                                                                                                                                                                                                                                                                                    |
+| **Preview** | The ▶ toggle in the toolbar (or Ctrl/⌘+E), not a tab: use the site normally. The mode tabs dim; the panel shows unsaved changes per file with _Discard_, and what is saved but not published. Off again: back to the tab you were in.                                                                                                                                                                                                         |
 | **Content** | Animations pause. The preview is a layout canvas: click a block to open it, drag it and its handles to move and resize it, double-click a text to type in it (Enter ends a single-line field; multi-line fields take Enter as a line break). The panel lists the same fields as inputs, and both stay in sync.                                                                                                                                |
 | **Motion**  | Click a block or an animated element (or pick one from the Elements list). Pick its animation and set its own timing (duration, ease, delay, stagger, trigger, scroll start/end/scrub); what the animation does (from/to properties, type-specific values) is shown read-only and edited in the Animations sub-tab. Changes replay live. **Replay** runs that block (or the page) again, and the **Scroll** slider moves the page through it. |
 
@@ -1106,7 +1106,7 @@ These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-block`,
   `targets` and `transitions`) and writes nothing when one is wrong; files are written to a
   temporary file and renamed, so a crash never leaves half a file.
 - **Save** (**Ctrl/⌘+S**) writes the changed files to `content/en/` on disk. That's a **draft**:
-  the preview (and Browse mode) shows it, and nothing leaves your machine. Only the preview
+  the preview (and Preview) shows it, and nothing leaves your machine. Only the preview
   reloads; the editor keeps its tab, scroll, open groups, selection and undo history.
 - **Edits outside the editor** (your IDE, a `git checkout`) are picked up too: the preview
   reloads, and the editor takes the files on disk with your unsaved edits on top (a "Changed

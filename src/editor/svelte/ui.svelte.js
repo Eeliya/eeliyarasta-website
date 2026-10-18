@@ -5,9 +5,9 @@
 export const ui = $state({
   /** Why the content could not be loaded; App shows it instead of the editor. */
   loadError: '',
-  /** 'browse' | 'text' (the Content tab) | 'motion' */
-  mode: 'browse',
-  /** The edit tab Ctrl+E goes back to. */
+  /** 'text' (the Content tab) | 'motion' | 'settings' | 'preview' (the toolbar's Preview: the site as visitors see it) */
+  mode: 'text',
+  /** The tab Preview (and Ctrl+E) goes back to. */
   lastEdit: 'text',
   /** 'desktop' | 'mobile' preview size */
   viewport: 'desktop',

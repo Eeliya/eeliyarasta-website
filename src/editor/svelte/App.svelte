@@ -1,7 +1,7 @@
 <!--
   The editor shell: the site preview on the left, the side panel on the right with the
-  toolbar (page menu; Sources, Media, Pages | phone, undo, redo; the mode tabs), the current
-  tab's panel and the Save / Publish footer. Also the
+  toolbar (page menu; Sources, Media, Pages | Preview, phone, undo, redo; the mode tabs), the
+  current tab's panel (Preview's while it is on) and the Save / Publish footer. Also the
   publish dialog, the toasts and the keyboard shortcuts.
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
@@ -9,7 +9,7 @@
   import Button from './Button.svelte';
   import PageMenu from './PageMenu.svelte';
   import Select from './Select.svelte';
-  import BrowsePanel from './BrowsePanel.svelte';
+  import PreviewPanel from './PreviewPanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
   import SettingsPanel from './SettingsPanel.svelte';
@@ -38,12 +38,14 @@
 
   // [mode, label, icon]: a tab with an icon shows only the icon
   const TABS = [
-    ['browse', 'Browse'],
     ['text', 'Content'],
     ['motion', 'Motion'],
     ['settings', 'Settings'],
   ];
   const mobile = $derived(ui.viewport === 'mobile');
+  // Preview: a toggle; off goes back to the tab it came from
+  const previewing = $derived(ui.mode === 'preview');
+  const togglePreview = () => actions.setMode(previewing ? ui.lastEdit : 'preview');
   const unpublished = $derived(ui.pub?.files || []);
   const ahead = $derived(ui.pub?.ahead || 0);
   const unpublishedChanges = $derived(unpublished.reduce((n, f) => n + (f.changes || 1), 0));
@@ -94,7 +96,7 @@
       location.href = bridge.path() || '/';
     } else if (mod && k === 'e') {
       e.preventDefault();
-      actions.setMode(ui.mode === 'browse' ? ui.lastEdit : 'browse');
+      togglePreview();
     } else if (mod && (k === 'z' || k === 'y') && !inField) {
       e.preventDefault();
       if (k === 'y' || e.shiftKey) live.store.redo();
@@ -157,7 +159,7 @@
           />
         </div>
       {/if}
-      <!-- [ Sources | Media | Pages ] ... [ phone | undo | redo ] (quiet icon buttons) -->
+      <!-- [ Sources | Media | Pages ] ... [ Preview | phone | undo | redo ] (quiet icon buttons) -->
       <div class="ed-row ed-tools">
         <Button
           icon="database"
@@ -181,7 +183,16 @@
           onclick={() => pagesModal.open()}
         />
         <span class="ed-tools__gap"></span>
-        <!-- a toggle: the phone view, on (the accent) or off -->
+        <!-- toggles, on (the accent) or off: Preview (the site as visitors see it), the phone view -->
+        <Button
+          icon="play"
+          iconOnly
+          label="Preview ({MOD}+E)"
+          title="Preview: the site as visitors see it, links work ({MOD}+E)"
+          aria-pressed={previewing}
+          onclick={togglePreview}
+        />
+        <span class="ed-tools__sep" aria-hidden="true"></span>
         <Button
           icon="mobile-screen-button"
           iconOnly
@@ -204,8 +215,9 @@
           onclick={() => live.store.redo()}
         />
       </div>
-      <!-- the modes: evenly spread, the picked one with a white line; their line ends the toolbar -->
-      <nav class="ed-modes" aria-label="Mode">
+      <!-- the modes: evenly spread, the picked one with a white line; their line ends the toolbar.
+           Dim while previewing (a click goes back to editing, in that tab) -->
+      <nav class={['ed-modes', previewing && 'is-dim']} aria-label="Mode">
         {#each TABS as [mode, label] (mode)}
           <button
             type="button"
@@ -226,7 +238,7 @@
     {:else if ui.mode === 'settings'}
       <SettingsPanel {live} {bridge} />
     {:else}
-      <BrowsePanel {live} onpublish={publish} />
+      <PreviewPanel {live} onpublish={publish} />
     {/if}
 
     <footer class="ed-foot">
@@ -350,6 +362,14 @@
     flex: 1 !important;
   }
 
+  // between Preview and phone / undo / redo: a 1px line, 16px tall
+  .ed-tools__sep {
+    width: 1px;
+    height: 16px;
+    margin-inline: var(--space-1);
+    background: var(--c-line);
+  }
+
   .ed-modes {
     display: flex;
     margin-top: var(--space-1);
@@ -384,6 +404,14 @@
     &.is-active {
       color: var(--c-text-strong);
       box-shadow: inset 0 -2px 0 var(--c-text-strong);
+    }
+
+    .is-dim > & {
+      opacity: var(--o-dim);
+    }
+
+    .is-dim > &:is(:hover, :focus-visible) {
+      opacity: 1;
     }
   }
 

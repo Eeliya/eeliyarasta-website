@@ -2,7 +2,7 @@
  * Keeps the editor where it was across a refresh, in two places:
  *
  *   The URL (shareable): /edit/?tab=motion&path=/people/
- *     tab     browse | content | motion | settings
+ *     tab     content | motion | settings | preview (the old browse opens Preview too)
  *     path    the page in the preview (main.js keeps it up to date)
  *     view    header | footer, when the page menu shows a site part instead of a page
  *     source  + item (+ field): the Source Explorer, open on that file and item, with that field
@@ -33,7 +33,14 @@ import { sourceIdOf } from '../../site/files.js';
 
 const KEY = 'editor:ui';
 // URL tab name -> ui.mode
-const TABS = { browse: 'browse', content: 'text', motion: 'motion', settings: 'settings' };
+// the first name of a mode is the one written; browse: links from before Preview
+const TABS = {
+  content: 'text',
+  motion: 'motion',
+  settings: 'settings',
+  preview: 'preview',
+  browse: 'preview',
+};
 const VIEWS = { header: 'Header', footer: 'Footer' };
 
 let bridge, live; // the preview (../bridge.js) and the content (live.svelte.js)
@@ -51,7 +58,7 @@ function readSession() {
 function readState() {
   const state = readSession();
   const q = new URLSearchParams(location.search);
-  if (q.has('tab')) state.mode = TABS[q.get('tab')] || 'browse';
+  if (q.has('tab')) state.mode = TABS[q.get('tab')] || 'text';
   if (q.has('view'))
     state.part = VIEWS[q.get('view')] && {
       kind: 'part',
@@ -90,7 +97,7 @@ export function restoreUi(preview, content) {
   live = content;
   saved = readState();
   if (Object.values(TABS).includes(saved.mode)) ui.mode = saved.mode;
-  if (['text', 'motion'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
+  if (['text', 'motion', 'settings'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
   if (saved.part) ui.target = saved.part; // Header or Footer (pages: ?path=)
   ui.sections = saved.sections || {};
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation

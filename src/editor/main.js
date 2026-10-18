@@ -1,14 +1,15 @@
 /**
  * Visual editor (/edit/): the real site in an iframe + a side panel.
  *
- *   Browse  - use the site normally; overview of unsaved changes
  *   Content - click text in the preview to edit it (animations paused)
  *   Motion  - click an animated element to edit its animation / timing / trigger
  *   Settings - site-wide values: site name and meta, the global page-transition curtain
+ *   Preview - the toolbar's toggle: the site as visitors see it (links work); the panel
+ *             shows the unsaved and unpublished changes
  *
  * Edits only touch in-memory copies of content/*.json (see store.js).
  *   Save    - writes the changed files to content/ on disk (a draft: the preview and
- *             Browse show it, nothing leaves this machine)
+ *             Preview show it, nothing leaves this machine)
  *   Publish - commits every saved content change in one commit and pushes it
  *             (svelte/PublishDialog.svelte)
  * Both go through the dev server (scripts/editor-server.mjs). The editor only exists
@@ -345,12 +346,12 @@ function pickAnim(sel) {
   return { el, id: el.dataset.anim, key: el.dataset.animKey, owner, scope: null };
 }
 
-/** The preview's mode: Settings has nothing to pick (browse). */
-const previewMode = () => (ui.mode === 'settings' ? 'browse' : ui.mode);
+/** The preview's mode: Preview and Settings have nothing to pick (browse: links work). */
+const previewMode = () => (['preview', 'settings'].includes(ui.mode) ? 'browse' : ui.mode);
 
 function setMode(mode) {
   ui.mode = mode;
-  if (mode === 'text' || mode === 'motion') ui.lastEdit = mode;
+  if (mode !== 'preview') ui.lastEdit = mode;
   bridge.setMode(previewMode());
   overlay.refresh();
   if (mode === 'motion') {

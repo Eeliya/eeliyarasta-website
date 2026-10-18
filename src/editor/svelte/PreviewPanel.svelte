@@ -1,6 +1,7 @@
 <!--
-  Browse tab: how the editor works, the unsaved changes per file (before and after, with
-  Discard), and the saved changes that are not published yet.
+  Preview (the toolbar's toggle, App.svelte): the site as visitors see it, links work. The
+  panel says so, then how the editor works, the unsaved changes per file (before and after,
+  with Discard), and the saved changes that are not published yet.
 -->
 <script>
   import Button from './Button.svelte';
@@ -64,6 +65,14 @@
 
 <section class="ed-body">
   <section class="grp">
+    <p class="pv__title"><i class="fa-solid fa-play" aria-hidden="true"></i>Previewing</p>
+    <p class="hint pv__hint">
+      The site as visitors see it: links work, nothing is outlined. Preview again (or {MOD}+E) goes
+      back to editing, on the page you are on.
+    </p>
+  </section>
+
+  <section class="grp">
     <h4 class="grp__title">How it works</h4>
     <ul class="help">
       <li><b>Content</b> — click any outlined text in the preview and type.</li>
@@ -72,10 +81,11 @@
         Changes replay live.
       </li>
       <li>
-        Browse navigates like the real site. In the edit modes, hold Alt to click through links.
+        <b>Preview</b> (▶ in the toolbar) navigates like the real site. In the edit modes, hold Alt to
+        click through links.
       </li>
       <li>
-        <b>Save</b> writes content/*.json on this machine: a draft you can check in Browse. Nothing is
+        <b>Save</b> writes content/*.json on this machine: a draft you can check in Preview. Nothing is
         pushed.
       </li>
       <li>
@@ -83,7 +93,7 @@
       </li>
     </ul>
     <p class="kbd-list">
-      <span><kbd>{MOD}+E</kbd> edit mode</span>
+      <span><kbd>{MOD}+E</kbd> preview / edit</span>
       <span><kbd>{MOD}+S</kbd> save</span>
       <span><kbd>{MOD}+Z</kbd> undo</span>
       <span><kbd>Esc</kbd> deselect</span>
@@ -140,6 +150,21 @@
 
 <style lang="scss">
   @use '../styles/mixins' as *;
+
+  // Previewing: the accent, like the pressed ▶
+  .pv__title {
+    @include row(var(--space-2));
+    margin: 0 0 var(--space-2);
+    color: var(--c-accent);
+    font-size: var(--fs-base);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .pv__hint {
+    margin: 0;
+  }
 
   .help {
     margin: 0 0 var(--space-3);

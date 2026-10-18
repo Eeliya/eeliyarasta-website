@@ -136,15 +136,15 @@ link colour, eye, Duplicate, Delete; no grip, no order). Put it in a `<ul>`.
 
 **Panel** — the editor's side panel around your cards.
 
-| prop       | type                                           | default                     | meaning                                             |
-| ---------- | ---------------------------------------------- | --------------------------- | --------------------------------------------------- |
-| `mode`     | `'browse'`\|`'text'`\|`'motion'`\|`'settings'` | `'text'`                    | active mode tab (`text` = "Content")                |
-| `tab`      | `'sections'`\|`'transitions'`\|`'seo'`         | `'sections'`                | page tab (only in `text`)                           |
-| `tabs`     | bool                                           | `true`                      | `false` hides the page tabs                         |
-| `height`   | CSS length                                     | `'844px'`                   | panel height (body scrolls)                         |
-| `changes`  | number                                         | `0`                         | unsaved count: "Unsaved changes", Save · N, Undo on |
-| `pending`  | string                                         | `'Everything is published'` | footer line when no changes                         |
-| `children` | snippet                                        | —                           | the scroll body                                     |
+| prop       | type                                            | default                     | meaning                                                             |
+| ---------- | ----------------------------------------------- | --------------------------- | ------------------------------------------------------------------- |
+| `mode`     | `'text'`\|`'motion'`\|`'settings'`\|`'preview'` | `'text'`                    | active mode tab (`text` = "Content"; `preview`: ▶ on, the tabs dim) |
+| `tab`      | `'sections'`\|`'transitions'`\|`'seo'`          | `'sections'`                | page tab (only in `text`)                                           |
+| `tabs`     | bool                                            | `true`                      | `false` hides the page tabs                                         |
+| `height`   | CSS length                                      | `'844px'`                   | panel height (body scrolls)                                         |
+| `changes`  | number                                          | `0`                         | unsaved count: "Unsaved changes", Save · N, Undo on                 |
+| `pending`  | string                                          | `'Everything is published'` | footer line when no changes                                         |
+| `children` | snippet                                         | —                           | the scroll body                                                     |
 
 **Modal** — a modal shell drawn in place (`.modal__box` + real ExplorerHead).
 
