@@ -138,7 +138,7 @@ link colour, eye, Duplicate, Delete; no grip, no order). Put it in a `<ul>`.
 
 | prop       | type                                            | default                     | meaning                                                             |
 | ---------- | ----------------------------------------------- | --------------------------- | ------------------------------------------------------------------- |
-| `mode`     | `'text'`\|`'motion'`\|`'settings'`\|`'preview'` | `'text'`                    | active mode tab (`text` = "Content"; `preview`: ▶ on, the tabs dim) |
+| `mode`     | `'text'`\|`'motion'`\|`'settings'`\|`'preview'` | `'text'`                    | active mode tab (`text` = "Content"; `preview`: ▶ on, no mode tabs) |
 | `tab`      | `'sections'`\|`'transitions'`\|`'seo'`          | `'sections'`                | page tab (only in `text`)                                           |
 | `tabs`     | bool                                            | `true`                      | `false` hides the page tabs                                         |
 | `height`   | CSS length                                      | `'844px'`                   | panel height (body scrolls)                                         |

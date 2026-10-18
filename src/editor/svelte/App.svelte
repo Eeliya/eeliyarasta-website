@@ -216,19 +216,21 @@
         />
       </div>
       <!-- the modes: evenly spread, the picked one with a white line; their line ends the toolbar.
-           Dim while previewing (a click goes back to editing, in that tab) -->
-      <nav class={['ed-modes', previewing && 'is-dim']} aria-label="Mode">
-        {#each TABS as [mode, label] (mode)}
-          <button
-            type="button"
-            class={['ed-modes__btn', ui.mode === mode && 'is-active']}
-            aria-current={ui.mode === mode ? 'page' : undefined}
-            onclick={() => actions.setMode(mode)}
-          >
-            {label}
-          </button>
-        {/each}
-      </nav>
+           Hidden while previewing (the rows above stay put; Preview's panel takes their place) -->
+      {#if !previewing}
+        <nav class="ed-modes" aria-label="Mode">
+          {#each TABS as [mode, label] (mode)}
+            <button
+              type="button"
+              class={['ed-modes__btn', ui.mode === mode && 'is-active']}
+              aria-current={ui.mode === mode ? 'page' : undefined}
+              onclick={() => actions.setMode(mode)}
+            >
+              {label}
+            </button>
+          {/each}
+        </nav>
+      {/if}
     </header>
 
     {#if ui.mode === 'text'}
@@ -404,14 +406,6 @@
     &.is-active {
       color: var(--c-text-strong);
       box-shadow: inset 0 -2px 0 var(--c-text-strong);
-    }
-
-    .is-dim > & {
-      opacity: var(--o-dim);
-    }
-
-    .is-dim > &:is(:hover, :focus-visible) {
-      opacity: 1;
     }
   }
 

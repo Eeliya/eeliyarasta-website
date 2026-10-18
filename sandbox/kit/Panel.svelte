@@ -2,7 +2,7 @@
   The editor's side panel, App.svelte's markup with its own styles (styles.js): the page menu
   (the real PageMenu), the tools row (Sources, Media, Pages … Preview | phone, undo, redo), the mode tabs,
   the page tabs (the real Tabs), the scroll body (.ed-body) and the Save / Publish footer.
-    mode     'text' | 'motion' | 'settings' | 'preview' (default 'text'; preview: ▶ on, the modes dim)
+    mode     'text' | 'motion' | 'settings' | 'preview' (default 'text'; preview: ▶ on, no mode tabs)
     tab      the page tab shown (default 'sections'); tabs: false hides them
     height   the panel's height (default 844px)       pending  the footer's line
     changes  unsaved changes (Save · N)               children the body
@@ -50,12 +50,15 @@
         <Button icon="rotate-left" iconOnly label="Undo" disabled={!changes} />
         <Button icon="rotate-right" iconOnly label="Redo" disabled />
       </div>
-      <nav class={['ed-modes', mode === 'preview' && 'is-dim']} aria-label="Mode">
-        {#each MODES as [m, label] (m)}
-          <button type="button" class={['ed-modes__btn', mode === m && 'is-active']}>{label}</button
-          >
-        {/each}
-      </nav>
+      {#if mode !== 'preview'}
+        <nav class="ed-modes" aria-label="Mode">
+          {#each MODES as [m, label] (m)}
+            <button type="button" class={['ed-modes__btn', mode === m && 'is-active']}
+              >{label}</button
+            >
+          {/each}
+        </nav>
+      {/if}
     </header>
     {#if tabs && mode === 'text'}
       <Tabs
