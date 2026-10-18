@@ -2,7 +2,7 @@
   Content > SEO (a tab of the page panel), plain fields: its address (PageAddress.svelte:
   renames it), then what search engines and share cards say about the page in the preview, from
   its file's "meta" (src/site/seo.js). A page: title, description, share image, noindex and
-  canonical. A [slug] page: its template's defaults for every item page (an item's own name,
+  canonical. A [param] page: its template's defaults for every item page (an item's own name,
   summary and cover come first). Below, a search result and a share card as the build makes
   them, with the character counts search engines show. Empty fields fall back to the site's
   defaults (Settings > SEO). Every change is one undo step; the preview's page itself does not
@@ -15,14 +15,14 @@
   import { ui } from './ui.svelte.js';
   import { imageSrcset, imageUrl, media } from './media.svelte.js';
   import { DESCRIPTION_MAX, TITLE_MAX, seoOf } from '../../site/seo.js';
-  import { TEMPLATE, contentFromFiles, pageIdOf } from '../../site/files.js';
+  import { contentFromFiles, isTemplate, pageIdOf } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); file: the page file of the preview
   // actions: pagesOp (main.js: the Address renames the page on disk)
   let { live, file, actions } = $props();
 
   const uid = $props.id();
-  const template = $derived(!!pageIdOf(file)?.endsWith(TEMPLATE));
+  const template = $derived(isTemplate(pageIdOf(file) || ''));
 
   // the preview's page as the build sees it, with the editor's changes
   const seo = $derived.by(() => {

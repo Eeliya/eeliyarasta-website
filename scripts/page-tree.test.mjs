@@ -6,6 +6,8 @@ import {
   linkPage,
   linksTo,
   movePage,
+  parentPath,
+  shownPath,
   unlinkPage,
 } from '../src/editor/lib/page-tree.js';
 import { buildRoutes } from '../src/site/routes.js';
@@ -45,7 +47,7 @@ const files = (more = {}) => ({
   'pages/old/index.json': page('pg-old0', 'Old portfolio'),
   'pages/photography/index.json': page('pg-phot', 'Photography'),
   'pages/photography/people/index.json': page('pg-peop', 'People'),
-  'pages/photography/people/[slug].json': {
+  'pages/photography/people/[person]/index.json': {
     ...page('pg-pslg', 'x'),
     template: { source: 'people' },
   },
@@ -73,7 +75,7 @@ test('the top level: home its own page, the menu order, the rest not linked', ()
   assert.equal(l.canOwn, false);
 });
 
-test('a folder: own segments, menu order, [slug] last, Not linked filtered', () => {
+test('a folder: own segments, menu order, [param] last, Not linked filtered', () => {
   const l = levelOf(files(), 'photography', 'here');
   assert.deepEqual(
     l.sub.map((r) => [r.title, r.seg, r.kids]),
@@ -90,7 +92,7 @@ test('a folder: own segments, menu order, [slug] last, Not linked filtered', () 
   const people = levelOf(files(), 'photography/people');
   assert.deepEqual(
     people.sub.map((r) => [r.title, r.seg, r.template, r.items]),
-    [['[slug]', '‹slug›/', true, 1]],
+    [['[person]', '[person]/', true, 1]],
   );
   assert.deepEqual(
     crumbsOf('photography/people').map((c) => c.label),
@@ -162,4 +164,29 @@ test('the menu: link into a dropdown or the top, unlink promotes, move', () => {
   assert.equal(movePage(NAV, 'pg-phot', { before: 'pg-peop' }), null);
   assert.equal(NAV.header[1].children[0].page, 'pg-plac'); // unchanged
   assert.equal(linksTo(files(), 'pg-phot', 'pages/photography/index.json'), 1);
+});
+
+test('a [param] folder in a [param] folder: its own level, "per" the outer one', () => {
+  const f = {
+    'pages/index.json': {},
+    'pages/people/index.json': { title: 'People' },
+    'pages/people/[person]/index.json': { template: { source: 'people' } },
+    'pages/people/[person]/[year]/index.json': { template: { source: 'shoots', key: 'year' } },
+    'sources/people.json': { items: [{ slug: 'a' }] },
+  };
+  const outer = levelOf(f, 'people').sub.at(-1);
+  assert.deepEqual(
+    [outer.id, outer.seg, outer.kids, outer.nested],
+    ['people/[person]', '[person]/', 1, null],
+  );
+  const L = levelOf(f, 'people/[person]');
+  assert.equal(L.path, '/people/[person]/');
+  assert.equal(L.canOwn, false);
+  const inner = L.sub.at(-1);
+  assert.deepEqual(
+    [inner.id, inner.seg, inner.title, inner.nested],
+    ['people/[person]/[year]', '[year]/', '[year]', '[person]'],
+  );
+  assert.equal(parentPath('people/[person]/[year]'), '/people/');
+  assert.equal(shownPath('people/[person]/[year]'), '/people/[person]/[year]/');
 });

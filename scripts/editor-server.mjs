@@ -37,8 +37,13 @@ import {
   ANIMATIONS,
   PHOTOS,
   REDIRECTS,
-  TEMPLATE,
   isContentFile,
+  isParam,
+  isParamName,
+  isTemplate,
+  pageIdOf,
+  paramFolder,
+  paramsOf,
   ROOT_FILES,
   VERSION,
   itemsOf,
@@ -109,18 +114,22 @@ const PROTECTED = new Set(['home', '404']); // no rename or delete
  * The pages list (src/editor/svelte/PagesList.svelte, AddPageModal, the SEO tab's Address): the pages in content/en/pages/. Every
  * page is a folder, its URL, with its own file index.json inside; pages/index.json is home,
  * whose folder is content/en/pages/ itself. Ids as in src/site/files.js: "home", "people",
- * "people/whatever", "people/[slug]". `parent` is the id of the page whose folder it is
+ * "people/whatever", "people/[person]". `parent` is the id of the page whose folder it is
  * about, '' for the root (the pages next to home's file).
  *
  *   add       { parent, name, title? }  the folder <parent>/<name>/ with its index.json
- *   template  { parent, source }        <parent>/[slug].json: a page per item of the source
+ *   template  { parent, source, param?, key? }
+ *                                       <parent>/[param]/index.json: a page per item of the
+ *                                       source (param: its name, default "slug"; key: the field
+ *                                       whose value is the URL part, default the item's slug)
  *   rename    { id, name }              the page's folder, with everything in it
- *   delete    { id, redirect }          the page's folder, with everything in it ([slug]: its file);
- *                                       its paths redirect to `redirect` (a page's path; default:
- *                                       the parent page), or go when it is null
+ *   delete    { id, redirect }          the page's folder, with everything in it; its paths
+ *                                       redirect to `redirect` (a page's path; default: the
+ *                                       parent page, past [param] ones), or go when it is null
  *
- * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted, and there
- * is no [slug] at the root. Returns { status, body }; body.created and body.removed list the
+ * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted. A [param]
+ * folder is never at the root, a folder has at most one, and one can hold only another
+ * (with another name: "[person]/[year]"). Returns { status, body }; body.created and body.removed list the
  * content files ("pages/x/index.json") that appeared and went, body.changed the others it
  * wrote: rename and delete keep links and redirects.json up to date (src/site/redirects.js),
  * body.links links were changed, body.broken links point at a deleted page without a
@@ -129,7 +138,7 @@ const PROTECTED = new Set(['home', '404']); // no rename or delete
  */
 export function pagesOp(
   root,
-  { op, id, parent = '', name, title, source, redirect } = {},
+  { op, id, parent = '', name, title, source, param = 'slug', key, redirect } = {},
   onWrite = () => {},
 ) {
   const content = path.join(root, CONTENT_DIR);
@@ -215,9 +224,11 @@ export function pagesOp(
   if (!['add', 'template', 'rename', 'delete'].includes(op))
     return fail(400, `Unknown pages op "${op ?? ''}"`);
   if (op === 'add' || op === 'template') {
-    if (parent !== '' && (PROTECTED.has(parent) || parent.endsWith(TEMPLATE) || !isPage(parent)))
+    if (parent !== '' && (PROTECTED.has(parent) || !isPage(parent)))
       return fail(400, `No page "${parent}" to add to`);
     if (op === 'add') {
+      if (isTemplate(parent))
+        return fail(400, 'A [param] folder holds only another [param] folder: add a [param] page');
       const bad = checkName(parent, name);
       if (bad) return fail(400, bad);
       const t = String(title || '').trim() || titleCase(name);
@@ -241,18 +252,30 @@ export function pagesOp(
       });
       return done({ id: join(parent, name), created: [file] });
     }
-    if (!parent) return fail(400, 'No [slug] page at the root: add it to a page');
-    const pid = join(parent, TEMPLATE);
-    if (isPage(pid)) return fail(400, `/${parent}/ already has a [slug] page`);
+    if (!parent) return fail(400, 'No [param] page at the root: add it to a page');
+    if (!isParamName(param))
+      return fail(
+        400,
+        `"${param ?? ''}" is not a valid param: a-z first, then a-z, 0-9 and dashes`,
+      );
+    if (paramsOf(parent).includes(param))
+      return fail(400, `[${param}] is in its URL already: pick another name`);
+    const has = fs
+      .readdirSync(dirOf(parent), { withFileTypes: true })
+      .find((e) => e.isDirectory() && isParam(e.name));
+    if (has) return fail(400, `/${parent}/ already has a [param] page: ${has.name}`);
+    const pid = join(parent, paramFolder(param));
     if (!isSlug(source) || !fs.existsSync(abs(sourceFile(source))))
       return fail(400, `No source "${source ?? ''}"`);
+    if (key !== undefined && (typeof key !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(key)))
+      return fail(400, `"${key}" is not a field name`);
     onWrite();
     const ids = new Set();
     write(pageFile(pid), {
       version: VERSION,
       kind: 'page',
       id: newPageId(),
-      template: { source },
+      template: key ? { source, key } : { source },
       // the item's album, filling the screen
       sections: [
         {
@@ -267,9 +290,10 @@ export function pagesOp(
 
   if (!isPage(id)) return fail(404, `No page "${id ?? ''}"`);
   if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed or deleted`);
-  const template = id.endsWith(TEMPLATE);
+  const template = isTemplate(id);
 
-  if (op === 'rename' && template) return fail(400, 'A [slug] page is always called [slug]');
+  if (op === 'rename' && template)
+    return fail(400, 'A [param] page is named after its param: delete it and add another');
   if (op === 'rename') {
     const bad = checkName(parentOf(id), name);
     if (bad) return fail(400, bad);
@@ -281,7 +305,10 @@ export function pagesOp(
   } catch (err) {
     return fail(400, `Fix the content first: ${err.message}`);
   }
-  const target = redirect === undefined ? pathOfId(parentOf(id) || 'home') : redirect;
+  // default: the parent page, the nearest one with one URL ([param] pages have many)
+  let up = parentOf(id);
+  while (isTemplate(up)) up = parentOf(up);
+  const target = redirect === undefined ? pathOfId(up || 'home') : redirect;
   const moves = pageMoves(before, op === 'rename' ? { id, name } : { id, to: target });
   if (op === 'delete' && target !== null) {
     if (
@@ -293,7 +320,7 @@ export function pagesOp(
     if (moves.has(pathKey(target))) return fail(400, `${target} is deleted too: pick another page`);
   }
   // deleted: links to its pages (by id) go to the page it redirects to, its items' are broken
-  const gone = op === 'delete' ? (template ? [pageFile(id)] : filesIn(id)) : [];
+  const gone = op === 'delete' ? filesIn(id) : [];
   const targetPid =
     typeof target === 'string'
       ? getRoutes(contentFromFiles(before)).find((r) => r.path === pathKey(target) && !r.template)
@@ -306,7 +333,7 @@ export function pagesOp(
       .map((pid) => [pid, targetPid ?? null]),
   );
   const sources = new Set(
-    gone.filter((f) => f.endsWith(`${TEMPLATE}.json`)).map((f) => before[f]?.template?.source),
+    gone.filter((f) => isTemplate(pageIdOf(f))).map((f) => before[f]?.template?.source),
   );
   plan = { moves, ...moveLinks(before, moves, { hash: op === 'rename', pages, sources }) };
 
@@ -328,10 +355,9 @@ export function pagesOp(
   }
 
   // delete
-  const removed = template ? [pageFile(id)] : filesIn(id);
+  const removed = filesIn(id);
   onWrite();
-  if (template) fs.rmSync(abs(pageFile(id)));
-  else fs.rmSync(dirOf(id), { recursive: true });
+  fs.rmSync(dirOf(id), { recursive: true });
   applyPlan((f) => (removed.includes(f) ? null : f));
   return done({ id, removed });
 }
@@ -367,7 +393,7 @@ function sourceProblems(root, files) {
 }
 
 /**
- * A new [slug] page's album block, its texts bound to the source's fields (its schema): the
+ * A new [param] page's album block, its texts bound to the source's fields (its schema): the
  * title field, the fields shown in item lists as facts ({ "bind": "role" }), the first long text.
  */
 function albumBlock(root, source, ids) {
@@ -817,7 +843,7 @@ export async function publish(root, message) {
     if (!msg) return { status: 400, body: { error: 'A commit message is required.' } };
     if (msg.length > 5000) return { status: 400, body: { error: 'Commit message is too long.' } };
     const paths = s.files.map((f) => f.path);
-    // literal: "[slug].json" is not a glob here
+    // literal: "[person]/index.json" is not a glob here
     const specs = paths.map((p) => `:(literal)${p}`);
     // Deleted files need no add (the commit below takes their removal; the old path of a
     // `git mv` isn't known to git add at all).

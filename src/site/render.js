@@ -1,7 +1,7 @@
 /**
  * Render a route to { head, body } HTML strings.
  * Used by the Vite plugin (dev middleware + build-time prerender).
- * Every page is its file's list of sections of blocks (layout/index.js); a [slug] page's are
+ * Every page is its file's list of sections of blocks (layout/index.js); a [param] page's are
  * in its template file, rendered for the route's item.
  */
 import { accentOf, setEditable, warnOnce } from './helpers.js';

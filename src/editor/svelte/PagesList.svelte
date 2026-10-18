@@ -5,10 +5,10 @@
                 goes there) | Own page (off: the folder's URL opens its first sub page, "As /")
     own row     "this page" (no icon): the folder's own page
     Sub items   its pages in the menu (nav.json), in the menu's order: the grip drags one to
-                another place (the menu's order); its [slug] page pinned last (a lock, no drag)
+                another place (the menu's order); its [param] page pinned last (a lock, no drag)
     Not linked  every page not in the menu (All), or the ones under this folder (This folder)
   A click selects a row and shows it in the preview; a double click (or Enter) goes into a
-  folder, or opens a page (its Sections, Transitions, SEO: PageHead.svelte goes back). The
+  folder (a [param] page's too: it can hold another, "[item]/[year]/"), or opens a page (its Sections, Transitions, SEO: PageHead.svelte goes back). The
   link button adds a page to the menu or takes it out (one undo step, saved with Save); +
   opens Add page (AddPageModal.svelte); Delete asks over the row: one line when nothing links
   to it, else with where its address and links go (a redirect). Adding and deleting go to
@@ -23,7 +23,7 @@
   import { toast } from './toasts.svelte.js';
   import { listDrag, rowsOf } from './list-drag.svelte.js';
   import { NAV, pageFile } from '../../site/files.js';
-  import { parentId, pathOfId } from '../../site/routes.js';
+  import { parentId } from '../../site/routes.js';
   import {
     crumbsOf,
     levelOf,
@@ -31,6 +31,7 @@
     linkPage,
     linksTo,
     movePage,
+    parentPath,
     unlinkPage,
   } from '../lib/page-tree.js';
   import { plural } from '../lib/format.js';
@@ -86,9 +87,10 @@
     sel = row.id;
     show(row);
   }
-  // a double click, or Enter / Space (a click without a pointer): into a folder, else open
-  const into = (row) =>
-    row.kids && !row.template && !row.self && !row.part ? go(row.id) : open(row);
+  // a double click, or Enter / Space (a click without a pointer): into a folder (a [param]
+  // page's always: another [param] page can go in it), else open
+  const inside = (row) => (row.kids || row.template) && !row.self && !row.part;
+  const into = (row) => (inside(row) ? go(row.id) : open(row));
   const onclick = (e, row) => (e.detail === 0 ? into(row) : pick(row));
 
   function setNav(next, what) {
@@ -135,7 +137,7 @@
     linksTo(files, row.pid, pageFile(row.id)) - linksTo({ [NAV]: files[NAV] }, row.pid);
   async function ask(row) {
     asking = row.id;
-    redirectTo = pathOfId(parentId(row.id) || 'home');
+    redirectTo = parentPath(row.id);
     await tick();
     root?.querySelector('.prow__ask .ask-btns > :last-child')?.focus();
   }
@@ -195,7 +197,7 @@
       class="prow__open"
       title={r.part
         ? `Double click: open the ${r.title}`
-        : `content/${pageFile(r.id)} · double click: ${r.kids && !r.template && !r.self ? 'go inside' : 'open'}`}
+        : `content/${pageFile(r.id)} · double click: ${inside(r) ? 'go inside' : 'open'}`}
       onclick={(e) => onclick(e, r)}
       ondblclick={() => into(r)}
     >
@@ -212,7 +214,14 @@
     {#if r.asRoot}
       <span class="prow__at" title="{L.path} opens it (its own page is off)">As /</span>
     {/if}
-    {#if r.template}
+    {#if r.template && !r.self}
+      <span class="prow__kids" title="{plural(r.items ?? 0, 'item')} in its source"
+        >{r.nested ? `per ${r.nested}` : plural(r.items ?? 0, 'page')}<i
+          class="fa-solid fa-chevron-right"
+          aria-hidden="true"
+        ></i></span
+      >
+    {:else if r.template}
       <span class="prow__kids">{plural(r.items ?? 0, 'page')}</span>
     {:else if r.kids && !r.self}
       <span class="prow__kids" title="{plural(r.kids, 'page')} in it"

@@ -146,7 +146,7 @@ tags, and works with JavaScript disabled.
 name; its text, `curtainText`, lives in the page's file `pages/<page>/index.json` or in the
 item in `sources/`: missing, the page's title; `""`, no label. The curtain's timing is the
 site's alone (settings/animations.json); a page's `transition` is only `{ "preset": "none" }`
-(no curtain: a fade), on its `[slug].json` for every item page; missing: the site's curtain),
+(no curtain: a fade), on its `[param]/index.json` for every item page; missing: the site's curtain),
 swaps `<main data-router-view>`, updates
 title/meta/history, scrolls to top and re-mounts animations and page modules. Each page's tweens, ScrollTriggers, SplitTexts and listeners live
 in one `gsap.context` and are reverted on leave. If anything fails it falls back to a normal
@@ -172,7 +172,7 @@ site settings can live side by side):
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                               |
 | `content/en/settings/photos.json`     | the **photo library**: every photo's `alt`, `credit` (`{ name, url?, source?, license? }`) and optional `focal` (`{ x, y }`, 0–100), keyed by media/ path or R2 key (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads |
 
-| `content/en/pages/people/[slug].json` | the people pages: `template.source` (the source with a page per item), then sections and blocks like any page; see "Pages and URLs" |
+| `content/en/pages/photography/people/[person]/index.json` | the people pages: `template.source` (the source with a page per item), then sections and blocks like any page; see "Pages and URLs" |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
@@ -235,7 +235,7 @@ Source Explorer don't list them. A new source is a new `<id>.json` (with its sch
 
 ### Layout
 
-Every page is an ordered list of **sections**, `sections` in its file (a `[slug].json` too), and
+Every page is an ordered list of **sections**, `sections` in its file (a `[param]/index.json` too), and
 every section is a grid of **blocks** (`src/site/layout/`):
 
 ```json
@@ -415,7 +415,7 @@ every section is a grid of **blocks** (`src/site/layout/`):
 **Blocks.** The block types live in **one registry**, `src/site/blocks/` (`index.js` explains the
 shape): the build renders with it, and the editor reads it for each block's fields and settings
 and for **Add block**. A type is `{ type, label, icon, fields, config, defaults, render(block,
-ctx, b) }`; `item` binds it to a `[slug]` page's item. A block's content sits next to its type,
+ctx, b) }`; `item` binds it to a `[param]` page's item. A block's content sits next to its type,
 how it works under `config` (`enabled`: on/off; the source, look, …):
 
 | type       | what                                                                                                                  |
@@ -432,14 +432,14 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 | `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                              |
 | `projects` | the project accordion of a source; with a `title` it gets a head (home)                                               |
 | `about`    | the about block: `image`, `eyebrow`, `title`, `body` (paragraphs), `facts`, `emailLabel`                              |
-| `album`    | **item**: the item's album (slider, grid, info), only on a `[slug]` page: `title`, `meta` (facts), `body`             |
+| `album`    | **item**: the item's album (slider, grid, info), only on a `[param]` page: `title`, `meta` (facts), `body`            |
 
 - **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its eyebrow
   with its number among the page's numbered headings that are on: (01), (02), …
-- **Item pages:** a `[slug].json`'s blocks render once per item. A type marked `item` (the
+- **Item pages:** a `[param]/index.json`'s blocks render once per item. A type marked `item` (the
   `album` block) reads the page's item, `ctx.route.album`, for its photos; its texts, like any
   block's, are bindings to the item (below), so every block shows the page's item through them.
-  Item types are only offered on `[slug]` pages.
+  Item types are only offered on `[param]` pages.
 - **Animations:** a block's `motion` picks its animation (a new block gets its type's default
   from the registry, e.g. text `lines-up`, photo `image-reveal`, grid `grid-reveal`). Composite
   blocks (hero, heading, about, album, section heads) keep `data-anim` **parts** inside them
@@ -469,7 +469,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **`"format"`** (text fields only, also a list's texts like the album's facts): text around
   the value, `{value}` marks where it goes, e.g. `"{value} photos"`. An empty value leaves the
   whole field empty. There is no `{{field}}` syntax: one field, one binding.
-- **The item:** a block's own `item: { source, id }`, else, on a `[slug]` page, the page's
+- **The item:** a block's own `item: { source, id }`, else, on a `[param]` page, the page's
   item. Without one its bound fields render empty (a build warning).
 - **Rendering:** one resolver, `resolveBlock()`, swaps the values in before every block renders
   (`src/site/layout/index.js`), so blocks don't know about bindings; values are escaped as
@@ -479,10 +479,10 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   that doesn't fit, or an item from a source that isn't one, is an error (Save refuses, the
   build stops; a changed schema that breaks a page's binding too). A binding without an item and an item that isn't in its source are build
   warnings (`[bindings] …`) and render empty.
-- **The `[slug]` pages** are built this way: the album block's title is `{ "bind": "title" }`, its
+- **The `[param]` pages** are built this way: the album block's title is `{ "bind": "title" }`, its
   facts are `{ "label": "Role", "value": { "bind": "role" } }`, … (a fact whose value is empty is left
   out; the photo count comes last), its body `{ "bind": "body" }`. Their output is the
-  same as before. A new `[slug]` page binds the source's title field, its list fields as facts
+  same as before. A new `[param]` page binds the source's title field, its list fields as facts
   and its first long text.
 - **In the editor:** bound values aren't typed in the preview; a click selects them and opens
   their block on the field. Each bindable field has a **Source** switch in its label row: on,
@@ -541,7 +541,7 @@ URLs from outside.
 A header item with `children` (one level deep) or `items` opens a dropdown on click; `all`
 labels the link to the item's own page at its end. `items` names a source
 (`content/en/sources/<id>.json`) and lists its items: with their photo and photo count when the
-source has item pages (a `[slug].json` shows it), else by title and type, linking to their spot
+source has item pages (a `[param]/index.json` shows it), else by title and type, linking to their spot
 on the item's page (`/projects/#<slug>`) or, with `linkOut`, to their own site. The menu button and clock labels are in `strings.json` (`nav`).
 `src/site/templates/header.js` renders it; `checkContent` validates its shape.
 
@@ -552,26 +552,38 @@ document of `"kind": "page"` (see "Footer") with a stable `"id"` (`"pg-k3x9"`, g
 move. A page's own file is
 `index.json` in its folder; home's folder is `content/en/pages/` itself:
 
-| file                                    | URL                                                            |
-| --------------------------------------- | -------------------------------------------------------------- |
-| `pages/index.json`                      | `/` (home)                                                     |
-| `pages/404/index.json`                  | `404.html` (not in the sitemap)                                |
-| `pages/people/index.json`               | `/people/`                                                     |
-| `pages/people/whatever/index.json`      | `/people/whatever/`                                            |
-| `pages/people/whatever/deep/index.json` | `/people/whatever/deep/` (any depth)                           |
-| `pages/people/[slug].json`              | `/people/<slug>/` for **every item** of its source: a template |
+| file                                      | URL                                                            |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| `pages/index.json`                        | `/` (home)                                                     |
+| `pages/404/index.json`                    | `404.html` (not in the sitemap)                                |
+| `pages/people/index.json`                 | `/people/`                                                     |
+| `pages/people/whatever/index.json`        | `/people/whatever/`                                            |
+| `pages/people/whatever/deep/index.json`   | `/people/whatever/deep/` (any depth)                           |
+| `pages/people/[person]/index.json`        | `/people/<slug>/` for **every item** of its source: a template |
+| `pages/people/[person]/[year]/index.json` | `/people/<slug>/<year>/`: a template in a template (nested)    |
 
 - **Ids:** code names a page by its folder path: `home`, `people`, `people/whatever`,
-  `people/[slug]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
+  `people/[person]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
   page file: `pages/about.json` or `pages/people/x.json` are ignored.
-- **Templates:** `[slug].json` says which list it shows, `{ "template": { "source": "people" } }`,
-  and nothing else: its pages are sections and blocks like any page (the album's back link
-  names the folder's page, its heading's title).
+- **Templates:** a `[param]` folder (a named param: `[person]`, `[place]`, `[year]`; a-z first,
+  then a-z, 0-9, dashes) is a template. Its `index.json` says which list it shows,
+  `{ "template": { "source": "people" } }`, optionally with `"key": "<field>"` (below), and
+  nothing else: its pages are sections and blocks like any page (the album's back link names the
+  folder's page, its heading's title). Its id is `people/[person]`, its pattern (redirects,
+  `pathOfId`) `/people/:person/`; each route has `params` (`{ person: "noor" }`).
   An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
   `noor-vermeer`). Items without one, with an invalid one or with a duplicate get no page and a
   build warning (`[routes] ...`). A template page is an album (the person/place look):
-  `route.album` is the item, like before. A folder can have one `[slug].json`; there is none at
+  `route.album` is the item, like before. A folder can have one `[param]` folder; there is none at
   the root.
+- **Nested templates** (interim rule, until blocks pick their own matches): a `[param]` folder
+  can hold one more `[param]` folder (`people/[person]/[year]/`) and nothing else (a normal
+  page in it gets no page and a warning). Each level has its own `template.source`. For every
+  page of the outer level, the inner level makes a page per item of its source, keeping only
+  the items whose field named after an outer param (`person`) equals that page's slug or its
+  item's id, when the source has such a field (else every item). `template.key` makes the URL
+  part a field's value (`"key": "year"`: one page per distinct year, its first item is the
+  page's item) instead of the item's slug; duplicates of a key are no warning.
 - **Fixed beats template:** `pages/people/noor-vermeer/index.json` replaces the template's page for
   that item (it is a normal page then).
 - **Views:** a page is its sections of blocks. Its view name (`view--<name>` on `<main>`, `data-page` on
@@ -581,14 +593,14 @@ move. A page's own file is
 - **Head:** title, description, share image and robots come from the page's `meta` and the
   site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"
-  goes to the page that shows its source (the folder of its `[slug]` page, else the first page
+  goes to the page that shows its source (the folder of its top-level `[param]` page, else the first page
   with a block of it), so they follow a folder rename. A new page is in the menu when added
   with In the menu on (the pages list), else add it there or in Content › Header (see "Menu").
 - **Own page off:** `"ownPage": false` in a folder's page (the pages list's Own page switch):
   its URL has no page of its own and sends visitors to its first sub page (the menu's order,
   else the folder's): a 302 (`_redirects` in the build, plus a small redirect page; the dev
   server answers it too), and links to it (`{ "page": … }`) go straight there. It stays out of
-  the sitemap. Not for home, 404 or a `[slug]` page; with no sub page it is kept (a warning).
+  the sitemap. Not for home, 404 or a `[param]` page; with no sub page it is kept (a warning).
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
@@ -650,7 +662,8 @@ Settings > Forms; `functions/` is then simply unused.
 
 `content/en/settings/redirects.json` is a list of `{ "from": "/old/", "to": "/new/", "status": 302 }`
 (`status` 301, moved for good, is the default and left out). `from` is a path, or a pattern for
-item pages (`/old/:slug/` -> `/new/:slug/`); `to` is a page of the site or an `https://` URL.
+item pages (`/old/:person/` -> `/new/:person/`, any number of named placeholders:
+`/old/:person/:year/`); `to` is a page of the site or an `https://` URL.
 The build writes them to `dist/_redirects` (Cloudflare Pages and Netlify read it: one
 `from to status` line, plus the same without the trailing slash); the dev server ignores them.
 It warns (`[redirects]`) about a redirect to no page, and leaves out one from a path that is a
@@ -661,11 +674,13 @@ in the site must point at pages, not at redirects.
 The editor keeps them up to date by itself (`src/site/redirects.js`):
 
 - **Rename a page** (its SEO tab, Address): every path of its folder redirects to the new one, its
-  item pages with one pattern (`/people/:slug/` -> `/models/:slug/`). Links by id need
+  item pages with one pattern per level (`/people/:person/` -> `/models/:person/`,
+  `/people/:person/:year/` -> `/models/:person/:year/`). Links by id need
   nothing; an `href` that is such a path is updated; the toast says how many.
-- **Delete a page**: its paths redirect to its parent page (the default), another page, or
+- **Delete a page**: its paths redirect to its parent page (the default; past `[param]`
+  folders, to the nearest page with one URL), another page, or
   nowhere ("No redirect": the 404 page; links to it stay and the toast counts them). Page links
-  to it go to the page picked; item links to a deleted `[slug]` page's items stay (broken, the
+  to it go to the page picked; item links to a deleted `[param]` page's items stay (broken, the
   build warns).
 - **Change an item's slug** (Source Explorer; or its name, when it has no slug): Save adds a
   redirect from its old page; links by its id need nothing.
@@ -700,7 +715,7 @@ heading's title, else its folder name), `description`, `image` (share image), `n
 (not in search, not in `sitemap.xml`), `canonical` (a path or URL, when the page copies
 another; else its own URL).
 
-**Item pages** (`[slug].json`), least magic: the title is `<item name> | <section>` in the
+**Item pages** (`[param]/index.json`), least magic: the title is `<item name> | <section>` in the
 template; the description is the item's `body`, else the template's `meta.description`, else
 the site's; the share image is the item's cover, else the template's `meta.image`, else the
 site's. The template's `meta.noindex` hides every item page; an item with `"placeholder": true`
@@ -916,7 +931,7 @@ loads pages with `?draft=…`) always gets the site, so the editor never opens i
 
 Layout: the real site in a same-origin iframe, with a glass side panel. The page (or site part)
 being edited is named at the top of the Content and Motion tabs (`PageHead.svelte`): its title,
-its path under it, ← to the pages list (a path part: that folder); a `[slug]` page has an item
+its path under it, ← to the pages list (a path part: that folder); a `[param]` page has an item
 picker on the right for which item page the preview shows. Or click links in Preview.
 
 **Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
@@ -927,8 +942,9 @@ page title with its path under it (each part goes there) and, in a folder with s
 - at the top, **Site**: Header and Footer;
 - the folder's own page ("this page", `/`);
 - **Sub items**: its pages that are in the menu (`nav.json`), in the menu's order; the grip on
-  the left drags one to another place (that is the menu's order, one undo step). Its `[slug]`
-  page is pinned last (a lock, no grip). When its own page is off, the first one is tagged **As /**:
+  the left drags one to another place (that is the menu's order, one undo step). Its `[param]`
+  page is pinned last (a lock, no grip; a double click goes into it, where its own `[param]`
+  page can be added). When its own page is off, the first one is tagged **As /**:
   the folder's URL opens it;
 - **Not linked**: every page that isn't in the menu, the whole site's (**All**) or this
   folder's (**This folder**).
@@ -938,8 +954,9 @@ titles and paths as written. A click selects a row and shows it in the preview; 
 (or Enter) goes into a folder, or opens the page (its Sections, Transitions, SEO). A dot after a
 title: unsaved changes in its file; an eye: hidden from search. The link button puts a page in
 the menu or takes it out (Content › Header has the labels and dropdowns). **+** opens **Add page**
-(title -> URL name, In the menu: on from Sub items' +, off from Not linked's; or a **[slug] page**:
-a template with a source, one per folder, none at the top): a new folder with its `index.json`.
+(title -> URL name, In the menu: on from Sub items' +, off from Not linked's; or a **[param] page**:
+a template with a source and a param name, `[slug]` by default, one per folder, none at the
+top; in a `[param]` folder only this kind): a new folder with its `index.json`.
 **Delete** asks over the row: one line (the trash, then Cancel) when nothing links to it; a page in
 the menu or linked to gets a panel over the rows below (nothing moves) asking where visitors and
 links should go (its parent page by default, another page, or no redirect: its menu item goes
@@ -1032,7 +1049,7 @@ preview) edits `nav.json` and the header's labels (`strings.json` `nav`: the men
 buttons, the clock). The menu with its items: label,
 link (a page from the page tree, or External URL with its URL), ↑ / ↓ / Remove, **Add link**,
 and a dropdown: the items of a source, or **Dropdown links** (one level) and the
-"all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[slug]` page the **Item** dropdown next
+"all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[param]` page the **Item** dropdown next
 to the page picks which item's page the preview shows.
 
 The **Sources** button (the database icon next to the page dropdown, before Pages and Media) opens the Source Explorer on the files in `content/en/sources/` (with their
@@ -1133,7 +1150,7 @@ These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-block`,
 
 - **Content checks** (`src/site/validate.js`): broken JSON in a content file stops the build and
   the dev server with the file, line and column (the editor shows the same error). Save checks
-  the shape of every file first (pages are objects, a `[slug]` page names its source, sources
+  the shape of every file first (pages are objects, a `[param]` page names its source, sources
   are lists of objects, `site.json` has `name` and `url`, `animations.json` has `presets`,
   `targets` and `transitions`) and writes nothing when one is wrong; files are written to a
   temporary file and renamed, so a crash never leaves half a file.

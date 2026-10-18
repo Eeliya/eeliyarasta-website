@@ -100,7 +100,7 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
   assert.ok(isBinding({ bind: 'a' }) && !isBinding('{{a}}') && !isBinding(''));
 });
 
-test('item resolution: the block item, else the [slug] page item', () => {
+test('item resolution: the block item, else the [param] page item', () => {
   const daan = content.sources.people.find((p) => p.slug === 'daan-okafor');
   assert.deepEqual(itemOf(content, {}, { item: { source: 'people', id: 'p-3pdk' } }), {
     item: daan,
@@ -110,7 +110,7 @@ test('item resolution: the block item, else the [slug] page item', () => {
     item: noor,
     source: 'people',
   });
-  // the block's own item wins on a [slug] page too
+  // the block's own item wins on a [param] page too
   assert.equal(
     itemOf(content, { album: noor, kind: 'people' }, { item: { source: 'people', id: 'p-3pdk' } })
       .item,
@@ -120,7 +120,7 @@ test('item resolution: the block item, else the [slug] page item', () => {
   assert.equal(itemOf(content, {}, {}).item, null);
 });
 
-test('[slug] templates: the album title, facts and summary come from each item', () => {
+test('[param] templates: the album title, facts and summary come from each item', () => {
   for (const route of routes.filter((r) => r.album)) {
     const html = render.renderRoute(route, content).body;
     const a = route.album;
@@ -141,7 +141,7 @@ test('[slug] templates: the album title, facts and summary come from each item',
     const html = render.renderRoute(route, content, { editable: true }).body;
     assert.match(
       html,
-      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/photography\/people\/\[slug\]\.json#\/sections\/0\/blocks\/0\/title">/,
+      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/photography\/people\/\[person\]\/index\.json#\/sections\/0\/blocks\/0\/title">/,
     );
     assert.doesNotMatch(html, /data-edit="[^"]*#\/sections\/0\/blocks\/0\/title"/);
   } finally {

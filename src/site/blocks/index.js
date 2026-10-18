@@ -27,7 +27,7 @@
  *                     | 'text' | 'boolean'; every block also has config.enabled (on/off)
  *   defaults  a new block of this type (Add block)
  *   check(block)  optional: more problems than the fields' types (src/site/validate.js)
- *   item      shows the item of a [slug] page (ctx.route.album): only on those pages
+ *   item      shows the item of a [param] page (ctx.route.album): only on those pages
  *   render(block, ctx, b)  its HTML, one root element. b: { id, file, number, ed }: the
  *             block's id, the page file, its number among the page's numbered headings and
  *             ed(field or path, type), the editor marker of one of its fields

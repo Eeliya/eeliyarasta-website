@@ -2,7 +2,7 @@
   Content > Transitions: the page's curtain, plain fields under a "Curtain" heading. Global (the
   site's curtain, its timing in Settings) or Off (no curtain when you navigate here: a fade),
   and the curtain's text: unset, the page's title (the placeholder); ✕ stores "" (No label:
-  none). A [slug] page: the choice is for every item page (its template), the
+  none). A [param] page: the choice is for every item page (its template), the
   text is the item's in the preview. One undo step each.
     live  reactive store; onsettings  open Settings (the curtain's timing)
 -->

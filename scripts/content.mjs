@@ -34,7 +34,7 @@ export function writeFileAtomic(file, text) {
 
 /**
  * JSON files under dir, recursively, as paths relative to it with "/" separators
- * ("people.json", "people/[slug].json"), sorted.
+ * ("people.json", "people/[person]/index.json"), sorted.
  */
 export function walkJson(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -47,7 +47,7 @@ export function walkJson(dir) {
   return out.sort();
 }
 
-/** Every content file as { "pages/index.json": data, "pages/people/[slug].json": data, ... }. */
+/** Every content file as { "pages/index.json": data, "pages/people/[person]/index.json": data, ... }. */
 export function readContentDir(root) {
   const dir = path.join(root, 'content/en');
   const files = {};

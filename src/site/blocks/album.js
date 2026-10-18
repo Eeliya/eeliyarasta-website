@@ -1,8 +1,8 @@
 /**
- * The album block of a [slug] page: the page's item (one person or place), Faint Film
+ * The album block of a [param] page: the page's item (one person or place), Faint Film
  * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
  * drag / wheel navigation and a Slider ⇄ Grid toggle. Its photos are the item of the page it
- * is on (ctx.route.album), so it only makes sense on a [slug] page (item: true). See ./index.js.
+ * is on (ctx.route.album), so it only makes sense on a [param] page (item: true). See ./index.js.
  * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "title" },
  * the facts ("Role" / { "bind": "role" }; a fact whose value is empty is left out, "Photos" and the
  * count always come last) and the body { "bind": "body" }.

@@ -6,21 +6,22 @@
  *   own        the folder's own page ("this page"), unless it is turned off ("ownPage": false:
  *              its URL opens its first sub page, src/site/routes.js); home is always its own
  *   sub        "Sub items": the pages in the folder that are in the menu (nav.json), in the
- *              menu's order, then its [slug] page (pinned last)
+ *              menu's order, then its [param] page (pinned last;
+ *              a [param] folder holds only another one)
  *   notLinked  every page not in the menu, the whole site's (filter 'all') or the folder's
  *              ('here': in it, at any depth)
  * A row: { id, pid, title, path, seg (what the row shows: its own segment under the folder,
- * else the full path), kids (pages directly in its folder), linked, template, fixed (home and
+ * else the full path), kids (pages directly in its folder), linked, template, nested (a
+ * [param] page in one: the outer folder's name), fixed (home and
  * 404: never deleted), noindex, asRoot (the folder's URL opens it) }.
  *
  * The menu edits (link, unlink, move) take nav.json's data and return a changed copy (null:
  * not possible). Items of the menu are { label, page } (hrefs.js); dropdowns go one level deep.
  */
-import { NAV, TEMPLATE, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
+import { NAV, isTemplate, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
 import { navOrder, pageTitle, parentId, pathOfId, titleCase } from '../../site/routes.js';
 
 export const FIXED = ['home', '404'];
-const isTemplate = (id) => id === TEMPLATE || id.endsWith(`/${TEMPLATE}`);
 const nameOf = (id) => id.slice(id.lastIndexOf('/') + 1);
 const join = (level, name) => (level ? `${level}/${name}` : name);
 
@@ -34,19 +35,29 @@ export const pageIds = (files) =>
 /** The page a level opens: its id ('' is home's folder: home). */
 export const levelPage = (level) => level || 'home';
 
-/** A page's title: its meta.title, its first heading's, else its name ("[slug]" for templates). */
+/** A page's title: its meta.title, its first heading's, else its name ("[person]" for templates). */
 export function titleOf(files, id) {
   if (id === 'home') return 'Home';
-  if (isTemplate(id)) return TEMPLATE;
+  if (isTemplate(id)) return nameOf(id);
   const d = files[pageFile(id)] || {};
   return d.meta?.title || pageTitle(d) || titleCase(nameOf(id));
 }
 
+/** A page's path as the editor shows it: "/people/[person]/" (routes.js: "/people/:person/"). */
+export const shownPath = (id) => pathOfId(id).replace(/:([a-z][a-z0-9-]*)/g, '[$1]');
+
+/** Where a deleted page redirects by default: its parent page, past [param] ones (many URLs). */
+export function parentPath(id) {
+  let up = parentId(id);
+  while (isTemplate(up)) up = parentId(up);
+  return pathOfId(up || 'home');
+}
+
 /** The path a row shows at `level`: its own segment under the folder, else the full path. */
 export function segOf(id, level) {
-  const path = isTemplate(id) ? `${pathOfId(id)}‹slug›/` : pathOfId(id);
+  const path = shownPath(id);
   if (!level) return path;
-  const base = pathOfId(level);
+  const base = shownPath(level);
   return path.startsWith(base) && path !== base ? path.slice(base.length) : path;
 }
 
@@ -79,6 +90,8 @@ export function levelOf(files, level, filter = 'all') {
       kids: kids(id).length,
       linked: linked(id),
       template,
+      // a [param] page in one: its pages are per outer page ("[person]")
+      nested: template && isTemplate(parentId(id)) ? nameOf(parentId(id)) : null,
       items: Array.isArray(items) ? items.length : undefined,
       fixed: FIXED.includes(id),
       noindex: !!d.meta?.noindex,
@@ -107,7 +120,7 @@ export function levelOf(files, level, filter = 'all') {
     level,
     id,
     title: titleOf(files, id),
-    path: pathOfId(id),
+    path: shownPath(id),
     own: on ? { ...row(id), seg: '/', self: true } : null,
     canOwn:
       !!level &&

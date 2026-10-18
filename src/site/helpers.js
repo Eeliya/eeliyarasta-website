@@ -95,14 +95,19 @@ export const itemSlug = (item, schema) => {
 
 /**
  * URL of a source item's page, from the routes (ctx.routes): the template route of its
- * source (content/en/pages/<folder>/[slug].json) or the fixed page that replaced it.
+ * source (content/en/pages/<folder>/[param]/index.json) or the fixed page that replaced it.
  * itemHref(ctx, 'people', item) -> "/photography/people/noor-vermeer/"; "#" (and a warning) when no
  * template shows that source.
  */
 export const itemHref = (ctx, source, item) => {
-  const tpl = (ctx.routes || []).find((r) => r.source === source && r.template);
-  if (tpl) return `${tpl.parent}${itemSlug(item, schemaOf(ctx, source))}/`;
-  warnOnce(`no [slug].json page shows source "${source}": its links go nowhere`, 'routes');
+  const routes = (ctx.routes || []).filter((r) => r.source === source && r.template);
+  // its own page (in a template in a template, the first one it has)
+  const own = item?.id && routes.find((r) => r.album?.id === item.id);
+  if (own) return own.path;
+  // else (a fixed page replaced it): its slug under the template's folder, at the top level
+  const top = routes.find((r) => Object.keys(r.params || {}).length <= 1);
+  if (top) return `${top.parent}${itemSlug(item, schemaOf(ctx, source))}/`;
+  warnOnce(`no [param] page shows source "${source}": its links go nowhere`, 'routes');
   return '#';
 };
 

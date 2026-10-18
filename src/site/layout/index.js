@@ -1,7 +1,7 @@
 /**
  * The layout engine: every page is a list of sections, each a grid of 120 square cells wide,
  * holding blocks
- * ("sections" in its file, content/en/pages/<page>/index.json or a template's [slug].json):
+ * ("sections" in its file, content/en/pages/<page>/index.json or a template's [param]/index.json):
  *
  *   { "id": "s-k3x9", "name": "Our people",
  *     "blocks": [{ "id": "b-7qpa", "type": "heading", "title": "People",
@@ -50,7 +50,7 @@
  *   motion   optional { anim, ...timing }: its animation from the library and its own timing
  *            (./motion.js)
  *   item     optional { source, slug }: the source item its bound fields show (./bindings.js;
- *            on a [slug] page they show the page's item without one)
+ *            on a [param] page they show the page's item without one)
  * Positions become CSS variables on the elements; src/client/styles/_layout.scss lays them out.
  */
 import { esc, ed, editRef, editable, slugify, warnOnce } from '../helpers.js';
@@ -302,7 +302,10 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
     return '';
   }
   if (t.item && !route.album) {
-    warnOnce(`${where}: a "${t.type}" block only works on a [slug] page: skipped`, 'layout');
+    warnOnce(
+      `${where}: a "${t.type}" block only works on a [param] page (an item page): skipped`,
+      'layout',
+    );
     return '';
   }
   const parts = (path) => ['sections', at, 'blocks', j, ...[path].flat()];
@@ -348,7 +351,7 @@ export function renderSection(ctx, route, file, section, at, numbers = {}) {
   return `<section${anchor ? ` id="${anchor}"` : ''} class="${sectionClass(section)}"${marker} style="${sectionVars(section)}"${hidden}>${blocks}</section>`;
 }
 
-/** The sections of a page file, rendered in order. route: the page's route (route.album on [slug] pages). */
+/** The sections of a page file, rendered in order. route: the page's route (route.album on [param] pages). */
 export function renderSections(ctx, route, file, sections) {
   const list = Array.isArray(sections) ? sections : [];
   const numbers = headingNumbers(list);

@@ -86,11 +86,12 @@ test('checkContent per kind', () => {
     ['"sections" must be an array, not an object'],
   );
   assert.equal(
-    checkContent('pages/people/[slug].json', { version: 1, kind: 'page', id: 'pg-t043' }).length,
+    checkContent('pages/people/[person]/index.json', { version: 1, kind: 'page', id: 'pg-t043' })
+      .length,
     1,
   );
   assert.deepEqual(
-    checkContent('pages/people/[slug].json', {
+    checkContent('pages/people/[person]/index.json', {
       version: 1,
       kind: 'page',
       id: 'pg-t044',
@@ -181,7 +182,7 @@ test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async 
     [],
     [1, 2],
     [{ a: 1 }],
-    [{ from: '/people/x/:slug/', to: '/people/' }], // redirects.json with one redirect
+    [{ from: '/people/x/:person/', to: '/people/' }], // redirects.json with one redirect
     [{ a: 1 }, { b: 2 }],
     [
       { a: 1, b: 2 },
@@ -195,8 +196,8 @@ test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async 
     { r: [{ from: '/a', to: '/b' }], x: [1, 'b'] },
     [{ a: { b: 1 } }],
     // at the width: a line of exactly 100 columns fits as the last entry, not with a comma after
-    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:slug/`, to: `/${'y'.repeat(17)}/` }] },
-    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:slug/`, to: `/${'y'.repeat(17)}/` }], z: 1 },
+    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:person/`, to: `/${'y'.repeat(17)}/` }] },
+    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:person/`, to: `/${'y'.repeat(17)}/` }], z: 1 },
   ];
   for (const v of cases) {
     const text = formatJSON(v);

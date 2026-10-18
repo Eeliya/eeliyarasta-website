@@ -19,7 +19,7 @@ import {
   SITE,
   STRINGS,
   VERSION,
-  TEMPLATE,
+  isTemplate,
   isSlug,
   pageIdOf,
   DOC_KINDS,
@@ -232,17 +232,22 @@ function checkDoc(file, d) {
   const t = d.transition;
   if (t !== undefined && !(isObject(t) && t.preset === 'none' && Object.keys(t).length === 1))
     out.push('"transition" must be { "preset": "none" } or left out (the site\'s curtain)');
-  const template = pageIdOf(file).endsWith(TEMPLATE);
+  const template = isTemplate(pageIdOf(file));
   if (template && typeof d.template?.source !== 'string')
-    out.push('"template.source" must name a source (a [slug] page makes a page per item)');
-  else if (isObject(d.template) && Object.keys(d.template).some((k) => k !== 'source'))
-    out.push('"template" has only "source"');
-  if (!template && d.template !== undefined) out.push('"template" is only for [slug] pages');
+    out.push('"template.source" must name a source (a [param] page makes a page per item)');
+  else if (
+    isObject(d.template) &&
+    Object.keys(d.template).some((k) => !['source', 'key'].includes(k))
+  )
+    out.push('"template" has only "source" and "key"');
+  else if (d.template?.key !== undefined && (typeof d.template.key !== 'string' || !d.template.key))
+    out.push('"template.key" must name a field of the source (its value is the URL part)');
+  if (!template && d.template !== undefined) out.push('"template" is only for [param] pages');
   // its folder's URL opens its first sub page instead (routes.js)
   if (d.ownPage !== undefined && d.ownPage !== false)
     out.push('"ownPage" must be false (the folder opens its first sub page) or left out');
   if (d.ownPage !== undefined && (template || ['home', '404'].includes(pageIdOf(file))))
-    out.push('"ownPage" is only for a folder\'s own page (not home, 404 or a [slug] page)');
+    out.push('"ownPage" is only for a folder\'s own page (not home, 404 or a [param] page)');
   return [...out, ...checkSections(d.sections)];
 }
 

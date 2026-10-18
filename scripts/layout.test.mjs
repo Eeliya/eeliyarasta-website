@@ -192,7 +192,7 @@ test('render: editor markers point into the blocks, only when editable', () => {
   }
 });
 
-test('render: an unknown type, or an item type off a [slug] page, warns and is skipped', () => {
+test('render: an unknown type, or an item type off a [param] page, warns and is skipped', () => {
   const [out, seen] = warnings(() =>
     renderSections(ctxOf(page), page, F, [
       section([block('nope'), block('album'), block('text', { body: 'x' })]),
@@ -201,7 +201,7 @@ test('render: an unknown type, or an item type off a [slug] page, warns and is s
   assert.doesNotMatch(out, /data-album/);
   assert.match(out, /<p>x<\/p>/);
   assert.match(seen.join('\n'), /unknown block type "nope"/);
-  assert.match(seen.join('\n'), /"album" block only works on a \[slug\] page/);
+  assert.match(seen.join('\n'), /"album" block only works on a \[param\] page/);
   assert.match(render.renderRoute(item, content).body, /data-album/);
 });
 
@@ -364,7 +364,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   assert.match(html, /Edited headline/);
   assert.match(html, /data-edit="pages\/about\/index\.json#\/sections\/0\/blocks\/0\/title"/);
   assert.match(html, /<\/section>$/);
-  // the item of a [slug] page
+  // the item of a [param] page
   const slug = routes.find((r) => r.album);
   const tpl = content.pages[slug.id];
   const out = renderOp(
@@ -373,7 +373,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
     {},
     {
       path: slug.path,
-      file: `pages/${slug.id}.json`,
+      file: `pages/${slug.id}/index.json`,
       data: tpl,
       ids: [tpl.sections[0].id],
     },

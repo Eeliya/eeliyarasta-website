@@ -192,7 +192,7 @@ test('routes: slug and title from the schema', () => {
   };
   const c = contentFromFiles({
     'settings/site.json': { name: 'Site', titleTemplate: '{page} | {site}' },
-    'pages/bands/[slug].json': { template: { source: 'bands' }, section: 'Bands' },
+    'pages/bands/[band]/index.json': { template: { source: 'bands' }, section: 'Bands' },
     'sources/bands.json': {
       version: 1,
       kind: 'page',

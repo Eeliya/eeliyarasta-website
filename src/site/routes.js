@@ -3,14 +3,27 @@
  * static HTML file per route; the client router fetches those same files.
  *
  * Routes come from content/en/pages/: every page is a folder, its URL, with the page's own
- * file index.json inside (page ids: "home", "people", "people/whatever", "people/[slug]"):
+ * file index.json inside (page ids: "home", "people", "people/whatever", "people/[person]"):
  *
- *   pages/index.json                   /                  home (pages/404/index.json is 404.html)
- *   pages/people/index.json            /people/
- *   pages/people/[slug].json           /people/<slug>/    a template: one page per item of its
- *                                                         source ({ "template": { "source": "people" } })
- *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
- *                                                         slug, this one wins over the template
+ *   pages/index.json                     /                 home (pages/404/index.json is 404.html)
+ *   pages/people/index.json              /people/
+ *   pages/people/whatever/index.json     /people/whatever/ a fixed page; when an item has the
+ *                                                          same slug, this one wins over the template
+ *   pages/people/[person]/index.json     /people/<slug>/   a template ([param] folder): one page per
+ *                                                          item of its source
+ *                                                          ({ "template": { "source": "people" } })
+ *   pages/people/[person]/[year]/index.json
+ *                                        /people/<slug>/<year>/  a template in a template: for
+ *                                                          each page of the one around it, one per
+ *                                                          item of its own source
+ *
+ * Params: a template's folder name is its param ("[person]": person), its URL part the item's
+ * slug, or with "key" in its template the value of that field ({ "source": "photos", "key":
+ * "year" }: one page per year, the year's first item its item). In a template inside another,
+ * the items are those whose field named after an outer param (a "person" field) holds that
+ * page's slug or its item's id, when the source has such a field; else all of them. A [param]
+ * folder holds only its page and maybe one more [param] folder. Item pages get `params`
+ * ({ person: "eeliya", year: "2018" }), `items` (each param's item) and `album` (their own).
  *
  * A folder's own page can be turned off ("ownPage": false in its index.json): its URL then
  * redirects (302) to its first sub page, the first one in the menu (nav.json) or else the first
@@ -25,13 +38,13 @@
  * Search and share meta (src/site/seo.js): a page's title is its meta.title, else its first
  * heading's title, else its folder name, in the site's titleTemplate (home: meta.title, else
  * site.title, in full); description, image, canonical and noindex come from its "meta".
- * A [slug] page: "<item name> | <section>", the item's body and cover, else the template's
+ * A [param] page: "<item name> | <section>", the item's body and cover, else the template's
  * meta.description / meta.image; its meta.noindex keeps every item page out.
  * Routes with noindex (404, meta.noindex, items with "placeholder": true, or site.json
  * "robots": "noindex") get <meta name="robots" content="noindex"> and stay out of sitemap.xml.
  */
-import { TEMPLATE, isSlug, pageFile, sourceFile } from './files.js';
-import { coverOf, editRef, itemSlug } from './helpers.js';
+import { isParam, isSlug, isTemplate, pageFile, paramOf, sourceFile } from './files.js';
+import { coverOf, editRef, itemSlug, slugify } from './helpers.js';
 import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
@@ -57,9 +70,17 @@ export const NAMED_VIEWS = {
   404: 'notFound',
 };
 
-/** "people/[slug]" -> "/people/", "about" -> "/about/", "home" -> "/". */
+/**
+ * A page's path: "about" -> "/about/", "home" -> "/"; a template's is its pattern, a param as
+ * ":name": "people/[person]" -> "/people/:person/" (the redirects' patterns read the same).
+ */
 export const pathOfId = (id) =>
-  id === 'home' ? '/' : `/${id.replace(/(^|\/)\[slug\]$/, '')}/`.replace(/\/+$/, '/');
+  id === 'home' || id === ''
+    ? '/'
+    : `/${id
+        .split('/')
+        .map((s) => (isParam(s) ? `:${paramOf(s)}` : s))
+        .join('/')}/`;
 
 /** A page's title: its first heading block's title (blocks/pages.js), else undefined. */
 export const pageTitle = (page) => {
@@ -91,7 +112,7 @@ export const titleCase = (s) =>
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
-/** A [slug] page's section label: its folder's page title ("People"), else its source's name. */
+/** A [param] page's section label: its folder's page title ("People"), else its source's name. */
 export const templateSection = (folderPage, source) =>
   pageTitle(folderPage || {}) || titleCase(source);
 
@@ -99,8 +120,8 @@ export const templateSection = (folderPage, source) =>
 const byTree = (a, b) => {
   const rank = (id) => (id === 'home' ? 0 : id === '404' ? 2 : 1);
   if (rank(a) !== rank(b)) return rank(a) - rank(b);
-  const pa = a.split('/').map((s) => (s === TEMPLATE ? '\uffff' : s));
-  const pb = b.split('/').map((s) => (s === TEMPLATE ? '\uffff' : s));
+  const pa = a.split('/').map((s) => (isParam(s) ? '\uffff' : s));
+  const pb = b.split('/').map((s) => (isParam(s) ? '\uffff' : s));
   for (let i = 0; i < Math.min(pa.length, pb.length); i++)
     if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
   return pa.length - pb.length;
@@ -121,6 +142,7 @@ export function buildRoutes(content) {
   const ids = Object.keys(pages).sort(byTree);
   const exists = new Set(ids);
   const routes = [];
+  const memo = new Map();
 
   // Curtain text and transition of a page live in its own file, content/en/pages/<id>/index.json.
   const pageCurtain = (id, title) => ({
@@ -133,8 +155,12 @@ export function buildRoutes(content) {
   for (const id of ids) {
     const page = pages[id] || {};
     const segments = id.split('/');
-    if (segments.at(-1) === TEMPLATE) {
-      routes.push(...templateRoutes(id, page));
+    if (isTemplate(id)) {
+      routes.push(...instancesOf(id).map((at) => itemRoute(id, page, at)));
+      continue;
+    }
+    if (segments.some(isParam)) {
+      warnings.push(`${pageFile(id)}: a [param] folder holds only another [param] folder: no page`);
       continue;
     }
     const meta = page.meta || {};
@@ -172,69 +198,110 @@ export function buildRoutes(content) {
   }
   return { routes, warnings };
 
-  function templateRoutes(id, tpl) {
+  /**
+   * The pages of template `id`, memoized: [{ path, params, items, item, index, slug, parent,
+   * parentName }], for every page of the folder around it (one, or a template's pages).
+   */
+  function instancesOf(id) {
+    if (memo.has(id)) return memo.get(id);
+    memo.set(id, []); // a loop can't recurse
+    const out = [];
+    const up = parentId(id);
     const file = pageFile(id);
-    const parent = pathOfId(id);
-    const folder = id.slice(0, -TEMPLATE.length); // "people/"
-    const source = tpl.template?.source;
+    const tpl = pages[id] || {};
+    const { source, key } = tpl.template || {};
     const list = sources[source];
-    if (!Array.isArray(list)) {
+    const outer = isTemplate(up)
+      ? instancesOf(up)
+      : [{ path: pathOfId(up || 'home'), params: {}, items: {} }];
+    if (!up) warnings.push(`${file}: no [param] folder at the root: no pages`);
+    else if (!Array.isArray(list))
       warnings.push(`${file}: template.source "${source ?? ''}" is not a source list`);
-      return [];
-    }
-    const section = templateSection(pages[folder.slice(0, -1)], source);
+    if (!up || !Array.isArray(list)) return out;
     const schema = schemaOf(content, source);
-    const meta = tpl.meta || {}; // defaults of its item pages
-    const seen = new Set();
-    const items = [];
-    list.forEach((item, index) => {
-      const slug = itemSlug(item, schema);
-      const label = `sources/${source}.json item ${index + 1}`;
-      if (!slug) {
-        const name = itemTitle(item, schema);
-        return warnings.push(
-          name
-            ? `${label}: name "${name}" makes no slug, add a "${schema.slug || 'slug'}": no page`
-            : `${label} has no slug or name: no page`,
+    const fields = new Set((schema.fields || []).map((f) => f.key));
+    const param = paramOf(id.split('/').at(-1));
+    for (const at of outer) {
+      // in a template in a template: the items that name the outer pages (a "person" field)
+      const mine = (item) =>
+        Object.entries(at.params).every(
+          ([p, slug]) =>
+            !fields.has(p) || [slug, at.items[p]?.id].includes(String(item?.[p] ?? '')),
         );
-      }
-      if (!isSlug(slug)) return warnings.push(`${label}: slug "${slug}" is not valid: no page`);
-      if (seen.has(slug))
-        return warnings.push(`${label}: duplicate slug "${slug}": no page for this one`);
-      seen.add(slug);
-      items.push({ item, index, slug, path: `${parent}${slug}/` });
-    });
-    return items
-      .filter(({ slug }) => !exists.has(folder + slug)) // a fixed page wins over the template
-      .map(({ item, index, slug, path }) => {
-        const name = itemTitle(item, schema) ?? slug;
-        const title = fillTitle(site, `${name} | ${section}`);
-        return {
-          path,
-          id,
-          page: tpl.view || 'album',
-          template: file,
-          source,
-          kind: source,
-          slug,
-          name,
-          parent,
-          section,
-          album: item,
+      const seen = new Set();
+      list.forEach((item, index) => {
+        if (!mine(item)) return;
+        const label = `sources/${source}.json item ${index + 1}`;
+        const slug = key ? slugify(String(item?.[key] ?? '')) : itemSlug(item, schema);
+        if (!slug) {
+          if (key) return warnings.push(`${label}: no "${key}" for ${pathOfId(id)}: no page`);
+          const name = itemTitle(item, schema);
+          return warnings.push(
+            name
+              ? `${label}: name "${name}" makes no slug, add a "${schema.slug || 'slug'}": no page`
+              : `${label} has no slug or name: no page`,
+          );
+        }
+        if (!isSlug(slug)) return warnings.push(`${label}: slug "${slug}" is not valid: no page`);
+        if (seen.has(slug)) {
+          // keyed: one page per value, its first item; by slug: two items, one URL
+          if (!key) warnings.push(`${label}: duplicate slug "${slug}": no page for this one`);
+          return;
+        }
+        seen.add(slug);
+        if (exists.has(`${up}/${slug}`)) return; // a fixed page wins over the template
+        out.push({
+          name: (key ? String(item[key]) : itemTitle(item, schema)) ?? slug,
+          path: `${at.path}${slug}/`,
+          params: { ...at.params, [param]: slug },
+          items: { ...at.items, [param]: item },
+          item,
           index,
-          file: sourceFile(source),
-          title,
-          description: item.body || meta.description || site.description,
-          image: coverOf(item) || meta.image || undefined,
-          // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
-          noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
-          curtain: curtainOf(item.curtainText, title),
-          curtainEdit: editRef(sourceFile(source), ['items', index, 'curtainText']),
-          // one curtain choice for every item page: its template's
-          transition: tpl.transition,
-          transitionEdit: editRef(file, ['transition']),
-        };
+          slug,
+          parent: at.path,
+          parentName: at.name,
+        });
       });
+    }
+    memo.set(id, out);
+    return out;
+  }
+
+  function itemRoute(id, tpl, at) {
+    const file = pageFile(id);
+    const source = tpl.template?.source;
+    const meta = tpl.meta || {}; // defaults of its item pages
+    // its section: the page around it ("People"), or in a template the item around it
+    const section = at.parentName ?? templateSection(pages[parentId(id)], source);
+    const { item, index, slug, name } = at;
+    const title = fillTitle(site, `${name} | ${section}`);
+    return {
+      path: at.path,
+      id,
+      page: tpl.view || 'album',
+      template: file,
+      source,
+      kind: source,
+      slug,
+      params: at.params,
+      items: at.items,
+      name,
+      parent: at.parent,
+      section,
+      album: item,
+      index,
+      file: sourceFile(source),
+      title,
+      description: item.body || meta.description || site.description,
+      image: coverOf(item) || meta.image || undefined,
+      // Placeholder items (stock photos) are not for search engines: noindex, no sitemap.
+      noindex: siteNoindex || !!meta.noindex || !!item.placeholder,
+      curtain: curtainOf(item.curtainText, title),
+      curtainEdit: editRef(sourceFile(source), ['items', index, 'curtainText']),
+      // one curtain choice for every item page: its template's
+      transition: tpl.transition,
+      transitionEdit: editRef(file, ['transition']),
+    };
   }
 }
 

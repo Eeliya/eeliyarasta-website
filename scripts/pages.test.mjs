@@ -8,7 +8,7 @@ import { rowsOf } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
 import { read } from './test-layout.mjs';
 
-/** content/ in a temp dir: home, 404, about, people (+ [slug] and team) and a people source. */
+/** content/ in a temp dir: home, 404, about, people (+ [person] and team) and a people source. */
 function site() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pages-'));
   const put = (f, data) => {
@@ -20,7 +20,7 @@ function site() {
   put('pages/404/index.json', { version: 1, kind: 'page', id: 'pg-t036' });
   put('pages/about/index.json', { version: 1, kind: 'page', id: 'pg-t037', title: 'About' });
   put('pages/people/index.json', { version: 1, kind: 'page', id: 'pg-t038', title: 'People' });
-  put('pages/people/[slug].json', {
+  put('pages/people/[person]/index.json', {
     version: 1,
     kind: 'page',
     id: 'pg-t039',
@@ -72,22 +72,22 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
     assert.equal(pagesOp(root, { op: 'add', name }).status, 400, name); // reserved at the root
   assert.equal(pagesOp(root, { op: 'add', parent: 'nope', name: 'x' }).status, 400);
   assert.equal(pagesOp(root, { op: 'add', parent: '../x', name: 'x' }).status, 400);
-  assert.equal(pagesOp(root, { op: 'add', parent: 'people/[slug]', name: 'x' }).status, 400);
+  assert.equal(pagesOp(root, { op: 'add', parent: 'people/[person]', name: 'x' }).status, 400);
 });
 
-test('template: [slug].json in a page folder, one per folder, not at the root', () => {
+test('template: [param]/index.json in a page folder, one per folder, not at the root', () => {
   const root = site();
   assert.equal(pagesOp(root, { op: 'template', source: 'people' }).status, 400);
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'nope' }).status, 400);
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
-  assert.deepEqual(r.body.created, ['pages/about/[slug].json']);
-  assert.deepEqual(read(root, 'pages/about/[slug].json').template, { source: 'people' });
+  assert.deepEqual(r.body.created, ['pages/about/[slug]/index.json']);
+  assert.deepEqual(read(root, 'pages/about/[slug]/index.json').template, { source: 'people' });
   // what the editor writes passes the validator (its Save refuses anything else)
   assert.deepEqual(
-    checkContent('pages/about/[slug].json', read(root, 'pages/about/[slug].json')),
+    checkContent('pages/about/[slug]/index.json', read(root, 'pages/about/[slug]/index.json')),
     [],
   );
-  const [album] = read(root, 'pages/about/[slug].json').sections;
+  const [album] = read(root, 'pages/about/[slug]/index.json').sections;
   assert.deepEqual(
     album.blocks.map((b) => b.type),
     ['album'],
@@ -102,19 +102,19 @@ test('rename moves the whole folder; a built-in view is kept', () => {
   assert.equal(r.status, 200);
   assert.equal(r.body.id, 'models');
   assert.deepEqual(r.body.created.sort(), [
-    'pages/models/[slug].json',
+    'pages/models/[person]/index.json',
     'pages/models/index.json',
     'pages/models/team/index.json',
   ]);
   assert.deepEqual(r.body.removed.sort(), [
-    'pages/people/[slug].json',
+    'pages/people/[person]/index.json',
     'pages/people/index.json',
     'pages/people/team/index.json',
   ]);
   assert.equal(read(root, 'pages/models/index.json').view, undefined); // no built-in view
   assert.equal(read(root, 'pages/models/team/index.json').view, undefined);
   assert.equal(pagesOp(root, { op: 'rename', id: 'about', name: 'models' }).status, 400);
-  assert.equal(pagesOp(root, { op: 'rename', id: 'models/[slug]', name: 'x' }).status, 400);
+  assert.equal(pagesOp(root, { op: 'rename', id: 'models/[person]', name: 'x' }).status, 400);
   assert.equal(pagesOp(root, { op: 'rename', id: '404', name: 'x' }).status, 400);
   assert.equal(pagesOp(root, { op: 'rename', id: 'home', name: 'x' }).status, 400);
   // a page with a built-in view keeps it under its new name
@@ -124,8 +124,8 @@ test('rename moves the whole folder; a built-in view is kept', () => {
 
 test('delete removes the folder and everything in it; home and 404 stay', () => {
   const root = site();
-  assert.deepEqual(pagesOp(root, { op: 'delete', id: 'people/[slug]' }).body.removed, [
-    'pages/people/[slug].json',
+  assert.deepEqual(pagesOp(root, { op: 'delete', id: 'people/[person]' }).body.removed, [
+    'pages/people/[person]/index.json',
   ]);
   const r = pagesOp(root, { op: 'delete', id: 'people' });
   assert.deepEqual(r.body.removed.sort(), [
@@ -147,4 +147,32 @@ test('an unknown op says so (not "No page")', () => {
   const r = pagesOp(site(), { op: 'nuke', id: 'about' });
   assert.equal(r.status, 400);
   assert.equal(r.body.error, 'Unknown pages op "nuke"');
+});
+
+test('template in a template: a named [param] folder in a [param] folder, one per folder', () => {
+  const root = site();
+  const op = (o) => pagesOp(root, { op: 'template', source: 'people', ...o });
+  // its name: a param name, not one already in its URL
+  for (const param of ['Year', '1y', 'a_b', ''])
+    assert.equal(op({ parent: 'people/[person]', param }).status, 400, param);
+  assert.equal(op({ parent: 'people/[person]', param: 'person' }).status, 400);
+  assert.equal(op({ parent: 'people', param: 'other' }).status, 400); // people has [person]
+  const r = op({ parent: 'people/[person]', param: 'year', key: 'year' });
+  assert.equal(r.status, 200, r.body.error);
+  assert.deepEqual(r.body.created, ['pages/people/[person]/[year]/index.json']);
+  const data = read(root, 'pages/people/[person]/[year]/index.json');
+  assert.deepEqual(data.template, { source: 'people', key: 'year' });
+  assert.deepEqual(checkContent('pages/people/[person]/[year]/index.json', data), []);
+  assert.equal(op({ parent: 'people/[person]', param: 'month' }).status, 400); // one per folder
+  assert.equal(op({ parent: 'people/[person]', param: 'x', key: 'a b' }).status, 400);
+  // a page in a [param] folder: no
+  assert.equal(
+    pagesOp(root, { op: 'add', parent: 'people/[person]/[year]', name: 'x' }).status,
+    400,
+  );
+  // delete the outer one: both go
+  assert.deepEqual(pagesOp(root, { op: 'delete', id: 'people/[person]' }).body.removed.sort(), [
+    'pages/people/[person]/[year]/index.json',
+    'pages/people/[person]/index.json',
+  ]);
 });

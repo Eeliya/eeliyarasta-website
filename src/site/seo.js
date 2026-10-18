@@ -13,7 +13,7 @@
  *   lang           <html lang>
  * A page's own, in its file's "meta" (src/site/routes.js reads them into its route):
  *   title, description, image (a photo: media/ path or R2 key), noindex, canonical
- * [slug] pages: see routes.js (the item's name, summary and cover, then the template's meta).
+ * [param] pages: see routes.js (the item's name, summary and cover, then the template's meta).
  */
 import { altOf, isExternal, mediaUrl, photoOf } from './helpers.js';
 

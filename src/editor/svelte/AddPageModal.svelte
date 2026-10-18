@@ -1,6 +1,7 @@
 <!--
-  Add page (PagesList's +): a page in the folder shown, or its [slug] page (one page per item
-  of a source, at /folder/<slug>/). Title, the name in its URL (from the title, unless typed),
+  Add page (PagesList's +): a page in the folder shown, or its [param] page (one page per item
+  of a source, at /folder/[param]/; a [param] folder holds only another one, so in one only that
+  kind can be added). Title, the name in its URL (from the title, unless typed),
   In the menu (the group's + picks it: Sub items on, Not linked off). Adding goes to disk at
   once (actions.pagesOp); In the menu adds its menu item (an undo step, saved with Save).
 -->
@@ -9,10 +10,20 @@
   import { closeOnBackdrop } from '../lib/dialog.js';
   import Button from './Button.svelte';
   import Select from './Select.svelte';
-  import { NAV, TEMPLATE, isSlug, pageFile, pageIdOf, sourceIds } from '../../site/files.js';
-  import { pathOfId } from '../../site/routes.js';
+  import {
+    NAV,
+    isParamName,
+    isSlug,
+    isTemplate,
+    pageFile,
+    pageIdOf,
+    paramFolder,
+    paramsOf,
+    sourceIds,
+  } from '../../site/files.js';
+  import { parentId, pathOfId } from '../../site/routes.js';
   import { slugify } from '../../site/helpers.js';
-  import { childId, linkPage } from '../lib/page-tree.js';
+  import { childId, linkPage, shownPath } from '../lib/page-tree.js';
 
   // live: reactive store (live.svelte.js); actions: pagesOp (main.js)
   let { live, actions } = $props();
@@ -25,6 +36,7 @@
   let title = $state('');
   let name = $state('');
   let source = $state('');
+  let param = $state('');
   let linked = $state(true);
   let busy = $state(false);
 
@@ -44,24 +56,42 @@
             ? `"${slug}" is reserved`
             : '',
   );
-  // [slug] pages: in a page's folder (not the top, not 404), one per folder
+  // a [param] folder: only another [param] page in it
+  const noPage = $derived(
+    isTemplate(level) ? 'A [param] folder holds only another [param] page' : '',
+  );
+  // [param] pages: in a page's folder (not the top, not 404), one per folder
   const noTemplate = $derived(
     !level
       ? 'Not at the top: add it in a page'
       : level === '404'
         ? 'Not in 404'
-        : ids.includes(childId(level, TEMPLATE))
-          ? `${pathOfId(level)} has its [slug] page`
+        : ids.some((i) => isTemplate(i) && parentId(i) === level)
+          ? `${shownPath(level)} has its [param] page`
           : '',
   );
-  const ready = $derived(kind === 'page' ? !!slug && !error && !!title.trim() : !!source);
+  const paramName = $derived(param || 'slug');
+  const paramError = $derived(
+    !isParamName(paramName)
+      ? 'Use a-z first, then a-z, 0-9 and dashes'
+      : paramsOf(level).includes(paramName)
+        ? `[${paramName}] is in its URL already`
+        : '',
+  );
+  // where the item pages go: "/people/[person]/[year]/"
+  const templatePath = $derived(`${shownPath(level || 'home')}${paramFolder(paramName)}/`);
+  const ready = $derived(
+    kind === 'page'
+      ? !!slug && !error && !!title.trim() && !noPage
+      : !!source && !paramError && !noTemplate,
+  );
 
   /** Open it for folder `at` ('' = the top); `menu`: In the menu at the start. */
   export async function open({ level: at = '', linked: menu = true } = {}) {
     level = at;
     linked = menu;
-    kind = 'page';
-    title = name = '';
+    kind = isTemplate(at) ? 'template' : 'page';
+    title = name = param = '';
     source = sources[0] || '';
     dialog.showModal();
     await tick();
@@ -75,7 +105,7 @@
     const res = await actions.pagesOp(
       kind === 'page'
         ? { op: 'add', parent: level, name: slug, title: title.trim() }
-        : { op: 'template', parent: level, source },
+        : { op: 'template', parent: level, source, param: paramName },
     );
     busy = false;
     if (!res) return;
@@ -92,7 +122,7 @@
 <dialog class="modal__box apm" aria-label="Add page" bind:this={dialog} {@attach closeOnBackdrop}>
   <form onsubmit={add}>
     <h3 class="modal__title">Add page</h3>
-    <p class="hint small apm__where">In {pathOfId(level || 'home')}</p>
+    <p class="hint small apm__where">In {shownPath(level || 'home')}</p>
 
     <div class="seg" role="radiogroup" aria-label="Kind">
       <button
@@ -100,6 +130,8 @@
         role="radio"
         aria-checked={kind === 'page'}
         class={['seg__btn', kind === 'page' && 'is-active']}
+        disabled={!!noPage}
+        title={noPage || 'A page with its own URL'}
         onclick={() => (kind = 'page')}>Page</button
       >
       <button
@@ -109,7 +141,7 @@
         class={['seg__btn', kind === 'template' && 'is-active']}
         disabled={!!noTemplate}
         title={noTemplate || 'One page per item of a source'}
-        onclick={() => (kind = 'template')}>[slug] page</button
+        onclick={() => (kind = 'template')}>[param] page</button
       >
     </div>
 
@@ -147,9 +179,17 @@
             options={sources.map((s) => ({ value: s, label: s, hint: `sources/${s}.json` }))}
           />
         </div>
-        <p class="hint small apm__note">
-          One page per item of {source || 'the source'}, at /{level}/&lt;slug&gt;/ (the item's slug,
-          else its name). It is pinned last in Sub items.
+        <label class="tf">
+          <span class="tf__label">Param name</span>
+          <input
+            class={['tf__input', paramError && 'is-invalid']}
+            spellcheck="false"
+            bind:value={param}
+            placeholder="slug"
+          />
+        </label>
+        <p class={['hint small apm__note', paramError && 'is-error']}>
+          {paramError || `A page per item of ${source || 'the source'}: ${templatePath}`}
         </p>
       {/if}
     </div>

@@ -18,7 +18,7 @@ export const ui = $state({
   /** Footer status line, e.g. "Saved 2 files · 12:40:03". */
   status: '',
   /**
-   * Page menu items: the site parts (Header, Footer), then every page. A [slug] template is
+   * Page menu items: the site parts (Header, Footer), then every page. A [param] template is
    * one item with `template` (its page id) and `items` ([{ path, title }], its pages).
    */
   pages: [],

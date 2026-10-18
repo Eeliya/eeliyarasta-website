@@ -1,7 +1,7 @@
 <!--
   One block of the page (ui.block), in three tabs:
     Content  its item (the source item its bound fields show, src/site/layout/bindings.js; on
-             a [slug] page the page's own by default), settings and texts (GroupFields.svelte)
+             a [param] page the page's own by default), settings and texts (GroupFields.svelte)
              with each field's Source switch
     Layout   its size (rows, aspect, auto) and layer, for the desktop or the phone
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
@@ -17,7 +17,7 @@
   import ItemPicker from './ItemPicker.svelte';
   import Tabs from './Tabs.svelte';
   import { schemaFor, itemName } from './source-items.js';
-  import { TEMPLATE, sourceFile } from '../../site/files.js';
+  import { isTemplate, pageIdOf, sourceFile } from '../../site/files.js';
   import { itemSlug } from '../../site/helpers.js';
   import { BIND_TYPES, resolve } from '../../site/layout/bindings.js';
   import { ui } from './ui.svelte.js';
@@ -41,8 +41,8 @@
     return live.get(g.file, base) || {};
   });
 
-  // ---- its item: the block's own ({ source, slug }), else on a [slug] page the page's
-  const template = $derived(g.file.endsWith(`/${TEMPLATE}.json`));
+  // ---- its item: the block's own ({ source, slug }), else on a [param] page the page's
+  const template = $derived(isTemplate(pageIdOf(g.file) || ''));
   const pageSource = $derived(template ? live.get(g.file, '/template/source') : null);
   // (read on its own: the store changes a value in place, so `block` stays the same object)
   const ref = $derived.by(() => {
@@ -61,10 +61,14 @@
     return Array.isArray(list) ? list : [];
   });
   const slugOf = (it) => itemSlug(it, schema);
-  // the item the preview shows: the block's, or the [slug] page's (its path's last part)
+  // the item the preview shows: the block's, or the [param] page's (its route's, else its
+  // path's last part)
   const item = $derived.by(() => {
     if (ref) return items.find((it) => it?.id === ref.id) ?? null;
     if (!template) return null;
+    live.version;
+    const at = live.routeOf?.(ui.path)?.album?.id;
+    if (at) return items.find((it) => it?.id === at) ?? items[0] ?? null;
     const last = String(ui.path || '')
       .split('/')
       .filter(Boolean)

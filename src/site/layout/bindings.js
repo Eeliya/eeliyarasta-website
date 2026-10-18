@@ -8,7 +8,7 @@
  *                                           a text around the value ({value}; text fields only,
  *                                           an empty value leaves the whole field empty)
  *
- * The item: a block's own `item: { source, id }`, else the item of a [slug] page
+ * The item: a block's own `item: { source, id }`, else the item of a [param] page
  * (route.album). A binding without an item, or to a field the item's source doesn't have,
  * renders empty, and the build warns (bindingProblems). Values are escaped by the blocks as before: the
  * resolver only swaps values (resolveBlock, applied to every block before it renders).
@@ -19,7 +19,7 @@
  * source field types (src/site/schemas.js) fit each block field type.
  */
 import { schemaOf } from '../schemas.js';
-import { pageFile } from '../files.js';
+import { isTemplate, pageFile } from '../files.js';
 import { isObject } from '../is.js';
 import { eachBlock } from './ids.js';
 
@@ -183,7 +183,7 @@ export function bindingProblems(content, { types, files = null }) {
   for (const [id, page] of Object.entries(content?.pages || {})) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
-    const pageSource = id.endsWith('[slug]') ? page?.template?.source : null;
+    const pageSource = isTemplate(id) ? page?.template?.source : null;
     for (const [b, , at, j] of eachBlock(page?.sections)) {
       const t = types[b?.type];
       if (!t || !isObject(b)) continue;

@@ -4,7 +4,7 @@
     [ ← ]  Title                         [ item ▾ ]
            / photography/ people/
   ← opens the pages list (in the Content tab) where the page was opened (its own folder, or
-  the one it is in), a path part at that folder. A [slug] page picks which of its item pages the preview shows on the right.
+  the one it is in), a path part at that folder. A [param] page picks which of its item pages the preview shows on the right.
 -->
 <script>
   import Button from './Button.svelte';
@@ -28,10 +28,10 @@
   const crumbs = $derived.by(() => {
     if (!id) return [{ label: 'Site', level: null }];
     if (id === 'home') return [{ label: '/', level: '' }];
-    const own = t.template ? '‹slug›' : id.slice(id.lastIndexOf('/') + 1);
+    const own = id.slice(id.lastIndexOf('/') + 1); // a [param] page: "[person]"
     return [...crumbsOf(parentId(id)), { label: `${own}/`, level: null }];
   });
-  // a [slug] page: its menu entry's name ("People item"), not "[slug]"
+  // a [param] page: its menu entry's name ("People item"), not "[person]"
   const title = $derived(id && !t.template ? titleOf(files, id) : t?.title || '');
 
   // ←: the level it was opened from (its own folder or the one it is in), else the latter

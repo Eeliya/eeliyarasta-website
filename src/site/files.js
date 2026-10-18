@@ -4,8 +4,9 @@
  *
  *   content/en/pages/              one folder per page, its URL: the page's file is index.json in
  *                               it (pages/index.json is home, pages/people/index.json is
- *                               /people/), plus maybe [slug].json, a template page for every
- *                               item of a source (see src/site/routes.js)
+ *                               /people/); a folder named [param] ("[person]") is a template:
+ *                               a page per item of a source, one URL segment per item, and
+ *                               can hold one more [param] folder (see src/site/routes.js)
  *   content/en/sources/<id>.json   lists that grids pull from; the top level is a JSON array
  *   content/en/sources/<id>.schema.json  the fields of that list's items (src/site/schemas.js)
  *   content/en/settings/<id>.json  site-wide settings (site.json, nav.json: the menus,
@@ -35,14 +36,9 @@ export const ROOT_FILES = ['strings.json'];
 
 /**
  * The file of a page by id: "home" -> "pages/index.json", "people" -> "pages/people/index.json",
- * "people/[slug]" -> "pages/people/[slug].json".
+ * "people/[person]" -> "pages/people/[person]/index.json". Every page is a folder.
  */
-export const pageFile = (id) =>
-  id === 'home'
-    ? 'pages/index.json'
-    : id.endsWith('[slug]')
-      ? `pages/${id}.json`
-      : `pages/${id}/index.json`;
+export const pageFile = (id) => (id === 'home' ? 'pages/index.json' : `pages/${id}/index.json`);
 export const sourceFile = (id) => `sources/${id}.json`;
 export const schemaFile = (id) => `sources/${id}.schema.json`;
 const settingsFile = (id) => `settings/${id}.json`;
@@ -72,28 +68,56 @@ export const docOf = (content, file) =>
 
 /**
  * A page file's id (pageFile backwards): "pages/index.json" -> "home",
- * "pages/people/index.json" -> "people", "pages/people/[slug].json" -> "people/[slug]".
- * Null for anything else.
+ * "pages/people/index.json" -> "people", "pages/people/[person]/index.json" ->
+ * "people/[person]". Null for anything else.
  */
 export function pageIdOf(file) {
   if (file === 'pages/index.json') return 'home';
-  const m = /^pages\/(.+)\/(index|\[slug\])\.json$/.exec(file || '');
-  if (!m) return null;
-  return m[2] === 'index' ? m[1] : `${m[1]}/[slug]`;
+  const m = PAGE_FILE.exec(file || '');
+  return m ? m[1] : null;
 }
 
 /** A URL segment and file name: lowercase letters, digits and dashes ("noor-vermeer"). */
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = (s) => SLUG.test(String(s ?? ''));
 
-/** The name of a template page (pages/people/[slug].json) and the last part of its id. */
-export const TEMPLATE = '[slug]';
+/**
+ * URL params: a page folder named "[name]" ("[person]", "[year]") is a template, one page per
+ * item, the item's slug in that part of the URL. A param's name: a-z first, then a-z, 0-9, -.
+ */
+const PARAM_NAME = '[a-z][a-z0-9-]*';
+const PARAM = new RegExp(`^\\[(${PARAM_NAME})\\]$`);
+/** "[person]" -> "person"; null for any other folder name. */
+export const paramOf = (segment) => PARAM.exec(segment ?? '')?.[1] ?? null;
+/** Is a folder name a param's ("[person]")? */
+export const isParam = (segment) => paramOf(segment) !== null;
+/** Is page `id` a template (its own folder a [param]: "people/[person]")? */
+export const isTemplate = (id) =>
+  isParam(
+    String(id ?? '')
+      .split('/')
+      .at(-1),
+  );
+/** The params of page `id`, outermost first: "people/[person]/[year]" -> ["person", "year"]. */
+export const paramsOf = (id) =>
+  String(id ?? '')
+    .split('/')
+    .map(paramOf)
+    .filter(Boolean);
+/** A new template's folder name: param "person" -> "[person]". */
+export const paramFolder = (name) => `[${name}]`;
+/** Is `s` a valid param name ("person")? */
+export const isParamName = (s) => new RegExp(`^${PARAM_NAME}$`).test(String(s ?? ''));
 
 const NAME = '[a-z0-9][a-z0-9_-]*';
 const SOURCE = new RegExp(`^sources/(${NAME})\\.json$`, 'i');
 const SCHEMA = new RegExp(`^sources/(${NAME})\\.schema\\.json$`, 'i');
+// a page folder: a name, or a [param]
+const SEG = `(?:${NAME}|\\[${PARAM_NAME}\\])`;
+// the first part is a name: no [param] folder at the root
+const PAGE_FILE = new RegExp(`^pages/(${NAME}(?:/${SEG})*)/index\\.json$`);
 const CONTENT_FILE = new RegExp(
-  `^(?:strings|(?:sources|settings)/${NAME}|sources/${NAME}\\.schema|pages/(?:${NAME}/)*index|pages/(?:${NAME}/)+\\[slug\\])\\.json$`,
+  `^(?:strings|(?:sources|settings)/${NAME}|sources/${NAME}\\.schema|pages/(?:${NAME}/(?:${SEG}/)*)?index)\\.json$`,
   'i',
 );
 
@@ -107,8 +131,8 @@ export const schemaIdOf = (file) => SCHEMA.exec(file || '')?.[1] ?? null;
 
 /**
  * Editable content file name: sources/<name>.json and its sources/<name>.schema.json,
- * settings/<name>.json, and the page files: pages/index.json, pages/<folders>/index.json
- * and pages/<folders>/[slug].json. Nothing else.
+ * settings/<name>.json, and the page files: pages/index.json and pages/<folders>/index.json
+ * (a folder: a name or a [param]). Nothing else.
  */
 export const isContentFile = (file) => CONTENT_FILE.test(file || '');
 
@@ -117,7 +141,7 @@ export const baseName = (file) => String(file || '').replace(/^(pages|sources|se
 
 /**
  * Render context from content files keyed by path ({ "pages/index.json": data, ... }).
- * pages is keyed by page id ({ home, people, "people/[slug]", ... }), sources and schemas
+ * pages is keyed by page id ({ home, people, "people/[person]", ... }), sources and schemas
  * by source id. Sources that are not arrays stay as-is in `sources` (grids warn and render
  * empty).
  */

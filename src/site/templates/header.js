@@ -10,7 +10,7 @@
  *
  * An item with "children" (one level) or "items" (the items of a content/en/sources list) opens a
  * dropdown; "all" labels its link to the item's own page. Items of a source with pages of their
- * own (a [slug].json shows it) are listed with a photo and their photo count; other items (e.g.
+ * own (a [param] page shows it) are listed with a photo and their photo count; other items (e.g.
  * projects) by title and kind, linking to their spot on the item's page, or to their own site
  * when "linkOut" is on. The menu, close and clock labels are in strings.json "nav".
  */

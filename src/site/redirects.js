@@ -1,25 +1,34 @@
 /**
  * Redirects: content/en/settings/redirects.json, a list of { from, to, status? } (status 301, the
  * default, or 302). `from` is a path of the site ("/old/"), or a pattern for the item pages of
- * a template ("/old/:slug/"); `to` is a path ("/new/", "/new/:slug/") or a URL. The build writes
+ * a template ("/old/:person/", "/old/:person/:year/"); `to` is a path ("/new/",
+ * "/new/:person/") or a URL. The build writes
  * them to dist/_redirects (Cloudflare Pages and Netlify read it); the dev server ignores them.
  *
  * Kept up to date by the editor (scripts/editor-server.mjs, src/editor/main.js), with the
  * functions here:
  *   a page renamed   every path of its folder (its pages, and a pattern for the item pages of
- *                    a [slug] page in it) redirects to the new path
+ *                    a [param] page in it) redirects to the new path
  *   a page deleted   its paths redirect to a page (its parent by default), or go (no redirect)
  *   an item's slug   its old page redirects to the new one (on Save)
  * and in every case the content's links to the old paths follow (moveLinks), redirects that
  * pointed at an old path point at the new one (no chains), and redirects to themselves or
  * from a path that is a page (again) go (pruneRedirects).
  */
-import { PHOTOS, REDIRECTS, TEMPLATE, contentFromFiles } from './files.js';
+import { PHOTOS, REDIRECTS, contentFromFiles, isTemplate } from './files.js';
 import { getRoutes, pathOfId } from './routes.js';
 import { isExternal } from './helpers.js';
 
-/** "/people/:slug/": the paths of a template's item pages, as a redirect pattern. */
-const itemPattern = (id) => `${pathOfId(id)}:slug/`;
+/**
+ * "/people/:person/", "/people/:person/:year/": the paths of a template's item pages, as a
+ * redirect pattern (its path: routes.js pathOfId), one named placeholder per param.
+ */
+const itemPattern = (id) => pathOfId(id);
+/** Does path `p` fit pattern `pattern` ("/people/eeliya/" fits "/people/:person/")? */
+const fits = (pattern, p) =>
+  new RegExp(
+    `^${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[a-z][a-z0-9-]*/g, '[^/]+')}$`,
+  ).test(p);
 
 /** The redirect list of `files` (empty when there is none). */
 export const redirectsOf = (files) => {
@@ -36,15 +45,14 @@ export function pathKey(s) {
 /** An internal link: a path on the site ("/about/", "/projects/#x"), not "//host" or a URL. */
 const isPath = (s) => typeof s === 'string' && s.startsWith('/') && !s.startsWith('//');
 
-/** The pages of the site: every route's path (not 404) and a pattern per [slug] page. */
+/** The pages of the site: every route's path (not 404) and a pattern per [param] page. */
 export function pathsOf(content) {
   const paths = new Set(
     getRoutes(content)
       .filter((r) => r.out !== '404.html')
       .map((r) => r.path),
   );
-  for (const id of Object.keys(content.pages))
-    if (id.endsWith(TEMPLATE)) paths.add(itemPattern(id));
+  for (const id of Object.keys(content.pages)) if (isTemplate(id)) paths.add(itemPattern(id));
   return paths;
 }
 
@@ -63,7 +71,7 @@ function eachString(data, fn, parts = []) {
  * keep their #hash and ?query (a rename; not when sent to another page).
  * Links by id (src/site/hrefs.js) don't move with a path: `pages` (deleted page id -> the id
  * of the page it redirects to, or null) sends { page } links on, and `sources` (sources whose
- * [slug] page is deleted) makes their { item } links broken.
+ * [param] page is deleted) makes their { item } links broken.
  * Returns the link edits [{ file, parts, value }] (redirects.json and photos.json aside) and
  * `broken`, the number of links to gone paths or pages, which stay as they are.
  */
@@ -106,12 +114,9 @@ export function moveRedirects(list, moves) {
     if (!isPath(r.to) || !moves.has(pathKey(r.to))) out.push(r);
     else if (moves.get(pathKey(r.to)) !== null) out.push({ ...r, to: moves.get(pathKey(r.to)) });
   }
-  // an item page's redirect is its pattern's ("/people/:slug/"), when that moves too
-  const patterns = [...moves.keys()]
-    .filter((p) => p.endsWith('/:slug/'))
-    .map((p) => p.slice(0, -6));
-  const covered = (p) =>
-    patterns.some((b) => p.startsWith(b) && /^[^/:]+\/$/.test(p.slice(b.length)));
+  // an item page's redirect is its pattern's ("/people/:person/"), when that moves too
+  const patterns = [...moves.keys()].filter((p) => p.includes(':'));
+  const covered = (p) => !p.includes(':') && patterns.some((pattern) => fits(pattern, p));
   const added = [...moves]
     .filter(([from, to]) => to !== null && !covered(from))
     .map(([from, to]) => ({ from, to }));
@@ -130,19 +135,17 @@ export function pruneRedirects(list, paths) {
  * The moves of a page change, from the content files before it (`files`):
  *   { id, name }      page `id` renamed to `name` (its folder and everything in it)
  *   { id, to }        page `id` deleted, its paths sent to `to` (a path), or gone (to null)
- * A [slug] page's own paths are its item pages (only its pattern and items move).
+ * A [param] page's own paths are its item pages (its pattern, its items and the templates in
+ * it move); a page's are its folder's, every page in it.
  */
 export function pageMoves(files, { id, name, to }) {
-  const template = id.endsWith(TEMPLATE);
   const from = pathOfId(id);
-  const routes = getRoutes(contentFromFiles(files)).filter((r) =>
-    template ? r.id === id : r.path.startsWith(from),
+  const routes = getRoutes(contentFromFiles(files)).filter(
+    (r) => r.id === id || r.id.startsWith(`${id}/`),
   );
   const paths = [
     ...routes.map((r) => r.path),
-    ...[...sitePaths(files)].filter((p) =>
-      template ? p === itemPattern(id) : p.includes(':') && p.startsWith(from),
-    ),
+    ...[...sitePaths(files)].filter((p) => p.includes(':') && p.startsWith(from)),
   ];
   const renamed = name !== undefined && from.replace(/[^/]+\/$/, `${name}/`);
   return new Map(paths.map((p) => [p, renamed ? renamed + p.slice(from.length) : to]));

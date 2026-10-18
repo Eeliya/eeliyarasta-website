@@ -38,7 +38,7 @@ export function linkProblem(v, extra = []) {
   return null;
 }
 
-/** The page route of a page id (ctx.routes: fixed pages only; [slug] pages have no one URL). */
+/** The page route of a page id (ctx.routes: fixed pages only; [param] pages have no one URL). */
 export const pageRoute = (ctx, id) =>
   (ctx.routes || []).find((r) => r.pid === id && !r.template) || null;
 

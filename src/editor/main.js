@@ -38,7 +38,7 @@ import { BACKDROP } from '../site/backdrop.js';
 import {
   ANIMATIONS,
   REDIRECTS,
-  TEMPLATE,
+  isTemplate,
   pageFile,
   pageIdOf,
   schemaIdOf,
@@ -138,7 +138,7 @@ function pushCurtains() {
 
 /**
  * Page menu entries, grouped by folder: "/people/" holds the people page and the pages in its
- * folder. A [slug] template is one entry ({ template, items }) for all its item pages.
+ * folder. A [param] template is one entry ({ template, items }) for all its item pages.
  */
 function pageEntries(routes) {
   const ids = Object.keys(store.current).map(pageIdOf).filter(Boolean);
@@ -177,8 +177,8 @@ function pageEntries(routes) {
   }
   // a template whose source has no items yet has no pages, but is still a page to pick
   for (const id of ids)
-    if (id.endsWith(TEMPLATE)) {
-      const folder = id.slice(0, -TEMPLATE.length - 1); // "people"
+    if (isTemplate(id)) {
+      const folder = id.slice(0, id.lastIndexOf('/')); // "people"
       const source = store.current[pageFile(id)]?.template?.source;
       template(id, templateSection(store.current[pageFile(folder)], source));
     }

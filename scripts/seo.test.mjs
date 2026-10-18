@@ -67,10 +67,10 @@ test('a page: its meta, else the site defaults; canonical override', () => {
   assert.doesNotMatch(sitemapXml(buildRoutes(c).routes, site.url), /\/b\//);
 });
 
-test('[slug] pages: the item title, body and cover, then the template meta', () => {
+test('[param] pages: the item title, body and cover, then the template meta', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[slug].json': {
+    'pages/people/[person]/index.json': {
       template: { source: 'people' },
       section: 'People',
       meta: { description: 'A person.', image: 'p.jpg' },
@@ -88,7 +88,7 @@ test('[slug] pages: the item title, body and cover, then the template meta', () 
   assert.equal(daan.description, 'A person.');
   assert.equal(daan.image, 'p.jpg');
   const off = content({
-    'pages/people/[slug].json': { template: { source: 'people' }, meta: { noindex: true } },
+    'pages/people/[person]/index.json': { template: { source: 'people' }, meta: { noindex: true } },
     'sources/people.json': { version: 1, items: [{ title: 'Noor' }] },
   });
   assert.equal(routeOf(off, '/people/noor/').noindex, true);

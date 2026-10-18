@@ -2,13 +2,13 @@
   Content > SEO > Address: the page's URL. Its name (the last part) renames the page's folder,
   with every page in it, straight on disk (actions.pagesOp 'rename'): links to it and the
   redirects are updated, a redirect from the old address is added. Not for home or 404 (their
-  address is fixed) or a [slug] page (its folder's address, then the item's slug).
+  address is fixed) or a [param] page (its folder's address, then the item's URL part).
 -->
 <script>
   import Button from './Button.svelte';
-  import { isSlug, pageIdOf, TEMPLATE } from '../../site/files.js';
+  import { isSlug, isTemplate, pageIdOf } from '../../site/files.js';
   import { parentId, pathOfId } from '../../site/routes.js';
-  import { FIXED, childId, pageIds } from '../lib/page-tree.js';
+  import { FIXED, childId, pageIds, shownPath } from '../lib/page-tree.js';
 
   // live: reactive store; file: the page's file; actions: pagesOp (main.js)
   let { live, file, actions } = $props();
@@ -17,9 +17,11 @@
   // the store's files, a new object per change (the store edits its own in place)
   const files = $derived((live.version, { ...live.store.current }));
   const id = $derived(pageIdOf(file));
-  const fixed = $derived(FIXED.includes(id) || !!id?.endsWith(TEMPLATE));
+  const template = $derived(!!id && isTemplate(id));
+  const fixed = $derived(FIXED.includes(id) || template);
   const name = $derived(id?.slice(id.lastIndexOf('/') + 1) || '');
-  const folder = $derived(id ? pathOfId(parentId(id) || 'home') : '/');
+  // "/people/[person]/" (a [param] folder's pattern, routes.js: "/people/:person/")
+  const folder = $derived(id ? shownPath(parentId(id) || 'home') : '/');
   let draft = $state(null); // what is typed; null: the page's name
   let busy = $state(false);
   const value = $derived(draft ?? name);
@@ -65,8 +67,8 @@
   <!-- one line, always: typing moves nothing -->
   <p class={['hint small addr__note', error && 'is-error']}>
     {fixed
-      ? id?.endsWith(TEMPLATE)
-        ? 'Item pages: the folder’s address, then the item’s slug.'
+      ? template
+        ? 'Item pages: the folder’s address, then each item’s URL part.'
         : 'Fixed: this page’s address can’t change.'
       : error ||
         (value !== name
