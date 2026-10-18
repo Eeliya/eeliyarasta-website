@@ -59,20 +59,20 @@ optional (only when asked to redo or clear mocks).
 ## 4. Template (copy, rename, change the variants)
 
 ```svelte
-<!-- mock: section cards: line above the blocks vs none -->
+<!-- mock: section cards: at rest vs hovered and open -->
 <script>
   import { Compare, Variant, SectionCard, sampleLive } from '../kit/index.js';
   const live = sampleLive('short');
 </script>
 
-<Compare title="Section cards: divider line" note="Line above the blocks vs no line" cols={2}>
-  <Variant label="With line (current)">
-    <SectionCard {live} at={0} fields={false} rows spread="left" />
-    <SectionCard {live} at={1} fields={false} rows spread="left" />
+<Compare title="Section cards" note="At rest vs hovered with its blocks open" cols={2}>
+  <Variant label="At rest (current)">
+    <SectionCard {live} at={0} />
+    <SectionCard {live} at={1} />
   </Variant>
-  <Variant label="No line">
-    <SectionCard {live} at={0} fields={false} rows spread="left" line={false} />
-    <SectionCard {live} at={1} fields={false} rows spread="left" line={false} />
+  <Variant label="Hovered, open">
+    <SectionCard {live} at={0} />
+    <SectionCard {live} at={1} hover open hoverRow={0} />
   </Variant>
 </Compare>
 ```
@@ -101,41 +101,38 @@ Tabs, ExplorerHead, …). `{live}` is required wherever listed.
 | `label` | string | `''`    | e.g. `"Left (current)"`, `"A"`                                 |
 | `note`  | string | `''`    | what it is, 1–2 lines (its 32px space is kept even when empty) |
 
-**SectionCard** — a page section's card (real `Section` + `SectionSettings`, its blocks, + Add block).
+**SectionCard** — a page section's card: the real `SectionCard.svelte` (title row: changed dot,
+title, eye, pen; count row: "N blocks ⌄", + Add block, ↑, ↓, Duplicate, Delete; its blocks
+inside when open).
 
-| prop       | type                     | default  | meaning                                                                                                             |
-| ---------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| `live`     | sampleLive()             | required | the page state (one per mock, shared by the cards)                                                                  |
-| `at`       | number                   | `0`      | the section's index in that page                                                                                    |
-| `fields`   | bool                     | `true`   | `false`: no settings body (**the list as built**)                                                                   |
-| `rows`     | bool                     | `false`  | title on its own row (wraps), tools on a second row (the real Section's `stack`)                                    |
-| `spread`   | `''`\|`'left'`\|`'even'` | `''`     | with `rows`: `even` spreads the tools evenly; `''` / `left`: from the left edge (**as built**)                      |
-| `line`     | bool                     | `true`   | `false`: no line above the blocks (space kept)                                                                      |
-| `changed`  | bool                     | `false`  | the 6px accent dot before the title                                                                                 |
-| `selected` | bool                     | `false`  | the selected card: its border white 70%                                                                             |
-| `red`      | bool                     | `false`  | border red (no size change) — use with a delete confirm                                                             |
-| `height`   | CSS length               | `''`     | fix the card's height, content clipped                                                                              |
-| `tools`    | snippet                  | —        | replaces the bar's tools (Show, ↑, ↓, Duplicate, Delete, eye)                                                       |
-| `over`     | snippet                  | —        | drawn over the card at its exact box; give the root `class="kit-over"` (whole card) + `kit-over--bar` (header only) |
-| `children` | snippet                  | —        | replaces the settings body                                                                                          |
+| prop       | type         | default  | meaning                                                        |
+| ---------- | ------------ | -------- | -------------------------------------------------------------- |
+| `live`     | sampleLive() | required | the page state (one per mock, shared by the cards)             |
+| `at`       | number       | `0`      | the section's index in that page                               |
+| `selected` | bool         | `false`  | the selected card: border white 70%, its buttons 100%          |
+| `hover`    | bool         | `false`  | drawn hovered: border white 40%, its buttons 100%              |
+| `open`     | bool         | `false`  | its blocks open inside the card (the card grows)               |
+| `hoverRow` | number       | `-1`     | that block row drawn hovered (its buttons 100%)                |
+| `changed`  | bool         | `false`  | the 6px accent dot before the title                            |
+| `red`      | bool         | `false`  | its real delete confirm: over the card at its size, border red |
 
-As built: the real Section's `onenter`, so always open (no caret), the pen (`pen-to-square`)
-at the title row's right end (in a mock it does nothing), hover a 40% white border. Title: the
-section's `name`, else "Section N", in one colour (muted when the section is hidden). The eye
-(`eye` / `eye-slash`) reflects `enabled !== false`; ↑/↓ disable at the first/last section.
+As built: not collapsible, no caret; the pen (`pen-to-square`) at the title row's right end
+(in a mock it does nothing). Title: the section's `name`, else "Section N", one line (…), muted
+when hidden. ↑/↓ disable at the first/last section; "No blocks" is faint and inactive.
 
-**Ask** — the section delete confirm as built, for `over` (add `red` to the card).
+**Ask** — the old delete confirm for an `over` snippet (old mocks). The card's `red` now shows
+the real confirm.
 
 | prop       | type   | default                  | meaning             |
 | ---------- | ------ | ------------------------ | ------------------- |
 | `question` | string | `'Delete this section?'` | the line at the top |
 
-**BlockCard** — one block row (grip, name, eye, Duplicate, Delete, its title under). Inside a `<ul class="blocks">` in a `kit-list` scope (SectionCard does this).
+**BlockCard** — one block row: the real `BlockRow.svelte` (its type, its title under it in the
+link colour, eye, Duplicate, Delete; no grip, no order). Put it in a `<ul>`.
 
 | prop    | type                       | default  | meaning                                                     |
 | ------- | -------------------------- | -------- | ----------------------------------------------------------- |
 | `block` | `{id,type,title?,config?}` | required | `config.enabled === false` = hidden (eye-slash, faint name) |
-| `tools` | snippet                    | —        | replaces eye / Duplicate / Delete                           |
 
 **Panel** — the editor's side panel around your cards.
 
@@ -192,23 +189,26 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
   `<!-- mock: what it compares -->` comment.
 - Show realistic cases: unnamed, short and very long names, changed, empty (the sample pages have them).
 
-### The current section card (decided, built in f214d8a)
+### The current section card (decided, built)
 
-`<SectionCard {live} at={i} fields={false} rows spread="left" />`
+`<SectionCard {live} at={i} />`
 
-- No settings fields in the list's cards; title on row 1 with the pen at its right end, tools
-  on row 2 (Show, ↑, ↓, Duplicate, Delete, eye, from the left); a line above the blocks. A
-  block row: grip, name, eye, Duplicate, Delete.
-- Always open, no caret. A click on the card selects it (white 70% border, its section shown
-  in the preview); a double click or the pen opens it (its first block's view, or an empty
-  section's own view). Hovered: a 40% white border, its section outlined in the preview. The
-  title never changes colour; "Section N" is as bright as a name.
-- Visibility: `eye` / `eye-slash` (24px icon buttons). A hidden section: title muted, body at
-  55%; a hidden block: its name and title faint.
-- Changed: a 6px `#33ccff` dot before the title, no shift.
-- Delete confirm (`red` + `Ask` in `over`): over the card at its size, the card's colour at 80%
-  dims it, red border, the question at the top (no background of its own), Cancel / Delete
-  (trash icon) at the bottom right, 8px padding.
+- Not collapsible. Title row: the changed dot, the title (one line), eye, pen. Count row:
+  "N blocks ⌄" (text only; "No blocks" faint, inactive), + Add block (always), then ↑, ↓,
+  Duplicate, Delete (24px icon buttons). 12px inside: every icon ends and all text starts on
+  those edges.
+- The count opens the blocks inside the card (the card grows): 48px rows 4px apart, bleeding
+  4px into the card's padding, text 12px in on two 20px lines (type, then its title in the
+  link colour), eye, Duplicate, Delete; no grip, no order (blocks are placed in the preview).
+  A row opens that block's settings, as a click on the block in the preview does.
+- A click on the card selects it (white 70% border, its section shown in the preview); a
+  double click or the pen opens its settings (one level: ← Back, Locate, the settings card).
+  Hovered: a 40% white border. The title never changes colour.
+- Buttons rest at 30%: the card's at 100% on its hover, selection or a focus in it; a block
+  row's on that row's hover or focus. An eye-slash (hidden) always 100%; the count not dimmed.
+- Hidden: the title muted, its blocks at 55%. Changed: a 6px `#33ccff` dot, no shift.
+- Delete: over the card at its size, the card's colour at 80%, red border, the question at the
+  top, Cancel / Delete at the bottom right, 12px in. A block's: over its row.
 
 ![Section card states](docs/section-card-states.png)
 ![Delete confirm](docs/section-card-delete.png)
