@@ -106,7 +106,7 @@ const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
 const PROTECTED = new Set(['home', '404']); // no rename or delete
 
 /**
- * The Pages window (src/editor/svelte/PagesModal.svelte): the pages in content/en/pages/. Every
+ * The pages list (src/editor/svelte/PagesList.svelte, AddPageModal, the SEO tab's Address): the pages in content/en/pages/. Every
  * page is a folder, its URL, with its own file index.json inside; pages/index.json is home,
  * whose folder is content/en/pages/ itself. Ids as in src/site/files.js: "home", "people",
  * "people/whatever", "people/[slug]". `parent` is the id of the page whose folder it is

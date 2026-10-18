@@ -83,8 +83,10 @@ function readState() {
       filter: state.media?.filter || 'all',
       pick: q.get('pick') || '',
     };
-  if (q.has('pages'))
+  if (q.has('pages')) {
+    if (!q.has('tab')) state.mode = 'text'; // the pages list is in the Content tab
     state.pagesWin = { open: true, folder: q.get('pages').replace(/^\/+|\/+$/g, '') };
+  }
   if (q.get('motion') === 'animations' || q.has('anim')) {
     if (!q.has('tab')) state.mode = 'motion'; // the library is in the Motion tab
     state.library = { open: true, name: q.get('anim') || '' }; // an unknown name: the list
@@ -103,7 +105,7 @@ export function restoreUi(preview, content) {
   ui.sections = saved.sections || {};
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
   if (saved.library) ui.library = saved.library;
-  if (saved.pagesWin) ui.pagesWin = saved.pagesWin; // PagesModal opens itself
+  if (saved.pagesWin) ui.pagesWin = saved.pagesWin; // the Content tab shows the pages list (PagesList)
   if (saved.media) ui.media = saved.media; // and MediaModal
 
   addEventListener('pagehide', () => {
@@ -188,7 +190,10 @@ export function writeUrl() {
   const library = ui.mode === 'motion' && ui.library.open;
   set('motion', library && 'animations');
   set('anim', library && ui.library.name);
-  set('pages', ui.pagesWin.open && `/${ui.pagesWin.folder}/`.replace('//', '/'));
+  set(
+    'pages',
+    ui.mode === 'text' && ui.pagesWin.open && `/${ui.pagesWin.folder}/`.replace('//', '/'),
+  );
   set('media', ui.media.open && (ui.media.key || '/'));
   set('pick', ui.media.open && ui.media.pick);
   const href = editorHref(url);

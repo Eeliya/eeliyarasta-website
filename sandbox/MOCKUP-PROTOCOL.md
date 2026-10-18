@@ -211,7 +211,7 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
   line) at the top, Delete (an icon-only red trash) then Cancel at the bottom left, both 24px
   with 8px corners, 8px in on every side (never scrolls). A block's: one line over its 48px row,
   its 8px corners, the question 12px in, the buttons 12px from the top, bottom and right.
-- Cards: top level (section, Settings, Pages window rows) `--radius-lg` 12px; nested (block
+- Cards: top level (section, Settings, pages list rows) `--radius-lg` 12px; nested (block
   rows) `--radius-md` 8px. A collapsible card's caret is at its bar's right end.
 
 ![Section card states](docs/section-card-states.png)

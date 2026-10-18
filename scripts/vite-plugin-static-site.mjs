@@ -110,6 +110,11 @@ export default function staticSite() {
           let pathname = url.pathname.replace(/index\.html$/, '');
           if (!pathname.endsWith('/')) pathname += '/';
           let route = routes.find((r) => r.path === pathname);
+          if (route?.redirect) {
+            // a folder without its own page (routes.js): its first sub page
+            res.writeHead(302, { Location: route.redirect + url.search });
+            return res.end();
+          }
           const status = route ? 200 : 404;
           route ||= routes.find((r) => r.page === 'notFound');
           const shell = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -154,6 +159,8 @@ export default function staticSite() {
       const {
         buildRedirects,
         buildRoutes,
+        ownPageRedirects,
+        redirectPage,
         pathsOf,
         redirectsText,
         renderRoute,
@@ -182,7 +189,11 @@ export default function staticSite() {
         const rel = route.out || path.join(route.path, 'index.html');
         const file = path.join(outDir, rel);
         fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, fill(shell, renderRoute(route, content)));
+        // a folder without its own page: a redirect page (and a 302 in _redirects)
+        fs.writeFileSync(
+          file,
+          route.redirect ? redirectPage(route.redirect) : fill(shell, renderRoute(route, content)),
+        );
       }
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemapXml(routes, content.site.url));
       fs.writeFileSync(
@@ -192,7 +203,7 @@ export default function staticSite() {
       // Cloudflare Pages / Netlify: "from to status" per line
       const redirects = buildRedirects(content.redirects, pathsOf(content));
       for (const w of redirects.warnings) config.logger.warn(`\x1b[33m[redirects]\x1b[0m ${w}`);
-      const text = redirectsText(redirects.list);
+      const text = redirectsText([...ownPageRedirects(routes), ...redirects.list]);
       fs.writeFileSync(path.join(outDir, '_redirects'), text && `${text}\n`);
 
       // The editor is dev-only: make sure nothing of it ends up in the build.

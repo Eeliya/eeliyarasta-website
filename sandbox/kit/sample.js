@@ -23,7 +23,7 @@ export const SECTIONS = [
   },
 ];
 
-/** The page menu's items (PageMenu.svelte). */
+/** Page menu entries (main.js pageEntries: ui.pages). */
 export const PAGES = [
   { kind: 'page', path: '/', title: 'Eeliya Rasta: Photography & Projects', group: 'Pages' },
   { kind: 'page', path: '/about/', title: 'About', group: 'Pages' },

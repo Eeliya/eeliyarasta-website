@@ -521,7 +521,7 @@ the page and leave the footer be; it is in the view's layer (`.site-footer`: z-i
 `#backdrop` and `#portal`; the curtain covers it). Its rows, animations and block scripts mount
 with each page (`src/client/main.js`).
 
-In the editor the footer is **Footer** in the page menu, or click it in the preview: a locked
+In the editor the footer is **Footer** in the pages list (Site), or click it in the preview: a locked
 footer (a dashed outline on hover, its label) picks nothing inside; the first click opens it
 (a solid outline, the Footer is the target) and its sections and blocks are picked and dragged
 like a page's, while the page's are locked. Esc with nothing picked, or a click outside it,
@@ -582,7 +582,13 @@ move. A page's own file is
   site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"
   goes to the page that shows its source (the folder of its `[slug]` page, else the first page
-  with a block of it), so they follow a folder rename. A new page isn't in the menu by itself: add it in Content › Header (see "Menu").
+  with a block of it), so they follow a folder rename. A new page is in the menu when added
+  with In the menu on (the pages list), else add it there or in Content › Header (see "Menu").
+- **Own page off:** `"ownPage": false` in a folder's page (the pages list's Own page switch):
+  its URL has no page of its own and sends visitors to its first sub page (the menu's order,
+  else the folder's): a 302 (`_redirects` in the build, plus a small redirect page; the dev
+  server answers it too), and links to it (`{ "page": … }`) go straight there. It stays out of
+  the sitemap. Not for home, 404 or a `[slug]` page; with no sub page it is kept (a warning).
 
 `npm run build` prints every route with its file. `npm run check:links` (after a build) checks
 that every internal `href` / `src` in `dist/` points at a file.
@@ -654,7 +660,7 @@ in the site must point at pages, not at redirects.
 
 The editor keeps them up to date by itself (`src/site/redirects.js`):
 
-- **Rename a page** (Pages window): every path of its folder redirects to the new one, its
+- **Rename a page** (its SEO tab, Address): every path of its folder redirects to the new one, its
   item pages with one pattern (`/people/:slug/` -> `/models/:slug/`). Links by id need
   nothing; an `href` that is such a path is updated; the toast says how many.
 - **Delete a page**: its paths redirect to its parent page (the default), another page, or
@@ -908,22 +914,42 @@ loads pages with `?draft=…`) always gets the site, so the editor never opens i
 (`src/editor/lib/editor-url.js`). The old `/edit/?path=/about/` addresses redirect to
 `/about/?edit` in dev.
 
-Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
-dropdown (grouped by folder; a `[slug]` template is one entry, `/people/[slug]`, with an item
-picker next to it for which person to show), or click links in Preview.
+Layout: the real site in a same-origin iframe, with a glass side panel. The page (or site part)
+being edited is named at the top of the Content and Motion tabs (`PageHead.svelte`): its title,
+its path under it, ← to the pages list (a path part: that folder); a `[slug]` page has an item
+picker on the right for which item page the preview shows. Or click links in Preview.
 
-**Pages window** (the sitemap button next to the page dropdown): the page folders, like the
-Source Explorer. A folder shows its own page first (the row `/` at the root, `/people/` in
-people), then a folder row per page in it (click to go in), then its `[slug]` page. Every
-folder has **Add page** (title -> URL name: a new folder with its `index.json`) and **Add
-[slug]** (a template with a source; one per folder, none at the root). Select a folder's own row
-to show it in the preview, rename it (the whole folder moves) or delete it (asks first, listing
-everything inside, and where its address should redirect). Both keep links and redirects up
-to date (see "Redirects") and say so in a toast. Names are slugs (a-z, 0-9, dashes);
-home and 404 can't be renamed or deleted. These write to disk right away through the dev server
-(`POST /__editor/pages`), and the dropdown and preview follow without a reload. Renaming or
-deleting a page with unsaved edits asks for Save first. Publish commits the new and removed
-files. `&pages=/people/` in the URL reopens it on that folder. There's also a phone (390 px) preview toggle.
+**Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
+the site's pages one folder at a time, flat. Its header: ← (or Esc) up one level, the folder's
+page title with its path under it (each part goes there) and, in a folder with sub pages, the
+**Own page** switch (off: `"ownPage": false`, see "Pages and URLs"). Then:
+
+- at the top, **Site**: Header and Footer;
+- the folder's own page ("this page", `/`);
+- **Sub items**: its pages that are in the menu (`nav.json`), in the menu's order; the grip on
+  the left drags one to another place (that is the menu's order, one undo step). Its `[slug]`
+  page is pinned last (a lock, no grip). When its own page is off, the first one is tagged **As /**:
+  the folder's URL opens it;
+- **Not linked**: every page that isn't in the menu, the whole site's (**All**) or this
+  folder's (**This folder**).
+
+Rows show only their own segment under the folder (`people/`; elsewhere the full path) and
+titles and paths as written. A click selects a row and shows it in the preview; a double click
+(or Enter) goes into a folder, or opens the page (its Sections, Transitions, SEO). A dot after a
+title: unsaved changes in its file; an eye: hidden from search. The link button puts a page in
+the menu or takes it out (Content › Header has the labels and dropdowns). **+** opens **Add page**
+(title -> URL name, In the menu: on from Sub items' +, off from Not linked's; or a **[slug] page**:
+a template with a source, one per folder, none at the top): a new folder with its `index.json`.
+**Delete** asks over the row: one line (the trash, then Cancel) when nothing links to it; a page in
+the menu or linked to gets a panel over the rows below (nothing moves) asking where visitors and
+links should go (its parent page by default, another page, or no redirect: its menu item goes
+too). The address is renamed in the page's SEO tab (**Address**: the whole folder moves). These
+keep links and redirects up to date (see "Redirects") and say so in a toast. Names are slugs (a-z,
+0-9, dashes); home and 404 can't be renamed or deleted. Adding, renaming and deleting write to disk
+right away through the dev server (`POST /__editor/pages`); the menu edits are normal edits (Save).
+Renaming or deleting a page with unsaved edits asks for Save first. Publish commits the new and
+removed files. `&pages=/people/` in the URL reopens the list on that folder. There's also a phone
+(390 px) preview toggle.
 
 In the Content panel every **section** of the page is a box (Section 1, 2, …, with its name
 under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first (over the card: the trash then Cancel), the switch
@@ -1098,7 +1124,7 @@ for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for 
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
 in each page's `pages/<page>/index.json`, shared copy (nav) in `settings/site.json`, for this reason. The editor only ever writes
 existing JSON files in `content/en/pages/`, `content/en/sources/` and `content/en/settings/` (see
-`src/editor/config.js`); only the Pages window creates or deletes files, and only page files.
+`src/editor/config.js`); only the pages list (and Address) creates, moves or deletes files, and only page files.
 These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-block`,
 `data-curtain-edit`) are only rendered by the dev server; `npm run build` leaves them out
 (`renderRoute(route, content, { editable })`), which makes the built HTML about 9% smaller.

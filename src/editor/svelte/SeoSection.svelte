@@ -1,5 +1,6 @@
 <!--
-  Content > SEO (a tab of the page panel), plain fields: what search engines and share cards say about the page in the preview, from
+  Content > SEO (a tab of the page panel), plain fields: its address (PageAddress.svelte:
+  renames it), then what search engines and share cards say about the page in the preview, from
   its file's "meta" (src/site/seo.js). A page: title, description, share image, noindex and
   canonical. A [slug] page: its template's defaults for every item page (an item's own name,
   summary and cover come first). Below, a search result and a share card as the build makes
@@ -10,13 +11,15 @@
 <script>
   import Button from './Button.svelte';
   import Field from './Field.svelte';
+  import PageAddress from './PageAddress.svelte';
   import { ui } from './ui.svelte.js';
   import { imageSrcset, imageUrl, media } from './media.svelte.js';
   import { DESCRIPTION_MAX, TITLE_MAX, seoOf } from '../../site/seo.js';
   import { TEMPLATE, contentFromFiles, pageIdOf } from '../../site/files.js';
 
   // live: reactive store (live.svelte.js); file: the page file of the preview
-  let { live, file } = $props();
+  // actions: pagesOp (main.js: the Address renames the page on disk)
+  let { live, file, actions } = $props();
 
   const uid = $props.id();
   const template = $derived(!!pageIdOf(file)?.endsWith(TEMPLATE));
@@ -48,6 +51,7 @@
       ? 'Defaults for every item page. Each item page is titled with its name and uses its own summary and cover first.'
       : 'Search engines and share cards. Empty fields use the site defaults (Settings > SEO).'}
   </p>
+  <PageAddress {live} {file} {actions} />
   {#if !template}
     <Field
       edit="{file}#/meta/title"

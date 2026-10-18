@@ -238,6 +238,11 @@ function checkDoc(file, d) {
   else if (isObject(d.template) && Object.keys(d.template).some((k) => k !== 'source'))
     out.push('"template" has only "source"');
   if (!template && d.template !== undefined) out.push('"template" is only for [slug] pages');
+  // its folder's URL opens its first sub page instead (routes.js)
+  if (d.ownPage !== undefined && d.ownPage !== false)
+    out.push('"ownPage" must be false (the folder opens its first sub page) or left out');
+  if (d.ownPage !== undefined && (template || ['home', '404'].includes(pageIdOf(file))))
+    out.push('"ownPage" is only for a folder\'s own page (not home, 404 or a [slug] page)');
   return [...out, ...checkSections(d.sections)];
 }
 

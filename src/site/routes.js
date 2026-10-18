@@ -12,6 +12,11 @@
  *   pages/people/whatever/index.json   /people/whatever/  a fixed page; when an item has the same
  *                                                         slug, this one wins over the template
  *
+ * A folder's own page can be turned off ("ownPage": false in its index.json): its URL then
+ * redirects (302) to its first sub page, the first one in the menu (nav.json) or else the first
+ * in the folder: the route keeps its path for the editor, gets `redirect` (that page's path),
+ * links to it go straight there (hrefs.js), and the build writes a redirect instead of the page.
+ *
  * Folders nest to any depth. Every page is its list of sections of blocks (src/site/layout/). Its
  * "view" (the class of <main> and <html data-page>, for the styles) is its "view" field,
  * else the built-in name of the same page (home, photography, people, places, projects,
@@ -63,6 +68,22 @@ export const pageTitle = (page) => {
   return typeof title === 'string' && !isBinding(title) ? title : undefined;
 };
 
+/** "photography/people" -> "photography", "about" -> "" (home's folder). */
+export const parentId = (id) => (id.includes('/') ? id.slice(0, id.lastIndexOf('/')) : '');
+
+/** The page ids the menu (nav.json "header") links to, in its order (children after their item). */
+export function navOrder(nav) {
+  const out = [];
+  const walk = (list) => {
+    for (const item of Array.isArray(list) ? list : []) {
+      if (typeof item?.page === 'string') out.push(item.page);
+      walk(item?.children);
+    }
+  };
+  walk(nav?.header);
+  return out;
+}
+
 /** "photo-walks" → "Photo Walks": a name from a slug. */
 export const titleCase = (s) =>
   String(s)
@@ -94,7 +115,7 @@ const byTree = (a, b) => {
  * source, items without or with duplicate slugs); those items get no page.
  */
 export function buildRoutes(content) {
-  const { site = {}, pages = {}, sources = {} } = content;
+  const { site = {}, pages = {}, sources = {}, nav = {} } = content;
   const warnings = [];
   const siteNoindex = site.robots === 'noindex';
   const ids = Object.keys(pages).sort(byTree);
@@ -134,6 +155,20 @@ export function buildRoutes(content) {
       noindex: siteNoindex || id === '404' || !!meta.noindex,
       ...pageCurtain(id, title),
     });
+  }
+  // folders without their own page: their first sub page (in the menu's order, else the tree's)
+  const order = navOrder(nav);
+  const rankOf = (pid) => (order.includes(pid) ? order.indexOf(pid) : Infinity);
+  for (const r of routes) {
+    if (r.template || pages[r.id]?.ownPage !== false) continue;
+    const subs = routes
+      .filter((s) => !s.template && s.id !== r.id && parentId(s.id) === r.id)
+      .sort((a, b) => rankOf(a.pid) - rankOf(b.pid));
+    if (!subs.length) {
+      warnings.push(`${pageFile(r.id)}: "ownPage": false, but it has no sub page to open: kept`);
+      continue;
+    }
+    Object.assign(r, { redirect: subs[0].path, noindex: true });
   }
   return { routes, warnings };
 

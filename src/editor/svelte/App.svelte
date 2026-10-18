@@ -1,20 +1,18 @@
 <!--
   The editor shell: the site preview on the left, the side panel on the right with the
-  toolbar (page menu; Sources, Media, Pages | Preview, phone, undo, redo; the mode tabs), the
-  current tab's panel (Preview's while it is on) and the Save / Publish footer. Also the
+  toolbar (Sources, Media | Preview, phone, undo, redo; the mode tabs), the current tab's
+  panel (the page edited on top: PageHead.svelte; the pages list is in the Content tab) (Preview's while it is on) and the Save / Publish footer. Also the
   publish dialog, the toasts and the keyboard shortcuts.
   main.js holds the logic: it changes `ui` (ui.svelte.js) and passes `actions`.
 -->
 <script>
   import Button from './Button.svelte';
-  import PageMenu from './PageMenu.svelte';
-  import Select from './Select.svelte';
   import PreviewPanel from './PreviewPanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
   import SettingsPanel from './SettingsPanel.svelte';
   import PublishDialog from './PublishDialog.svelte';
-  import PagesModal from './PagesModal.svelte';
+  import PageHead from './PageHead.svelte';
   import MediaModal from './MediaModal.svelte';
   import { openMedia } from './media.svelte.js';
   import Toasts from './Toasts.svelte';
@@ -27,7 +25,6 @@
   let { live, bridge, actions } = $props();
 
   let publishDialog = $state();
-  let pagesModal = $state();
   const publish = () => publishDialog.open();
   // The Source Explorer lives in the Content tab (ContentPanel.svelte); it opens itself when
   // ui.explorer.open is set (SourcesModal.svelte), on the list of files.
@@ -145,21 +142,7 @@
 
   <aside class="ed-panel">
     <header class="ed-head">
-      <!-- the page or site part shown, full width; the item of a [slug] page under it -->
-      <div class="ed-row">
-        <PageMenu items={ui.pages} value={ui.target} onchange={actions.pickTarget} />
-      </div>
-      {#if ui.target?.items}
-        <div class="ed-row">
-          <Select
-            aria-label="Item"
-            value={ui.path}
-            options={ui.target.items.map((i) => ({ value: i.path, label: i.title }))}
-            onchange={(path) => actions.pickTarget(ui.target, path)}
-          />
-        </div>
-      {/if}
-      <!-- [ Sources | Media | Pages ] ... [ Preview | phone | undo | redo ] (quiet icon buttons) -->
+      <!-- [ Sources | Media ] ... [ Preview | phone | undo | redo ] (quiet icon buttons) -->
       <div class="ed-row ed-tools">
         <Button
           icon="database"
@@ -174,13 +157,6 @@
           label="Media"
           title="Media: every photo, upload, alt text"
           onclick={() => openMedia({ key: ui.media.key })}
-        />
-        <Button
-          icon="sitemap"
-          iconOnly
-          label="Pages"
-          title="Pages: add, rename, delete"
-          onclick={() => pagesModal.open()}
         />
         <span class="ed-tools__gap"></span>
         <!-- toggles, on (the accent) or off: Preview (the site as visitors see it), the phone view -->
@@ -236,6 +212,7 @@
     {#if ui.mode === 'text'}
       <ContentPanel {live} {bridge} {actions} />
     {:else if ui.mode === 'motion'}
+      <PageHead {live} {actions} />
       <MotionPanel {live} {bridge} />
     {:else if ui.mode === 'settings'}
       <SettingsPanel {live} {bridge} />
@@ -270,7 +247,6 @@
   </aside>
 
   <PublishDialog {live} {actions} bind:this={publishDialog} />
-  <PagesModal {live} {actions} bind:this={pagesModal} />
   <MediaModal {live} {bridge} {actions} />
   <Toasts />
 {/if}
@@ -331,7 +307,7 @@
     min-width: 0;
   }
 
-  // [ page menu ], [ Sources Media Pages ... phone undo redo ], then the modes; 16px edges
+  // [ Sources Media ... phone undo redo ], then the modes; 16px edges
   .ed-head {
     flex: none;
     padding-top: var(--space-4);

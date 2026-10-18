@@ -9,7 +9,7 @@
   note="Panel, SectionCard (as built: the real SectionCard.svelte), Modal on sampleLive('full')"
   cols={3}
 >
-  <Variant label="Panel" note="Toolbar, modes, page tabs, body, footer">
+  <Variant label="Panel" note="Toolbar, modes, page head, page tabs, body, footer">
     <Panel height="760px" changes={2}>
       <SectionCard {live} at={0} />
       <SectionCard {live} at={1} changed hover open hoverRow={0} />

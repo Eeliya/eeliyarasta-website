@@ -16,7 +16,13 @@ import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.j
 
 export { getRoutes, buildRoutes, sitemapXml };
 export { seoWarnings } from './seo.js';
-export { buildRedirects, pathsOf, redirectsText } from './redirects.js';
+export {
+  buildRedirects,
+  ownPageRedirects,
+  pathsOf,
+  redirectPage,
+  redirectsText,
+} from './redirects.js';
 
 /** Schema-aware checks of the pages' bindings: [{ level, message }] (layout/bindings.js). */
 export const bindingChecks = (content) => bindingProblems(content, { types: BLOCK_TYPES });

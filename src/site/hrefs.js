@@ -53,7 +53,7 @@ export function hrefOf(ctx, link, where = 'a link') {
       return String(link.href);
     case 'page': {
       const r = pageRoute(ctx, link.page);
-      if (r) return r.path;
+      if (r) return r.redirect || r.path; // a folder without its own page: its first sub page
       warnOnce(`${where} points at page "${link.page}", which is no page: "#"`, 'links');
       return '#';
     }

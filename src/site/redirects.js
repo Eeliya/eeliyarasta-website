@@ -170,6 +170,16 @@ export function itemMoves(before, after) {
   return moves;
 }
 
+/** The 302s of folders without their own page ("ownPage": false, routes.js): to their first sub page. */
+export const ownPageRedirects = (routes) =>
+  routes.filter((r) => r.redirect).map((r) => ({ from: r.path, to: r.redirect, status: 302 }));
+
+/** A folder without its own page, in the build: a page that goes on (if the 302 isn't served). */
+export const redirectPage = (to) => {
+  const url = JSON.stringify(to);
+  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=${to}"><link rel="canonical" href="${to}"><title>Redirecting…</title><script>location.replace(${url})</script></head><body><a href="${to}">${to}</a></body></html>\n`;
+};
+
 /** _redirects lines: "from to status"; a page path also without its trailing "/". */
 export function redirectsText(list) {
   return list

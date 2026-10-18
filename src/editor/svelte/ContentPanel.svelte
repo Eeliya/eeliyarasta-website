@@ -1,5 +1,7 @@
 <!--
-  Content tab: the page in the preview, or a site part (the Header: HeaderPart.svelte; the Footer). A page is a list of sections
+  Content tab: the pages list (PagesList.svelte, while ui.pagesWin.open), or the page in the
+  preview or a site part (the Header: HeaderPart.svelte; the Footer) under PageHead.svelte (←:
+  back to the pages list). A page is a list of sections
   holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
   the open one kept per page in ui.sections["pagetab:<file>"]):
     Sections     SectionsList.svelte: the section cards and the dashed Add section card. One
@@ -14,8 +16,8 @@
   layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
   a double click edits a text in place (bridge.js); links and buttons don't follow; a click on
   empty space or Esc drops the selection. The selected block's section shows its grid (faint
-  cells). The Sources button beside
-  the page menu (App.svelte) opens the Source Explorer (SourcesModal.svelte); so does a
+  cells). The Sources button in the
+  toolbar (App.svelte) opens the Source Explorer (SourcesModal.svelte); so does a
   list item's text clicked in the preview.
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
@@ -27,6 +29,8 @@
   import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
   import HeaderPart from './HeaderPart.svelte';
+  import PageHead from './PageHead.svelte';
+  import PagesList from './PagesList.svelte';
   import BackdropFields from './BackdropFields.svelte';
   import PageCurtain from './PageCurtain.svelte';
   import Tabs from './Tabs.svelte';
@@ -207,84 +211,98 @@
 
   $effect(() => {
     const { edit, quiet } = ui.selection || {};
-    if (edit && !quiet) reveal(edit);
+    if (!edit || quiet) return;
+    // a text clicked in the preview: its block, not the pages list
+    untrack(() => (ui.pagesWin.open = false));
+    reveal(edit);
+  });
+  // a block clicked in the preview: the same
+  $effect(() => {
+    if (ui.block) untrack(() => (ui.pagesWin.open = false));
   });
 </script>
 
-{#if isPage}
-  <Tabs
-    tabs={TABS}
-    value={shownTab}
-    onpick={pickTab}
-    label="Page"
-    class="page-tabs"
-    id={tabsId}
-    panel="{tabsId}-panel"
-  />
-{/if}
-<section
-  class="ed-body"
-  bind:this={panel}
-  id="{tabsId}-panel"
-  role={isPage ? 'tabpanel' : undefined}
-  aria-labelledby={isPage ? `${tabsId}-${shownTab}` : undefined}
->
-  {#if waiting}
-    <p class="hint">Waiting for the preview…</p>
-  {:else if file && shownTab === 'sections'}
-    <div class="slide" bind:this={slideEl}>
-      <div
-        class={['slide__pane', atBlock && !moving && 'is-away']}
-        bind:this={listEl}
-        inert={atBlock}
-      >
-        <SectionsList
-          {live}
-          {file}
-          onopen={openBlock}
-          onsection={openSection}
-          onadd={(at) => blocksModal.open(at)}
-        />
-      </div>
-      {#if held}
-        <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
-          {#if held.section}
-            <SectionView {live} {bridge} {file} id={held.section} onback={back} />
-          {:else}
-            <BlockInspector
-              g={held}
-              {live}
-              {bridge}
-              {sourceIds}
-              {onsource}
-              onback={back}
-              onmotion={(el) => actions.editMotion(el)}
-              onlibrary={(name) => {
-                ui.library = { open: true, name };
-                actions.setMode('motion');
-              }}
-            />
-          {/if}
-        </div>
-      {/if}
-    </div>
-  {:else}
-    {#if isPage && tab === 'transitions'}
-      <BackdropFields {live} {file} />
-      <hr class="pane__line" />
-      <PageCurtain {live} onsettings={() => actions.setMode('settings')} />
-    {:else if isPage && tab === 'seo'}
-      <SeoSection {live} {file} />
-    {:else if ui.target.id === 'header'}
-      <HeaderPart {live} />
-    {:else}
-      <p class="hint">No editable content here.</p>
-    {/if}
+{#if ui.pagesWin.open}
+  <section class="ed-body" bind:this={panel}>
+    <PagesList {live} {actions} />
+  </section>
+{:else}
+  <PageHead {live} {actions} />
+  {#if isPage}
+    <Tabs
+      tabs={TABS}
+      value={shownTab}
+      onpick={pickTab}
+      label="Page"
+      class="page-tabs"
+      id={tabsId}
+      panel="{tabsId}-panel"
+    />
   {/if}
+  <section
+    class="ed-body"
+    bind:this={panel}
+    id="{tabsId}-panel"
+    role={isPage ? 'tabpanel' : undefined}
+    aria-labelledby={isPage ? `${tabsId}-${shownTab}` : undefined}
+  >
+    {#if waiting}
+      <p class="hint">Waiting for the preview…</p>
+    {:else if file && shownTab === 'sections'}
+      <div class="slide" bind:this={slideEl}>
+        <div
+          class={['slide__pane', atBlock && !moving && 'is-away']}
+          bind:this={listEl}
+          inert={atBlock}
+        >
+          <SectionsList
+            {live}
+            {file}
+            onopen={openBlock}
+            onsection={openSection}
+            onadd={(at) => blocksModal.open(at)}
+          />
+        </div>
+        {#if held}
+          <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
+            {#if held.section}
+              <SectionView {live} {bridge} {file} id={held.section} onback={back} />
+            {:else}
+              <BlockInspector
+                g={held}
+                {live}
+                {bridge}
+                {sourceIds}
+                {onsource}
+                onback={back}
+                onmotion={(el) => actions.editMotion(el)}
+                onlibrary={(name) => {
+                  ui.library = { open: true, name };
+                  actions.setMode('motion');
+                }}
+              />
+            {/if}
+          </div>
+        {/if}
+      </div>
+    {:else}
+      {#if isPage && tab === 'transitions'}
+        <BackdropFields {live} {file} />
+        <hr class="pane__line" />
+        <PageCurtain {live} onsettings={() => actions.setMode('settings')} />
+      {:else if isPage && tab === 'seo'}
+        <SeoSection {live} {file} {actions} />
+      {:else if ui.target.id === 'header'}
+        <HeaderPart {live} />
+      {:else}
+        <p class="hint">No editable content here.</p>
+      {/if}
+    {/if}
+  </section>
+{/if}
 
-  <SourcesModal bind:this={sourcesModal} {live} {bridge} />
-  <BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
-</section>
+<SourcesModal bind:this={sourcesModal} {live} {bridge} />
+<BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
 
 <style lang="scss">
   // the tabs' line runs the panel's full width, above the scrolling body
