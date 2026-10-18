@@ -126,7 +126,7 @@ function keepScroll(fn) {
 
 /**
  * Dev only (`npm run dev`): connect to the visual editor (src/editor), which loads
- * the site in a same-origin iframe at /edit/. `import.meta.env.DEV` is false in
+ * the site in a same-origin iframe (the editor itself is any page with ?edit). `import.meta.env.DEV` is false in
  * production builds, so this function, the window.__site API and the editor
  * shortcut are dropped from the public bundle entirely.
  */
@@ -213,7 +213,7 @@ function connectEditor() {
       e.key.toLowerCase() === 'e'
     ) {
       e.preventDefault();
-      location.href = `/edit/?path=${encodeURIComponent(location.pathname)}`;
+      location.href = `${location.pathname}?edit`; // the editor on this page (editor-url.js)
     }
   });
 

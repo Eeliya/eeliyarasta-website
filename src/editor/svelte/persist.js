@@ -1,9 +1,9 @@
 /**
  * Keeps the editor where it was across a refresh, in two places:
  *
- *   The URL (shareable): /edit/?tab=motion&path=/people/
+ *   The URL (shareable): /photography/people/?edit&tab=motion (src/editor/lib/editor-url.js)
  *     tab     content | motion | settings | preview (the old browse opens Preview too)
- *     path    the page in the preview (main.js keeps it up to date)
+ *     (path)  the URL's own path is the page in the preview (main.js keeps it up to date)
  *     view    header | footer, when the page menu shows a site part instead of a page
  *     source  + item (+ field): the Source Explorer, open on that file and item, with that field
  *             highlighted (&source=people&item=noor-vermeer&field=summary; item is the
@@ -28,6 +28,7 @@
  * Media window changes.
  */
 import { tick } from 'svelte';
+import { editorHref } from '../lib/editor-url.js';
 import { ui } from './ui.svelte.js';
 import { sourceIdOf } from '../../site/files.js';
 
@@ -98,7 +99,7 @@ export function restoreUi(preview, content) {
   saved = readState();
   if (Object.values(TABS).includes(saved.mode)) ui.mode = saved.mode;
   if (['text', 'motion', 'settings'].includes(saved.lastEdit)) ui.lastEdit = saved.lastEdit;
-  if (saved.part) ui.target = saved.part; // Header or Footer (pages: ?path=)
+  if (saved.part) ui.target = saved.part; // Header or Footer (pages: the URL's path)
   ui.sections = saved.sections || {};
   // the Motion tab's sub-tab: Elements, or Animations (ui.library.open) on an animation
   if (saved.library) ui.library = saved.library;
@@ -190,5 +191,7 @@ export function writeUrl() {
   set('pages', ui.pagesWin.open && `/${ui.pagesWin.folder}/`.replace('//', '/'));
   set('media', ui.media.open && (ui.media.key || '/'));
   set('pick', ui.media.open && ui.media.pick);
-  if (url.href !== location.href) history.replaceState(history.state, '', url);
+  const href = editorHref(url);
+  if (href !== location.pathname + location.search + location.hash)
+    history.replaceState(history.state, '', href);
 }

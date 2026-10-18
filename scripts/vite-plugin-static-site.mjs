@@ -10,17 +10,20 @@
  *
  * index.html is the shell; it contains two markers: <!--ssr-head--> and <!--ssr-body-->.
  *
- * Visual editor (edit/index.html → src/editor) is DEV ONLY:
- *  dev   → /edit/ is served by Vite, and /__editor/* (scripts/editor-server.mjs, localhost
- *          only) loads, saves and publishes the content JSON files and uploads photos to
+ * Visual editor (src/editor/index.html → src/editor) is DEV ONLY:
+ *  dev   → any page with ?edit (/?edit, /about/?edit&tab=motion: src/editor/lib/editor-url.js)
+ *          gets the editor app instead (its preview iframe, ?draft=…, always gets the site; the
+ *          old /edit/?path=… redirects there, /edit/sandbox/ to /sandbox/), and /__editor/*
+ *          (scripts/editor-server.mjs, localhost only) loads, saves and publishes the content JSON files and uploads photos to
  *          Cloudflare R2 with the R2_* keys from .env.local (read here, never sent to a page).
  *
  * Dev reloads: a change in content/, .generated/ or src/site/ sends the custom HMR event
  * "site:changed" { files, content, external } instead of Vite's full reload, which every
- * page would obey, the editor at /edit/ included. The editor reloads only its preview
+ * page would obey, the editor (?edit) included. The editor reloads only its preview
  * (src/editor/main.js); a plain site tab reloads itself (src/client/main.js). external is
  * false for the editor's own saves. Code changes keep normal HMR.
- *  build → only index.html is bundled; no editor page, code or endpoints are emitted.
+ *  build → only index.html is bundled; no editor page, code or endpoints are emitted (?edit on
+ *          the built site is an ignored param).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,6 +33,7 @@ import { loadContent } from './content.mjs';
 import { DRAFT_PARAM, draftsFor, editorMiddleware } from './editor-server.mjs';
 import { contactMiddleware } from './contact-dev.mjs';
 import { pageFile } from '../src/site/files.js';
+import { EDITOR_HTML, legacyRedirect, wantsEditor } from '../src/editor/lib/editor-url.js';
 import { checkSources } from '../src/site/schemas.js';
 
 const RENDER_MODULE = '/src/site/render.js';
@@ -87,12 +91,19 @@ export default function staticSite() {
           return next();
         if (url.pathname.startsWith('/@') || url.pathname.startsWith('/node_modules'))
           return next();
-        if (url.pathname === '/edit') {
-          res.writeHead(302, { Location: '/edit/' + url.search });
+        const moved = legacyRedirect(url); // the old /edit/?path=… addresses
+        if (moved || url.pathname === '/sandbox') {
+          res.writeHead(302, { Location: moved || '/sandbox/' + url.search });
           return res.end();
         }
-        if (url.pathname.startsWith('/edit/')) return next(); // editor app (edit/index.html)
+        if (url.pathname.startsWith('/sandbox/')) return next(); // mock sandbox (sandbox/index.html)
         try {
+          if (wantsEditor(url, req.headers)) {
+            // the editor app on this page (src/editor/lib/editor-url.js); its preview gets the site
+            const shell = fs.readFileSync(path.join(root, EDITOR_HTML), 'utf8');
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.end(await server.transformIndexHtml(req.url, shell));
+          }
           const { getRoutes, renderRoute } = await server.ssrLoadModule(RENDER_MODULE);
           const content = loadContent(root, draftsFor(drafts, url.searchParams.get(DRAFT_PARAM)));
           const routes = getRoutes(content);

@@ -72,7 +72,7 @@ kbd {
   display: none !important;
 }
 
-// "Loading editor…" (edit/index.html) and "Could not load content" (App.svelte)
+// "Loading editor…" (src/editor/index.html) and "Could not load content" (App.svelte)
 .ed-boot {
   padding: 40px;
   color: var(--c-text-muted);

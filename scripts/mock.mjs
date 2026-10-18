@@ -44,7 +44,7 @@ const port = Number(process.env.MOCK_PORT || 5173);
 const base = `http://localhost:${port}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const up = () =>
-  fetch(`${base}/edit/sandbox/`)
+  fetch(`${base}/sandbox/`)
     .then((r) => r.ok)
     .catch(() => false);
 
@@ -137,7 +137,7 @@ try {
   const q = new URLSearchParams({ mock: names.join(','), shot: '1' });
   if (opt.width) q.set('width', String(opt.width));
   if (opt.bare) q.set('bare', '1');
-  await send('Page.navigate', { url: `${base}/edit/sandbox/?${q}` });
+  await send('Page.navigate', { url: `${base}/sandbox/?${q}` });
   for (let i = 0; i < 300 && !(await evaluate('window.__mockReady === true')); i++) await sleep(50);
   // everything drawn, also what reaches out of the panel (an open menu)
   const box = await evaluate(`(() => {

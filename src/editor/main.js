@@ -1,5 +1,5 @@
 /**
- * Visual editor (/edit/): the real site in an iframe + a side panel.
+ * Visual editor (any page with ?edit: /?edit, /about/?edit&tab=motion): the real site in an iframe + a side panel.
  *
  *   Content - click text in the preview to edit it (animations paused)
  *   Motion  - click an animated element to edit its animation / timing / trigger
@@ -65,6 +65,10 @@ import {
 import { linkBlock, placeBlock, placeMobile, setSectionRows } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
+import { editorHref } from './lib/editor-url.js';
+
+/** The page to open: the URL's path (/about/?edit). */
+const startPath = () => location.pathname;
 
 const store = createStore();
 const live = createLive(store);
@@ -183,7 +187,7 @@ function pageEntries(routes) {
 
 /** The page menu: the site parts (Header, Footer), then every page of the site (404 included: it has its own file). */
 function updatePages() {
-  const path = bridge.path() || new URLSearchParams(location.search).get('path') || '/';
+  const path = bridge.path() || startPath();
   const routes = live.routes;
   ui.pages = [
     { kind: 'part', id: 'header', title: 'Header', path: '---' },
@@ -486,8 +490,8 @@ bridge.on('navigate', (path) => {
     syncSections({}, root);
   }
   const url = new URL(location.href);
-  url.searchParams.set('path', path);
-  history.replaceState(null, '', url);
+  url.pathname = path; // the editor's URL is the previewed page's (src/editor/lib/editor-url.js)
+  history.replaceState(null, '', editorHref(url));
   // Keep Header/Footer selection; only sync target when browsing pages.
   if (ui.target?.kind !== 'part') {
     ui.target = { kind: 'page', path, title: path === '/' ? 'Home' : path };
@@ -687,7 +691,7 @@ async function boot() {
   updatePages();
   refreshStatus();
   window.addEventListener('focus', () => !ui.publishing && refreshStatus());
-  bridge.load(new URLSearchParams(location.search).get('path') || '/');
+  bridge.load(startPath());
 }
 
 boot();

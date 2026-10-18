@@ -49,9 +49,9 @@ optional (only when asked to redo or clear mocks).
 
     npm run mock:serve          # Vite on port 5199 (MOCK_PORT), HMR; new mocks appear by themselves
 
-- List: `http://localhost:5199/edit/sandbox/` · one mock: `…/?mock=<name>` · stacked:
+- List: `http://localhost:5199/sandbox/` · one mock: `…/?mock=<name>` · stacked:
   `?mock=a,b` · panel width `&width=N` · no panel `&bare=1` · `/__mocks/list` (JSON).
-- Send Eeliya the links: `http://localhost:5199/edit/sandbox/?mock=<name>`.
+- Send Eeliya the links: `http://localhost:5199/sandbox/?mock=<name>`.
 - Screenshot (headless Chrome, 2x): `MOCK_PORT=5199 npm run mock -- <name> [--bare] [--width N]
 [--out file.png]` → `$MOCK_DIR/<name>.png` (default `../mocks/` next to the checkout).
   Chrome: `CHROME`, else the usual install path (`/usr/bin/google-chrome` on Linux).

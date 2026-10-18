@@ -1,5 +1,5 @@
 /**
- * Dev-server endpoints for the visual editor (/edit/). Mounted by the static-site
+ * Dev-server endpoints for the visual editor (any page with ?edit). Mounted by the static-site
  * plugin in `configureServer`, so they only exist while `npm run dev` runs; a
  * production build has no editor and no endpoints.
  *

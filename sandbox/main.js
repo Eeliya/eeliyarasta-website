@@ -1,5 +1,5 @@
 /**
- * Editor UI sandbox (dev only: /edit/sandbox/, never built; npm run mock:serve). Two kinds of
+ * Editor UI sandbox (dev only: /sandbox/, never built; npm run mock:serve). Two kinds of
  * page:
  *
  *   (no ?mock)          the viewer: the mocks, newest first, to open or delete (Viewer.svelte),

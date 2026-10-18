@@ -20,7 +20,7 @@ npm run check:links  # after a build: every internal link in dist/ points at a f
 npm run mock -- <name>  # screenshot an editor UI mock (sandbox/README.md)
 ```
 
-Visual editor (dev only): `http://localhost:5173/edit/` while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
+Visual editor (dev only): any page with `?edit`, e.g. `http://localhost:5173/?edit`, while `npm run dev` runs (see [Visual editor](#visual-editor-edit-dev-only)).
 
 Requires Node `^20.19.0 || >=22.12.0` (Vite 8's engines). `npm run mock` passes
 `--experimental-websocket`, which only Node 20 needs.
@@ -77,7 +77,7 @@ scripts/
   test-layout.mjs   ← shared test helpers
   *.test.mjs        ← the unit tests (node --test)
 functions/api/contact.js ← the contact form's Cloudflare Pages Function (emails via Resend)
-sandbox/            ← editor UI mock builder (kit/, viewer; mocks/ is local, git-ignored): npm run mock:serve
+sandbox/            ← editor UI mock builder at /sandbox/ (kit/, viewer; mocks/ is local, git-ignored): npm run mock:serve
 src/
   site/             ← isomorphic templates (no Node APIs, run at build time AND in a browser)
     routes.js       ← list of pages, from the files in content/en/pages/
@@ -105,15 +105,15 @@ src/
     modules/        ← real rows, album slider, project accordion, card hover, misc
     ui/             ← menu (click-only), clock
     styles/         ← SCSS (tokens, glass, chrome, home, pages, album)
-  editor/           ← the visual editor app (/edit/), dev server only, never built or shipped
+  editor/           ← the visual editor app (any page + ?edit), dev server only, never built or shipped
     config.js       ← content files the editor may write and publish
     store.js        ← in-memory content copies, dirty state, undo/redo, rebase
     bridge.js       ← talks to the site inside the iframe (text overrides, selection, replay)
     source.js       ← talks to the dev-server endpoints (load, save, status, publish)
     svelte/         ← the editor UI (Svelte 5): panels, fields, modals
-    lib/            ← small editor helpers (pointers, diff, format, show-value, dialog)
+    lib/            ← small editor helpers (pointers, diff, format, show-value, dialog, editor-url)
+    index.html      ← editor shell (served by `npm run dev` for ?edit only)
 index.html          ← HTML shell with <!--ssr-head--> / <!--ssr-body--> markers
-edit/index.html     ← editor entry (served by `npm run dev` only)
 ```
 
 **Content shape.** Every content file is a JSON object whose first key is `"version": 1`, the
@@ -890,17 +890,23 @@ that blocks still use is refused.
 scroll scrubs (content is simply shown), instant album slides, a quick crossfade
 between pages.
 
-### Visual editor (`/edit/`, dev only)
+### Visual editor (`?edit`, dev only)
 
-A WYSIWYG editor for **text and animations** (`edit/index.html` → `src/editor/`). It only exists
+A WYSIWYG editor for **text and animations** (`src/editor/index.html` → `src/editor/`). It only exists
 while **`npm run dev`** runs: `npm run build` bundles just the public site, so `dist/` has no
-`/edit/` page, no editor code and no editor endpoints, and the editor shortcut isn't in the
+editor page (`?edit` on the built site is an ignored param), no editor code and no editor endpoints, and the editor shortcut isn't in the
 public bundle either (the code that connects the site to the editor sits behind
 `import.meta.env.DEV`).
 
-**Open it:** `http://localhost:5173/edit/` while running `npm run dev`. Shortcut: **Ctrl/⌘ +
-Shift + E** on any page of the dev site opens that page in the editor (and from the editor goes
-back to the page).
+**Open it:** add `?edit` to any page of the dev site while running `npm run dev`:
+`http://localhost:5173/?edit` (home), `http://localhost:5173/photography/people/?edit` (that
+page). The URL's path is the page in the preview and follows it as you browse; the other editor
+params come after it (`/about/?edit&tab=motion`). Shortcut: **Ctrl/⌘ + Shift + E** on any page
+of the dev site opens that page in the editor (and from the editor goes back to the page). The
+dev server serves the editor for `?edit` only to a top-level page: the preview iframe (which
+loads pages with `?draft=…`) always gets the site, so the editor never opens inside itself
+(`src/editor/lib/editor-url.js`). The old `/edit/?path=/about/` addresses redirect to
+`/about/?edit` in dev.
 
 Layout: the real site in a same-origin iframe, with a glass side panel. Pick a page from the
 dropdown (grouped by folder; a `[slug]` template is one entry, `/people/[slug]`, with an item
@@ -1027,9 +1033,9 @@ nothing uses: an R2 photo loses all its sizes, a local one its file in `media/` 
 commits `content/`, so commit that removal yourself). `&media=<key>` (and `&pick=<field>`)
 in the URL reopens it.
 
-**Refresh** keeps your place. The URL holds the page, the tab, Menu/Footer and the open Source
+**Refresh** keeps your place. The URL holds the page (its path), the tab, Menu/Footer and the open Source
 Explorer item, so a shared link opens the same view:
-`/edit/?path=/photography/people/&tab=content&source=people&item=noor-vermeer` (`tab`: content,
+`/photography/people/?edit&tab=content&source=people&item=noor-vermeer` (`tab`: content,
 motion, settings, preview (the old `browse` opens Preview too); `view`: menu, footer; `motion=animations`: the Motion tab's Animations sub-tab; `anim`: the animation open there). Open/closed sections, the selected field or Motion
 element and the scroll positions are kept per browser tab in sessionStorage. See
 `src/editor/svelte/persist.js`.

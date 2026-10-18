@@ -19,12 +19,12 @@ them.
 
 The same on Windows, macOS and Linux (plain Node, no shell). A Vite dev server with HMR on
 `MOCK_PORT` (default **5199**, so it runs next to `npm run dev` on 5173). It prints the URL:
-**http://localhost:5199/edit/sandbox/**. `npm run dev` serves the sandbox too, at
-`/edit/sandbox/` on its own port.
+**http://localhost:5199/sandbox/**. `npm run dev` serves the sandbox too, at
+`/sandbox/` on its own port (the old `/sandbox/` redirects there).
 
 ## The viewer
 
-`/edit/sandbox/` lists the mocks newest first (name, last changed), plus the kit's demo
+`/sandbox/` lists the mocks newest first (name, last changed), plus the kit's demo
 (`kit-demo`, tracked). The viewer (the list, and the bar with "← Mocks" over a mock) has its own
 plain look (`viewer.css`, `Viewer.svelte`: black, the system font, no editor tokens or components);
 the editor's styles, icons and panel load only on a mock page, for the mock. Click one to open it live. A new `sandbox/mocks/*.svelte` appears by
@@ -43,7 +43,7 @@ other files are refused.
 with made-up props, and copy only the piece the mock changes, so it can't drift from the
 editor.
 
-Open `/edit/sandbox/?mock=<name>` (`?mock=a,b,c` stacks several with their names,
+Open `/sandbox/?mock=<name>` (`?mock=a,b,c` stacks several with their names,
 `&width=N` sets the panel width, default `--panel-w`, `&bare=1` drops the panel, `&shot=1`
 drops the viewer's bar: what `npm run mock` uses).
 

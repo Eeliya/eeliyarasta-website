@@ -22,9 +22,9 @@ export default defineConfig({
     target: 'es2020',
     assetsInlineLimit: 0,
     modulePreload: { polyfill: false },
-    // Only the public site is built. The visual editor (edit/index.html → src/editor)
-    // is served by the dev server only (`npm run dev` → /edit/) and never ships; nor does the
-    // mock sandbox (edit/sandbox/index.html → sandbox/, sandbox/README.md).
+    // Only the public site is built. The visual editor (src/editor/index.html) is served by the
+    // dev server only (`npm run dev` → any page with ?edit, e.g. /?edit) and never ships; nor does
+    // the mock sandbox (sandbox/index.html → /sandbox/, sandbox/README.md).
     rolldownOptions: {
       input: { main: 'index.html' },
     },

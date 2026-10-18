@@ -15,6 +15,7 @@
  *    its field in the panel shows the binding.
  */
 import { withDraft } from './source.js';
+import { EDIT_PARAM } from './lib/editor-url.js';
 import { splitEdit, words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
@@ -93,11 +94,14 @@ export function createBridge({ store, labelFor }) {
     /** Use `el` as the preview (an attachment: {@attach bridge.attach} in App.svelte). */
     attach(el) {
       iframe = el;
-      // A full navigation inside the frame to a non-site page (e.g. /edit/ itself): go home.
+      // A full navigation inside the frame to an editor URL (?edit: the dev server gives frames the
+      // site anyway) or the mock sandbox: load that page as a preview, never the editor in itself.
       iframe.addEventListener('load', () => {
         try {
           const cw = iframe.contentWindow;
-          if (cw && cw.location.pathname.startsWith('/edit')) iframe.src = withDraft('/');
+          const { pathname, search } = cw?.location || {};
+          if (cw && new URLSearchParams(search).has(EDIT_PARAM)) iframe.src = withDraft(pathname);
+          else if (cw && pathname.startsWith('/sandbox/')) iframe.src = withDraft('/');
         } catch {
           /* cross-origin or frame not ready */
         }

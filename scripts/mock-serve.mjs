@@ -19,4 +19,4 @@ const server = await createServer({
 });
 await server.listen();
 const local = server.resolvedUrls?.local?.[0] || `http://localhost:${port}/`;
-console.log(`\n  Mock sandbox: ${new URL('edit/sandbox/', local)}\n`);
+console.log(`\n  Mock sandbox: ${new URL('sandbox/', local)}\n`);
