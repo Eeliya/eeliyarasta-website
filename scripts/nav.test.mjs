@@ -67,13 +67,13 @@ test('render: the header and mobile menu follow nav.json', () => {
   assert.ok(h.indexOf('>Work<') < h.indexOf('>Builds<') && h.indexOf('>Shop<') < h.indexOf('>Me<'));
   assert.match(
     h,
-    /aria-controls="dd-photography" data-dropdown-toggle data-nav-section="\/photography\/,\/people\/"/,
+    /aria-controls="dd-photography" data-dropdown-toggle data-nav-section="\/photography\/,\/photography\/people\/"/,
   );
   assert.match(
     h,
-    /<a class="dropdown__head" href="\/people\/"><span>Faces<\/span> <sup>04<\/sup><\/a>/,
+    /<a class="dropdown__head" href="\/photography\/people\/"><span>Faces<\/span> <sup>04<\/sup><\/a>/,
   );
-  assert.match(h, /class="dd-link" href="\/people\/noor-vermeer\/"/); // items with pages: photo rows
+  assert.match(h, /class="dd-link" href="\/photography\/people\/noor-vermeer\/"/); // items with pages: photo rows
   assert.match(h, /class="dd-link dd-link--text" href="\/projects\/#/); // without: their spot
   assert.match(h, /<a class="dropdown__all" href="\/projects\/"><span>Every build<\/span>/);
   assert.match(
@@ -87,12 +87,12 @@ test('render: the header and mobile menu follow nav.json', () => {
   // an item link: the item's page, computed from its id
   assert.match(
     h,
-    /<a class="nav__item" href="\/people\/noor-vermeer\/" data-nav="\/people\/noor-vermeer\/"><span>Noor/,
+    /<a class="nav__item" href="\/photography\/people\/noor-vermeer\/" data-nav="\/photography\/people\/noor-vermeer\/"><span>Noor/,
   );
   const m = mobileMenu(ctx);
   assert.match(
     m,
-    /<a class="mmenu__head" href="\/people\/"><span>Faces<\/span><\/a><a href="\/people\/noor-vermeer\/">/,
+    /<a class="mmenu__head" href="\/photography\/people\/"><span>Faces<\/span><\/a><a href="\/photography\/people\/noor-vermeer\/">/,
   );
   assert.match(m, /mmenu__sub--single/);
   assert.match(m, /<a class="mmenu__big" href="\/about\/" data-nav="\/about\/" data-mm-item>/);
@@ -115,7 +115,10 @@ test('links: a page by id, an item by id, an href; made into URLs at build time'
   const { hrefOf, linkProblem } = await import('../src/site/hrefs.js');
   const ctx = ctxWith(base.nav);
   assert.equal(hrefOf(ctx, { page: 'pg-lyos' }), '/about/');
-  assert.equal(hrefOf(ctx, { item: { source: 'people', id: 'p-qw7b' } }), '/people/noor-vermeer/');
+  assert.equal(
+    hrefOf(ctx, { item: { source: 'people', id: 'p-qw7b' } }),
+    '/photography/people/noor-vermeer/',
+  );
   assert.equal(hrefOf(ctx, { href: 'mailto:a@b.c' }), 'mailto:a@b.c');
   assert.equal(hrefOf(ctx, 'https://bound.example'), 'https://bound.example'); // a bound value
   assert.equal(hrefOf(ctx, undefined), '');

@@ -194,6 +194,9 @@ test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async 
     ],
     { r: [{ from: '/a', to: '/b' }], x: [1, 'b'] },
     [{ a: { b: 1 } }],
+    // at the width: a line of exactly 100 columns fits as the last entry, not with a comma after
+    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:slug/`, to: `/${'y'.repeat(17)}/` }] },
+    { v: 1, r: [{ from: `/${'x'.repeat(40)}/:slug/`, to: `/${'y'.repeat(17)}/` }], z: 1 },
   ];
   for (const v of cases) {
     const text = formatJSON(v);

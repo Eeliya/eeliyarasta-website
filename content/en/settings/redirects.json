@@ -2,8 +2,8 @@
   "version": 1,
   "redirects": [
     {
-      "from": "/people/noor-vermeer/:slug/",
-      "to": "/people/"
+      "from": "/photography/people/noor-vermeer/:slug/",
+      "to": "/photography/people/"
     }
   ]
 }

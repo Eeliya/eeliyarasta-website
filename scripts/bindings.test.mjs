@@ -141,7 +141,7 @@ test('[slug] templates: the album title, facts and summary come from each item',
     const html = render.renderRoute(route, content, { editable: true }).body;
     assert.match(
       html,
-      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/people\/\[slug\]\.json#\/sections\/0\/blocks\/0\/title">/,
+      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/photography\/people\/\[slug\]\.json#\/sections\/0\/blocks\/0\/title">/,
     );
     assert.doesNotMatch(html, /data-edit="[^"]*#\/sections\/0\/blocks\/0\/title"/);
   } finally {

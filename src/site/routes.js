@@ -45,8 +45,8 @@ function curtainOf(explicit, title) {
 export const NAMED_VIEWS = {
   home: 'home',
   photography: 'photography',
-  people: 'people',
-  places: 'places',
+  'photography/people': 'people',
+  'photography/places': 'places',
   projects: 'projects',
   about: 'about',
   404: 'notFound',

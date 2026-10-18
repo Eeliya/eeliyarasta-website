@@ -200,7 +200,7 @@ shaped like the block registry's fields (`src/site/schemas.js`):
 ```
 
 - `title`: the field that names an item (the editor's lists, page titles, `<name> | People`);
-  `slug`: the field with its URL slug (`/people/<slug>/`; empty: the title, slugified).
+  `slug`: the field with its URL slug (`/photography/people/<slug>/`; empty: the title, slugified).
 - `type`: `text`, `longtext` (lines), `number`, `photo` (a `media/` path or R2 key), `photos`
   (a list of photo paths), `link` (`https://…`, `/path/` or `mailto:`), `choice`
   (one of `options: ["a", "b"]`), `boolean`, `date` (`YYYY-MM-DD`).

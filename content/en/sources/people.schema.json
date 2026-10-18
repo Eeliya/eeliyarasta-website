@@ -9,7 +9,7 @@
       "label": "Slug",
       "type": "text",
       "required": true,
-      "help": "The page URL, /people/<slug>/. When it changes, Save redirects the old one."
+      "help": "The page URL, /photography/people/<slug>/. When it changes, Save redirects the old one."
     },
     {
       "key": "title",

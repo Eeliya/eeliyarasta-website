@@ -3,8 +3,8 @@
  * endpoint (Node), so every save produces the same bytes and small git diffs.
  *
  * 2-space indent; an object/array whose values are all primitives is kept on one
- * line when it fits in `width` (99) columns, e.g. "from": { "autoAlpha": 0, "y": 40 }.
- * 99: Prettier's printWidth (100) less a trailing comma, so saved files are Prettier-clean.
+ * line when it fits in Prettier's printWidth (100) columns with the comma after it, if one
+ * follows, e.g. "from": { "autoAlpha": 0, "y": 40 }: so saved files are Prettier-clean.
  * An array goes on one line the way Prettier prints it, with no space inside its brackets
  * ([1, 2], [{ "from": "/a/", "to": "/b/" }]), when every item does (a value, a flat object,
  * an array of values) and it fits, unless Prettier breaks it: 2+ items that are all objects
@@ -30,27 +30,28 @@ const oneLine = (v) => {
     : '{}';
 };
 
-function fmt(value, indent, prefixLen, width) {
+function fmt(value, indent, prefixLen, width, comma = false) {
   if (!isObj(value)) return JSON.stringify(value) ?? 'null';
   if (Array.isArray(value) ? flatItems(value) : flat(value)) {
     const line = oneLine(value);
-    if (indent.length + prefixLen + line.length <= width) return line;
+    if (indent.length + prefixLen + line.length + (comma ? 1 : 0) <= width) return line;
   }
   const inner = indent + '  ';
   if (Array.isArray(value)) {
     if (!value.length) return '[]';
-    return `[\n${value.map((x) => inner + fmt(x, inner, 0, width)).join(',\n')}\n${indent}]`;
+    const last = value.length - 1;
+    return `[\n${value.map((x, i) => inner + fmt(x, inner, 0, width, i < last)).join(',\n')}\n${indent}]`;
   }
   const entries = Object.entries(value).filter(([, x]) => x !== undefined);
   if (!entries.length) return '{}';
   return `{\n${entries
-    .map(([k, x]) => {
+    .map(([k, x], i) => {
       const key = `${JSON.stringify(k)}: `;
-      return inner + key + fmt(x, inner, key.length, width);
+      return inner + key + fmt(x, inner, key.length, width, i < entries.length - 1);
     })
     .join(',\n')}\n${indent}}`;
 }
 
-export function formatJSON(value, { width = 99 } = {}) {
+export function formatJSON(value, { width = 100 } = {}) {
   return fmt(value, '', 0, width) + '\n';
 }

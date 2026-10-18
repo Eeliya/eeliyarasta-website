@@ -96,7 +96,7 @@ export const itemSlug = (item, schema) => {
 /**
  * URL of a source item's page, from the routes (ctx.routes): the template route of its
  * source (content/en/pages/<folder>/[slug].json) or the fixed page that replaced it.
- * itemHref(ctx, 'people', item) -> "/people/noor-vermeer/"; "#" (and a warning) when no
+ * itemHref(ctx, 'people', item) -> "/photography/people/noor-vermeer/"; "#" (and a warning) when no
  * template shows that source.
  */
 export const itemHref = (ctx, source, item) => {

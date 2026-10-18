@@ -28,7 +28,8 @@ test('folders mirror URLs, in tree order', () => {
   const r = buildRoutes(c).routes;
   assert.equal(r.find((x) => x.path === '/404/').out, '404.html');
   assert.doesNotMatch(sitemapXml(r, ''), /404/);
-  assert.equal(r.find((x) => x.path === '/people/').page, 'people'); // built-in view
+  assert.equal(r.find((x) => x.path === '/about/').page, 'about'); // built-in view
+  assert.equal(r.find((x) => x.path === '/people/').page, 'page'); // a view by id, not by name
   assert.equal(r.find((x) => x.path === '/people/whatever/').page, 'page');
   assert.equal(r.find((x) => x.path === '/people/whatever/').title, 'Whatever | Site');
 });
