@@ -114,7 +114,7 @@ test('rename moves the whole folder; a built-in view is kept', () => {
   assert.equal(read(root, 'pages/models/index.json').view, undefined); // no built-in view
   assert.equal(read(root, 'pages/models/team/index.json').view, undefined);
   assert.equal(pagesOp(root, { op: 'rename', id: 'about', name: 'models' }).status, 400);
-  assert.equal(pagesOp(root, { op: 'rename', id: 'models/[person]', name: 'x' }).status, 400);
+  assert.equal(pagesOp(root, { op: 'rename', id: 'models/[person]', name: 'X' }).status, 400);
   assert.equal(pagesOp(root, { op: 'rename', id: '404', name: 'x' }).status, 400);
   assert.equal(pagesOp(root, { op: 'rename', id: 'home', name: 'x' }).status, 400);
   // a page with a built-in view keeps it under its new name

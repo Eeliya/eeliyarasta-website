@@ -134,7 +134,9 @@ export function pruneRedirects(list, paths) {
 /**
  * The moves of a page change, from the content files before it (`files`):
  *   { id, name }      page `id` renamed to `name` (its folder and everything in it)
- *   { id, to }        page `id` deleted, its paths sent to `to` (a path), or gone (to null)
+ *   { id, to }        page `id` deleted, its paths sent to `to` (a path), or gone (to null);
+ *                     `to` may be a pattern of a [param] page above it ("/people/:person/"):
+ *                     each item page goes to its own outer page, the pattern to the pattern
  * A [param] page's own paths are its item pages (its pattern, its items and the templates in
  * it move); a page's are its folder's, every page in it.
  */
@@ -148,7 +150,28 @@ export function pageMoves(files, { id, name, to }) {
     ...[...sitePaths(files)].filter((p) => p.includes(':') && p.startsWith(from)),
   ];
   const renamed = name !== undefined && from.replace(/[^/]+\/$/, `${name}/`);
-  return new Map(paths.map((p) => [p, renamed ? renamed + p.slice(from.length) : to]));
+  const params = new Map(routes.map((r) => [r.path, r.params || {}]));
+  // "/people/:person/" for "/people/noor/2024/": "/people/noor/"
+  const fill = (p) =>
+    typeof to === 'string' && !p.includes(':')
+      ? to.replace(PLACEHOLDER, (m, n) => params.get(p)?.[n] ?? m)
+      : to;
+  return new Map(paths.map((p) => [p, renamed ? renamed + p.slice(from.length) : fill(p)]));
+}
+
+const PLACEHOLDER = /:([a-z][a-z0-9-]*)/g;
+
+/**
+ * A [param] folder's param renamed (`from` -> `to`, its pattern `pattern`: the URLs stay):
+ * the redirects that name it in a pattern under it, from and to, use the new name.
+ */
+export function renameParam(list, pattern, from, to) {
+  const re = new RegExp(`:${from}(?=/|$)`, 'g');
+  return list.map((r) =>
+    r.from.startsWith(pattern) || (isPath(r.to) && pathKey(r.to).startsWith(pattern))
+      ? { ...r, from: r.from.replace(re, `:${to}`), to: r.to.replace(re, `:${to}`) }
+      : r,
+  );
 }
 
 /**

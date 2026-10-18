@@ -187,6 +187,7 @@ test('a [param] folder in a [param] folder: its own level, "per" the outer one',
     [inner.id, inner.seg, inner.title, inner.nested],
     ['people/[person]/[year]', '[year]/', '[year]', '[person]'],
   );
-  assert.equal(parentPath('people/[person]/[year]'), '/people/');
+  assert.equal(parentPath('people/[person]/[year]'), '/people/:person/');
+  assert.equal(parentPath('people/[person]'), '/people/');
   assert.equal(shownPath('people/[person]/[year]'), '/people/[person]/[year]/');
 });

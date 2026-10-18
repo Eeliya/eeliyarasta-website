@@ -52,7 +52,7 @@ test('a [param] page: "template" names only its source; "grid" is gone', () => {
   ]);
   // no loose labels (a back or next link): a page is only sections of blocks
   assert.deepEqual(checkContent(T, { ...base, template: { source: 'people', next: 'Next' } }), [
-    '"template" has only "source" and "key"',
+    '"template" has only "source", "key" and "match"',
   ]);
 });
 

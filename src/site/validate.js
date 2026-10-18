@@ -20,6 +20,7 @@ import {
   STRINGS,
   VERSION,
   isTemplate,
+  paramsOf,
   isSlug,
   pageIdOf,
   DOC_KINDS,
@@ -237,11 +238,22 @@ function checkDoc(file, d) {
     out.push('"template.source" must name a source (a [param] page makes a page per item)');
   else if (
     isObject(d.template) &&
-    Object.keys(d.template).some((k) => !['source', 'key'].includes(k))
+    Object.keys(d.template).some((k) => !['source', 'key', 'match'].includes(k))
   )
-    out.push('"template" has only "source" and "key"');
+    out.push('"template" has only "source", "key" and "match"');
   else if (d.template?.key !== undefined && (typeof d.template.key !== 'string' || !d.template.key))
     out.push('"template.key" must name a field of the source (its value is the URL part)');
+  // match: { <outer param>: <field> }, the field of its items an outer param's value must equal
+  const outer = template ? paramsOf(pageIdOf(file)).slice(0, -1) : [];
+  const match = d.template?.match;
+  if (
+    match !== undefined &&
+    (!isObject(match) ||
+      Object.entries(match).some(([p, f]) => !outer.includes(p) || typeof f !== 'string' || !f))
+  )
+    out.push(
+      '"template.match" must map params of the folders above to field names ({ "person": "owner" })',
+    );
   if (!template && d.template !== undefined) out.push('"template" is only for [param] pages');
   // its folder's URL opens its first sub page instead (routes.js)
   if (d.ownPage !== undefined && d.ownPage !== false)

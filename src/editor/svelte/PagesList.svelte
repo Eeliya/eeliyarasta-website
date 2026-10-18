@@ -23,7 +23,7 @@
   import { toast } from './toasts.svelte.js';
   import { listDrag, rowsOf } from './list-drag.svelte.js';
   import { NAV, pageFile } from '../../site/files.js';
-  import { parentId } from '../../site/routes.js';
+  import { parentId, pathOfId } from '../../site/routes.js';
   import {
     crumbsOf,
     levelOf,
@@ -32,6 +32,7 @@
     linksTo,
     movePage,
     parentPath,
+    shownPath,
     unlinkPage,
   } from '../lib/page-tree.js';
   import { plural } from '../lib/format.js';
@@ -131,7 +132,8 @@
   const drag = $derived(ld.drag);
 
   // ---- delete
-  const heavyOf = (row) => linksTo(files, row.pid, pageFile(row.id)) > 0;
+  // a [param] page always asks: its item pages have addresses visitors may come to
+  const heavyOf = (row) => row.template || linksTo(files, row.pid, pageFile(row.id)) > 0;
   // its links outside the menu (the menu's own items are "In the menu")
   const others = (row) =>
     linksTo(files, row.pid, pageFile(row.id)) - linksTo({ [NAV]: files[NAV] }, row.pid);
@@ -141,7 +143,19 @@
     await tick();
     root?.querySelector('.prow__ask .ask-btns > :last-child')?.focus();
   }
-  const redirectOptions = (row) => [
+  // a [param] page in one: the same outer item, one level up ("/people/:person/"), or none
+  const redirectOptions = (row) =>
+    row.nested
+      ? [
+          {
+            value: pathOfId(parentId(row.id)),
+            label: `Same ${row.nested}, one level up`,
+            hint: `${row.nested}/`,
+          },
+          { value: GONE, label: 'No redirect (its pages are gone)' },
+        ]
+      : pageOptions(row);
+  const pageOptions = (row) => [
     ...ui.pages
       .filter(
         (p) => p.kind === 'page' && !p.items && p.path !== '/404/' && !p.path.startsWith(row.path),
@@ -269,6 +283,7 @@
             <p>Delete {r.title}?</p>
             <span
               >{[
+                r.template && `Its item pages${r.nested ? `, per ${r.nested}` : ''}`,
                 r.linked && 'In the menu',
                 others(r) && `${plural(others(r), 'link')} to it`,
                 r.kids && `${plural(r.kids, 'page')} in it ${r.kids === 1 ? 'goes' : 'go'} too`,
@@ -288,8 +303,12 @@
           </div>
           <p class="hint small">
             {redirectTo === GONE
-              ? 'No redirect: its address shows the 404 page; its menu item goes, links to it stay.'
-              : `A redirect (Settings › Redirects) sends ${r.path} there; links to it are updated.`}
+              ? r.template
+                ? 'No redirect: its addresses show the 404 page; links to them stay.'
+                : 'No redirect: its address shows the 404 page; its menu item goes, links to it stay.'
+              : r.nested
+                ? `Each ${r.title} page goes to its own ${r.nested} page; links follow.`
+                : `A redirect (Settings › Redirects) sends ${shownPath(r.id)} there; links to it are updated.`}
           </p>
           <span class="ask-btns">
             <Button

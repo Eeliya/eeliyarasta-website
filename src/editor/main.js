@@ -298,6 +298,13 @@ async function pagesOp(body) {
     to = pathOfId(res.id) + shown.slice(oldPath.length);
   else if (body.op === 'delete' && shown.startsWith(oldPath))
     to = pathOfId(res.id).replace(/[^/]+\/$/, '');
+  else if (body.op === 'delete' && oldPath?.includes(':')) {
+    // a [param] page: from one of its pages (at its depth or deeper) to the same outer page
+    const depth = oldPath.split('/').filter(Boolean).length;
+    const parts = shown.split('/').filter(Boolean);
+    const at = new RegExp(`^${oldPath.replace(/:[a-z][a-z0-9-]*/g, '[^/]+')}`);
+    if (at.test(shown)) to = `/${parts.slice(0, depth - 1).join('/')}/`.replace('//', '/');
+  }
   if (to) bridge.navigate(to);
   return res;
 }

@@ -5,6 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { pagesOp } from './editor-server.mjs';
 import { readContentDir } from './content.mjs';
+import { getRoutes } from '../src/site/routes.js';
+import { contentFromFiles } from '../src/site/files.js';
 import {
   buildRedirects,
   itemMoves,
@@ -304,21 +306,112 @@ test('nested [param] pages: a rename moves every level by its pattern', () => {
   ]);
 });
 
-test('nested [param] pages: delete one level, its item pages and pattern redirect', () => {
+test('nested [param] pages: delete one level, to the same outer item by default', () => {
   const root = nestedSite();
+  const file = path.join(root, 'content/en/pages/about/index.json');
+  fs.writeFileSync(
+    file,
+    JSON.stringify(
+      page('pg-abou', {
+        type: 'button',
+        label: 'x',
+        config: { link: { href: '/people/noor/2024/' } },
+      }),
+    ),
+  );
+  // only a pattern above it, not itself or another
+  for (const redirect of ['/people/:person/:year/', '/about/:person/', '/people/:x/'])
+    assert.equal(
+      pagesOp(root, { op: 'delete', id: 'people/[person]/[year]', redirect }).status,
+      400,
+      redirect,
+    );
   const r = pagesOp(root, { op: 'delete', id: 'people/[person]/[year]' });
   assert.equal(r.status, 200, r.body.error);
   assert.deepEqual(r.body.removed, ['pages/people/[person]/[year]/index.json']);
+  // one line: each item page goes to its own outer page; links to one follow it
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
+    { from: '/people/:person/:year/', to: '/people/:person/' },
+  ]);
+  assert.equal(
+    read(root, 'pages/about/index.json').sections[0].blocks[0].config.link.href,
+    '/people/noor/',
+  );
+  // No redirect: none (its pages are 404s)
+  const gone = nestedSite();
+  assert.equal(
+    pagesOp(gone, { op: 'delete', id: 'people/[person]/[year]', redirect: null }).status,
+    200,
+  );
+  assert.deepEqual(read(gone, 'settings/redirects.json').redirects, []);
+});
+
+test('top-level [param] pages: delete to the nearest page (default) or one picked', () => {
+  const root = nestedSite();
+  assert.equal(pagesOp(root, { op: 'delete', id: 'people/[person]' }).status, 200);
   assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/people/:person/:year/', to: '/people/' },
+    { from: '/people/:person/', to: '/people/' },
   ]);
-  // the outer level: both go
   const again = nestedSite();
   pagesOp(again, { op: 'delete', id: 'people/[person]', redirect: '/about/' });
   assert.deepEqual(read(again, 'settings/redirects.json').redirects, [
     { from: '/people/:person/:year/', to: '/about/' },
     { from: '/people/:person/', to: '/about/' },
   ]);
+});
+
+test('rename a param: the URLs stay, the levels in it keep matching, redirects follow', () => {
+  const root = nestedSite([
+    { from: '/p/:person/:year/', to: '/people/:person/:year/' },
+    { from: '/old/', to: '/about/' },
+  ]);
+  const urls = () =>
+    getRoutes(contentFromFiles(readContentDir(root)))
+      .map((r) => r.path)
+      .sort();
+  const before = urls();
+  const op = (id, name) => pagesOp(root, { op: 'rename', id, name });
+  // not valid, the same, used above it or in it
+  for (const name of ['Model', '1x', '', 'person', 'year'])
+    assert.equal(op('people/[person]', name).status, 400, name);
+  assert.equal(op('people/[person]/[year]', 'person').status, 400);
+  const r = op('people/[person]', 'model');
+  assert.equal(r.status, 200, r.body.error);
+  assert.equal(r.body.id, 'people/[model]');
+  assert.deepEqual(r.body.created.sort(), [
+    'pages/people/[model]/[year]/index.json',
+    'pages/people/[model]/index.json',
+  ]);
+  assert.equal(read(root, 'pages/people/[model]/index.json').id, 'pg-pslg'); // links by id stay
+  // the [year] level still matches its items' "person" field to the outer value
+  assert.deepEqual(read(root, 'pages/people/[model]/[year]/index.json').template, {
+    source: 'shoots',
+    key: 'year',
+    match: { model: 'person' },
+  });
+  assert.deepEqual(urls(), before);
+  assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
+    { from: '/p/:model/:year/', to: '/people/:model/:year/' },
+    { from: '/old/', to: '/about/' },
+  ]);
+  // back again: the match goes (the field is named after the param)
+  assert.equal(op('people/[model]', 'person').status, 200);
+  assert.deepEqual(read(root, 'pages/people/[person]/[year]/index.json').template, {
+    source: 'shoots',
+    key: 'year',
+  });
+  assert.deepEqual(urls(), before);
+  // the inner level: renamed alone
+  assert.equal(op('people/[person]/[year]', 'when').status, 200);
+  assert.deepEqual(urls(), before);
+  assert.deepEqual(
+    checkContent(
+      'pages/people/[person]/[when]/index.json',
+      read(root, 'pages/people/[person]/[when]/index.json'),
+    ),
+    [],
+  );
 });
 
 test('multi-param patterns: in and out of _redirects', () => {

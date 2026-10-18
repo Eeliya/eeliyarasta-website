@@ -46,12 +46,11 @@ export function titleOf(files, id) {
 /** A page's path as the editor shows it: "/people/[person]/" (routes.js: "/people/:person/"). */
 export const shownPath = (id) => pathOfId(id).replace(/:([a-z][a-z0-9-]*)/g, '[$1]');
 
-/** Where a deleted page redirects by default: its parent page, past [param] ones (many URLs). */
-export function parentPath(id) {
-  let up = parentId(id);
-  while (isTemplate(up)) up = parentId(up);
-  return pathOfId(up || 'home');
-}
+/**
+ * Where a deleted page redirects by default: its parent page; in a [param] page, its pattern
+ * ("/people/:person/": each item page to the same outer item, one level up).
+ */
+export const parentPath = (id) => pathOfId(parentId(id) || 'home');
 
 /** The path a row shows at `level`: its own segment under the folder, else the full path. */
 export function segOf(id, level) {

@@ -40,6 +40,7 @@ import {
   isContentFile,
   isParam,
   isParamName,
+  paramOf,
   isTemplate,
   pageIdOf,
   paramFolder,
@@ -75,6 +76,7 @@ import {
   pathKey,
   pruneRedirects,
   redirectsOf,
+  renameParam,
   sitePaths,
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
@@ -122,10 +124,12 @@ const PROTECTED = new Set(['home', '404']); // no rename or delete
  *                                       <parent>/[param]/index.json: a page per item of the
  *                                       source (param: its name, default "slug"; key: the field
  *                                       whose value is the URL part, default the item's slug)
- *   rename    { id, name }              the page's folder, with everything in it
+ *   rename    { id, name }              the page's folder, with everything in it; a [param]
+ *                                       page: its param (name "model": [model]), URLs stay
  *   delete    { id, redirect }          the page's folder, with everything in it; its paths
  *                                       redirect to `redirect` (a page's path; default: the
- *                                       parent page, past [param] ones), or go when it is null
+ *                                       parent page; in a [param] page its pattern, each
+ *                                       item page to the same outer item), or go when it is null
  *
  * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted. A [param]
  * folder is never at the root, a folder has at most one, and one can hold only another
@@ -292,9 +296,7 @@ export function pagesOp(
   if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed or deleted`);
   const template = isTemplate(id);
 
-  if (op === 'rename' && template)
-    return fail(400, 'A [param] page is named after its param: delete it and add another');
-  if (op === 'rename') {
+  if (op === 'rename' && !template) {
     const bad = checkName(parentOf(id), name);
     if (bad) return fail(400, bad);
   }
@@ -305,16 +307,18 @@ export function pagesOp(
   } catch (err) {
     return fail(400, `Fix the content first: ${err.message}`);
   }
-  // default: the parent page, the nearest one with one URL ([param] pages have many)
-  let up = parentOf(id);
-  while (isTemplate(up)) up = parentOf(up);
-  const target = redirect === undefined ? pathOfId(up || 'home') : redirect;
+  if (op === 'rename' && template) return renameParamOp(before);
+  // default: the parent page; in a [param] page, its pattern: each item page goes one level
+  // up, to the same outer item ("/people/:person/:year/" -> "/people/:person/")
+  const target = redirect === undefined ? pathOfId(parentOf(id) || 'home') : redirect;
   const moves = pageMoves(before, op === 'rename' ? { id, name } : { id, to: target });
   if (op === 'delete' && target !== null) {
+    const up = typeof target === 'string' && target.includes(':');
     if (
       typeof target !== 'string' ||
       !sitePaths(before).has(pathKey(target)) ||
-      target.includes(':')
+      // a pattern: only one of the [param] pages above it
+      (up && (!pathOfId(id).startsWith(target) || target === pathOfId(id)))
     )
       return fail(400, `No page "${target}" to redirect to`);
     if (moves.has(pathKey(target))) return fail(400, `${target} is deleted too: pick another page`);
@@ -352,6 +356,48 @@ export function pagesOp(
       created: inside.map((f) => `pages/${to}/${f.slice(`pages/${id}/`.length)}`),
       removed: inside,
     });
+  }
+
+  /**
+   * rename a [param] page: its param ("[person]" -> "[model]"), the URLs stay. The folder
+   * moves with everything in it; the [param] pages in it keep matching the same field
+   * (template.match); redirects naming the param in a pattern under it follow.
+   */
+  function renameParamOp(before) {
+    const old = paramOf(id.split('/').at(-1));
+    if (!isParamName(name))
+      return fail(400, `"${name ?? ''}" is not a valid param: a-z first, then a-z, 0-9 and dashes`);
+    if (name === old) return fail(400, `It is [${old}] already`);
+    if (paramsOf(parentOf(id)).includes(name))
+      return fail(400, `[${name}] is in its URL already: pick another name`);
+    const inside = filesIn(id);
+    if (inside.some((f) => paramsOf(pageIdOf(f)).includes(name)))
+      return fail(400, `[${name}] is used in it already: pick another name`);
+    const to = join(parentOf(id), paramFolder(name));
+    const prefix = `pages/${id}/`;
+    const moved = (f) => `pages/${to}/${f.slice(prefix.length)}`;
+    const c = contentFromFiles(before);
+    onWrite();
+    fs.renameSync(dirOf(id), dirOf(to));
+    for (const f of inside) {
+      const pid = pageIdOf(f);
+      const t = before[f]?.template;
+      if (pid === id || !isTemplate(pid) || !t) continue;
+      const fields = new Set((schemaOf(c, t.source).fields || []).map((x) => x.key));
+      const field = t.match?.[old] ?? old;
+      const match = { ...t.match };
+      delete match[old];
+      if (field !== name && fields.has(field)) match[name] = field;
+      const next = { ...t, match };
+      if (!Object.keys(match).length) delete next.match;
+      if (JSON.stringify(next) !== JSON.stringify(t))
+        writeData(moved(f), { ...before[f], template: next });
+    }
+    const list = redirectsOf(before);
+    const renamed = renameParam(list, pathOfId(id), old, name);
+    if (JSON.stringify(renamed) !== JSON.stringify(list))
+      writeData(REDIRECTS, { version: VERSION, redirects: renamed });
+    return done({ id: to, created: inside.map(moved), removed: inside });
   }
 
   // delete

@@ -209,7 +209,7 @@ export function buildRoutes(content) {
     const up = parentId(id);
     const file = pageFile(id);
     const tpl = pages[id] || {};
-    const { source, key } = tpl.template || {};
+    const { source, key, match = {} } = tpl.template || {};
     const list = sources[source];
     const outer = isTemplate(up)
       ? instancesOf(up)
@@ -222,12 +222,13 @@ export function buildRoutes(content) {
     const fields = new Set((schema.fields || []).map((f) => f.key));
     const param = paramOf(id.split('/').at(-1));
     for (const at of outer) {
-      // in a template in a template: the items that name the outer pages (a "person" field)
+      // in a template in a template: the items that name the outer pages (a field named
+      // after the param, "person", or the one template.match names for it)
       const mine = (item) =>
-        Object.entries(at.params).every(
-          ([p, slug]) =>
-            !fields.has(p) || [slug, at.items[p]?.id].includes(String(item?.[p] ?? '')),
-        );
+        Object.entries(at.params).every(([p, slug]) => {
+          const f = match[p] ?? p;
+          return !fields.has(f) || [slug, at.items[p]?.id].includes(String(item?.[f] ?? ''));
+        });
       const seen = new Set();
       list.forEach((item, index) => {
         if (!mine(item)) return;

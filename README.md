@@ -581,9 +581,12 @@ move. A page's own file is
   page in it gets no page and a warning). Each level has its own `template.source`. For every
   page of the outer level, the inner level makes a page per item of its source, keeping only
   the items whose field named after an outer param (`person`) equals that page's slug or its
-  item's id, when the source has such a field (else every item). `template.key` makes the URL
+  item's id, when the source has such a field (else every item); `template.match`
+  (`{ "model": "person" }`) names another field for an outer param (a param rename writes it).
+  `template.key` makes the URL
   part a field's value (`"key": "year"`: one page per distinct year, its first item is the
-  page's item) instead of the item's slug; duplicates of a key are no warning.
+  page's item) instead of the item's slug; duplicates of a key are no warning. Planned: once
+  blocks can be a page's main block, this rule goes, so there is one way to match.
 - **Fixed beats template:** `pages/people/noor-vermeer/index.json` replaces the template's page for
   that item (it is a normal page then).
 - **Views:** a page is its sections of blocks. Its view name (`view--<name>` on `<main>`, `data-page` on
@@ -677,11 +680,17 @@ The editor keeps them up to date by itself (`src/site/redirects.js`):
   item pages with one pattern per level (`/people/:person/` -> `/models/:person/`,
   `/people/:person/:year/` -> `/models/:person/:year/`). Links by id need
   nothing; an `href` that is such a path is updated; the toast says how many.
-- **Delete a page**: its paths redirect to its parent page (the default; past `[param]`
-  folders, to the nearest page with one URL), another page, or
+- **Rename a param** (a `[param]` page's SEO tab, Address · param name: `[person]` -> `[model]`):
+  the URLs stay, so no redirect. The folder moves with the levels in it (they keep matching the
+  same field: `template.match`), and redirects that name it in a pattern under it follow
+  (`/p/:person/` -> `/people/:person/` becomes `:model`). Not a name already in its URL, above
+  or in it.
+- **Delete a page**: its paths redirect to its parent page (the default), another page, or
   nowhere ("No redirect": the 404 page; links to it stay and the toast counts them). Page links
   to it go to the page picked; item links to a deleted `[param]` page's items stay (broken, the
-  build warns).
+  build warns). A `[param]` level in another one (`[year]` in `[person]`) redirects one level
+  up by default, each page to the same outer item (`/people/:person/:year/` ->
+  `/people/:person/`; links to `/people/noor/2024/` become `/people/noor/`), or nowhere.
 - **Change an item's slug** (Source Explorer; or its name, when it has no slug): Save adds a
   redirect from its old page; links by its id need nothing.
 - No chains: a redirect to a moved path follows it (A -> B, B renamed C: A -> C). A redirect to

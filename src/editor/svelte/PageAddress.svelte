@@ -2,11 +2,20 @@
   Content > SEO > Address: the page's URL. Its name (the last part) renames the page's folder,
   with every page in it, straight on disk (actions.pagesOp 'rename'): links to it and the
   redirects are updated, a redirect from the old address is added. Not for home or 404 (their
-  address is fixed) or a [param] page (its folder's address, then the item's URL part).
+  address is fixed). A [param] page: its param's name ([person] -> [model]): the URLs stay,
+  only the name the folder (and its patterns) use changes.
 -->
 <script>
   import Button from './Button.svelte';
-  import { isSlug, isTemplate, pageIdOf } from '../../site/files.js';
+  import {
+    isParamName,
+    isSlug,
+    isTemplate,
+    pageIdOf,
+    paramFolder,
+    paramOf,
+    paramsOf,
+  } from '../../site/files.js';
   import { parentId, pathOfId } from '../../site/routes.js';
   import { FIXED, childId, pageIds, shownPath } from '../lib/page-tree.js';
 
@@ -18,8 +27,10 @@
   const files = $derived((live.version, { ...live.store.current }));
   const id = $derived(pageIdOf(file));
   const template = $derived(!!id && isTemplate(id));
-  const fixed = $derived(FIXED.includes(id) || template);
-  const name = $derived(id?.slice(id.lastIndexOf('/') + 1) || '');
+  const fixed = $derived(FIXED.includes(id));
+  const last = $derived(id?.slice(id.lastIndexOf('/') + 1) || '');
+  // a [param] page: its param ("person"); else its folder's name
+  const name = $derived(template ? paramOf(last) : last);
   // "/people/[person]/" (a [param] folder's pattern, routes.js: "/people/:person/")
   const folder = $derived(id ? shownPath(parentId(id) || 'home') : '/');
   let draft = $state(null); // what is typed; null: the page's name
@@ -27,6 +38,15 @@
   const value = $derived(draft ?? name);
   const error = $derived.by(() => {
     if (value === name) return '';
+    if (template) {
+      if (!isParamName(value)) return 'Use a-z first, then a-z, 0-9 and dashes';
+      const used = pageIds(files)
+        .filter((p) => p.startsWith(`${id}/`))
+        .flatMap(paramsOf);
+      if ([...paramsOf(parentId(id)), ...used].includes(value))
+        return `[${value}] is in its URL already`;
+      return '';
+    }
     if (!isSlug(value)) return 'Use a-z, 0-9 and dashes';
     const next = childId(parentId(id), value);
     if (pageIds(files).includes(next)) return `${pathOfId(next)} already exists`;
@@ -44,7 +64,7 @@
 </script>
 
 <form class="tf addr" onsubmit={rename}>
-  <label class="tf__label" for="{uid}-name">Address</label>
+  <label class="tf__label" for="{uid}-name">{template ? 'Address · param name' : 'Address'}</label>
   <div class="addr__row">
     <span class="addr__base" title={folder}>{fixed ? pathOfId(id) : folder}</span>
     {#if !fixed}
@@ -67,13 +87,15 @@
   <!-- one line, always: typing moves nothing -->
   <p class={['hint small addr__note', error && 'is-error']}>
     {fixed
-      ? template
-        ? 'Item pages: the folder’s address, then each item’s URL part.'
-        : 'Fixed: this page’s address can’t change.'
+      ? 'Fixed: this page’s address can’t change.'
       : error ||
         (value !== name
-          ? `${pathOfId(id)} → ${pathOfId(childId(parentId(id), value))}: links follow, a redirect is added.`
-          : 'Renames its folder and every page in it. Links follow.')}
+          ? template
+            ? `${last} → ${paramFolder(value)}: the URLs stay the same.`
+            : `${pathOfId(id)} → ${pathOfId(childId(parentId(id), value))}: links follow, a redirect is added.`
+          : template
+            ? 'The param’s name: each item’s URL part goes here. Renaming keeps the URLs.'
+            : 'Renames its folder and every page in it. Links follow.')}
   </p>
 </form>
 
