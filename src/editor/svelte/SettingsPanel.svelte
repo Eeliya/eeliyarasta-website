@@ -91,7 +91,7 @@
 </script>
 
 <section class="ed-body">
-  <Section key="settings:site" title="Site" name="Name & details">
+  <Section key="settings:site" title="Name & details">
     <p class="hint">
       Used on every page: the clock and search engines' details about you. The preview shows them
       after Save.
@@ -108,7 +108,7 @@
     {/each}
   </Section>
 
-  <Section key="settings:seo" title="Site" name="SEO">
+  <Section key="settings:seo" title="SEO">
     <p class="hint">
       What search engines and share cards show. Pages can set their own in Content > SEO; these are
       the defaults.
@@ -137,7 +137,7 @@
     </div>
   </Section>
 
-  <Section key="settings:forms" title="Site" name="Forms">
+  <Section key="settings:forms" title="Forms">
     <p class="hint">
       Where contact forms send (a form can pick its own in Content). The Cloudflare function emails
       through Resend with the keys set in the Cloudflare Pages project, never here (see the README,
@@ -173,7 +173,7 @@
     </p>
   </Section>
 
-  <Section key="settings:layout" title="Site" name="Layout">
+  <Section key="settings:layout" title="Layout">
     <p class="hint">
       How wide a contained section is: columns of the {COLS}-column grid ({CONTAINED_MIN}–{COLS};
       {CONTAINED} by default), centred and never nearer the edges than the side margins. Its blocks keep
@@ -196,7 +196,7 @@
     </ul>
   </Section>
 
-  <Section key="settings:type" title="Site" name="Typography">
+  <Section key="settings:type" title="Typography">
     <p class="hint">
       The text styles of scaled text (a text block's Layout › Scale text), in cells of the
       {COLS}-column grid (~11px at 1440px wide; on phones half a {MCOLS}-column cell), so the text
@@ -222,7 +222,7 @@
 
   <RedirectSettings {live} />
 
-  <Section key="settings:media" title="Site" name="Photos">
+  <Section key="settings:media" title="Photos">
     <p class="hint">
       Photos you upload in the editor go to Cloudflare R2 (keys in .env.local, see the README). The
       content stores their key (photos/…); the site shows them from this address. Photos in media/

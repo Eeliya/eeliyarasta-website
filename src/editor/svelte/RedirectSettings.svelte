@@ -58,7 +58,7 @@
   const setTo = (i, value) => setKey(i, 'to', value === EXTERNAL ? 'https://' : value);
 </script>
 
-<Section key="settings:redirects" title="Site" name="Redirects" open={false}>
+<Section key="settings:redirects" title="Redirects" open={false}>
   <p class="hint">
     Old addresses that send visitors on (dist/_redirects, for Cloudflare Pages). Renaming or
     deleting a page and changing an item's slug add them by themselves. /old/:slug/ stands for every

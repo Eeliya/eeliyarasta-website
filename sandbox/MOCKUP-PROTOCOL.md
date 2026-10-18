@@ -207,8 +207,12 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 - Buttons rest at 30%: the card's at 100% on its hover, selection or a focus in it; a block
   row's on that row's hover or focus. An eye-slash (hidden) always 100%; the count not dimmed.
 - Hidden: the title muted, its blocks at 55%. Changed: a 6px `#33ccff` dot, no shift.
-- Delete: over the card at its size, the card's colour at 80%, red border, the question at the
-  top, Cancel / Delete at the bottom right, 12px in. A block's: over its row.
+- Delete: over the card at its size and 12px corners, opaque, red border, the question (one
+  line) at the top, Delete (an icon-only red trash) then Cancel at the bottom left, both 24px
+  with 8px corners, 8px in on every side (never scrolls). A block's: one line over its 48px row,
+  its 8px corners, the question 12px in, the buttons 12px from the top, bottom and right.
+- Cards: top level (section, Settings, Pages window rows) `--radius-lg` 12px; nested (block
+  rows) `--radius-md` 8px. A collapsible card's caret is at its bar's right end.
 
 ![Section card states](docs/section-card-states.png)
 ![Delete confirm](docs/section-card-delete.png)

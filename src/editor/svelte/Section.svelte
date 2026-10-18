@@ -1,13 +1,13 @@
 <!--
-  A collapsible panel section: a bar (a toggle button with the caret and title, then the `bar`
-  snippet's controls) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
+  A collapsible panel section: a bar (a toggle button with the title, the `bar` snippet's
+  controls, then the caret at its right end) and the body, clipped and inert while closed (it stays in the DOM, so a field picked
   in the preview can be found and its section opened). Used by the Content, Motion and Settings
   tabs and the Animations library (with onenter, an always open card a click selects and a
   double click or its pen goes into: the page's section cards). .sec is a flex column: bar, body (.sec__body > .sec__clip > .sec__inner).
 
     title     the bar title (small caps)
     name      optional: what it is, on a second line in the accent color
-              ("Page transition" / "Curtain")
+              (Motion: "Section 2" / "Work")
     key       remembers open/closed in ui.sections (also kept across a refresh, persist.js),
               e.g. "settings:site"; without it the section just starts as `open`
     open      open when nothing is remembered yet (default true)
@@ -111,7 +111,6 @@
 </script>
 
 {#snippet head()}
-  {#if !onenter}<i class="fa-solid fa-chevron-right sec__caret" aria-hidden="true"></i>{/if}
   <span>{title}</span>
   {#if name}<strong>{name}</strong>{/if}
 {/snippet}
@@ -149,6 +148,16 @@
       </button>
     {/if}
     {@render bar?.()}
+    {#if !onenter}
+      <!-- the caret at the bar's right end: a pointer target (the title is the keyboard's) -->
+      <button
+        type="button"
+        class={['sec__caret', isOpen && 'is-open']}
+        tabindex="-1"
+        aria-hidden="true"
+        onclick={toggle}><i class="fa-solid fa-chevron-right"></i></button
+      >
+    {/if}
     {#if onenter}
       <span class="sec__enter"
         ><Button
@@ -221,13 +230,12 @@
     padding: var(--space-2);
   }
 
-  // caret | title, with the name under the title
+  // the title, with the name under it
   .sec__toggle {
     flex: 1;
     min-width: 0;
     display: grid;
-    grid-template-columns: 20px minmax(0, 1fr);
-    column-gap: var(--space-1);
+    grid-template-columns: minmax(0, 1fr);
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
@@ -249,7 +257,6 @@
 
     // a card's title: plain text (no caret, not a button), its colour never changes
     &.sec__toggle--card {
-      grid-template-columns: minmax(0, 1fr);
       cursor: default;
 
       &:hover {
@@ -259,24 +266,36 @@
 
     // the name under the title, like .grp__title strong
     strong {
-      grid-column: -2;
       font-weight: 400;
       color: var(--c-brand);
     }
   }
 
-  // (display comes from Font Awesome's .fa-solid)
+  // the caret: the bar's last item, an 8px column at its right end (the bar's 8px inset: the
+  // fields' right edge); right closed, down open
   .sec__caret {
-    width: 20px;
+    display: grid;
+    place-items: center;
+    width: 8px;
     height: 20px;
+    padding: 0;
+    border: 0;
+    background: none;
     color: var(--c-text-muted);
     font-size: var(--fs-xs);
-    line-height: 20px;
-    text-align: center;
-    transition: rotate 0.15s;
+    cursor: pointer;
 
-    [aria-expanded='true'] > & {
+    > i {
+      transition: rotate 0.15s;
+    }
+
+    &.is-open > i {
       rotate: 90deg;
+    }
+
+    .sec__toggle:hover ~ &,
+    &:hover {
+      color: var(--c-text-strong);
     }
   }
 

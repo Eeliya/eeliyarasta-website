@@ -522,6 +522,33 @@ kbd {
   font-size: var(--fs-sm);
 }
 
+// a delete confirm's buttons over a card or row (SectionCard, BlockRow): Delete (an icon-only red
+// trash) then Cancel, both 24px with 8px corners: these only, Button.svelte stays a pill
+.ask-btns {
+  @include row(var(--space-2));
+  flex: none;
+
+  > .btn.btn--small {
+    border-radius: var(--radius-md);
+  }
+
+  > .btn.btn--small:not(.btn--icon) {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-xs);
+  }
+
+  > .btn.btn--icon.btn--danger,
+  > .btn.btn--icon.btn--danger:hover:not(:disabled) {
+    color: var(--c-on-danger);
+    font-size: var(--fs-sm);
+    background: var(--c-danger);
+  }
+
+  > .btn.btn--icon.btn--danger:hover:not(:disabled) {
+    background: var(--c-danger-hover);
+  }
+}
+
 // text fields (Field.svelte, also used by the curtain timeline)
 .tf {
   display: block;

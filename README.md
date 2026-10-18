@@ -926,7 +926,7 @@ deleting a page with unsaved edits asks for Save first. Publish commits the new 
 files. `&pages=/people/` in the URL reopens it on that folder. There's also a phone (390 px) preview toggle.
 
 In the Content panel every **section** of the page is a box (Section 1, 2, …, with its name
-under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first, the switch
+under it when it has one): ↑ / ↓ move it, **Duplicate** copies it below (new ids), **Delete** asks first (over the card: the trash then Cancel), the switch
 turns it on/off, and the caret folds it. Under the bar are its settings (**Name**, the whole row, empty by
 default, with the `#anchor` it makes shown under it, or what's wrong with it: taken by another
 section on the page, …; then side by side **Height**, five quiet icon buttons with tooltips: custom

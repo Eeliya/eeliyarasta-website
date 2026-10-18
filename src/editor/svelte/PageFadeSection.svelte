@@ -53,7 +53,7 @@
   }
 </script>
 
-<Section class="ptg" key="settings:fade" title="Page transition" name="Fade">
+<Section class="ptg" key="settings:fade" title="Page fade">
   <p class="hint">
     The old page fades out, the new one fades in: the whole page change when a page's curtain is
     Off, behind the curtain otherwise. Duration and ease.

@@ -86,7 +86,7 @@
   />
 {/snippet}
 
-<Section class="ptg" key="settings:curtain" title="Page transition" name="Curtain">
+<Section class="ptg" key="settings:curtain" title="Curtain">
   <p class="hint">
     The curtain every page uses, unless a page turns it off (Content → Transitions). Drag the bar
     ends or type the values. Changes apply to the next page change in the preview.

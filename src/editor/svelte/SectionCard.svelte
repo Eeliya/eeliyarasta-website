@@ -70,7 +70,7 @@
   }
 
   // the delete confirm: Cancel takes the focus (Enter does not delete by accident)
-  const focusCancel = (el) => el.querySelector('button')?.focus();
+  const focusCancel = (el) => el.querySelector('.ask-btns > :last-child')?.focus();
 </script>
 
 <Section
@@ -104,7 +104,7 @@
 
   {#snippet over()}
     {#if asking}
-      <!-- over the card at its size: the question at the top, Cancel / Delete at the bottom -->
+      <!-- over the card at its size and corners: the question top left, Delete / Cancel bottom left -->
       <div
         class="ask"
         role="alertdialog"
@@ -114,17 +114,19 @@
         onkeydown={(e) => e.key === 'Escape' && (e.stopPropagation(), (deleting = ''))}
       >
         <p class="ask__msg">{name ? `Delete “${name}”?` : `Delete ${title}?`}</p>
-        <div class="ask__btns">
-          <Button size="small" onclick={() => (deleting = '')}>Cancel</Button>
+        <div class="ask-btns">
           <Button
             size="small"
             variant="danger"
             icon="trash"
+            iconOnly
+            label="Delete"
             onclick={() => {
               deleting = '';
               removeSection(live.store, file, at);
-            }}>Delete</Button
-          >
+            }}
+          />
+          <Button size="small" onclick={() => (deleting = '')}>Cancel</Button>
         </div>
       </div>
     {/if}
@@ -322,21 +324,22 @@
 
   // Delete?: over the card at its size (no shift): the card's colour at 80% hides what is
   // under it; the question at the top, Cancel / Delete at the bottom, 12px in
+  // the card's confirm: over it at its size and corners (inside its red border), opaque, 8px in
+  // on every side: 8 + 20 + 24 + 8 = 60px fits the 78px card (one line: never scrolls)
   .ask {
+    @include stack(var(--space-2));
     position: absolute;
     inset: 0;
     z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: var(--space-2);
-    padding: var(--space-3);
-    overflow: auto;
+    align-content: space-between;
+    padding: var(--space-2);
+    overflow: hidden;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--c-card) 80%, transparent);
+    background: var(--c-card);
   }
 
   .ask__msg {
+    @include ellipsis;
     margin: 0;
     color: var(--c-text-strong);
     font-size: var(--fs-base);
@@ -344,13 +347,5 @@
     letter-spacing: 0.1em;
     line-height: 20px;
     text-transform: uppercase;
-    overflow-wrap: anywhere;
-  }
-
-  .ask__btns {
-    display: flex;
-    flex: none;
-    justify-content: flex-end;
-    gap: var(--space-2);
   }
 </style>

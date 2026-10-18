@@ -22,7 +22,7 @@
   const name = $derived(nameOf(block));
   const on = $derived(block?.config?.enabled !== false);
   // the confirm's Cancel takes the focus (Enter does not delete by accident)
-  const focusCancel = (el) => el.querySelector('button:last-child')?.focus();
+  const focusCancel = (el) => el.querySelector('.ask-btns > :last-child')?.focus();
 </script>
 
 <li class={['brow', !on && 'is-off']} data-row>
@@ -60,16 +60,20 @@
       onkeydown={(e) => e.key === 'Escape' && (e.stopPropagation(), (asking = false))}
     >
       <span>Delete {label}?</span>
-      <Button
-        size="small"
-        variant="danger"
-        icon="trash"
-        onclick={() => {
-          asking = false;
-          ondelete();
-        }}>Delete</Button
-      >
-      <Button size="small" onclick={() => (asking = false)}>Cancel</Button>
+      <span class="ask-btns">
+        <Button
+          size="small"
+          variant="danger"
+          icon="trash"
+          iconOnly
+          label="Delete"
+          onclick={() => {
+            asking = false;
+            ondelete();
+          }}
+        />
+        <Button size="small" onclick={() => (asking = false)}>Cancel</Button>
+      </span>
     </div>
   {/if}
 </li>
@@ -139,18 +143,20 @@
     }
   }
 
-  // Delete?: over the row at its size, its text where the row's is
+  // Delete?: over the row at its size and corners, one line, 12px in on every side (24px
+  // buttons in the 48px row), a red line
   .brow__ask {
-    @include row(var(--space-2));
+    @include row(var(--space-3));
     position: absolute;
     inset: 0;
     z-index: 1;
-    padding: 0 var(--space-2) 0 var(--space-3);
+    padding: 0 var(--space-3);
     border-radius: inherit;
     background: var(--c-surface-2);
+    box-shadow: inset 0 0 0 1px var(--c-danger);
     font-size: var(--fs-base);
 
-    span {
+    > span:first-child {
       @include ellipsis;
       flex: 1;
     }
