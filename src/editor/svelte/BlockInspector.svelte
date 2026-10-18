@@ -7,8 +7,10 @@
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
-  At the top, plain (not a card): its section (SectionTop.svelte: Back, its title, Locate and
-  its settings). Under them the block in a card: its type and title, the tabs and their fields.
+  One level under the list of sections (a block's row on its section's card, or the block
+  clicked in the preview): its top (ViewTop.svelte: ← Back to the list, Locate), then the block
+  in a card: its type and title, the tabs and their fields. Its section's settings are not
+  here (its card's pen: SectionView.svelte).
 -->
 <script>
   import GroupFields from './GroupFields.svelte';
@@ -22,7 +24,7 @@
   import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
-  import SectionTop from './SectionTop.svelte';
+  import ViewTop from './ViewTop.svelte';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
@@ -94,7 +96,7 @@
   });
 </script>
 
-<SectionTop {live} {bridge} file={g.file} {at} {onback} />
+<ViewTop {bridge} id={g.id} {onback} />
 
 <!-- the block, in a card: its type and title, its tabs and fields -->
 <div class="card">

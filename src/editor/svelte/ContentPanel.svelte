@@ -2,11 +2,12 @@
   Content tab: the page in the preview, or a site part (the Header: HeaderPart.svelte; the Footer). A page is a list of sections
   holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
   the open one kept per page in ui.sections["pagetab:<file>"]):
-    Sections     SectionsList.svelte: the section cards and the dashed Add section card; a
-                 block opens in BlockInspector.svelte (ui.block: its Content, Layout, Motion),
-                 a card's title its first block, or an empty section's own view
-                 (SectionView.svelte, ui.section). The Add block modal (BlocksModal.svelte)
-                 serves both: the block added opens
+    Sections     SectionsList.svelte: the section cards and the dashed Add section card. One
+                 level under it, never both: a block's settings (BlockInspector.svelte,
+                 ui.block: its Content, Layout, Motion; a block's row on a card, or the block
+                 clicked in the preview) or a section's (SectionView.svelte, ui.section; a
+                 card's pen or double click). The Add block modal (BlocksModal.svelte): the
+                 block added opens
     Transitions  the Backdrop (BackdropFields.svelte) and the Curtain (PageCurtain.svelte)
     SEO          SeoSection.svelte
   The footer is sections only (no tabs). While this tab is open the preview is a
@@ -71,7 +72,7 @@
     const list = file && live.current(file)?.sections;
     return Array.isArray(list) ? list : [];
   });
-  // what the Sections tab shows over the list: the block open, else an empty section's view
+  // what the Sections tab shows over the list: the block open, else a section's settings
   // ({ section: its id }); none: the list (a block or section gone, e.g. undone: the list too)
   const open = $derived(
     (file && groups.find((g) => g.block && g.id === ui.block)) ||
@@ -109,10 +110,8 @@
     ui.block = id;
     ui.blockTab = 'content';
   }
-  // a section card's title: its first block, or its own view when it has none
+  // a section card's pen or double click: its settings
   function openSection(id) {
-    const first = sections.find((s) => s?.id === id)?.blocks?.[0];
-    if (first) return openBlock(first.id);
     ui.block = null;
     ui.selection = null;
     ui.section = id;
@@ -122,7 +121,7 @@
     ui.section = null;
   }
 
-  // Add block (a section card's, or an empty section's view): the types on offer (item types,
+  // Add block (a section card's): the types on offer (item types,
   // the item of a [slug] page, only there); the block added opens
   let blocksModal = $state();
   const types = $derived(
@@ -241,7 +240,6 @@
       >
         <SectionsList
           {live}
-          {bridge}
           {file}
           onopen={openBlock}
           onsection={openSection}
@@ -251,14 +249,7 @@
       {#if held}
         <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
           {#if held.section}
-            <SectionView
-              {live}
-              {bridge}
-              {file}
-              id={held.section}
-              onback={back}
-              onadd={(at) => blocksModal.open(at)}
-            />
+            <SectionView {live} {bridge} {file} id={held.section} onback={back} />
           {:else}
             <BlockInspector
               g={held}

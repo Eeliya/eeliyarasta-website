@@ -26,8 +26,10 @@
     over      snippet: drawn over the whole card at its size (a confirm), inside its border
     onenter   optional: the card doesn't collapse (always open, no caret, `key` and `open`
               unused; the title plain text, not a button) and goes into it (a page section's
-              view): a double click on the card, or its pen (pen-to-square, `enterLabel`) at the
-              title row's right end (24px, 2px over the 20px row: no height change)
+              settings): a double click on the card, or its pen (pen-to-square, `enterLabel`)
+              at the title row's right end, after the `bar` snippet's controls (24px, 2px over
+              the 20px row: no height change). Such a card (data-card) dims only its title
+              while `off`: its body's parts dim themselves (SectionCard.svelte)
     onselect  optional, with onenter: a click on the card selects it
     selected  its border white 70% (the selected card); hovered 40% (editor.scss)
               Neither a click nor a double click on its controls (buttons, switches, fields,
@@ -127,6 +129,7 @@
     cls,
   ]}
   data-section={id}
+  data-card={onenter ? '' : undefined}
   onclick={onenter && pick}
   ondblclick={onenter && enter}
   onmousedown={onenter && noSelect}
@@ -134,15 +137,6 @@
   <div class="sec__bar">
     {#if onenter}
       <span class="sec__toggle sec__toggle--card">{@render head()}</span>
-      <span class="sec__enter"
-        ><Button
-          size="small"
-          icon="pen-to-square"
-          iconOnly
-          label={enterLabel}
-          onclick={onenter}
-        /></span
-      >
     {:else}
       <button
         type="button"
@@ -155,6 +149,17 @@
       </button>
     {/if}
     {@render bar?.()}
+    {#if onenter}
+      <span class="sec__enter"
+        ><Button
+          size="small"
+          icon="pen-to-square"
+          iconOnly
+          label={enterLabel}
+          onclick={onenter}
+        /></span
+      >
+    {/if}
   </div>
   <div class="sec__body" id="{uid}-body" inert={!isOpen} bind:this={body}>
     <div class="sec__clip">
@@ -353,7 +358,7 @@
       color: var(--c-text-muted);
     }
 
-    .sec__body {
+    &:not([data-card]) .sec__body {
       opacity: var(--o-dim);
     }
   }
