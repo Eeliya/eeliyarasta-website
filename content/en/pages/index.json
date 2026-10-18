@@ -144,7 +144,8 @@
           "body": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
           "motion": { "anim": "scrub-words" }
         }
-      ]
+      ],
+      "height": "half"
     },
     {
       "id": "s-rpvk",
