@@ -147,6 +147,13 @@ export function levelOf(files, level, filter = 'all', routes = null) {
   };
 }
 
+/**
+ * Does a double click on the row go into its level (else it opens the page in the editor)?
+ * Every page's row does, a plain page's too (its root row, "No sub pages yet"); not a level's
+ * root row (it is that page: open it), home (it is /, the top) or 404 (it holds no pages).
+ */
+export const goesInside = (row) => !row.self && row.id !== 'home' && row.id !== NOT_FOUND;
+
 /** The path crumbs of a level: [{ label: '/', level: '' }, { label: 'photography/', … }]. */
 export const crumbsOf = (level) => [
   { label: '/', level: '' },

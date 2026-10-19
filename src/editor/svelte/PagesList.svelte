@@ -14,8 +14,9 @@
   linked (out of the menu); from Not linked into it (into the menu there). A page of another
   folder dropped there moves here (its address changes, links follow, no redirect), unless
   its name is taken here. 404 and [param] pages don't move. A click selects a row and shows
-  it in the preview; a double click (or Enter) goes into a folder (a [param] page's too: it
-  can hold another, "[item]/[year]/"), or opens a page (its Sections, Transitions, SEO:
+  it in the preview; a double click (or Enter) goes into a page's level (any page, a plain one
+  too: its root row and "No sub pages yet"; a [param] page's: it can hold another), and on a
+  level's root row, on Home, 404, Header or Footer opens it (its Sections, Transitions, SEO:
   PageHead.svelte goes back). Delete asks over the row: one line when nothing links to it,
   else with where its address and links go (a redirect). Adding, moving and deleting go to
   disk at once (actions.pagesOp in main.js).
@@ -33,6 +34,7 @@
   import {
     crumbsOf,
     dropOf,
+    goesInside,
     levelOf,
     linkAt,
     linksTo,
@@ -102,9 +104,9 @@
     sel = row.id;
     show(row);
   }
-  // a double click, or Enter / Space (a click without a pointer): into a folder (a [param]
-  // page's always: another [param] page can go in it), else open
-  const inside = (row) => (row.kids || row.template) && !row.self && !row.part;
+  // a double click, or Enter / Space (a click without a pointer): into the page's level (its
+  // root row first, its sub pages, or "No sub pages yet"), its root row: open it (page-tree.js)
+  const inside = (row) => !row.part && goesInside(row);
   const into = (row) => (inside(row) ? go(row.id) : open(row));
   const onclick = (e, row) => (e.detail === 0 ? into(row) : pick(row));
 

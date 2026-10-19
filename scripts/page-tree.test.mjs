@@ -4,6 +4,7 @@ import {
   crumbsOf,
   levelOf,
   dropOf,
+  goesInside,
   linkAt,
   linkPage,
   linksTo,
@@ -296,4 +297,19 @@ test('a page of another folder dropped on the menu list moves here, unless its n
   const phRow = { ...ph.own, self: false, id: 'photography' };
   assert.equal(dropOf(f, levelOf(f, 'photography/people'), phRow, 0).kind, 'refuse');
   assert.equal(dropOf(f, levelOf(f, 'photography/people/[person]'), old, 0).kind, 'refuse');
+});
+
+test('a double click goes into any page level; a root row, home and 404 open', () => {
+  const f = files();
+  const top = levelOf(f, '');
+  const by = (l, id) => [...l.sub, ...l.notLinked].find((r) => r.id === id);
+  assert.equal(goesInside(by(top, 'about')), true); // a plain page: its root row, no sub pages
+  assert.equal(goesInside(by(top, 'photography')), true);
+  assert.equal(goesInside(by(top, 'old')), true); // Not linked too
+  assert.equal(goesInside(by(top, 'home')), false); // home is the top: it opens
+  assert.equal(goesInside(by(top, '404')), false);
+  const about = levelOf(f, 'about');
+  assert.equal(goesInside(about.own), false); // the root row opens the page
+  assert.deepEqual([about.own.title, about.sub.length], ['About', 0]);
+  assert.equal(goesInside(levelOf(f, 'photography/people').sub[0]), true); // [person]
 });

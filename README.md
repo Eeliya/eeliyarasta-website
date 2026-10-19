@@ -972,7 +972,9 @@ show a folder's "All …" link first, as its root row is first here.
 
 Rows show only their own segment under the folder (`people/`; elsewhere the full path) and
 titles and paths as written. A click selects a row and shows it in the preview; a double click
-(or Enter) goes into a folder, or opens the page (its Sections, Transitions, SEO). A dot after a
+(or Enter) goes into the page's level (any page: a plain one shows its root row and "No sub
+pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections,
+Transitions, SEO). A dot after a
 title: unsaved changes in its file; an eye: hidden from search. Content › Header has the menu's
 labels and dropdowns. **+** opens **Add page** (title -> URL name, In the menu; or a **[param]
 page**: a template with a source and a param name, `[slug]` by default, one per folder, none at
