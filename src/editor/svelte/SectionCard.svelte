@@ -6,7 +6,7 @@
     count row  "N blocks ⌄" (text only; "No blocks" faint, inactive), + Add block (onadd),
                then move up, move down, Duplicate and Delete (24px icon buttons)
     its blocks the count opens them inside the card (ui.sections["blocks:<id>"]; the card
-               grows): BlockRow.svelte each, no order (blocks are placed in the preview)
+               grows, animated as a section opens; not on load, not with reduced motion): BlockRow.svelte each, no order (blocks are placed in the preview)
   12px inside on every side: every icon ends, all text starts on those edges. The card's
   buttons (both rows, Add block) rest at 30% and show fully while it is hovered, selected or
   has the focus; a block row's on its own hover (BlockRow.svelte); an eye-slash (hidden)
@@ -20,6 +20,8 @@
   import Button from './Button.svelte';
   import Section from './Section.svelte';
   import BlockRow from './BlockRow.svelte';
+  import { untrack } from 'svelte';
+  import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
   import {
     duplicateBlock,
@@ -58,6 +60,30 @@
   const key = $derived(`blocks:${s.id}`);
   const open = $derived(!!n && (expanded ?? !!ui.sections[key]));
   const listId = $props.id();
+
+  // The blocks open and close as Section's body: a one-row grid (1fr open, 0fr closed, by its
+  // inert), its list clipped to that row and kept rendered; a toggle tweens
+  // grid-template-rows, then hands back to CSS. The first render (and reduced motion) doesn't.
+  let drawer = $state();
+  let first = true;
+  $effect(() => {
+    const opening = open;
+    untrack(() => {
+      if (first || !drawer) return void (first = false);
+      gsap.killTweensOf(drawer);
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      gsap.fromTo(
+        drawer,
+        { gridTemplateRows: opening ? '0fr' : '1fr' },
+        {
+          gridTemplateRows: opening ? '1fr' : '0fr',
+          duration: 0.25,
+          ease: 'power2.out',
+          onComplete: () => gsap.set(drawer, { clearProps: 'gridTemplateRows' }),
+        },
+      );
+    });
+  });
   const asking = $derived(deleting === s.id);
 
   function setBlockOn(j, show) {
@@ -139,7 +165,7 @@
         type="button"
         class="line__count"
         aria-expanded={open}
-        aria-controls={open ? listId : undefined}
+        aria-controls={n ? listId : undefined}
         disabled={!n}
         title={n ? (open ? 'Hide its blocks' : 'Show its blocks') : undefined}
         onclick={() => (ui.sections[key] = !open)}
@@ -189,18 +215,20 @@
         />
       </span>
     </div>
-    {#if open}
-      <ul class="blocks" id={listId} aria-label="Blocks of {title}">
-        {#each blocks as b, j (b.id)}
-          <BlockRow
-            block={b}
-            onopen={() => onopen(b.id)}
-            onshow={(show) => setBlockOn(j, show)}
-            onduplicate={() => duplicateBlock(live.store, file, at, j)}
-            ondelete={() => removeBlock(live.store, file, at, j)}
-          />
-        {/each}
-      </ul>
+    {#if n}
+      <div class="drawer" bind:this={drawer} inert={!open}>
+        <ul class="blocks" id={listId} aria-label="Blocks of {title}">
+          {#each blocks as b, j (b.id)}
+            <BlockRow
+              block={b}
+              onopen={() => onopen(b.id)}
+              onshow={(show) => setBlockOn(j, show)}
+              onduplicate={() => duplicateBlock(live.store, file, at, j)}
+              ondelete={() => removeBlock(live.store, file, at, j)}
+            />
+          {/each}
+        </ul>
+      </div>
     {/if}
   {/snippet}
 </Section>
@@ -215,7 +243,7 @@
   }
 
   :global(.sec[data-card] .sec__foot) {
-    gap: var(--space-2);
+    gap: 0; // the blocks' 8px is inside their drawer, so it closes with them
     margin-top: 0;
     padding: var(--space-2) var(--space-3) 0;
   }
@@ -315,10 +343,21 @@
   }
 
   // its blocks: 48px rows 4px apart, on the card's content edges (BlockRow.svelte)
+  .drawer {
+    display: grid;
+    grid-template-rows: 1fr;
+
+    &[inert] {
+      grid-template-rows: 0fr;
+    }
+  }
+
   .blocks {
     @include stack(var(--space-1));
+    min-height: 0;
+    overflow: hidden;
     margin: 0;
-    padding: 0;
+    padding: var(--space-2) 0 0;
     list-style: none;
   }
 
