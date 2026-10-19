@@ -21,7 +21,7 @@
 import { isTemplate, paramsOf } from '../files.js';
 import { isObject } from '../is.js';
 import { schemaOf } from '../schemas.js';
-import { query, unmatched } from '../query.js';
+import { defaultWhere, query, unmatched } from '../query.js';
 import { blocksOf, eachBlock } from './ids.js';
 
 export const MODES = ['item', 'all', 'url'];
@@ -97,4 +97,27 @@ export function mainProblem(content, id) {
   return first.problem === 'any'
     ? say('any', `[${first.param}] needs a field to match`, first)
     : say('missing', `[${first.param}] matches no field`, first);
+}
+
+/** A From URL source of `from` on a page with `params`: each param on its default field. */
+export const urlSource = (content, from, params) => ({
+  mode: 'url',
+  from,
+  where: defaultWhere(params, schemaOf(content, from)),
+});
+
+/**
+ * A new block's source fitted to its page (Add block): From URL on a [param] page matches
+ * every param of its address (its default fields); on a page without params From URL can't
+ * be, so a list shows All and one item its source's first (no item: None, undefined).
+ * Item and All stay as they are.
+ */
+export function fitSource(source, { list = false, params = [], content } = {}) {
+  const s = sourceOf({ source });
+  if (!s) return undefined;
+  if (s.mode !== 'url') return s;
+  if (params.length) return urlSource(content, s.from, params);
+  if (list) return { mode: 'all', from: s.from };
+  const first = listOf(content, s.from).find((it) => typeof it?.id === 'string');
+  return first ? { mode: 'item', from: s.from, id: first.id } : undefined;
 }

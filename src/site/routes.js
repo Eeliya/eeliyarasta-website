@@ -24,7 +24,8 @@
  * when at least one item matches; no main block, or a param without a field to match: no pages
  * (a warning). A [param] folder holds only its page and maybe one more [param] folder. Item
  * pages get `params` ({ person: "eeliya", year: "2018" }), `items` (each param's item), `album`
- * (their own), `source` (the main block's) and `count` (how many items match).
+ * (their own), `source` (the main block's), `count` (how many items match) and `members` (their
+ * ids: an item's link goes to the page it is on).
  *
  * A folder's own page can be turned off ("ownPage": false in its index.json): its URL then
  * redirects (302) to its first sub page, the first one in the menu (nav.json) or else the first
@@ -139,8 +140,10 @@ const byTree = (a, b) => {
  * can't decide its pages, items whose value makes no URL part); those get no page.
  *
  * unbuilt (the editor and its preview): a [param] page that builds no pages still gets routes
- * to edit it on, marked `unbuilt`: its main block's rules that can match (a broken one left out,
- * its own param by slug then), else one route at its pattern ("/people/:person/", no item).
+ * to edit it on, marked `unbuilt` (noindex): with the main block's rules that can match (a
+ * broken one left out); its own param without one, one per page around it at its pattern
+ * ("/people/noor/:year/", its first item); no main block to go by, one at its pattern
+ * ("/people/:person/", no item).
  */
 export function buildRoutes(content, { unbuilt = false } = {}) {
   const { site = {}, pages = {}, sources = {}, nav = {} } = content;
@@ -245,10 +248,30 @@ export function buildRoutes(content, { unbuilt = false } = {}) {
     const where = problem
       ? { ...s.where, rules: s.where.rules.filter((r) => hasField(schema, r.field)) }
       : s.where;
-    const field = ruleOf(where, param)?.field ?? SLUG;
+    const field = ruleOf(where, param)?.field;
     for (const at of outer) {
       // the items of the page around it (its params), then one page per value of this param
       const mine = query(list, where, at.params, { schema, refs: refsOf(at) });
+      if (!field) {
+        // unbuilt, its own param matching nothing: one page to edit it on, at its pattern
+        // under the page around it ("/people/noor/:year/"), its first item shown
+        const item = mine[0] ?? null;
+        out.push({
+          name: `[${param}]`,
+          path: `${at.path}:${param}/`,
+          params: { ...at.params },
+          items: { ...at.items },
+          item,
+          index: item ? list.indexOf(item) : -1,
+          count: mine.length,
+          members: [],
+          source: s.from,
+          parent: at.path,
+          parentName: at.name,
+          unbuilt: true,
+        });
+        continue;
+      }
       const groups = new Map();
       for (const item of mine) {
         const slug = valueOf(item, field, schema);
@@ -287,6 +310,7 @@ export function buildRoutes(content, { unbuilt = false } = {}) {
           index: list.indexOf(item),
           slug,
           count: matched.length,
+          members: matched.map((it) => it?.id).filter(Boolean),
           source: s.from,
           parent: at.path,
           parentName: at.name,
@@ -319,6 +343,7 @@ export function buildRoutes(content, { unbuilt = false } = {}) {
       kind: source,
       slug,
       count,
+      members: at.members,
       params: at.params,
       items: at.items,
       name,

@@ -262,6 +262,14 @@ test('nested [param] folders: Any or a missing field on the main block builds no
   );
   const shown = years(ed);
   assert.ok(shown.length && shown.every((x) => x.unbuilt && x.noindex));
+  // [year] matches nothing: one page per person, at its pattern, its first item
+  assert.deepEqual(
+    shown.map((x) => [x.path, x.album?.id]),
+    [
+      ['/people/noor/:year/', 's-1'],
+      ['/people/daan/:year/', 's-3'],
+    ],
+  );
   // without a main block: one route at its pattern, no item
   const none = nested();
   delete none.pages['people/[person]/[year]'].main;

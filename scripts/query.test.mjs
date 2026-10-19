@@ -15,6 +15,7 @@ import { blockItems, mainAt, mainProblem, sourceOf } from '../src/site/layout/so
 import { buildRoutes } from '../src/site/routes.js';
 import { contentFromFiles } from '../src/site/files.js';
 import { checkContent } from '../src/site/validate.js';
+import { itemHref } from '../src/site/helpers.js';
 
 const schema = {
   version: 1,
@@ -138,6 +139,10 @@ test('main block: a page per value of its own param among the items the outer pa
     ['/people/daan/2025/', 1, 's-3'], // by id reference
   ]); // mila: no shoots, no pages; s-4 names no person
   assert.equal(mainProblem(site(), 'people/[person]/[year]'), null);
+  // a link to the second item of a page goes to that page
+  const c = site();
+  const ctx = { ...c, routes: buildRoutes(c).routes };
+  assert.equal(itemHref(ctx, 'shoots', shoots[1]), '/people/noor/2024/');
   assert.equal(mainAt(site().pages['people/[person]']).block.id, 'b-main');
 });
 

@@ -102,7 +102,10 @@ export const itemSlug = (item, schema) => {
 export const itemHref = (ctx, source, item) => {
   const routes = (ctx.routes || []).filter((r) => r.source === source && r.template);
   // its own page (in a template in a template, the first one it has)
-  const own = item?.id && routes.find((r) => r.album?.id === item.id);
+  const own =
+    item?.id &&
+    (routes.find((r) => r.album?.id === item.id) ||
+      routes.find((r) => r.members?.includes(item.id))); // one of a page's items (by year)
   if (own) return own.path;
   // else (a fixed page replaced it): its slug under the template's folder, at the top level
   const top = routes.find((r) => Object.keys(r.params || {}).length <= 1);
