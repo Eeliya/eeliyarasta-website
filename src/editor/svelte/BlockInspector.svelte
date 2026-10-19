@@ -9,8 +9,8 @@
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   One level under the list of sections (a block's row on its section's card, or the block
   clicked in the preview): its top (ViewTop.svelte: ← Back to the list, Locate), then the block
-  in a card: its type and title (Main: the page's main block), the tabs and their fields. Its
-  section's settings are not here (its card's pen: SectionView.svelte).
+  in a card: its type and title (Main: the page's main block), the tabs and their fields. Under it,
+  on every tab, its section's settings card (SectionView.svelte, put there by ContentPanel).
 -->
 <script>
   import GroupFields from './GroupFields.svelte';

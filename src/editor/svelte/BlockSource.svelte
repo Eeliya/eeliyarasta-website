@@ -48,8 +48,8 @@
   });
   const mode = $derived(source?.mode ?? 'none');
   const MODES = $derived([
-    list ? ['all', 'All'] : ['item', 'Item'],
     ['url', 'From URL'],
+    list ? ['all', 'All'] : ['item', 'Item'],
     ['none', 'None'],
   ]);
   const schema = $derived.by(() => {

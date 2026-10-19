@@ -3,13 +3,14 @@
   one level under the list: its top (ViewTop.svelte: ← Back, Locate), then its settings card on
   the settings fill, titled with its name ("Section N" without one): SectionSettings.svelte.
   No blocks here: they are on its card in the list and in the preview.
-    live, bridge, file, id (the section's), onback
+    live, bridge, file, id (the section's), onback; top: false for its card alone (under a
+    block's card in the block view, BlockInspector.svelte's section)
 -->
 <script>
   import SectionSettings from './SectionSettings.svelte';
   import ViewTop from './ViewTop.svelte';
 
-  let { live, bridge, file, id, onback } = $props();
+  let { live, bridge, file, id, onback, top = true } = $props();
 
   // a fresh copy after every edit (SectionSettings reads the values from it); found by its id:
   // it keeps its view while sections move above it
@@ -26,7 +27,7 @@
 </script>
 
 {#if at >= 0}
-  <ViewTop {bridge} {id} {onback} />
+  {#if top}<ViewTop {bridge} {id} {onback} />{/if}
   <div class="card">
     <h2 class="card__title">{title}</h2>
     <SectionSettings {live} {file} {at} {sections} />

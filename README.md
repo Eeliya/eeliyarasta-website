@@ -522,7 +522,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   and its first long text.
 - **In the editor:** bound values aren't typed in the preview; a click selects them and opens
   their block on the field. The block's Content tab starts with its **Source**
-  (`BlockSource.svelte`): Item / All, From URL, None (From URL greyed on a page without
+  (`BlockSource.svelte`): From URL, Item / All, None (From URL greyed on a page without
   params, its tooltip says why), the item selector (Item: an item; All, From URL: a source),
   on From URL a row per param of the address (`where [person] = person ▾`: the source's
   fields that can be a URL part, `same name` / `default` marked, or **Any**, off on the main
@@ -537,7 +537,8 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   shows dimmed as `{{title}}` there (only there). Editing a source renders the sections that
   show it again. Add block fits a new block's source to the page (From URL on a `[param]`
   page; elsewhere All for a list, the source's first item for one); removing the main block
-  leaves the page without one (the page head says so).
+  leaves the page without one (the page head says so). Under the block's card, on all its tabs, is its section's
+  settings card (the same as its card's pen opens), 12px under it.
 
 ### Menu
 
@@ -1031,7 +1032,7 @@ show a folder's "All …" link first, as its root row is first here.
 Rows show only their own segment under the folder (`people/`; elsewhere the full path) and
 titles and paths as written. A click selects a row and shows it in the preview; a double click
 (or Enter) goes into the page's level (any page: a plain one shows its root row and "No sub
-pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections,
+pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections & Blocks,
 Transitions, SEO). Every row also has a quiet **edit** button (a pen, 30% until hovered or
 focused, like the trash) that opens that page's Sections the same way in one click (no select,
 no drag; Header and Footer open theirs; a `[param]` page that builds no pages too, to fix its main block). A row's end is fixed 24px slots, `edit | trash | ›`

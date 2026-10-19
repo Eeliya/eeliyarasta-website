@@ -94,7 +94,7 @@
 
   // a page's tabs, the open one per page file
   const TABS = [
-    ['sections', 'Sections'],
+    ['sections', 'Sections & Blocks'],
     ['transitions', 'Transitions'],
     ['seo', 'SEO'],
   ];
@@ -305,6 +305,12 @@
                   actions.setMode('motion');
                 }}
               />
+              <!-- its section's settings under it, on every block tab (as its card's pen) -->
+              {#if sections[held.block.at]?.id}
+                <div class="block-section">
+                  <SectionView {live} {bridge} {file} id={sections[held.block.at].id} top={false} />
+                </div>
+              {/if}
             {/if}
           </div>
         {/if}
@@ -333,6 +339,11 @@
   :global(.page-tabs) {
     flex: none;
     padding: 0; // a tab's own 12px: its label on the 12px edge
+  }
+
+  // a block's section, 12px under the block's card (the pane's 8px gap + 4px)
+  .block-section {
+    margin-top: var(--space-1);
   }
 
   // the panes share one cell, clipped while they slide
