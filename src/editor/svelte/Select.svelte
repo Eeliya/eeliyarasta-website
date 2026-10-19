@@ -4,12 +4,15 @@
   is aria-activedescendant. Keys: Up/Down, Home/End, Enter/Space pick, Esc/Tab close, typing jumps.
   Props:
     value        the picked option's value: bind:value, or a value the parent updates on onchange
-    options      [{ value, label, hint?, disabled? }], or groups [{ group, options: [...] }]
+    options      [{ value, label, hint?, note?, disabled? }], or groups [{ group, options: [...] }]
+                 (note: a line under the option, e.g. why it is off)
     placeholder  shown when no option has the value
     id           for <label for>; aria-label when there is no label
     onchange     (value, option) on a pick; with it the parent owns the value
     option       snippet (option) for an option's content; default: label + hint
     selected     snippet (option) for the button's content; default: label
+    compact      a 24px button as wide as its value (a label row's picker), the list at least
+                 200px wide
 -->
 <script>
   import { untrack } from 'svelte';
@@ -23,6 +26,7 @@
     onchange,
     option: optionSnippet,
     selected: selectedSnippet,
+    compact = false,
   } = $props();
 
   const uid = $props.id();
@@ -55,8 +59,8 @@
     if (!list) return;
     const r = button.getBoundingClientRect();
     Object.assign(list.style, {
-      left: `${r.left}px`,
-      width: `${r.width}px`,
+      left: `${compact ? Math.max(8, r.right - Math.max(r.width, 200)) : r.left}px`,
+      width: `${compact ? Math.max(r.width, 200) : r.width}px`,
       top: up ? 'auto' : `${r.bottom}px`,
       bottom: up ? `${innerHeight - r.top}px` : 'auto',
       maxHeight: `${Math.min(360, up ? r.top - 8 : innerHeight - r.bottom - 8)}px`,
@@ -170,7 +174,7 @@
 
 <button
   type="button"
-  class={['sel', open && (up ? 'is-up' : 'is-down')]}
+  class={['sel', compact && 'is-compact', open && (up ? 'is-up' : 'is-down')]}
   {id}
   role="combobox"
   aria-label={ariaLabel}
@@ -221,6 +225,7 @@
           {#if optionSnippet}{@render optionSnippet(o)}{:else}
             {o.label}{#if o.hint}<span class="sel__hint">{o.hint}</span>{/if}
           {/if}
+          {#if o.note}<span class="sel__note">{o.note}</span>{/if}
         </li>
       {/each}
     {/each}
@@ -262,6 +267,28 @@
     &.is-up {
       border-top-left-radius: 0;
       border-top-right-radius: 0;
+    }
+
+    // in a label row: 24px, its value's width (at most 70% of the row), the list under it
+    // right-aligned (place())
+    &.is-compact {
+      flex: 0 1 auto;
+      gap: var(--space-1);
+      width: auto;
+      max-width: 100%;
+      height: 24px;
+      padding: 0 var(--space-2);
+      border-radius: var(--radius-md);
+      color: inherit;
+      font-size: var(--fs-sm);
+
+      .sel__value {
+        flex: 0 1 auto;
+      }
+
+      .sel__caret {
+        font-size: var(--fs-2xs);
+      }
     }
   }
 
@@ -339,5 +366,17 @@
   .sel__hint {
     margin-left: auto;
     color: var(--c-text-muted);
+  }
+
+  // why an option is off: a muted paragraph under it, the option's width
+  .sel__opt:has(.sel__note) {
+    flex-wrap: wrap;
+  }
+
+  .sel__note {
+    flex-basis: 100%;
+    color: var(--c-text-muted);
+    font-size: var(--fs-xs);
+    white-space: normal;
   }
 </style>

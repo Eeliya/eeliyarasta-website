@@ -1,25 +1,26 @@
 <!--
   One block of the page (ui.block), in three tabs:
-    Content  its item (the source item its bound fields show, src/site/layout/bindings.js; on
-             a [param] page the page's own by default), settings and texts (GroupFields.svelte)
-             with each field's Source switch
+    Content  its source (BlockSource.svelte: Item / All, From URL or None, and on a [param] page
+             whether it is the main block), then its settings and texts (GroupFields.svelte),
+             each bindable field with its picker: Custom or a field of the item it shows
     Layout   its size (rows, aspect, auto) and layer, for the desktop or the phone
              (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   One level under the list of sections (a block's row on its section's card, or the block
   clicked in the preview): its top (ViewTop.svelte: ← Back to the list, Locate), then the block
-  in a card: its type and title, the tabs and their fields. Its section's settings are not
-  here (its card's pen: SectionView.svelte).
+  in a card: its type and title (Main: the page's main block), the tabs and their fields. Its
+  section's settings are not here (its card's pen: SectionView.svelte).
 -->
 <script>
   import GroupFields from './GroupFields.svelte';
-  import ItemPicker from './ItemPicker.svelte';
+  import BlockSource from './BlockSource.svelte';
   import Tabs from './Tabs.svelte';
-  import { schemaFor, itemName } from './source-items.js';
+  import { schemaFor } from './source-items.js';
   import { isTemplate, pageIdOf, sourceFile } from '../../site/files.js';
-  import { itemSlug } from '../../site/helpers.js';
   import { BIND_TYPES, resolve } from '../../site/layout/bindings.js';
+  import { blockItems, sourceOf } from '../../site/layout/source.js';
+  import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { ui } from './ui.svelte.js';
   import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
@@ -40,57 +41,58 @@
     live.version;
     return live.get(g.file, base) || {};
   });
+  const type = $derived(BLOCK_TYPES[g.type] || {});
 
-  // ---- its item: the block's own ({ source, slug }), else on a [param] page the page's
-  const template = $derived(isTemplate(pageIdOf(g.file) || ''));
-  const pageSource = $derived(template ? live.get(g.file, '/template/source') : null);
+  // ---- what it shows (src/site/layout/source.js): on a [param] page with the page the
+  // preview shows (its params), the item its fields show the first
+  const pageId = $derived(pageIdOf(g.file) || '');
   // (read on its own: the store changes a value in place, so `block` stays the same object)
-  const ref = $derived.by(() => {
+  const source = $derived.by(() => {
     live.version;
-    const v = live.get(g.file, `${base}/item`);
-    return v && typeof v === 'object' ? { ...v } : null;
+    const v = live.get(g.file, `${base}/source`);
+    return v && typeof v === 'object' ? structuredClone(v) : null;
   });
-  const itemSource = $derived(ref?.source || pageSource || null);
+  const shown = $derived.by(() => {
+    const route = live.routeOf(ui.path);
+    const at = isTemplate(pageId) && route?.id === pageId ? route : { params: {} };
+    return blockItems(live.content, at, { source });
+  });
+  const item = $derived(shown.item);
+  const from = $derived(sourceOf({ source })?.from ?? null);
   const schema = $derived.by(() => {
     live.version;
-    return itemSource ? schemaFor(live.store, sourceFile(itemSource)) : null;
+    return from ? schemaFor(live.store, sourceFile(from)) : null;
   });
-  const items = $derived.by(() => {
+  const isMain = $derived.by(() => {
     live.version;
-    const list = itemSource ? live.get(sourceFile(itemSource), '/items') : null;
-    return Array.isArray(list) ? list : [];
+    return isTemplate(pageId) && live.get(g.file, '/main') === g.id;
   });
-  const slugOf = (it) => itemSlug(it, schema);
-  // the item the preview shows: the block's, or the [param] page's (its route's, else its
-  // path's last part)
-  const item = $derived.by(() => {
-    if (ref) return items.find((it) => it?.id === ref.id) ?? null;
-    if (!template) return null;
-    live.version;
-    const at = live.routeOf?.(ui.path)?.album?.id;
-    if (at) return items.find((it) => it?.id === at) ?? items[0] ?? null;
-    const last = String(ui.path || '')
-      .split('/')
-      .filter(Boolean)
-      .at(-1);
-    return items.find((it) => slugOf(it) === last) ?? items[0] ?? null;
-  });
-  // for the fields (Field.svelte): the item's fields per bind type, what one shows
+  // a field's value as one line (a field picker's hint)
+  const line = (v) =>
+    typeof v === 'string' || typeof v === 'number'
+      ? String(v)
+      : Array.isArray(v)
+        ? `${v.length} items`
+        : '';
+  // for the fields (Field.svelte): the item's fields per bind type (with their value), what
+  // one shows, and the item's name for the picker's group
   const bindings = $derived({
-    // the title field first: what switching Source on binds
-    binds: (type) =>
+    // the title field first
+    binds: (bindType) =>
       (schema?.fields || [])
-        .filter((f) => (BIND_TYPES[type] || []).includes(f.type))
+        .filter((f) => (BIND_TYPES[bindType] || []).includes(f.type))
         .sort((a, b) => (b.key === schema.title) - (a.key === schema.title))
-        .map((f) => ({ value: f.key, label: f.label || f.key, hint: f.type })),
+        .map((f) => ({
+          value: f.key,
+          label: f.key,
+          hint: (item && line(item[f.key])) || f.label || f.type,
+        })),
     resolved: (f) => {
       const v = resolve(live.get(f.file, f.ptr), { item, def: { type: f.type } });
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
     },
+    from: item && schema ? (schema.title && line(item[schema.title])) || from : from,
   });
-
-  const setItem = (next) =>
-    live.store.set(g.file, `${base}/item`, next, { source: 'panel', structure: true });
 
   // the block's element in the preview, read again after every edit
   const blockEl = $derived.by(() => {
@@ -109,6 +111,9 @@
       {g.title}
       {#if g.name}<strong>{g.name}</strong>{/if}
     </span>
+    {#if isMain}<span class="badge" title="The page’s main block: it decides which pages exist"
+        >Main</span
+      >{/if}
   </div>
 
   <Tabs
@@ -138,24 +143,9 @@
         />
       {/key}
     {:else}
-      <!-- its item (a block with a source setting, a list block, picks its source there instead) -->
-      {#snippet item()}
-        <ItemPicker
-          store={live.store}
-          value={ref}
-          changed={live.changed(g.file, `${base}/item`)}
-          {sourceIds}
-          {onsource}
-          none={template ? "This page's item" : 'None'}
-          itemsOf={(id) => {
-            live.version;
-            const list = live.get(sourceFile(id), '/items');
-            return Array.isArray(list) ? list : [];
-          }}
-          nameOf={(id, it) => itemName(it, schemaFor(live.store, sourceFile(id)))}
-          onpick={setItem}
-          onclear={() => setItem(undefined)}
-        />
+      <!-- its source first (a block whose type shows items), then its settings and fields -->
+      {#snippet lead()}
+        <BlockSource {g} {live} {base} list={!!type.list} {shown} {sourceIds} {onsource} />
       {/snippet}
       <GroupFields
         {g}
@@ -164,9 +154,8 @@
         {sourceIds}
         {onsource}
         {bindings}
-        lead={!g.config?.some((c) => c.type === 'source') &&
-        (g.fields.length || g.config?.some((c) => c.type === 'text'))
-          ? item
+        lead={type.list || type.item || g.fields.some((f) => f.bindType) || block.source
+          ? lead
           : undefined}
       />
       {#if !g.fields.length && !g.config?.length}
@@ -203,6 +192,17 @@
       color: var(--c-link);
       font-weight: 400;
     }
+  }
+
+  // Main: the block accent, a pill
+  .badge {
+    margin-left: auto;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    color: var(--c-block-accent);
+    font-size: var(--fs-xs);
+    line-height: 16px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-block-accent) 45%, transparent);
   }
 
   .card :global(.card__tabs) {

@@ -238,19 +238,22 @@ function lockPart() {
 }
 
 /**
- * A page entry picked (the pages list): a page (navigate the preview), a template (one of its item pages:
- * `path`, else the one shown, else the first) or a site part (Header, Footer).
+ * A page entry picked (the pages list, the page head's Preview line): a page (navigate the
+ * preview), a template (one of its item pages: `path`, else the one it showed last
+ * (ui.previewAt), else the one shown, else its first) or a site part (Header, Footer).
  */
 function pickTarget(item, path) {
+  if (!item) return;
   ui.target = item;
   applyPart();
   if (item.kind !== 'page') return;
   const items = item.items;
+  const has = (p) => !!p && items.some((i) => i.path === p);
   const to = !items
     ? item.path
-    : path || (items.some((i) => i.path === ui.path) ? ui.path : items[0]?.path);
+    : [path, ui.previewAt[item.template], ui.path].find(has) || items[0]?.path;
   if (to) bridge.navigate(to);
-  else toast(`${item.path} has no pages: its source has no items`, { kind: 'error' });
+  else toast(`${item.path} has no pages to show`, { kind: 'error' });
 }
 
 /**
@@ -498,6 +501,9 @@ function renderSections(stale, root = bridge.doc?.querySelector('[data-router-vi
 
 bridge.on('navigate', (path) => {
   ui.path = path;
+  // a [param] page's page shown: picked again when it is opened (editor state only)
+  const shown = live.routeOf(path);
+  if (shown?.template && !shown.unbuilt) ui.previewAt[shown.id] = path;
   backdropShown = null;
   syncBackdrop(); // what the page was rendered with (the drafts)
   for (const root of syncRoots(bridge.doc)) {
@@ -568,9 +574,25 @@ function pushDraft({ refresh = false, sources = false } = {}) {
     } catch (err) {
       toast(`Preview: ${err.message}`, { kind: 'error' });
     }
+    if (followTemplate()) return;
     if (reload && bridge.path()) bridge.reload();
     else if (bound) rebind();
   }, 250);
+}
+
+/**
+ * A [param] page edited so the page of it shown is gone (its main block's rules changed):
+ * the preview goes to the one it showed last, else its first (pickTarget). True when it went.
+ */
+function followTemplate() {
+  const path = bridge.path();
+  const template = ui.target?.template;
+  if (!template || !path || live.routeOf(path)) return false;
+  updatePages(); // (the target falls back to another page: the path is gone)
+  const entry = ui.pages.find((e) => e.template === template);
+  if (!entry?.items?.length) return false;
+  pickTarget(entry);
+  return true;
 }
 
 let animTimer = 0;

@@ -7,9 +7,10 @@
     live      reactive store (live.svelte.js); bridge: the preview (../bridge.js)
     sourceIds the files in content/en/sources/, for a list item's source
     onsource  (file, item?, edit?): open the Source Explorer
-    bindings  a block's: { binds(type), resolved(f) } for its fields' Source switch and a
-              bound text's format (BlockInspector.svelte, Field.svelte); null: none
-    lead      snippet: a setting first in the grid (the block's item, BlockInspector.svelte)
+    bindings  a block's: { binds(type), resolved(f), from } for its fields' pickers (Custom or
+              a field of its item) and a bound text's format (BlockInspector.svelte,
+              Field.svelte); null: none
+    lead      snippet: first in the grid (the block's source, BlockSource.svelte)
   Settings and content share one .fields grid (all through Field, the same labels and gaps),
   a 1px line between them when both are there.
 -->
@@ -145,6 +146,7 @@
       onfocus={() => bridge.focusEdit(f.edit)}
       onvalue={(value) => setValue(f, value)}
       binds={bindings && f.bindType && f.type !== 'boolean' ? bindings.binds(f.bindType) : null}
+      from={bindings?.from ?? ''}
       formats={!!bindings && f.textual}
       resolved={bindings?.resolved(f) ?? ''}
       {...extra}
@@ -168,6 +170,7 @@
     <ItemPicker
       store={live.store}
       mode="source"
+      label={c.label}
       {value}
       changed={live.changed(g.file, c.ptr)}
       none={c.empty ?? null}

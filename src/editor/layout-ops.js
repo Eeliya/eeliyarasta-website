@@ -30,6 +30,9 @@ import {
 } from '../site/layout/index.js';
 import { resolveRows } from '../site/layout/flow.js';
 import { idsOf, newId } from '../site/layout/ids.js';
+import { fitSource } from '../site/layout/source.js';
+import { BLOCK_TYPES } from '../site/blocks/index.js';
+import { contentFromFiles, isTemplate, pageIdOf, paramsOf } from '../site/files.js';
 
 const listOf = (store, file) => {
   const list = store.get(file, '/sections');
@@ -105,8 +108,13 @@ export function moveSection(store, file, from, to) {
 /** Section `at` removed. */
 export function removeSection(store, file, at) {
   const list = listOf(store, file);
-  list.splice(at, 1);
-  return write(store, file, list);
+  const [gone] = list.splice(at, 1);
+  return writeDropMain(
+    store,
+    file,
+    list,
+    (gone?.blocks || []).map((b) => b?.id),
+  );
 }
 
 /**
@@ -197,6 +205,17 @@ export function addBlock(store, file, at, type) {
   const section = list[at];
   const first = !section.blocks?.length;
   const block = newBlock(type, idsOf(list), { row: first ? 1 : below(section) });
+  // its source fitted to the page: From URL matches this page's params, or can't be here
+  if (block.source) {
+    const id = pageIdOf(file) || '';
+    const fit = fitSource(block.source, {
+      list: !!BLOCK_TYPES[type]?.list,
+      params: isTemplate(id) ? paramsOf(id) : [],
+      content: contentFromFiles(store.current),
+    });
+    if (fit) block.source = fit;
+    else delete block.source;
+  }
   section.blocks = [...(section.blocks || []), block];
   write(store, file, list);
   return block;
@@ -262,7 +281,25 @@ export function removeBlock(store, file, at, j) {
     if (baseOf(b).link?.to === gone?.id) setBase(b, { link: undefined });
     if (phoneOf(b)?.link?.to === gone?.id) setPhone(b, { link: undefined });
   }
-  return write(store, file, list);
+  return writeDropMain(store, file, list, [gone?.id]);
+}
+
+/**
+ * The sections written; a [param] page's main block among `gone` (removed) is its main block no
+ * more (no pages are built until another is picked: the page head says so). One undo step.
+ */
+function writeDropMain(store, file, list, gone) {
+  const main = store.get(file, '/main');
+  if (!gone.includes(main)) return write(store, file, list);
+  let done = false;
+  store.batch(
+    () => {
+      done = write(store, file, list);
+      store.remove(file, '/main', { source: 'panel', structure: true });
+    },
+    { source: 'panel' },
+  );
+  return done;
 }
 
 /**

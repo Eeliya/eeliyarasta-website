@@ -10,7 +10,7 @@
     picked), sourceIds, itemsOf(id) a source's items, nameOf(id, item) an item's name,
     onpick(value | undefined); onclear(): back to empty (the ✕ beside Change, when picked);
     store: the editor's store (the sources' schemas: a list's name, an
-    item's photo)
+    item's photo); label: its own label (a setting's, "Count of"), else by what it picks
     onsource(file, index, edit, then): open the Source Explorer (SourcesModal.svelte); each
               row's edit button closes this window and opens it there, and this window opens
               again on the same source or item when the Source Explorer closes (then)
@@ -37,11 +37,12 @@
     onsource,
     onclear = null,
     store = null,
+    label: ownLabel = '',
   } = $props();
 
   const items_ = $derived(mode === 'item');
   // always named by what it picks: a whole list, or one item of one
-  const label = $derived(items_ ? 'Source item' : 'Source list');
+  const label = $derived(ownLabel || (items_ ? 'Source item' : 'Source list'));
   const current = $derived(items_ ? value?.source || '' : value || '');
   const uid = $props.id();
   let dialog = $state();

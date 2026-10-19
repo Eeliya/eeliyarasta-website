@@ -22,6 +22,17 @@ export const ui = $state({
    * one item with `template` (its page id) and `items` ([{ path, title }], its pages).
    */
   pages: [],
+  /**
+   * The page each [param] page previews ({ "people/[person]": "/people/noor-vermeer/" }): the
+   * one shown last, picked again when the page is opened (else its first). Editor state only:
+   * never saved to content.
+   */
+  previewAt: {},
+  /**
+   * A param row of a block's From URL to bring into view and focus ({ block, param }; the page
+   * head's warning sets it, BlockSource.svelte takes it), or null.
+   */
+  focusParam: null,
   /** The path shown in the preview ("/people/noor-vermeer/"). */
   path: '/',
   /** What the Content tab edits: a page { kind: 'page', path, title } or a site part { kind: 'part', id: 'header' | 'footer', title }. */

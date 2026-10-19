@@ -4,15 +4,22 @@
     ← Return to navigation
     Title
     / photography/ people/          (a site part: its title only)
+    Preview noor-vermeer / 2018 ▾   (a [param] page: the page of it the preview shows)
+    ⚠ No pages are built: …        (only when its main block can't decide its pages)
   Return to navigation opens the pages list (in the Content tab) where the page was opened (its
-  own folder, or the one it is in), a path part at that folder. A [param] page shows the item
-  the preview is on (main.js pickTarget: the one shown, else its first; a link in the preview
-  goes to another).
+  own folder, or the one it is in), a path part at that folder. The path's [param]/ parts and
+  the Preview line's values are in the block accent (a param and its value read as a pair).
+  A [param] page previews the page of it shown last (ui.previewAt, main.js pickTarget), else its
+  first; the Preview line opens the item selector (PreviewPicker.svelte) to pick another, every
+  tab shows it. The warning line jumps to the main block, on the param row that is wrong.
 -->
 <script>
   import { ui } from './ui.svelte.js';
+  import PreviewPicker from './PreviewPicker.svelte';
   import { parentId, pathOfId } from '../../site/routes.js';
   import { crumbsOf, pageIds, titleOf } from '../lib/page-tree.js';
+  import { isParam, pageFile, paramsOf } from '../../site/files.js';
+  import { mainProblem } from '../../site/layout/source.js';
 
   // live: reactive store; actions: pickTarget, setMode (main.js)
   let { live, actions } = $props();
@@ -45,6 +52,26 @@
     ui.pagesWin = { open: true, folder: level };
     if (ui.mode !== 'text') actions.setMode('text');
   }
+
+  // ---- a [param] page: the page of it shown, and why it builds none
+  const template = $derived(!!t?.template);
+  const isParamCrumb = (c) => isParam(c.label.replace(/\/$/, ''));
+  const route = $derived(template ? live.routeOf(ui.path) : null);
+  const values = $derived(template ? paramsOf(id).map((p) => route?.params?.[p] ?? `[${p}]`) : []);
+  const problem = $derived(template ? mainProblem(live.content, id) : null);
+  let picker = $state();
+  const entry = () => ui.pages.find((e) => e.template === id);
+  /** The warning: the main block open on its Content tab, its wrong param row focused. */
+  function toMain() {
+    const main = live.get(pageFile(id), '/main');
+    if (ui.mode !== 'text') actions.setMode('text');
+    ui.pagesWin = { ...ui.pagesWin, open: false };
+    ui.section = null;
+    const has = problem?.kind !== 'none';
+    ui.block = has ? main : null;
+    ui.blockTab = 'content';
+    ui.focusParam = has ? { block: main, param: problem?.param ?? '' } : null;
+  }
 </script>
 
 <div class="ph">
@@ -56,12 +83,54 @@
     <nav class="ph__path" aria-label="Where it is">
       {#each crumbs as c, i (i)}
         {#if c.level === null}
-          <span class="ph__crumb is-current" aria-current="page">{c.label}</span>
+          <span
+            class={['ph__crumb', 'is-current', isParamCrumb(c) && 'is-param']}
+            aria-current="page">{c.label}</span
+          >
         {:else}
-          <button type="button" class="ph__crumb" onclick={() => list(c.level)}>{c.label}</button>
+          <button
+            type="button"
+            class={['ph__crumb', isParamCrumb(c) && 'is-param']}
+            onclick={() => list(c.level)}>{c.label}</button
+          >
         {/if}
       {/each}
     </nav>
+  {/if}
+  {#if template}
+    <button
+      type="button"
+      class="ph__preview"
+      title="The page every tab and the preview show: pick another"
+      aria-haspopup="dialog"
+      onclick={() => picker.open()}
+    >
+      <span class="ph__label">Preview</span>
+      {#each values as v, i (i)}{#if i}<span class="ph__sep">/</span>{/if}<span class="ph__val"
+          >{v}</span
+        >{/each}
+      <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+    </button>
+    <PreviewPicker
+      bind:this={picker}
+      {live}
+      {id}
+      path={ui.path}
+      onpick={(path) => actions.pickTarget(entry(), path)}
+    />
+  {/if}
+  <!-- only in that state: the head grows by this line then (nothing is reserved for it) -->
+  {#if problem}
+    <p class="ph__warn" role="status">
+      <button
+        type="button"
+        title={problem.kind === 'none' ? 'Show the sections' : 'Open the main block'}
+        onclick={toMain}
+        ><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span
+          >{problem.message}</span
+        ></button
+      >
+    </p>
   {/if}
 </div>
 
@@ -152,6 +221,96 @@
       color: var(--c-text-muted);
       cursor: default;
       text-decoration: none;
+    }
+
+    // a [param]/ part, its slash too: the block accent
+    &.is-param {
+      color: var(--c-block-accent);
+    }
+  }
+
+  // [ PREVIEW  noor-vermeer / 2018 ▾ ]: text-style, 24px, on the 12px edge
+  .ph__preview {
+    @include row(var(--space-2));
+    align-self: start;
+    max-width: 100%;
+    height: 24px;
+    margin-top: var(--space-1);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-text);
+    font: inherit;
+    font-size: var(--fs-base);
+    cursor: pointer;
+
+    &:hover .ph__val {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    i {
+      flex: none;
+      color: var(--c-text-muted);
+      font-size: var(--fs-2xs);
+    }
+  }
+
+  .ph__label {
+    @include muted;
+    flex: none;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ph__val {
+    @include ellipsis;
+    color: var(--c-block-accent);
+  }
+
+  .ph__sep {
+    color: var(--c-text-faint);
+  }
+
+  // the main block's error: one 20px line in the warning colour; a click opens the block
+  .ph__warn {
+    margin: var(--space-1) 0 0;
+
+    button {
+      @include row(var(--space-2));
+      max-width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--c-notice);
+      font: inherit;
+      font-size: var(--fs-sm);
+      line-height: 20px;
+      text-align: left;
+      cursor: pointer;
+
+      &:hover span {
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        @include focus-ring;
+      }
+    }
+
+    i {
+      flex: none;
+      font-size: var(--fs-2xs);
+    }
+
+    span {
+      @include ellipsis;
     }
   }
 </style>

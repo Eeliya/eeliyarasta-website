@@ -176,6 +176,7 @@ function blockGroup(store, file, at, j) {
   const base = `/sections/${at}/blocks/${j}`;
   return {
     id: s.id,
+    type: s?.type,
     block: { at, j },
     file,
     icon: t?.icon || 'question',

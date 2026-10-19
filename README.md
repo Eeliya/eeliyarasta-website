@@ -521,13 +521,23 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   same as before. A new `[param]` page binds the source's title field, its list fields as facts
   and its first long text.
 - **In the editor:** bound values aren't typed in the preview; a click selects them and opens
-  their block on the field. Each bindable field has a **Source** switch in its label row: on,
-  it shows a Select of the item's fields that fit (the title field first); off, the field
-  gets what it showed as its own text. A bound text has a **format** input under it
-  (`{value}` and the text around it). The block's Content tab starts with **Item from** (a source, or none /
-  this page's item) and **Item**. The preview shows the values of the item it shows; what can't
-  be filled shows dimmed as `{{title}}` there (only there). Editing a source renders the
-  sections that show it again.
+  their block on the field. The block's Content tab starts with its **Source**
+  (`BlockSource.svelte`): Item / All, From URL, None (From URL greyed on a page without
+  params, its tooltip says why), the item selector (Item: an item; All, From URL: a source),
+  on From URL a row per param of the address (`where [person] = person ▾`: the source's
+  fields that can be a URL part, `same name` / `default` marked, or **Any**, off on the main
+  block with why), a red row and a note when its field isn't in the source, one line saying
+  what it shows ("2 items match · the fields show the first"), and on a `[param]` page the
+  **Main block** switch (on makes it From URL; its hint: how many pages are built, or why
+  none). Every bindable field has a picker at the end of its label row: **Custom** (its own
+  text: what it showed becomes it) or one of the item's fields that fit, with its value (no
+  source: only Custom). A bound value is dimmed and read only (a lock); a bound text has a
+  **format** input under it (`{value}` and the text around it). None turns bound fields into
+  their own texts. The preview shows the values of the item it shows; what can't be filled
+  shows dimmed as `{{title}}` there (only there). Editing a source renders the sections that
+  show it again. Add block fits a new block's source to the page (From URL on a `[param]`
+  page; elsewhere All for a list, the source's first item for one); removing the main block
+  leaves the page without one (the page head says so).
 
 ### Menu
 
@@ -970,9 +980,18 @@ loads pages with `?draft=…`) always gets the site, so the editor never opens i
 Layout: the real site in a same-origin iframe, with a glass side panel. The page (or site part)
 being edited is named at the top of the Content and Motion tabs (`PageHead.svelte`), a column on
 the panel's 12px edges: **Return to navigation** (back to the pages list; its arrow where the
-list's ← is), its title, its path (a path part: that folder; a site part: its title only). A
-`[param]` page's preview shows the item it was on, else its first; links in the preview go to
-another (a "Preview item" choice is planned with main blocks). The pages list and a page's view
+list's ← is), its title, its path (a path part: that folder; a site part: its title only; a
+`[param]/` part, its slash too, in the block accent). A `[param]` page has a **Preview** line
+under it, its values in the block accent (`Preview noor-vermeer / 2018 ▾`): the page of it the
+preview and every tab show. It opens the item selector (`PreviewPicker.svelte`), one step per
+param, each listing only the values under the ones picked before it (`[year]` after
+`[person] noor-vermeer`: her years), "Nothing found" and why when there are none; its crumbs
+and Back go back a step. The page shown is remembered per page (`ui.previewAt`, editor state
+only, never saved), else its first; links in the preview go to another. When its main block
+can't decide its pages, a warning line follows (only then: the head grows by it), e.g.
+"No pages are built: [year] matches no field"; a click opens the main block on that param's
+row. In the editor and its preview such a page still has pages to edit it on (`unbuilt`
+routes, at its pattern where a param matches nothing: `/people/noor/:year/`). The pages list and a page's view
 swap with the editor's slide (`src/editor/lib/slide.js`, as the Sections panes): a page opened
 comes in from the right, the list comes back from the left; reduced motion: no slide.
 
@@ -991,7 +1010,7 @@ the left. Then:
   URLs"; the row stays, quieter, and the first sub page is tagged **As /**: the folder's URL
   opens it), then its pages. The grip drags one to another place (the menu's order, one undo
   step). Its `[param]` page is pinned last (a lock and a tag with its count of pages:
-  "per item · 4", or "per [person] · 4" in another; 0, a source with no items, is amber; a
+  "per item · 4", or "per [person] · 4" in another; 0 (no item matches, or its main block can't decide) is amber; a
   double click goes into it, where its own `[param]` page can be
   added: + is off once it has one). A plain page's level: its root row and "No sub pages yet";
 - **Not linked**: every page that isn't in the menu, the whole site's (**All**) or this
@@ -1015,8 +1034,7 @@ titles and paths as written. A click selects a row and shows it in the preview; 
 pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections,
 Transitions, SEO). Every row also has a quiet **edit** button (a pen, 30% until hovered or
 focused, like the trash) that opens that page's Sections the same way in one click (no select,
-no drag; Header and Footer open theirs). A `[param]` page with no pages (its source has no
-items) has nothing to show: its edit stays quiet and says so, a click only selects it. A row's end is fixed 24px slots, `edit | trash | ›`
+no drag; Header and Footer open theirs; a `[param]` page that builds no pages too, to fix its main block). A row's end is fixed 24px slots, `edit | trash | ›`
 (an empty slot where a row has no trash, as Home, 404 and Site), so the buttons line up; the
 `›` (muted) marks a page with pages inside (there are no counts of sub pages). A level's root
 row ends with edit, then its Own page switch (or its empty place). A dot after a
@@ -1119,8 +1137,8 @@ preview) edits `nav.json` and the header's labels (`strings.json` `nav`: the men
 buttons, the clock). The menu with its items: label,
 link (a page from the page tree, or External URL with its URL), ↑ / ↓ / Remove, **Add link**,
 and a dropdown: the items of a source, or **Dropdown links** (one level) and the
-"all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[param]` page the **Item** dropdown next
-to the page picks which item's page the preview shows.
+"all" link's label. The preview renders the menu again on each change; undo works as anywhere. On a `[param]` page the page head's **Preview** line
+picks which of its pages the preview shows.
 
 The **Sources** button (the database icon next to the page dropdown, before Pages and Media) opens the Source Explorer on the files in `content/en/sources/` (with their
 item counts): click one to edit its items, **←** goes back to the files. A grid's Source edit

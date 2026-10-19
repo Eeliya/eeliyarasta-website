@@ -388,3 +388,41 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   );
   assert.equal(renderOp(render, '.', {}, { path: '/about/', file }).status, 400);
 });
+
+test('add block: its source fits the page; removing the main block leaves the page without one', () => {
+  const store = createStore();
+  const P = 'pages/people/[person]/index.json';
+  const A = 'pages/about/index.json';
+  const people = { version: 1, items: [{ id: 'p-noor', slug: 'noor', title: 'Noor' }] };
+  const page = (id) => ({
+    version: 1,
+    kind: 'page',
+    id,
+    sections: [{ id: `s-${id.slice(3)}`, blocks: [] }],
+  });
+  store.load({
+    'sources/people.json': people,
+    'sources/people.schema.json': { version: 1, title: 'title', slug: 'slug', fields: [] },
+    [P]: page('pg-t300'),
+    [A]: page('pg-t301'),
+  });
+  const block = (file, type) => addBlock(store, file, 0, type);
+  // an album on a [param] page: From URL, [person] on slug (people has no "person" field)
+  assert.deepEqual(block(P, 'album').source, {
+    mode: 'url',
+    from: 'people',
+    where: { op: 'and', rules: [{ param: 'person', field: 'slug' }] },
+  });
+  // off one: no params to match, so its source's first item; a list keeps All
+  assert.deepEqual(block(A, 'album').source, { mode: 'item', from: 'people', id: 'p-noor' });
+  assert.deepEqual(block(A, 'albums').source, { mode: 'all', from: 'people' });
+  assert.equal(block(A, 'text').source, undefined);
+  // the main block removed: "main" goes with it, one undo step
+  const main = store.get(P, '/sections/0/blocks/0/id');
+  store.set(P, '/main', main);
+  removeBlock(store, P, 0, 0);
+  assert.equal(store.get(P, '/main'), undefined);
+  store.undo();
+  assert.equal(store.get(P, '/main'), main);
+  assert.equal(store.get(P, '/sections/0/blocks/0/id'), main);
+});

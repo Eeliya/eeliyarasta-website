@@ -16,10 +16,19 @@ export function createLive(store) {
   // the site's routes, built once per store change for everyone who asks (not per reader)
   let routesAt = -1;
   let routes = [];
+  let contentAt = -1;
+  let content = {};
+  const contentNow = () => {
+    if (contentAt !== version) {
+      content = contentFromFiles(store.current);
+      contentAt = version;
+    }
+    return content;
+  };
   const routesNow = () => {
     if (routesAt !== version) {
       // the editor: [param] pages that build none too (unbuilt), so they can be edited
-      routes = getRoutes(contentFromFiles(store.current), { unbuilt: true });
+      routes = getRoutes(contentNow(), { unbuilt: true });
       routesAt = version;
     }
     return routes;
@@ -42,6 +51,11 @@ export function createLive(store) {
     /** Read it to re-run after every store change (e.g. to re-read something outside the store). */
     get version() {
       return version;
+    },
+    /** The site's content with the edits ({ site, pages, sources, ... }), shared. Don't change it. */
+    get content() {
+      version;
+      return contentNow();
     },
     /** Every route of the site with the edits (routes.js), shared: built once per change. */
     get routes() {

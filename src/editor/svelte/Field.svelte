@@ -9,12 +9,13 @@
   stores the photo picked there in this field: one undo step. No text input.
   Used by the Content panel, the Sources modal and Settings.
   Bindings (a block's field, src/site/layout/bindings.js):
-    binds     the item's fields this one can show, [{ value, label }] (null: it can't bind).
-              A Source switch in the label row, only when there is an item to show (binds
-              not empty) or the field is still bound: on stores { "bind": "<first>" } and shows a
-              Select of them; off stores `resolved` (what it showed) as the field's own text
-    formats   a text field: when bound, a Format input under the Select ("{value} photos");
-              empty or just {value} stores { "bind" } alone
+    binds     the item's fields this one can show, [{ value, label, hint }] (null: it can't
+              bind). A picker at the end of the label row: Custom (its own text: what it showed
+              becomes it) or one of them (stores { "bind": "<field>" }); no source: only Custom.
+              Bound, its value is the item's, dimmed and read only (a lock); `from` names the
+              item in the picker's group
+    formats   a text field: when bound, a Format input under it ("{value} photos"); empty or
+              just {value} stores { "bind" } alone
 -->
 <script module>
   /** Input text -> stored value. undefined means invalid: the value is not stored. */
@@ -58,6 +59,7 @@
     onfocus,
     onvalue,
     binds = null,
+    from = '',
     formats = false,
     resolved = '',
     bare = false,
@@ -70,8 +72,8 @@
   const photo = $derived(type === 'image');
   // a label element around an input, a switch; photos and Selects label their own buttons
   const tag = $derived(photo || type === 'select' || bound ? 'div' : 'label');
-  // a photo's label goes inside its card, unless the label row has more (a Source switch, a file)
-  const inner = $derived(photo && !bound && !(binds && binds.length) && !source);
+  // a photo's label goes inside its card, unless the label row has more (a picker, a file)
+  const inner = $derived(photo && !bound && !binds && !source);
 
   /** Show the stored value, except while the user is typing in the field. */
   const show = (value) => showValue(String(value ?? ''));
@@ -90,9 +92,17 @@
       ? [...list, { value: value.bind, label: `${value.bind} (missing)` }]
       : list;
   });
-  function setBound(on) {
-    if (on) onvalue({ bind: binds[0].value });
-    else onvalue(typeof resolved === 'string' ? resolved : '');
+  const CUSTOM = ''; // the picker's value for the field's own text
+  const pickOptions = $derived([
+    { group: '', options: [{ value: CUSTOM, label: 'Custom', hint: 'your own text' }] },
+    ...(bindOptions.length
+      ? [{ group: from ? `From the item · ${from}` : 'From the item', options: bindOptions }]
+      : []),
+  ]);
+  // Custom: what it showed becomes its own text; a field: bound (a format kept)
+  function pick(v) {
+    if (v === CUSTOM) return onvalue(typeof resolved === 'string' ? resolved : '');
+    onvalue(bound && value.format ? { bind: v, format: value.format } : { bind: v });
   }
 
   // ---- a bound text's format: {value} is the item's value
@@ -120,7 +130,7 @@
   data-edit={edit}
 >
   {#if !bare && !inner}<span class="tf__label">
-      {label}
+      {#if binds}<span class="tf__name">{label}</span>{:else}{label}{/if}
       {#if type === 'boolean'}
         <input
           type="checkbox"
@@ -130,20 +140,21 @@
           onchange={(e) => onvalue(e.currentTarget.checked)}
         />
       {/if}
-      {#if binds && (binds.length || bound)}
-        <span class="tf__bind" class:is-on={bound}>Source</span>
-        <input
-          type="checkbox"
-          role="switch"
-          class="switch"
-          aria-label="{label}: from the item"
-          title={bound
-            ? 'Shows a field of the item (off: own text)'
-            : 'Own text (on: a field of the item)'}
-          checked={bound}
-          {onfocus}
-          onchange={(e) => setBound(e.currentTarget.checked)}
-        />
+      {#if binds}
+        <span class={['tf__pick', bound && 'is-bound']}>
+          <Select
+            compact
+            aria-label="{label}: its value"
+            value={bound ? value.bind : CUSTOM}
+            options={pickOptions}
+            onchange={pick}
+          >
+            {#snippet selected(o)}{#if o.value !== CUSTOM}<i
+                  class="fa-solid fa-link"
+                  aria-hidden="true"
+                ></i>{/if}{o.label}{/snippet}
+          </Select>
+        </span>
       {/if}
       {#if source}
         <Button
@@ -156,14 +167,21 @@
       {/if}
     </span>{/if}
   {#if bound}
-    <Select
+    <!-- the item's value: dimmed, not typed in (Custom to write one) -->
+    <div
+      class="tf__bound"
       id={uid}
-      aria-label="{label}: item field"
-      value={value.bind}
-      placeholder="Pick a field…"
-      options={bindOptions}
-      onchange={(v) => onvalue(value.format ? { bind: v, format: value.format } : { bind: v })}
-    />
+      aria-readonly="true"
+      title="From the item’s {value.bind} (read only): Custom to write your own"
+    >
+      {#if photo && resolved}<img
+          src={thumbUrl(resolved)}
+          alt=""
+          {@attach fallback(resolved)}
+        />{/if}
+      <span>{resolved || `{{${value.bind}}}`}</span>
+      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+    </div>
     {#if formats}
       <input
         class="tf__input tf__format"
@@ -250,17 +268,60 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // the Source switch's word, before it in the label row
-  .tf__bind {
-    margin-left: auto;
-    color: var(--c-text-faint);
+  // with a picker the label gives up the room first
+  .tf__name {
+    @include ellipsis;
+    min-width: 0;
+  }
 
-    &.is-on {
-      color: var(--c-text);
+  // the value picker at the end of the label row (Select compact); bound: the block accent
+  .tf__pick {
+    @include row(0);
+    flex: none;
+    justify-content: flex-end;
+    max-width: 70%;
+    margin-left: auto;
+    color: var(--c-text-muted);
+
+    &.is-bound {
+      color: var(--c-block-accent);
     }
 
-    + :global(.switch) {
-      margin-left: 0;
+    i {
+      margin-right: var(--space-1);
+      font-size: var(--fs-2xs);
+    }
+  }
+
+  // a bound field's value: what the preview shows, dimmed, a lock at its end; 32px
+  .tf__bound {
+    @include row(var(--space-2));
+    @include muted;
+    height: var(--size-control);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-md);
+    background: var(--c-shadow);
+    box-shadow: inset 0 0 0 1px var(--c-line);
+    cursor: default;
+
+    span {
+      @include ellipsis;
+      flex: 1;
+    }
+
+    img {
+      flex: none;
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      opacity: 0.7;
+    }
+
+    i {
+      flex: none;
+      color: var(--c-text-faint);
+      font-size: var(--fs-2xs);
     }
   }
 
