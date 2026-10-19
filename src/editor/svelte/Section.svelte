@@ -188,7 +188,6 @@
     display: flex;
     flex-direction: column;
     padding: var(--space-3) 0; // the sides: the bar's and the inner's (a foot's line is edge to edge)
-    margin-inline: -8px;
     position: relative;
     border: 1px solid transparent;
     background: var(--c-card);
@@ -224,7 +223,7 @@
   // its section scrolls by, on the panel's color so the fields pass under it
   :global(.ed-body) > .sec > .sec__bar {
     position: sticky;
-    top: -16px; // the scroll area's top edge, over its padding
+    top: -12px; // the scroll area's top edge, over its padding
     z-index: 1;
     margin: -8px 0;
     padding: var(--space-2);

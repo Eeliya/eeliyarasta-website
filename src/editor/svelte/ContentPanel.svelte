@@ -1,7 +1,8 @@
 <!--
   Content tab: the pages list (PagesList.svelte, while ui.pagesWin.open), or the page in the
-  preview or a site part (the Header: HeaderPart.svelte; the Footer) under PageHead.svelte (←:
-  back to the pages list). A page is a list of sections
+  preview or a site part (the Header: HeaderPart.svelte; the Footer) under PageHead.svelte
+  (Return to navigation: back to the pages list). The two swap with a slide (lib/slide.js):
+  a page opened comes in from the right, the list comes back from the left. A page is a list of sections
   holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
   the open one kept per page in ui.sections["pagetab:<file>"]):
     Sections     SectionsList.svelte: the section cards and the dashed Add section card. One
@@ -47,6 +48,7 @@
   import { isTemplate, pageIdOf, sourceIds as sourceIdsOf } from '../../site/files.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { addBlock } from '../layout-ops.js';
+  import { SLIDE, still, swapView } from '../lib/slide.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // actions: main.js (editMotion: open an element in the Motion tab)
@@ -181,7 +183,7 @@
     tl?.kill();
     tl = null;
     if (to && settled && panel) saved = panel.scrollTop;
-    if (!slideEl || matchMedia('(prefers-reduced-motion: reduce)').matches) return done(to);
+    if (!slideEl || still()) return done(to);
     const from = slideEl.offsetHeight;
     moving = true;
     await tick();
@@ -194,7 +196,7 @@
     }
     const target = (to ? blockEl : listEl).offsetHeight;
     tl = gsap
-      .timeline({ defaults: { duration: 0.35, ease: 'power2.out' }, onComplete: () => done(to) })
+      .timeline({ defaults: SLIDE, onComplete: () => done(to) })
       .to(listEl, { x: to ? -w : 0 }, 0)
       .to(blockEl, { x: to ? 0 : w }, 0)
       .fromTo(slideEl, { height: from }, { height: target }, 0);
@@ -208,6 +210,25 @@
     await tick();
     if (panel) panel.scrollTop = to ? 0 : saved;
   }
+
+  // the pages list and a page's view (its head, tabs and body) swap with the same slide: a
+  // page opened comes in from the right, Return to navigation brings the list from the left
+  // (lib/slide.js: a still copy of the one going slides out)
+  const viewEls = () => {
+    const els = [];
+    for (let n = panel; n && !n.matches('.ed-head'); n = n.previousElementSibling) els.unshift(n);
+    return els;
+  };
+  let listOpen = ui.pagesWin.open;
+  $effect.pre(() => {
+    const now = ui.pagesWin.open;
+    untrack(() => {
+      if (now === listOpen) return;
+      listOpen = now;
+      const play = swapView(panel?.closest('.ed-panel'), viewEls());
+      tick().then(() => play(viewEls(), now ? -1 : 1));
+    });
+  });
 
   $effect(() => {
     const { edit, quiet } = ui.selection || {};
@@ -308,15 +329,13 @@
   // the tabs' line runs the panel's full width, above the scrolling body
   :global(.page-tabs) {
     flex: none;
-    padding: var(--space-3) var(--space-1) 0; // 4px + a tab's 12px: its label on the 16px edge
+    padding: 0; // a tab's own 12px: its label on the 12px edge
   }
 
-  // the panes share one cell; the cards' -8px margins stay inside the clip
+  // the panes share one cell, clipped while they slide
   .slide {
     display: grid;
     flex: none;
-    margin-inline: -8px;
-    padding-inline: 8px;
     overflow: clip;
   }
 

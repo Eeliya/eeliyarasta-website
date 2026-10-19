@@ -939,15 +939,20 @@ loads pages with `?draft=…`) always gets the site, so the editor never opens i
 `/about/?edit` in dev.
 
 Layout: the real site in a same-origin iframe, with a glass side panel. The page (or site part)
-being edited is named at the top of the Content and Motion tabs (`PageHead.svelte`): its title,
-its path under it, ← to the pages list (a path part: that folder); a `[param]` page has an item
-picker on the right for which item page the preview shows. Or click links in Preview.
+being edited is named at the top of the Content and Motion tabs (`PageHead.svelte`), a column on
+the panel's 12px edges: **Return to navigation** (back to the pages list; its arrow where the
+list's ← is), its title, its path (a path part: that folder; a site part: its title only). A
+`[param]` page's preview shows the item it was on, else its first; links in the preview go to
+another (a "Preview item" choice is planned with main blocks). The pages list and a page's view
+swap with the editor's slide (`src/editor/lib/slide.js`, as the Sections panes): a page opened
+comes in from the right, the list comes back from the left; reduced motion: no slide.
 
 **Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
-the site's pages one folder at a time, flat, on the pages' card colour (`--c-page-card`, warm
-sand; their paths and badges in `--c-page-accent`: a card's colour says its type). Its header
-(48px): ← (or Esc) up one level, the folder's path (each part goes there; at the top just `/`)
-and **+** (Add page). Then:
+the site's pages one folder at a time, flat, on the pages' card colour (`--c-page-card`, dark
+teal; their paths and badges in `--c-page-accent`: a card's colour says its type). Its header
+(one 32px row): ← (or Esc) up one level, the folder's path (each part goes there; at the top
+just `/`) and **+** (Add page). Going into a level slides it in from the right, going back from
+the left. Then:
 
 - one list in the menu's order (`nav.json`, the order on the website): at the top **Home** and
   the other top pages (Home can move and leave the menu, never be deleted); in a folder its
@@ -964,8 +969,9 @@ and **+** (Add page). Then:
 - at the top, **Site**: Header and Footer (no grip, no delete).
 
 Linking is a drag: a row from the menu list into Not linked takes it out of the menu, a row from
-Not linked into the menu list puts it in the menu there (Not linked has no order of its own:
-the line shows where it will sit). A page of another folder dropped on a folder's menu list
+Not linked into the menu list puts it in the menu there. The row in hand leaves its place and a
+dashed placeholder card shows where it lands (Not linked has no order of its own: it waits at
+the page's place in the site's order); a drop that can't land shows why in red. A page of another folder dropped on a folder's menu list
 **moves** into that folder (its address changes, links follow, no redirect: pre-v1), unless a
 page of that name is there already. 404 and `[param]` pages don't move. The website's dropdowns
 show a folder's "All …" link first, as its root row is first here.

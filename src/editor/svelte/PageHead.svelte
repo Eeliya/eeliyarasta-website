@@ -1,14 +1,15 @@
 <!--
-  The page or site part being edited, over the Content and Motion tabs (the pages list's own
-  header takes its place while it is open: PagesList.svelte, at the same height):
-    [ ← ]  Title                         [ item ▾ ]
-           / photography/ people/
-  ← opens the pages list (in the Content tab) where the page was opened (its own folder, or
-  the one it is in), a path part at that folder. A [param] page picks which of its item pages the preview shows on the right.
+  The page or site part being edited, over the Content and Motion tabs (the pages list takes
+  its place while it is open: PagesList.svelte; its ← on the same spot):
+    ← Return to navigation
+    Title
+    / photography/ people/          (a site part: its title only)
+  Return to navigation opens the pages list (in the Content tab) where the page was opened (its
+  own folder, or the one it is in), a path part at that folder. A [param] page shows the item
+  the preview is on (main.js pickTarget: the one shown, else its first; a link in the preview
+  goes to another).
 -->
 <script>
-  import Button from './Button.svelte';
-  import Select from './Select.svelte';
   import { ui } from './ui.svelte.js';
   import { parentId, pathOfId } from '../../site/routes.js';
   import { crumbsOf, pageIds, titleOf } from '../lib/page-tree.js';
@@ -26,7 +27,7 @@
   );
   // the page's path parts: its folder's, then its own (the current one)
   const crumbs = $derived.by(() => {
-    if (!id) return [{ label: 'Site', level: null }];
+    if (!id) return []; // a site part: its title only
     if (id === 'home') return [{ label: '/', level: '' }];
     const own = id.slice(id.lastIndexOf('/') + 1); // a [param] page: "[person]"
     return [...crumbsOf(parentId(id)), { label: `${own}/`, level: null }];
@@ -47,9 +48,11 @@
 </script>
 
 <div class="ph">
-  <Button size="small" icon="arrow-left" iconOnly label="Pages" onclick={() => list()} />
-  <div class="ph__main">
-    <h2 class="ph__title">{title}</h2>
+  <button type="button" class="ph__back" onclick={() => list()}
+    ><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Return to navigation</button
+  >
+  <h2 class="ph__title">{title}</h2>
+  {#if crumbs.length}
     <nav class="ph__path" aria-label="Where it is">
       {#each crumbs as c, i (i)}
         {#if c.level === null}
@@ -59,35 +62,44 @@
         {/if}
       {/each}
     </nav>
-  </div>
-  {#if t?.items?.length}
-    <div class="ph__item">
-      <Select
-        aria-label="Item"
-        value={ui.path}
-        options={t.items.map((i) => ({ value: i.path, label: i.title }))}
-        onchange={(path) => actions.pickTarget(t, path)}
-      />
-    </div>
   {/if}
 </div>
 
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // the pages list's header, the same box: 16px edges, 48px tall
+  // a column on the panel's 12px edges: the back button (its arrow on the edge), title, path
   .ph {
-    @include row(var(--space-2));
+    @include stack(0);
     flex: none;
-    min-height: 48px;
-    padding: var(--space-4) var(--space-4) 0;
-    box-sizing: content-box;
+    padding: var(--space-3) var(--space-3) 0;
   }
 
-  .ph__main {
-    @include stack(0);
-    flex: 1;
-    min-width: 0;
+  // text-style: no fill, no inline padding, muted until hovered; 32px tall (the list's ←)
+  .ph__back {
+    @include row(var(--space-2));
+    align-self: start;
+    height: var(--size-control);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-text-muted);
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    letter-spacing: 0.06em; // a button's label
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--c-text);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
   .ph__title {
@@ -107,6 +119,7 @@
     line-height: 20px;
   }
 
+  // the page accent (the pages list's paths); a part's text on its left edge
   .ph__crumb {
     @include ellipsis;
     flex: 0 1 auto;
@@ -115,8 +128,9 @@
     border: 0;
     border-radius: var(--radius-sm);
     background: none;
-    color: var(--c-link);
+    color: var(--c-page-accent);
     font: inherit;
+    text-align: left;
     cursor: pointer;
 
     &:hover {
@@ -127,16 +141,17 @@
       @include focus-ring;
     }
 
+    // the root "/": its own width (2ch would leave a gap after it), never shrunk
+    &:first-child {
+      flex: none;
+      min-width: 0;
+    }
+
     &.is-current {
       flex: none;
       color: var(--c-text-muted);
       cursor: default;
       text-decoration: none;
     }
-  }
-
-  .ph__item {
-    flex: 0 1 45%;
-    min-width: 0;
   }
 </style>

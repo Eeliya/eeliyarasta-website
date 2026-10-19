@@ -1,8 +1,10 @@
 <!--
   Pages (the Content tab, while ui.pagesWin.open): the site's pages one folder at a time
-  (src/editor/lib/page-tree.js), its rows on the pages' card colour (--c-page-card).
-    header      ← (up one level, Esc) | the path, each part goes there ("/" at the top) | +
-                (Add page; off where only a [param] page could go and it has one)
+  (src/editor/lib/page-tree.js), its rows on the pages' card colour (--c-page-card). Another
+  level slides in (lib/slide.js): a deeper one from the right, a higher one from the left.
+    header      one 32px row: ← (up one level, Esc; where the page head's back arrow is) | the
+                path, each part goes there ("/" at the top) | + (Add page; off where only a
+                [param] page could go and it has one)
     menu list   one list in the menu's order (nav.json): at the top home and the other pages;
                 in a folder its root row first (locked: its own page, the Own page switch
                 when it has a normal sub page; off: quieter, its first sub page "As /"), then
@@ -11,7 +13,8 @@
                 no filter at the top: every page is under /), in the site's order
     Site        at the top: the Header and Footer (no grip, no delete)
   The grips drag: in the menu list to another place (the menu's order); from it into Not
-  linked (out of the menu); from Not linked into it (into the menu there). A page of another
+  linked (out of the menu); from Not linked into it (into the menu there). The row in hand
+  leaves its place, a dashed placeholder card shows where it lands (red with why: refused). A page of another
   folder dropped there moves here (its address changes, links follow, no redirect), unless
   its name is taken here. 404 and [param] pages don't move. A click selects a row and shows
   it in the preview; a double click (or Enter) goes into a page's level (any page, a plain one
@@ -22,7 +25,7 @@
   disk at once (actions.pagesOp in main.js).
 -->
 <script>
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import Button from './Button.svelte';
   import Select from './Select.svelte';
   import AddPageModal from './AddPageModal.svelte';
@@ -46,6 +49,7 @@
     unlinkPage,
   } from '../lib/page-tree.js';
   import { plural } from '../lib/format.js';
+  import { swapView } from '../lib/slide.js';
 
   // live: reactive store (live.svelte.js); actions: pickTarget, pagesOp (main.js)
   let { live, actions } = $props();
@@ -72,6 +76,20 @@
   $effect(() => {
     const ids = pageIds(files);
     if (level && ids.length && !ids.includes(level)) ui.pagesWin.folder = '';
+  });
+  // another level slides in (lib/slide.js): a deeper one from the right, a higher one (←, a
+  // path part, Esc) from the left; a still copy of the one before slides out
+  let shown = untrack(() => ui.pagesWin.folder);
+  const depth = (id) => (id ? id.split('/').length : 0);
+  $effect.pre(() => {
+    const next = level;
+    untrack(() => {
+      if (next === shown || !root) return void (shown = next);
+      const dir = depth(next) > depth(shown) ? 1 : -1;
+      shown = next;
+      const play = swapView(root, [...root.children]);
+      tick().then(() => root && play([...root.children], dir));
+    });
   });
   // the store's files, a new object per change (the store edits its own in place)
   const files = $derived((live.version, { ...live.store.current }));
@@ -148,6 +166,15 @@
     edgeScroll: true,
     swallowClick: true,
   });
+  // the row in hand floats over the list from where it was (.pl's coordinates)
+  const grab = (e, j, at) =>
+    ld.grab(e, {
+      j,
+      at,
+      top:
+        e.currentTarget.closest('.prow').getBoundingClientRect().top -
+        root.getBoundingClientRect().top,
+    });
   const parentPid = () => (level ? pidOf(level) : null);
   /** A Not linked page dropped on the menu list: linked there, moved here first, or refused. */
   async function link(row, plan) {
@@ -167,18 +194,34 @@
   // where a drag would land, for the lines and the list it lights up
   const over = $derived(drag?.moving ? drag.over : null);
   const dragged = $derived(drag ? (drag.at === 0 ? movable : nlMovable)[drag.j] : null);
-  // into Not linked: the line where it will sit (the site's order), not where the pointer is
-  const nlAt = $derived(
-    over?.at === 1 && drag.at === 0 && dragged ? sortedAt(L.notLinked, dragged.id) : -1,
-  );
-  const nlLine = (i) =>
-    nlAt < 0
-      ? ''
-      : i === nlAt
-        ? 'is-drop-before'
-        : nlAt === L.notLinked.length && i === nlAt - 1
-          ? 'is-drop-after'
-          : '';
+  /**
+   * Where the drag's placeholder (a dashed card) is: { at: list (0 the menu list, 1 Not
+   * linked), before: the row it sits before (null: the list's end), why: refused }. The row in
+   * hand leaves its place; over its own list the placeholder opens where it lands (that list
+   * keeps its height); over the other list its place stays open as an empty gap (nothing above
+   * moves); over neither, the placeholder waits in its place. Into Not linked it sits at the
+   * page's place in the site's order (Not linked has none of its own).
+   */
+  const slots = $derived.by(() => {
+    if (!drag?.moving || !dragged) return [];
+    const rows = drag.at === 0 ? L.sub : L.notLinked;
+    const home = { at: drag.at, before: rows[rows.indexOf(dragged) + 1]?.id ?? null };
+    const o = over && !(over.at === 1 && drag.at === 1) ? over : null;
+    if (!o) return [home];
+    let to;
+    if (o.at === 1) to = { at: 1, before: L.notLinked[sortedAt(L.notLinked, dragged.id)]?.id };
+    else if (drag.at === 0) to = { at: 0, before: movable.filter((r) => r !== dragged)[o.to]?.id };
+    else {
+      const plan = dropOf(files, L, dragged, o.to);
+      to = { at: 0, before: movable[o.to]?.id, why: plan.kind === 'refuse' ? plan.why : '' };
+    }
+    to.before ??= null;
+    return o.at === drag.at ? [to] : [{ ...home, gap: true }, to];
+  });
+  // the slots before row id of list at (id null: at its end)
+  const slotsAt = (at, id) => slots.filter((p) => p.at === at && p.before === id);
+  // the menu list's end: after its last movable row (a [param] row stays pinned after it)
+  const lastMovable = $derived(movable.at(-1)?.id);
 
   // ---- delete
   // a [param] page always asks: its item pages have addresses visitors may come to
@@ -232,17 +275,12 @@
 </script>
 
 <!-- a row: [lead | title / path | As / | N › | trash or Own page], its delete confirm over it
-     (j, at: its grip's index in the menu list (0) or Not linked (1); line: a drop line) -->
-{#snippet row(r, { j = -1, at = 0, line = '' } = {})}
+     (j, at: its grip's index in the menu list (0) or Not linked (1)) -->
+{#snippet row(r, { j = -1, at = 0 } = {})}
   {@const lifted = j >= 0 && drag?.moving && drag.at === at && drag.j === j}
   <li
-    class={[
-      'prow',
-      sel === r.id && 'is-sel',
-      lifted && 'is-lifted',
-      r.off && 'is-off',
-      line || (at === 0 && j >= 0 && ld.dropAt(j, 0)),
-    ]}
+    class={['prow', sel === r.id && 'is-sel', lifted && 'is-lifted', r.off && 'is-off']}
+    style:top={lifted ? `${drag.top}px` : null}
     style:translate={lifted ? `0 ${drag.dy}px` : null}
     data-prow={j >= 0 ? j : undefined}
   >
@@ -254,7 +292,7 @@
           ? `Move ${r.title} (drag: its place in the menu, or into Not linked)`
           : `Move ${r.title} (drag into the list above: into the menu)`}
         title={at === 0 ? 'Drag to reorder, or into Not linked' : 'Drag into the menu list'}
-        onpointerdown={(e) => ld.grab(e, { j, at })}
+        onpointerdown={(e) => grab(e, j, at)}
         ><i class="fa-solid fa-grip-vertical" aria-hidden="true"></i></button
       >
     {:else if r.self || r.template}
@@ -419,6 +457,14 @@
   </li>
 {/snippet}
 
+<!-- the drop placeholder: a page card's size and corners, dashed, in the page accent (6%);
+     refused: red, why; gap: the dragged row's place kept open, empty -->
+{#snippet slot(p)}
+  <li class={['pl-slot', p.why && 'is-refused', p.gap && 'is-gap']} aria-hidden="true">
+    {#if p.why}<i class="fa-solid fa-ban"></i><span>{p.why}</span>{/if}
+  </li>
+{/snippet}
+
 {#snippet head(title, n, withFilter = false)}
   <div class="pl-head">
     <span class="pl-head__title">{title}</span>
@@ -444,13 +490,14 @@
   <!-- [ ← ] / photography/                    [ + ]   (the top: just / and +) -->
   <div class="pl-top">
     {#if level}
-      <Button
-        size="small"
-        icon="arrow-left"
-        iconOnly
-        label="Up one level (Esc)"
+      <button
+        type="button"
+        class="pl-top__back"
+        aria-label="Up one level (Esc)"
+        title="Up one level (Esc)"
         onclick={() => go(parentId(level))}
-      />
+        ><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button
+      >
     {/if}
     <nav class="pl-top__path" aria-label="Where you are">
       {#each crumbsOf(level) as c, i (c.level)}
@@ -476,24 +523,29 @@
     </span>
   </div>
 
-  <ul class={['pl-rows', over?.at === 0 && drag.at === 1 && 'is-target']} bind:this={subList}>
-    {#if L.own}
-      {@render row(L.own, { line: over?.at === 0 && !movable.length ? 'is-drop-after' : '' })}
-    {/if}
+  <ul class="pl-rows" bind:this={subList}>
+    {#if L.own}{@render row(L.own)}{/if}
+    {#if !lastMovable}{#each slotsAt(0, null) as p, i (i)}{@render slot(p)}{/each}{/if}
     {#each L.sub as r (r.id)}
+      {#each slotsAt(0, r.id) as p, i (i)}{@render slot(p)}{/each}
       {@render row(r, { j: movable.indexOf(r) })}
+      {#if r.id === lastMovable}
+        {#each slotsAt(0, null) as p, i (i)}{@render slot(p)}{/each}
+      {/if}
     {/each}
   </ul>
   {#if level && !L.sub.length}<p class="hint small">No sub pages yet: + adds one.</p>{/if}
 
-  <div class={['pl-zone', over?.at === 1 && drag.at === 0 && 'is-target']} bind:this={nlZone}>
+  <div class="pl-zone" bind:this={nlZone}>
     {@render head('Not linked', L.notLinked.length, !!level)}
     <ul class="pl-rows">
-      {#each L.notLinked as r, i (r.id)}
-        {@render row(r, { j: nlMovable.indexOf(r), at: 1, line: nlLine(i) })}
+      {#each L.notLinked as r (r.id)}
+        {#each slotsAt(1, r.id) as p, i (i)}{@render slot(p)}{/each}
+        {@render row(r, { j: nlMovable.indexOf(r), at: 1 })}
       {/each}
+      {#each slotsAt(1, null) as p, i (i)}{@render slot(p)}{/each}
     </ul>
-    {#if !L.notLinked.length}
+    {#if !L.notLinked.length && !slotsAt(1, null).length}
       <p class="hint small">
         {filter === 'here' && level ? `None under ${L.path}` : 'Every page is in the menu'}
       </p>
@@ -513,16 +565,43 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
+  // positioned: a dragged row floats over it, a level sliding out lies over it
   .pl {
     @include stack(var(--space-2));
+    position: relative;
     align-content: start;
   }
 
-  // [ ← | path | + ]: 48px, the path on the rows' text edge (at the top: "/" and +)
+  // [ ← | path | + ]: one 32px row; its ← on the 12px edge where the page head's back arrow is
+  // (PageHead.svelte: switching between them, the arrow stays put)
   .pl-top {
     @include row(var(--space-2));
-    min-height: 48px;
+    min-height: var(--size-control);
     margin-bottom: var(--space-1);
+  }
+
+  // text-style: just the arrow, no padding, muted until hovered
+  .pl-top__back {
+    display: grid;
+    flex: none;
+    place-items: center;
+    height: var(--size-control);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-text-muted);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--c-text);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
   }
 
   .pl-top__path {
@@ -561,13 +640,6 @@
   .pl-top__add {
     display: flex;
     flex: none;
-  }
-
-  // a drag's target list: lit (an outline: nothing moves)
-  .pl-rows.is-target,
-  .pl-zone.is-target {
-    border-radius: var(--radius-lg);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-accent) 45%, transparent);
   }
 
   .pl-zone {
@@ -631,7 +703,6 @@
 
   .pl-rows {
     @include stack(var(--space-1));
-    position: relative;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -667,8 +738,10 @@
     }
   }
 
-  // dragging: the row lifts and follows the pointer; a line in the gap where it lands
+  // dragging: the row lifts out of its list and follows the pointer, over the list
   .prow.is-lifted {
+    position: absolute;
+    inset-inline: 0;
     z-index: 2;
     background: var(--c-card-peek);
     box-shadow:
@@ -676,20 +749,34 @@
       0 18px 40px -12px var(--c-scrim);
   }
 
-  .prow:global(.is-drop-before)::before,
-  .prow:global(.is-drop-after)::after {
-    content: '';
-    position: absolute;
-    inset-inline: 0;
-    border-top: 2px solid var(--c-accent);
-  }
+  // where it lands: a page card's size and corners, dashed in the page accent, 6% of it
+  .pl-slot {
+    @include row(var(--space-2));
+    min-height: 48px;
+    padding: 0 var(--space-3);
+    border: 1px dashed var(--c-page-accent);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--c-page-accent) 6%, transparent);
+    box-sizing: border-box;
 
-  .prow:global(.is-drop-before)::before {
-    top: -4px;
-  }
+    // refused: red, the ban and why
+    &.is-refused {
+      border-color: var(--c-error);
+      background: color-mix(in srgb, var(--c-error) 6%, transparent);
+      color: var(--c-error);
+      font-size: var(--fs-sm);
 
-  .prow:global(.is-drop-after)::after {
-    bottom: -4px;
+      span {
+        @include ellipsis;
+        min-width: 0;
+      }
+    }
+
+    // the dragged row's place, kept while it is over the other list
+    &.is-gap {
+      border-color: transparent;
+      background: none;
+    }
   }
 
   // the grip (or the lock, or nothing): 28 × 48 at the left edge

@@ -77,14 +77,13 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // Add section: a dashed card the section cards' width (their -8px bleed), + and its name centred
+  // Add section: a dashed card the section cards' width, + and its name centred
   .add {
     @include row(var(--space-2));
     flex: none;
     justify-content: center;
-    width: calc(100% + 16px);
+    width: 100%;
     height: 40px;
-    margin-inline: -8px;
     border: 1px dashed var(--c-line);
     border-radius: var(--radius-lg);
     background: none;
