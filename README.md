@@ -950,7 +950,7 @@ comes in from the right, the list comes back from the left; reduced motion: no s
 **Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
 the site's pages one folder at a time, flat, on the navigation cards' colour (`--c-page-card`,
 warm sand; their paths and badges in `--c-page-accent`: a card's colour says its type, as the
-block rows in a section card are teal: `--c-block-card`, their title line `--c-block-accent`). Its header
+block rows in a section card are teal: `--c-block-card`, their title line `--c-block-accent`, a hovered row a 1px ring of it at 50%: `--c-block-line-hover`). Its header
 (one 32px row): ← (or Esc) up one level, the folder's path (each part goes there; at the top
 just `/`) and **+** (Add page). Going into a level slides it in from the right, going back from
 the left. Then:

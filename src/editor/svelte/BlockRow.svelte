@@ -4,6 +4,7 @@
   the blocks' accent (--c-block-accent), then its eye, Duplicate and
   Delete. A click on the row opens its settings (onopen). Hidden (config.enabled false): its
   name and title faint, its eye-slash. Delete asks over the row at its size (nothing moves).
+  Hovered: a 1px inset ring (--c-block-line-hover); keyboard focus: the cyan focus ring.
   Its buttons rest at 30% and show fully while the row is hovered or has the focus; an
   eye-slash always (SectionCard.svelte's rule for the card's own buttons).
     block      { id, type, title?, config? }
@@ -95,6 +96,11 @@
       flex: none;
       opacity: 0.3;
       transition: opacity 0.15s;
+    }
+
+    // hovered: a 1px inset ring in the blocks' accent (nothing moves; focus keeps the cyan ring)
+    &:hover {
+      box-shadow: inset 0 0 0 1px var(--c-block-line-hover);
     }
 
     &:is(:hover, :focus-within) > :global(.btn),

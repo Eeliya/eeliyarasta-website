@@ -89,6 +89,8 @@
   --c-page-accent: var(--sand-400); // paths, path crumbs (list, page head), "As /", drop slot: 7:1
   --c-block-card: var(--teal-950); // block rows: 1.14:1 under the section card
   --c-block-accent: var(--teal-400); // a block row's title line (its accent text): 8.15:1
+  // a hovered block row's ring (1px inset, no fill change): its accent at 50%
+  --c-block-line-hover: color-mix(in srgb, var(--c-block-accent) 50%, transparent);
   --c-card-peek: var(--solid-card-peek);
   --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
   --c-control-hover: var(--gray-38);
