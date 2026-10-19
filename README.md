@@ -948,8 +948,9 @@ swap with the editor's slide (`src/editor/lib/slide.js`, as the Sections panes):
 comes in from the right, the list comes back from the left; reduced motion: no slide.
 
 **Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
-the site's pages one folder at a time, flat, on the pages' card colour (`--c-page-card`, dark
-teal; their paths and badges in `--c-page-accent`: a card's colour says its type). Its header
+the site's pages one folder at a time, flat, on the navigation cards' colour (`--c-page-card`,
+warm sand; their paths and badges in `--c-page-accent`: a card's colour says its type, as the
+block rows in a section card are teal: `--c-block-card`, their title line `--c-block-accent`). Its header
 (one 32px row): ← (or Esc) up one level, the folder's path (each part goes there; at the top
 just `/`) and **+** (Add page). Going into a level slides it in from the right, going back from
 the left. Then:
@@ -1006,7 +1007,8 @@ empty space; picking it starts from the section's rows), fit
 content, 1/3, 1/2 or the full screen, each icon the screen with that share filled (the content
 is always centred), and **Width**, two such buttons: contained (a centred band in the screen)
 or full width (a band edge to edge)) and its **blocks**, in order, each with ↑ / ↓, Duplicate,
-Delete and on/off; **Add block** adds one below the others, **Add section** at the end a
+Delete and on/off (the rows on the blocks' card colour, teal `--c-block-card`, the block's
+title in `--c-block-accent`); **Add block** adds one below the others, **Add section** at the end a
 section (empty, or with a block). Clicking a block (or a text of it in the preview) opens the
 **block inspector**: **Content** (its settings and fields, from the registry), **Layout**
 (see below) and **Motion** (the block's animation and timing, the same view as in the Motion

@@ -1,6 +1,7 @@
 <!--
   One block in a section card's list (SectionCard.svelte), no order (blocks are placed in the
-  preview): its type with its title under it in the link colour, then its eye, Duplicate and
+  preview), on the blocks' card colour (--c-block-card): its type with its title under it in
+  the blocks' accent (--c-block-accent), then its eye, Duplicate and
   Delete. A click on the row opens its settings (onopen). Hidden (config.enabled false): its
   name and title faint, its eye-slash. Delete asks over the row at its size (nothing moves).
   Its buttons rest at 30% and show fully while the row is hovered or has the focus; an
@@ -89,7 +90,7 @@
     min-height: 48px;
     padding-right: var(--space-1);
     border-radius: var(--radius-md);
-    background: var(--c-surface-2);
+    background: var(--c-block-card);
 
     > :global(.btn) {
       flex: none;
@@ -135,8 +136,9 @@
     }
   }
 
+  // the blocks' accent (their card colour's pair: a card's colour says its type)
   .brow__name {
-    color: var(--c-link);
+    color: var(--c-block-accent);
 
     .is-off & {
       color: var(--c-text-faint);
@@ -152,7 +154,7 @@
     z-index: 1;
     padding: 0 var(--space-3);
     border-radius: inherit;
-    background: var(--c-surface-2);
+    background: var(--c-block-card);
     box-shadow: inset 0 0 0 1px var(--c-danger);
     font-size: var(--fs-base);
 
