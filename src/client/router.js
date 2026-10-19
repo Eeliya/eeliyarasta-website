@@ -10,10 +10,12 @@ import { normalizeCurtain, curtainPlan, curtainFor } from './anim/curtain.js';
 import { closeMenus } from './ui/menu.js';
 import { scrollToTop } from './scroll.js';
 import { finalUrl } from './lib/final-url.js';
+import { nextNav, queueNav } from './lib/nav-queue.js';
 
 const cache = new Map();
 let busy = false;
-let queued = null;
+let queued = null; // { url, push }: the next navigation (lib/nav-queue.js)
+let running = null; // the URL of the one that runs
 let hooks = { mount: () => {}, unmount: () => {} };
 
 const normalize = (pathname) =>
@@ -256,10 +258,11 @@ function mountView(view) {
 export async function navigate(href, { push = true } = {}) {
   const url = keepDraft(new URL(href, location.href));
   if (busy) {
-    queued = { href, push };
+    queued = queueNav(running, { url, push });
     return;
   }
   busy = true;
+  running = url;
   closeMenus();
   const oldView = document.querySelector('[data-router-view]');
   const t = transitions.page;
@@ -313,12 +316,11 @@ export async function navigate(href, { push = true } = {}) {
     return;
   } finally {
     busy = false;
+    running = null;
   }
-  if (queued) {
-    const q = queued;
-    queued = null;
-    navigate(q.href, { push: q.push });
-  }
+  const q = nextNav(queued, new URL(location.href));
+  queued = null;
+  if (q) navigate(q.url.href, { push: q.push });
 }
 
 export function initRouter(h) {
