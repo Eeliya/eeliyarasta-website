@@ -41,7 +41,7 @@
   --sand-400: #c1aa74;
   --sand-900: #24221d;
   --teal-400: #54beac;
-  --teal-900: #1a2523;
+  --teal-950: #0a1715;
   // ---- primitives: alpha steps (tints over the dark UI)
   --white-a03: rgb(255 255 255 / 0.03);
   --white-a04: rgb(255 255 255 / 0.04);
@@ -87,10 +87,8 @@
   // a card type: its fill and its accent text (paths, badges), the type told by its colour
   --c-page-card: var(--sand-900); // the pages list's (navigation) rows: 1.2:1 on the panel
   --c-page-accent: var(--sand-400); // paths, path crumbs (list, page head), "As /", drop slot: 7:1
-  --c-block-card: var(
-    --teal-900
-  ); // a section card's block rows: 1.21:1 on the panel, 1.02:1 on the card
-  --c-block-accent: var(--teal-400); // a block row's title line (its accent text): 7:1
+  --c-block-card: var(--teal-950); // block rows: 1.14:1 under the section card
+  --c-block-accent: var(--teal-400); // a block row's title line (its accent text): 8.15:1
   --c-card-peek: var(--solid-card-peek);
   --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
   --c-control-hover: var(--gray-38);
