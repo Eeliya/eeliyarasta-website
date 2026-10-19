@@ -21,8 +21,22 @@
  * not possible). Items of the menu are { label, page } (hrefs.js); dropdowns go one level deep.
  * Linking is a drag between the two lists (dropOf: link, or move the page into the folder).
  */
-import { NAV, isReserved, isTemplate, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
-import { navOrder, pageTitle, parentId, pathOfId, titleCase } from '../../site/routes.js';
+import {
+  NAV,
+  contentFromFiles,
+  isReserved,
+  isTemplate,
+  pageFile,
+  pageIdOf,
+} from '../../site/files.js';
+import {
+  getRoutes,
+  navOrder,
+  pageTitle,
+  parentId,
+  pathOfId,
+  titleCase,
+} from '../../site/routes.js';
 
 export const FIXED = ['home', '404'];
 const NOT_FOUND = '404';
@@ -71,10 +85,13 @@ export const ownPageOn = (files, level) =>
  * The level: { level, id, title, path, own (a folder's root row, `off` when its own page is
  * off; null at the top), canOwn (its own page can be turned off: a folder with a normal sub
  * page), full (only a [param] page could be added and it has one), sub, notLinked, total (Not
- * linked before the filter) }. routes (routes.js, optional): a [param] page's count of pages.
+ * linked before the filter) }. routes (routes.js; built from the files when left out): a
+ * [param] page's count of pages.
  */
 export function levelOf(files, level, filter = 'all', routes = null) {
   const ids = pageIds(files);
+  // its [param] pages' counts: the pages built (not the editor's unbuilt ones)
+  const built = (routes ?? getRoutes(contentFromFiles(files))).filter((r) => !r.unbuilt);
   const nav = files[NAV] || {};
   const order = navOrder(nav);
   const pidOf = (id) => files[pageFile(id)]?.id;
@@ -83,7 +100,6 @@ export function levelOf(files, level, filter = 'all', routes = null) {
   const row = (id) => {
     const d = files[pageFile(id)] || {};
     const template = isTemplate(id);
-    const items = template ? files[sourceFile(d.template?.source)]?.items : null;
     return {
       id,
       pid: d.id,
@@ -95,14 +111,8 @@ export function levelOf(files, level, filter = 'all', routes = null) {
       template,
       // a [param] page in one: its pages are per outer page ("[person]")
       nested: template && isTemplate(parentId(id)) ? nameOf(parentId(id)) : null,
-      items: Array.isArray(items) ? items.length : undefined,
-      count: template
-        ? routes
-          ? routes.filter((r) => r.id === id).length
-          : Array.isArray(items)
-            ? items.length
-            : 0
-        : undefined,
+      // the pages it builds (its main block decides: src/site/layout/source.js)
+      count: template ? built.filter((r) => r.id === id).length : undefined,
       fixed: FIXED.includes(id),
       movable: !template && id !== NOT_FOUND,
       noindex: !!d.meta?.noindex,
@@ -156,7 +166,7 @@ export const goesInside = (row) => !row.self && row.id !== 'home' && row.id !== 
 
 /**
  * A row's tag after its title: "root" (a level's own row), a [param] page's "per item · 4" or
- * "per [person] · 4" (its pages; 0: warn, its source has no items), else null.
+ * "per [person] · 4" (the pages it builds; 0: warn), else null.
  */
 export function tagOf(row) {
   if (row.self) return { text: 'root' };
@@ -164,9 +174,6 @@ export function tagOf(row) {
   const n = row.count ?? 0;
   return { text: `per ${row.nested || 'item'} · ${n}`, warn: n === 0 };
 }
-
-/** Can its Edit open it? Not a [param] page with no pages (its source has no items: none to show). */
-export const editable = (row) => !(row.template && row.count === 0);
 
 /** A row has a level of pages under it to go into: the › hint (not on a level's own row). */
 export const hasInside = (row) => !row.self && !row.part && (row.kids > 0 || !!row.template);

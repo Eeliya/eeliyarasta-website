@@ -15,11 +15,11 @@ import {
   bindTypeOf,
   bindingProblems,
   isBinding,
-  itemOf,
   resolve,
   resolveBlock,
 } from '../src/site/layout/bindings.js';
 import { createStore } from '../src/editor/store.js';
+import { blockItems } from '../src/site/layout/source.js';
 
 const content = loadContent('.');
 const { routes } = buildRoutes(content);
@@ -100,24 +100,24 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
   assert.ok(isBinding({ bind: 'a' }) && !isBinding('{{a}}') && !isBinding(''));
 });
 
-test('item resolution: the block item, else the [param] page item', () => {
+test("item resolution: Item picks one, From URL the page's matches, None nothing", () => {
   const daan = content.sources.people.find((p) => p.slug === 'daan-okafor');
-  assert.deepEqual(itemOf(content, {}, { item: { source: 'people', id: 'p-3pdk' } }), {
-    item: daan,
-    source: 'people',
-  });
-  assert.deepEqual(itemOf(content, { album: noor, kind: 'people' }, {}), {
-    item: noor,
-    source: 'people',
-  });
-  // the block's own item wins on a [param] page too
-  assert.equal(
-    itemOf(content, { album: noor, kind: 'people' }, { item: { source: 'people', id: 'p-3pdk' } })
-      .item,
-    daan,
-  );
-  assert.equal(itemOf(content, {}, { item: { source: 'people', id: 'p-zzzz' } }).item, null);
-  assert.equal(itemOf(content, {}, {}).item, null);
+  const item = { source: { mode: 'item', from: 'people', id: 'p-3pdk' } };
+  assert.equal(blockItems(content, {}, item).item, daan);
+  assert.equal(blockItems(content, {}, item).source, 'people');
+  const url = {
+    source: {
+      mode: 'url',
+      from: 'people',
+      where: { op: 'and', rules: [{ param: 'person', field: 'slug' }] },
+    },
+  };
+  assert.equal(blockItems(content, { params: { person: 'noor-vermeer' } }, url).item, noor);
+  assert.equal(blockItems(content, { params: { person: 'nobody' } }, url).item, null);
+  const missing = { source: { mode: 'item', from: 'people', id: 'p-zzzz' } };
+  assert.equal(blockItems(content, {}, missing).item, null);
+  assert.equal(blockItems(content, {}, {}).item, null);
+  assert.equal(blockItems(content, {}, {}).source, null);
 });
 
 test('[param] templates: the album title, facts and summary come from each item', () => {
@@ -156,13 +156,13 @@ test('a normal page: a block with an item; without one its bound fields are empt
     eyebrow: 'Featured',
     title: { bind: 'title', format: '{value}, model' },
     body: { bind: 'body' },
-    item: { source: 'people', id: 'p-qw7b' },
+    source: { mode: 'item', from: 'people', id: 'p-qw7b' },
   };
   const page = [newSection(ids, [heading])];
   const html = renderSections(content, { id: 'x' }, 'pages/x/index.json', page);
   assert.match(html, /Noor Vermeer, model/);
   assert.match(html, new RegExp(noor.body.slice(0, 20)));
-  delete heading.item;
+  delete heading.source;
   const empty = renderSections(content, { id: 'x' }, 'pages/x/index.json', page);
   assert.doesNotMatch(empty, /Noor/);
   setEditable(true);
@@ -183,16 +183,28 @@ test('bindingProblems: schema-aware errors and warnings', () => {
       x: {
         sections: [
           newSection(ids, [
-            block({ title: { bind: 'title' }, item: { source: 'people', id: 'p-qw7b' } }),
-            block({ title: { bind: 'nope' }, item: { source: 'people', id: 'p-qw7b' } }),
-            block({ title: { bind: 'images' }, item: { source: 'people', id: 'p-qw7b' } }),
+            block({
+              title: { bind: 'title' },
+              source: { mode: 'item', from: 'people', id: 'p-qw7b' },
+            }),
+            block({
+              title: { bind: 'nope' },
+              source: { mode: 'item', from: 'people', id: 'p-qw7b' },
+            }),
+            block({
+              title: { bind: 'images' },
+              source: { mode: 'item', from: 'people', id: 'p-qw7b' },
+            }),
             block({
               title: { bind: 'title', format: '{value}!' },
-              item: { source: 'people', id: 'p-qw7b' },
+              source: { mode: 'item', from: 'people', id: 'p-qw7b' },
             }),
             block({ title: { bind: 'title' } }),
-            block({ title: 'x', item: { source: 'nope', id: 'p-aaaa' } }),
-            block({ title: { bind: 'title' }, item: { source: 'people', id: 'p-zzzz' } }),
+            block({ title: 'x', source: { mode: 'item', from: 'nope', id: 'p-aaaa' } }),
+            block({
+              title: { bind: 'title' },
+              source: { mode: 'item', from: 'people', id: 'p-zzzz' },
+            }),
           ]),
         ],
       },
@@ -233,7 +245,10 @@ test('validation: the shape of bindings and items', () => {
     [],
   );
   assert.deepEqual(checkContent(F, page({ config: { link: { bind: 'slug' } } })), []);
-  assert.deepEqual(checkContent(F, page({ item: { source: 'people', id: 'p-aaaa' } })), []);
+  assert.deepEqual(
+    checkContent(F, page({ source: { mode: 'item', from: 'people', id: 'p-aaaa' } })),
+    [],
+  );
   const one = (p, type) => checkContent(F, page(p, type)).join('; ');
   assert.match(one({ title: { bind: '' } }), /"title" must be \{ "bind": "<field>", "format"/);
   assert.match(one({ title: { bind: 'a', x: 1 } }), /"title" must be \{ "bind"/);
@@ -275,7 +290,11 @@ test('Save refuses bindings that do not fit the schema', () => {
 
     sections: [
       newSection(ids, [
-        { ...newBlock('heading', ids), title, item: { source: 'people', id: 'p-qw7b' } },
+        {
+          ...newBlock('heading', ids),
+          title,
+          source: { mode: 'item', from: 'people', id: 'p-qw7b' },
+        },
       ]),
     ],
   });

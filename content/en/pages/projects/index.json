@@ -24,7 +24,8 @@
         {
           "id": "b-h6t6",
           "type": "projects",
-          "config": { "source": "projects" },
+          "source": { "mode": "all", "from": "projects" },
+          "config": {},
           "motion": { "anim": "list-up", "trigger": "load" }
         }
       ]

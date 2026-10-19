@@ -60,33 +60,34 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
 export const projectList = (
   ctx,
   projects,
-  { id = 'projects', source = 'projects', headingLevel = 3 } = {},
+  { id = 'projects', source = 'projects', headingLevel = 3, indexOf = (p, i) => i } = {},
 ) => {
   const PROJECTS = sourceFile(source);
   const h = `h${headingLevel}`;
   return html` <div class="plist" data-project-list="${id}">
-      ${projects.map(
-        (p, i) => html`
+      ${projects.map((p, i) => {
+        const at = indexOf(p, i); // its index in the source (the list can be filtered)
+        return html`
     <article class="prow" id="${esc(p.slug)}" data-prow data-preview-index="${i}">
       <button class="prow__head" type="button" aria-expanded="false" aria-controls="prow-${esc(p.slug)}">
         <span class="prow__num">${pad(i + 1)}</span>
-        <${h} class="prow__title"${ed(PROJECTS, ['items', i, 'title'])}>${esc(p.title)}</${h}>
-        <span class="prow__kind"${ed(PROJECTS, ['items', i, 'type'])}>${esc(p.type)}</span>
-        <span class="prow__year"${ed(PROJECTS, ['items', i, 'year'], 'number')}>${esc(p.year)}</span>
+        <${h} class="prow__title"${ed(PROJECTS, ['items', at, 'title'])}>${esc(p.title)}</${h}>
+        <span class="prow__kind"${ed(PROJECTS, ['items', at, 'type'])}>${esc(p.type)}</span>
+        <span class="prow__year"${ed(PROJECTS, ['items', at, 'year'], 'number')}>${esc(p.year)}</span>
         <span class="prow__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
       <div class="prow__body" id="prow-${esc(p.slug)}" hidden>
         <div class="prow__inner">
-          <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: sizes('100vw', '30vw'), attrs: ed(PROJECTS, ['items', i, 'image'], 'image') }) : ''}</div>
+          <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: sizes('100vw', '30vw'), attrs: ed(PROJECTS, ['items', at, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
-            <p${ed(PROJECTS, ['items', i, 'body'], 'block')}>${lines(p.body)}</p>
+            <p${ed(PROJECTS, ['items', at, 'body'], 'block')}>${lines(p.body)}</p>
             ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
-            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, ['items', i, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
+            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, ['items', at, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
           </div>
         </div>
       </div>
-    </article>`,
-      )}
+    </article>`;
+      })}
     </div>
     <div
       class="preview"
@@ -96,7 +97,7 @@ export const projectList = (
       aria-hidden="true"
     >
       <div class="preview__frame">
-        ${projects.map((p, i) => (p.image ? img(ctx, p.image, { decorative: true, sizes: '360px', attrs: ed(PROJECTS, ['items', i, 'image'], 'image') }) : '<img alt="" />'))}
+        ${projects.map((p, i) => (p.image ? img(ctx, p.image, { decorative: true, sizes: '360px', attrs: ed(PROJECTS, ['items', indexOf(p, i), 'image'], 'image') }) : '<img alt="" />'))}
       </div>
     </div>`;
 };

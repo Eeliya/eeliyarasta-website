@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { paramPage } from './test-layout.mjs';
 import { buildRoutes, sitemapXml } from '../src/site/routes.js';
 import { renderRoute } from '../src/site/render.js';
 import { contentFromFiles } from '../src/site/files.js';
@@ -71,7 +72,7 @@ test('[param] pages: the item title, body and cover, then the template meta', ()
   const c = content({
     'pages/people/index.json': {},
     'pages/people/[person]/index.json': {
-      template: { source: 'people' },
+      ...paramPage('people/[person]', 'people'),
       section: 'People',
       meta: { description: 'A person.', image: 'p.jpg' },
     },
@@ -88,7 +89,12 @@ test('[param] pages: the item title, body and cover, then the template meta', ()
   assert.equal(daan.description, 'A person.');
   assert.equal(daan.image, 'p.jpg');
   const off = content({
-    'pages/people/[person]/index.json': { template: { source: 'people' }, meta: { noindex: true } },
+    'pages/people/[person]/index.json': paramPage(
+      'people/[person]',
+      'people',
+      {},
+      { meta: { noindex: true } },
+    ),
     'sources/people.json': { version: 1, items: [{ title: 'Noor' }] },
   });
   assert.equal(routeOf(off, '/people/noor/').noindex, true);

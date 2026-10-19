@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { paramPage } from './test-layout.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -192,7 +193,7 @@ test('routes: slug and title from the schema', () => {
   };
   const c = contentFromFiles({
     'settings/site.json': { name: 'Site', titleTemplate: '{page} | {site}' },
-    'pages/bands/[band]/index.json': { template: { source: 'bands' }, section: 'Bands' },
+    'pages/bands/[band]/index.json': paramPage('bands/[band]', 'bands', {}, { section: 'Bands' }),
     'sources/bands.json': {
       version: 1,
       kind: 'page',

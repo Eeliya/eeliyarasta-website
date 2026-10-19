@@ -3,6 +3,7 @@ import { warnOnce } from '../helpers.js';
 import { isTemplate, paramsOf, sourceFile } from '../files.js';
 import { parentId, pathOfId } from '../routes.js';
 import { blocksOf } from '../layout/ids.js';
+import { pageSourceOf, sourceOf } from '../layout/source.js';
 
 /**
  * The list a block pulls from: content/en/sources/<source>.json. A missing file or one that
@@ -19,22 +20,25 @@ export function sourceList(ctx, source) {
 }
 
 /**
- * The page that shows all of a source ("See all" links): the folder of the [param] page of
- * that source (one not inside another), else the first page (not home) with a block of it, else /<source>/. So a
- * renamed page keeps its links.
+ * The page that shows all of a source ("See all" links): the folder of the [param] page whose
+ * main block shows that source (one not inside another), else the first page (not home) with a
+ * block listing all of it, else /<source>/. So a renamed page keeps its links.
  */
 export function sourcePage(ctx, source) {
   const ids = Object.keys(ctx.pages || {}).sort();
   const page = (id) => ctx.pages[id];
   const tpl = ids.find(
-    (id) => paramsOf(id).length === 1 && isTemplate(id) && page(id)?.template?.source === source,
+    (id) => paramsOf(id).length === 1 && isTemplate(id) && pageSourceOf(page(id)) === source,
   );
   if (tpl) return pathOfId(parentId(tpl));
   const lists = ids.find(
     (id) =>
       id !== 'home' &&
       !paramsOf(id).length &&
-      blocksOf(page(id)).some((b) => b?.config?.source === source),
+      blocksOf(page(id)).some((b) => {
+        const s = sourceOf(b);
+        return s?.mode === 'all' && s.from === source;
+      }),
   );
   return lists ? pathOfId(lists) : `/${source}/`;
 }

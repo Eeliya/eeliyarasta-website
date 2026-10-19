@@ -24,7 +24,8 @@
         {
           "id": "b-grz4",
           "type": "albums",
-          "config": { "source": "people", "layout": "portrait" },
+          "source": { "mode": "all", "from": "people" },
+          "config": { "layout": "portrait" },
           "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]

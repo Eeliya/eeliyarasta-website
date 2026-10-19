@@ -2,7 +2,7 @@
   "version": 1,
   "kind": "page",
   "id": "pg-h6eg",
-  "template": { "source": "places" },
+  "main": "b-gbxt",
   "sections": [
     {
       "id": "s-gaii",
@@ -12,6 +12,14 @@
         {
           "id": "b-gbxt",
           "type": "album",
+          "source": {
+            "mode": "url",
+            "from": "places",
+            "where": {
+              "op": "and",
+              "rules": [{ "param": "place", "field": "slug" }]
+            }
+          },
           "title": { "bind": "title" },
           "meta": [
             {

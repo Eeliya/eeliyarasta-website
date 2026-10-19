@@ -42,17 +42,19 @@ test('save tidies a page: no empty config or meta, an area without its defaults'
   assert.deepEqual(storedDefaults(F, page), []);
 });
 
-test('a [param] page: "template" names only its source; "grid" is gone', () => {
+test('a [param] page: its main block decides its pages; "template" and "grid" are gone', () => {
   const T = 'pages/people/[person]/index.json';
   const base = { version: 1, kind: 'page', id: 'pg-t110', sections: [] };
-  const ok = { ...base, template: { source: 'people' } };
+  const ok = { ...base, main: 'b-t111' };
   assert.deepEqual(checkContent(T, ok), []);
   assert.deepEqual(checkContent(T, { ...ok, grid: 120 }), [
     '"grid" must be left out: the page grid is always 120',
   ]);
-  // no loose labels (a back or next link): a page is only sections of blocks
-  assert.deepEqual(checkContent(T, { ...base, template: { source: 'people', next: 'Next' } }), [
-    '"template" has only "source", "key" and "match"',
+  assert.deepEqual(checkContent(T, { ...base, template: { source: 'people' } }), [
+    '"template" is gone: a [param] page\'s main block decides its pages ("main")',
+  ]);
+  assert.deepEqual(checkContent('pages/people/index.json', { ...ok, id: 'pg-t112' }), [
+    '"main" is only for [param] pages',
   ]);
 });
 

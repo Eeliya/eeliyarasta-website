@@ -85,18 +85,18 @@ test('checkContent per kind', () => {
     }),
     ['"sections" must be an array, not an object'],
   );
+  // no main block: it builds no pages (a warning, routes.js), it still saves
   assert.equal(
     checkContent('pages/people/[person]/index.json', { version: 1, kind: 'page', id: 'pg-t043' })
       .length,
-    1,
+    0,
   );
   assert.deepEqual(
     checkContent('pages/people/[person]/index.json', {
       version: 1,
       kind: 'page',
       id: 'pg-t044',
-
-      template: { source: 'people' },
+      main: 'b-main',
     }),
     [],
   );
@@ -105,7 +105,7 @@ test('checkContent per kind', () => {
       version: 1,
       kind: 'page',
       id: 'pg-t045',
-      template: {},
+      main: 'b-main',
     }).length,
     1,
   );

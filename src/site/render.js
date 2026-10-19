@@ -33,9 +33,9 @@ export const motionChecks = (content) => motionProblems(content);
 /**
  * { head, body, lang } of a route; lang: <html lang>.
  * editable: render the editor's markers (the dev server), see setEditable in helpers.js. */
-export function renderRoute(route, content, { editable = false } = {}) {
+export function renderRoute(route, content, { editable = false, unbuilt = false } = {}) {
   setEditable(editable);
-  const ctx = contextOf(route, content);
+  const ctx = contextOf(route, content, unbuilt);
   const file = pageFile(route.id);
   const page = content.pages[route.id];
   const view =
@@ -63,10 +63,11 @@ function anchorClashes(route, sections, html) {
 }
 
 /** What a page's blocks render with. */
-function contextOf(route, content) {
+function contextOf(route, content, unbuilt = false) {
   // curtains: every page carries the pages with their own curtain, for the router.
-  // routes: links to source items go to their pages (itemHref in helpers.js).
-  const routes = getRoutes(content);
+  // routes: links to source items go to their pages (itemHref in helpers.js); the editor's
+  // preview: those of [param] pages that build none too (unbuilt, routes.js)
+  const routes = getRoutes(content, { unbuilt });
   return { ...content, route, routes, curtains: curtainOverrides(routes) };
 }
 
@@ -79,7 +80,7 @@ export { BACKDROP };
 
 export function renderRouteSections(route, content, ids, file = pageFile(route.id)) {
   setEditable(true);
-  const ctx = contextOf(route, content);
+  const ctx = contextOf(route, content, true);
   const doc = docOf(content, file);
   const list = doc?.sections || [];
   const numbers = headingNumbers(list);

@@ -17,7 +17,7 @@ import {
   sitePaths,
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
-import { read } from './test-layout.mjs';
+import { read, paramPage } from './test-layout.mjs';
 
 /** content/ in a temp dir: home, 404, people (+ [param] and team), about, a menu and redirects. */
 function site(redirects = []) {
@@ -55,8 +55,7 @@ function site(redirects = []) {
     version: 1,
     kind: 'page',
     id: 'pg-pslg',
-
-    template: { source: 'people' },
+    ...paramPage('people/[person]', 'people'),
   });
   put('pages/people/team/index.json', { version: 1, kind: 'page', id: 'pg-team' });
   put('sources/people.json', {
@@ -251,9 +250,9 @@ test('validation: redirects.json', () => {
 test('"See all" links go to the page that shows the source, wherever it is', async () => {
   const { sourcePage } = await import('../src/site/blocks/data.js');
   const pages = {
-    home: page('pg-home', { type: 'grid', config: { source: 'people' } }),
-    'models/[person]': { template: { source: 'people' } },
-    work: page('pg-work', { type: 'projects', config: { source: 'projects' } }),
+    home: page('pg-home', { type: 'grid', source: { mode: 'all', from: 'people' } }),
+    'models/[person]': paramPage('models/[person]', 'people'),
+    work: page('pg-work', { type: 'projects', source: { mode: 'all', from: 'projects' } }),
   };
   assert.equal(sourcePage({ pages }, 'people'), '/models/');
   assert.equal(sourcePage({ pages }, 'projects'), '/work/');
@@ -272,7 +271,7 @@ function nestedSite(redirects) {
     version: 1,
     kind: 'page',
     id: 'pg-pyea',
-    template: { source: 'shoots', key: 'year' },
+    ...paramPage('people/[person]/[year]', 'shoots', { person: 'person', year: 'year' }),
   });
   put('sources/shoots.json', {
     version: 1,
@@ -386,23 +385,25 @@ test('rename a param: the URLs stay, the levels in it keep matching, redirects f
     'pages/people/[model]/index.json',
   ]);
   assert.equal(read(root, 'pages/people/[model]/index.json').id, 'pg-pslg'); // links by id stay
-  // the [year] level still matches its items' "person" field to the outer value
-  assert.deepEqual(read(root, 'pages/people/[model]/[year]/index.json').template, {
-    source: 'shoots',
-    key: 'year',
-    match: { model: 'person' },
-  });
+  // the [year] level still matches its items' "person" field to the outer value: its rule
+  // follows the param
+  const rules = (id) =>
+    read(root, `pages/${id}/index.json`).sections[0].blocks[0].source.where.rules;
+  assert.deepEqual(rules('people/[model]/[year]'), [
+    { param: 'model', field: 'person' },
+    { param: 'year', field: 'year' },
+  ]);
   assert.deepEqual(urls(), before);
   assert.deepEqual(read(root, 'settings/redirects.json').redirects, [
     { from: '/p/:model/:year/', to: '/people/:model/:year/' },
     { from: '/old/', to: '/about/' },
   ]);
-  // back again: the match goes (the field is named after the param)
+  // back again
   assert.equal(op('people/[model]', 'person').status, 200);
-  assert.deepEqual(read(root, 'pages/people/[person]/[year]/index.json').template, {
-    source: 'shoots',
-    key: 'year',
-  });
+  assert.deepEqual(rules('people/[person]/[year]'), [
+    { param: 'person', field: 'person' },
+    { param: 'year', field: 'year' },
+  ]);
   assert.deepEqual(urls(), before);
   // the inner level: renamed alone
   assert.equal(op('people/[person]/[year]', 'when').status, 200);

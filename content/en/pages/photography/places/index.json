@@ -24,7 +24,8 @@
         {
           "id": "b-syyw",
           "type": "albums",
-          "config": { "source": "places", "layout": "landscape" },
+          "source": { "mode": "all", "from": "places" },
+          "config": { "layout": "landscape" },
           "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]

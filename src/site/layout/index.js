@@ -57,7 +57,8 @@ import { esc, ed, editRef, editable, slugify, warnOnce } from '../helpers.js';
 import { BLOCK_TYPES } from '../blocks/index.js';
 import { eachBlock, newId } from './ids.js';
 import { motionAttrs } from './motion.js';
-import { isBinding, itemOf, keysOf, resolve, resolveBlock } from './bindings.js';
+import { isBinding, keysOf, resolve, resolveBlock } from './bindings.js';
+import { blockItems } from './source.js';
 import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, scaled } from './type.js';
@@ -301,15 +302,14 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
     warnOnce(`${where}: unknown block type "${block?.type}": skipped`, 'layout');
     return '';
   }
-  if (t.item && !route.album) {
-    warnOnce(
-      `${where}: a "${t.type}" block only works on a [param] page (an item page): skipped`,
-      'layout',
-    );
+  const parts = (path) => ['sections', at, 'blocks', j, ...[path].flat()];
+  // what it shows (./source.js): its items, the first one for its bound fields
+  const shown = blockItems(ctx, route, block);
+  const { item, source } = shown;
+  if (t.item && !item) {
+    warnOnce(`${where}: a "${t.type}" block shows an item: it has none: skipped`, 'layout');
     return '';
   }
-  const parts = (path) => ['sections', at, 'blocks', j, ...[path].flat()];
-  const { item, source } = itemOf(ctx, route, block);
   const keys = keysOf(ctx, source);
   // a bound value isn't edited in the preview: data-bound instead (a click selects the block),
   // and data-bound-missing when its item or a field of it is missing (a dimmed {{name}})
@@ -322,6 +322,7 @@ function renderBlock(ctx, route, file, at, j, block, numbers) {
   const b = {
     id: block.id,
     file,
+    ...shown,
     number: numbers[block.id] || 0,
     ed: (path, type) => {
       const value = [path].flat().reduce((v, k) => v?.[k], block);

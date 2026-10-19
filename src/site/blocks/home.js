@@ -19,7 +19,7 @@ import { sourceFile } from '../files.js';
 import { hrefOf } from '../hrefs.js';
 import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
-import { sourceList, sourcePage } from './data.js';
+import { sourcePage } from './data.js';
 
 /** Photo paths of a source item: albums have images[], projects a single image. */
 const imagesOf = (item) =>
@@ -100,10 +100,11 @@ export const intro = {
 };
 
 /** Interleave the first N images of each item (e.g. 4 per person) for a photo-tile grid. */
-const interleave = (items, perItem = 4) => {
+const interleave = (items, indexOf, perItem = 4) => {
   const tiles = [];
   for (let i = 0; i < perItem; i++)
-    items.forEach((item, at) => {
+    items.forEach((item) => {
+      const at = indexOf(item);
       const image = imagesOf(item)[i];
       if (image) tiles.push({ item, at, image, index: i });
     });
@@ -111,10 +112,10 @@ const interleave = (items, perItem = 4) => {
 };
 
 /** Photo tiles (people look): the first 4 images of every item, interleaved. */
-const photoTiles = (ctx, source, items, layout) => {
+const photoTiles = (ctx, source, items, layout, indexOf) => {
   const { title } = schemaOf(ctx, source); // the field that names an item
   return html` <div class="tiles${layout === 'even' ? ' tiles--even' : ''}">
-    ${interleave(items).map(
+    ${interleave(items, indexOf).map(
       ({ item, at, image, index }) => html`
       <a class="tile" href="${esc(itemHref(ctx, source, item))}#${index + 1}" data-anim-item>
         <span class="tile__media">${img(ctx, image, { sizes: sizes('50vw', '25vw') })}</span>
@@ -125,11 +126,12 @@ const photoTiles = (ctx, source, items, layout) => {
 };
 
 /** Landscape cards (places look): cover image, name, location · year · photo count. */
-const placeCards = (ctx, source, items, layout) =>
+const placeCards = (ctx, source, items, layout, indexOf) =>
   html` <div
     class="placecards${layout === 'even' ? ' placecards--even' : ''}"
   >
-    ${items.map((p, i) => {
+    ${items.map((p) => {
+      const i = indexOf(p);
       const cover = coverOf(p);
       return html`
       <a class="placecard" href="${esc(itemHref(ctx, source, p))}" data-anim-item>
@@ -145,9 +147,13 @@ const placeCards = (ctx, source, items, layout) =>
 /** Which tile look a grid uses, by source. Anything not listed gets photo tiles. */
 const GRID_LOOKS = { places: placeCards };
 
-/** A head (eyebrow, title, button), then a source's photos as tiles (or place cards for places). */
+/**
+ * A head (eyebrow, title, button), then its source's photos as tiles (or place cards for
+ * places): a list block (its items: all of a source, or the ones From URL matches).
+ */
 export const grid = {
   type: 'grid',
+  list: true,
   label: 'Photo grid',
   icon: 'table-cells',
   line: 'Photos from a source list',
@@ -158,7 +164,6 @@ export const grid = {
     { key: 'cta', label: 'Button' },
   ],
   config: [
-    { key: 'source', label: 'Source', type: 'source' },
     {
       key: 'layout',
       label: 'Layout',
@@ -173,17 +178,18 @@ export const grid = {
     eyebrow: 'People',
     title: 'New grid',
     cta: 'See all',
-    config: { source: 'people', layout: 'staggered' },
+    source: { mode: 'all', from: 'people' },
+    config: { layout: 'staggered' },
     motion: { anim: 'grid-reveal' },
   },
   render: (s, ctx, b) => {
-    // no source (cleared in the editor): its head without a link, and no tiles
-    const source = s.config?.source || '';
+    // no source (None): its head without a link, and no tiles
+    const source = b.source || '';
     const look = GRID_LOOKS[source] || photoTiles;
     const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
     return html` <div class="gridblock gridblock--${esc(source)}">
       ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
-      ${look(ctx, source, source ? sourceList(ctx, source) : [], layout)}
+      ${look(ctx, source, b.items, layout, b.indexOf)}
     </div>`;
   },
 };
@@ -194,6 +200,7 @@ export const grid = {
  */
 export const projects = {
   type: 'projects',
+  list: true,
   label: 'Project list',
   icon: 'list',
   line: 'Rows that open each project',
@@ -203,24 +210,24 @@ export const projects = {
     { key: 'title', label: 'Title (empty: no heading)', width: 'half' },
     { key: 'cta', label: 'Button' },
   ],
-  config: [{ key: 'source', label: 'Source', type: 'source' }],
   defaults: {
     eyebrow: 'Projects',
     title: 'Things I build',
     cta: 'All projects',
-    config: { source: 'projects' },
+    source: { mode: 'all', from: 'projects' },
     motion: { anim: 'list-up' },
   },
   render: (s, ctx, b) => {
-    const source = s.config?.source || ''; // none: an empty list
-    const list = source ? sourceList(ctx, source) : [];
+    const source = b.source || ''; // None: an empty list
+    const list = b.items;
+    const { indexOf } = b;
     if (!s.title)
       return html` <div class="projectsblock">
-        ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2 })}
+        ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2, indexOf })}
       </div>`;
     return html` <div class="projectsblock">
       ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
-      ${projectList(ctx, list, { id: `projects-${b.id}`, source })}
+      ${projectList(ctx, list, { id: `projects-${b.id}`, source, indexOf })}
     </div>`;
   },
 };

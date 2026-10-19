@@ -3,10 +3,11 @@
  * for it. Blocks sit in the sections of a page (src/site/layout/index.js places them):
  *
  *   { "id": "b-k3x9", "type": "grid", "label": "People", "title": "Models",
- *     "config": { "source": "people" }, "layout": { "base": { "col": 1, "span": 120, "row": 1 } } }
+ *     "source": { "mode": "all", "from": "people" },
+ *     "layout": { "base": { "col": 1, "span": 120, "row": 1 } } }
  *
- * The block's own content (texts, photos) sits next to its type; how it works (which source
- * it pulls, its look, on/off) is under "config"; where it sits is the layout's (id, layout, z,
+ * The block's own content (texts, photos) sits next to its type, the items it shows under
+ * "source" (../layout/source.js); how it works (its look, on/off) is under "config"; where it sits is the layout's (id, layout, z,
  * size: layout keys, never a field key). A type:
  *
  *   type      its name in the content
@@ -27,10 +28,13 @@
  *                     | 'text' | 'boolean'; every block also has config.enabled (on/off)
  *   defaults  a new block of this type (Add block)
  *   check(block)  optional: more problems than the fields' types (src/site/validate.js)
- *   item      shows the item of a [param] page (ctx.route.album): only on those pages
- *   render(block, ctx, b)  its HTML, one root element. b: { id, file, number, ed }: the
- *             block's id, the page file, its number among the page's numbered headings and
- *             ed(field or path, type), the editor marker of one of its fields
+ *   list      a list block: it shows all its source's items (its source: All / From URL /
+ *             None), not one (Item / From URL / None): ../layout/source.js
+ *   item      it needs an item (its source's first): without one it is skipped
+ *   render(block, ctx, b)  its HTML, one root element. b: { id, file, number, ed, source,
+ *             items, item, index, indexOf }: the block's id, the page file, its number among
+ *             the page's numbered headings, ed(field or path, type), the editor marker of one
+ *             of its fields, and what its source shows (blockItems, ../layout/source.js)
  */
 import { hero, intro, grid, projects } from './home.js';
 import { heading, albums, panels, about } from './pages.js';

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { pagesOp, editableFiles } from './editor-server.mjs';
 import { rowsOf } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
-import { read } from './test-layout.mjs';
+import { read, paramPage } from './test-layout.mjs';
 
 /** content/ in a temp dir: home, 404, about, people (+ [person] and team) and a people source. */
 function site() {
@@ -24,8 +24,7 @@ function site() {
     version: 1,
     kind: 'page',
     id: 'pg-t039',
-
-    template: { source: 'people' },
+    ...paramPage('people/[person]', 'people'),
   });
   put('pages/people/team/index.json', { version: 1, kind: 'page', id: 'pg-t040', title: 'Team' });
   put('sources/people.json', { version: 1, items: [{ slug: 'noor' }] });
@@ -81,7 +80,15 @@ test('template: [param]/index.json in a page folder, one per folder, not at the 
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'nope' }).status, 400);
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug]/index.json']);
-  assert.deepEqual(read(root, 'pages/about/[slug]/index.json').template, { source: 'people' });
+  // its main block: the album, From URL, [slug] matching slug (people has no "slug" param field)
+  const made = read(root, 'pages/about/[slug]/index.json');
+  const main = made.sections[0].blocks[0];
+  assert.equal(made.main, main.id);
+  assert.deepEqual(main.source, {
+    mode: 'url',
+    from: 'people',
+    where: { op: 'and', rules: [{ param: 'slug', field: 'slug' }] },
+  });
   // what the editor writes passes the validator (its Save refuses anything else)
   assert.deepEqual(
     checkContent('pages/about/[slug]/index.json', read(root, 'pages/about/[slug]/index.json')),
@@ -161,7 +168,12 @@ test('template in a template: a named [param] folder in a [param] folder, one pe
   assert.equal(r.status, 200, r.body.error);
   assert.deepEqual(r.body.created, ['pages/people/[person]/[year]/index.json']);
   const data = read(root, 'pages/people/[person]/[year]/index.json');
-  assert.deepEqual(data.template, { source: 'people', key: 'year' });
+  // each param on its default field (same name, else slug); the new one on its key
+  assert.deepEqual(data.sections[0].blocks[0].source.where.rules, [
+    { param: 'person', field: 'slug' },
+    { param: 'year', field: 'year' },
+  ]);
+  assert.equal(data.main, data.sections[0].blocks[0].id);
   assert.deepEqual(checkContent('pages/people/[person]/[year]/index.json', data), []);
   assert.equal(op({ parent: 'people/[person]', param: 'month' }).status, 400); // one per folder
   assert.equal(op({ parent: 'people/[person]', param: 'x', key: 'a b' }).status, 400);

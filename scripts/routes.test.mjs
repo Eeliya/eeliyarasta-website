@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { paramPage } from './test-layout.mjs';
 import { buildRoutes, pathOfId, sitemapXml } from '../src/site/routes.js';
 import { contentFromFiles, isContentFile, pageFile, pageIdOf } from '../src/site/files.js';
 import { itemHref, slugify } from '../src/site/helpers.js';
@@ -37,7 +38,7 @@ test('folders mirror URLs, in tree order', () => {
 test('[param] template: a page per item, slug field or slugified name', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
     'sources/people.json': {
       version: 1,
       kind: 'page',
@@ -65,7 +66,7 @@ test('[param] template: a page per item, slug field or slugified name', () => {
 
 test('a fixed page beats the template for the same slug', () => {
   const c = content({
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
     'pages/people/noor/index.json': { title: 'Mine' },
     'sources/people.json': {
       version: 1,
@@ -91,8 +92,8 @@ test('a fixed page beats the template for the same slug', () => {
 
 test('missing, invalid and duplicate slugs warn and get no page', () => {
   const c = content({
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
-    'pages/places/[place]/index.json': { template: { source: 'nope' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
+    'pages/places/[place]/index.json': paramPage('places/[place]', 'nope'),
     'sources/people.json': {
       version: 1,
       kind: 'page',
@@ -109,8 +110,8 @@ test('missing, invalid and duplicate slugs warn and get no page', () => {
   assert.equal(warnings.length, 4);
   assert.match(warnings.join('\n'), /duplicate slug "a"/);
   assert.match(warnings.join('\n'), /no slug or name/);
-  assert.match(warnings.join('\n'), /"Not Valid" is not valid/);
-  assert.match(warnings.join('\n'), /template.source "nope"/);
+  assert.match(warnings.join('\n'), /"Not Valid" is not a valid URL part/);
+  assert.match(warnings.join('\n'), /No pages are built: the main block’s source is missing/);
 });
 
 test('content file names', () => {
@@ -132,7 +133,7 @@ test('content file names', () => {
 test('placeholder items: noindex, so not in the sitemap', () => {
   const c = content({
     'pages/people/index.json': {},
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
     'sources/people.json': {
       version: 1,
       kind: 'page',
@@ -151,7 +152,7 @@ test('placeholder items: noindex, so not in the sitemap', () => {
 
 test('a name that makes no slug says so', () => {
   const c = content({
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
     'sources/people.json': { version: 1, items: [{ name: '??? //' }, {}] },
   });
   assert.deepEqual(buildRoutes(c).warnings, [
@@ -164,8 +165,11 @@ test('a name that makes no slug says so', () => {
 const nested = (extra = {}) =>
   content({
     'pages/people/index.json': { title: 'People' },
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
-    'pages/people/[person]/[year]/index.json': { template: { source: 'shoots', key: 'year' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
+    'pages/people/[person]/[year]/index.json': paramPage('people/[person]/[year]', 'shoots', {
+      person: 'person',
+      year: 'year',
+    }),
     'sources/people.json': {
       version: 1,
       items: [
@@ -217,16 +221,55 @@ test('nested [param] folders: a page per outer page and matching item, named par
   assert.equal(pathOfId('people/[person]'), '/people/:person/');
 });
 
-test('nested [param] folders: no field named after the param, every item; fixed pages win', () => {
-  const c = nested({
-    'pages/people/[person]/[year]/index.json': { template: { source: 'people' } },
-    'pages/people/daan/index.json': { title: 'Mine' },
-  });
-  const r = buildRoutes(c).routes;
+test('nested [param] folders: a fixed page wins, and gets no pages under it', () => {
+  const r = buildRoutes(nested({ 'pages/people/daan/index.json': { title: 'Mine' } })).routes;
   assert.deepEqual(
     r.filter((x) => x.id === 'people/[person]/[year]').map((x) => x.path),
-    ['/people/noor/noor/', '/people/noor/daan/'], // daan is a fixed page: no items under it
+    ['/people/noor/2024/'], // daan is a fixed page: no items under it
   );
+});
+
+test('nested [param] folders: Any or a missing field on the main block builds no pages', () => {
+  const inner = (rules) => {
+    const p = paramPage('people/[person]/[year]', 'shoots');
+    p.sections[0].blocks[0].source.where.rules = rules;
+    return { 'pages/people/[person]/[year]/index.json': p };
+  };
+  const years = (c) => c.routes.filter((x) => x.id === 'people/[person]/[year]');
+  // [person] on Any: every shoot under every person, the same page twice: no pages
+  const any = buildRoutes(nested(inner([{ param: 'year', field: 'year' }])));
+  assert.deepEqual(years(any), []);
+  assert.match(any.warnings.join('\n'), /No pages are built: \[person\] needs a field to match/);
+  const missing = buildRoutes(
+    nested(
+      inner([
+        { param: 'person', field: 'person' },
+        { param: 'year', field: 'when' },
+      ]),
+    ),
+  );
+  assert.deepEqual(years(missing), []);
+  assert.match(missing.warnings.join('\n'), /\[year\] matches no field/);
+  // the editor still gets pages to edit it on: the rules that can match, marked unbuilt
+  const ed = buildRoutes(
+    nested(
+      inner([
+        { param: 'person', field: 'person' },
+        { param: 'year', field: 'when' },
+      ]),
+    ),
+    { unbuilt: true },
+  );
+  const shown = years(ed);
+  assert.ok(shown.length && shown.every((x) => x.unbuilt && x.noindex));
+  // without a main block: one route at its pattern, no item
+  const none = nested();
+  delete none.pages['people/[person]/[year]'].main;
+  assert.deepEqual(years(buildRoutes(none)), []);
+  const [pattern] = years(buildRoutes(none, { unbuilt: true }));
+  assert.equal(pattern.path, '/people/:person/:year/');
+  assert.equal(pattern.album, null);
+  assert.match(buildRoutes(none).warnings.join('\n'), /pick the main block/);
 });
 
 test('nested [param] folders: a page in one is no page; hrefs go to the item pages', () => {

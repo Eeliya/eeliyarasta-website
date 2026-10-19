@@ -20,7 +20,7 @@ import {
   STRINGS,
   VERSION,
   isTemplate,
-  paramsOf,
+  isParamName,
   isSlug,
   pageIdOf,
   DOC_KINDS,
@@ -233,28 +233,13 @@ function checkDoc(file, d) {
   const t = d.transition;
   if (t !== undefined && !(isObject(t) && t.preset === 'none' && Object.keys(t).length === 1))
     out.push('"transition" must be { "preset": "none" } or left out (the site\'s curtain)');
+  // a [param] page: its main block decides which pages exist (layout/source.js)
   const template = isTemplate(pageIdOf(file));
-  if (template && typeof d.template?.source !== 'string')
-    out.push('"template.source" must name a source (a [param] page makes a page per item)');
-  else if (
-    isObject(d.template) &&
-    Object.keys(d.template).some((k) => !['source', 'key', 'match'].includes(k))
-  )
-    out.push('"template" has only "source", "key" and "match"');
-  else if (d.template?.key !== undefined && (typeof d.template.key !== 'string' || !d.template.key))
-    out.push('"template.key" must name a field of the source (its value is the URL part)');
-  // match: { <outer param>: <field> }, the field of its items an outer param's value must equal
-  const outer = template ? paramsOf(pageIdOf(file)).slice(0, -1) : [];
-  const match = d.template?.match;
-  if (
-    match !== undefined &&
-    (!isObject(match) ||
-      Object.entries(match).some(([p, f]) => !outer.includes(p) || typeof f !== 'string' || !f))
-  )
-    out.push(
-      '"template.match" must map params of the folders above to field names ({ "person": "owner" })',
-    );
-  if (!template && d.template !== undefined) out.push('"template" is only for [param] pages');
+  if (d.template !== undefined)
+    out.push('"template" is gone: a [param] page\'s main block decides its pages ("main")');
+  if (d.main !== undefined && !template) out.push('"main" is only for [param] pages');
+  else if (d.main !== undefined && !isId(d.main, 'b'))
+    out.push('"main" must be the id of one of its blocks ("b-7qpa")');
   // its folder's URL opens its first sub page instead (routes.js)
   if (d.ownPage !== undefined && d.ownPage !== false)
     out.push('"ownPage" must be false (the folder opens its first sub page) or left out');
@@ -383,6 +368,33 @@ function checkSection(s, at) {
   return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
 }
 
+/** A block's "source" (layout/source.js) against its type: list blocks All, others Item. */
+function sourceProblems(src, t) {
+  const SHAPE =
+    '"source" must be { "mode": "item", "from", "id" }, { "mode": "all", "from" } or { "mode": "url", "from", "where" }';
+  if (!isObject(src) || !isSlug(src.from)) return [SHAPE];
+  const keys = { item: ['id'], all: [], url: ['where'] }[src.mode];
+  if (!keys) return [SHAPE];
+  if (Object.keys(src).some((k) => !['mode', 'from', ...keys].includes(k))) return [SHAPE];
+  if (src.mode === 'all' && !t.list) return ['"source": "all" is for list blocks (Item: one item)'];
+  if (src.mode === 'item' && t.list) return ['"source": "item" is for one item (a list: "all")'];
+  if (src.mode === 'item' && !isId(src.id, 'p'))
+    return ['"source.id" must be an item id ("p-k3x9")'];
+  if (src.mode !== 'url') return [];
+  const w = src.where;
+  const rule = (r) =>
+    isObject(r) &&
+    isParamName(r.param) &&
+    typeof r.field === 'string' &&
+    /^[\w-]+$/.test(r.field) &&
+    Object.keys(r).length === 2;
+  if (!isObject(w) || w.op !== 'and' || !Array.isArray(w.rules) || !w.rules.every(rule))
+    return ['"source.where" must be { "op": "and", "rules": [{ "param", "field" }] }'];
+  const params = w.rules.map((r) => r.param);
+  if (new Set(params).size !== params.length) return ['"source.where": one rule per param'];
+  return [];
+}
+
 /** One block: its place, then its content against its type in the registry. */
 function checkBlock(b, where) {
   if (!isObject(b)) return [`${where} must be an object`];
@@ -410,8 +422,8 @@ function checkBlock(b, where) {
   out.push(...checkScale(b).map((p) => `${name}: ${p}`));
   if (b.motion !== undefined) out.push(...checkMotion(b.motion).map((p) => `${name}: ${p}`));
   if (!t) return out; // an unknown type only warns (render)
-  if (b.item !== undefined && !(isObject(b.item) && isSlug(b.item.source) && isId(b.item.id, 'p')))
-    bad('item', '{ "source": "<source>", "id": "<item id>" }');
+  if (b.item !== undefined) bad('item', 'left out: its "source" says which item');
+  if (b.source !== undefined) out.push(...sourceProblems(b.source, t).map((p) => `${name}: ${p}`));
   // a value can be bound to the item (../layout/bindings.js): { "bind": "<field>", "format"? }
   const bindShape = (key, v, type) => {
     const extra = Object.keys(v).filter((k) => k !== 'bind' && k !== 'format');

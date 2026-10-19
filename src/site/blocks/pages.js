@@ -55,15 +55,18 @@ export const heading = {
   },
 };
 
-/** Album cards of a source, each linking to its page; config.layout landscape for wide photos. */
+/**
+ * Album cards of its source's items (a list block: all of them, or the ones From URL
+ * matches), each linking to its page; config.layout landscape for wide photos.
+ */
 export const albums = {
   type: 'albums',
+  list: true,
   label: 'Album cards',
   icon: 'images',
   line: 'A card per album, to its page',
   sketch: 'albums',
   config: [
-    { key: 'source', label: 'Source', type: 'source' },
     {
       key: 'layout',
       label: 'Layout',
@@ -74,12 +77,16 @@ export const albums = {
       ],
     },
   ],
-  defaults: { config: { source: 'people', layout: 'portrait' }, motion: { anim: 'grid-reveal' } },
-  render: (s, ctx) => {
-    const source = s.config?.source || ''; // none: no cards
+  defaults: {
+    source: { mode: 'all', from: 'people' },
+    config: { layout: 'portrait' },
+    motion: { anim: 'grid-reveal' },
+  },
+  render: (s, ctx, b) => {
+    const source = b.source || ''; // None: no cards
     const landscape = s.config?.layout === 'landscape';
     return html` <div class="agrid${landscape ? ' agrid--landscape' : ''}">
-      ${(source ? sourceList(ctx, source) : []).map((p, index) => albumCard(ctx, source, p, { landscape, index }))}
+      ${b.items.map((p) => albumCard(ctx, source, p, { landscape, index: b.indexOf(p) }))}
     </div>`;
   },
 };

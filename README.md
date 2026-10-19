@@ -172,7 +172,7 @@ site settings can live side by side):
 | `content/en/settings/redirects.json`  | **redirects** from old addresses: `[{ "from", "to", "status"? }]` (see "Redirects")                                                                                                                                                                                                                               |
 | `content/en/settings/photos.json`     | the **photo library**: every photo's `alt`, `credit` (`{ name, url?, source?, license? }`) and optional `focal` (`{ x, y }`, 0–100), keyed by media/ path or R2 key (`{ "people/noor-vermeer/01.jpg": { "alt": "…" } }`) and the sizes of photos uploaded to R2; written by the editor's Media window and uploads |
 
-| `content/en/pages/photography/people/[person]/index.json` | the people pages: `template.source` (the source with a page per item), then sections and blocks like any page; see "Pages and URLs" |
+| `content/en/pages/photography/people/[person]/index.json` | the people pages: `main` (the id of its main block, whose source decides which pages exist), then sections and blocks like any page; see "Pages and URLs" and "Block sources" |
 
 Add a person: drop photos into `media/people/<slug>/`, add an entry to `sources/people.json`, done.
 
@@ -415,8 +415,9 @@ every section is a grid of **blocks** (`src/site/layout/`):
 **Blocks.** The block types live in **one registry**, `src/site/blocks/` (`index.js` explains the
 shape): the build renders with it, and the editor reads it for each block's fields and settings
 and for **Add block**. A type is `{ type, label, icon, fields, config, defaults, render(block,
-ctx, b) }`; `item` binds it to a `[param]` page's item. A block's content sits next to its type,
-how it works under `config` (`enabled`: on/off; the source, look, …):
+ctx, b) }`; `list` makes it show a list of items (grid, albums, projects), `item` one item it
+needs (album). Which items a block shows is its `source` (see "Block sources"). A block's content
+sits next to its type, how it works under `config` (`enabled`: on/off; look, …):
 
 | type       | what                                                                                                                  |
 | ---------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -427,25 +428,59 @@ how it works under `config` (`enabled`: on/off; the source, look, …):
 | `form`     | a contact form (see "Contact form")                                                                                   |
 | `hero`     | the home hero: `title` (one word per line), `eyebrow`, `body`, scattered `photos`                                     |
 | `intro`    | a statement (`body`)                                                                                                  |
-| `grid`     | a head + tiles of a source; config `source`, `layout` (`staggered` / `even`); `places` shows cards                    |
-| `albums`   | album cards of a source (the people/places index); config `source`, `layout` (`portrait` / `landscape`)               |
+| `grid`     | **list**: a head + tiles of its source's items; config `layout` (`staggered` / `even`); `places` shows cards          |
+| `albums`   | **list**: album cards of its items (the people/places index); config `layout` (`portrait` / `landscape`)              |
 | `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                              |
-| `projects` | the project accordion of a source; with a `title` it gets a head (home)                                               |
+| `projects` | **list**: the project accordion of its items; with a `title` it gets a head (home)                                    |
 | `about`    | the about block: `image`, `eyebrow`, `title`, `body` (paragraphs), `facts`, `emailLabel`                              |
-| `album`    | **item**: the item's album (slider, grid, info), only on a `[param]` page: `title`, `meta` (facts), `body`            |
+| `album`    | **item**: its item's album (slider, grid, info): `title`, `meta` (facts), `body`; without an item it is skipped       |
 
 - **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its eyebrow
   with its number among the page's numbered headings that are on: (01), (02), …
-- **Item pages:** a `[param]/index.json`'s blocks render once per item. A type marked `item` (the
-  `album` block) reads the page's item, `ctx.route.album`, for its photos; its texts, like any
-  block's, are bindings to the item (below), so every block shows the page's item through them.
-  Item types are only offered on `[param]` pages.
+- **Item pages:** a `[param]/index.json`'s blocks render once per page it builds. A block From
+  URL shows the items matching that page's address; a type marked `item` (the `album` block)
+  reads its first for its photos, and its texts, like any block's, are bindings to it (below).
 - **Animations:** a block's `motion` picks its animation (a new block gets its type's default
   from the registry, e.g. text `lines-up`, photo `image-reveal`, grid `grid-reveal`). Composite
   blocks (hero, heading, about, album, section heads) keep `data-anim` **parts** inside them
   for their own pieces (see Animations).
 - **A new type:** add it to a file in `src/site/blocks/` and to `BLOCK_TYPES` in `index.js`
   (and its styles); the editor shows it with no editor code.
+
+### Block sources
+
+Which items a block shows is its `source` (`src/site/layout/source.js`), one of three modes; no
+`source` is **None** (the block's own texts):
+
+```json
+{ "mode": "item", "from": "people", "id": "p-qw7b" }
+{ "mode": "all", "from": "people" }
+{ "mode": "url", "from": "shoots", "where": { "op": "and", "rules": [{ "param": "person", "field": "person" }] } }
+```
+
+- **Item** (field blocks: heading, text, album, …): one item, picked. **All** (list blocks:
+  grid, albums, projects): every item, in order.
+- **From URL** (any block, on a `[param]` page): the items that match the page's address. Every
+  param of the address (`/people/[person]/[year]/`) has a row: the source field it matches
+  (`where.rules`, `{ param, field }`); a param with no rule is **Any** (doesn't filter). A field
+  is compared as a URL part: `slug` is the item's slug (its `slug` field, else its name
+  slugified), any other field its value slugified (`2018`, `Noor Vermeer` -> `noor-vermeer`);
+  a field holding the id of the param's item matches too (a reference to another source's
+  item). A new row defaults to the field of the same name, else `slug`.
+- **One query:** `query(list, where, params)` in `src/site/query.js` is what the build, the
+  preview and the editor all use. Rules can be groups (`{ op: "and" | "or", rules }`), so more
+  kinds of rules can come later without a new format.
+- **The main block** of a `[param]` page (`"main": "<block id>"` in its `index.json`) decides
+  which pages are built (`src/site/routes.js`): for each page of the folder around it, the items
+  matching the params above, one page per value of its own param's field among them (the first
+  of those its item); a page exists when at least one item matches (a list main block shows all
+  of them). It must be From URL with a field for every param (no Any). If it can't decide (no
+  main block, not From URL, a param on Any or matching no field) the page still saves, builds no
+  pages and the build warns (`No pages are built: [year] matches no field`); the editor shows the
+  same line in the page head and still opens the page to fix it.
+- **Checks:** `validate.js` checks the shape (a mode its block kind has, an item id, one rule per
+  param); `bindingProblems()` that the source is a list and a bound field without a source
+  warns.
 
 ### Bindings
 
@@ -458,7 +493,7 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
   "eyebrow": "Featured",
   "title": { "bind": "title" },
   "body": { "bind": "role", "format": "{value} in Amsterdam" },
-  "item": { "source": "people", "id": "p-qw7b" }
+  "source": { "mode": "item", "from": "people", "id": "p-qw7b" }
 }
 ```
 
@@ -469,8 +504,9 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 - **`"format"`** (text fields only, also a list's texts like the album's facts): text around
   the value, `{value}` marks where it goes, e.g. `"{value} photos"`. An empty value leaves the
   whole field empty. There is no `{{field}}` syntax: one field, one binding.
-- **The item:** a block's own `item: { source, id }`, else, on a `[param]` page, the page's
-  item. Without one its bound fields render empty (a build warning).
+- **The item:** the first item of the block's source (see "Block sources"): the one picked, or
+  the first matching the page's address. Without one its bound fields render empty (a build
+  warning).
 - **Rendering:** one resolver, `resolveBlock()`, swaps the values in before every block renders
   (`src/site/layout/index.js`), so blocks don't know about bindings; values are escaped as
   always. A block without bindings renders exactly as before.
@@ -566,27 +602,20 @@ move. A page's own file is
   `people/[person]` (`pageFile(id)` / `pageIdOf(file)` in `src/site/files.js`). Nothing else is a
   page file: `pages/about.json` or `pages/people/x.json` are ignored.
 - **Templates:** a `[param]` folder (a named param: `[person]`, `[place]`, `[year]`; a-z first,
-  then a-z, 0-9, dashes) is a template. Its `index.json` says which list it shows,
-  `{ "template": { "source": "people" } }`, optionally with `"key": "<field>"` (below), and
-  nothing else: its pages are sections and blocks like any page (the album's back link names the
-  folder's page, its heading's title). Its id is `people/[person]`, its pattern (redirects,
-  `pathOfId`) `/people/:person/`; each route has `params` (`{ person: "noor" }`).
-  An item's slug is its `slug` field, else its name (or title) slugified (`Noor Vermeer` ->
-  `noor-vermeer`). Items without one, with an invalid one or with a duplicate get no page and a
-  build warning (`[routes] ...`). A template page is an album (the person/place look):
-  `route.album` is the item, like before. A folder can have one `[param]` folder; there is none at
-  the root.
-- **Nested templates** (interim rule, until blocks pick their own matches): a `[param]` folder
-  can hold one more `[param]` folder (`people/[person]/[year]/`) and nothing else (a normal
-  page in it gets no page and a warning). Each level has its own `template.source`. For every
-  page of the outer level, the inner level makes a page per item of its source, keeping only
-  the items whose field named after an outer param (`person`) equals that page's slug or its
-  item's id, when the source has such a field (else every item); `template.match`
-  (`{ "model": "person" }`) names another field for an outer param (a param rename writes it).
-  `template.key` makes the URL
-  part a field's value (`"key": "year"`: one page per distinct year, its first item is the
-  page's item) instead of the item's slug; duplicates of a key are no warning. Planned: once
-  blocks can be a page's main block, this rule goes, so there is one way to match.
+  then a-z, 0-9, dashes) is a template. Its `index.json` names its **main block** (`"main":
+"b-…"`), whose source decides which pages exist (see "Block sources"); its pages are sections
+  and blocks like any page (the album's back link names the folder's page, its heading's title).
+  Its id is `people/[person]`, its pattern (redirects, `pathOfId`) `/people/:person/`; each route
+  has `params` (`{ person: "noor" }`) and `count` (how many items match). An item's slug is its
+  `slug` field, else its name (or title) slugified (`Noor Vermeer` -> `noor-vermeer`). Items
+  without a URL part or with an invalid one get no page, a duplicate slug shows the first, each
+  with a build warning (`[routes] ...`). A template page is an album (the person/place look):
+  `route.album` is its item. A folder can have one `[param]` folder; there is none at the root.
+- **Nested templates:** a `[param]` folder can hold one more `[param]` folder
+  (`people/[person]/[year]/`) and nothing else (a normal page in it gets no page and a
+  warning). Its main block's rules match each param, the outer ones too (`[person]` on the
+  shoots' `person` field: by slug, or the person's id), so `/people/noor/2024/` exists when a
+  shoot of Noor's is from 2024. There is no other matching rule.
 - **Fixed beats template:** `pages/people/noor-vermeer/index.json` replaces the template's page for
   that item (it is a normal page then).
 - **Views:** a page is its sections of blocks. Its view name (`view--<name>` on `<main>`, `data-page` on
@@ -681,8 +710,8 @@ The editor keeps them up to date by itself (`src/site/redirects.js`):
   `/people/:person/:year/` -> `/models/:person/:year/`). Links by id need
   nothing; an `href` that is such a path is updated; the toast says how many.
 - **Rename a param** (a `[param]` page's SEO tab, Address · param name: `[person]` -> `[model]`):
-  the URLs stay, so no redirect. The folder moves with the levels in it (they keep matching the
-  same field: `template.match`), and redirects that name it in a pattern under it follow
+  the URLs stay, so no redirect. The folder moves with the levels in it (their blocks' rules
+  follow the new name, matching the same field), and redirects that name it in a pattern under it follow
   (`/p/:person/` -> `/people/:person/` becomes `:model`). Not a name already in its URL, above
   or in it.
 - **Delete a page**: its paths redirect to its parent page (the default), another page, or

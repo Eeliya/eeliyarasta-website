@@ -105,8 +105,10 @@ export default function staticSite() {
             return res.end(await server.transformIndexHtml(req.url, shell));
           }
           const { getRoutes, renderRoute } = await server.ssrLoadModule(RENDER_MODULE);
-          const content = loadContent(root, draftsFor(drafts, url.searchParams.get(DRAFT_PARAM)));
-          const routes = getRoutes(content);
+          const draft = url.searchParams.get(DRAFT_PARAM);
+          const content = loadContent(root, draftsFor(drafts, draft));
+          // the editor's preview (a draft session): [param] pages that build none too (routes.js)
+          const routes = getRoutes(content, { unbuilt: !!draft });
           let pathname = url.pathname.replace(/index\.html$/, '');
           if (!pathname.endsWith('/')) pathname += '/';
           let route = routes.find((r) => r.path === pathname);
@@ -120,7 +122,7 @@ export default function staticSite() {
           const shell = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
           const html = await server.transformIndexHtml(
             req.url,
-            fill(shell, renderRoute(route, content, { editable: true })),
+            fill(shell, renderRoute(route, content, { editable: true, unbuilt: !!draft })),
           );
           res.statusCode = status;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');

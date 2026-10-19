@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { paramPage } from './test-layout.mjs';
 import {
   crumbsOf,
   levelOf,
   dropOf,
-  editable,
   entryFor,
   goesInside,
   hasInside,
@@ -57,7 +57,7 @@ const files = (more = {}) => ({
   'pages/photography/people/index.json': page('pg-peop', 'People'),
   'pages/photography/people/[person]/index.json': {
     ...page('pg-pslg', 'x'),
-    template: { source: 'people' },
+    ...paramPage('photography/people/[person]', 'people'),
   },
   'pages/photography/places/index.json': page('pg-plac', 'Places'),
   'pages/photography/archive/index.json': page('pg-arch', 'Archive'),
@@ -99,7 +99,7 @@ test('a folder: own segments, menu order, [param] last, Not linked filtered', ()
   assert.equal(levelOf(files(), 'photography', 'all').notLinked.length, 3);
   const people = levelOf(files(), 'photography/people');
   assert.deepEqual(
-    people.sub.map((r) => [r.title, r.seg, r.template, r.items]),
+    people.sub.map((r) => [r.title, r.seg, r.template, r.count]),
     [['[person]', '[person]/', true, 1]],
   );
   assert.deepEqual(
@@ -182,8 +182,10 @@ test('a [param] folder in a [param] folder: its own level, "per" the outer one',
   const f = {
     'pages/index.json': {},
     'pages/people/index.json': { title: 'People' },
-    'pages/people/[person]/index.json': { template: { source: 'people' } },
-    'pages/people/[person]/[year]/index.json': { template: { source: 'shoots', key: 'year' } },
+    'pages/people/[person]/index.json': paramPage('people/[person]', 'people'),
+    'pages/people/[person]/[year]/index.json': paramPage('people/[person]/[year]', 'shoots', {
+      year: 'year',
+    }),
     'sources/people.json': { items: [{ slug: 'a' }] },
   };
   const outer = levelOf(f, 'people').sub.at(-1);
@@ -215,7 +217,7 @@ test('the Own page switch: only in a folder with a normal sub page', () => {
   const nested = files({
     'pages/photography/people/[person]/[year]/index.json': {
       ...page('pg-year', 'x'),
-      template: { source: 'people' },
+      ...paramPage('photography/people/[person]/[year]', 'people'),
     },
   });
   assert.equal(levelOf(f, 'photography/people/[person]').full, false);
@@ -319,7 +321,10 @@ test('a double click goes into any page level; a root row, home and 404 open', (
 });
 
 test("the count tag: a [param] row 'per item · N' or 'per [person] · N' (0 warns); root rows 'root'", () => {
-  const year = { ...page('pg-year', 'Year'), template: { source: 'people' } };
+  const year = {
+    ...page('pg-year', 'Year'),
+    ...paramPage('photography/people/[person]/[year]', 'people'),
+  };
   const f = files({ 'pages/photography/people/[person]/[year]/index.json': year });
   const person = levelOf(f, 'photography/people').sub.find((r) => r.template);
   assert.deepEqual(tagOf(person), { text: 'per item · 1', warn: false });
@@ -378,14 +383,16 @@ test('a drop that would move a page to a reserved top name is refused (placehold
   assert.equal(dropOf(f, photo, row, 0).kind, 'move');
 });
 
-test('a [param] page with no items: its edit is off (nothing to show), with items on', () => {
-  const people = levelOf(files(), 'photography/people');
-  assert.equal(editable(people.sub.find((r) => r.template)), true);
-  const none = levelOf(
-    files({ 'sources/people.json': { version: 1, items: [] } }),
-    'photography/people',
-  );
-  assert.equal(editable(none.sub.find((r) => r.template)), false);
-  assert.equal(editable(none.own), true);
-  assert.equal(editable({ id: 'header', part: true }), true);
+test("a [param] page counts the pages it builds: none without items, or when its main block can't decide", () => {
+  const count = (f) => levelOf(f, 'photography/people').sub.find((r) => r.template).count;
+  assert.equal(count(files()), 1);
+  assert.equal(count(files({ 'sources/people.json': { version: 1, items: [] } })), 0);
+  // its param matches a field the source doesn't have: no pages (the editor's unbuilt ones don't count)
+  const broken = files({
+    'pages/photography/people/[person]/index.json': {
+      ...page('pg-pslg', 'x'),
+      ...paramPage('photography/people/[person]', 'people', { person: 'nope' }),
+    },
+  });
+  assert.equal(count(broken), 0);
 });

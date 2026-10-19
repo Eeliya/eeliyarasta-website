@@ -18,7 +18,8 @@ export function createLive(store) {
   let routes = [];
   const routesNow = () => {
     if (routesAt !== version) {
-      routes = getRoutes(contentFromFiles(store.current));
+      // the editor: [param] pages that build none too (unbuilt), so they can be edited
+      routes = getRoutes(contentFromFiles(store.current), { unbuilt: true });
       routesAt = version;
     }
     return routes;

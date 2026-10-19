@@ -1,8 +1,8 @@
 /**
- * The album block of a [param] page: the page's item (one person or place), Faint Film
- * "slider view": a big current image, numbered thumbnail strip, 01/08 counter, keyboard /
- * drag / wheel navigation and a Slider ⇄ Grid toggle. Its photos are the item of the page it
- * is on (ctx.route.album), so it only makes sense on a [param] page (item: true). See ./index.js.
+ * The album block: one item (a person or a place), Faint Film "slider view": a big current
+ * image, numbered thumbnail strip, 01/08 counter, keyboard / drag / wheel navigation and a
+ * Slider ⇄ Grid toggle. Its photos are its source's item (../layout/source.js: on a [param]
+ * page usually From URL, the page's own; item: true, without one it is skipped). See ./index.js.
  * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "title" },
  * the facts ("Role" / { "bind": "role" }; a fact whose value is empty is left out, "Photos" and the
  * count always come last) and the body { "bind": "body" }.
@@ -20,6 +20,9 @@ import {
   imagesOf,
   sizes,
 } from '../helpers.js';
+import { sourceFile } from '../files.js';
+import { titleCase } from '../routes.js';
+import { sourcePage } from './data.js';
 
 export const album = {
   type: 'album',
@@ -41,6 +44,7 @@ export const album = {
     { key: 'body', label: 'Summary', type: 'block' },
   ],
   defaults: {
+    source: { mode: 'url', from: 'people', where: { op: 'and', rules: [] } },
     title: { bind: 'title' },
     meta: [
       { label: 'Location', value: { bind: 'location' } },
@@ -52,12 +56,16 @@ export const album = {
 };
 
 function albumOf(s, ctx, route, b) {
-  const a = route.album;
+  const a = b.item;
   const images = imagesOf(a);
   const n = images.length;
-  const at = (field, type) => ed(route.file, ['items', route.index, field], type);
+  const file = sourceFile(b.source);
+  const at = (field, type) => ed(file, ['items', b.index, field], type);
   // a photo's path, edited (and uploaded) in the editor
-  const photo = (i) => ed(route.file, ['items', route.index, 'images', i], 'image');
+  const photo = (i) => ed(file, ['items', b.index, 'images', i], 'image');
+  // back: the page around it (a [param] page's), else the page of all of its source
+  const back = route.parent ?? sourcePage(ctx, b.source);
+  const section = route.section ?? titleCase(b.source);
   const title = String(s.title ?? '');
   const summary = String(s.body ?? '');
   const meta = [
@@ -72,8 +80,8 @@ function albumOf(s, ctx, route, b) {
 
   return html` <div class="album" data-album data-view="slider" data-count="${n}">
     <aside class="album__info">
-      <a class="album__back label" href="${esc(route.parent)}"
-        ><span aria-hidden="true">←</span> <span>${esc(route.section)}</span></a
+      <a class="album__back label" href="${esc(back)}"
+        ><span aria-hidden="true">←</span> <span>${esc(section)}</span></a
       >
       <h1 class="album__title" data-anim="album.title" ${b.ed('title')}>${esc(title)}</h1>
       <div class="album__details" data-anim="album.meta">

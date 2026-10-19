@@ -36,6 +36,7 @@ import { plural } from './lib/format.js';
 import { oneAtATime } from './lib/one-at-a-time.js';
 import { curtainOverrides, pathOfId, templateSection } from '../site/routes.js';
 import { BACKDROP } from '../site/backdrop.js';
+import { pageSourceOf } from '../site/layout/source.js';
 import {
   ANIMATIONS,
   REDIRECTS,
@@ -181,7 +182,7 @@ function pageEntries(routes) {
   for (const id of ids)
     if (isTemplate(id)) {
       const folder = id.slice(0, id.lastIndexOf('/')); // "people"
-      const source = store.current[pageFile(id)]?.template?.source;
+      const source = pageSourceOf(store.current[pageFile(id)]);
       template(id, templateSection(store.current[pageFile(folder)], source));
     }
   return entries;

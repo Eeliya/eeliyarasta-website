@@ -2,7 +2,7 @@
   "version": 1,
   "kind": "page",
   "id": "pg-gk6t",
-  "template": { "source": "people" },
+  "main": "b-j8hg",
   "sections": [
     {
       "id": "s-2jiz",
@@ -12,6 +12,14 @@
         {
           "id": "b-j8hg",
           "type": "album",
+          "source": {
+            "mode": "url",
+            "from": "people",
+            "where": {
+              "op": "and",
+              "rules": [{ "param": "person", "field": "slug" }]
+            }
+          },
           "title": { "bind": "title" },
           "meta": [
             {

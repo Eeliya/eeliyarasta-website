@@ -45,7 +45,7 @@
   import { splitEdit } from '../../site/helpers.js';
   import { parse } from '../lib/pointer.js';
   import { targetFile } from '../layout-sync.js';
-  import { isTemplate, pageIdOf, sourceIds as sourceIdsOf } from '../../site/files.js';
+  import { sourceIds as sourceIdsOf } from '../../site/files.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { addBlock } from '../layout-ops.js';
   import { SLIDE, still, swapView } from '../lib/slide.js';
@@ -127,13 +127,16 @@
     ui.section = null;
   }
 
-  // Add block (a section card's): the types on offer (item types,
-  // the item of a [param] page, only there); the block added opens
+  // Add block (a section card's): every type on offer; the block added opens
   let blocksModal = $state();
   const types = $derived(
-    Object.values(BLOCK_TYPES)
-      .filter((t) => !t.item || isTemplate(pageIdOf(file) || ''))
-      .map(({ type, label, icon, line, sketch }) => ({ value: type, label, icon, line, sketch })),
+    Object.values(BLOCK_TYPES).map(({ type, label, icon, line, sketch }) => ({
+      value: type,
+      label,
+      icon,
+      line,
+      sketch,
+    })),
   );
   const addTo = (at, type) => openBlock(addBlock(live.store, file, at, type).id);
 

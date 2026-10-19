@@ -38,7 +38,6 @@
   import {
     crumbsOf,
     dropOf,
-    editable,
     entryFor,
     goesInside,
     hasInside,
@@ -61,7 +60,6 @@
 
   const GONE = '(gone)';
   const FULL = 'Only one [param] page per folder: it has one';
-  const NO_ITEMS = 'No pages to edit yet: its source has no items';
   const SITE_PARTS = [
     { id: 'header', title: 'Header', sub: 'The menu and its labels' },
     { id: 'footer', title: 'Footer', sub: 'Its sections and blocks' },
@@ -110,9 +108,8 @@
     asking = '';
     tick().then(() => root?.querySelector('.prow__open')?.focus());
   }
-  // a [param] page with no items has no page to show (its row is only selected)
+  // a [param] page without pages opens too (its main block can be fixed there: main.js)
   function show(row) {
-    if (!editable(row)) return;
     const entry = entryFor(ui.pages, row);
     if (entry) actions.pickTarget(entry);
   }
@@ -292,7 +289,6 @@
 {#snippet row(r, { j = -1, at = 0 } = {})}
   {@const lifted = j >= 0 && drag?.moving && drag.at === at && drag.j === j}
   {@const tag = tagOf(r)}
-  {@const canEdit = editable(r)}
   <li
     class={['prow', sel === r.id && 'is-sel', lifted && 'is-lifted', r.off && 'is-off']}
     style:top={lifted ? `${drag.top}px` : null}
@@ -335,7 +331,7 @@
           <span
             class={['prow__tag', tag.warn && 'is-warn']}
             title={r.template
-              ? `${plural(r.count ?? 0, 'page')}: one per item of its source (${plural(r.items ?? 0, 'item')})`
+              ? `${plural(r.count ?? 0, 'page')}: one per item its main block matches`
               : null}>{tag.text}</span
           >
         {/if}
@@ -363,9 +359,8 @@
       icon="pen-to-square"
       iconOnly
       label="Edit {r.title}"
-      title={canEdit ? 'Edit: its sections' : NO_ITEMS}
-      aria-disabled={canEdit ? undefined : 'true'}
-      onclick={() => canEdit && open(r)}
+      title="Edit: its sections"
+      onclick={() => open(r)}
     />
     {#if r.self && L.canOwn}
       <label
@@ -774,11 +769,6 @@
     &:is(:hover, :focus-within, .is-sel, .is-lifted) > :global(.btn),
     &:is(:hover, :focus-within, .is-sel, .is-lifted) > .prow__grip {
       opacity: 1;
-    }
-
-    // an edit with nothing to open: stays quiet (its title says why)
-    &:is(:hover, :focus-within, .is-sel, .is-lifted) > :global(.btn[aria-disabled]) {
-      opacity: 0.3;
     }
   }
 

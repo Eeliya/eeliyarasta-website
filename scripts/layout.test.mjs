@@ -95,7 +95,7 @@ test('a list block without a source: its head without a link, no items (not a de
   for (const type of ['grid', 'projects', 'albums']) {
     const ids = new Set();
     const b = newBlock(type, ids);
-    b.config = { ...b.config, source: undefined };
+    delete b.source; // None
     const out = renderSections(ctxOf(page), page, F, [newSection(ids, [b])]);
     assert.doesNotMatch(out, /section__cta|<img/, type);
   }
@@ -192,16 +192,16 @@ test('render: editor markers point into the blocks, only when editable', () => {
   }
 });
 
-test('render: an unknown type, or an item type off a [param] page, warns and is skipped', () => {
+test('render: an unknown type, or an item type without an item, warns and is skipped', () => {
   const [out, seen] = warnings(() =>
     renderSections(ctxOf(page), page, F, [
-      section([block('nope'), block('album'), block('text', { body: 'x' })]),
+      section([block('nope'), block('album', { source: undefined }), block('text', { body: 'x' })]),
     ]),
   );
   assert.doesNotMatch(out, /data-album/);
   assert.match(out, /<p>x<\/p>/);
   assert.match(seen.join('\n'), /unknown block type "nope"/);
-  assert.match(seen.join('\n'), /"album" block only works on a \[param\] page/);
+  assert.match(seen.join('\n'), /"album" block shows an item: it has none/);
   assert.match(render.renderRoute(item, content).body, /data-album/);
 });
 

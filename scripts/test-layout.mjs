@@ -75,3 +75,32 @@ export function warnings(fn) {
 /** A temp site's content file (content/en/<f>), parsed. */
 export const read = (root, f) =>
   JSON.parse(fs.readFileSync(path.join(root, 'content/en', f), 'utf8'));
+
+/**
+ * A [param] page's content (src/site/layout/source.js) for page `id` ("people/[person]"): an
+ * album block as its main block, From URL `from`, each param of the address matching the field
+ * `fields` names for it, else slug. extra: more keys of the page (meta, ...).
+ */
+export function paramPage(id, from, fields = {}, extra = {}) {
+  const params = id
+    .split('/')
+    .map((s) => /^\[(.+)\]$/.exec(s)?.[1])
+    .filter(Boolean);
+  const rules = params.map((param) => ({ param, field: fields[param] ?? 'slug' }));
+  return {
+    main: 'b-main',
+    sections: [
+      {
+        id: 's-main',
+        blocks: [
+          {
+            id: 'b-main',
+            type: 'album',
+            source: { mode: 'url', from, where: { op: 'and', rules } },
+          },
+        ],
+      },
+    ],
+    ...extra,
+  };
+}

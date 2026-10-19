@@ -85,6 +85,9 @@ import {
 import { checkContent } from '../src/site/validate.js';
 import { omitDefaults } from '../src/site/defaults.js';
 import { newBlock, newSection } from '../src/site/layout/index.js';
+import { eachBlock } from '../src/site/layout/ids.js';
+import { pageSourceOf, sourceOf } from '../src/site/layout/source.js';
+import { defaultWhere, rulesOf } from '../src/site/query.js';
 import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
 import { motionProblems } from '../src/site/layout/motion.js';
@@ -292,19 +295,15 @@ export function pagesOp(
       return fail(400, `"${key}" is not a field name`);
     onWrite();
     const ids = new Set();
+    // the item's album, filling the screen: its main block (layout/source.js), each param of
+    // the address matching its default field (key: the new param's)
+    const album = albumBlock(root, source, ids, paramsOf(pid), key);
     write(pageFile(pid), {
       version: VERSION,
       kind: 'page',
       id: newPageId(),
-      template: key ? { source, key } : { source },
-      // the item's album, filling the screen
-      sections: [
-        {
-          ...newSection(ids, [albumBlock(root, source, ids)]),
-          height: 'full',
-          width: 'full',
-        },
-      ],
+      main: album.id,
+      sections: [{ ...newSection(ids, [album]), height: 'full', width: 'full' }],
     });
     return done({ id: pid, created: [pageFile(pid)] });
   }
@@ -355,7 +354,7 @@ export function pagesOp(
       .map((pid) => [pid, targetPid ?? null]),
   );
   const sources = new Set(
-    gone.filter((f) => isTemplate(pageIdOf(f))).map((f) => before[f]?.template?.source),
+    gone.filter((f) => isTemplate(pageIdOf(f))).map((f) => pageSourceOf(before[f])),
   );
   plan = { moves, ...moveLinks(before, moves, { hash: op === 'rename', pages, sources }) };
 
@@ -378,8 +377,9 @@ export function pagesOp(
 
   /**
    * rename a [param] page: its param ("[person]" -> "[model]"), the URLs stay. The folder
-   * moves with everything in it; the [param] pages in it keep matching the same field
-   * (template.match); redirects naming the param in a pattern under it follow.
+   * moves with everything in it; the From URL rules of its blocks and of the pages in it
+   * follow (the same field matches the renamed param); redirects naming the param in a
+   * pattern under it follow.
    */
   function renameParamOp(before) {
     const old = paramOf(id.split('/').at(-1));
@@ -394,22 +394,15 @@ export function pagesOp(
     const to = join(parentOf(id), paramFolder(name));
     const prefix = `pages/${id}/`;
     const moved = (f) => `pages/${to}/${f.slice(prefix.length)}`;
-    const c = contentFromFiles(before);
     onWrite();
     fs.renameSync(dirOf(id), dirOf(to));
     for (const f of inside) {
-      const pid = pageIdOf(f);
-      const t = before[f]?.template;
-      if (pid === id || !isTemplate(pid) || !t) continue;
-      const fields = new Set((schemaOf(c, t.source).fields || []).map((x) => x.key));
-      const field = t.match?.[old] ?? old;
-      const match = { ...t.match };
-      delete match[old];
-      if (field !== name && fields.has(field)) match[name] = field;
-      const next = { ...t, match };
-      if (!Object.keys(match).length) delete next.match;
-      if (JSON.stringify(next) !== JSON.stringify(t))
-        writeData(moved(f), { ...before[f], template: next });
+      const data = structuredClone(before[f]);
+      let changed = false;
+      for (const [b] of eachBlock(data?.sections))
+        for (const rule of sourceOf(b)?.mode === 'url' ? rulesOf(b.source.where) : [])
+          if (rule?.param === old) ((rule.param = name), (changed = true));
+      if (changed) writeData(moved(f), data);
     }
     const list = redirectsOf(before);
     const renamed = renameParam(list, pathOfId(id), old, name);
@@ -513,7 +506,7 @@ function sourceProblems(root, files) {
  * A new [param] page's album block, its texts bound to the source's fields (its schema): the
  * title field, the fields shown in item lists as facts ({ "bind": "role" }), the first long text.
  */
-function albumBlock(root, source, ids) {
+function albumBlock(root, source, ids, params, key) {
   const list = itemsOf(readContentFile(root, sourceFile(source), { check: false }));
   const own = fs.existsSync(path.join(root, CONTENT_DIR, schemaFile(source)))
     ? readContentFile(root, schemaFile(source), { check: false })
@@ -521,8 +514,11 @@ function albumBlock(root, source, ids) {
   const schema = schemaOf({ sources: { [source]: list }, schemas: { [source]: own } }, source);
   const fields = schema.fields || [];
   const long = fields.find((f) => f.type === 'longtext');
+  const where = defaultWhere(params, schema);
+  if (key) where.rules.at(-1).field = key;
   return {
     ...newBlock('album', ids, { rows: 1 }),
+    source: { mode: 'url', from: source, where },
     title: schema.title ? { bind: schema.title } : '',
     meta: fields
       .filter((f) => f.list && ['text', 'choice', 'number', 'date'].includes(f.type))
@@ -1060,7 +1056,7 @@ export function renderOp(render, root, drafts, { path: at, file, data, ids, sess
   const problems = checkContent(file, data);
   if (problems.length) return { status: 400, body: { error: problems.join('; ') } };
   const content = loadContent(root, { ...draftsFor(drafts, session), [file]: data });
-  const route = render.getRoutes(content).find((r) => r.path === at);
+  const route = render.getRoutes(content, { unbuilt: true }).find((r) => r.path === at);
   // the footer's sections render on any page (under it)
   if (!route || (docKindOf(file) !== 'part' && pageFile(route.id) !== file))
     return { status: 400, body: { error: `${at} is not a page of ${file}` } };

@@ -153,10 +153,11 @@
         {
           "id": "b-xh7b",
           "type": "grid",
+          "source": { "mode": "all", "from": "people" },
           "eyebrow": "People",
           "title": "Models I've worked with",
           "cta": "All people",
-          "config": { "source": "people", "layout": "even" },
+          "config": { "layout": "even" },
           "motion": { "anim": "grid-reveal" }
         }
       ]
@@ -167,10 +168,11 @@
         {
           "id": "b-vnrc",
           "type": "grid",
+          "source": { "mode": "all", "from": "places" },
           "eyebrow": "Places",
           "title": "Buildings, streets & castles",
           "cta": "All places",
-          "config": { "source": "places", "layout": "staggered" },
+          "config": { "layout": "staggered" },
           "motion": { "anim": "grid-reveal", "stagger": 0.15 }
         }
       ]
@@ -181,11 +183,12 @@
         {
           "id": "b-57ry",
           "type": "projects",
+          "source": { "mode": "all", "from": "projects" },
           "eyebrow": "Projects",
           "title": "Things I build",
           "cta": "All projects",
           "motion": { "anim": "list-up", "trigger": "load" },
-          "config": { "source": "projects" }
+          "config": {}
         }
       ]
     }
