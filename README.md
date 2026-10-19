@@ -944,34 +944,45 @@ its path under it, ← to the pages list (a path part: that folder); a `[param]`
 picker on the right for which item page the preview shows. Or click links in Preview.
 
 **Pages list** (the Content tab, ← on the page head; `PagesList.svelte`, `src/editor/lib/page-tree.js`):
-the site's pages one folder at a time, flat. Its header: ← (or Esc) up one level, the folder's
-page title with its path under it (each part goes there) and, in a folder with sub pages, the
-**Own page** switch (off: `"ownPage": false`, see "Pages and URLs"). Then:
+the site's pages one folder at a time, flat, on the pages' card colour (`--c-page-card`, warm
+sand; their paths and badges in `--c-page-accent`: a card's colour says its type). Its header
+(48px): ← (or Esc) up one level, the folder's path (each part goes there; at the top just `/`)
+and **+** (Add page). Then:
 
-- at the top, **Site**: Header and Footer;
-- the folder's own page ("this page", `/`);
-- **Sub items**: its pages that are in the menu (`nav.json`), in the menu's order; the grip on
-  the left drags one to another place (that is the menu's order, one undo step). Its `[param]`
-  page is pinned last (a lock, no grip; a double click goes into it, where its own `[param]`
-  page can be added). When its own page is off, the first one is tagged **As /**:
-  the folder's URL opens it;
+- one list in the menu's order (`nav.json`, the order on the website): at the top **Home** and
+  the other top pages (Home can move and leave the menu, never be deleted); in a folder its
+  **root** row first (its own page, `/`, locked: a lock, no grip), with the **Own page** switch
+  at its end when the folder has a normal sub page (off: `"ownPage": false`, see "Pages and
+  URLs"; the row stays, quieter, and the first sub page is tagged **As /**: the folder's URL
+  opens it), then its pages. The grip drags one to another place (the menu's order, one undo
+  step). Its `[param]` page is pinned last (a lock, "per item", or "per [person]" in another,
+  and its count of pages; a double click goes into it, where its own `[param]` page can be
+  added: + is off once it has one). A plain page's level: its root row and "No sub pages yet";
 - **Not linked**: every page that isn't in the menu, the whole site's (**All**) or this
-  folder's (**This folder**).
+  folder's (**This folder**; no filter at the top), in the site's order (home first, then by
+  path);
+- at the top, **Site**: Header and Footer (no grip, no delete).
+
+Linking is a drag: a row from the menu list into Not linked takes it out of the menu, a row from
+Not linked into the menu list puts it in the menu there (Not linked has no order of its own:
+the line shows where it will sit). A page of another folder dropped on a folder's menu list
+**moves** into that folder (its address changes, links follow, no redirect: pre-v1), unless a
+page of that name is there already. 404 and `[param]` pages don't move. The website's dropdowns
+show a folder's "All …" link first, as its root row is first here.
 
 Rows show only their own segment under the folder (`people/`; elsewhere the full path) and
 titles and paths as written. A click selects a row and shows it in the preview; a double click
 (or Enter) goes into a folder, or opens the page (its Sections, Transitions, SEO). A dot after a
-title: unsaved changes in its file; an eye: hidden from search. The link button puts a page in
-the menu or takes it out (Content › Header has the labels and dropdowns). **+** opens **Add page**
-(title -> URL name, In the menu: on from Sub items' +, off from Not linked's; or a **[param] page**:
-a template with a source and a param name, `[slug]` by default, one per folder, none at the
-top; in a `[param]` folder only this kind): a new folder with its `index.json`.
+title: unsaved changes in its file; an eye: hidden from search. Content › Header has the menu's
+labels and dropdowns. **+** opens **Add page** (title -> URL name, In the menu; or a **[param]
+page**: a template with a source and a param name, `[slug]` by default, one per folder, none at
+the top; in a `[param]` folder only this kind): a new folder with its `index.json`.
 **Delete** asks over the row: one line (the trash, then Cancel) when nothing links to it; a page in
 the menu or linked to gets a panel over the rows below (nothing moves) asking where visitors and
 links should go (its parent page by default, another page, or no redirect: its menu item goes
 too). The address is renamed in the page's SEO tab (**Address**: the whole folder moves). These
 keep links and redirects up to date (see "Redirects") and say so in a toast. Names are slugs (a-z,
-0-9, dashes); home and 404 can't be renamed or deleted. Adding, renaming and deleting write to disk
+0-9, dashes); home and 404 can't be renamed or deleted. Adding, renaming, moving and deleting write to disk
 right away through the dev server (`POST /__editor/pages`); the menu edits are normal edits (Save).
 Renaming or deleting a page with unsaved edits asks for Save first. Publish commits the new and
 removed files. `&pages=/people/` in the URL reopens the list on that folder. There's also a phone

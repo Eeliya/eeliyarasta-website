@@ -176,3 +176,48 @@ test('template in a template: a named [param] folder in a [param] folder, one pe
     'pages/people/[person]/index.json',
   ]);
 });
+
+test('move: a page into another folder, its name kept; links follow, no redirect', () => {
+  const root = site();
+  const put = (f, data) => fs.writeFileSync(path.join(root, 'content/en', f), JSON.stringify(data));
+  put('pages/about/index.json', {
+    version: 1,
+    kind: 'page',
+    id: 'pg-t037',
+    title: 'About',
+    sections: [
+      {
+        id: 's-aaaa',
+        blocks: [{ id: 'b-aaaa', type: 'text', body: 'x', href: '/people/team/#top' }],
+      },
+    ],
+  });
+  const r = pagesOp(root, { op: 'move', id: 'people/team', parent: 'about' });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.id, 'about/team');
+  assert.deepEqual(r.body.created, ['pages/about/team/index.json']);
+  assert.deepEqual(r.body.removed, ['pages/people/team/index.json']);
+  assert.deepEqual(r.body.added, []);
+  assert.equal(read(root, 'pages/about/index.json').sections[0].blocks[0].href, '/about/team/#top');
+  assert.equal(fs.existsSync(path.join(root, 'content/en/pages/people/team')), false);
+  assert.equal(fs.existsSync(path.join(root, 'content/en/redirects.json')), false);
+  // to the top and back
+  assert.equal(pagesOp(root, { op: 'move', id: 'about/team', parent: '' }).body.id, 'team');
+});
+
+test('move refuses: a taken name, into itself, a [param] folder, home and 404, nowhere', () => {
+  const root = site();
+  pagesOp(root, { op: 'add', parent: 'about', name: 'team' });
+  const move = (o) => pagesOp(root, { op: 'move', ...o });
+  const clash = move({ id: 'people/team', parent: 'about' });
+  assert.equal(clash.status, 400);
+  assert.match(clash.body.error, /already exists/);
+  assert.equal(move({ id: 'people', parent: 'people/team' }).status, 400);
+  assert.equal(move({ id: 'about', parent: 'people/[person]' }).status, 400);
+  assert.equal(move({ id: 'people/[person]', parent: 'about' }).status, 400);
+  assert.equal(move({ id: 'home', parent: 'about' }).status, 400);
+  assert.equal(move({ id: '404', parent: 'about' }).status, 400);
+  assert.equal(move({ id: 'about', parent: 'nope' }).status, 400);
+  assert.equal(move({ id: 'about', parent: '' }).status, 400); // there already
+  assert.ok(fs.existsSync(path.join(root, 'content/en/pages/people/team/index.json')));
+});

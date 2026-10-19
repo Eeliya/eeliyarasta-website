@@ -106,9 +106,10 @@ export function moveLinks(
  * The redirect list after `moves` (old path -> new path, or null): redirects to a moved path
  * follow it (or go with it), every moved path that has a new one gets a redirect (replacing
  * one from the same path; item pages through their template's pattern when that moves too),
- * and self-redirects go. Returns { list, added }.
+ * and self-redirects go (add false: no new ones, a moved page's old address just goes).
+ * Returns { list, added }.
  */
-export function moveRedirects(list, moves) {
+export function moveRedirects(list, moves, { add = true } = {}) {
   const out = [];
   for (const r of list) {
     if (!isPath(r.to) || !moves.has(pathKey(r.to))) out.push(r);
@@ -118,7 +119,7 @@ export function moveRedirects(list, moves) {
   const patterns = [...moves.keys()].filter((p) => p.includes(':'));
   const covered = (p) => !p.includes(':') && patterns.some((pattern) => fits(pattern, p));
   const added = [...moves]
-    .filter(([from, to]) => to !== null && !covered(from))
+    .filter(([from, to]) => add && to !== null && !covered(from))
     .map(([from, to]) => ({ from, to }));
   const froms = new Set(added.map((r) => r.from));
   const next = [...out.filter((r) => !froms.has(r.from)), ...added].filter((r) => r.from !== r.to);
@@ -134,13 +135,14 @@ export function pruneRedirects(list, paths) {
 /**
  * The moves of a page change, from the content files before it (`files`):
  *   { id, name }      page `id` renamed to `name` (its folder and everything in it)
+ *   { id, into }      page `id` moved to the id `into` (another folder, its name kept)
  *   { id, to }        page `id` deleted, its paths sent to `to` (a path), or gone (to null);
  *                     `to` may be a pattern of a [param] page above it ("/people/:person/"):
  *                     each item page goes to its own outer page, the pattern to the pattern
  * A [param] page's own paths are its item pages (its pattern, its items and the templates in
  * it move); a page's are its folder's, every page in it.
  */
-export function pageMoves(files, { id, name, to }) {
+export function pageMoves(files, { id, name, into, to }) {
   const from = pathOfId(id);
   const routes = getRoutes(contentFromFiles(files)).filter(
     (r) => r.id === id || r.id.startsWith(`${id}/`),
@@ -149,7 +151,10 @@ export function pageMoves(files, { id, name, to }) {
     ...routes.map((r) => r.path),
     ...[...sitePaths(files)].filter((p) => p.includes(':') && p.startsWith(from)),
   ];
-  const renamed = name !== undefined && from.replace(/[^/]+\/$/, `${name}/`);
+  const renamed =
+    into !== undefined
+      ? pathOfId(into)
+      : name !== undefined && from.replace(/[^/]+\/$/, `${name}/`);
   const params = new Map(routes.map((r) => [r.path, r.params || {}]));
   // "/people/:person/" for "/people/noor/2024/": "/people/noor/"
   const fill = (p) =>

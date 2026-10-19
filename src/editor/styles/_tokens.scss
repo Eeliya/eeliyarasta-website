@@ -38,6 +38,8 @@
   --amber-300: #ffcf7a;
   --orange-400: #f0a040;
   --sand-200: #e6dcc4;
+  --sand-400: #c1aa74;
+  --sand-900: #24221d;
   // ---- primitives: alpha steps (tints over the dark UI)
   --white-a03: rgb(255 255 255 / 0.03);
   --white-a04: rgb(255 255 255 / 0.04);
@@ -80,6 +82,9 @@
   --c-surface-3: var(--gray-1c);
   --c-settings: var(--slate-900); // settings surfaces' one background (the section view's settings)
   --c-card: var(--solid-card); // toasts, menus
+  // a card type: its fill and its accent text (paths, badges), the type told by its colour
+  --c-page-card: var(--sand-900); // the pages list's rows (Content)
+  --c-page-accent: var(--sand-400); // their paths, the list's path crumbs, "As /"
   --c-card-peek: var(--solid-card-peek);
   --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
   --c-control-hover: var(--gray-38);

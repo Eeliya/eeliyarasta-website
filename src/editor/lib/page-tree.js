@@ -3,34 +3,37 @@
  * from the content files ({ "pages/index.json": data, …, "settings/nav.json": … }).
  *
  * A level is a page's folder (its page id; '' is the top, home's folder). It shows:
- *   own        the folder's own page ("this page"), unless it is turned off ("ownPage": false:
- *              its URL opens its first sub page, src/site/routes.js); home is always its own
- *   sub        "Sub items": the pages in the folder that are in the menu (nav.json), in the
- *              menu's order, then its [param] page (pinned last;
- *              a [param] folder holds only another one)
+ *   own        a folder's root row: its own page, always (locked first); off ("ownPage":
+ *              false: its URL opens its first sub page, src/site/routes.js) it is still there,
+ *              quieter. The top has none: its page is home, a row of the menu like the others
+ *   sub        the pages in the folder that are in the menu (nav.json), in the menu's order
+ *              (at the top home too), then its [param] page (pinned last; a [param] folder
+ *              holds only another one)
  *   notLinked  every page not in the menu, the whole site's (filter 'all') or the folder's
- *              ('here': in it, at any depth)
+ *              ('here': in it, at any depth), in the site's order (home first, then by path)
  * A row: { id, pid, title, path, seg (what the row shows: its own segment under the folder,
  * else the full path), kids (pages directly in its folder), linked, template, nested (a
- * [param] page in one: the outer folder's name), fixed (home and
- * 404: never deleted), noindex, asRoot (the folder's URL opens it) }.
+ * [param] page in one: the outer folder's name), count (a [param] page's pages), fixed (home
+ * and 404: never deleted), movable (it has a grip: not a [param] page, not 404), noindex,
+ * asRoot (the folder's URL opens it) }.
  *
  * The menu edits (link, unlink, move) take nav.json's data and return a changed copy (null:
  * not possible). Items of the menu are { label, page } (hrefs.js); dropdowns go one level deep.
+ * Linking is a drag between the two lists (dropOf: link, or move the page into the folder).
  */
 import { NAV, isTemplate, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
 import { navOrder, pageTitle, parentId, pathOfId, titleCase } from '../../site/routes.js';
 
 export const FIXED = ['home', '404'];
+const NOT_FOUND = '404';
 const nameOf = (id) => id.slice(id.lastIndexOf('/') + 1);
 const join = (level, name) => (level ? `${level}/${name}` : name);
 
+/** The site's order of page ids: home first, then by id. */
+const byId = (a, b) => (a === 'home' ? -1 : b === 'home' ? 1 : a < b ? -1 : 1);
+
 /** Every page id of the files (home first). */
-export const pageIds = (files) =>
-  Object.keys(files)
-    .map(pageIdOf)
-    .filter(Boolean)
-    .sort((a, b) => (a === 'home' ? -1 : b === 'home' ? 1 : a < b ? -1 : 1));
+export const pageIds = (files) => Object.keys(files).map(pageIdOf).filter(Boolean).sort(byId);
 
 /** The page a level opens: its id ('' is home's folder: home). */
 export const levelPage = (level) => level || 'home';
@@ -65,17 +68,18 @@ export const ownPageOn = (files, level) =>
   !level || (files[pageFile(level)] || {}).ownPage !== false;
 
 /**
- * The level: { level, id, title, path, own (its own page row, or null when off), canOwn (it
- * can be turned off: not the top, it has sub pages), sub, notLinked, total (Not linked before
- * the filter) }.
+ * The level: { level, id, title, path, own (a folder's root row, `off` when its own page is
+ * off; null at the top), canOwn (its own page can be turned off: a folder with a normal sub
+ * page), full (only a [param] page could be added and it has one), sub, notLinked, total (Not
+ * linked before the filter) }. routes (routes.js, optional): a [param] page's count of pages.
  */
-export function levelOf(files, level, filter = 'all') {
+export function levelOf(files, level, filter = 'all', routes = null) {
   const ids = pageIds(files);
   const nav = files[NAV] || {};
   const order = navOrder(nav);
   const pidOf = (id) => files[pageFile(id)]?.id;
   const linked = (id) => order.includes(pidOf(id));
-  const kids = (id) => (id === 'home' ? [] : ids.filter((p) => parentId(p) === id));
+  const kids = (id) => (id === 'home' ? [] : ids.filter((p) => p !== 'home' && parentId(p) === id));
   const row = (id) => {
     const d = files[pageFile(id)] || {};
     const template = isTemplate(id);
@@ -92,12 +96,21 @@ export function levelOf(files, level, filter = 'all') {
       // a [param] page in one: its pages are per outer page ("[person]")
       nested: template && isTemplate(parentId(id)) ? nameOf(parentId(id)) : null,
       items: Array.isArray(items) ? items.length : undefined,
+      count: template
+        ? routes
+          ? routes.filter((r) => r.id === id).length
+          : Array.isArray(items)
+            ? items.length
+            : 0
+        : undefined,
       fixed: FIXED.includes(id),
+      movable: !template && id !== NOT_FOUND,
       noindex: !!d.meta?.noindex,
       asRoot: false,
     };
   };
-  const inFolder = ids.filter((id) => id !== 'home' && parentId(id) === level);
+  // at the top: home too (its page; a row of the menu like the others)
+  const inFolder = ids.filter((id) => (id === 'home' ? !level : parentId(id) === level));
   const rank = (id) => order.indexOf(pidOf(id));
   const sub = inFolder
     .filter((id) => !isTemplate(id) && linked(id))
@@ -106,12 +119,13 @@ export function levelOf(files, level, filter = 'all') {
   const template = inFolder.find(isTemplate);
   if (template) sub.push(row(template));
   const under = (id) => !level || id.startsWith(`${level}/`);
-  const all = ids.filter((id) => !isTemplate(id) && id !== 'home' && !linked(id)).map(row);
-  const notLinked = filter === 'here' ? all.filter((r) => under(r.id)) : all;
+  const all = ids.filter((id) => !isTemplate(id) && !linked(id)).map(row);
+  const notLinked = filter === 'here' && level ? all.filter((r) => under(r.id)) : all;
   const on = ownPageOn(files, level);
   // off: the folder's URL opens its first sub page (in the menu's order, else the folder's)
   if (!on) {
-    const first = sub.find((r) => !r.template) || notLinked.find((r) => parentId(r.id) === level);
+    const first =
+      sub.find((r) => !r.template) || all.find((r) => r.id !== 'home' && parentId(r.id) === level);
     if (first) first.asRoot = true;
   }
   const id = levelPage(level);
@@ -120,12 +134,13 @@ export function levelOf(files, level, filter = 'all') {
     id,
     title: titleOf(files, id),
     path: shownPath(id),
-    own: on ? { ...row(id), seg: '/', self: true } : null,
+    own: level ? { ...row(id), seg: '/', self: true, off: !on } : null,
     canOwn:
       !!level &&
       !isTemplate(level) &&
       !FIXED.includes(level) &&
       inFolder.some((p) => !isTemplate(p)),
+    full: isTemplate(level) && inFolder.some(isTemplate),
     sub,
     notLinked,
     total: all.length,
@@ -228,3 +243,45 @@ export function movePage(nav, pid, { before, after } = {}) {
 
 /** A new page's id at `level`: join(level, name). */
 export const childId = join;
+
+/**
+ * Link page `pid` into the menu at `place` ({ before | after: a pid }, or null: where
+ * linkPage puts it): linkPage, then movePage. Returns the copy (null: it can't go there).
+ */
+export function linkAt(nav, pid, label, parentPid, place) {
+  const next = linkPage(nav, pid, label, parentPid);
+  return place ? movePage(next, pid, place) : next;
+}
+
+/**
+ * A drop on the level's menu list (index `to` among its movable rows, the row itself left
+ * out): what it does. Dragging from Not linked links a page of this folder; a page of
+ * another folder moves here (its address changes; nothing redirects: the old one goes):
+ *   { kind: 'link', place }               place: { before | after: a pid } or null
+ *   { kind: 'move', place, to }           to: its new id
+ *   { kind: 'refuse', why }
+ */
+export function dropOf(files, L, row, to) {
+  const level = L.level;
+  if (!row.movable) return { kind: 'refuse', why: `${row.title} stays where it is` };
+  if (isTemplate(level))
+    return { kind: 'refuse', why: 'A [param] folder holds only its [param] page' };
+  const rest = L.sub.filter((r) => r.movable && r.id !== row.id);
+  const place =
+    to < rest.length ? { before: rest[to].pid } : rest.length ? { after: rest.at(-1).pid } : null;
+  const here = row.id === 'home' ? !level : row.id !== 'home' && parentId(row.id) === level;
+  if (here) return { kind: 'link', place };
+  if (row.fixed) return { kind: 'refuse', why: `${row.title} stays at ${shownPath(row.id)}` };
+  if (level === row.id || level.startsWith(`${row.id}/`))
+    return { kind: 'refuse', why: `${row.title} can't go into itself` };
+  const id = join(level, nameOf(row.id));
+  if (pageIds(files).includes(id))
+    return {
+      kind: 'refuse',
+      why: `${shownPath(id)} exists already: rename one of them first (SEO › Address)`,
+    };
+  return { kind: 'move', place, to: id };
+}
+
+/** Where a row dropped on Not linked shows up there: its index in the site's order. */
+export const sortedAt = (rows, id) => rows.filter((r) => byId(r.id, id) < 0).length;

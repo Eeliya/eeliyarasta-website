@@ -1,17 +1,23 @@
 <!--
   Pages (the Content tab, while ui.pagesWin.open): the site's pages one folder at a time
-  (src/editor/lib/page-tree.js). The top: the site parts (Header, Footer), then home's folder.
-    header      ← (up one level, Esc) | the folder's page title, its path under it (each part
-                goes there) | Own page (off: the folder's URL opens its first sub page, "As /")
-    own row     "this page" (no icon): the folder's own page
-    Sub items   its pages in the menu (nav.json), in the menu's order: the grip drags one to
-                another place (the menu's order); its [param] page pinned last (a lock, no drag)
-    Not linked  every page not in the menu (All), or the ones under this folder (This folder)
-  A click selects a row and shows it in the preview; a double click (or Enter) goes into a
-  folder (a [param] page's too: it can hold another, "[item]/[year]/"), or opens a page (its Sections, Transitions, SEO: PageHead.svelte goes back). The
-  link button adds a page to the menu or takes it out (one undo step, saved with Save); +
-  opens Add page (AddPageModal.svelte); Delete asks over the row: one line when nothing links
-  to it, else with where its address and links go (a redirect). Adding and deleting go to
+  (src/editor/lib/page-tree.js), its rows on the pages' card colour (--c-page-card).
+    header      ← (up one level, Esc) | the path, each part goes there ("/" at the top) | +
+                (Add page; off where only a [param] page could go and it has one)
+    menu list   one list in the menu's order (nav.json): at the top home and the other pages;
+                in a folder its root row first (locked: its own page, the Own page switch
+                when it has a normal sub page; off: quieter, its first sub page "As /"), then
+                its pages, its [param] page pinned last (a lock)
+    Not linked  every page not in the menu (All), or the ones under this folder (This folder;
+                no filter at the top: every page is under /), in the site's order
+    Site        at the top: the Header and Footer (no grip, no delete)
+  The grips drag: in the menu list to another place (the menu's order); from it into Not
+  linked (out of the menu); from Not linked into it (into the menu there). A page of another
+  folder dropped there moves here (its address changes, links follow, no redirect), unless
+  its name is taken here. 404 and [param] pages don't move. A click selects a row and shows
+  it in the preview; a double click (or Enter) goes into a folder (a [param] page's too: it
+  can hold another, "[item]/[year]/"), or opens a page (its Sections, Transitions, SEO:
+  PageHead.svelte goes back). Delete asks over the row: one line when nothing links to it,
+  else with where its address and links go (a redirect). Adding, moving and deleting go to
   disk at once (actions.pagesOp in main.js).
 -->
 <script>
@@ -22,17 +28,19 @@
   import { ui } from './ui.svelte.js';
   import { toast } from './toasts.svelte.js';
   import { listDrag, rowsOf } from './list-drag.svelte.js';
-  import { NAV, pageFile } from '../../site/files.js';
+  import { NAV, isTemplate, pageFile } from '../../site/files.js';
   import { parentId, pathOfId } from '../../site/routes.js';
   import {
     crumbsOf,
+    dropOf,
     levelOf,
-    pageIds,
-    linkPage,
+    linkAt,
     linksTo,
+    pageIds,
     movePage,
     parentPath,
     shownPath,
+    sortedAt,
     unlinkPage,
   } from '../lib/page-tree.js';
   import { plural } from '../lib/format.js';
@@ -41,6 +49,7 @@
   let { live, actions } = $props();
 
   const GONE = '(gone)';
+  const FULL = 'Only one [param] page per folder: it has one';
   const SITE_PARTS = [
     { id: 'header', title: 'Header', sub: 'The menu and its labels' },
     { id: 'footer', title: 'Footer', sub: 'Its sections and blocks' },
@@ -52,17 +61,22 @@
   let busy = $state(false);
   let root = $state();
   let subList = $state();
+  let nlZone = $state();
   let addModal = $state();
 
   const level = $derived(ui.pagesWin.folder);
-  // a folder that is gone (deleted, undone, a stale URL): the top
+  // a folder that is gone (deleted, undone, a stale URL): the top (once the pages are there:
+  // a ?pages=/folder/ URL opens before the content is loaded)
   $effect(() => {
-    if (level && !pageIds(files).includes(level)) ui.pagesWin.folder = '';
+    const ids = pageIds(files);
+    if (level && ids.length && !ids.includes(level)) ui.pagesWin.folder = '';
   });
   // the store's files, a new object per change (the store edits its own in place)
   const files = $derived((live.version, { ...live.store.current }));
-  const L = $derived(levelOf(files, level, filter));
-  const movable = $derived(L.sub.filter((r) => !r.template));
+  // the top has no This folder (every page is under /)
+  const L = $derived(levelOf(files, level, level ? filter : 'all', live.routes));
+  const movable = $derived(L.sub.filter((r) => r.movable));
+  const nlMovable = $derived(L.notLinked.filter((r) => r.movable));
 
   /** The page menu entry (main.js pageEntries) of page id. */
   const entryOf = (row) =>
@@ -100,12 +114,6 @@
     live.store.set(NAV, '/header', next.header, { source: 'panel', structure: true });
   }
   const pidOf = (id) => files[pageFile(id)]?.id;
-  function toggleLink(row) {
-    const nav = live.current(NAV) || {};
-    if (row.linked) return setNav(unlinkPage(nav, row.pid));
-    setNav(linkPage(nav, row.pid, row.title, level ? pidOf(level) : null));
-    toast(`${row.title} is in the menu now (Content › Header to change it)`, { kind: 'ok' });
-  }
   function setOwn(on) {
     live.store.set(pageFile(level), '/ownPage', on ? undefined : false, {
       source: 'panel',
@@ -113,23 +121,62 @@
     });
   }
 
-  // ---- reorder: the Sub items' grips (the menu's order)
+  // ---- drag: in the menu list (its order), between it and Not linked (in or out of the menu)
   const ld = listDrag({
-    lists: () => [rowsOf(subList, '[data-prow]')],
-    shape: () => movable.map((r) => r.id).join(),
+    lists: () => [rowsOf(subList, '[data-prow]', 0), rowsOf(nlZone, '.pl-rows > [data-prow]', 1)],
+    shape: () => `${movable.map((r) => r.id)}|${nlMovable.map((r) => r.id)}`,
     ondrop: (d) => {
-      const from = movable[d.j];
-      const rest = movable.filter((_, i) => i !== d.j);
-      const to = d.over.to;
-      const place = to < rest.length ? { before: rest[to].pid } : { after: rest.at(-1).pid };
-      setNav(movePage(live.current(NAV) || {}, from.pid, place), from.title);
+      const nav = live.current(NAV) || {};
+      const from = (d.at === 0 ? movable : nlMovable)[d.j];
+      if (d.over.at === 1) {
+        // into Not linked: out of the menu (Not linked has no order: where it lands is its place)
+        if (d.at === 0) setNav(unlinkPage(nav, from.pid));
+        return;
+      }
+      if (d.at === 0) {
+        const rest = movable.filter((_, i) => i !== d.j);
+        const to = d.over.to;
+        const place = to < rest.length ? { before: rest[to].pid } : { after: rest.at(-1).pid };
+        return setNav(movePage(nav, from.pid, place), from.title);
+      }
+      link(from, dropOf(files, L, from, d.over.to));
     },
     scroller: () => subList,
     grabbing: true,
     edgeScroll: true,
     swallowClick: true,
   });
+  const parentPid = () => (level ? pidOf(level) : null);
+  /** A Not linked page dropped on the menu list: linked there, moved here first, or refused. */
+  async function link(row, plan) {
+    if (plan.kind === 'refuse') return void toast(plan.why, { kind: 'error' });
+    if (plan.kind === 'move') {
+      busy = true;
+      const res = await actions.pagesOp({ op: 'move', id: row.id, parent: level });
+      busy = false;
+      if (!res) return;
+      toast(`${row.title} is at ${shownPath(res.id)} now (no redirect from ${shownPath(row.id)})`, {
+        kind: 'ok',
+      });
+    }
+    setNav(linkAt(live.current(NAV) || {}, row.pid, row.title, parentPid(), plan.place), row.title);
+  }
   const drag = $derived(ld.drag);
+  // where a drag would land, for the lines and the list it lights up
+  const over = $derived(drag?.moving ? drag.over : null);
+  const dragged = $derived(drag ? (drag.at === 0 ? movable : nlMovable)[drag.j] : null);
+  // into Not linked: the line where it will sit (the site's order), not where the pointer is
+  const nlAt = $derived(
+    over?.at === 1 && drag.at === 0 && dragged ? sortedAt(L.notLinked, dragged.id) : -1,
+  );
+  const nlLine = (i) =>
+    nlAt < 0
+      ? ''
+      : i === nlAt
+        ? 'is-drop-before'
+        : nlAt === L.notLinked.length && i === nlAt - 1
+          ? 'is-drop-after'
+          : '';
 
   // ---- delete
   // a [param] page always asks: its item pages have addresses visitors may come to
@@ -182,11 +229,18 @@
   }
 </script>
 
-<!-- a row: [lead | title / path | As / | N › | link trash], its delete confirm over it -->
-{#snippet row(r, { drag: j = -1 } = {})}
-  {@const lifted = j >= 0 && drag?.j === j && drag.moving}
+<!-- a row: [lead | title / path | As / | N › | trash or Own page], its delete confirm over it
+     (j, at: its grip's index in the menu list (0) or Not linked (1); line: a drop line) -->
+{#snippet row(r, { j = -1, at = 0, line = '' } = {})}
+  {@const lifted = j >= 0 && drag?.moving && drag.at === at && drag.j === j}
   <li
-    class={['prow', sel === r.id && 'is-sel', lifted && 'is-lifted', j >= 0 && ld.dropAt(j)]}
+    class={[
+      'prow',
+      sel === r.id && 'is-sel',
+      lifted && 'is-lifted',
+      r.off && 'is-off',
+      line || (at === 0 && j >= 0 && ld.dropAt(j, 0)),
+    ]}
     style:translate={lifted ? `0 ${drag.dy}px` : null}
     data-prow={j >= 0 ? j : undefined}
   >
@@ -194,13 +248,17 @@
       <button
         type="button"
         class="prow__lead prow__grip"
-        aria-label="Move {r.title} (drag: its place in the menu)"
-        title="Drag to reorder"
-        onpointerdown={(e) => ld.grab(e, { j })}
+        aria-label={at === 0
+          ? `Move ${r.title} (drag: its place in the menu, or into Not linked)`
+          : `Move ${r.title} (drag into the list above: into the menu)`}
+        title={at === 0 ? 'Drag to reorder, or into Not linked' : 'Drag into the menu list'}
+        onpointerdown={(e) => ld.grab(e, { j, at })}
         ><i class="fa-solid fa-grip-vertical" aria-hidden="true"></i></button
       >
-    {:else if r.template}
-      <span class="prow__lead prow__pin" title="Always last: one page per item"
+    {:else if r.self || r.template}
+      <span
+        class="prow__lead prow__pin"
+        title={r.self ? 'Always first: the folder’s own page' : 'Always last: one page per item'}
         ><i class="fa-solid fa-lock" aria-hidden="true"></i></span
       >
     {:else}
@@ -218,7 +276,11 @@
       <span class="prow__title">
         {#if r.template}<i class="fa-solid fa-layer-group" aria-hidden="true"></i>{/if}
         <span>{r.title}</span>
-        {#if r.self}<span class="prow__tag">this page</span>{/if}
+        {#if r.self}
+          <span class="prow__tag">root</span>
+        {:else if r.template}
+          <span class="prow__tag">{r.nested ? `per ${r.nested}` : 'per item'}</span>
+        {/if}
         {#if !r.part && live.changed(pageFile(r.id), '')}
           <i class="prow__dot" title="Unsaved changes" aria-label="Unsaved changes"></i>
         {/if}
@@ -228,15 +290,13 @@
     {#if r.asRoot}
       <span class="prow__at" title="{L.path} opens it (its own page is off)">As /</span>
     {/if}
-    {#if r.template && !r.self}
+    {#if r.template}
       <span class="prow__kids" title="{plural(r.items ?? 0, 'item')} in its source"
-        >{r.nested ? `per ${r.nested}` : plural(r.items ?? 0, 'page')}<i
-          class="fa-solid fa-chevron-right"
-          aria-hidden="true"
-        ></i></span
+        >{plural(r.count ?? 0, 'page')}{#if !r.self}<i
+            class="fa-solid fa-chevron-right"
+            aria-hidden="true"
+          ></i>{/if}</span
       >
-    {:else if r.template}
-      <span class="prow__kids">{plural(r.items ?? 0, 'page')}</span>
     {:else if r.kids && !r.self}
       <span class="prow__kids" title="{plural(r.kids, 'page')} in it"
         >{r.kids}<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span
@@ -249,22 +309,29 @@
         aria-label="Hidden from search engines"
       ></i>
     {/if}
-    {#if !r.self && !r.part}
-      {#if !r.template}
-        <Button
-          size="small"
-          icon={r.linked ? 'link-slash' : 'link'}
-          iconOnly
-          label={r.linked ? `Take ${r.title} out of the menu` : `Add ${r.title} to the menu`}
-          onclick={() => toggleLink(r)}
+    {#if r.self && L.canOwn}
+      <label
+        class="prow__own"
+        title={r.off
+          ? `${L.path} opens its first sub page (302). On: this page`
+          : `${L.path} is this page. Off: it opens its first sub page`}
+      >
+        <input
+          type="checkbox"
+          class="switch"
+          role="switch"
+          aria-label="Own page"
+          checked={!r.off}
+          onchange={(e) => setOwn(e.currentTarget.checked)}
         />
-      {/if}
+      </label>
+    {:else if !r.self && !r.part && !r.fixed}
       <Button
         size="small"
         icon="trash"
         iconOnly
-        label={r.fixed ? `${r.title} can't be deleted` : `Delete ${r.title}`}
-        disabled={r.fixed || busy}
+        label="Delete {r.title}"
+        disabled={busy}
         onclick={() => ask(r)}
       />
     {/if}
@@ -350,7 +417,7 @@
   </li>
 {/snippet}
 
-{#snippet head(title, n, add, withFilter = false)}
+{#snippet head(title, n, withFilter = false)}
   <div class="pl-head">
     <span class="pl-head__title">{title}</span>
     {#if n !== undefined}<span class="pl-head__n">{n}</span>{/if}
@@ -362,29 +429,17 @@
         <button
           type="button"
           aria-pressed={filter === 'here'}
-          disabled={!level}
-          title={level ? `Only the pages under ${L.path}` : 'At the top: every page is under /'}
+          title="Only the pages under {L.path}"
           onclick={() => (filter = 'here')}>This folder</button
         >
       </span>
-    {/if}
-    {#if add}
-      <Button
-        size="small"
-        icon="plus"
-        iconOnly
-        label={add.label}
-        disabled={level === '404'}
-        onclick={() => addModal.open({ level, linked: add.linked })}
-      />
     {/if}
   </div>
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="pl" bind:this={root} {onkeydown}>
-  <!-- [ ← ]  Title            Own page ◯
-              / photography/ -->
+  <!-- [ ← ] / photography/                    [ + ]   (the top: just / and +) -->
   <div class="pl-top">
     {#if level}
       <Button
@@ -395,34 +450,51 @@
         onclick={() => go(parentId(level))}
       />
     {/if}
-    <div class="pl-top__main">
-      <h2 class="pl-top__title">{L.title}</h2>
-      <nav class="pl-top__path" aria-label="Where you are">
-        {#each crumbsOf(level) as c, i (c.level)}
-          {#if i === crumbsOf(level).length - 1}
-            <span class="pl-top__crumb is-current" aria-current="location">{c.label}</span>
-          {:else}
-            <button type="button" class="pl-top__crumb" onclick={() => go(c.level)}
-              >{c.label}</button
-            >
-          {/if}
-        {/each}
-      </nav>
-    </div>
-    {#if L.canOwn || L.own === null}
-      <label
-        class="pl-top__own"
-        title={L.own ? `${L.path} is its own page` : `${L.path} opens its first sub page (302)`}
-      >
-        Own page
-        <input
-          type="checkbox"
-          class="switch"
-          role="switch"
-          checked={!!L.own}
-          onchange={(e) => setOwn(e.currentTarget.checked)}
-        />
-      </label>
+    <nav class="pl-top__path" aria-label="Where you are">
+      {#each crumbsOf(level) as c, i (c.level)}
+        {#if i === crumbsOf(level).length - 1}
+          <span class="pl-top__crumb is-current" aria-current="location">{c.label}</span>
+        {:else}
+          <button type="button" class="pl-top__crumb" onclick={() => go(c.level)}>{c.label}</button>
+        {/if}
+      {/each}
+    </nav>
+    <!-- off: a [param] folder takes only a [param] page, and it has one (the title says so:
+         a disabled button shows none of its own) -->
+    <span class="pl-top__add" title={L.full ? FULL : null}>
+      <Button
+        size="small"
+        icon="plus"
+        iconOnly
+        label="Add page"
+        title={L.full ? FULL : undefined}
+        disabled={level === '404' || L.full}
+        onclick={() => addModal.open({ level, linked: !isTemplate(level) })}
+      />
+    </span>
+  </div>
+
+  <ul class={['pl-rows', over?.at === 0 && drag.at === 1 && 'is-target']} bind:this={subList}>
+    {#if L.own}
+      {@render row(L.own, { line: over?.at === 0 && !movable.length ? 'is-drop-after' : '' })}
+    {/if}
+    {#each L.sub as r (r.id)}
+      {@render row(r, { j: movable.indexOf(r) })}
+    {/each}
+  </ul>
+  {#if level && !L.sub.length}<p class="hint small">No sub pages yet: + adds one.</p>{/if}
+
+  <div class={['pl-zone', over?.at === 1 && drag.at === 0 && 'is-target']} bind:this={nlZone}>
+    {@render head('Not linked', L.notLinked.length, !!level)}
+    <ul class="pl-rows">
+      {#each L.notLinked as r, i (r.id)}
+        {@render row(r, { j: nlMovable.indexOf(r), at: 1, line: nlLine(i) })}
+      {/each}
+    </ul>
+    {#if !L.notLinked.length}
+      <p class="hint small">
+        {filter === 'here' && level ? `None under ${L.path}` : 'Every page is in the menu'}
+      </p>
     {/if}
   </div>
 
@@ -431,33 +503,6 @@
     <ul class="pl-rows">
       {#each SITE_PARTS as p (p.id)}{@render row({ ...p, part: true })}{/each}
     </ul>
-  {/if}
-
-  {#if L.own}
-    <ul class="pl-rows">{@render row(L.own)}</ul>
-  {/if}
-
-  {@render head('Sub items', L.sub.length, { label: 'Add a sub item (in the menu)', linked: true })}
-  <ul class="pl-rows" bind:this={subList}>
-    {#each L.sub as r, i (r.id)}
-      {@render row(r, { drag: r.template ? -1 : i })}
-    {/each}
-  </ul>
-  {#if !L.sub.length}<p class="hint small">No pages of {L.path} in the menu</p>{/if}
-
-  {@render head(
-    'Not linked',
-    L.notLinked.length,
-    { label: 'Add a page (not in the menu)', linked: false },
-    true,
-  )}
-  <ul class="pl-rows">
-    {#each L.notLinked as r (r.id)}{@render row(r)}{/each}
-  </ul>
-  {#if !L.notLinked.length}
-    <p class="hint small">
-      {filter === 'here' ? `None under ${L.path}` : 'Every page is in the menu'}
-    </p>
   {/if}
 </div>
 
@@ -471,30 +516,17 @@
     align-content: start;
   }
 
-  // [ ← | title / path | Own page ◯ ]: 48px, the title on the rows' text edge
+  // [ ← | path | + ]: 48px, the path on the rows' text edge (at the top: "/" and +)
   .pl-top {
     @include row(var(--space-2));
     min-height: 48px;
     margin-bottom: var(--space-1);
   }
 
-  .pl-top__main {
-    @include stack(0);
-    flex: 1;
-    min-width: 0;
-  }
-
-  .pl-top__title {
-    @include ellipsis;
-    margin: 0;
-    color: var(--c-text-strong);
-    font-size: var(--fs-base);
-    font-weight: 500;
-    line-height: 20px;
-  }
-
   .pl-top__path {
     @include row(0);
+    flex: 1;
+    min-width: 0;
     flex-wrap: wrap;
     font-size: var(--fs-base);
     line-height: 20px;
@@ -505,7 +537,7 @@
     border: 0;
     border-radius: var(--radius-sm);
     background: none;
-    color: var(--c-link);
+    color: var(--c-page-accent);
     font: inherit;
     cursor: pointer;
 
@@ -524,11 +556,20 @@
     }
   }
 
-  .pl-top__own {
-    @include row(var(--space-2));
-    @include muted;
+  .pl-top__add {
+    display: flex;
     flex: none;
-    cursor: pointer;
+  }
+
+  // a drag's target list: lit (an outline: nothing moves)
+  .pl-rows.is-target,
+  .pl-zone.is-target {
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-accent) 45%, transparent);
+  }
+
+  .pl-zone {
+    @include stack(var(--space-2));
   }
 
   // a group's label: SUB ITEMS 2 …… [All | This folder] +
@@ -537,16 +578,6 @@
     height: 24px;
     margin-top: var(--space-2);
     padding-right: var(--space-1);
-
-    > :global(.btn) {
-      margin-left: auto;
-      opacity: 0.3;
-    }
-
-    &:hover > :global(.btn),
-    > :global(.btn:focus-visible) {
-      opacity: 1;
-    }
   }
 
   .pl-head__title {
@@ -596,10 +627,6 @@
     }
   }
 
-  .pl-head:has(.pl-filter) > :global(.btn) {
-    margin-left: 0;
-  }
-
   .pl-rows {
     @include stack(var(--space-1));
     position: relative;
@@ -615,7 +642,7 @@
     min-height: 48px;
     padding-right: var(--space-1);
     border-radius: var(--radius-lg);
-    background: var(--c-surface-2);
+    background: var(--c-page-card);
     box-shadow: inset 0 0 0 1px transparent;
 
     > :global(.btn),
@@ -641,7 +668,7 @@
   // dragging: the row lifts and follows the pointer; a line in the gap where it lands
   .prow.is-lifted {
     z-index: 2;
-    background: var(--c-surface-3);
+    background: var(--c-card-peek);
     box-shadow:
       inset 0 0 0 1px var(--c-line-peek),
       0 18px 40px -12px var(--c-scrim);
@@ -745,7 +772,7 @@
 
   .prow__path {
     @include ellipsis;
-    color: var(--c-link);
+    color: var(--c-page-accent);
 
     &.is-muted {
       @include muted;
@@ -778,10 +805,28 @@
     margin-right: var(--space-2);
     padding: 0 var(--space-2);
     border-radius: var(--radius-pill);
-    color: var(--c-accent);
+    color: var(--c-page-accent);
     font-size: var(--fs-sm);
     line-height: 16px;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 45%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-page-accent) 45%, transparent);
+  }
+
+  // a folder's root row, its own page off: still there, quieter
+  .prow.is-off {
+    .prow__title,
+    .prow__path,
+    .prow__pin {
+      @include muted;
+    }
+  }
+
+  // the root row's Own page switch, at its end where the buttons are
+  .prow__own {
+    @include row(0);
+    flex: none;
+    align-self: stretch;
+    padding: 0 var(--space-2);
+    cursor: pointer;
   }
 
   // Delete?: over the row at its size and corners, one line, 12px in all round, a red line
@@ -792,7 +837,7 @@
     z-index: 3;
     padding: 0 var(--space-3);
     border-radius: inherit;
-    background: var(--c-surface-2);
+    background: var(--c-page-card);
     box-shadow: inset 0 0 0 1px var(--c-danger);
   }
 

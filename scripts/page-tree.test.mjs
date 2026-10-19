@@ -3,11 +3,14 @@ import assert from 'node:assert/strict';
 import {
   crumbsOf,
   levelOf,
+  dropOf,
+  linkAt,
   linkPage,
   linksTo,
   movePage,
   parentPath,
   shownPath,
+  sortedAt,
   unlinkPage,
 } from '../src/editor/lib/page-tree.js';
 import { buildRoutes } from '../src/site/routes.js';
@@ -57,15 +60,15 @@ const files = (more = {}) => ({
   ...more,
 });
 
-test('the top level: home its own page, the menu order, the rest not linked', () => {
+test('the top level: home a row of the menu list, the menu order, the rest not linked', () => {
   const l = levelOf(files(), '');
-  assert.equal(l.own.title, 'Home');
-  assert.equal(l.own.seg, '/');
+  assert.equal(l.own, null);
   assert.deepEqual(
-    l.sub.map((r) => [r.title, r.seg]),
+    l.sub.map((r) => [r.title, r.seg, r.movable, r.fixed]),
     [
-      ['Photography', '/photography/'],
-      ['About', '/about/'],
+      ['Home', '/', true, true],
+      ['Photography', '/photography/', true, false],
+      ['About', '/about/', true, false],
     ],
   );
   assert.deepEqual(
@@ -100,12 +103,16 @@ test('a folder: own segments, menu order, [param] last, Not linked filtered', ()
   );
 });
 
-test('own page off: no own row, the first sub item opens at the folder URL', () => {
+test('own page off: the root row stays (off), the first sub item opens at the folder URL', () => {
   const f = files({
     'pages/photography/index.json': page('pg-phot', 'Photography', { ownPage: false }),
   });
   const l = levelOf(f, 'photography');
-  assert.equal(l.own, null);
+  assert.deepEqual(
+    [l.own.title, l.own.seg, l.own.self, l.own.off],
+    ['Photography', '/', true, true],
+  );
+  assert.equal(levelOf(files(), 'photography').own.off, false);
   assert.equal(l.canOwn, true);
   assert.deepEqual(
     l.sub.filter((r) => r.asRoot).map((r) => r.title),
@@ -190,4 +197,103 @@ test('a [param] folder in a [param] folder: its own level, "per" the outer one',
   assert.equal(parentPath('people/[person]/[year]'), '/people/:person/');
   assert.equal(parentPath('people/[person]'), '/people/');
   assert.equal(shownPath('people/[person]/[year]'), '/people/[person]/[year]/');
+});
+
+test('the Own page switch: only in a folder with a normal sub page', () => {
+  const f = files();
+  assert.equal(levelOf(f, '').canOwn, false); // the top: home is always its own page
+  assert.equal(levelOf(f, 'photography').canOwn, true);
+  assert.equal(levelOf(f, 'about').canOwn, false); // a plain page: nothing to open instead
+  assert.equal(levelOf(f, 'photography/people').canOwn, false); // only its [param] page
+  assert.equal(levelOf(f, 'photography/people/[person]').canOwn, false);
+  // a [param] folder with its [param] page: + has nothing to add
+  const nested = files({
+    'pages/photography/people/[person]/[year]/index.json': {
+      ...page('pg-year', 'x'),
+      template: { source: 'people' },
+    },
+  });
+  assert.equal(levelOf(f, 'photography/people/[person]').full, false);
+  assert.equal(levelOf(nested, 'photography/people/[person]').full, true);
+  assert.equal(levelOf(nested, 'photography/people').full, false);
+});
+
+test('404 has no grip, [param] pages neither; home moves (in the menu or Not linked)', () => {
+  const top = levelOf(files(), '');
+  const nf = top.notLinked.find((r) => r.id === '404');
+  assert.equal(nf.movable, false);
+  assert.equal(dropOf(files(), top, nf, 0).kind, 'refuse');
+  const people = levelOf(files(), 'photography/people');
+  assert.deepEqual(
+    people.sub.map((r) => [r.title, r.movable]),
+    [['[person]', false]],
+  );
+  // home out of the menu: first in Not linked, still movable
+  const nav = unlinkPage(NAV, 'pg-home');
+  const out = levelOf(files({ 'settings/nav.json': nav }), '');
+  assert.deepEqual(
+    out.notLinked.map((r) => [r.title, r.movable]),
+    [
+      ['Home', true],
+      ['Not found', false],
+      ['Old portfolio', true],
+      ['Archive', true],
+    ],
+  );
+  assert.deepEqual(dropOf(files(), out, out.notLinked[0], 1), {
+    kind: 'link',
+    place: { before: 'pg-abou' },
+  });
+  // home into a folder: it stays at /
+  assert.equal(
+    dropOf(files(), levelOf(files(), 'photography'), out.notLinked[0], 0).kind,
+    'refuse',
+  );
+});
+
+test('drag link / unlink: into the menu at the drop place, out of it; Not linked sorts', () => {
+  const f = files();
+  const ph = levelOf(f, 'photography');
+  const archive = ph.notLinked.find((r) => r.id === 'photography/archive');
+  // dropped between Places and People: linked into Photography's dropdown there
+  const plan = dropOf(f, ph, archive, 1);
+  assert.deepEqual(plan, { kind: 'link', place: { before: 'pg-peop' } });
+  const linked = linkAt(NAV, archive.pid, archive.title, 'pg-phot', plan.place);
+  assert.deepEqual(
+    linked.header[1].children.map((c) => c.page),
+    ['pg-plac', 'pg-arch', 'pg-peop'],
+  );
+  // last: after the last one; an empty list: where linkPage puts it
+  assert.deepEqual(dropOf(f, ph, archive, 9).place, { after: 'pg-peop' });
+  assert.equal(dropOf(f, levelOf(f, 'about'), { ...archive, id: 'about/x' }, 0).place, null);
+  // out of the menu: unlinkPage; Not linked has no order: the line is its sorted place
+  const after = levelOf(files({ 'settings/nav.json': unlinkPage(NAV, 'pg-abou') }), '');
+  assert.ok(after.notLinked.some((r) => r.id === 'about'));
+  assert.equal(sortedAt(levelOf(f, '').notLinked, 'about'), 1); // after 404, before old
+  assert.equal(sortedAt(levelOf(f, '').notLinked, 'home'), 0);
+});
+
+test('a page of another folder dropped on the menu list moves here, unless its name is taken', () => {
+  const f = files({ 'pages/about/archive/index.json': page('pg-arc2', 'Old archive') });
+  const top = levelOf(f, '');
+  const old = top.notLinked.find((r) => r.id === 'old');
+  const ph = levelOf(f, 'photography');
+  assert.deepEqual(dropOf(f, ph, old, 0), {
+    kind: 'move',
+    place: { before: 'pg-plac' },
+    to: 'photography/old',
+  });
+  // /photography/archive/ exists: about/archive can't come in
+  const clash = dropOf(
+    f,
+    ph,
+    top.notLinked.find((r) => r.id === 'about/archive'),
+    0,
+  );
+  assert.equal(clash.kind, 'refuse');
+  assert.match(clash.why, /\/photography\/archive\/ exists already/);
+  // not into itself, not into a [param] folder
+  const phRow = { ...ph.own, self: false, id: 'photography' };
+  assert.equal(dropOf(f, levelOf(f, 'photography/people'), phRow, 0).kind, 'refuse');
+  assert.equal(dropOf(f, levelOf(f, 'photography/people/[person]'), old, 0).kind, 'refuse');
 });

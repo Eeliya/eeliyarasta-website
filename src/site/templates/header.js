@@ -128,13 +128,14 @@ function navItem(ctx, item, i) {
     .map((c) => navPath(ctx, c))
     .filter(Boolean)
     .join(',');
+  // "All photography →" first, as the item's own page is first in the editor's pages list
   const all = item.all
-    ? html`
-            <a class="dropdown__all" ${hrefAttrs(href)}>${label([...at, 'all'], item.all)} <span aria-hidden="true">→</span></a>`
+    ? html`<a class="dropdown__all" ${hrefAttrs(href)}>${label([...at, 'all'], item.all)} <span aria-hidden="true">→</span></a>
+            `
     : '';
   const body = children.length
     ? html`<div class="dropdown glass" id="${id}" data-dropdown hidden>
-            <div class="dropdown__cols">
+            ${all}<div class="dropdown__cols">
               ${children
                 .map((c, j) => {
                   const sub = itemsOf(ctx, c);
@@ -144,10 +145,10 @@ function navItem(ctx, item, i) {
               </div>`;
                 })
                 .join('\n              ')}
-            </div>${all}
+            </div>
           </div>`
     : html`<div class="dropdown dropdown--narrow glass" id="${id}" data-dropdown hidden>
-            <ul class="dropdown__list">${ddLinks(ctx, items)}</ul>${all}
+            ${all}<ul class="dropdown__list">${ddLinks(ctx, items)}</ul>
           </div>`;
   return html`<div class="nav__group">
           <button class="nav__item" type="button" aria-expanded="false" aria-controls="${id}" data-dropdown-toggle data-nav-section="${esc(section)}">${label([...at, 'label'], item.label)} ${caret}</button>

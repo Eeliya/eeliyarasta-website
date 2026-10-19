@@ -110,7 +110,7 @@ export function editableFiles(root) {
 // ---------------------------------------------------------------- pages
 // Root names that are not pages: the editor, Vite's assets, the photos, and the two specials.
 const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
-const PROTECTED = new Set(['home', '404']); // no rename or delete
+const PROTECTED = new Set(['home', '404']); // no rename, move or delete
 
 /**
  * The pages list (src/editor/svelte/PagesList.svelte, AddPageModal, the SEO tab's Address): the pages in content/en/pages/. Every
@@ -126,6 +126,8 @@ const PROTECTED = new Set(['home', '404']); // no rename or delete
  *                                       whose value is the URL part, default the item's slug)
  *   rename    { id, name }              the page's folder, with everything in it; a [param]
  *                                       page: its param (name "model": [model]), URLs stay
+ *   move      { id, parent }            the page's folder into <parent>/ (its name kept), with
+ *                                       everything in it; links follow, no redirect (pre-v1)
  *   delete    { id, redirect }          the page's folder, with everything in it; its paths
  *                                       redirect to `redirect` (a page's path; default: the
  *                                       parent page; in a [param] page its pattern, each
@@ -201,7 +203,9 @@ export function pagesOp(
       return {}; // a broken file: the build says which
     }
     const old = redirectsOf(after);
-    const moved = plan ? moveRedirects(old, plan.moves) : { list: old, added: [] };
+    const moved = plan
+      ? moveRedirects(old, plan.moves, { add: !plan.noRedirect })
+      : { list: old, added: [] };
     const { list, pruned } = pruneRedirects(moved.list, sitePaths(after));
     if (JSON.stringify(list) !== JSON.stringify(old))
       writeData(REDIRECTS, { version: VERSION, redirects: list });
@@ -225,7 +229,7 @@ export function pagesOp(
       ),
     );
 
-  if (!['add', 'template', 'rename', 'delete'].includes(op))
+  if (!['add', 'template', 'rename', 'move', 'delete'].includes(op))
     return fail(400, `Unknown pages op "${op ?? ''}"`);
   if (op === 'add' || op === 'template') {
     if (parent !== '' && (PROTECTED.has(parent) || !isPage(parent)))
@@ -293,7 +297,7 @@ export function pagesOp(
   }
 
   if (!isPage(id)) return fail(404, `No page "${id ?? ''}"`);
-  if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed or deleted`);
+  if (PROTECTED.has(id)) return fail(400, `${id} can't be renamed, moved or deleted`);
   const template = isTemplate(id);
 
   if (op === 'rename' && !template) {
@@ -308,6 +312,7 @@ export function pagesOp(
     return fail(400, `Fix the content first: ${err.message}`);
   }
   if (op === 'rename' && template) return renameParamOp(before);
+  if (op === 'move') return moveOp(before);
   // default: the parent page; in a [param] page, its pattern: each item page goes one level
   // up, to the same outer item ("/people/:person/:year/" -> "/people/:person/")
   const target = redirect === undefined ? pathOfId(parentOf(id) || 'home') : redirect;
@@ -397,6 +402,38 @@ export function pagesOp(
     const renamed = renameParam(list, pathOfId(id), old, name);
     if (JSON.stringify(renamed) !== JSON.stringify(list))
       writeData(REDIRECTS, { version: VERSION, redirects: renamed });
+    return done({ id: to, created: inside.map(moved), removed: inside });
+  }
+
+  /**
+   * move a page into another folder (`parent`, '' the top), its name kept: its folder with
+   * everything in it, links follow; no redirect (its old address just goes). Not a [param]
+   * page, not into itself, not where its name is taken.
+   */
+  function moveOp(before) {
+    if (template) return fail(400, 'A [param] page stays in its folder');
+    if (typeof parent !== 'string') return fail(400, 'Move it where?');
+    if (parent !== '' && (PROTECTED.has(parent) || !isPage(parent)))
+      return fail(400, `No page "${parent}" to move it into`);
+    if (isTemplate(parent)) return fail(400, 'A [param] folder holds only its [param] page');
+    if (parent === parentOf(id)) return fail(400, `${id} is there already`);
+    if (parent === id || parent.startsWith(`${id}/`))
+      return fail(400, `${id} can't go into itself`);
+    const name = id.split('/').at(-1);
+    const bad = checkName(parent, name);
+    if (bad) return fail(400, bad);
+    const to = join(parent, name);
+    const moves = pageMoves(before, { id, into: to });
+    plan = { moves, noRedirect: true, ...moveLinks(before, moves, { hash: true }) };
+    const inside = filesIn(id);
+    onWrite();
+    fs.mkdirSync(path.dirname(dirOf(to)), { recursive: true });
+    fs.renameSync(dirOf(id), dirOf(to));
+    const data = JSON.parse(fs.readFileSync(abs(pageFile(to)), 'utf8'));
+    if (NAMED_VIEWS[id] && !data.view) write(pageFile(to), { ...data, view: NAMED_VIEWS[id] });
+    const prefix = `pages/${id}/`;
+    const moved = (f) => (f.startsWith(prefix) ? `pages/${to}/${f.slice(prefix.length)}` : f);
+    applyPlan(moved);
     return done({ id: to, created: inside.map(moved), removed: inside });
   }
 

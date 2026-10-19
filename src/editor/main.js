@@ -251,7 +251,7 @@ function pickTarget(item, path) {
 }
 
 /**
- * The Pages window: add, rename or delete pages on disk (source.pagesOp), then take the new
+ * The Pages window: add, rename, move or delete pages on disk (source.pagesOp), then take the new
  * and removed files into the store, update the page menu and show the page. Moving or
  * deleting a page with unsaved edits needs a Save or Discard first. Resolves to the server's
  * answer ({ id, created, removed }), or null when nothing happened.
@@ -263,7 +263,7 @@ async function pagesOp(body) {
       )
     : [];
   const dirty = store.dirtyFiles().filter((f) => touched.includes(f));
-  if (dirty.length && ['rename', 'delete'].includes(body.op)) {
+  if (dirty.length && ['rename', 'move', 'delete'].includes(body.op)) {
     toast('Save or discard the unsaved changes first', { kind: 'error', files: dirty });
     return null;
   }
@@ -294,7 +294,7 @@ async function pagesOp(body) {
   let to = null;
   if (body.op === 'add') to = pathOfId(res.id);
   else if (body.op === 'template') to = routes.find((r) => r.id === res.id)?.path;
-  else if (body.op === 'rename' && shown.startsWith(oldPath))
+  else if (['rename', 'move'].includes(body.op) && shown.startsWith(oldPath))
     to = pathOfId(res.id) + shown.slice(oldPath.length);
   else if (body.op === 'delete' && shown.startsWith(oldPath))
     to = pathOfId(res.id).replace(/[^/]+\/$/, '');

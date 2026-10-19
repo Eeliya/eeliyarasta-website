@@ -2,7 +2,7 @@
   Add page (PagesList's +): a page in the folder shown, or its [param] page (one page per item
   of a source, at /folder/[param]/; a [param] folder holds only another one, so in one only that
   kind can be added). Title, the name in its URL (from the title, unless typed),
-  In the menu (the group's + picks it: Sub items on, Not linked off). Adding goes to disk at
+  In the menu (on by default). Adding goes to disk at
   once (actions.pagesOp); In the menu adds its menu item (an undo step, saved with Save).
 -->
 <script>
