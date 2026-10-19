@@ -961,8 +961,9 @@ the left. Then:
   at its end when the folder has a normal sub page (off: `"ownPage": false`, see "Pages and
   URLs"; the row stays, quieter, and the first sub page is tagged **As /**: the folder's URL
   opens it), then its pages. The grip drags one to another place (the menu's order, one undo
-  step). Its `[param]` page is pinned last (a lock, "per item", or "per [person]" in another,
-  and its count of pages; a double click goes into it, where its own `[param]` page can be
+  step). Its `[param]` page is pinned last (a lock and a tag with its count of pages:
+  "per item · 4", or "per [person] · 4" in another; 0, a source with no items, is amber; a
+  double click goes into it, where its own `[param]` page can be
   added: + is off once it has one). A plain page's level: its root row and "No sub pages yet";
 - **Not linked**: every page that isn't in the menu, the whole site's (**All**) or this
   folder's (**This folder**; no filter at the top), in the site's order (home first, then by
@@ -981,7 +982,12 @@ Rows show only their own segment under the folder (`people/`; elsewhere the full
 titles and paths as written. A click selects a row and shows it in the preview; a double click
 (or Enter) goes into the page's level (any page: a plain one shows its root row and "No sub
 pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections,
-Transitions, SEO). A dot after a
+Transitions, SEO). Every row also has a quiet **edit** button (a pen, 30% until hovered or
+focused, like the trash) that opens that page's Sections the same way in one click (no select,
+no drag; Header and Footer open theirs). A row's end is fixed 24px slots, `edit | trash | ›`
+(an empty slot where a row has no trash, as Home, 404 and Site), so the buttons line up; the
+`›` (muted) marks a page with pages inside (there are no counts of sub pages). A level's root
+row ends with edit, then its Own page switch (or its empty place). A dot after a
 title: unsaved changes in its file; an eye: hidden from search. Content › Header has the menu's
 labels and dropdowns. **+** opens **Add page** (title -> URL name, In the menu; or a **[param]
 page**: a template with a source and a param name, `[slug]` by default, one per folder, none at

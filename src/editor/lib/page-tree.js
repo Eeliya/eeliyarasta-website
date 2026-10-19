@@ -154,6 +154,34 @@ export function levelOf(files, level, filter = 'all', routes = null) {
  */
 export const goesInside = (row) => !row.self && row.id !== 'home' && row.id !== NOT_FOUND;
 
+/**
+ * A row's tag after its title: "root" (a level's own row), a [param] page's "per item · 4" or
+ * "per [person] · 4" (its pages; 0: warn, its source has no items), else null.
+ */
+export function tagOf(row) {
+  if (row.self) return { text: 'root' };
+  if (!row.template) return null;
+  const n = row.count ?? 0;
+  return { text: `per ${row.nested || 'item'} · ${n}`, warn: n === 0 };
+}
+
+/** A row has a level of pages under it to go into: the › hint (not on a level's own row). */
+export const hasInside = (row) => !row.self && !row.part && (row.kids > 0 || !!row.template);
+
+/**
+ * What a row's Edit opens (its Sections in Content): its entry in the page menu (main.js
+ * pageEntries: { kind, path, template?, items?, id? }): a site part's, a [param] page's (its
+ * items: the preview shows one), else the page at the row's path.
+ */
+export const entryFor = (pages, row) =>
+  pages.find((p) =>
+    row.part
+      ? p.kind === 'part' && p.id === row.id
+      : row.template
+        ? p.template === row.id
+        : p.kind === 'page' && p.path === row.path && !p.items,
+  );
+
 /** The path crumbs of a level: [{ label: '/', level: '' }, { label: 'photography/', … }]. */
 export const crumbsOf = (level) => [
   { label: '/', level: '' },

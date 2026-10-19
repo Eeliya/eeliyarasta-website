@@ -4,7 +4,9 @@ import {
   crumbsOf,
   levelOf,
   dropOf,
+  entryFor,
   goesInside,
+  hasInside,
   linkAt,
   linkPage,
   linksTo,
@@ -12,6 +14,7 @@ import {
   parentPath,
   shownPath,
   sortedAt,
+  tagOf,
   unlinkPage,
 } from '../src/editor/lib/page-tree.js';
 import { buildRoutes } from '../src/site/routes.js';
@@ -312,4 +315,52 @@ test('a double click goes into any page level; a root row, home and 404 open', (
   assert.equal(goesInside(about.own), false); // the root row opens the page
   assert.deepEqual([about.own.title, about.sub.length], ['About', 0]);
   assert.equal(goesInside(levelOf(f, 'photography/people').sub[0]), true); // [person]
+});
+
+test("the count tag: a [param] row 'per item · N' or 'per [person] · N' (0 warns); root rows 'root'", () => {
+  const year = { ...page('pg-year', 'Year'), template: { source: 'people' } };
+  const f = files({ 'pages/photography/people/[person]/[year]/index.json': year });
+  const person = levelOf(f, 'photography/people').sub.find((r) => r.template);
+  assert.deepEqual(tagOf(person), { text: 'per item · 1', warn: false });
+  const inside = levelOf(f, 'photography/people/[person]');
+  assert.deepEqual(tagOf(inside.own), { text: 'root' });
+  assert.deepEqual(tagOf(inside.sub[0]), { text: 'per [person] · 1', warn: false });
+  const none = levelOf(
+    files({ 'sources/people.json': { version: 1, items: [] } }),
+    'photography/people',
+  );
+  assert.deepEqual(tagOf(none.sub.find((r) => r.template)), { text: 'per item · 0', warn: true });
+  assert.equal(tagOf(levelOf(f, '').sub.find((r) => r.id === 'about')), null); // no count on pages
+  // the › only where there are pages to go into (not on a level's own row, not plain pages)
+  const top = levelOf(f, '');
+  const by = (id) => [...top.sub, ...top.notLinked].find((r) => r.id === id);
+  assert.deepEqual(
+    ['photography', 'about', 'home'].map((id) => hasInside(by(id))),
+    [true, false, false],
+  );
+  assert.equal(hasInside(person), true);
+  assert.equal(hasInside(inside.own), false);
+});
+
+test("a row's Edit opens its page: the page at its path, a [param] page's entry, a site part", () => {
+  const f = files();
+  const PAGES = [
+    { kind: 'page', path: '/', title: 'Home' },
+    { kind: 'page', path: '/photography/', title: 'Photography' },
+    { kind: 'page', path: '/photography/people/', title: 'People' },
+    {
+      kind: 'page',
+      path: '/photography/people/[person]',
+      template: 'photography/people/[person]',
+      items: [{ path: '/photography/people/noor/' }],
+    },
+    { kind: 'part', id: 'header', title: 'Header' },
+  ];
+  const photo = levelOf(f, 'photography');
+  assert.equal(entryFor(PAGES, photo.own).title, 'Photography'); // its root row: itself
+  const people = levelOf(f, 'photography/people');
+  assert.equal(entryFor(PAGES, people.own).title, 'People'); // not its [param] page's entry
+  assert.equal(entryFor(PAGES, people.sub[0]).template, 'photography/people/[person]');
+  assert.equal(entryFor(PAGES, levelOf(f, '').sub[0]).title, 'Home');
+  assert.equal(entryFor(PAGES, { id: 'header', part: true }).title, 'Header');
 });

@@ -20,7 +20,8 @@
   it in the preview; a double click (or Enter) goes into a page's level (any page, a plain one
   too: its root row and "No sub pages yet"; a [param] page's: it can hold another), and on a
   level's root row, on Home, 404, Header or Footer opens it (its Sections, Transitions, SEO:
-  PageHead.svelte goes back). Delete asks over the row: one line when nothing links to it,
+  PageHead.svelte goes back). Each row's edit button (pen) opens it the same way, one click
+  (no select, no drag). Delete asks over the row: one line when nothing links to it,
   else with where its address and links go (a redirect). Adding, moving and deleting go to
   disk at once (actions.pagesOp in main.js).
 -->
@@ -37,7 +38,9 @@
   import {
     crumbsOf,
     dropOf,
+    entryFor,
     goesInside,
+    hasInside,
     levelOf,
     linkAt,
     linksTo,
@@ -46,6 +49,7 @@
     parentPath,
     shownPath,
     sortedAt,
+    tagOf,
     unlinkPage,
   } from '../lib/page-tree.js';
   import { plural } from '../lib/format.js';
@@ -98,10 +102,6 @@
   const movable = $derived(L.sub.filter((r) => r.movable));
   const nlMovable = $derived(L.notLinked.filter((r) => r.movable));
 
-  /** The page menu entry (main.js pageEntries) of page id. */
-  const entryOf = (row) =>
-    ui.pages.find((p) => (row.template ? p.template === row.id : p.path === row.path && !p.items));
-
   function go(next) {
     ui.pagesWin.folder = next;
     sel = '';
@@ -109,9 +109,7 @@
     tick().then(() => root?.querySelector('.prow__open')?.focus());
   }
   function show(row) {
-    const entry = row.part
-      ? ui.pages.find((p) => p.kind === 'part' && p.id === row.id)
-      : entryOf(row);
+    const entry = entryFor(ui.pages, row);
     if (entry) actions.pickTarget(entry);
   }
   function open(row) {
@@ -274,7 +272,8 @@
   }
 </script>
 
-<!-- a row: [lead | title / path | As / | N › | trash or Own page], its delete confirm over it
+<!-- a row: [lead | title / path (tag) | As / | edit | trash | ›] (a level's root row: edit,
+     Own page), its delete confirm over it
      (j, at: its grip's index in the menu list (0) or Not linked (1)) -->
 {#snippet row(r, { j = -1, at = 0 } = {})}
   {@const lifted = j >= 0 && drag?.moving && drag.at === at && drag.j === j}
@@ -316,10 +315,14 @@
       <span class="prow__title">
         {#if r.template}<i class="fa-solid fa-layer-group" aria-hidden="true"></i>{/if}
         <span>{r.title}</span>
-        {#if r.self}
-          <span class="prow__tag">root</span>
-        {:else if r.template}
-          <span class="prow__tag">{r.nested ? `per ${r.nested}` : 'per item'}</span>
+        {#if tagOf(r)}
+          {@const tag = tagOf(r)}
+          <span
+            class={['prow__tag', tag.warn && 'is-warn']}
+            title={r.template
+              ? `${plural(r.count ?? 0, 'page')}: one per item of its source (${plural(r.items ?? 0, 'item')})`
+              : null}>{tag.text}</span
+          >
         {/if}
         {#if !r.part && live.changed(pageFile(r.id), '')}
           <i class="prow__dot" title="Unsaved changes" aria-label="Unsaved changes"></i>
@@ -330,18 +333,6 @@
     {#if r.asRoot}
       <span class="prow__at" title="{L.path} opens it (its own page is off)">As /</span>
     {/if}
-    {#if r.template}
-      <span class="prow__kids" title="{plural(r.items ?? 0, 'item')} in its source"
-        >{plural(r.count ?? 0, 'page')}{#if !r.self}<i
-            class="fa-solid fa-chevron-right"
-            aria-hidden="true"
-          ></i>{/if}</span
-      >
-    {:else if r.kids && !r.self}
-      <span class="prow__kids" title="{plural(r.kids, 'page')} in it"
-        >{r.kids}<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span
-      >
-    {/if}
     {#if r.noindex}
       <i
         class="fa-solid fa-eye-slash prow__flag"
@@ -349,6 +340,16 @@
         aria-label="Hidden from search engines"
       ></i>
     {/if}
+    <!-- [ edit | trash | › ]: 24px slots each (empty ones kept), so the columns line up; a
+         level's root row: edit, then its Own page switch -->
+    <Button
+      size="small"
+      icon="pen-to-square"
+      iconOnly
+      label="Edit {r.title}"
+      title="Edit: its sections"
+      onclick={() => open(r)}
+    />
     {#if r.self && L.canOwn}
       <label
         class="prow__own"
@@ -374,6 +375,19 @@
         disabled={busy}
         onclick={() => ask(r)}
       />
+    {:else if !r.self}
+      <span class="prow__slot" aria-hidden="true"></span>
+    {/if}
+    {#if r.self && !L.canOwn}
+      <!-- no switch: its place (two slots), so edit stays in the column -->
+      <span class="prow__slot" aria-hidden="true"></span>
+      <span class="prow__slot" aria-hidden="true"></span>
+    {/if}
+    {#if !r.self}
+      <span class="prow__slot" aria-hidden="true"
+        >{#if hasInside(r)}<i class="fa-solid fa-chevron-right" title="Double click: go inside"
+          ></i>{/if}</span
+      >
     {/if}
     {#if asking === r.id}
       {@const heavy = heavyOf(r)}
@@ -869,16 +883,19 @@
     }
   }
 
-  // "2 ›": the pages inside, a hint for the double click (not a button)
-  .prow__kids {
-    @include row(var(--space-1));
-    @include muted;
-    flex: none;
-    margin-right: var(--space-2);
+  // a [param] page with no pages (its source has no items)
+  .prow__tag.is-warn {
+    color: var(--c-warning);
+  }
 
-    i {
-      font-size: var(--fs-2xs);
-    }
+  // an action's 24px place when it has none, or the › (pages inside: a double click goes in)
+  .prow__slot {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    color: var(--c-text-muted);
+    font-size: var(--fs-2xs);
   }
 
   .prow__flag {
