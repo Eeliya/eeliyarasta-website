@@ -1,7 +1,7 @@
 <!--
   Settings > Redirects: content/en/settings/redirects.json (src/site/redirects.js), the old
   addresses that send visitors on, written to dist/_redirects by the build. Renaming or
-  deleting a page in the Pages window, and changing an item's slug, add them by themselves;
+  deleting a page in the pages list, and changing an item's slug, add them by themselves;
   here they can be checked, changed, added and removed. Each: from (a path, or a pattern like
   /old/:slug/), to (a page of the site or an external URL) and its status. Every change is
   one undo step.

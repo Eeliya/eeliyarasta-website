@@ -221,3 +221,80 @@ test('move refuses: a taken name, into itself, a [param] folder, home and 404, n
   assert.equal(move({ id: 'about', parent: '' }).status, 400); // there already
   assert.ok(fs.existsSync(path.join(root, 'content/en/pages/people/team/index.json')));
 });
+
+/** settings/nav.json in the test site: About, then People with Team in its dropdown. */
+function withNav(root) {
+  const nav = {
+    version: 1,
+    header: [
+      { label: 'About', page: 'pg-t037' },
+      { label: 'People', page: 'pg-t038', children: [{ label: 'Team', page: 'pg-t040' }] },
+    ],
+  };
+  const file = path.join(root, 'content/en/settings/nav.json');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(nav));
+  return root;
+}
+
+test('move refuses a reserved name at the top (and anything else listed there)', () => {
+  const root = site();
+  for (const name of ['edit', 'assets', 'media', 'sandbox']) {
+    pagesOp(root, { op: 'add', parent: 'about', name });
+    const r = pagesOp(root, { op: 'move', id: `about/${name}`, parent: '' });
+    assert.equal(r.status, 400, name);
+    assert.match(r.body.error, /reserved/);
+  }
+  assert.equal(pagesOp(root, { op: 'add', parent: '', name: 'sandbox' }).status, 400);
+});
+
+test('move with link: moved and in the menu at that place, in one op on disk', () => {
+  const root = withNav(site());
+  pagesOp(root, { op: 'add', parent: 'about', name: 'press', title: 'Press' });
+  const pid = read(root, 'pages/about/press/index.json').id;
+  const r = pagesOp(root, {
+    op: 'move',
+    id: 'about/press',
+    parent: 'people',
+    link: { parentPid: 'pg-t038', place: { before: 'pg-t040' } },
+  });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.changed.includes('settings/nav.json'));
+  assert.deepEqual(
+    read(root, 'settings/nav.json').header[1].children.map((c) => [c.label, c.page]),
+    [
+      ['Press', pid],
+      ['Team', 'pg-t040'],
+    ],
+  );
+  // a place it can't go (a dropdown into a dropdown): refused before anything moves
+  pagesOp(root, { op: 'add', parent: 'about', name: 'blog' });
+  const bad = pagesOp(root, {
+    op: 'move',
+    id: 'about/blog',
+    parent: 'people',
+    link: { parentPid: 'pg-t038', place: { before: 'pg-nope' } },
+  });
+  assert.equal(bad.status, 400);
+  assert.ok(fs.existsSync(path.join(root, 'content/en/pages/about/blog/index.json')));
+});
+
+test('delete without a redirect: its menu items go too (dropdown moves up); with one they follow', () => {
+  const root = withNav(site());
+  const r = pagesOp(root, { op: 'delete', id: 'people', redirect: null });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.changed.includes('settings/nav.json'));
+  // People and Team (in it) are gone with the folder: both out of the menu, none broken
+  assert.deepEqual(
+    read(root, 'settings/nav.json').header.map((i) => i.label),
+    ['About'],
+  );
+  assert.equal(r.body.broken, 0);
+
+  const root2 = withNav(site());
+  const r2 = pagesOp(root2, { op: 'delete', id: 'people/team', redirect: '/about/' });
+  assert.equal(r2.status, 200, JSON.stringify(r2.body));
+  assert.deepEqual(read(root2, 'settings/nav.json').header[1].children, [
+    { label: 'Team', page: 'pg-t037' },
+  ]);
+});

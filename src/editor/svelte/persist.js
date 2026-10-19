@@ -4,13 +4,13 @@
  *   The URL (shareable): /photography/people/?edit&tab=motion (src/editor/lib/editor-url.js)
  *     tab     content | motion | settings | preview (the old browse opens Preview too)
  *     (path)  the URL's own path is the page in the preview (main.js keeps it up to date)
- *     view    header | footer, when the page menu shows a site part instead of a page
+ *     view    header | footer, when a site part (Header, Footer) is edited instead of a page
  *     source  + item (+ field): the Source Explorer, open on that file and item, with that field
  *             highlighted (&source=people&item=noor-vermeer&field=summary; item is the
  *             slug, or the number without one)
  *     motion  animations: the Motion tab's Animations sub-tab (the list of animations)
  *     anim    that sub-tab, open on that animation (&anim=fade-up)
- *     pages   the Pages window, open on that page's folder (&pages=/people/; / is the root)
+ *     pages   the pages list, open on that folder (&pages=/people/; / is the root)
  *     media   + pick: the Media window, on that photo (&media=photos/x-1600.webp; / for none),
  *             picking for that field (&pick=sources/people.json#/0/images/0/src)
  *   sessionStorage (this browser tab only, survives a refresh): the finer things. Open/closed

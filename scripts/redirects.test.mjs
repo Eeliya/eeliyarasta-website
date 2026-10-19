@@ -161,7 +161,9 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
   root = site([{ from: '/crew/', to: '/people/team/' }]);
   r = pagesOp(root, { op: 'delete', id: 'people', redirect: null });
   assert.deepEqual(read(root, 'settings/redirects.json').redirects, []); // gone: no redirect to it either
-  assert.equal(r.body.broken, 4); // links to it stay (the build's link check finds them)
+  // links to it stay (the build's link check finds them); its menu items went (nav.json)
+  assert.equal(r.body.broken, 2);
+  assert.equal(JSON.stringify(read(root, 'settings/nav.json')).includes('pg-peop'), false);
   assert.equal(r.body.links, 0);
 });
 

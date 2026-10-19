@@ -33,6 +33,7 @@ import * as source from './source.js';
 import { createBridge } from './bridge.js';
 import { labelFor } from './svelte/content-groups.js';
 import { plural } from './lib/format.js';
+import { oneAtATime } from './lib/one-at-a-time.js';
 import { curtainOverrides, pathOfId, templateSection } from '../site/routes.js';
 import { BACKDROP } from '../site/backdrop.js';
 import {
@@ -155,7 +156,8 @@ function pageEntries(routes) {
         kind: 'page',
         template: id,
         path: `/${id}`,
-        title: `${section || 'Item'} item`,
+        // "People item"; a source without a section title: its [param] ("[person]")
+        title: section ? `${section} item` : id.slice(id.lastIndexOf('/') + 1),
         group: groupOf(id),
         items: [],
       };
@@ -185,7 +187,7 @@ function pageEntries(routes) {
   return entries;
 }
 
-/** The page menu: the site parts (Header, Footer), then every page of the site (404 included: it has its own file). */
+/** The page entries (ui.pages: the pages list's edit and the page head pick from them): the site parts (Header, Footer), then every page of the site (404 included: it has its own file). */
 function updatePages() {
   const path = bridge.path() || startPath();
   const routes = live.routes;
@@ -198,7 +200,7 @@ function updatePages() {
   if (ui.target?.kind !== 'part') ui.target = shownPage(path);
 }
 
-/** The page menu's entry of the page shown (a template page: the template's entry). */
+/** The page entry of the page shown (a template page: the template's entry). */
 function shownPage(path = bridge.path() || '/') {
   const shows = (i) => i.path === path || i.items?.some((it) => it.path === path);
   return (
@@ -235,7 +237,7 @@ function lockPart() {
 }
 
 /**
- * The page menu picked a page (navigate the preview), a template (one of its item pages:
+ * A page entry picked (the pages list): a page (navigate the preview), a template (one of its item pages:
  * `path`, else the one shown, else the first) or a site part (Header, Footer).
  */
 function pickTarget(item, path) {
@@ -251,12 +253,17 @@ function pickTarget(item, path) {
 }
 
 /**
- * The Pages window: add, rename, move or delete pages on disk (source.pagesOp), then take the new
- * and removed files into the store, update the page menu and show the page. Moving or
- * deleting a page with unsaved edits needs a Save or Discard first. Resolves to the server's
- * answer ({ id, created, removed }), or null when nothing happened.
+ * The pages list, Add page and the SEO tab's Address: add, rename, move or delete pages on
+ * disk (source.pagesOp), then take the new and removed files into the store, update the page
+ * entries and show the page. Moving or deleting a page with unsaved edits needs a Save or
+ * Discard first. One op at a time: one asked while another runs waits for it (each reads the
+ * files the one before wrote). Resolves to the server's answer ({ id, created, removed }), or
+ * null when nothing happened. A declaration (hoisted: App gets it before this line runs).
  */
-async function pagesOp(body) {
+function pagesOp(body) {
+  return pagesQueued(body);
+}
+const pagesQueued = oneAtATime(async (body) => {
   const touched = body.id
     ? Object.keys(store.current).filter(
         (f) => f === pageFile(body.id) || f.startsWith(`pages/${body.id}/`),
@@ -307,7 +314,7 @@ async function pagesOp(body) {
   }
   if (to) bridge.navigate(to);
   return res;
-}
+});
 
 /**
  * What a page op or Save did to links and redirects (src/site/redirects.js): links updated,

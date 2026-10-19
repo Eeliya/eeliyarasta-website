@@ -82,6 +82,14 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const isSlug = (s) => SLUG.test(String(s ?? ''));
 
 /**
+ * Top-level names that are not pages (pages/<name>/ can't be one): home and 404 (their files
+ * are pages/index.json and pages/404/), the editor, Vite's assets, the photos, the sandbox.
+ */
+export const RESERVED = ['home', '404', 'edit', 'assets', 'media', 'sandbox'];
+/** Is `name` a name no page can have in folder `parent` ('' the top)? */
+export const isReserved = (parent, name) => !parent && RESERVED.includes(name);
+
+/**
  * URL params: a page folder named "[name]" ("[person]", "[year]") is a template, one page per
  * item, the item's slug in that part of the URL. A param's name: a-z first, then a-z, 0-9, -.
  */

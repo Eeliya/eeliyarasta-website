@@ -38,6 +38,7 @@
   import {
     crumbsOf,
     dropOf,
+    editable,
     entryFor,
     goesInside,
     hasInside,
@@ -60,6 +61,7 @@
 
   const GONE = '(gone)';
   const FULL = 'Only one [param] page per folder: it has one';
+  const NO_ITEMS = 'No pages to edit yet: its source has no items';
   const SITE_PARTS = [
     { id: 'header', title: 'Header', sub: 'The menu and its labels' },
     { id: 'footer', title: 'Footer', sub: 'Its sections and blocks' },
@@ -95,8 +97,8 @@
       tick().then(() => root && play([...root.children], dir));
     });
   });
-  // the store's files, a new object per change (the store edits its own in place)
-  const files = $derived((live.version, { ...live.store.current }));
+  // the store's files (live.svelte.js: one shared copy per change)
+  const files = $derived(live.files);
   // the top has no This folder (every page is under /)
   const L = $derived(levelOf(files, level, level ? filter : 'all', live.routes));
   const movable = $derived(L.sub.filter((r) => r.movable));
@@ -108,7 +110,9 @@
     asking = '';
     tick().then(() => root?.querySelector('.prow__open')?.focus());
   }
+  // a [param] page with no items has no page to show (its row is only selected)
   function show(row) {
+    if (!editable(row)) return;
     const entry = entryFor(ui.pages, row);
     if (entry) actions.pickTarget(entry);
   }
@@ -144,6 +148,7 @@
     lists: () => [rowsOf(subList, '[data-prow]', 0), rowsOf(nlZone, '.pl-rows > [data-prow]', 1)],
     shape: () => `${movable.map((r) => r.id)}|${nlMovable.map((r) => r.id)}`,
     ondrop: (d) => {
+      if (busy) return; // a move runs: one op at a time
       const nav = live.current(NAV) || {};
       const from = (d.at === 0 ? movable : nlMovable)[d.j];
       if (d.over.at === 1) {
@@ -166,6 +171,7 @@
   });
   // the row in hand floats over the list from where it was (.pl's coordinates)
   const grab = (e, j, at) =>
+    !busy &&
     ld.grab(e, {
       j,
       at,
@@ -173,20 +179,30 @@
         e.currentTarget.closest('.prow').getBoundingClientRect().top -
         root.getBoundingClientRect().top,
     });
-  const parentPid = () => (level ? pidOf(level) : null);
   /** A Not linked page dropped on the menu list: linked there, moved here first, or refused. */
   async function link(row, plan) {
     if (plan.kind === 'refuse') return void toast(plan.why, { kind: 'error' });
-    if (plan.kind === 'move') {
-      busy = true;
-      const res = await actions.pagesOp({ op: 'move', id: row.id, parent: level });
-      busy = false;
-      if (!res) return;
+    // the level and its page now: the op may end after another level is shown
+    const parent = level;
+    const parentPid = level ? pidOf(level) : null;
+    if (plan.kind === 'link')
+      return setNav(
+        linkAt(live.current(NAV) || {}, row.pid, row.title, parentPid, plan.place),
+        row.title,
+      );
+    // moved here and linked in one op on disk (nav.json follows the files)
+    busy = true;
+    const res = await actions.pagesOp({
+      op: 'move',
+      id: row.id,
+      parent,
+      link: { parentPid, place: plan.place },
+    });
+    busy = false;
+    if (res)
       toast(`${row.title} is at ${shownPath(res.id)} now (no redirect from ${shownPath(row.id)})`, {
         kind: 'ok',
       });
-    }
-    setNav(linkAt(live.current(NAV) || {}, row.pid, row.title, parentPid(), plan.place), row.title);
   }
   const drag = $derived(ld.drag);
   // where a drag would land, for the lines and the list it lights up
@@ -256,12 +272,10 @@
   async function remove(row, heavy) {
     const redirect = heavy && redirectTo !== GONE ? redirectTo : null;
     busy = true;
-    const res = await actions.pagesOp({ op: 'delete', id: row.id, redirect });
+    // no redirect: its menu item goes with it, on disk (pagesOp: nav.json follows the files)
+    await actions.pagesOp({ op: 'delete', id: row.id, redirect });
     busy = false;
     asking = '';
-    // no redirect: its menu item goes too (a link to no page)
-    if (res && row.linked && !redirect) setNav(unlinkPage(live.current(NAV) || {}, row.pid));
-    if (res && row.id === level) go(parentId(level));
   }
   const askKey = (e) => e.key === 'Escape' && (e.stopPropagation(), (asking = ''));
 
@@ -277,6 +291,8 @@
      (j, at: its grip's index in the menu list (0) or Not linked (1)) -->
 {#snippet row(r, { j = -1, at = 0 } = {})}
   {@const lifted = j >= 0 && drag?.moving && drag.at === at && drag.j === j}
+  {@const tag = tagOf(r)}
+  {@const canEdit = editable(r)}
   <li
     class={['prow', sel === r.id && 'is-sel', lifted && 'is-lifted', r.off && 'is-off']}
     style:top={lifted ? `${drag.top}px` : null}
@@ -315,8 +331,7 @@
       <span class="prow__title">
         {#if r.template}<i class="fa-solid fa-layer-group" aria-hidden="true"></i>{/if}
         <span>{r.title}</span>
-        {#if tagOf(r)}
-          {@const tag = tagOf(r)}
+        {#if tag}
           <span
             class={['prow__tag', tag.warn && 'is-warn']}
             title={r.template
@@ -325,7 +340,7 @@
           >
         {/if}
         {#if !r.part && live.changed(pageFile(r.id), '')}
-          <i class="prow__dot" title="Unsaved changes" aria-label="Unsaved changes"></i>
+          <i class="prow__dot" role="img" title="Unsaved changes" aria-label="Unsaved changes"></i>
         {/if}
       </span>
       <span class={['prow__path', r.part && 'is-muted']}>{r.part ? r.sub : r.seg}</span>
@@ -336,6 +351,7 @@
     {#if r.noindex}
       <i
         class="fa-solid fa-eye-slash prow__flag"
+        role="img"
         title="Hidden from search engines (SEO: noindex)"
         aria-label="Hidden from search engines"
       ></i>
@@ -347,8 +363,9 @@
       icon="pen-to-square"
       iconOnly
       label="Edit {r.title}"
-      title="Edit: its sections"
-      onclick={() => open(r)}
+      title={canEdit ? 'Edit: its sections' : NO_ITEMS}
+      aria-disabled={canEdit ? undefined : 'true'}
+      onclick={() => canEdit && open(r)}
     />
     {#if r.self && L.canOwn}
       <label
@@ -391,6 +408,7 @@
     {/if}
     {#if asking === r.id}
       {@const heavy = heavyOf(r)}
+      {@const links = heavy ? others(r) : 0}
       {#if heavy}
         <!-- anchored to the row, over the rows below: nothing moves -->
         <div
@@ -406,7 +424,7 @@
               >{[
                 r.template && `Its item pages${r.nested ? `, per ${r.nested}` : ''}`,
                 r.linked && 'In the menu',
-                others(r) && `${plural(others(r), 'link')} to it`,
+                links && `${plural(links, 'link')} to it`,
                 r.kids && `${plural(r.kids, 'page')} in it ${r.kids === 1 ? 'goes' : 'go'} too`,
               ]
                 .filter(Boolean)
@@ -618,16 +636,21 @@
     }
   }
 
+  // one line, never wrapping (the header stays 32px): the parts above shrink first, cut with
+  // "…", the current one stays whole
   .pl-top__path {
     @include row(0);
     flex: 1;
     min-width: 0;
-    flex-wrap: wrap;
     font-size: var(--fs-base);
     line-height: 20px;
+    white-space: nowrap;
   }
 
   .pl-top__crumb {
+    @include ellipsis;
+    flex: 0 1 auto;
+    min-width: 1ch;
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
@@ -645,6 +668,8 @@
     }
 
     &.is-current {
+      flex: none;
+      max-width: 100%;
       color: var(--c-text-muted);
       cursor: default;
       text-decoration: none;
@@ -749,6 +774,11 @@
     &:is(:hover, :focus-within, .is-sel, .is-lifted) > :global(.btn),
     &:is(:hover, :focus-within, .is-sel, .is-lifted) > .prow__grip {
       opacity: 1;
+    }
+
+    // an edit with nothing to open: stays quiet (its title says why)
+    &:is(:hover, :focus-within, .is-sel, .is-lifted) > :global(.btn[aria-disabled]) {
+      opacity: 0.3;
     }
   }
 
@@ -860,17 +890,13 @@
 
   // unsaved changes in its file: the editor's dot
   .prow__dot {
-    flex: none;
-    width: var(--size-changed);
-    height: var(--size-changed);
-    border-radius: var(--radius-round);
-    background: var(--c-accent);
+    @include changed-dot;
   }
 
   .prow__tag {
-    @include muted;
     flex: none;
     color: var(--c-text-faint);
+    font-size: var(--fs-sm);
   }
 
   .prow__path {

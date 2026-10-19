@@ -70,7 +70,7 @@ export const ui = $state({
    * ('all' | 'r2' | 'local') and the field it picks for (its data-edit, '' = just managing).
    */
   media: { open: false, key: '', filter: 'all', pick: '' },
-  /** The Pages window: open or not, and the folder it shows ('' = content/en/pages/ itself). */
+  /** The pages list (Content tab): open or not, and the folder it shows ('' = content/en/pages/ itself). */
   pagesWin: { open: false, folder: '' },
   /** Motion tab: the Animations sub-tab (open) or Elements, and its animation ('' = the list). */
   library: { open: false, name: '' },

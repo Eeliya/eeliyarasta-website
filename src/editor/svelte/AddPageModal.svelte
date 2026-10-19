@@ -13,6 +13,7 @@
   import {
     NAV,
     isParamName,
+    isReserved,
     isSlug,
     isTemplate,
     pageFile,
@@ -28,7 +29,6 @@
   // live: reactive store (live.svelte.js); actions: pagesOp (main.js)
   let { live, actions } = $props();
 
-  const RESERVED = ['home', '404', 'edit', 'assets', 'media', 'sandbox'];
   const uid = $props.id();
   let dialog = $state();
   let level = $state('');
@@ -40,8 +40,8 @@
   let linked = $state(true);
   let busy = $state(false);
 
-  // the store's files, a new object per change (the store edits its own in place)
-  const files = $derived((live.version, { ...live.store.current }));
+  // the store's files (live.svelte.js: one shared copy per change)
+  const files = $derived(live.files);
   const ids = $derived(Object.keys(files).map(pageIdOf).filter(Boolean));
   const sources = $derived(sourceIds(files));
   const slug = $derived(name || slugify(title));
@@ -52,7 +52,7 @@
         ? 'Use a-z, 0-9 and dashes'
         : ids.includes(childId(level, slug))
           ? `${pathOfId(childId(level, slug))} already exists`
-          : !level && RESERVED.includes(slug)
+          : isReserved(level, slug)
             ? `"${slug}" is reserved`
             : '',
   );

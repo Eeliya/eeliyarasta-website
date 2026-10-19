@@ -24,7 +24,7 @@
  * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
  * Only existing JSON files in content/en/pages/, content/en/sources/ and content/en/settings/ can be
  * read or written (src/editor/config.js, src/site/files.js); Save never creates files: only
- * the Pages window does (POST /pages), and only page files under content/en/pages/.
+ * the pages list does (POST /pages), and only page files under content/en/pages/.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,11 +35,13 @@ import editorConfig from '../src/editor/config.js';
 import { diff } from '../src/editor/lib/diff.js';
 import {
   ANIMATIONS,
+  NAV,
   PHOTOS,
   REDIRECTS,
   isContentFile,
   isParam,
   isParamName,
+  isReserved,
   paramOf,
   isTemplate,
   pageIdOf,
@@ -69,6 +71,7 @@ import {
   writeFileAtomic,
 } from './content.mjs';
 import { set as setAt } from '../src/editor/lib/pointer.js';
+import { linkAt, linksTo, titleOf, unlinkPage } from '../src/editor/lib/page-tree.js';
 import {
   moveLinks,
   moveRedirects,
@@ -108,8 +111,6 @@ export function editableFiles(root) {
 }
 
 // ---------------------------------------------------------------- pages
-// Root names that are not pages: the editor, Vite's assets, the photos, and the two specials.
-const RESERVED = new Set(['home', '404', 'edit', 'assets', 'media']);
 const PROTECTED = new Set(['home', '404']); // no rename, move or delete
 
 /**
@@ -126,12 +127,16 @@ const PROTECTED = new Set(['home', '404']); // no rename, move or delete
  *                                       whose value is the URL part, default the item's slug)
  *   rename    { id, name }              the page's folder, with everything in it; a [param]
  *                                       page: its param (name "model": [model]), URLs stay
- *   move      { id, parent }            the page's folder into <parent>/ (its name kept), with
- *                                       everything in it; links follow, no redirect (pre-v1)
+ *   move      { id, parent, link? }     the page's folder into <parent>/ (its name kept), with
+ *                                       everything in it; links follow, no redirect (pre-v1);
+ *                                       link { parentPid, place }: it goes into the menu there
+ *                                       too (page-tree.js linkAt), in the same op
  *   delete    { id, redirect }          the page's folder, with everything in it; its paths
  *                                       redirect to `redirect` (a page's path; default: the
  *                                       parent page; in a [param] page its pattern, each
- *                                       item page to the same outer item), or go when it is null
+ *                                       item page to the same outer item), or go when it is null;
+ *                                       menu items of its pages without a page to go to go too
+ *                                       (unlinkPage: nav.json and the disk stay one)
  *
  * Names must be slugs (a-z, 0-9, dashes); home and 404 can't be renamed or deleted. A [param]
  * folder is never at the root, a folder has at most one, and one can hold only another
@@ -144,7 +149,7 @@ const PROTECTED = new Set(['home', '404']); // no rename, move or delete
  */
 export function pagesOp(
   root,
-  { op, id, parent = '', name, title, source, param = 'slug', key, redirect } = {},
+  { op, id, parent = '', name, title, source, param = 'slug', key, redirect, link } = {},
   onWrite = () => {},
 ) {
   const content = path.join(root, CONTENT_DIR);
@@ -165,7 +170,7 @@ export function pagesOp(
   const join = (p, n) => (p ? `${p}/${n}` : n);
   const checkName = (p, n) => {
     if (!isSlug(n)) return `"${n ?? ''}" is not a valid name: use a-z, 0-9 and dashes`;
-    if (!p && RESERVED.has(n)) return `"${n}" is reserved`;
+    if (isReserved(p, n)) return `"${n}" is reserved`;
     if (fs.existsSync(dirOf(join(p, n)))) return `/${join(p, n)}/ already exists`;
     return null;
   };
@@ -180,6 +185,14 @@ export function pagesOp(
   const writeData = (file, data) => {
     write(file, data);
     changed.add(file);
+  };
+  /** A content file's data on disk now, or null (none, or not JSON). */
+  const readJSON = (file) => {
+    try {
+      return JSON.parse(fs.readFileSync(abs(file), 'utf8'));
+    } catch {
+      return null;
+    }
   };
   /** Write the link edits, to the files' names after the op (fileOf; null: deleted). */
   function applyPlan(fileOf) {
@@ -422,6 +435,15 @@ export function pagesOp(
     const name = id.split('/').at(-1);
     const bad = checkName(parent, name);
     if (bad) return fail(400, bad);
+    // into the menu too: checked before anything is written
+    const pid = before[pageFile(id)]?.id;
+    const linkNav = (nav) =>
+      linkAt(nav || {}, pid, titleOf(before, id), link.parentPid ?? null, link.place ?? null);
+    if (link !== undefined) {
+      if (!link || typeof link !== 'object') return fail(400, 'Link it where?');
+      if (!linkNav(before[NAV]))
+        return fail(400, "Can't link it there: dropdowns go one level deep");
+    }
     const to = join(parent, name);
     const moves = pageMoves(before, { id, into: to });
     plan = { moves, noRedirect: true, ...moveLinks(before, moves, { hash: true }) };
@@ -434,6 +456,7 @@ export function pagesOp(
     const prefix = `pages/${id}/`;
     const moved = (f) => (f.startsWith(prefix) ? `pages/${to}/${f.slice(prefix.length)}` : f);
     applyPlan(moved);
+    if (link) writeData(NAV, linkNav(readJSON(NAV)));
     return done({ id: to, created: inside.map(moved), removed: inside });
   }
 
@@ -442,6 +465,17 @@ export function pagesOp(
   onWrite();
   fs.rmSync(dirOf(id), { recursive: true });
   applyPlan((f) => (removed.includes(f) ? null : f));
+  // its pages' menu items with no page to go to: out of the menu (their dropdowns move up)
+  const unlinked = [...pages].filter(([, to]) => to === null).map(([pid]) => pid);
+  const nav = readJSON(NAV);
+  if (nav && unlinked.length) {
+    const next = unlinked.reduce(unlinkPage, nav);
+    if (JSON.stringify(next) !== JSON.stringify(nav)) {
+      writeData(NAV, next);
+      // not broken links any more: they went
+      for (const pid of unlinked) plan.broken -= linksTo({ [NAV]: nav }, pid);
+    }
+  }
   return done({ id, removed });
 }
 

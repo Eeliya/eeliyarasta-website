@@ -22,6 +22,15 @@
   font-size: var(--fs-sm);
 }
 
+// The unsaved-changes dot (a changed card's, row's, pane's): one look everywhere
+@mixin changed-dot {
+  flex: none;
+  width: var(--size-changed);
+  height: var(--size-changed);
+  border-radius: var(--radius-round);
+  background: var(--c-accent);
+}
+
 // Cut long one-line text off with "…"
 @mixin ellipsis {
   overflow: hidden;

@@ -9,6 +9,7 @@
   import Button from './Button.svelte';
   import {
     isParamName,
+    isReserved,
     isSlug,
     isTemplate,
     pageIdOf,
@@ -23,8 +24,8 @@
   let { live, file, actions } = $props();
 
   const uid = $props.id();
-  // the store's files, a new object per change (the store edits its own in place)
-  const files = $derived((live.version, { ...live.store.current }));
+  // the store's files (live.svelte.js: one shared copy per change)
+  const files = $derived(live.files);
   const id = $derived(pageIdOf(file));
   const template = $derived(!!id && isTemplate(id));
   const fixed = $derived(FIXED.includes(id));
@@ -48,6 +49,7 @@
       return '';
     }
     if (!isSlug(value)) return 'Use a-z, 0-9 and dashes';
+    if (isReserved(parentId(id), value)) return `"${value}" is reserved`;
     const next = childId(parentId(id), value);
     if (pageIds(files).includes(next)) return `${pathOfId(next)} already exists`;
     return '';
@@ -109,12 +111,12 @@
   // [ /photography/ | people______ | Rename ], 32px
   .addr__row {
     @include row(var(--space-2));
-    min-height: 32px;
+    min-height: var(--size-control);
 
     .tf__input {
       flex: 1;
       min-width: 0;
-      height: 32px;
+      height: var(--size-control);
       box-sizing: border-box;
     }
   }

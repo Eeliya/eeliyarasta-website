@@ -24,8 +24,20 @@ export function createLive(store) {
     return routes;
   };
 
+  // the store's files, one new object per change (the store edits its own in place), shared
+  let filesAt = -1;
+  let files = {};
+
   return {
     store,
+    /** The edited files ({ name: data }), a new object per change, shared by every reader. Don't change it. */
+    get files() {
+      if (filesAt !== version) {
+        files = { ...store.current };
+        filesAt = version;
+      }
+      return files;
+    },
     /** Read it to re-run after every store change (e.g. to re-read something outside the store). */
     get version() {
       return version;

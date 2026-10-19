@@ -180,7 +180,7 @@ export function createStore() {
     },
     /**
      * Files that appeared on disk (`files`: { name: data }) and files that are gone
-     * (`removed`: names), e.g. after the Pages window added, renamed or deleted a page.
+     * (`removed`: names), e.g. after the pages list added, renamed, moved or deleted a page.
      * Not an undo step; undo steps that touched a removed file are dropped.
      */
     files(files = {}, removed = []) {

@@ -952,7 +952,7 @@ the site's pages one folder at a time, flat, on the navigation cards' colour (`-
 warm sand; their paths and badges in `--c-page-accent`: a card's colour says its type, as the
 block rows in a section card are teal: `--c-block-card`, their title line `--c-block-accent`, a hovered row a 1px ring of it at 50%: `--c-block-line-hover`). Its header
 (one 32px row): ← (or Esc) up one level, the folder's path (each part goes there; at the top
-just `/`) and **+** (Add page). Going into a level slides it in from the right, going back from
+just `/`; one line: the parts above shrink with "…", the current one stays whole) and **+** (Add page). Going into a level slides it in from the right, going back from
 the left. Then:
 
 - one list in the menu's order (`nav.json`, the order on the website): at the top **Home** and
@@ -974,8 +974,10 @@ Linking is a drag: a row from the menu list into Not linked takes it out of the 
 Not linked into the menu list puts it in the menu there. The row in hand leaves its place and a
 dashed placeholder card shows where it lands (Not linked has no order of its own: it waits at
 the page's place in the site's order); a drop that can't land shows why in red. A page of another folder dropped on a folder's menu list
-**moves** into that folder (its address changes, links follow, no redirect: pre-v1), unless a
-page of that name is there already. 404 and `[param]` pages don't move. The website's dropdowns
+**moves** into that folder and into the menu there, in one op on disk (its address changes,
+links follow, no redirect: pre-v1), unless a page of that name is there already or the name is
+reserved at the top (`home`, `404`, `edit`, `assets`, `media`, `sandbox`: `RESERVED` in
+`src/site/files.js`, for adding, renaming and moving alike). 404 and `[param]` pages don't move. The website's dropdowns
 show a folder's "All …" link first, as its root row is first here.
 
 Rows show only their own segment under the folder (`people/`; elsewhere the full path) and
@@ -984,7 +986,8 @@ titles and paths as written. A click selects a row and shows it in the preview; 
 pages yet"), and on a level's root row, Home, 404, Header or Footer opens it (its Sections,
 Transitions, SEO). Every row also has a quiet **edit** button (a pen, 30% until hovered or
 focused, like the trash) that opens that page's Sections the same way in one click (no select,
-no drag; Header and Footer open theirs). A row's end is fixed 24px slots, `edit | trash | ›`
+no drag; Header and Footer open theirs). A `[param]` page with no pages (its source has no
+items) has nothing to show: its edit stays quiet and says so, a click only selects it. A row's end is fixed 24px slots, `edit | trash | ›`
 (an empty slot where a row has no trash, as Home, 404 and Site), so the buttons line up; the
 `›` (muted) marks a page with pages inside (there are no counts of sub pages). A level's root
 row ends with edit, then its Own page switch (or its empty place). A dot after a
@@ -994,11 +997,13 @@ page**: a template with a source and a param name, `[slug]` by default, one per 
 the top; in a `[param]` folder only this kind): a new folder with its `index.json`.
 **Delete** asks over the row: one line (the trash, then Cancel) when nothing links to it; a page in
 the menu or linked to gets a panel over the rows below (nothing moves) asking where visitors and
-links should go (its parent page by default, another page, or no redirect: its menu item goes
-too). The address is renamed in the page's SEO tab (**Address**: the whole folder moves). These
+links should go (its parent page by default, another page, or no redirect: its menu items go
+too, on disk with the folder: nav.json never points at a page that is gone). The address is renamed in the page's SEO tab (**Address**: the whole folder moves). These
 keep links and redirects up to date (see "Redirects") and say so in a toast. Names are slugs (a-z,
 0-9, dashes); home and 404 can't be renamed or deleted. Adding, renaming, moving and deleting write to disk
-right away through the dev server (`POST /__editor/pages`); the menu edits are normal edits (Save).
+right away through the dev server (`POST /__editor/pages`), one at a time (one asked while
+another runs waits); the menu edits are normal edits (Save), except a move's link and a
+delete's unlink, which the op writes with the files.
 Renaming or deleting a page with unsaved edits asks for Save first. Publish commits the new and
 removed files. `&pages=/people/` in the URL reopens the list on that folder. There's also a phone
 (390 px) preview toggle.

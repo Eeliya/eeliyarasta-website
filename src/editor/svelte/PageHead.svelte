@@ -17,8 +17,8 @@
   // live: reactive store; actions: pickTarget, setMode (main.js)
   let { live, actions } = $props();
 
-  // the store's files, a new object per change (the store edits its own in place)
-  const files = $derived((live.version, { ...live.store.current }));
+  // the store's files (live.svelte.js: one shared copy per change)
+  const files = $derived(live.files);
   const t = $derived(ui.target);
   const id = $derived(
     t?.kind !== 'page'

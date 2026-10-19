@@ -21,7 +21,7 @@
  * not possible). Items of the menu are { label, page } (hrefs.js); dropdowns go one level deep.
  * Linking is a drag between the two lists (dropOf: link, or move the page into the folder).
  */
-import { NAV, isTemplate, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
+import { NAV, isReserved, isTemplate, pageFile, pageIdOf, sourceFile } from '../../site/files.js';
 import { navOrder, pageTitle, parentId, pathOfId, titleCase } from '../../site/routes.js';
 
 export const FIXED = ['home', '404'];
@@ -165,11 +165,14 @@ export function tagOf(row) {
   return { text: `per ${row.nested || 'item'} · ${n}`, warn: n === 0 };
 }
 
+/** Can its Edit open it? Not a [param] page with no pages (its source has no items: none to show). */
+export const editable = (row) => !(row.template && row.count === 0);
+
 /** A row has a level of pages under it to go into: the › hint (not on a level's own row). */
 export const hasInside = (row) => !row.self && !row.part && (row.kids > 0 || !!row.template);
 
 /**
- * What a row's Edit opens (its Sections in Content): its entry in the page menu (main.js
+ * What a row's Edit opens (its Sections in Content): its page entry (ui.pages, main.js
  * pageEntries: { kind, path, template?, items?, id? }): a site part's, a [param] page's (its
  * items: the preview shows one), else the page at the row's path.
  */
@@ -310,6 +313,8 @@ export function dropOf(files, L, row, to) {
   if (level === row.id || level.startsWith(`${row.id}/`))
     return { kind: 'refuse', why: `${row.title} can't go into itself` };
   const id = join(level, nameOf(row.id));
+  if (isReserved(level, nameOf(row.id)))
+    return { kind: 'refuse', why: `"${nameOf(row.id)}" is reserved at the top: rename it first` };
   if (pageIds(files).includes(id))
     return {
       kind: 'refuse',
