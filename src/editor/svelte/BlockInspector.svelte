@@ -181,7 +181,6 @@
 
   // the side padding is on its parts, so the tabs' line runs edge to edge
   .card {
-    margin-inline: -8px;
     padding: var(--space-3) 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);

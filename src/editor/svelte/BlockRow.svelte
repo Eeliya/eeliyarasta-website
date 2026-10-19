@@ -82,13 +82,12 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // [ Type / its title        eye copy trash ]: 48px, 4px inside on the right (the list bleeds
-  // 4px into the card's padding, so the icons end on the title row's right edge)
+  // [ Type / its title        eye copy trash ]: 48px; the icons end on its right edge (the
+  // card's content edge, as the title row's)
   .brow {
     @include row(var(--space-1));
     position: relative;
     min-height: 48px;
-    padding-right: var(--space-1);
     border-radius: var(--radius-md);
     background: var(--c-block-card);
 

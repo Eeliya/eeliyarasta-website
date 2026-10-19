@@ -28,21 +28,19 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // [ ← Back            locate ]: 32px, as wide as the cards (their -8px bleed); Back's text
-  // and Locate's icon on the cards' 12px edges
+  // [ ← Back            locate ]: 32px on the panel's 12px edges (Back's arrow where the page
+  // head's back arrow is)
   .top {
     @include row(var(--space-2));
     flex: none;
     justify-content: space-between;
     height: var(--size-control);
-    margin-inline: -8px;
-    padding-right: var(--space-3);
   }
 
   .top__back {
     @include row(var(--space-2));
     height: var(--size-control);
-    padding: 0 var(--space-3);
+    padding: 0;
     border: 0;
     border-radius: var(--radius-md);
     background: none;
@@ -55,7 +53,6 @@
     cursor: pointer;
 
     &:hover {
-      background: var(--c-surface-2);
       color: var(--c-text-strong);
     }
 

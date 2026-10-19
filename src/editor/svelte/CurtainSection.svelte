@@ -186,17 +186,18 @@
     margin: var(--space-2) 0 0;
   }
 
-  /* One bordered curtain group: total, timeline, ease, Advanced. */
+  /* One bordered curtain group: total, timeline, ease, Advanced (edge to edge: the box has no
+     side padding, its other parts 8px each). */
   .ptg__box {
     position: relative;
     margin: 0 0 var(--space-4);
-    padding: var(--space-2) var(--space-2) 0;
+    padding: var(--space-2) 0 0;
     border-radius: var(--radius-lg);
     background: var(--c-card);
     @include stack(var(--space-3));
 
-    > .tf {
-      margin-bottom: 0;
+    > :global(:not(.ptg__advanced, .btn)) {
+      padding-inline: var(--space-2);
     }
 
     // the first row ("Curtain for this page", or "Total duration") leaves room for Replay
@@ -218,7 +219,7 @@
 
   /* Advanced sits on the bottom edge of the curtain box (same border). */
   .ptg__advanced {
-    margin: 0 -12px;
+    margin: 0;
     padding: 0;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     box-shadow: inset 0 1px 0 var(--c-line);

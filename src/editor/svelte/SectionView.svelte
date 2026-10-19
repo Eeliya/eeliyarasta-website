@@ -36,11 +36,10 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // on the settings fill, as wide as the list's cards (their -8px bleed), 12px inside; its 1px
-  // border kept, transparent (the content where a framed card has it)
+  // on the settings fill, as wide as the list's cards, 12px inside; its 1px border kept,
+  // transparent (the content where a framed card has it)
   .card {
     @include stack(var(--space-3));
-    margin-inline: -8px;
     padding: var(--space-3);
     border: 1px solid transparent;
     border-radius: var(--radius-lg);

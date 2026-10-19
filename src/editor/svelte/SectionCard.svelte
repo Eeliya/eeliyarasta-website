@@ -314,10 +314,10 @@
     }
   }
 
-  // its blocks: 48px rows 4px apart, bleeding 4px into the card's padding (BlockRow.svelte)
+  // its blocks: 48px rows 4px apart, on the card's content edges (BlockRow.svelte)
   .blocks {
     @include stack(var(--space-1));
-    margin: 0 calc(-1 * var(--space-1));
+    margin: 0;
     padding: 0;
     list-style: none;
   }

@@ -550,16 +550,18 @@ kbd {
 }
 
 // text fields (Field.svelte, also used by the curtain timeline)
+// selected: a tint 4px round it (a spread shadow: nothing moves, no negative margin)
 .tf {
   display: block;
-  transition: box-shadow 0.6s;
-  padding: var(--space-1);
-  margin: -4px;
-  border-radius: var(--radius-lg);
+  transition:
+    background 0.6s,
+    box-shadow 0.6s;
+  border-radius: var(--radius-md);
 }
 
 .tf.is-selected {
   background: var(--c-accent-bg);
+  box-shadow: 0 0 0 var(--space-1) var(--c-accent-bg);
 
   .tf__label {
     color: var(--c-accent);
