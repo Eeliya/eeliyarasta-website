@@ -10,11 +10,30 @@
       "blocks": [
         {
           "id": "b-b4w8",
-          "type": "heading",
-          "eyebrow": "Projects",
-          "title": "Projects",
-          "body": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments.",
-          "config": { "count": "projects" }
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Projects" }]
+            },
+            {
+              "style": "title",
+              "text": [
+                { "t": "Projects" },
+                {
+                  "count": { "source": "projects" }
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Things I build when I am not behind the camera: websites, developer tools and DIY experiments."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

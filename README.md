@@ -246,10 +246,12 @@ every section is a grid of **blocks** (`src/site/layout/`):
   "blocks": [
     {
       "id": "b-7qpa",
-      "type": "heading",
-      "eyebrow": "Photography / People",
-      "title": "People",
-      "config": { "count": "people", "numbered": true },
+      "type": "text",
+      "body": [
+        { "style": "label", "text": [{ "t": "Photography / People" }] },
+        { "style": "title", "text": [{ "t": "People" }, { "count": { "source": "people" } }] }
+      ],
+      "config": { "numbered": true },
       "layout": { "base": { "col": 1, "span": 120, "row": 1 } }
     },
     {
@@ -374,17 +376,19 @@ every section is a grid of **blocks** (`src/site/layout/`):
     with a minimum height a block that fits in it gets the whole rows that fit (rows stay square, so up to a cell
     short; its content is still screen-high), centred. Without JavaScript the stored areas apply
     as they are (the editor keeps a follower's stored row at its leader's stored bottom + gap).
-- **Scaled text** (`src/site/layout/type.js`): a text block (`heading`, `text`, `button`) with
+- **Scaled text** (`src/site/layout/type.js`): a text block (`text`, `button`) with
   `"scale": { "on": true, "adjust": 90 }` sizes its text in cells, so it grows and shrinks with
   the grid; `adjust` is its % of its styles (default 100). The styles are set once in
   `site.json` `typography` (Settings › Typography), each in cells of the 120-column grid:
   `{ "paragraph": { "size": 1.4, "line": 1.75, "tracking": 0, "min": 14 } }`: font size (cells),
   line height (× the size), letter spacing (em) and a minimum font size (px, so text stays
-  readable on phones). Defaults: title 19 (a heading's title), heading 3 (a text's title),
-  paragraph 1.4 (text, a heading's body), label 1 (a heading's eyebrow, a button), ≈ the fixed
+  readable on phones). Defaults: title 19, heading 3, subheading 2, statement 5, paragraph 1.4,
+  label 1 (also a button), small 1.05, ≈ the fixed
   sizes at 1440px. On phones a style's cell is half a 60-column cell (the 120 grid's), so the
   text scales like the layout and the minimum takes over. Off (default): the style's normal
-  fixed size from the stylesheets.
+  fixed size from the stylesheets. **Fit to block** (`"scale": { "fit": true }`, a block with
+  an Aspect or Rows size): its text is as large as fits the block (`src/client/modules/fit.js`
+  sets `--tkf`, measured on load, resize and every edit).
 - **Phones** (below 760px): every section is a **60-column** square grid (`--cell` = width /
   60, ~6px at 390px; its rows `--mrows`). Nothing stacks: a block without a phone area of its
   own shows its **desktop area halved** (columns and rows, rounded to the cells it covers:
@@ -419,24 +423,29 @@ ctx, b) }`; `list` makes it show a list of items (grid, albums, projects), `item
 needs (album). Which items a block shows is its `source` (see "Block sources"). A block's content
 sits next to its type, how it works under `config` (`enabled`: on/off; look, …):
 
-| type       | what                                                                                                                  |
-| ---------- | --------------------------------------------------------------------------------------------------------------------- |
-| `heading`  | page heading: `eyebrow`, `title`, `body`, `cta`; config `count` (a source's item count), `link`, `center`, `numbered` |
-| `text`     | `body`: paragraphs (a blank line starts one) under an optional `title`                                                |
-| `photo`    | one photo (`src`) with an optional `caption`                                                                          |
-| `button`   | a button: `label`; config `link` (see Links)                                                                          |
-| `form`     | a contact form (see "Contact form")                                                                                   |
-| `hero`     | the home hero: `title` (one word per line), `eyebrow`, `body`, scattered `photos`                                     |
-| `intro`    | a statement (`body`)                                                                                                  |
-| `grid`     | **list**: a head + tiles of its source's items; config `layout` (`staggered` / `even`); `places` shows cards          |
-| `albums`   | **list**: album cards of its items (the people/places index); config `layout` (`portrait` / `landscape`)              |
-| `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                              |
-| `projects` | **list**: the project accordion of its items; with a `title` it gets a head (home)                                    |
-| `about`    | the about block: `image`, `eyebrow`, `title`, `body` (paragraphs), `facts`, `emailLabel`                              |
-| `album`    | **item**: its item's album (slider, grid, info): `title`, `meta` (facts), `body`; without an item it is skipped       |
+| type       | what                                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------- |
+| `text`     | rich text: `body` lines (see "Text block"); config `center`, `numbered`                                         |
+| `photo`    | one photo (`src`) with an optional `caption`                                                                    |
+| `button`   | a button: `label`; config `link` (see Links)                                                                    |
+| `form`     | a contact form (see "Contact form")                                                                             |
+| `hero`     | the home hero: `title` (one word per line), `eyebrow`, `body`, scattered `photos`                               |
+| `grid`     | **list**: a head + tiles of its source's items; config `layout` (`staggered` / `even`); `places` shows cards    |
+| `albums`   | **list**: album cards of its items (the people/places index); config `layout` (`portrait` / `landscape`)        |
+| `panels`   | big links to sources: `panels` `[{ source, title, unit }]` (photography)                                        |
+| `projects` | **list**: the project accordion of its items; with a `title` it gets a head (home)                              |
+| `about`    | the about block: `image`, `eyebrow`, `title`, `body` (paragraphs), `facts`, `emailLabel`                        |
+| `album`    | **item**: its item's album (slider, grid, info): `title`, `meta` (facts), `body`; without an item it is skipped |
 
-- **Numbering:** nothing is numbered by itself. A heading with config `numbered` starts its eyebrow
-  with its number among the page's numbered headings that are on: (01), (02), …
+- **Text block** (`src/site/text.js`): `body` is a list of lines `{ style, text: [runs] }`; a
+  style (title, heading, subheading, statement, paragraph, label, small: the site's typography)
+  is a whole line's. Runs: `{ t, marks?: ["b","i"], link? }` text, `{ field, format? }` an item's
+  field (from the block's source, filled at build time), `{ count: { source } | { of: "items" } }`
+  a count chip. Rendered to escaped HTML; the page's title is its first Text block's title line.
+  Edited only in the preview (double-click, or Edit in preview): the block toolbar's style, B,
+  I, link and + Field act on the caret's line or the selection.
+- **Numbering:** nothing is numbered by itself. A Text block with config `numbered` starts its
+  first label line with its number among the page's numbered Text blocks that are on: (01), (02), …
 - **Item pages:** a `[param]/index.json`'s blocks render once per page it builds. A block From
   URL shows the items matching that page's address; a type marked `item` (the `album` block)
   reads its first for its photos, and its texts, like any block's, are bindings to it (below).
@@ -489,14 +498,14 @@ value of a **source item** instead of its own (`src/site/layout/bindings.js`):
 
 ```json
 {
-  "type": "heading",
-  "eyebrow": "Featured",
-  "title": { "bind": "title" },
-  "body": { "bind": "role", "format": "{value} in Amsterdam" },
+  "type": "button",
+  "label": { "bind": "role", "format": "{value} in Amsterdam" },
+  "config": { "link": { "bind": "slug" } },
   "source": { "mode": "item", "from": "people", "id": "p-qw7b" }
 }
 ```
 
+- **A Text block** binds per run: its `{ field, format? }` runs are its bindings.
 - **Custom:** a plain value, as before.
 - **`{ "bind": "<field>" }`:** the item's whole value. Its type must fit the field's (a text field
   takes `text`, `choice`, `number`, `date`, `link`; a long text also `longtext`; a photo
@@ -632,7 +641,7 @@ move. A page's own file is
 - **Views:** a page is its sections of blocks. Its view name (`view--<name>` on `<main>`, `data-page` on
   `<html>`, for styles and scripts) is its `view` field, else its own name for the built-in
   pages (`home`, `photography`, `people`, `places`, `projects`, `about`, `404`), else `page`.
-  A template's is `album`. New pages start with a section holding a heading block.
+  A template's is `album`. New pages start with a section holding a Text block (a label and a title line).
 - **Head:** title, description, share image and robots come from the page's `meta` and the
   site's defaults; see "SEO".
 - Links to an item (menu dropdowns, grids, next) come from the routes, and a grid's "See all"

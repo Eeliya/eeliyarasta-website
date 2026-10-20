@@ -146,6 +146,16 @@ function bindingsOf(block, t) {
   };
   for (const f of t?.fields || []) {
     const v = block?.[f.key];
+    // rich text (../text.js): its field runs show the item's fields as text
+    if (f.type === 'rich' && Array.isArray(v)) {
+      v.forEach((line, i) =>
+        (Array.isArray(line?.text) ? line.text : []).forEach((r, k) => {
+          if (isObject(r) && typeof r.field === 'string')
+            out.push({ path: [f.key, i, 'text', k], bind: r.field, type: 'text' });
+        }),
+      );
+      continue;
+    }
     add([f.key], v, bindTypeOf(f));
     if (Array.isArray(v) && isObject(f.list))
       v.forEach((e, i) =>

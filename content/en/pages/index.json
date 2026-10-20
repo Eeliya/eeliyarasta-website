@@ -140,8 +140,17 @@
       "blocks": [
         {
           "id": "b-9phu",
-          "type": "intro",
-          "body": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion.",
+          "type": "text",
+          "body": [
+            {
+              "style": "statement",
+              "text": [
+                {
+                  "t": "Beauty dwells both in the eye of the beholder and in the eternal forms that outshine opinion."
+                }
+              ]
+            }
+          ],
           "motion": { "anim": "scrub-words" }
         }
       ],

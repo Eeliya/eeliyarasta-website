@@ -13,7 +13,7 @@ export const FILE = 'pages/index.json';
 export const block = (id, type, title) => ({ id, type, ...(title && { title }) });
 export const SECTIONS = [
   { id: 's-1', name: 'Eeliya Rasta', blocks: [block('b-1', 'hero')] },
-  { id: 's-2', blocks: [block('b-2', 'intro')] },
+  { id: 's-2', blocks: [block('b-2', 'text')] },
   { id: 's-3', name: 'Work', blocks: [block('b-3', 'grid', 'People'), block('b-4', 'button')] },
   { id: 's-4', blocks: [block('b-5', 'albums', 'Albums')] },
   { id: 's-5', blocks: [block('b-6', 'projects', 'Things I build')] },
@@ -36,19 +36,19 @@ export const labelOf = (b) => BLOCK_TYPES[b.type]?.label || b.type;
 
 /**
  * Ready-made pages for section-card mocks (pass the name to sampleLive). `at` is the index:
- *   short   0 unnamed (intro) · 1 "Work" (grid People, button)
- *   full    0 unnamed (intro) · 1 "Work" (grid People, button) · 2 "Albums" (albums) ·
+ *   short   0 unnamed (text) · 1 "Work" (grid People, button)
+ *   full    0 unnamed (text) · 1 "Work" (grid People, button) · 2 "Albums" (albums) ·
  *           3 a very long name (projects, grid Places) · 4 unnamed (projects, button)
  *   states  0 "Work" (grid People, button) · 1 "Contact", switched off (button) · 2 unnamed, no blocks
  */
 const LONG = 'Selected portrait and editorial work from the last three years';
 export const samplePage = {
   short: [
-    { id: 's-1', blocks: [block('b-1', 'intro')] },
+    { id: 's-1', blocks: [block('b-1', 'text')] },
     { id: 's-2', name: 'Work', blocks: [block('b-2', 'grid', 'People'), block('b-3', 'button')] },
   ],
   full: [
-    { id: 's-1', blocks: [block('b-1', 'intro')] },
+    { id: 's-1', blocks: [block('b-1', 'text')] },
     { id: 's-2', name: 'Work', blocks: [block('b-2', 'grid', 'People'), block('b-3', 'button')] },
     { id: 's-3', name: 'Albums', blocks: [block('b-4', 'albums', 'Albums')] },
     {

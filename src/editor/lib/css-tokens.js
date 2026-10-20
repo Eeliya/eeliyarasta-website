@@ -34,6 +34,8 @@ export function uiTokens(site, editor) {
   return {
     accent: v('--c-accent'),
     accentRgb: rgbOf(v('--c-accent')),
+    // a Text block's field and count chips (bridge.js), as the panel shows them
+    chipRgb: rgbOf(v('--teal-400')),
     onAccent: v('--c-on-accent'),
     error: v('--c-error'),
     peekLine: v('--c-line-peek'),

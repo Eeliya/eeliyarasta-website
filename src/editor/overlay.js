@@ -80,7 +80,7 @@ const STYLE = `
 .dim { position: absolute; background: rgb(0 0 0 / .4); }
 .sel { border: 2px solid ${T.accent}; }
 .sel.is-dragging { background: ${T.accent}; background: rgb(${T.accentRgb} / .08); }
-.label { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.accent}; color: ${T.black}; white-space: nowrap; }
+.label { position: absolute; right: 0; bottom: 100%; margin-bottom: 4px; padding: 4px 8px; border-radius: ${T.radiusSm}; background: ${T.accent}; color: ${T.black}; white-space: nowrap; }
 .handle { position: absolute; width: 12px; height: 12px; translate: -50% -50%; box-sizing: border-box; border: 2px solid ${T.accent}; border-radius: ${T.radiusXs}; background: ${T.black}; pointer-events: auto; }
 .handle[data-h='n'], .handle[data-h='s'] { left: 50%; cursor: ns-resize; }
 .handle[data-h='e'], .handle[data-h='w'] { top: 50%; cursor: ew-resize; }

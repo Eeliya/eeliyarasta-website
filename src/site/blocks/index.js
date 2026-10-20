@@ -36,29 +36,18 @@
  *             the page's numbered headings, ed(field or path, type), the editor marker of one
  *             of its fields, and what its source shows (blockItems, ../layout/source.js)
  */
-import { hero, intro, grid, projects } from './home.js';
-import { heading, albums, panels, about } from './pages.js';
+import { hero, grid, projects } from './home.js';
+import { albums, panels, about } from './pages.js';
 import { album } from './album.js';
 import { text, photo, button } from './basic.js';
 import { form } from './form.js';
 
 /** Every block type, in the order the editor offers them. */
 export const BLOCK_TYPES = Object.fromEntries(
-  [
-    heading,
-    text,
-    photo,
-    button,
-    form,
-    hero,
-    intro,
-    grid,
-    albums,
-    panels,
-    projects,
-    about,
-    album,
-  ].map((t) => [t.type, t]),
+  [text, photo, button, form, hero, grid, albums, panels, projects, about, album].map((t) => [
+    t.type,
+    t,
+  ]),
 );
 
 /**

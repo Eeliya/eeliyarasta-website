@@ -460,6 +460,7 @@ function checkBlock(b, where) {
             bad(`${f.key}.${i}.${k}`, linkProblem(sv));
         }),
       );
+    if (f.type === 'rich') continue; // a Text block's body: its type's check (../text.js)
     if (!f.list) {
       if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
         bad(f.key, `a ${FIELD_TYPES[f.type] || 'string'}`);

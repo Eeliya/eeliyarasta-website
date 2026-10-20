@@ -10,10 +10,25 @@
       "blocks": [
         {
           "id": "b-9m0e",
-          "type": "heading",
-          "eyebrow": "Photography",
-          "title": "Photography",
-          "body": "Two sides of the same habit: the people I photograph, and the places I keep coming back to."
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Photography" }]
+            },
+            {
+              "style": "title",
+              "text": [{ "t": "Photography" }]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Two sides of the same habit: the people I photograph, and the places I keep coming back to."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

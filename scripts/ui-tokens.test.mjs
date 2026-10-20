@@ -15,6 +15,7 @@ test('ui tokens: the values the injected CSS gets from the token files', () => {
   assert.deepEqual(T, {
     accent: '#3cf',
     accentRgb: '51 204 255',
+    chipRgb: '84 190 172',
     onAccent: '#000',
     error: '#ff8a7a',
     peekLine: 'rgb(255 255 255 / 0.7)',

@@ -257,7 +257,7 @@ test('scaled text: per block, by its styles; site typography over the defaults',
   // only text blocks scale
   assert.doesNotMatch(blockClass({ ...t({ scale: { on: true } }), type: 'photo' }), /scale/);
   assert.deepEqual(checkScale({ type: 'photo', scale: { on: true } }), [
-    '"scale" is for text blocks (heading, text, button)',
+    '"scale" is for text blocks (text, button)',
   ]);
   assert.deepEqual(checkScale({ type: 'text', scale: { on: 'yes', adjust: 5 } }), [
     '"scale.on" must be true or false',
@@ -273,7 +273,7 @@ test('scaled text: per block, by its styles; site typography over the defaults',
   assert.equal(typographyVars({}), '');
   assert.deepEqual(checkTypography(site.typography), []);
   assert.deepEqual(checkTypography({ huge: {}, paragraph: { size: 0, x: 1 } }), [
-    'typography: unknown style "huge" (title, heading, paragraph, label)',
+    'typography: unknown style "huge" (title, heading, paragraph, label, subheading, statement, small)',
     'typography.paragraph.size must be more than 0',
     'typography.paragraph: unknown key "x"',
   ]);

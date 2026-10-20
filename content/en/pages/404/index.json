@@ -11,14 +11,34 @@
       "blocks": [
         {
           "id": "b-89og",
-          "type": "heading",
-          "eyebrow": "Error 404",
-          "title": "Lost frame",
-          "body": "This page doesn't exist (yet).",
-          "cta": "Back home",
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Error 404" }]
+            },
+            {
+              "style": "title",
+              "text": [{ "t": "Lost frame" }]
+            },
+            {
+              "style": "paragraph",
+              "text": [{ "t": "This page doesn't exist (yet)." }]
+            }
+          ],
+          "config": { "center": true }
+        },
+        {
+          "id": "b-56q5",
+          "type": "button",
+          "label": "Back home",
           "config": {
-            "center": true,
             "link": { "page": "pg-boha" }
+          },
+          "layout": {
+            "base": {
+              "link": { "to": "b-89og", "gap": 2 }
+            }
           }
         }
       ]

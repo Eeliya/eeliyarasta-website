@@ -20,6 +20,15 @@ import { splitEdit, words } from '../site/helpers.js';
 import { ANIMATIONS } from '../site/files.js';
 import { imageSrcset, imageUrl } from './svelte/media.svelte.js';
 import { T } from './ui-tokens.js';
+import {
+  isCaret,
+  posOf,
+  readBody,
+  renderEditing,
+  select as selectAt,
+  selectionOf,
+} from './rich.js';
+import { hasMark, lineLength, linkIn, splitLine, toggleMark } from '../site/text.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit], html.__ed-text [data-bound] { outline-offset: 3px; border-radius: ${T.radiusXs}; pointer-events: auto; }
@@ -48,6 +57,10 @@ html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [
 .__ed-box--hover span { background: ${T.black}; color: ${T.white}; border: 1px solid rgb(255 255 255 / .2); }
 .__ed-box--sel span { background: ${T.accent}; color: ${T.onAccent}; }
 .__ed-box.is-low span { bottom: auto; top: 100%; margin: 4px 0 0; }
+html.__ed-text :is(.ts__chip, .ts__count) { border-radius: ${T.radiusXs}; background: rgb(${T.chipRgb} / .16); box-shadow: inset 0 0 0 1px rgb(${T.chipRgb} / .45); color: inherit; }
+html.__ed-text [contenteditable] :is(.ts__chip, .ts__count) { color: rgb(${T.chipRgb}); user-select: all; cursor: default; }
+html.__ed-text [data-edit-type="rich"][contenteditable] { outline-offset: 6px; }
+html.__ed-text [data-edit-type="rich"][contenteditable] a { cursor: text !important; }
 `;
 
 /** What Motion mode picks under the pointer: a data-anim part, else its block. */
@@ -61,7 +74,17 @@ const escText = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').re
  * The preview iframe is attached later: App.svelte calls bridge.attach(iframe) when it renders.
  */
 export function createBridge({ store, labelFor }) {
-  const handlers = { connect: [], navigate: [], select: [], key: [], textFocus: [], part: [] };
+  const handlers = {
+    connect: [],
+    navigate: [],
+    select: [],
+    key: [],
+    textFocus: [],
+    part: [],
+    rich: [], // the Text block editor's state changed (richState)
+    richDone: [], // a Text block's edit ended: its section renders again (edit ref)
+    richLink: [], // Ctrl+K while editing: the toolbar's link box opens
+  };
   const emit = (name, ...args) => handlers[name].forEach((fn) => fn(...args));
   let iframe = null;
   let api = null;
@@ -75,6 +98,10 @@ export function createBridge({ store, labelFor }) {
   let plaintext = true;
   let applied = new WeakMap(); // element -> value it currently shows
   let restore = null; // after a reload(): puts scroll and selection back once mounted
+  // the Text block being edited in place (rich.js): { el, edit, file, ptr, block, numLine,
+  // numHtml }, and its last selection in model positions (kept while the toolbar has focus)
+  let rich = null;
+  let richSel = null;
 
   const bridge = {
     get api() {
@@ -207,6 +234,8 @@ export function createBridge({ store, labelFor }) {
         const { file, ptr } = splitEdit(el.dataset.edit);
         const value = store.get(file, ptr);
         if (value === undefined || value === null) continue;
+        // a Text block's body: the dev server renders it (its fields' values, counts)
+        if (el.dataset.editType === 'rich') continue;
         if (el === skip) {
           applied.set(el, value);
           continue;
@@ -313,6 +342,54 @@ export function createBridge({ store, labelFor }) {
       const r = el.getBoundingClientRect();
       if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true });
     },
+    /** The Text block editor's state for the toolbar (richState), or null. */
+    get rich() {
+      return richState();
+    },
+    /** Start editing Text block `id`'s body in place (the panel's Edit in preview). */
+    editRich(id) {
+      const el = doc?.querySelector(`[data-block="${CSS.escape(id)}"] [data-edit-type="rich"]`);
+      if (!el) return false;
+      bridge.reveal(el);
+      startRich(el);
+      return true;
+    },
+    /** Is a Text block being edited? */
+    get richEditing() {
+      return !!rich;
+    },
+    /** End the edit in place (the preview renders the block again). */
+    endRich: () => rich && rich.el.blur(),
+    /**
+     * Change the Text block's body: fn(body, sel) -> { body, sel? }. While it is edited the
+     * lines are rendered again and the selection put back; otherwise (the block only picked)
+     * `fallback` is the block's body ptr: { file, ptr } and the change renders the section.
+     */
+    richApply(fn, fallback = null) {
+      const target = rich || fallback;
+      if (!target) return;
+      const body = structuredClone(store.get(target.file, target.ptr) || []);
+      const sel = rich ? selectionOf(rich.el, win) || richSel : null;
+      const out = fn(body, sel);
+      if (!out?.body) return;
+      if (rich) {
+        rich.el.focus({ preventScroll: true });
+        renderLines(out.body);
+        writeRich(out.body);
+        const next = out.sel || sel;
+        if (next) selectAt(rich.el, win, next);
+        richSel = next;
+        emit('rich', richState());
+      } else store.set(target.file, target.ptr, out.body, { source: 'panel', structure: true });
+    },
+    /** Keep the edit going while the toolbar's own field (a link, a ratio) has the focus. */
+    holdRich(on) {
+      if (rich) rich.hold = !!on;
+      if (!on && rich && doc.activeElement !== rich.el) {
+        rich.el.focus({ preventScroll: true });
+        if (richSel) selectAt(rich.el, win, richSel);
+      }
+    },
     focusEdit(edit) {
       const el = doc?.querySelector(
         `[data-edit="${CSS.escape(edit)}"], [data-bound="${CSS.escape(edit)}"]`,
@@ -344,7 +421,138 @@ export function createBridge({ store, labelFor }) {
     el.removeAttribute('spellcheck');
     el.classList.remove('__ed-invalid');
   }
-  const endEdits = () => doc?.querySelectorAll('[data-edit][contenteditable]').forEach(endEdit);
+  const endEdits = () => {
+    if (rich) finishRich();
+    doc?.querySelectorAll('[data-edit][contenteditable]').forEach(endEdit);
+  };
+
+  // ---- the Text block's editor (rich.js, ../site/text.js)
+
+  /** The toolbar's view of it: editing, the caret line's style, a selection and its marks. */
+  function richState() {
+    if (!rich) return null;
+    const body = store.get(rich.file, rich.ptr) || [];
+    const sel = (doc && selectionOf(rich.el, win)) || richSel;
+    const caret = sel?.to || { line: 0, at: 0 };
+    const range = sel && !isCaret(sel);
+    return {
+      block: rich.block,
+      edit: rich.edit,
+      style: body[caret.line]?.style || 'paragraph',
+      line: caret.line,
+      selected: !!range,
+      bold: range ? hasMark(body, sel.from, sel.to, 'b') : false,
+      italic: range ? hasMark(body, sel.from, sel.to, 'i') : false,
+      link: range ? linkIn(body, sel.from, sel.to) : null,
+    };
+  }
+
+  /** Render the lines for editing (chips named), the numbered label's "(01) " kept. */
+  function renderLines(body) {
+    renderEditing(rich.el, body, {
+      lead: (i) => (i === rich.numLine ? rich.numHtml : ''),
+    });
+  }
+
+  /** The body typed into the store (no re-render: the preview shows it already). */
+  function writeRich(body) {
+    store.set(rich.file, rich.ptr, body, {
+      key: `text:${rich.edit}`,
+      source: rich.el,
+      structure: true, // its undo and redo render the section again
+    });
+  }
+
+  function startRich(el, x, y) {
+    if (rich?.el === el) return;
+    if (rich) finishRich();
+    const edit = el.dataset.edit;
+    const { file, ptr } = splitEdit(edit);
+    const body = store.get(file, ptr);
+    if (!Array.isArray(body)) return;
+    // where it was clicked, as a model position (chips are 1 either way)
+    const range = x === undefined ? null : doc.caretRangeFromPoint?.(x, y);
+    const at =
+      range && el.contains(range.startContainer)
+        ? posOf(el, range.startContainer, range.startOffset)
+        : null;
+    const num = el.querySelector('.ts__num');
+    rich = {
+      el,
+      edit,
+      file,
+      ptr,
+      block: el.closest('[data-block]')?.dataset.block || '',
+      numHtml: num ? num.outerHTML : '',
+      numLine: num ? [...el.children].indexOf(num.closest('[data-line]')) : -1,
+      hold: false,
+    };
+    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('spellcheck', 'true');
+    renderLines(body);
+    el.focus({ preventScroll: true });
+    const end = { line: body.length - 1, at: lineLength(body.at(-1)) };
+    richSel = at ? { from: at, to: at } : { from: end, to: end };
+    selectAt(el, win, richSel);
+    bridge.select(el, 'text');
+    emit('rich', richState());
+  }
+
+  function finishRich() {
+    const { el, edit } = rich;
+    rich = null;
+    richSel = null;
+    el.removeAttribute('contenteditable');
+    el.removeAttribute('spellcheck');
+    emit('rich', null);
+    emit('richDone', edit);
+  }
+
+  /** A key in the Text block being edited; true when it was handled. */
+  function richKey(e) {
+    const mod = e.metaKey || e.ctrlKey;
+    const k = e.key.toLowerCase();
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      rich.el.blur();
+      return true;
+    }
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      doc.execCommand('insertLineBreak');
+      return true;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // a selection typed over first (the browser's delete), then the line split
+      const s = selectionOf(rich.el, win);
+      if (s && !isCaret(s)) doc.execCommand('delete');
+      const sel = selectionOf(rich.el, win);
+      if (!sel) return true;
+      const next = { line: sel.to.line + 1, at: 0 };
+      bridge.richApply((body) => ({
+        body: splitLine(body, sel.to),
+        sel: { from: next, to: next },
+      }));
+      return true;
+    }
+    if (mod && !e.altKey && (k === 'b' || k === 'i')) {
+      e.preventDefault();
+      e.stopPropagation();
+      bridge.richApply((body, sel) =>
+        sel && !isCaret(sel) ? { body: toggleMark(body, sel.from, sel.to, k) } : null,
+      );
+      return true;
+    }
+    if (mod && !e.altKey && k === 'k') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (richSel && !isCaret(richSel)) emit('richLink');
+      return true;
+    }
+    return false;
+  }
 
   function readValue(el) {
     const type = el.dataset.editType || 'text';
@@ -401,8 +609,13 @@ export function createBridge({ store, labelFor }) {
     raf = requestAnimationFrame(tick);
   }
 
+  /** Is the key's target somewhere typing goes (a field, a text edited in place)? */
+  const typing = (t) => !!t?.closest?.('input, textarea, select, [contenteditable]');
+  // Ctrl+S / E / Z / Y, Esc, and [ ] (a block's layer: by character, AltGr included) when not typing
   const isShortcut = (e) =>
-    ((e.metaKey || e.ctrlKey) && /^[sezy]$/i.test(e.key)) || e.key === 'Escape';
+    ((e.metaKey || e.ctrlKey) && /^[sezy]$/i.test(e.key)) ||
+    e.key === 'Escape' ||
+    ((e.key === '[' || e.key === ']') && !typing(e.target));
 
   function attachListeners() {
     const style = doc.createElement('style');
@@ -513,6 +726,7 @@ export function createBridge({ store, labelFor }) {
         e.preventDefault();
         e.stopPropagation();
         if (hit.dataset.bound !== undefined || hit.dataset.editType === 'image') pickField(hit);
+        else if (hit.dataset.editType === 'rich') startRich(hit, e.clientX, e.clientY);
         else startEdit(hit, e.clientX, e.clientY);
       },
       true,
@@ -537,6 +751,11 @@ export function createBridge({ store, labelFor }) {
     });
 
     doc.addEventListener('focusout', (e) => {
+      // the Text block: its edit ends, unless the toolbar's own field took the focus
+      if (rich && e.target === rich.el) {
+        if (!rich.hold) finishRich();
+        return;
+      }
       const edited = e.target.closest?.('[data-edit][contenteditable]');
       if (edited) endEdit(edited);
       const el = e.target.closest?.('[data-edit-type="words"]');
@@ -550,6 +769,12 @@ export function createBridge({ store, labelFor }) {
     });
 
     doc.addEventListener('input', (e) => {
+      if (rich && rich.el.contains(e.target)) {
+        writeRich(readBody(rich.el));
+        richSel = selectionOf(rich.el, win) || richSel;
+        emit('rich', richState());
+        return;
+      }
       const el = e.target.closest?.('[data-edit]');
       if (mode !== 'text' || !el) return;
       const value = readValue(el);
@@ -562,6 +787,12 @@ export function createBridge({ store, labelFor }) {
     doc.addEventListener(
       'keydown',
       (e) => {
+        if (rich && rich.el.contains(e.target)) {
+          if (richKey(e)) return;
+          if (isShortcut(e)) emit('key', e);
+          e.stopPropagation();
+          return;
+        }
         const el = e.target.closest?.('[contenteditable][data-edit]');
         if (el) {
           if (e.key === 'Enter' && el.dataset.editType !== 'block') {
@@ -587,6 +818,25 @@ export function createBridge({ store, labelFor }) {
       true,
     );
 
+    // a paste into a Text block is its plain text (the model's runs stay clean)
+    doc.addEventListener(
+      'paste',
+      (e) => {
+        if (!rich || !rich.el.contains(e.target)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        doc.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+      },
+      true,
+    );
+    // the caret moved: the toolbar's style and B / I state follow
+    doc.addEventListener('selectionchange', () => {
+      if (!rich) return;
+      const s = selectionOf(rich.el, win);
+      if (s) richSel = s;
+      emit('rich', richState());
+    });
+
     if (!plaintext) {
       doc.addEventListener('paste', (e) => {
         if (!e.target.closest?.('[contenteditable][data-edit]')) return;
@@ -599,6 +849,8 @@ export function createBridge({ store, labelFor }) {
   // Called by the site (src/client/main.js) before its first mount.
   window.__siteEditor = {
     connect(siteApi, siteWin) {
+      rich = null;
+      richSel = null;
       api = siteApi;
       win = siteWin;
       applied = new WeakMap();

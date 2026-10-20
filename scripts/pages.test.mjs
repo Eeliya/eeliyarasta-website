@@ -49,10 +49,11 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
     heading.blocks.map(({ id: _id, ...b }) => b),
     [
       {
-        type: 'heading',
-        eyebrow: 'New one',
-        title: 'New one',
-        body: '',
+        type: 'text',
+        body: [
+          { style: 'label', text: [{ t: 'New one' }] },
+          { style: 'title', text: [{ t: 'New one' }] },
+        ],
         layout: { base: { row: 17 } },
       },
     ],
@@ -200,7 +201,13 @@ test('move: a page into another folder, its name kept; links follow, no redirect
     sections: [
       {
         id: 's-aaaa',
-        blocks: [{ id: 'b-aaaa', type: 'text', body: 'x', href: '/people/team/#top' }],
+        blocks: [
+          {
+            id: 'b-aaaa',
+            type: 'text',
+            body: [{ style: 'paragraph', text: [{ t: 'x', link: { href: '/people/team/#top' } }] }],
+          },
+        ],
       },
     ],
   });
@@ -210,7 +217,10 @@ test('move: a page into another folder, its name kept; links follow, no redirect
   assert.deepEqual(r.body.created, ['pages/about/team/index.json']);
   assert.deepEqual(r.body.removed, ['pages/people/team/index.json']);
   assert.deepEqual(r.body.added, []);
-  assert.equal(read(root, 'pages/about/index.json').sections[0].blocks[0].href, '/about/team/#top');
+  assert.equal(
+    read(root, 'pages/about/index.json').sections[0].blocks[0].body[0].text[0].link.href,
+    '/about/team/#top',
+  );
   assert.equal(fs.existsSync(path.join(root, 'content/en/pages/people/team')), false);
   assert.equal(fs.existsSync(path.join(root, 'content/en/redirects.json')), false);
   // to the top and back

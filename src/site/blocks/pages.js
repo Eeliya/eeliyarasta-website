@@ -1,5 +1,5 @@
 /**
- * Block types of the inner pages: a page heading, album cards of a source (People,
+ * Block types of the inner pages: album cards of a source (People,
  * Places), photography panels, the About bio. See ./index.js for the shape.
  */
 import {
@@ -14,46 +14,8 @@ import {
   firstPhotos,
   sizes,
 } from '../helpers.js';
-import { hrefOf } from '../hrefs.js';
 import { albumCard } from '../templates/partials.js';
-import { sourceList, sourcePage } from './data.js';
-
-/**
- * A page's heading: eyebrow, big title (with the item count of a source: config.count), body,
- * and a button (cta, to config.link). config.center: centred on the screen (404);
- * config.numbered: the eyebrow starts with its number among the page's numbered headings (01).
- */
-export const heading = {
-  type: 'heading',
-  label: 'Page heading',
-  icon: 'heading',
-  line: 'A big title with a short intro',
-  sketch: 'heading',
-  fields: [
-    { key: 'eyebrow', label: 'Eyebrow' },
-    { key: 'title', label: 'Title' },
-    { key: 'body', label: 'Intro', type: 'block' },
-    { key: 'cta', label: 'Button (empty: none)' },
-  ],
-  config: [
-    { key: 'count', label: 'Count of', type: 'source', empty: 'No count' },
-    { key: 'link', label: 'Button link', type: 'link' },
-    { key: 'center', label: 'Centred', type: 'boolean' },
-    { key: 'numbered', label: 'Numbered (01)', type: 'boolean' },
-  ],
-  defaults: { eyebrow: '', title: 'New page', body: '', config: {} },
-  render: (s, ctx, b) => {
-    const c = s.config || {};
-    const count = c.count ? sourceList(ctx, c.count).length : undefined;
-    return html`
-  <div class="page-head${c.center ? ' page-head--center' : ''}">
-    <span class="label page-head__crumb">${c.numbered ? `(${pad(b.number)}) ` : ''}<span${b.ed('eyebrow')}>${esc(s.eyebrow)}</span></span>
-    <h1 class="page-title" data-anim="page.title"><span${b.ed('title')}>${esc(s.title)}</span>${count !== undefined ? html`<sup class="page-title__count">${pad(count)}</sup>` : ''}</h1>
-    ${s.body ? html`<p class="page-intro" data-anim="page.intro" ${b.ed('body', 'block')}>${lines(s.body)}</p>` : ''}
-    ${s.cta ? html`<a class="btn glass" href="${esc(hrefOf(ctx, c.link, 'a heading button') || '/')}"><span${b.ed('cta')}>${esc(s.cta)}</span> <span aria-hidden="true">→</span></a>` : ''}
-  </div>`;
-  },
-};
+import { sourcePage } from './data.js';
 
 /**
  * Album cards of its source's items (a list block: all of them, or the ones From URL

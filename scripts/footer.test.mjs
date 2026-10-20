@@ -20,7 +20,7 @@ test("footer.json: a part, its sections checked like a page's; the kind is the f
     checkContent(FOOTER, { version: 1, kind: 'part', sections: [{ id: 'x', blocks: [] }] }).length,
   );
   const taken = new Set();
-  const s = newSection(taken, [newBlock('heading', taken)]);
+  const s = newSection(taken, [newBlock('text', taken)]);
   const twice = checkContent(FOOTER, { version: 1, kind: 'part', sections: [s, { ...s }] });
   assert.ok(twice.includes(`the id "${s.id}" is used twice`));
   // one document type: the file decides the kind
@@ -54,8 +54,8 @@ test('footer: shipped empty, rendered under every page, outside the view', () =>
 
 test('footer: its sections render on every page, and the editor renders them on any page', () => {
   const taken = new Set();
-  const block = newBlock('heading', taken);
-  block.title = 'Say hello';
+  const block = newBlock('text', taken);
+  block.body = [{ style: 'title', text: [{ t: 'Say hello' }] }];
   const s = newSection(taken, [block]);
   const data = { version: 1, kind: 'part', sections: [s] };
   const withFooter = { ...content, footer: data };
@@ -65,7 +65,7 @@ test('footer: its sections render on every page, and the editor renders them on 
     const foot = body.slice(body.indexOf('<footer class="site-footer"'));
     assert.match(foot, new RegExp(`data-sec="${s.id}"`));
     assert.match(foot, /Say hello/);
-    assert.match(foot, /data-edit="settings\/footer\.json#\/sections\/0\/blocks\/0\/title"/);
+    assert.match(foot, /data-edit="settings\/footer\.json#\/sections\/0\/blocks\/0\/body"/);
   }
   for (const path of ['/', '/about/']) {
     const r = renderOp(render, '.', {}, { path, file: FOOTER, data, ids: [s.id] });

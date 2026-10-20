@@ -54,10 +54,21 @@ $z-skip: 200; // .skip-link: always on top when focused
   --ts-label-lh: 1.3;
   --ts-label-tr: 0.08em;
   --ts-label-min: 10px;
+  --ts-subheading: 2;
+  --ts-subheading-lh: 1.2;
+  --ts-subheading-tr: -0.005em;
+  --ts-subheading-min: 18px;
+  --ts-statement: 5;
+  --ts-statement-lh: 1.06;
+  --ts-statement-tr: -0.005em;
+  --ts-statement-min: 26px;
+  --ts-small: 1.05;
+  --ts-small-lh: 1.5;
+  --ts-small-tr: 0;
+  --ts-small-min: 11px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   @media (width <= $bp-sm) {
     --header-h: 64px;
   }
 }
-

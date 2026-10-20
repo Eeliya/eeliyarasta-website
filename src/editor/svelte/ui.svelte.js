@@ -65,8 +65,13 @@ export const ui = $state({
   selSection: null,
   /** Content tab: an empty section's own view open (its id; no block to open), or null. */
   section: null,
-  /** 'content' | 'layout' | 'motion' */
+  /** 'content' | 'motion' (its layout: the preview's toolbar, BlockToolbar.svelte) */
   blockTab: 'content',
+  /**
+   * A Text block edited in place in the preview (bridge.js richState): { block, edit, style,
+   * line, selected, bold, italic, link }, or null.
+   */
+  rich: null,
   /** Content tab: the link selected in the preview (its follower's block id), or null. */
   link: null,
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */

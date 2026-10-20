@@ -10,11 +10,30 @@
       "blocks": [
         {
           "id": "b-erex",
-          "type": "heading",
-          "eyebrow": "Photography / Places",
-          "title": "Places",
-          "body": "Buildings, streets and castles. What is left when the people walk out of frame.",
-          "config": { "count": "places" }
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Photography / Places" }]
+            },
+            {
+              "style": "title",
+              "text": [
+                { "t": "Places" },
+                {
+                  "count": { "source": "places" }
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Buildings, streets and castles. What is left when the people walk out of frame."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

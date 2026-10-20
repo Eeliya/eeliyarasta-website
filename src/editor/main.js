@@ -473,7 +473,7 @@ function rebind() {
   for (const root of syncRoots(bridge.doc))
     renderSections(
       [...root.querySelectorAll('[data-sec]')]
-        .filter((s) => s.querySelector('[data-bound]'))
+        .filter((s) => s.querySelector('[data-bound], [data-field], [data-count]'))
         .map((s) => s.dataset.sec),
       root,
     );
@@ -529,6 +529,12 @@ bridge.on('select', (sel) => {
       sel?.kind === 'text' ? { edit: sel.el.dataset.edit ?? sel.el.dataset.bound } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
+// the Text block editor (bridge.js, rich.js): its state for the toolbar; an edit ended: its
+// section rendered again (the fields' values, the counts, the animations' markup)
+bridge.on('rich', (state) => (ui.rich = state));
+bridge.on('richDone', () => {
+  for (const root of syncRoots(bridge.doc)) syncSections({ structure: true }, root);
+});
 // a click on a locked site part opens it (the Header or Footer is the target), one outside locks it
 bridge.on('part', (id, open) => {
   if (!open) return void lockPart();
@@ -609,8 +615,13 @@ store.on(({ files, source: src, structure }) => {
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
+  // a Text block typed into in place: the preview shows it already (its section renders
+  // again when the edit ends: richDone); an undo or redo while it is edited ends the edit
+  const typed = src?.nodeType === 1 && src.isContentEditable;
+  if ((src === 'undo' || src === 'redo') && bridge.richEditing) bridge.endRich();
   for (const root of roots)
-    if (files.includes(root.dataset.pageFile)) syncSections({ structure }, root);
+    if (files.includes(root.dataset.pageFile))
+      syncSections({ structure: structure && !typed }, root);
   if (files.includes(page)) syncBackdrop();
   if (textChanged) {
     pushCurtains();

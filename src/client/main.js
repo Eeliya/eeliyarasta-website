@@ -24,11 +24,12 @@ import { contactForms } from './modules/form.js';
 import { watchRows } from './modules/rows.js';
 import { anchors } from './modules/anchors.js';
 import { backdrop } from './modules/backdrop.js';
+import { fitText } from './modules/fit.js';
 
-const pageModules = [imageFade, album, projects, cards, contactForms, anchors];
+const pageModules = [imageFade, album, projects, cards, contactForms, anchors, fitText];
 // the footer's blocks: the modules of blocks it can have (no album, project list or anchors:
 // those are the page's, once)
-const footerModules = [imageFade, cards, contactForms];
+const footerModules = [imageFade, cards, contactForms, fitText];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;

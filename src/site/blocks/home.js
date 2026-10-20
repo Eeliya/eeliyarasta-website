@@ -1,6 +1,5 @@
 /**
- * Block types of the home page look: the hero with its scattered photos, the big intro
- * statement, a grid of a source's photos, the project list. See ./index.js for the shape.
+ * Block types of the home page look: the hero with its scattered photos, a grid of a source's photos, the project list. See ./index.js for the shape.
  */
 import {
   html,
@@ -81,21 +80,6 @@ export const hero = {
         <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
         <p class="hero__subline" ${b.ed('body', 'block')}>${lines(s.body)}</p>
       </div>
-    </div>`,
-};
-
-/** A big statement in the display font. */
-export const intro = {
-  type: 'intro',
-  label: 'Statement',
-  icon: 'quote-left',
-  line: 'One large line of text',
-  sketch: 'intro',
-  fields: [{ key: 'body', label: 'Text', type: 'block' }],
-  defaults: { body: 'A sentence about your work.', motion: { anim: 'scrub-words' } },
-  render: (s, ctx, b) =>
-    html` <div class="intro">
-      <p class="intro__text" ${b.ed('body', 'block')}>${lines(s.body)}</p>
     </div>`,
 };
 

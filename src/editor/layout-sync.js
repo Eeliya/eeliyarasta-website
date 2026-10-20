@@ -125,7 +125,7 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
     const cls = blockClass(b);
     const wasNode = node.className + '|' + node.style.cssText + node.hidden;
     node.className = cls;
-    const kept = ['--fr', '--frs']
+    const kept = ['--fr', '--frs', '--tkf']
       .map((v) => [v, node.style.getPropertyValue(v)])
       .filter(([, x]) => x)
       .map(([v, x]) => `;${v}:${x}`)

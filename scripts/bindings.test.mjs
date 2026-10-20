@@ -79,8 +79,12 @@ test('resolve: unknown fields and missing items are empty, with a warning ({{tit
 });
 
 test('resolveBlock: bound fields and config links resolved; an unbound block is the same object', () => {
-  const t = BLOCK_TYPES.heading;
-  const plain = { ...newBlock('heading', new Set()), title: 'Hi' };
+  // a type with a text, a multi-line text and a link (the registry's have one or two of them)
+  const t = {
+    fields: [{ key: 'title' }, { key: 'body', type: 'block' }],
+    config: [{ key: 'link', type: 'link' }],
+  };
+  const plain = { ...newBlock('button', new Set()), title: 'Hi' };
   assert.equal(resolveBlock(plain, t, { item: noor, source: 'people', ctx: content }), plain);
   const bound = {
     ...plain,
@@ -151,11 +155,14 @@ test('[param] templates: the album title, facts and summary come from each item'
 
 test('a normal page: a block with an item; without one its bound fields are empty', () => {
   const ids = new Set();
+  // a Text block's field runs (src/site/text.js): the item's fields in its lines
   const heading = {
-    ...newBlock('heading', ids),
-    eyebrow: 'Featured',
-    title: { bind: 'title', format: '{value}, model' },
-    body: { bind: 'body' },
+    ...newBlock('text', ids),
+    body: [
+      { style: 'label', text: [{ t: 'Featured' }] },
+      { style: 'title', text: [{ field: 'title', format: '{value}, model' }] },
+      { style: 'paragraph', text: [{ field: 'body' }] },
+    ],
     source: { mode: 'item', from: 'people', id: 'p-qw7b' },
   };
   const page = [newSection(ids, [heading])];
@@ -168,7 +175,7 @@ test('a normal page: a block with an item; without one its bound fields are empt
   setEditable(true);
   try {
     const ed = renderSections(content, { id: 'x' }, 'pages/x/index.json', page);
-    assert.match(ed, /data-bound="[^"]*\/title" data-bound-missing>\{\{title\}\}/);
+    assert.match(ed, /data-field="title" data-format="\{value\}, model">\{\{title\}\}/);
   } finally {
     setEditable(false);
   }
@@ -176,7 +183,21 @@ test('a normal page: a block with an item; without one its bound fields are empt
 
 test('bindingProblems: schema-aware errors and warnings', () => {
   const ids = new Set();
-  const block = (patch) => ({ ...newBlock('heading', ids), ...patch });
+  // a Text block: its title line one field (src/site/text.js), or a text
+  const block = ({ title, ...patch }) => ({
+    ...newBlock('text', ids),
+    body: [
+      {
+        style: 'title',
+        text: [
+          typeof title === 'string'
+            ? { t: title }
+            : { field: title.bind, ...(title.format ? { format: title.format } : {}) },
+        ],
+      },
+    ],
+    ...patch,
+  });
   const c = {
     ...content,
     pages: {
@@ -229,7 +250,7 @@ test('bindingProblems: schema-aware errors and warnings', () => {
 
 test('validation: the shape of bindings and items', () => {
   const ids = new Set();
-  const page = (patch, type = 'heading') => ({
+  const page = (patch, type = 'button') => ({
     version: 1,
     kind: 'page',
     id: 'pg-t004',
@@ -237,21 +258,15 @@ test('validation: the shape of bindings and items', () => {
     sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
   });
   const F = 'pages/x/index.json';
-  assert.deepEqual(
-    checkContent(
-      F,
-      page({ title: { bind: 'title' }, body: { bind: 'role', format: 'A {value}' } }),
-    ),
-    [],
-  );
+  assert.deepEqual(checkContent(F, page({ label: { bind: 'role', format: 'A {value}' } })), []);
   assert.deepEqual(checkContent(F, page({ config: { link: { bind: 'slug' } } })), []);
   assert.deepEqual(
     checkContent(F, page({ source: { mode: 'item', from: 'people', id: 'p-aaaa' } })),
     [],
   );
   const one = (p, type) => checkContent(F, page(p, type)).join('; ');
-  assert.match(one({ title: { bind: '' } }), /"title" must be \{ "bind": "<field>", "format"/);
-  assert.match(one({ title: { bind: 'a', x: 1 } }), /"title" must be \{ "bind"/);
+  assert.match(one({ label: { bind: '' } }), /"label" must be \{ "bind": "<field>", "format"/);
+  assert.match(one({ label: { bind: 'a', x: 1 } }), /"label" must be \{ "bind"/);
   assert.match(one({ item: 'people' }), /"item" must be/);
   assert.match(one({ item: { source: 'People!', id: 'p-aaaa' } }), /"item" must be/);
   assert.match(one({ body: { bind: 'body' } }, 'about'), /"body" must be a list of its own/);
@@ -260,8 +275,8 @@ test('validation: the shape of bindings and items', () => {
     /"src.format" must be left out/,
   );
   assert.match(
-    one({ title: { bind: 'a', format: 'no value' } }),
-    /"title.format" must be a text with \{value\}/,
+    one({ label: { bind: 'a', format: 'no value' } }),
+    /"label.format" must be a text with \{value\}/,
   );
 });
 
@@ -291,8 +306,8 @@ test('Save refuses bindings that do not fit the schema', () => {
     sections: [
       newSection(ids, [
         {
-          ...newBlock('heading', ids),
-          title,
+          ...newBlock('button', ids),
+          label: title,
           source: { mode: 'item', from: 'people', id: 'p-qw7b' },
         },
       ]),

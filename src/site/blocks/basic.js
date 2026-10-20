@@ -1,30 +1,61 @@
 /**
  * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
  */
-import { html, esc, img, extAttrs, lines, sizes } from '../helpers.js';
+import { html, esc, img, extAttrs, sizes, pad, editable } from '../helpers.js';
+import { checkBody, countText, fieldText, renderBody } from '../text.js';
+import { sourceList } from './data.js';
 import { hrefOf } from '../hrefs.js';
 
-/** Paragraphs (a blank line starts a new one) under an optional title. */
+/**
+ * Text: lines in the site's text styles (a label, a title, paragraphs, ...), with bold,
+ * italic, links, an item's fields and counts in them (../text.js has the body's shape).
+ * Edited in the preview only (src/editor/rich.js). config.center: centred;
+ * config.numbered: its first label starts with its number among the page's numbered text
+ * blocks ("(01) "). A title line animates as page.title, the lines after it (when the
+ * block has no motion of its own) as page.intro.
+ */
 export const text = {
   type: 'text',
   label: 'Text',
-  icon: 'align-left',
-  line: 'Paragraphs, with a title if you like',
+  icon: 'font',
+  line: 'Titles, paragraphs, labels: any text',
   sketch: 'text',
-  fields: [
-    { key: 'title', label: 'Title (empty: none)' },
-    { key: 'body', label: 'Text (a blank line starts a paragraph)', type: 'block' },
+  fields: [{ key: 'body', label: 'Text', type: 'rich' }],
+  config: [
+    { key: 'center', label: 'Centred', type: 'boolean' },
+    { key: 'numbered', label: 'Numbered (01)', type: 'boolean' },
   ],
-  defaults: { title: '', body: 'Some text.', motion: { anim: 'lines-up' } },
+  defaults: { body: [{ style: 'paragraph', text: [{ t: 'Some text.' }] }], config: {} },
+  check: (b) => (b.body === undefined ? [] : checkBody(b.body)),
   render: (s, ctx, b) => {
-    const paragraphs = String(s.body ?? '')
-      .split(/\n\s*\n/)
-      .filter((p) => p.trim());
-    return html` <div class="textblock">
-      ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
-      <div class="textblock__body" ${b.ed('body', 'block')}>
-        ${paragraphs.map((p) => html`<p>${lines(p.trim())}</p>`)}
-      </div>
+    const c = s.config || {};
+    const body = Array.isArray(s.body) ? s.body : [];
+    const missing = (name) => (editable ? `{{${name}}}` : '');
+    const value = (r) => {
+      if (r.field !== undefined) return fieldText(r, b.item) || missing(r.field);
+      const n = r.count.source ? sourceList(ctx, r.count.source).length : (b.items || []).length;
+      return countText(n);
+    };
+    const firstTitle = body.findIndex((l) => l?.style === 'title');
+    const firstLabel = body.findIndex((l) => l?.style === 'label');
+    const own = typeof s.motion?.anim === 'string';
+    const attrs = (i, style) =>
+      style === 'title' && i === firstTitle
+        ? ' data-anim="page.title"'
+        : !own && firstTitle >= 0 && i > firstTitle
+          ? ' data-anim="page.intro"'
+          : '';
+    const lead = (i) =>
+      c.numbered && i === firstLabel
+        ? `<span class="ts__num"${editable ? ' contenteditable="false"' : ''}>(${pad(b.number)}) </span>`
+        : '';
+    return html`<div class="text${c.center ? ' text--center' : ''}">
+      <div class="text__body" ${b.ed('body', 'rich')}>${renderBody(body, {
+        value,
+        href: (link) => hrefOf(ctx, link, 'a text link') || '#',
+        attrs,
+        lead,
+      })}</div>
     </div>`;
   },
 };

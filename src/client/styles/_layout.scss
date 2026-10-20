@@ -162,25 +162,49 @@
  * _tokens.scss, site.json typography in the page's head).
  */
 @mixin scaled($style) {
-  font-size: max(var(--ts-#{$style}-min), calc(var(--tcell) * var(--ts-#{$style}) * var(--tk, 1)));
+  font-size: max(
+    var(--fit-min, var(--ts-#{$style}-min)),
+    calc(var(--tcell) * var(--ts-#{$style}) * var(--tk-now, 1))
+  );
   line-height: var(--ts-#{$style}-lh);
   letter-spacing: var(--ts-#{$style}-tr);
 }
 .blk--scale {
-  .page-title {
+  // (a fitted block's --tkf, src/client/modules/fit.js, over its adjust)
+  --tk-now: var(--tkf, var(--tk, 1));
+  .ts--title {
     @include scaled('title');
   }
+  .ts--heading,
   .section__title {
     @include scaled('heading');
   }
-  // (the body too: the editor's preview has its text without <p> while it is edited)
-  .page-intro,
-  .textblock__body,
-  .textblock__body p {
+  .ts--subheading {
+    @include scaled('subheading');
+  }
+  .ts--statement {
+    @include scaled('statement');
+  }
+  .ts--paragraph {
     @include scaled('paragraph');
   }
+  .ts--small {
+    @include scaled('small');
+  }
+  .ts--label,
   .page-head__crumb,
   .btn {
     @include scaled('label');
+  }
+  // scaled lines are as wide as the block lets them
+  .ts {
+    max-width: none;
+  }
+}
+// fitted: no minimum (it is as large as fits, small blocks included)
+.blk--fit {
+  overflow: hidden;
+  .ts {
+    --fit-min: 0px;
   }
 }

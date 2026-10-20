@@ -1,10 +1,9 @@
 <!--
-  One block of the page (ui.block), in three tabs:
+  One block of the page (ui.block), in two tabs (its size, text size and layer: the toolbar on
+  it in the preview, BlockToolbar.svelte; where it sits is dragged there, overlay.js):
     Content  its source (BlockSource.svelte: Item / All, From URL or None, and on a [param] page
              whether it is the main block), then its settings and texts (GroupFields.svelte),
              each bindable field with its picker: Custom or a field of the item it shows
-    Layout   its size (rows, aspect, auto) and layer, for the desktop or the phone
-             (LayoutTab.svelte); where it sits is dragged in the preview (overlay.js)
     Motion   its motion: its animation and own timing, and its parts with their own animation,
              which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
   One level under the list of sections (a block's row on its section's card, or the block
@@ -22,7 +21,6 @@
   import { blockItems, sourceOf } from '../../site/layout/source.js';
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { ui } from './ui.svelte.js';
-  import LayoutTab from './LayoutTab.svelte';
   import BlockMotion from './BlockMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
   import ViewTop from './ViewTop.svelte';
@@ -30,9 +28,9 @@
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
 
+  // (its layout: the toolbar on the block in the preview, BlockToolbar.svelte)
   const TABS = [
     ['content', 'Content'],
-    ['layout', 'Layout'],
     ['motion', 'Motion'],
   ];
   const { at, j } = $derived(g.block);
@@ -92,6 +90,9 @@
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
     },
     from: item && schema ? (schema.title && line(item[schema.title])) || from : from,
+    // a Text block's summary: its fields' values, its own count
+    item,
+    items: shown.items?.length ?? 0,
   });
 
   // the block's element in the preview, read again after every edit
@@ -125,9 +126,7 @@
   />
 
   <div class="card__body">
-    {#if ui.blockTab === 'layout'}
-      <LayoutTab {g} {live} {at} {j} {base} {block} el={blockEl} />
-    {:else if ui.blockTab === 'motion'}
+    {#if ui.blockTab === 'motion'}
       {#key blockEl}
         <BlockMotion
           {live}

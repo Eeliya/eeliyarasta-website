@@ -28,7 +28,12 @@ const page = (id, title, more = {}) => ({
   version: 1,
   kind: 'page',
   id,
-  sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'heading', title }] }],
+  sections: [
+    {
+      id: 's-aaaa',
+      blocks: [{ id: 'b-aaaa', type: 'text', body: [{ style: 'title', text: [{ t: title }] }] }],
+    },
+  ],
   ...more,
 });
 const NAV = {

@@ -40,6 +40,8 @@ const F = 'pages/test/index.json';
 let n = 0;
 const id = (kind) => `${kind}-t${String(++n).padStart(3, '0')}`;
 const block = (type, more = {}) => lay({ id: id('b'), type, ...more });
+// a Text block's body: one paragraph line
+const lines = (t) => [{ style: 'paragraph', text: [{ t }] }];
 const section = (blocks, more = {}) => ({ id: id('s'), blocks, ...more });
 
 /** Console warnings while fn runs. */
@@ -104,14 +106,18 @@ test('a list block without a source: its head without a link, no items (not a de
 test('render: sections are grids, blocks carry their area; off is hidden', () => {
   const list = [
     section([
-      block('text', { body: 'One', layout: { base: { col: 3, span: 10, row: 2, rows: 4 } }, z: 2 }),
+      block('text', {
+        body: lines('One'),
+        layout: { base: { col: 3, span: 10, row: 2, rows: 4 } },
+        z: 2,
+      }),
     ]),
-    section([block('text', { body: 'Two', config: { enabled: false } })], {
+    section([block('text', { body: lines('Two'), config: { enabled: false } })], {
       name: 'Our People',
       height: 'full',
       width: 'full',
     }),
-    section([block('text', { body: 'Three' })], { enabled: false }),
+    section([block('text', { body: lines('Three') })], { enabled: false }),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
   // rows: down to the lowest block; the phone grid's rows: its blocks' halved areas
@@ -161,8 +167,16 @@ test('render: sections are grids, blocks carry their area; off is hidden', () =>
 });
 
 test('render: no automatic numbering; a heading can be numbered, counting the ones that are on', () => {
+  // a Text block: its label numbered (its first label line), then its title
   const heading = (title, numbered, more) =>
-    block('heading', { title, config: { numbered }, ...more });
+    block('text', {
+      body: [
+        { style: 'label', text: [{ t: `L${title}` }] },
+        { style: 'title', text: [{ t: title }] },
+      ],
+      config: { numbered },
+      ...more,
+    });
   const list = [
     section([heading('A', true), heading('B', false)]),
     section([heading('C', true)], { enabled: false }),
@@ -172,21 +186,24 @@ test('render: no automatic numbering; a heading can be numbered, counting the on
     ]),
   ];
   const out = renderSections(ctxOf(page), page, F, list);
-  assert.match(out, /\(01\) <span>[\s\S]*>A</);
-  assert.match(out, /\(02\) <span>[\s\S]*>D</);
+  assert.match(out, /\(01\) <\/span>LA</);
+  assert.match(out, /\(02\) <\/span>LD</);
   assert.doesNotMatch(out, /\(03\)/);
   assert.match(out, /data-anim="section.label">L</); // a grid head has no number
 });
 
 test('render: editor markers point into the blocks, only when editable', () => {
-  const list = [section([block('text'), block('heading', { title: 'T' })])];
+  const list = [section([block('photo'), block('text')])];
   assert.doesNotMatch(renderSections(ctxOf(page), page, F, list), /data-edit|data-sec|data-block/);
   setEditable(true);
   try {
     const out = renderSections(ctxOf(page), page, F, list);
     assert.match(out, new RegExp(`data-sec="${list[0].id}"`));
     assert.match(out, new RegExp(`data-block="${list[0].blocks[1].id}"`));
-    assert.match(out, /data-edit="pages\/test\/index\.json#\/sections\/0\/blocks\/1\/title"/);
+    assert.match(
+      out,
+      /data-edit="pages\/test\/index\.json#\/sections\/0\/blocks\/1\/body" data-edit-type="rich"/,
+    );
   } finally {
     setEditable(false);
   }
@@ -195,11 +212,15 @@ test('render: editor markers point into the blocks, only when editable', () => {
 test('render: an unknown type, or an item type without an item, warns and is skipped', () => {
   const [out, seen] = warnings(() =>
     renderSections(ctxOf(page), page, F, [
-      section([block('nope'), block('album', { source: undefined }), block('text', { body: 'x' })]),
+      section([
+        block('nope'),
+        block('album', { source: undefined }),
+        block('text', { body: lines('x') }),
+      ]),
     ]),
   );
   assert.doesNotMatch(out, /data-album/);
-  assert.match(out, /<p>x<\/p>/);
+  assert.match(out, /<p class="ts ts--paragraph" data-line="paragraph">x<\/p>/);
   assert.match(seen.join('\n'), /unknown block type "nope"/);
   assert.match(seen.join('\n'), /"album" block shows an item: it has none/);
   assert.match(render.renderRoute(item, content).body, /data-album/);
@@ -236,10 +257,14 @@ test('validation: the layout, then each block against its type', () => {
     /layout.base.col/,
   );
   assert.match(one({ type: 'text', z: 1.5 })[0], /"z" must be a whole number/);
-  assert.match(one({ type: 'heading', title: 3 })[0], /\(Page heading\): "title" must be a string/);
+  assert.match(one({ type: 'text', body: 3 })[0], /\(Text\): "body" must be a list of lines/);
+  assert.match(
+    one({ type: 'text', body: [{ style: 'huge', text: [{ t: 'x', marks: ['u'] }] }] }).join(),
+    /"body\.0\.style" must be one of title[\s\S]*"body\.0\.text\.0\.marks" must/,
+  );
   assert.match(one({ type: 'about', facts: ['x'] })[0], /list of objects/);
   assert.match(one({ type: 'grid', config: { layout: 'wild' } })[0], /one of staggered, even/);
-  assert.match(one({ type: 'heading', config: { numbered: 'yes' } })[0], /must be a boolean/);
+  assert.match(one({ type: 'text', config: { numbered: 'yes' } })[0], /must be a boolean/);
   assert.match(one({ type: 'text', config: { enabled: 1 } })[0], /true or false/);
   const twice = section([block('text'), block('text')]);
   twice.blocks[1].id = twice.blocks[0].id;
@@ -267,20 +292,20 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   store.load({ [F]: { version: 1, kind: 'page', id: 'pg-t008', sections: [] } });
   const sections = () => store.current[F].sections;
   const types = () => sections().map((s) => s.blocks.map((b) => b.type).join('+'));
-  addSection(store, F, 'heading');
+  addSection(store, F, 'photo');
   addSection(store, F, 'text', 0);
   addSection(store, F); // empty
-  assert.deepEqual(types(), ['text', 'heading', '']);
+  assert.deepEqual(types(), ['text', 'photo', '']);
   assert.ok(sections().every((s) => isId(s.id, 's') && s.blocks.every((b) => isId(b.id, 'b'))));
   duplicateSection(store, F, 0);
-  assert.deepEqual(types(), ['text', 'text', 'heading', '']);
+  assert.deepEqual(types(), ['text', 'text', 'photo', '']);
   assert.notEqual(sections()[0].id, sections()[1].id);
   assert.notEqual(sections()[0].blocks[0].id, sections()[1].blocks[0].id);
   moveSection(store, F, 2, 0);
-  assert.deepEqual(types(), ['heading', 'text', 'text', '']);
+  assert.deepEqual(types(), ['photo', 'text', 'text', '']);
   assert.equal(moveSection(store, F, 0, -1), false);
   removeSection(store, F, 3);
-  assert.deepEqual(types(), ['heading', 'text', 'text']);
+  assert.deepEqual(types(), ['photo', 'text', 'text']);
 
   const b = addBlock(store, F, 0, 'button');
   assert.deepEqual(flat(sections()[0].blocks[1]).pos, { col: 1, span: 120, row: 9 }); // below
@@ -288,18 +313,18 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.equal(sections()[0].rows, undefined); // its rows: down to its lowest block, not stored
   assert.ok(isId(b.id, 'b'));
   duplicateBlock(store, F, 0, 1);
-  assert.deepEqual(types()[0], 'heading+button+button');
+  assert.deepEqual(types()[0], 'photo+button+button');
   assert.equal(flat(sections()[0].blocks[2]).pos.row, 17);
   moveBlock(store, F, 0, 2, 0);
-  assert.deepEqual(types()[0], 'button+heading+button');
+  assert.deepEqual(types()[0], 'button+photo+button');
   // to another section: free, below its blocks; one undo step
   moveBlockTo(store, F, 0, 0, 1, 0);
-  assert.deepEqual(types().slice(0, 2), ['heading+button', 'button+text']);
+  assert.deepEqual(types().slice(0, 2), ['photo+button', 'button+text']);
   assert.equal(flat(sections()[1].blocks[0]).pos.row > 1, true);
   store.undo();
-  assert.deepEqual(types()[0], 'button+heading+button');
+  assert.deepEqual(types()[0], 'button+photo+button');
   removeBlock(store, F, 0, 0);
-  assert.deepEqual(types()[0], 'heading+button');
+  assert.deepEqual(types()[0], 'photo+button');
   placeBlock(store, F, 0, 1, { col: 13, span: 12, row: 30, rows: 4 });
   assert.deepEqual(flat(sections()[0].blocks[1]).pos, { col: 13, span: 12, row: 30 });
   assert.equal(rowsOf(sections()[0]), 30); // a section grows to fit
@@ -322,9 +347,9 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
   assert.deepEqual(flat(sections()[0].blocks[1]).pos, { col: 1, span: 120, row: 9 });
   assert.equal(rowsOf(sections()[0]), 9); // down to its lowest block again
   store.undo(); // remove
-  assert.deepEqual(types()[0], 'button+heading+button');
+  assert.deepEqual(types()[0], 'button+photo+button');
   store.redo();
-  assert.deepEqual(types()[0], 'heading+button');
+  assert.deepEqual(types()[0], 'photo+button');
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'layout-'));
   for (const f of ['settings/site.json', 'settings/animations.json', 'pages/index.json']) {
@@ -342,7 +367,7 @@ test('ops: sections and blocks added, copied, moved, removed; one undo step each
     saved.sections.map((s) => s.blocks.length),
     [2, 1, 1],
   );
-  const bad = { sections: [section([block('heading', { title: 3 })])] };
+  const bad = { sections: [section([block('text', { body: 3 })])] };
   assert.equal(save(root, { [F]: bad }).status, 400);
 });
 

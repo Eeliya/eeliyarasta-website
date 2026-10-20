@@ -258,13 +258,15 @@ export function pagesOp(
       const t = String(title || '').trim() || titleCase(name);
       const file = pageFile(join(parent, name));
       onWrite();
-      // a new page starts with its heading (src/site/layout/), below the header: sections have
+      // a new page starts with a Text block: its label and title (src/site/layout/), below the header: sections have
       // no space above, so the rows above it are empty (HEAD_ROW)
       const ids = new Set();
       const heading = {
-        ...newBlock('heading', ids, { row: HEAD_ROW, rows: 1 }),
-        eyebrow: t,
-        title: t,
+        ...newBlock('text', ids, { row: HEAD_ROW, rows: 1 }),
+        body: [
+          { style: 'label', text: [{ t }] },
+          { style: 'title', text: [{ t }] },
+        ],
       };
       const section = newSection(ids, [heading]);
       write(file, {

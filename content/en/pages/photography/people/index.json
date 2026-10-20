@@ -10,11 +10,30 @@
       "blocks": [
         {
           "id": "b-j6je",
-          "type": "heading",
-          "eyebrow": "Photography / People",
-          "title": "People",
-          "body": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light.",
-          "config": { "count": "people" }
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Photography / People" }]
+            },
+            {
+              "style": "title",
+              "text": [
+                { "t": "People" },
+                {
+                  "count": { "source": "people" }
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Models and the people I have photographed. Portraits, editorial and fashion, mostly natural light."
+                }
+              ]
+            }
+          ]
         }
       ]
     },

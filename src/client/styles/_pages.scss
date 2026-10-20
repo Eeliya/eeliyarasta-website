@@ -1,47 +1,5 @@
 @use 'tokens' as *;
 
-/* ---------------- Page head (index pages) ---------------- */
-.page-head {
-  display: grid;
-  grid-template-columns: 1fr minmax(auto, 380px);
-  align-items: end;
-  gap: 20px 40px;
-  &__crumb {
-    grid-column: 1 / -1;
-  }
-  &--center {
-    grid-template-columns: 1fr;
-    justify-items: start;
-    min-height: 80svh;
-    align-content: center;
-  }
-  @media (max-width: $bp-sm) {
-    grid-template-columns: 1fr;
-  }
-}
-.page-title {
-  font-family: var(--f-display);
-  font-weight: 400;
-  font-size: clamp(72px, 15vw, 250px);
-  line-height: 0.82;
-  letter-spacing: -0.02em;
-  // a phone: 72px made "Photography" wider than the screen
-  @media (width <= 480px) {
-    font-size: 13vw;
-  }
-  &__count {
-    font-size: 13px;
-    margin-left: 0.4em;
-    color: var(--muted);
-    letter-spacing: 0.04em;
-  }
-}
-.page-intro {
-  max-width: 42ch;
-  font-size: 14px;
-  color: var(--muted);
-}
-
 /* ---------------- Album cards (People / Places) ---------------- */
 .agrid {
   display: grid;
@@ -393,21 +351,7 @@
   }
 }
 
-/* ---------------- Plain blocks (any page): text, photo, button ---------------- */
-.textblock {
-  display: grid;
-  gap: 24px;
-  &__body {
-    display: grid;
-    gap: 20px;
-    p {
-      max-width: 64ch;
-      font-size: 16px;
-      line-height: 1.75;
-      color: var(--solid-faint);
-    }
-  }
-}
+/* ---------------- Plain blocks (any page): photo, button (text: _text.scss) ---------------- */
 .photoblock {
   &__figure {
     display: grid;

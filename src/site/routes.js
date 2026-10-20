@@ -51,7 +51,7 @@ import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
 import { blocksOf } from './layout/ids.js';
-import { isBinding } from './layout/bindings.js';
+import { lineText } from './text.js';
 import { mainOf, mainProblem, refsOf, sourceOf } from './layout/source.js';
 import { hasField, query, ruleOf, valueOf, SLUG } from './query.js';
 
@@ -86,11 +86,15 @@ export const pathOfId = (id) =>
         .map((s) => (isParam(s) ? `:${paramOf(s)}` : s))
         .join('/')}/`;
 
-/** A page's title: its first heading block's title (blocks/pages.js), else undefined. */
+/**
+ * A page's title: the first title line of its first Text block with one (blocks/basic.js),
+ * else undefined. A title with a field in it names the item, not the page: none.
+ */
 export const pageTitle = (page) => {
-  const title = blocksOf(page).find((b) => b?.type === 'heading')?.title;
-  // a bound title (layout/bindings.js) names the item, not the page
-  return typeof title === 'string' && !isBinding(title) ? title : undefined;
+  for (const b of blocksOf(page))
+    if (b?.type === 'text' && Array.isArray(b.body) && b.body.some((l) => l?.style === 'title'))
+      return lineText(b.body, 'title');
+  return undefined;
 };
 
 /** "photography/people" -> "photography", "about" -> "" (home's folder). */

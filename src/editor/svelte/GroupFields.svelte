@@ -25,6 +25,7 @@
   import { openMedia } from './media.svelte.js';
   import { pairedHalves } from './source-items.js';
   import ItemPicker from './ItemPicker.svelte';
+  import RichSummary from './RichSummary.svelte';
   import { sourceFile } from '../../site/files.js';
   import { isBinding } from '../../site/layout/bindings.js';
 
@@ -108,7 +109,17 @@
 <!-- one field: a Field (text, photo, switch, choice), or a source field (a list item's
      source, ItemPicker.svelte) -->
 {#snippet field(f, half, extra = {})}
-  {#if f.type === 'source'}
+  {#if f.type === 'rich'}
+    <!-- a Text block's text: edited in the preview only -->
+    <RichSummary
+      label={f.label}
+      value={live.get(f.file, f.ptr)}
+      item={bindings?.item ?? null}
+      items={bindings?.items ?? 0}
+      {live}
+      onedit={() => bridge.editRich(g.id)}
+    />
+  {:else if f.type === 'source'}
     <ItemPicker
       store={live.store}
       mode="source"

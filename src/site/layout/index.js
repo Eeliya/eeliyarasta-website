@@ -61,7 +61,7 @@ import { isBinding, keysOf, resolve, resolveBlock } from './bindings.js';
 import { blockItems } from './source.js';
 import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
-import { adjustOf, scaled } from './type.js';
+import { adjustOf, fitted, scaled } from './type.js';
 
 export {
   COLS,
@@ -238,6 +238,7 @@ export function blockClass(b) {
     `blk blk--${b?.type}` +
     (aspect ? ' blk--aspect' : size === 'auto' || size === 'aspect' ? ' blk--auto' : '') +
     (scaled(b) ? ' blk--scale' : '') +
+    (fitted(b) ? ' blk--fit' : '') +
     (b?.layout?.phone === null ? ' blk--m-hidden' : '')
   );
 }
@@ -279,14 +280,14 @@ const linkAttrs = (b) =>
     .map(([k, v]) => ` ${k}="${esc(v)}"`)
     .join('');
 
-/** The number (1, 2, ...) of each numbered heading block on the page, by block id. */
+/** The number (1, 2, ...) of each numbered Text block on the page, by block id. */
 export function headingNumbers(sections) {
   const numbers = {};
   let n = 0;
   for (const [b, s] of eachBlock(sections))
     if (
       s.enabled !== false &&
-      b?.type === 'heading' &&
+      b?.type === 'text' &&
       b.config?.numbered &&
       b.config.enabled !== false
     )

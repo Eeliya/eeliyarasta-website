@@ -3,6 +3,7 @@
  * text in cells, so it grows and shrinks with the page's width like the blocks do:
  *
  *   "scale": { "on": true, "adjust": 120 }     adjust: % of its styles' sizes (default 100)
+ *   "scale": { "fit": true }                    as large as fits the block (fixed height only)
  *
  * Each text style is defined once, in cells of the 120-column grid (site.json "typography";
  * TEXT_STYLES are the defaults):
@@ -27,14 +28,24 @@ export const TEXT_STYLES = {
   heading: { label: 'Heading', size: 3, line: 1.1, tracking: -0.01, min: 20 },
   paragraph: { label: 'Paragraph', size: 1.4, line: 1.75, tracking: 0, min: 14 },
   label: { label: 'Label', size: 1, line: 1.3, tracking: 0.08, min: 10 },
+  subheading: { label: 'Subheading', size: 2, line: 1.2, tracking: -0.005, min: 18 },
+  statement: { label: 'Statement', size: 5, line: 1.06, tracking: -0.005, min: 26 },
+  small: { label: 'Small', size: 1.05, line: 1.5, tracking: 0, min: 11 },
 };
 const STYLE_KEYS = ['size', 'line', 'tracking', 'min'];
 
 /** Block types whose text can scale (a Scale switch in the editor). */
-export const SCALE_TYPES = ['heading', 'text', 'button'];
+export const SCALE_TYPES = ['text', 'button'];
 
-/** Is a block's text scaled? */
-export const scaled = (b) => SCALE_TYPES.includes(b?.type) && b?.scale?.on === true;
+/**
+ * Fit to block: its text as large as fits its box (a block with a fixed height: aspect or
+ * rows), worked out live in the page (src/client/modules/fit.js: --tkf, over adjust).
+ */
+export const fitted = (b) =>
+  SCALE_TYPES.includes(b?.type) && b?.scale?.fit === true && ['aspect', 'rows'].includes(b?.size);
+
+/** Is a block's text scaled (in cells: by the grid, or fitted)? */
+export const scaled = (b) => SCALE_TYPES.includes(b?.type) && (b?.scale?.on === true || fitted(b));
 
 /** A scaled block's adjust as a factor (1 = 100%). */
 export const adjustOf = (b) => {
@@ -102,9 +113,12 @@ export function checkScale(b) {
   if (s === undefined) return [];
   if (!SCALE_TYPES.includes(b.type))
     return [`"scale" is for text blocks (${SCALE_TYPES.join(', ')})`];
-  if (!isObject(s)) return ['"scale" must be an object { "on": true, "adjust": 100 }'];
+  if (!isObject(s))
+    return ['"scale" must be an object { "on": true, "adjust": 100, "fit": false }'];
   const out = [];
   if (s.on !== undefined && typeof s.on !== 'boolean') out.push('"scale.on" must be true or false');
+  if (s.fit !== undefined && typeof s.fit !== 'boolean')
+    out.push('"scale.fit" must be true or false');
   if (
     s.adjust !== undefined &&
     !(typeof s.adjust === 'number' && s.adjust >= 10 && s.adjust <= 1000)

@@ -154,26 +154,6 @@
   }
 }
 
-/* ---------------- Intro statement ---------------- */
-.intro {
-  &__text {
-    max-width: 1280px;
-    font-family: var(--f-display);
-    font-size: clamp(30px, 4.3vw, 72px);
-    line-height: 1.06;
-    letter-spacing: -0.005em;
-    text-indent: 18%;
-    .split-word {
-      text-indent: 0;
-    } // SplitText word wrappers must not inherit the indent
-  }
-  @media (max-width: $bp-sm) {
-    &__text {
-      text-indent: 0;
-    }
-  }
-}
-
 /* ---------------- Block heads (photo grid, project list) ---------------- */
 .section {
   &__head {

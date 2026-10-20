@@ -76,8 +76,7 @@
 <!-- a block's sketch: grey shapes, 2:1 -->
 {#snippet sketch(type)}
   <span class="as-sk as-sk--{type}" aria-hidden="true">
-    {#if type === 'heading'}<b class="w70 h12"></b><b class="w50 h4"></b><b class="w40 h4"></b>
-    {:else if type === 'text'}<b class="w40 h8"></b><b class="w90 h4"></b><b class="w80 h4"></b><b
+    {#if type === 'text'}<b class="w40 h4"></b><b class="w70 h12"></b><b class="w90 h4"></b><b
         class="w60 h4"
       ></b>
     {:else if type === 'photo'}<b class="img"></b><b class="w40 h4"></b>
@@ -88,7 +87,6 @@
     {:else if type === 'hero'}<b class="sc s1"></b><b class="sc s2"></b><b class="sc s3"></b><b
         class="w70 h12 mid"
       ></b>
-    {:else if type === 'intro'}<b class="w90 h8"></b><b class="w70 h8"></b>
     {:else if type === 'grid'}<span class="g g3"
         >{#each Array(6) as _, i (i)}<b></b>{/each}</span
       >

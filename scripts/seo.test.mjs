@@ -33,7 +33,18 @@ test('titles: the site template around the page title; home in full', () => {
   const files = {
     'pages/index.json': {},
     'pages/about/index.json': {
-      sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'heading', title: 'About me' }] }],
+      sections: [
+        {
+          id: 's-aaaa',
+          blocks: [
+            {
+              id: 'b-aaaa',
+              type: 'text',
+              body: [{ style: 'title', text: [{ t: 'About me' }] }],
+            },
+          ],
+        },
+      ],
     },
     'pages/work/index.json': { meta: { title: 'My work' } },
   };
