@@ -36,11 +36,11 @@
   font-family: var(--f-display);
   font-weight: 400;
   // the old page title's size, never wider than its block: "Photography" is ~6em wide
-  font-size: min(clamp(72px, 15vw, 250px), 16cqi);
+  font-size: min(clamp(72px, 15vw, 250px), 20cqi);
   line-height: 0.82;
   letter-spacing: -0.02em;
   @media (width <= 480px) {
-    font-size: min(13vw, 16cqi);
+    font-size: min(13vw, 20cqi);
   }
 }
 .ts--heading {
