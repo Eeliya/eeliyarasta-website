@@ -7,7 +7,7 @@
  * position ({ line, at }: a chip counts as one, a line break as one).
  *
  * The DOM it reads: one element per line ([data-line="<style>"]) under the body; in a line
- * text, <br> (a line break), <strong>/<b>, <em>/<i>, <a data-link> and the chips
+ * text, <br> (a line break), <strong>/<b>, <em>/<i>, <a data-ts-link> and the chips
  * ([data-field], [data-count]: atomic, contenteditable=false). Anything else the browser
  * makes (a pasted <div>, a <span style>) is read as its text, so the model stays clean.
  */
@@ -72,7 +72,7 @@ function readRuns(node, marks = [], link = null, self = false) {
       // our own links carry theirs; one the browser made: its href, when it is a safe one
       let own = null;
       try {
-        own = n.dataset.link ? JSON.parse(n.dataset.link) : null;
+        own = n.dataset.tsLink ? JSON.parse(n.dataset.tsLink) : null;
       } catch {
         /* not ours */
       }

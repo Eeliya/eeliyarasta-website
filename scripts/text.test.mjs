@@ -137,3 +137,18 @@ test('text: a line style, a chip put in, a line split', () => {
     { style: 'paragraph', text: [] },
   ]);
 });
+
+test('text: Enter at the end of a title-like line starts a Paragraph; mid-line keeps the style', () => {
+  const b = [{ style: 'title', text: [{ t: 'Hello' }] }];
+  assert.deepEqual(splitLine(b, { line: 0, at: 5 })[1], { style: 'paragraph', text: [] });
+  assert.deepEqual(splitLine(b, { line: 0, at: 2 })[1], { style: 'title', text: [{ t: 'llo' }] });
+  for (const style of ['heading', 'subheading', 'statement', 'label'])
+    assert.equal(
+      splitLine([{ style, text: [{ t: 'x' }] }], { line: 0, at: 1 })[1].style,
+      'paragraph',
+    );
+  for (const style of ['paragraph', 'small'])
+    assert.equal(splitLine([{ style, text: [{ t: 'x' }] }], { line: 0, at: 1 })[1].style, style);
+  // an empty title: Enter pushes it down, both titles
+  assert.equal(splitLine([{ style: 'title', text: [] }], { line: 0, at: 0 })[1].style, 'title');
+});

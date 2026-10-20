@@ -61,7 +61,10 @@ export function fitText(view) {
   const dirty = new Set();
   const run = () => {
     raf = 0;
-    for (const el of dirty) if (el.isConnected && el.matches(FIT)) fitOne(el);
+    for (const el of dirty) {
+      if (el.isConnected && el.matches(FIT)) fitOne(el);
+      else if (!el.isConnected) ro.unobserve(el); // gone (a section rendered again)
+    }
     dirty.clear();
   };
   const queue = (el) => {
@@ -75,6 +78,12 @@ export function fitText(view) {
       const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
       const el = t?.closest?.(FIT);
       if (el) queue(el);
+      // removed fitted blocks: no longer observed
+      for (const n of m.removedNodes || [])
+        if (n.nodeType === 1) {
+          if (n.matches(FIT)) ro.unobserve(n);
+          n.querySelectorAll?.(FIT).forEach((b) => ro.unobserve(b));
+        }
       if (m.type === 'attributes' && t?.matches?.('.blk')) {
         if (t.matches(FIT)) {
           ro.observe(t);

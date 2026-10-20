@@ -159,7 +159,11 @@ function renderRun(r, { value, href, editing }) {
     if (marks.includes('i')) out = `<em>${out}</em>`;
     if (marks.includes('b')) out = `<strong>${out}</strong>`;
     if (r.link)
-      out = `<a href="${esc(href(r.link))}" data-link="${esc(JSON.stringify(r.link))}">${out}</a>`;
+      // the site: just its URL (made at build time); while edited, the link itself
+      // (data-ts-link: rich.js reads it back), never in the site's HTML
+      out = editing
+        ? `<a href="#" data-ts-link="${esc(JSON.stringify(r.link))}">${out}</a>`
+        : `<a href="${esc(href(r.link))}">${out}</a>`;
     return out;
   }
   const ce = editing ? ' contenteditable="false"' : '';
@@ -302,14 +306,23 @@ export function insertRun(body, pos, run) {
   return out;
 }
 
-/** Line `pos.line` split at `pos.at` (Enter): the new line after it, in the same style. */
+// Enter at the end of one of these starts body text (a Paragraph), not another of them
+const LEAD_STYLES = new Set(['title', 'heading', 'subheading', 'statement', 'label']);
+
+/**
+ * Line `pos.line` split at `pos.at` (Enter): the new line after it. Mid-line both halves keep
+ * the style; at the end of a title, heading, subheading, statement or label the new line is a
+ * Paragraph (what follows a heading is text); after a paragraph or small text, the same.
+ */
 export function splitLine(body, pos) {
   const out = clone(body.length ? body : [{ style: 'paragraph', text: [] }]);
   const line = out[pos.line];
   if (!line) return out;
   const [a, b] = splitRuns(line.text, pos.at);
   line.text = tidyRuns(a);
-  out.splice(pos.line + 1, 0, { style: line.style, text: tidyRuns(b) });
+  const atEnd = !tidyRuns(b).length && tidyRuns(a).length > 0;
+  const style = atEnd && LEAD_STYLES.has(line.style) ? 'paragraph' : line.style;
+  out.splice(pos.line + 1, 0, { style, text: tidyRuns(b) });
   return out;
 }
 

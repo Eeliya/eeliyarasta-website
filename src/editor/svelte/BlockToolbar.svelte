@@ -420,7 +420,7 @@
 
 {#snippet textSizePanel()}
   <span class="btb__grp">Text size</span>
-  <div class="seg" role="radiogroup" aria-label="Text size">
+  <div class="seg btb__tsize" role="radiogroup" aria-label="Text size">
     <button
       type="button"
       role="radio"
@@ -466,7 +466,7 @@
       />
     </label>
   {:else if !canFit}
-    <span class="btb__hint">Fit to block: give it a fixed height (Size Aspect or Rows)</span>
+    <p class="btb__note">Fit to block needs a fixed height: Size Aspect or Rows.</p>
   {/if}
 {/snippet}
 
@@ -593,7 +593,13 @@
     </div>
 
     {#if open}
-      <div class={['btb__pop', open === 'style' && 'is-list']}>
+      <div
+        class={[
+          'btb__pop',
+          open === 'style' && 'is-list',
+          (open === 'tsize' || open === 'more') && 'is-wide',
+        ]}
+      >
         {#if open === 'style'}
           {@render styleMenu()}
         {:else if open === 'size'}
@@ -773,6 +779,11 @@
       inset 0 0 0 1px var(--c-line),
       0 8px 24px var(--black-a40);
 
+    // the text size's three choices in full (Fit to block)
+    &.is-wide {
+      width: 320px;
+    }
+
     &.is-list {
       gap: 0;
       width: 248px;
@@ -826,6 +837,21 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-1);
+  }
+
+  // the text size's choices: as wide as their words, the rest shared
+  .btb__tsize :global(.seg__btn) {
+    flex: 1 1 auto;
+    padding-inline: var(--space-3);
+  }
+
+  // help under a control, in line with the group titles
+  .btb__note {
+    margin: 0;
+    padding: 0 var(--space-1);
+    color: var(--c-text-muted);
+    font-size: var(--fs-xs);
+    line-height: 16px;
   }
 
   .btb__hint {
