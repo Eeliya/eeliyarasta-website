@@ -17,6 +17,21 @@ import { isObject } from './is.js';
 
 const KINDS = ['page', 'item', 'href'];
 
+/**
+ * Is `href` a URL a link may have: http(s):, mailto:, tel:, or one without a scheme (a path,
+ * #anchor, ?query). javascript:, data:, vbscript: and the like are not (also hidden behind
+ * whitespace, control characters or odd case: browsers ignore those).
+ */
+export function isSafeHref(href) {
+  if (typeof href !== 'string') return false;
+  // eslint-disable-next-line no-control-regex -- the control characters browsers skip
+  const s = href.replace(/[\u0000-\u0020\u007f-\u009f]/g, '');
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(s);
+  return !scheme || ['http', 'https', 'mailto', 'tel'].includes(scheme[1].toLowerCase());
+}
+export const UNSAFE_HREF =
+  'a link must be a web address (https://…), mailto:, tel:, a path (/about/) or #anchor';
+
 /** Which kind of link `v` holds ('page' | 'item' | 'href'), or null. */
 export const linkKind = (v) =>
   isObject(v) ? (KINDS.filter((k) => v[k] !== undefined)[0] ?? null) : null;
@@ -35,6 +50,7 @@ export function linkProblem(v, extra = []) {
   if (kinds[0] === 'item' && !(isObject(v.item) && isSlug(v.item.source) && isId(v.item.id, 'p')))
     return '"item" must be { "source": "<source>", "id": "<item id>" }';
   if (kinds[0] === 'href' && typeof v.href !== 'string') return '"href" must be a text';
+  if (kinds[0] === 'href' && !isSafeHref(v.href)) return UNSAFE_HREF;
   return null;
 }
 
@@ -47,10 +63,16 @@ export const pageRoute = (ctx, id) =>
  * link; '#' (and a build warning naming `where`) for a page or item that isn't there.
  */
 export function hrefOf(ctx, link, where = 'a link') {
-  if (typeof link === 'string') return link; // bound: the item's own link text
+  // bound: the item's own link text; never an unsafe URL (javascript:, …)
+  const safe = (href) => {
+    if (isSafeHref(href)) return href;
+    warnOnce(`${where} has an unsafe URL: "#"`, 'links');
+    return '#';
+  };
+  if (typeof link === 'string') return safe(link);
   switch (linkKind(link)) {
     case 'href':
-      return String(link.href);
+      return safe(String(link.href));
     case 'page': {
       const r = pageRoute(ctx, link.page);
       if (r) return r.redirect || r.path; // a folder without its own page: its first sub page

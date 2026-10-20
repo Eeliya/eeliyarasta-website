@@ -12,6 +12,7 @@
  * makes (a pasted <div>, a <span style>) is read as its text, so the model stays clean.
  */
 import { MARKS, renderBody, tidyBody } from '../site/text.js';
+import { isSafeHref, linkProblem } from '../site/hrefs.js';
 
 const LINE = '[data-line]';
 const isChip = (n) =>
@@ -67,8 +68,17 @@ function readRuns(node, marks = [], link = null, self = false) {
     if ((tag === 'STRONG' || tag === 'B') && !next.includes('b')) next.push('b');
     if ((tag === 'EM' || tag === 'I') && !next.includes('i')) next.push('i');
     let nl = l;
-    if (tag === 'A')
-      nl = n.dataset.link ? JSON.parse(n.dataset.link) : { href: n.getAttribute('href') || '' };
+    if (tag === 'A') {
+      // our own links carry theirs; one the browser made: its href, when it is a safe one
+      let own = null;
+      try {
+        own = n.dataset.link ? JSON.parse(n.dataset.link) : null;
+      } catch {
+        /* not ours */
+      }
+      const href = (n.getAttribute('href') || '').trim();
+      nl = own && !linkProblem(own) ? own : href && isSafeHref(href) ? { href } : null;
+    }
     for (const c of n.childNodes) walk(c, next, nl);
   };
   if (self) walk(node, marks, link);

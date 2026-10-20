@@ -28,6 +28,7 @@
  */
 import { esc, pad } from './helpers.js';
 import { isObject } from './is.js';
+import { linkProblem } from './hrefs.js';
 
 /** The styles a line can have, in the editor's picker order: [style, label, tag]. */
 export const LINE_STYLES = [
@@ -71,8 +72,10 @@ export function checkBody(body, key = 'body') {
           !(Array.isArray(r.marks) && r.marks.every((m) => MARKS.includes(m)))
         )
           out.push(`"${rat}.marks" must be a list of ${MARKS.join(', ')}`);
-        if (r.link !== undefined && !isObject(r.link))
-          out.push(`"${rat}.link" must be a link object`);
+        if (r.link !== undefined) {
+          const bad = linkProblem(r.link);
+          if (bad) out.push(`"${rat}.link": ${bad}`);
+        }
       } else if (isField(r)) {
         if (!/^[\w-]+$/.test(r.field)) out.push(`"${rat}.field" must be a field name`);
         if (
@@ -316,3 +319,149 @@ export const tidyBody = (body) =>
     style: STYLE_IDS.includes(l?.style) ? l.style : 'paragraph',
     text: tidyRuns(Array.isArray(l?.text) ? l.text : []),
   }));
+
+/** The range between two positions taken out (its lines joined): the new body. */
+export function deleteRange(body, from, to) {
+  const [s, e] = ordered(from, to);
+  const out = clone(body);
+  if (!out[s.line] || !out[e.line]) return out;
+  const [head] = splitRuns(out[s.line].text, s.at);
+  const [, tail] = splitRuns(out[e.line].text, e.at);
+  out.splice(s.line, e.line - s.line + 1, {
+    style: out[s.line].style,
+    text: tidyRuns([...head, ...tail]),
+  });
+  return out;
+}
+
+/**
+ * Pasted lines ([{ style, text }], pastedLines) put in over a selection: one line goes into
+ * the caret's line; more each become their own line between its two halves (an empty half
+ * goes). Returns { body, at } (at: the caret after them).
+ */
+export function insertLines(body, from, to, lines) {
+  const base = deleteRange(body.length ? body : [{ style: 'paragraph', text: [] }], from, to);
+  const [s] = ordered(from, to);
+  const pos = { line: Math.min(s.line, base.length - 1), at: s.at };
+  const line = base[pos.line];
+  const [head, tail] = splitRuns(line.text, pos.at);
+  if (!lines.length) return { body: base, at: pos };
+  if (lines.length === 1) {
+    line.text = tidyRuns([...head, ...lines[0].text, ...tail]);
+    return {
+      body: base,
+      at: { line: pos.line, at: pos.at + lineLength(lines[0]) },
+    };
+  }
+  const mid = lines.map((l) => ({ style: l.style, text: tidyRuns(l.text) }));
+  const parts = [
+    ...(head.length ? [{ style: line.style, text: tidyRuns(head) }] : []),
+    ...mid,
+    ...(tail.length ? [{ style: line.style, text: tidyRuns(tail) }] : []),
+  ];
+  base.splice(pos.line, 1, ...parts);
+  const last = pos.line + (head.length ? 1 : 0) + mid.length - 1;
+  return { body: base, at: { line: last, at: lineLength(base[last]) } };
+}
+
+/**
+ * Plain pasted text as lines: a blank line starts a new Paragraph line, a single newline is a
+ * line break in it.
+ */
+export function plainLines(text) {
+  return String(text ?? '')
+    .replace(/\r\n?/g, '\n')
+    .split(/\n[ \t]*\n+/)
+    .map((p) => p.replace(/[ \t]+\n|\n[ \t]+/g, '\n').trim())
+    .filter(Boolean)
+    .map((p) => ({ style: 'paragraph', text: [{ t: p }] }));
+}
+
+const BLOCK_TAGS = new Set(
+  'P DIV H1 H2 H3 H4 H5 H6 LI UL OL BLOCKQUOTE PRE SECTION ARTICLE HEADER FOOTER TABLE TR FIGURE FIGCAPTION DL DT DD HR ADDRESS MAIN ASIDE NAV'.split(
+    ' ',
+  ),
+);
+const SKIP_TAGS = new Set(
+  'SCRIPT STYLE META TITLE HEAD LINK NOSCRIPT TEMPLATE IFRAME OBJECT SVG IMG'.split(' '),
+);
+
+/**
+ * Pasted HTML (a parsed DOM tree: any node with nodeType, tagName, childNodes, getAttribute,
+ * style) as lines: every block (a paragraph, a heading, a list item, …) its own Paragraph
+ * line, <br> a line break in it; only bold, italic and safe links kept (no styles, fonts,
+ * colours or sizes). `safe(href)`: is the link allowed (hrefs.js isSafeHref).
+ */
+export function htmlLines(root, safe) {
+  const lines = [];
+  let cur = null;
+  const pre = { on: 0 };
+  const close = () => {
+    if (cur) {
+      // spaces at a line's edges and around its breaks go
+      const runs = tidyRuns(cur);
+      if (runs.length && isText(runs[0]))
+        runs[0] = { ...runs[0], t: runs[0].t.replace(/^\s+/, '') };
+      const z = runs.at(-1);
+      if (z && isText(z)) runs[runs.length - 1] = { ...z, t: z.t.replace(/\s+$/, '') };
+      const text = tidyRuns(
+        runs.map((r) => (isText(r) ? { ...r, t: r.t.replace(/ ?\n ?/g, '\n') } : r)),
+      );
+      if (text.length) lines.push({ style: 'paragraph', text });
+    }
+    cur = null;
+  };
+  const push = (t, marks, link) => {
+    if (!t) return;
+    cur = cur || [];
+    cur.push({
+      t,
+      ...(marks.length ? { marks: MARKS.filter((m) => marks.includes(m)) } : {}),
+      ...(link ? { link } : {}),
+    });
+  };
+  const walk = (n, marks, link) => {
+    if (n.nodeType === 3) {
+      let t = String(n.textContent ?? n.nodeValue ?? '').replace(/\u00a0/g, ' ');
+      if (!pre.on) t = t.replace(/\s+/g, ' ');
+      if (!cur && !t.trim()) return; // whitespace between blocks
+      push(t, marks, link);
+      return;
+    }
+    if (n.nodeType !== 1 && n.nodeType !== 9 && n.nodeType !== 11) return;
+    const tag = String(n.tagName || '').toUpperCase();
+    if (SKIP_TAGS.has(tag)) return;
+    if (tag === 'BR') {
+      push('\n', marks, link);
+      return;
+    }
+    const block = BLOCK_TAGS.has(tag);
+    if (block) close();
+    const style = n.style || {};
+    const weight = String(style.fontWeight || '');
+    const next = [...marks];
+    const bold =
+      tag === 'B' ||
+      tag === 'STRONG' ||
+      weight === 'bold' ||
+      weight === 'bolder' ||
+      Number(weight) >= 600;
+    // a Google Docs paste wraps everything in <b style="font-weight:normal">
+    const notBold = weight === 'normal' || (weight && Number(weight) < 600);
+    if (bold && !notBold && !next.includes('b')) next.push('b');
+    if ((tag === 'I' || tag === 'EM' || style.fontStyle === 'italic') && !next.includes('i'))
+      next.push('i');
+    let nl = link;
+    if (tag === 'A') {
+      const href = (n.getAttribute?.('href') || '').trim();
+      nl = href && safe(href) ? { href } : null;
+    }
+    if (tag === 'PRE') pre.on++;
+    for (const c of n.childNodes || []) walk(c, next, nl);
+    if (tag === 'PRE') pre.on--;
+    if (block) close();
+  };
+  walk(root, [], null);
+  close();
+  return lines;
+}

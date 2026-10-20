@@ -28,7 +28,17 @@ import {
   select as selectAt,
   selectionOf,
 } from './rich.js';
-import { hasMark, lineLength, linkIn, splitLine, toggleMark } from '../site/text.js';
+import {
+  hasMark,
+  htmlLines,
+  insertLines,
+  lineLength,
+  linkIn,
+  plainLines,
+  splitLine,
+  toggleMark,
+} from '../site/text.js';
+import { isSafeHref } from '../site/hrefs.js';
 
 const INJECTED_CSS = `
 html.__ed-text [data-edit], html.__ed-text [data-bound] { outline-offset: 3px; border-radius: ${T.radiusXs}; pointer-events: auto; }
@@ -57,6 +67,7 @@ html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [
 .__ed-box--hover span { background: ${T.black}; color: ${T.white}; border: 1px solid rgb(255 255 255 / .2); }
 .__ed-box--sel span { background: ${T.accent}; color: ${T.onAccent}; }
 .__ed-box.is-low span { bottom: auto; top: 100%; margin: 4px 0 0; }
+html.__ed-tb-above .__ed-box--sel:not(.is-low) span, html.__ed-tb-below .__ed-box--sel.is-low span { visibility: hidden; }
 html.__ed-text :is(.ts__chip, .ts__count) { border-radius: ${T.radiusXs}; background: rgb(${T.chipRgb} / .16); box-shadow: inset 0 0 0 1px rgb(${T.chipRgb} / .45); color: inherit; }
 html.__ed-text [contenteditable] :is(.ts__chip, .ts__count) { color: rgb(${T.chipRgb}); user-select: all; cursor: default; }
 html.__ed-text [data-edit-type="rich"][contenteditable] { outline-offset: 6px; }
@@ -342,6 +353,16 @@ export function createBridge({ store, labelFor }) {
       const r = el.getBoundingClientRect();
       if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true });
     },
+    /**
+     * Where the block toolbar sits ('above' | 'below' | 'inside', null: none): the selected
+     * box's label on that side is hidden so the toolbar is never under it.
+     */
+    toolbarSide(side) {
+      const root = doc?.documentElement;
+      if (!root) return;
+      root.classList.toggle('__ed-tb-above', side === 'above');
+      root.classList.toggle('__ed-tb-below', side === 'below');
+    },
     /** The Text block editor's state for the toolbar (richState), or null. */
     get rich() {
       return richState();
@@ -359,7 +380,22 @@ export function createBridge({ store, labelFor }) {
       return !!rich;
     },
     /** End the edit in place (the preview renders the block again). */
-    endRich: () => rich && rich.el.blur(),
+    endRich() {
+      if (!rich) return;
+      const { el } = rich;
+      rich.hold = false;
+      finishRich();
+      el.blur();
+    },
+    /**
+     * A click away from the toolbar's own field (the link box): the hold is let go; the edit
+     * ends unless the click was in the block being edited (it keeps the caret there).
+     */
+    releaseRich(target) {
+      if (!rich) return;
+      rich.hold = false;
+      if (!(target && rich.el.contains(target))) bridge.endRich();
+    },
     /**
      * Change the Text block's body: fn(body, sel) -> { body, sel? }. While it is edited the
      * lines are rendered again and the selection put back; otherwise (the block only picked)
@@ -427,6 +463,17 @@ export function createBridge({ store, labelFor }) {
   };
 
   // ---- the Text block's editor (rich.js, ../site/text.js)
+
+  /** A paste's lines: its HTML's (bold, italic, safe links only), else its plain text's. */
+  function pastedLines(data, w) {
+    const htmlText = data.getData('text/html');
+    if (htmlText) {
+      const parsed = new w.DOMParser().parseFromString(htmlText, 'text/html');
+      const lines = htmlLines(parsed.body, isSafeHref);
+      if (lines.length) return lines;
+    }
+    return plainLines(data.getData('text/plain'));
+  }
 
   /** The toolbar's view of it: editing, the caret line's style, a selection and its marks. */
   function richState() {
@@ -818,6 +865,15 @@ export function createBridge({ store, labelFor }) {
       true,
     );
 
+    // the link box held the edit open: a click in the preview away from the block lets go
+    // and ends it (the toolbar's box closes with it)
+    doc.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (rich?.hold && !rich.el.contains(e.target)) bridge.endRich();
+      },
+      true,
+    );
     // a paste into a Text block is its plain text (the model's runs stay clean)
     doc.addEventListener(
       'paste',
@@ -825,7 +881,12 @@ export function createBridge({ store, labelFor }) {
         if (!rich || !rich.el.contains(e.target)) return;
         e.preventDefault();
         e.stopImmediatePropagation();
-        doc.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+        const lines = pastedLines(e.clipboardData, win);
+        bridge.richApply((body, sel) => {
+          if (!sel) return null;
+          const out = insertLines(body, sel.from, sel.to, lines);
+          return { body: out.body, sel: { from: out.at, to: out.at } };
+        });
       },
       true,
     );

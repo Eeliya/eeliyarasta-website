@@ -202,8 +202,15 @@
   }
 }
 // fitted: no minimum (it is as large as fits, small blocks included)
+// and words whole: a long word makes the text smaller (fit.js measures the width too), it
+// never breaks mid-word
 .blk--fit {
   overflow: hidden;
+  .text__body {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: manual;
+  }
   .ts {
     --fit-min: 0px;
   }

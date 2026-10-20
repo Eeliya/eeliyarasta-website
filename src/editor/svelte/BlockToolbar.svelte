@@ -33,6 +33,8 @@
   import { BLOCK_TYPES } from '../../site/blocks/index.js';
   import { sourceFile, sourceIds as sourceIdsOf } from '../../site/files.js';
   import { sourceOf } from '../../site/layout/source.js';
+  import { untrack } from 'svelte';
+  import { isSafeHref, UNSAFE_HREF } from '../../site/hrefs.js';
   import {
     LINE_STYLES,
     insertRun,
@@ -133,16 +135,27 @@
     const below = box.y + box.h + 12;
     let y;
     let flip = false;
-    if (above >= box.frameTop + 8) y = above;
-    else if (below + BAR_H <= box.frameBottom - 8) {
+    let side = 'inside';
+    if (above >= box.frameTop + 8) {
+      y = above;
+      side = 'above';
+    } else if (below + BAR_H <= box.frameBottom - 8) {
       y = below;
       flip = true;
+      side = 'below';
     } else y = Math.max(box.frameTop + 8, box.y + 8); // taller than the frame: inside its top
     const x = Math.min(
       Math.max(box.x, box.frameLeft + 8),
       Math.max(box.frameLeft + 8, box.frameRight - 8 - barW),
     );
-    return { x, y, flip };
+    return { x, y, flip, side };
+  });
+
+  // the preview's label of the selected text steps aside on the toolbar's side (no shift)
+  $effect(() => {
+    const side = where && block && pos && !hidden ? pos.side : null;
+    bridge.toolbarSide(side);
+    return () => bridge.toolbarSide(null);
   });
 
   // ---- menus: one open at a time; a click elsewhere (here or in the preview) closes it
@@ -151,7 +164,10 @@
   $effect(() => {
     if (!open) return;
     const close = (e) => {
-      if (!e.target?.closest?.('.btb')) open = null;
+      if (e.target?.closest?.('.btb')) return;
+      // the link box held the edit open: a click elsewhere cancels it and lets go
+      if (open === 'link') bridge.releaseRich(e.target);
+      open = null;
     };
     const doc = bridge.doc;
     window.addEventListener('pointerdown', close, true);
@@ -163,7 +179,15 @@
   });
   $effect(() => {
     where?.id;
-    open = null;
+    // another block picked while the link box held the edit open: it lets go, the edit ends
+    untrack(() => {
+      if (open === 'link') bridge.releaseRich(null);
+      open = null;
+    });
+  });
+  // the edit ended (a click elsewhere in the preview): the link box goes with it
+  $effect(() => {
+    if (!rich && untrack(() => open) === 'link') open = null;
   });
   // Ctrl+K while editing: the link box
   $effect(() =>
@@ -193,8 +217,10 @@
     bridge.holdRich(true);
     open = 'link';
   }
+  const linkError = $derived(linkText.trim() && !isSafeHref(linkText.trim()) ? UNSAFE_HREF : '');
   function saveLink(e) {
     e?.preventDefault();
+    if (linkError) return;
     const href = linkText.trim();
     open = null;
     bridge.holdRich(false);
@@ -584,12 +610,15 @@
               class="tf__input btb__input btb__url"
               placeholder="https://… or /about/ (empty: no link)"
               aria-label="Link address"
+              class:is-invalid={!!linkError}
+              aria-invalid={!!linkError}
               bind:value={linkText}
               {@attach (el) => el.focus()}
               onkeydown={(e) => e.key === 'Escape' && (e.stopPropagation(), cancelLink())}
             />
-            <button type="submit" class="btb__btn">Link</button>
+            <button type="submit" class="btb__btn" disabled={!!linkError}>Link</button>
           </form>
+          {#if linkError}<p class="btb__err" role="alert">{linkError}</p>{/if}
         {:else if open === 'field'}
           <span class="btb__grp">{from ? `A field of ${from}` : 'No source: no fields'}</span>
           {#each fields as f (f.key)}
@@ -631,6 +660,14 @@
 
 <style lang="scss">
   @use '../styles/mixins' as *;
+
+  .btb__err {
+    max-width: 320px;
+    margin: 0;
+    padding: 0 var(--space-2) var(--space-2);
+    color: var(--c-danger);
+    font-size: var(--fs-xs);
+  }
 
   .btb {
     position: absolute;
