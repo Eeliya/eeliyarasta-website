@@ -681,7 +681,7 @@ that every internal `href` / `src` in `dist/` points at a file.
 
 ### Contact form
 
-A **Contact form** widget (Add widget > Contact form; `src/site/widgets/form.js`): title,
+A **Contact form** widget (Add widget > Contact form; `src/site/widgets/form/index.js`): title,
 intro, its fields, the button and the messages are content, edited in the Content panel. Each
 field: label, placeholder, name (what the email calls it; `name`, `email` and `phone` get the
 browser's autofill), type (text, email, phone, long text, choice), required, and a choice's

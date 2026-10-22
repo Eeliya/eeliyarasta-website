@@ -1,5 +1,5 @@
 /**
- * The contact form widget. See ./index.js for the shape of a type.
+ * The contact form widget. A widget module like any custom one (../index.js has the format).
  *
  * Its texts are content (title, body (its intro), each field's label and placeholder, the button, the
  * messages); `fields` is the list of inputs: { name, type, label, placeholder, required,
@@ -15,8 +15,8 @@
  * A plain <form method="post"> that works without JavaScript; src/client/modules/form.js
  * sends it with fetch and shows the messages in place.
  */
-import { html, esc, warnOnce } from '../helpers.js';
-import { t } from '../strings.js';
+import { html, esc, warnOnce } from '../../helpers.js';
+import { t } from '../../strings.js';
 
 export const FIELD_TYPES = [
   ['text', 'Text'],
@@ -25,11 +25,13 @@ export const FIELD_TYPES = [
   ['textarea', 'Long text'],
   ['select', 'Choice'],
 ];
+
 export const TARGETS = [
   ['function', 'Cloudflare function (/api/contact)'],
   ['endpoint', 'External endpoint (a URL)'],
   ['email', 'Email link (mailto)'],
 ];
+
 const AUTOCOMPLETE = { name: 'name', email: 'email', phone: 'tel' };
 
 /** Where a form section sends: { mode, action }. Without an endpoint or function: email. */
@@ -203,3 +205,5 @@ export const form = {
     </div>`;
   },
 };
+
+export default form;

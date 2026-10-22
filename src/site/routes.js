@@ -87,7 +87,7 @@ export const pathOfId = (id) =>
         .join('/')}/`;
 
 /**
- * A page's title: the first title line of its first Text widget with one (widgets/basic.js),
+ * A page's title: the first title line of its first Text widget with one (widgets/text/index.js),
  * else undefined. A title with a field in it names the item, not the page: none.
  */
 export const pageTitle = (page) => {

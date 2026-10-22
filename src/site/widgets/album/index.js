@@ -1,9 +1,9 @@
 /**
  * The album widget: one item (a person or a place), Faint Film "slider view": a big current
  * image, numbered thumbnail strip, 01/08 counter, keyboard / drag / wheel navigation and a
- * Slider ⇄ Grid toggle. Its photos are its source's item (../layout/source.js: on a [param]
- * page usually From URL, the page's own; item: true, without one it is skipped). See ./index.js.
- * Its texts are fields bound to the item (../layout/bindings.js): the title { "bind": "title" },
+ * Slider ⇄ Grid toggle. Its photos are its source's item (../../layout/source.js: on a [param]
+ * page usually From URL, the page's own; item: true, without one it is skipped). A widget module (../index.js has the format).
+ * Its texts are fields bound to the item (../../layout/bindings.js): the title { "bind": "title" },
  * the facts ("Role" / { "bind": "role" }; a fact whose value is empty is left out, "Photos" and the
  * count always come last) and the body { "bind": "body" }.
  */
@@ -19,11 +19,11 @@ import {
   lines,
   imagesOf,
   sizes,
-} from '../helpers.js';
-import { sourceFile } from '../files.js';
-import { t } from '../strings.js';
-import { titleCase } from '../routes.js';
-import { sourcePage } from './data.js';
+} from '../../helpers.js';
+import { sourceFile } from '../../files.js';
+import { t } from '../../strings.js';
+import { titleCase } from '../../routes.js';
+import { sourcePage } from '../data.js';
 
 export const album = {
   type: 'album',
@@ -190,3 +190,5 @@ function albumOf(s, ctx, route, b) {
     </div>
   </div>`;
 }
+
+export default album;

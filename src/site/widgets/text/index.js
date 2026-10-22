@@ -1,10 +1,11 @@
 /**
- * Plain widget types for any page: text, one photo, a button. See ./index.js for the shape.
+ * The built-in Text widget (text): a widget module like any custom one (../index.js has
+ * the format), its default export the definition.
  */
-import { html, esc, img, extAttrs, sizes, pad, editable } from '../helpers.js';
-import { checkBody, countText, fieldText, renderBody } from '../text.js';
-import { sourceList } from './data.js';
-import { hrefOf } from '../hrefs.js';
+import { html, pad, editable } from '../../helpers.js';
+import { checkBody, countText, fieldText, renderBody } from '../../text.js';
+import { sourceList } from '../data.js';
+import { hrefOf } from '../../hrefs.js';
 
 /**
  * Text: lines in the site's text styles (a label, a title, paragraphs, ...), with bold,
@@ -60,45 +61,4 @@ export const text = {
   },
 };
 
-/** One photo, as wide as the text column, with an optional caption. */
-export const photo = {
-  type: 'photo',
-  label: 'Photo',
-  icon: 'image',
-  line: 'One photo, with a caption',
-  sketch: 'photo',
-  fields: [
-    { key: 'src', label: 'Photo', type: 'image' },
-    { key: 'caption', label: 'Caption (empty: none)' },
-  ],
-  defaults: { src: '', caption: '', motion: { anim: 'image-reveal' } },
-  render: (s, ctx, b) =>
-    html` <div class="photowidget">
-      <figure class="photowidget__figure">
-        ${s.src ? img(ctx, s.src, { sizes: sizes('100vw', '60vw'), attrs: b.ed('src', 'image') }) : ''}
-        ${s.caption ? html`<figcaption class="label muted" ${b.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
-      </figure>
-    </div>`,
-};
-
-/** A button linking somewhere (config.link: a page, an item or a URL; src/site/hrefs.js). */
-export const button = {
-  type: 'button',
-  label: 'Button',
-  icon: 'arrow-right',
-  line: 'A link to a page or a site',
-  sketch: 'button',
-  fields: [{ key: 'label', label: 'Label' }],
-  config: [{ key: 'link', label: 'Link', type: 'link' }],
-  defaults: {
-    label: 'Get in touch',
-    config: { link: { href: '/about/' } },
-    motion: { anim: 'fade-in' },
-  },
-  render: (s, ctx, b) => {
-    const href = hrefOf(ctx, s.config?.link, 'a button') || '/';
-    return html` <div class="buttonwidget">
-      <a class="btn glass" href="${esc(href)}"${extAttrs(href)}><span${b.ed('label')}>${esc(s.label)}</span> <span aria-hidden="true">→</span></a>
-    </div>`;
-  },
-};
+export default text;

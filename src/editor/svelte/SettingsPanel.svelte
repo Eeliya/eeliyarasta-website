@@ -19,7 +19,7 @@
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
-  import { TARGETS } from '../../site/widgets/form.js';
+  import { TARGETS } from '../../site/widgets/form/index.js';
   import { SITE } from '../../site/files.js';
   import { COLS, MCOLS } from '../../site/layout/grid.js';
   import { TEXT_STYLES, typographyOf } from '../../site/layout/type.js';

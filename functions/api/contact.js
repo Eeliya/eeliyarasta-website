@@ -1,5 +1,5 @@
 /**
- * POST /api/contact: the contact form (src/site/widgets/form.js) on Cloudflare Pages.
+ * POST /api/contact: the contact form (src/site/widgets/form/index.js) on Cloudflare Pages.
  * A Pages Function: Cloudflare runs it for this path; nothing secret is in the site or its
  * content. It checks the submission, drops spam, and emails it through Resend's HTTP API.
  *

@@ -1,7 +1,7 @@
 @use 'tokens' as *;
 
 /*
- * The Text widget (src/site/widgets/basic.js) and its lines' styles (.ts--<style>,
+ * The Text widget (src/site/widgets/text/index.js) and its lines' styles (.ts--<style>,
  * src/site/text.js). Fixed sizes here; scaled with the grid or fitted to the widget:
  * _layout.scss (.wgt--scale). The widget is its lines' container: a title never gets wider
  * than the widget (its size is capped by the widget's width, cqi), and a word longer than

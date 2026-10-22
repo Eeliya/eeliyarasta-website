@@ -1,5 +1,5 @@
 /**
- * Rich text: the Text widget's body (src/site/widgets/basic.js), a list of lines, each in one
+ * Rich text: the Text widget's body (src/site/widgets/text/index.js), a list of lines, each in one
  * of the site's text styles (TEXT_STYLES, ./layout/type.js), its text a list of runs:
  *
  *   "body": [
