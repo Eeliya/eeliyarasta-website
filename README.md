@@ -35,7 +35,7 @@ Requires Node `^20.19.0 || >=22.12.0`.
 ewcms and a site together"): `npm install` at the workspace root links `node_modules/ewcms` to
 the local `ewcms/` folder, so engine edits show up in `npm run dev` right away, no npm link.
 
-**Upgrading ewcms:** change `#v0.1.0` in `package.json` to the new tag, `npm install`, commit
+**Upgrading ewcms:** change `#v0.1.1` in `package.json` to the new tag, `npm install`, commit
 `package.json` and `package-lock.json`.
 
 ## Deploy
