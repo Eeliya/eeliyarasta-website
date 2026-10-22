@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "p-qw7b",
+      "slug": "noor-vermeer",
+      "title": "Noor Vermeer",
+      "placeholder": true,
+      "note": "PLACEHOLDER model: invented name, stock photos from Unsplash. Replace with a real shoot.",
+      "role": "Model",
+      "agency": "Independent",
+      "location": "Amsterdam",
+      "year": 2026,
+      "body": "Golden-hour street portraits between concrete and canals. Natural light only, shot handheld on the X100V.",
+      "accent": "#c9a27a",
+      "cover": "people/noor-vermeer/01.jpg",
+      "images": [
+        "people/noor-vermeer/01.jpg",
+        "people/noor-vermeer/02.jpg",
+        "people/noor-vermeer/03.jpg",
+        "people/noor-vermeer/04.jpg",
+        "people/noor-vermeer/05.jpg",
+        "people/noor-vermeer/06.jpg",
+        "people/noor-vermeer/07.jpg",
+        "people/noor-vermeer/08.jpg"
+      ],
+      "curtainText": "Noor Vermeer"
+    },
+    {
+      "id": "p-3pdk",
+      "slug": "daan-okafor",
+      "title": "Daan Okafor",
+      "placeholder": true,
+      "note": "PLACEHOLDER model: invented name, stock photos from Unsplash. Replace with a real shoot.",
+      "role": "Model / Musician",
+      "agency": "Independent",
+      "location": "Rotterdam",
+      "year": 2026,
+      "body": "Monochrome editorial with a musician: long coats, glasses, late afternoons in the city.",
+      "accent": "",
+      "cover": "people/daan-okafor/01.jpg",
+      "images": [
+        "people/daan-okafor/01.jpg",
+        "people/daan-okafor/02.jpg",
+        "people/daan-okafor/03.jpg",
+        "people/daan-okafor/04.jpg",
+        "people/daan-okafor/05.jpg",
+        "people/daan-okafor/06.jpg",
+        "people/daan-okafor/07.jpg"
+      ],
+      "curtainText": "Daan Okafor"
+    },
+    {
+      "id": "p-hx4p",
+      "slug": "mila-example",
+      "title": "Mila Example",
+      "placeholder": true,
+      "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
+      "role": "Model",
+      "agency": "Independent",
+      "location": "Rotterdam",
+      "year": 2026,
+      "body": "PLACEHOLDER: test portraits to fill the people grid. Window light and quiet corners.",
+      "accent": "#b9a48f",
+      "cover": "people/noor-vermeer/05.jpg",
+      "images": [
+        "people/noor-vermeer/05.jpg",
+        "people/noor-vermeer/06.jpg",
+        "people/noor-vermeer/07.jpg",
+        "people/noor-vermeer/08.jpg"
+      ],
+      "curtainText": "Mila Example"
+    },
+    {
+      "id": "p-y8gp",
+      "slug": "joris-placeholder",
+      "title": "Joris Placeholder",
+      "placeholder": true,
+      "note": "PLACEHOLDER model: invented name, reuses existing placeholder photos from the repo (Unsplash). Replace with a real shoot.",
+      "role": "Model",
+      "agency": "Independent",
+      "location": "Utrecht",
+      "year": 2026,
+      "body": "PLACEHOLDER: test portraits to fill the people grid. Overcast streets, shot handheld.",
+      "accent": "",
+      "cover": "people/daan-okafor/05.jpg",
+      "images": [
+        "people/daan-okafor/05.jpg",
+        "people/daan-okafor/06.jpg",
+        "people/daan-okafor/07.jpg"
+      ],
+      "curtainText": "Joris Placeholder"
+    }
+  ]
+}

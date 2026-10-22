@@ -19,6 +19,8 @@
  * keyboard shortcuts. This file mounts it and holds the glue: the preview (bridge.js) and
  * store (store.js) events, saving and loading the content.
  */
+// the site's own widgets join the registry first (before any module reads it)
+import './site-widgets.js';
 import './styles/editor.scss';
 import '@fortawesome/fontawesome-free/css/fontawesome.css';
 import '@fortawesome/fontawesome-free/css/solid.css';

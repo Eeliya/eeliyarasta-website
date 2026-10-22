@@ -40,5 +40,8 @@
     "stylelint-config-standard-scss": "^17.0.0",
     "svelte": "^5.57.2",
     "vite": "^8.3.4"
+  },
+  "imports": {
+    "#widget-api": "./src/site/widget-api.js"
   }
 }

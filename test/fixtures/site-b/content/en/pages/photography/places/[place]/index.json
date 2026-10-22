@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "kind": "page",
+  "id": "pg-h6eg",
+  "main": "b-gbxt",
+  "sections": [
+    {
+      "id": "s-gaii",
+      "height": "full",
+      "width": "full",
+      "widgets": [
+        {
+          "id": "b-gbxt",
+          "type": "album",
+          "source": {
+            "mode": "url",
+            "from": "places",
+            "where": {
+              "op": "and",
+              "rules": [{ "param": "place", "field": "slug" }]
+            }
+          },
+          "title": { "bind": "title" },
+          "meta": [
+            {
+              "label": "Location",
+              "value": { "bind": "location" }
+            },
+            {
+              "label": "Year",
+              "value": { "bind": "year" }
+            }
+          ],
+          "body": { "bind": "body" }
+        }
+      ]
+    }
+  ]
+}

@@ -25,11 +25,31 @@ import { watchRows } from './modules/rows.js';
 import { anchors } from './modules/anchors.js';
 import { backdrop } from './modules/backdrop.js';
 import { fitText } from './modules/fit.js';
+// the site's own widgets (site.config.mjs widgets): their styles and client modules
+import siteWidgets from 'virtual:site-widgets/client';
 
-const pageModules = [imageFade, album, projects, cards, contactForms, anchors, fitText];
+/** A site widget's client module as a page module: run on each of its elements. */
+const widgetModule =
+  ({ type, init }) =>
+  (root) => {
+    const off = [...root.querySelectorAll(`.wgt--${type}`)].map((el) => init(el));
+    return () => off.forEach((fn) => typeof fn === 'function' && fn());
+  };
+const siteModules = siteWidgets.map(widgetModule);
+
+const pageModules = [
+  imageFade,
+  album,
+  projects,
+  cards,
+  contactForms,
+  anchors,
+  fitText,
+  ...siteModules,
+];
 // the footer's widgets: the modules of widgets it can have (no album, project list or anchors:
 // those are the page's, once)
-const footerModules = [imageFade, cards, contactForms, fitText];
+const footerModules = [imageFade, cards, contactForms, fitText, ...siteModules];
 // Editor hooks (see connectEditor below); always empty on the public site.
 const hooks = { beforeMount: new Set(), afterMount: new Set() };
 let current = null;

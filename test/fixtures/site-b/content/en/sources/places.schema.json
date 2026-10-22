@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "label": "Places",
+  "title": "title",
+  "slug": "slug",
+  "fields": [
+    {
+      "key": "slug",
+      "label": "Slug",
+      "type": "text",
+      "required": true,
+      "help": "The page URL, /photography/places/<slug>/. When it changes, Save redirects the old one."
+    },
+    {
+      "key": "title",
+      "label": "Name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "key": "location",
+      "label": "Location",
+      "type": "text",
+      "width": "half",
+      "list": true
+    },
+    {
+      "key": "year",
+      "label": "Year",
+      "type": "number",
+      "width": "half"
+    },
+    {
+      "key": "body",
+      "label": "Summary",
+      "type": "longtext",
+      "help": "Under the name on the album page; also its search description"
+    },
+    {
+      "key": "images",
+      "label": "Photos",
+      "type": "photos"
+    },
+    {
+      "key": "cover",
+      "label": "Cover photo",
+      "type": "photo",
+      "width": "half",
+      "help": "One of its photos; empty: the first"
+    },
+    {
+      "key": "accent",
+      "label": "Accent color",
+      "type": "text",
+      "width": "half",
+      "help": "#rrggbb; empty: the site accent"
+    },
+    {
+      "key": "curtainText",
+      "label": "Curtain text",
+      "type": "text",
+      "help": "The page transition label; empty: none"
+    },
+    {
+      "key": "placeholder",
+      "label": "Placeholder",
+      "type": "boolean",
+      "help": "Stock photos: kept out of search engines"
+    },
+    {
+      "key": "note",
+      "label": "Placeholder note",
+      "type": "longtext"
+    }
+  ]
+}

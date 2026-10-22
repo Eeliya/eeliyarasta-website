@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "kind": "page",
+  "id": "pg-rugs",
+  "curtainText": "Places",
+  "meta": { "description": "Places and architecture photographed by Eeliya Rasta." },
+  "sections": [
+    {
+      "id": "s-jrwb",
+      "widgets": [
+        {
+          "id": "b-erex",
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [{ "t": "Photography / Places" }]
+            },
+            {
+              "style": "title",
+              "text": [
+                { "t": "Places" },
+                {
+                  "count": { "source": "places" }
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Buildings, streets and castles. What is left when the people walk out of frame."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-v6rg",
+      "widgets": [
+        {
+          "id": "b-syyw",
+          "type": "albums",
+          "source": { "mode": "all", "from": "places" },
+          "config": { "layout": "landscape" },
+          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+        }
+      ]
+    }
+  ]
+}

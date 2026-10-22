@@ -9,6 +9,7 @@
  *     generatedDir: '.generated',      // the media manifest (media.json)
  *     outDir: 'dist',                  // the build
  *     themeDir: 'theme',               // the theme: theme.json, styles/ (the site-theme alias)
+ *     widgets: ['./widgets/quote'],    // the site's own widgets (widget modules), after the built-ins
  *     repo: { owner, name },           // GitHub links when the git remote names none
  *   };
  *
@@ -32,6 +33,7 @@ export const DEFAULTS = Object.freeze({
   generatedDir: '.generated',
   outDir: 'dist',
   themeDir: 'theme',
+  widgets: Object.freeze([]),
   repo: Object.freeze({ owner: '', name: '' }),
 });
 

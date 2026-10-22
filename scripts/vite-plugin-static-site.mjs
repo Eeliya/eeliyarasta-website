@@ -37,6 +37,7 @@ import { EDITOR_HTML, legacyRedirect, wantsEditor } from '../src/editor/lib/edit
 import { checkSources } from '../src/site/schemas.js';
 import { FOLDERS } from '../src/site/files.js';
 import { loadSiteConfig } from './site-config.mjs';
+import { registerSiteWidgets, widgetClientsModule, widgetsModule } from './site-widgets.mjs';
 
 const RENDER_MODULE = '/src/site/render.js';
 
@@ -101,12 +102,20 @@ export const editorConfigModule = (site) =>
     repo: site.config.repo,
   })};\n`;
 
+/** The site's own widgets (site.config.mjs widgets): definitions for the editor, styles and
+ * client modules for the public site (scripts/site-widgets.mjs). */
+export const SITE_WIDGETS = 'virtual:site-widgets';
+export const SITE_WIDGET_CLIENTS = 'virtual:site-widgets/client';
+const WIDGETS_MODULE = '/src/site/widgets/index.js';
+
 const posixRel = (root, p) => path.relative(root, p).split(path.sep).join('/');
 
 export default function staticSite() {
   let config;
   // Until then, content changes come from the editor's own Save (not "external").
   let editorWriteUntil = 0;
+  // the site's widgets in Node's registry (the build, the editor endpoints, content checks)
+  let widgetsReady = Promise.resolve();
   return {
     name: 'static-site',
     config(c) {
@@ -126,12 +135,16 @@ export default function staticSite() {
     },
     configResolved(c) {
       config = c;
+      widgetsReady = registerSiteWidgets(c.root);
+      widgetsReady.catch(() => {}); // reported where it is awaited
     },
     resolveId(id) {
-      if (id === EDITOR_CONFIG) return `\0${EDITOR_CONFIG}`;
+      if ([EDITOR_CONFIG, SITE_WIDGETS, SITE_WIDGET_CLIENTS].includes(id)) return `\0${id}`;
     },
     load(id) {
       if (id === `\0${EDITOR_CONFIG}`) return editorConfigModule(loadSiteConfig(config.root));
+      if (id === `\0${SITE_WIDGETS}`) return widgetsModule(config.root);
+      if (id === `\0${SITE_WIDGET_CLIENTS}`) return widgetClientsModule(config.root);
     },
 
     configureServer(server) {
@@ -139,6 +152,8 @@ export default function staticSite() {
       // The editor's unsaved edits per editor session (POST /__editor/draft): only its preview's
       // pages (?draft=<session>) render from them, every other request from the saved files
       const drafts = {};
+      // Nothing before the site's widgets are known (content checks need their types)
+      server.middlewares.use((req, res, next) => widgetsReady.then(() => next(), next));
       // Content and media manifest changes re-render pages (see handleHotUpdate).
       const site = loadSiteConfig(root);
       server.watcher.add([site.contentDir, site.generatedDir]);
@@ -186,6 +201,12 @@ export default function staticSite() {
             return res.end(await server.transformIndexHtml(req.url, shell));
           }
           const { getRoutes, renderRoute } = await server.ssrLoadModule(RENDER_MODULE);
+          // the site's widgets in the render's own module graph too (Vite's SSR one)
+          const { registerWidgets } = await server.ssrLoadModule(WIDGETS_MODULE);
+          await registerSiteWidgets(root, {
+            load: (file) => server.ssrLoadModule(file),
+            register: registerWidgets,
+          });
           const draft = url.searchParams.get(DRAFT_PARAM);
           const content = loadContent(root, draftsFor(drafts, draft));
           // the editor's preview (a draft session): [param] pages that build none too (routes.js)
@@ -260,6 +281,7 @@ export default function staticSite() {
         seoWarnings,
         sitemapXml,
       } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
+      await widgetsReady; // the render module's registry is Node's (scripts/site-widgets.mjs)
       const content = loadContent(root);
       // every source against its schema (required fields, types, photos): stop on a mistake
       const problems = checkSources(content);

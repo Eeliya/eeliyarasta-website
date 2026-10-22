@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "kind": "page",
+  "id": "pg-lyos",
+  "sections": [
+    {
+      "id": "s-ud3l",
+      "widgets": [
+        {
+          "id": "b-wrvr",
+          "type": "about",
+          "eyebrow": "About",
+          "title": "I photograph people, the way they are when they forget the camera.",
+          "image": "about/x100v.jpg",
+          "body": [
+            "PLACEHOLDER BIO: I'm Eeliya, a photographer based in the Netherlands. Most of my work is portraits and editorial shoots with models, made with one small camera (a Fujifilm X100V) and whatever light the day gives me.",
+            "Photography is the hobby that took over. During the week I build things: websites, tools for developers and the occasional DIY contraption on my desk. This site is one of them, so it's equal parts portfolio and playground.",
+            "Want to shoot together, or have a project in mind? Send me a message."
+          ],
+          "facts": [
+            {
+              "label": "Based in",
+              "value": "Netherlands"
+            },
+            {
+              "label": "Camera",
+              "value": "Fujifilm X100V"
+            },
+            {
+              "label": "Shoots",
+              "value": "Portrait, Editorial, Fashion, Architecture"
+            },
+            {
+              "label": "Builds",
+              "value": "Websites, Dev tools, DIY"
+            }
+          ],
+          "emailLabel": "Email me"
+        }
+      ]
+    },
+    {
+      "id": "s-q8t2",
+      "widgets": [
+        {
+          "id": "b-q8t2",
+          "type": "quote",
+          "quote": "Light is the only thing\nI really edit.",
+          "author": "Noor Vermeer",
+          "role": "Model",
+          "config": {
+            "size": "large"
+          }
+        }
+      ]
+    }
+  ],
+  "curtainText": "About"
+}

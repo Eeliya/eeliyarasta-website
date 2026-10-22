@@ -1,0 +1,28 @@
+// The Quote widget's look (bundled after the theme's).
+.quote {
+  margin: 0;
+  padding: var(--pad);
+  border-left: 2px solid var(--accent);
+}
+
+.quote__text {
+  margin: 0 0 12px;
+  font-family: var(--f-display);
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.quote--large .quote__text {
+  font-size: 56px;
+}
+
+.quote__by {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quote.is-seen {
+  border-left-color: var(--fg);
+}

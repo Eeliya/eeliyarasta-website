@@ -478,6 +478,65 @@ sits next to its type, how it works under `config` (`enabled`: on/off; look, …
 - **A new type:** add it to a file in `src/site/widgets/` and to `WIDGET_TYPES` in `index.js`
   (and its styles); the editor shows it with no editor code.
 
+### Custom widgets
+
+Built-in widgets live in `src/site/widgets/<type>/index.js`, one module each (always on). A site
+can add its own the same way: a folder with an `index.js`, listed in `site.config.mjs`:
+
+```js
+export default { widgets: ['./widgets/quote'] };
+```
+
+```
+widgets/quote/
+  index.js     the definition (default export), required
+  style.scss   its look, optional: bundled with the site's CSS
+  client.js    optional: `export default (el) => cleanup?`, run on each `.wgt--quote` on a page
+```
+
+`index.js` default-exports a definition like a built-in's:
+
+```js
+import { html, esc, lines } from '#widget-api'; // the core's render helpers
+
+export default {
+  type: 'quote', // a-z, 0-9, -; not a built-in's
+  label: 'Quote',
+  icon: 'quote-left', // Font Awesome name (Add widget modal, outline)
+  line: 'A pull quote and who said it', // the modal's description
+  fields: [
+    { key: 'quote', label: 'Quote', type: 'block' },
+    { key: 'author', label: 'Author', width: 'half' },
+  ],
+  config: [
+    {
+      key: 'size',
+      label: 'Size',
+      type: 'select',
+      options: [
+        ['', 'Normal'],
+        ['large', 'Large'],
+      ],
+    },
+  ],
+  defaults: { quote: 'Something worth repeating.', author: 'Someone', config: {} },
+  check: (w) => [], // optional: extra content problems
+  render: (w, ctx, b) =>
+    html`<figure class="quote">
+      <blockquote ${b.ed('quote', 'block')}>${lines(w.quote)}</blockquote>
+      <figcaption ${b.ed('author')}>${esc(w.author)}</figcaption>
+    </figure>`,
+};
+```
+
+That's all: the registry (`registerWidgets` in `src/site/widgets/index.js`) adds it next to the
+built-ins for the prerender, content validation (its `fields` types and `check`), and, through
+`virtual:site-widgets`, the editor: the Add widget modal, the inspector (from `fields`/`config`),
+Motion and the widget/layout toolbars need no code of their own. `b.ed(key)` makes a field
+editable in place on the preview. A bad definition or a built-in's type stops the build/dev
+server with a message. Example and tests: `test/fixtures/site-b`, `scripts/site-widgets.test.mjs`.
+After editing a widget's `index.js`, restart `npm run dev` (the editor's server endpoints load it once).
+
 ### Widget sources
 
 Which items a widget shows is its `source` (`src/site/layout/source.js`), one of three modes; no

@@ -21,7 +21,12 @@ export default [
   },
   // The site, its templates, the editor and its mock sandbox run in the browser.
   {
-    files: ['src/**/*.{js,svelte}', 'src/**/*.svelte.js', 'sandbox/**/*.{js,svelte}'],
+    files: [
+      'src/**/*.{js,svelte}',
+      'src/**/*.svelte.js',
+      'sandbox/**/*.{js,svelte}',
+      '**/widgets/*/client.js',
+    ],
     languageOptions: { globals: { ...globals.browser, __SITE_CONTENT_DIR__: 'readonly' } },
     rules: { 'no-console': ['warn', { allow: ['warn', 'error'] }] },
   },
