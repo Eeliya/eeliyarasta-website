@@ -1,0 +1,715 @@
+{
+  "about/x100v.jpg": {
+    "mtime": 1792655622629.689,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/about/x100v-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/about/x100v-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/about/x100v-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/about/x100v-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#a8703d",
+    "lqip": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAQCdASoQAAsAA4BaJbACdAC1yB5jTAAA/gFtXjnSqjJHPIbXzGIIK7pzkCbgvar0njRBFQDGSdi4Nny2jWiKhPwE4PqNlgA="
+  },
+  "people/daan-okafor/01.jpg": {
+    "mtime": 1792655622649.6897,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/01-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/01-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/01-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#5c5c5c",
+    "lqip": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAwCdASoQABQAPu1iqU2ppaQiMAgBMB2JaQAANX1pRvKGhsjtwADp4nvt5A/TMKp+AI0QhI5R4LPNhfRFaIyv5pltaRHUgAAAAA=="
+  },
+  "people/daan-okafor/02.jpg": {
+    "mtime": 1792655622661.69,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/02-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/02-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/02-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#313131",
+    "lqip": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACwAwCdASoQABQAPu1iqU2ppaQiMAgBMB2JaQAAUqohxeNXfXM42AD+rU4ipixgibN5RwulcbwjlYhu2Vwgf8Rdo8wjAAAA"
+  },
+  "people/daan-okafor/03.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1281,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/03-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/03-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/03-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#aeaeae",
+    "lqip": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAwCdASoQABQAPu1kq04ppaQiMAgBMB2JaQAASoreCX7BOyWcz0QA/vHSp8E+z7hC/JO/+STCQREkM3E84TQJ7LtgB0ZYBTMtrd37qLel/tPuwhSwdQAA"
+  },
+  "people/daan-okafor/04.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/people/daan-okafor/04-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/04-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/04-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/people/daan-okafor/04-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#797979",
+    "lqip": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA4BaJaQAAxYf1B3VzIAA/tYpdtQfFLlO9REpb4ZPDz43/VlgpwBbUIJlvhQfl/TESClxWgAA"
+  },
+  "people/daan-okafor/05.jpg": {
+    "mtime": 1792655622593.688,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/05-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/05-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/05-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#878787",
+    "lqip": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAwBACdASoQABgAPu1kqU2ppaQiMAgBMB2JaQAAW+/Z1vSX04gO84RLbiAA/vQqe3paF1tkPvieWLdk7f54hcd35j17MhlUjsxNu+WezCYU8DRoGlztEAAA"
+  },
+  "people/daan-okafor/06.jpg": {
+    "mtime": 1792655622649.6897,
+    "pipeline": "sharp",
+    "width": 1283,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/06-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/06-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/06-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#a08e6d",
+    "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAADQAwCdASoQABQAPu1iqk2ppaQiMAgBMB2JQBadA3Kp3/jLoukmmqgA/vHgxgi0TbbvMaVz4AzFIbcgP5bqrTPKNMO3s/Cuj1KYNMv8e5R91Zy30oTIZjMxCkhJW8SrjjC9vdYMttggAA=="
+  },
+  "people/daan-okafor/07.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/daan-okafor/07-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/daan-okafor/07-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/daan-okafor/07-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#363636",
+    "lqip": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAADQAwCdASoQABQAPu1mqk4ppaOiMAgBMB2JaQAAWsfcr/iuY3qYPIAA/vKkKgBykqUw2b5KhqKiSWZgkaZN/Giq15Sc/J8R367Y+y2yeGLcm8AAAAA="
+  },
+  "people/noor-vermeer/01.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/01-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/01-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/01-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#857c5c",
+    "lqip": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADQAwCdASoQABQAPu1kqU2ppaQiMAgBMB2JZQAAW+hr0aUU+LC+IaAA/qoQmZGpVu1bTgMqJBe8HPQ0pTmPEHjutdWRKsxZp70dOGiXelAaW0DVuk24TEXQAAA="
+  },
+  "people/noor-vermeer/02.jpg": {
+    "mtime": 1792655622637.6892,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/02-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/02-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/02-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#927931",
+    "lqip": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAABQBACdASoQABQAPu1iqU2ppaQiMAgBMB2JaACdMoADgA2YZ8q0WcHkrboAAP7lnrvpH05eoAMh4F8FvxbM1v3RqXOHKzuT3EjEuuhoJlW9Y4q38cO+d9LZjlupsrNS4m0wxRWN0RWVkOjmRN4oAA=="
+  },
+  "people/noor-vermeer/03.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/03-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/03-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/03-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#625641",
+    "lqip": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAwCdASoQABQAPu1kq04ppaQiMAgBMB2JZwAAW+flpDUSHEV2JVagAP7kWL0PUWvGztGa9Imc3Mu1eEmDEUMr9ZlCHOj1nTAAAA=="
+  },
+  "people/noor-vermeer/04.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/04-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/04-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/04-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#675931",
+    "lqip": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABwAwCdASoQABQAPu1iqU2ppaOiMAgBMB2JQBYdgd+TOO+KEXAA/ukpyHYyZOHvvFS0RoLFUEfXvXvE0S+kZr5wLQJThcI5cCY7YElCHUiLA6F8sHrw1+vQ5zAAAA=="
+  },
+  "people/noor-vermeer/05.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/05-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/05-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/05-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#416b79",
+    "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAwBACdASoQABQAPu1kqk4ppaQiMAgBMB2JYwDA/IjCryMlq276tMXIQgAA/uoAj5fi40Ms5GConQhfR98SG8tUbmn2LpvEBV7tb1n+ZwX4ASUEqX42jVNPMPm6qj7IgAA="
+  },
+  "people/noor-vermeer/06.jpg": {
+    "mtime": 1792655622637.6892,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/06-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/06-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/06-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#ac7b5f",
+    "lqip": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAwBACdASoQABQAPu1iqk2ppaQiMAgBMB2JYwC7IDZDAeNZ1taQXHtPnLwA/uv2I3O/xC3KD+2XYTF/m56EvL7hgFoFSaSTVz2kNku+9HBdfh6VSPiEPcZPU/c5eSsW3w9jTLgA"
+  },
+  "people/noor-vermeer/07.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/07-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/07-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/07-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#43707e",
+    "lqip": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAAAQBACdASoQABQAPu1orU6ppiSiMAgBMB2JZACsMoAChwhDspLcNOyhEAD+7qCsGkX1OPf2D228yGTZr9rksVdY95VhuaRWVE+pLMYdJ7pm9MdwAAA="
+  },
+  "people/noor-vermeer/08.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 1280,
+    "height": 1600,
+    "src": "/media/people/noor-vermeer/08-960.webp",
+    "srcset": [
+      {
+        "url": "/media/people/noor-vermeer/08-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/people/noor-vermeer/08-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#8eaba0",
+    "lqip": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAwCdASoQABQAPu1kqk4ppaQiMAgBMB2JZwAAW6mpBRC+jMntrUAA/Z1VOhAlKnW6s3GZjQAgmxwRwhf7fP1re0U8UEbVGilxb6wL0hwAAA=="
+  },
+  "places/concrete-studies/01.jpg": {
+    "mtime": 1792655622633.6892,
+    "pipeline": "sharp",
+    "width": 1263,
+    "height": 1600,
+    "src": "/media/places/concrete-studies/01-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/01-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/01-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#6d9da9",
+    "lqip": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAwCdASoQABQAPu1iqk2ppaQiMAgBMB2JQBOmUABFXn5XSZSv8AD51fPDOP54YBPg2n8GYHTH1hByAcbhZnHua3fXjCyD/y52AA=="
+  },
+  "places/concrete-studies/02.jpg": {
+    "mtime": 1792655622633.6892,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/places/concrete-studies/02-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/02-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/02-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/concrete-studies/02-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#c4b6ab",
+    "lqip": "data:image/webp;base64,UklGRjYAAABXRUJQVlA4ICoAAACwAQCdASoQAAsAA4BaJZQAAlo8p1yAAP7wZVVB7ZIz4NuSYuZTB+NRQAA="
+  },
+  "places/concrete-studies/03.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/concrete-studies/03-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/03-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/03-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#65625f",
+    "lqip": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAAAQBACdASoQABgAPu1kqU2ppaOiMAgBMB2JaQAAV5jNQZEFw2AGl0oggADKKUnwObKGAKsExmEbfQnWQw+pcZmyKFtspaDekY47F2lkv/AadvZnoM4HmEFeZGElbEponY7XSKiThspz0fOtW8qdNefz3scAAA=="
+  },
+  "places/concrete-studies/04.jpg": {
+    "mtime": 1792655622601.6882,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 983,
+    "src": "/media/places/concrete-studies/04-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/04-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/04-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/concrete-studies/04-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#c2dce1",
+    "lqip": "data:image/webp;base64,UklGRkQAAABXRUJQVlA4IDgAAAAwAgCdASoQAAoAA4BaJYwCdAEPAG+YTmW0AAD+8AIOm/O2d6AJrXhL8mgzKnwjvmEcnFpGsQAAAA=="
+  },
+  "places/concrete-studies/05.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/concrete-studies/05-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/05-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/05-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#776b5a",
+    "lqip": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAABwAwCdASoQABgALrV2u12jqampiYC0SzgABLQy/C+5qAU8UkAA+bTqQlMraU4cTA67+BQwHedBrPSWvpYdZSmZVmyn3eUJidOSPsPIAAA="
+  },
+  "places/concrete-studies/06.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 960,
+    "height": 1600,
+    "src": "/media/places/concrete-studies/06-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/06-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/06-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#3d3d3c",
+    "lqip": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAABwAwCdASoQABsAPu1yrU+pp6QiMAgBMB2JaQABIs0u8AHm0AAA/v1WeV0eKX6M9jP3CNAngADIOLXADErZ97uAGyeJxX/BHDGxtDpQNW2bBIyknIfFnAAA"
+  },
+  "places/concrete-studies/07.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1295,
+    "src": "/media/places/concrete-studies/07-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/07-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/07-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/concrete-studies/07-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#657582",
+    "lqip": "data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAACQAQCdASoQAA0AA4BaJZwAApYYmDAA/rn9ipXhUk5e4uz+IAS3EQbTiKwMqKlD5aGGxj/MCAA="
+  },
+  "places/concrete-studies/08.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/concrete-studies/08-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/concrete-studies/08-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/concrete-studies/08-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#153236",
+    "lqip": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAABwAwCdASoQABgAPu1orU2ppqSiMAgBMB2JZQAAie1BbHmteAAA/u/H5HIzc/0+c2oFW1eBFISF823taht6BdPAAAA="
+  },
+  "places/kasteel-de-haar/01.jpg": {
+    "mtime": 1792655622657.69,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/places/kasteel-de-haar/01-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/01-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/01-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/01-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#6897b4",
+    "lqip": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADwAQCdASoQAAsAA4BaJbACdH8AFBUkCIAA/rITBtKP2WymV7Pz6h0EC48fv38rnzbsCCFVnA4YeOS1ac11wVVaY1wgAA=="
+  },
+  "places/kasteel-de-haar/02.jpg": {
+    "mtime": 1792655622653.6897,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/places/kasteel-de-haar/02-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/02-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/02-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/02-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#138cc0",
+    "lqip": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAAAQAgCdASoQAAsAA4BaJbACdH8AE1ZLvlIAAP4jOXvwBuzlrk4OA9Kf94iqNaa4YCRs3ZPhOQ7f2yqUT+tH4zjt7BEaVFpgAAA="
+  },
+  "places/kasteel-de-haar/03.jpg": {
+    "mtime": 1792655622649.6897,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/kasteel-de-haar/03-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/03-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/03-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#68675e",
+    "lqip": "data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAAAwBACdASoQABgAPu1iqk2ppaQiMAgBMB2JZwDImBnVTWltkATr4d+lxvgA/q9uFxLz27u0Rpz+QRnrNECuQOkMkP7JxmKLTv+Des93FNMuBb0uMEBcX2Jk4AA="
+  },
+  "places/kasteel-de-haar/04.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/kasteel-de-haar/04-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/04-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/04-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#88b1d1",
+    "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAAAwBACdASoQABgALrV2u12jqampiYC0S2AE6ZQYwATn+MJyAH4vyHGSXFAA/qy4GLKdU7u9VEITfWRZCwn/IIQF7mI5CJQ8DoPw0J2xo4ZqT+8Xs6OZkS/5uVdS6EcxcjoG3fKFaDLsBjZPgSK53sut/pqFcAAA"
+  },
+  "places/kasteel-de-haar/05.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/kasteel-de-haar/05-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/05-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/05-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#302f28",
+    "lqip": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAACQAwCdASoQABgAPu1iqk2ppaQiMAgBMB2JZwAAO7QL3gfLVRocAM4TOxoKE3vg9Y2Y5UKlXHDGpi5jYRYz94I/P76NyQAAAAA="
+  },
+  "places/kasteel-de-haar/06.jpg": {
+    "mtime": 1792655622649.6897,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/places/kasteel-de-haar/06-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/06-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/06-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/06-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#1375b2",
+    "lqip": "data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADQAQCdASoQAAsAA4BaJbACdAEO8/VDAAD+2kauGxOgNRNNXEb7ux95h0zBltdbp5ePchYtgzXbcOVtwAA="
+  },
+  "places/kasteel-de-haar/07.jpg": {
+    "mtime": 1792655622637.6892,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1067,
+    "src": "/media/places/kasteel-de-haar/07-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/07-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/07-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/07-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#126fae",
+    "lqip": "data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAADwAQCdASoQAAsAA4BaJbACdAEOcJ9b3EAA/rvZEwO8WnTD5gm9tprm7N2vGLWdHjun2Im4XvQ2DM4ds7eW6sAA"
+  },
+  "places/kasteel-de-haar/08.jpg": {
+    "mtime": 1792655622645.6895,
+    "pipeline": "sharp",
+    "width": 1067,
+    "height": 1600,
+    "src": "/media/places/kasteel-de-haar/08-960.webp",
+    "srcset": [
+      {
+        "url": "/media/places/kasteel-de-haar/08-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/places/kasteel-de-haar/08-960.webp",
+        "w": 960
+      }
+    ],
+    "color": "#856a20",
+    "lqip": "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAAAQBACdASoQABgAPu1iqU2ppaOiMAgBMB2JbACdMoAB35+CzFdcO2eIwAD9kxzkbC7yUyvXHFsaRZukCjXHhiiniy7/iuXfKjP3DDy8TeiTSv4RGguADVDWFxqLLV95KwskU1g9+O9X9zQLLM5TZRAAAAA="
+  },
+  "projects/arduino.jpg": {
+    "mtime": 1792655622633.6892,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1208,
+    "src": "/media/projects/arduino-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/projects/arduino-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/projects/arduino-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/projects/arduino-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#29838b",
+    "lqip": "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAADQAQCdASoQAAwAA4BaJQBYdh4W0rYiAAD+3G4mdc4aJbGZa1xN6LnyPLLSivxIYIAAAA=="
+  },
+  "projects/film-scanner.jpg": {
+    "mtime": 1792655622629.689,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1068,
+    "src": "/media/projects/film-scanner-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/projects/film-scanner-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/projects/film-scanner-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/projects/film-scanner-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#729aa5",
+    "lqip": "data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAADwAQCdASoQAAsAA4BaJYgCdAD6RLtHs6AA/jR0p8VMaJHLCNSaixCwWzWF2Ac8qgMbr4Frs1svwEIk3FmxMoMpl8RgAA=="
+  },
+  "projects/grok-observatory.jpg": {
+    "mtime": 1792655622637.6892,
+    "pipeline": "sharp",
+    "width": 1600,
+    "height": 1000,
+    "src": "/media/projects/grok-observatory-1600.webp",
+    "srcset": [
+      {
+        "url": "/media/projects/grok-observatory-480.webp",
+        "w": 480
+      },
+      {
+        "url": "/media/projects/grok-observatory-960.webp",
+        "w": 960
+      },
+      {
+        "url": "/media/projects/grok-observatory-1600.webp",
+        "w": 1600
+      }
+    ],
+    "color": "#58a26d",
+    "lqip": "data:image/webp;base64,UklGRj4AAABXRUJQVlA4IDIAAADQAQCdASoQAAoAA4BaJaQAAuRIrdrxcAD+9mhNuLxcuoT+6fTMsj/ltWUUYlnXVrIAAA=="
+  }
+}

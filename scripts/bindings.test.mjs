@@ -20,8 +20,9 @@ import {
 } from '../src/site/layout/bindings.js';
 import { createStore } from '../src/editor/store.js';
 import { widgetItems } from '../src/site/layout/source.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
-const content = loadContent('.');
+const content = loadContent(SITE_A);
 const { routes } = buildRoutes(content);
 const noor = content.sources.people.find((p) => p.slug === 'noor-vermeer');
 const keys = new Set(['title', 'role', 'year', 'body', 'images']);
@@ -289,7 +290,7 @@ test('Save refuses bindings that do not fit the schema', () => {
     'sources/people.schema.json',
   ]) {
     fs.mkdirSync(path.dirname(path.join(root, 'content/en', f)), { recursive: true });
-    fs.copyFileSync(path.join('content/en', f), path.join(root, 'content/en', f));
+    fs.copyFileSync(path.join(SITE_A, 'content/en', f), path.join(root, 'content/en', f));
   }
   const F = 'pages/x/index.json';
   fs.mkdirSync(path.join(root, 'content/en/pages/x'), { recursive: true });

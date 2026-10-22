@@ -6,8 +6,9 @@ import * as render from '../src/site/render.js';
 import { FOOTER, STRINGS, contentFromFiles } from '../src/site/files.js';
 import { checkContent } from '../src/site/validate.js';
 import { newWidget, newSection } from '../src/site/layout/index.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
-const content = loadContent('.');
+const content = loadContent(SITE_A);
 
 test("footer.json: a part, its sections checked like a page's; the kind is the file's", () => {
   assert.deepEqual(checkContent(FOOTER, { version: 1, kind: 'part', sections: [] }), []);
@@ -68,7 +69,7 @@ test('footer: its sections render on every page, and the editor renders them on 
     assert.match(foot, /data-edit="settings\/footer\.json#\/sections\/0\/widgets\/0\/body"/);
   }
   for (const path of ['/', '/about/']) {
-    const r = renderOp(render, '.', {}, { path, file: FOOTER, data, ids: [s.id] });
+    const r = renderOp(render, SITE_A, {}, { path, file: FOOTER, data, ids: [s.id] });
     assert.equal(r.status, 200, path);
     assert.match(r.body.html[s.id], /Say hello/);
   }
@@ -76,7 +77,7 @@ test('footer: its sections render on every page, and the editor renders them on 
   const about = { ...content.pages.about };
   const bad = renderOp(
     render,
-    '.',
+    SITE_A,
     {},
     { path: '/', file: 'pages/about/index.json', data: about, ids: [] },
   );

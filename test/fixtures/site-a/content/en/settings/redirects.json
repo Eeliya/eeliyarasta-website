@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "redirects": [
+    {
+      "from": "/photography/people/noor-vermeer/:slug/",
+      "to": "/photography/people/"
+    }
+  ]
+}

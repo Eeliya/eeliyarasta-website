@@ -6,9 +6,10 @@ import { header, mobileMenu } from '../src/site/templates/header.js';
 import { checkContent } from '../src/site/validate.js';
 import { setEditable } from '../src/site/helpers.js';
 import { warnings } from './test-layout.mjs';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
 const NAV = 'settings/nav.json';
-const base = loadContent('.');
+const base = loadContent(SITE_A);
 const ctxWith = (nav) => {
   const content = { ...base, nav };
   return { ...content, routes: buildRoutes(content).routes };

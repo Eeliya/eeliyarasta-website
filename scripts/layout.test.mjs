@@ -28,8 +28,9 @@ import {
   removeSection,
   setSection,
 } from '../src/editor/layout-ops.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
-const content = loadContent('.');
+const content = loadContent(SITE_A);
 const { routes } = buildRoutes(content);
 const ctxOf = (route) => ({ ...content, route, routes, curtains: {} });
 const page = routes.find((r) => r.path === '/about/');
@@ -354,7 +355,7 @@ test('ops: sections and widgets added, copied, moved, removed; one undo step eac
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'layout-'));
   for (const f of ['settings/site.json', 'settings/animations.json', 'pages/index.json']) {
     fs.mkdirSync(path.dirname(path.join(root, 'content/en', f)), { recursive: true });
-    fs.copyFileSync(path.join('content/en', f), path.join(root, 'content/en', f));
+    fs.copyFileSync(path.join(SITE_A, 'content/en', f), path.join(root, 'content/en', f));
   }
   fs.mkdirSync(path.join(root, 'content/en/pages/test'));
   fs.writeFileSync(
@@ -376,7 +377,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   const data = structuredClone(content.pages.about);
   const [s] = data.sections;
   s.widgets[0].title = 'Edited headline';
-  const r = renderOp(render, '.', {}, { path: '/about/', file, data, ids: [s.id] });
+  const r = renderOp(render, SITE_A, {}, { path: '/about/', file, data, ids: [s.id] });
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(r.body.html), [s.id]);
   const html = r.body.html[s.id];
@@ -394,7 +395,7 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   const tpl = content.pages[slug.id];
   const out = renderOp(
     render,
-    '.',
+    SITE_A,
     {},
     {
       path: slug.path,
@@ -405,13 +406,13 @@ test('render endpoint: one section of a page, from the editor copy over the draf
   );
   assert.match(Object.values(out.body.html)[0], /data-album/);
   // wrong page, bad data, no ids
-  assert.equal(renderOp(render, '.', {}, { path: '/', file, data, ids: [] }).status, 400);
+  assert.equal(renderOp(render, SITE_A, {}, { path: '/', file, data, ids: [] }).status, 400);
   const bad = { sections: [{ id: 'x', widgets: [] }] };
   assert.equal(
-    renderOp(render, '.', {}, { path: '/about/', file, data: bad, ids: [] }).status,
+    renderOp(render, SITE_A, {}, { path: '/about/', file, data: bad, ids: [] }).status,
     400,
   );
-  assert.equal(renderOp(render, '.', {}, { path: '/about/', file }).status, 400);
+  assert.equal(renderOp(render, SITE_A, {}, { path: '/about/', file }).status, 400);
 });
 
 test('add widget: its source fits the page; removing the main widget leaves the page without one', () => {

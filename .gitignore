@@ -17,3 +17,5 @@ public/media
 sandbox/mocks/
 sandbox/history/
 sandbox/thumbs/
+# the test fixture sites keep their media manifest (test/fixtures/index.mjs)
+!test/fixtures/*/.generated

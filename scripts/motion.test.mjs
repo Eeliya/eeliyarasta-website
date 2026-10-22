@@ -16,8 +16,9 @@ import {
   motionProblems,
 } from '../src/site/layout/motion.js';
 import { widgetModel, inherited, keepFor } from '../src/editor/svelte/motion.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
-const content = loadContent('.');
+const content = loadContent(SITE_A);
 const presets = content.animations.presets;
 const pageWith = (motion) => ({
   version: 1,
@@ -99,9 +100,9 @@ test('the library has the scroll animations and every default and page animation
 
 test('save refuses a widget with an unknown animation', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'motion-'));
-  fs.cpSync('content/en', path.join(root, 'content/en'), { recursive: true });
+  fs.cpSync(path.join(SITE_A, 'content/en'), path.join(root, 'content/en'), { recursive: true });
   const F = 'pages/index.json';
-  const page = JSON.parse(fs.readFileSync(path.join('content/en', F), 'utf8'));
+  const page = JSON.parse(fs.readFileSync(path.join(SITE_A, 'content/en', F), 'utf8'));
   const wgt = page.sections.flatMap((s) => s.widgets).find((b) => b.motion);
   const before = fs.readFileSync(path.join(root, 'content/en', F), 'utf8');
   wgt.motion = { anim: 'no-such-animation' };

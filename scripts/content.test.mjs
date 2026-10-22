@@ -6,6 +6,7 @@ import path from 'node:path';
 import { loadContent, writeFileAtomic } from './content.mjs';
 import { readContentFiles, save } from './editor-server.mjs';
 import { checkContent, parseContent } from '../src/site/validate.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
 const site = { version: 1, name: 'Site', url: 'https://example.com' };
 const animations = { version: 1, presets: {}, targets: {}, transitions: {} };
@@ -177,7 +178,7 @@ test('site.json with only name and url builds every page', async () => {
 test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async () => {
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
-  const options = await prettier.resolveConfig('content/en/pages/index.json');
+  const options = await prettier.resolveConfig(path.join(SITE_A, 'content/en/pages/index.json'));
   const cases = [
     [],
     [1, 2],
@@ -207,7 +208,7 @@ test('formatJSON is Prettier-clean for arrays of every shape (fixtures)', async 
 
 test('every content file starts with its shape version', async () => {
   const { readContentDir } = await import('./content.mjs');
-  for (const [file, data] of Object.entries(readContentDir('.')))
+  for (const [file, data] of Object.entries(readContentDir(SITE_A)))
     assert.equal(Object.keys(data)[0] === 'version' && data.version, 1, file);
 });
 
@@ -215,8 +216,8 @@ test('formatJSON (what Save writes) is Prettier-clean for every content file', a
   const prettier = await import('prettier');
   const { formatJSON } = await import('../src/editor/lib/json-format.js');
   const { readContentDir } = await import('./content.mjs');
-  const options = await prettier.resolveConfig('content/en/pages/index.json');
-  for (const [file, data] of Object.entries(readContentDir('.'))) {
+  const options = await prettier.resolveConfig(path.join(SITE_A, 'content/en/pages/index.json'));
+  for (const [file, data] of Object.entries(readContentDir(SITE_A))) {
     const text = formatJSON(data);
     const pretty = await prettier.format(text, { ...options, parser: 'json' });
     assert.equal(text, pretty, `content/en/${file}`);
@@ -226,7 +227,7 @@ test('formatJSON (what Save writes) is Prettier-clean for every content file', a
 test('editor markers: only when rendering for the editor (dev), never in the build', async () => {
   const { buildRoutes } = await import('../src/site/routes.js');
   const { renderRoute } = await import('../src/site/render.js');
-  const content = loadContent('.');
+  const content = loadContent(SITE_A);
   const home = buildRoutes(content).routes.find((r) => r.path === '/');
   const MARKERS = /data-edit|data-sec|data-widget|data-curtain-edit/;
   const built = renderRoute(home, content);
@@ -281,7 +282,7 @@ test('alt text comes from photos.json; decorative photos and missing alts are em
 });
 
 test('photo library: no alt or credit in pages or sources, every photo they use has alt in photos.json', () => {
-  const content = loadContent(process.cwd());
+  const content = loadContent(SITE_A);
   const photos = content.photos;
   const used = [];
   const walk = (v, where) => {
@@ -299,9 +300,12 @@ test('photo library: no alt or credit in pages or sources, every photo they use 
       }
   };
   for (const dir of ['pages', 'sources'])
-    for (const f of fs.readdirSync(path.join('content/en', dir), { recursive: true }))
+    for (const f of fs.readdirSync(path.join(SITE_A, 'content/en', dir), { recursive: true }))
       if (f.endsWith('.json'))
-        walk(JSON.parse(fs.readFileSync(path.join('content/en', dir, f), 'utf8')), `${dir}/${f}`);
+        walk(
+          JSON.parse(fs.readFileSync(path.join(SITE_A, 'content/en', dir, f), 'utf8')),
+          `${dir}/${f}`,
+        );
   assert.ok(used.length > 20);
   for (const src of used) assert.ok(photos[src]?.alt, `${src} has no alt in photos.json`);
 });

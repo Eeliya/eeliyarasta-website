@@ -11,6 +11,7 @@ import { checkContent } from '../src/site/validate.js';
 import { loadContent } from './content.mjs';
 import { buildRoutes } from '../src/site/routes.js';
 import { renderRoute } from '../src/site/render.js';
+import { SITE_A } from '../test/fixtures/index.mjs';
 
 test('contained width: N columns of the full-width cell, at least the side margins from the edges', () => {
   assert.equal(CONTAINED, 115);
@@ -38,7 +39,7 @@ test('contained width: validated in site.json, and on the page as --contain', ()
     '"layout.gap" is not a layout setting',
   ]);
   assert.deepEqual(checkLayout({ containedCols: 100.5 }).length, 1);
-  const content = loadContent('.');
+  const content = loadContent(SITE_A);
   // the site's own setting doesn't matter: the default (no layout) and a set one
   const { layout: _own, ...plain } = content.site; // eslint-disable-line no-unused-vars
   const site = { ...plain, layout: { containedCols: 121 } };

@@ -43,6 +43,10 @@ Requires Node `^20.19.0 || >=22.12.0` (Vite 8's engines). `npm run mock` passes
   `// eslint-disable-next-line no-console -- why` or `/* stylelint-disable-next-line local/grid-4px -- why */`.
 
 **Pre-push hook:** `.githooks/pre-push` runs `npm run lint && npm test` before every `git push`.
+
+**Test fixtures:** tests never read the live content. They read `test/fixtures/site-a` (a frozen
+copy of a site: `content/en` and `.generated/media.json`, `test/fixtures/index.mjs`), and tests
+that change files copy it to a temp folder first.
 `npm install` turns it on (the `prepare` script sets `git config core.hooksPath .githooks`), so
 run `npm install` after pulling this. It works in Git for Windows' sh. Skip it once with
 `git push --no-verify`.

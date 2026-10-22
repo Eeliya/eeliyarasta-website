@@ -32,7 +32,7 @@ export default [
   },
   // Build scripts, the Vite plugin and config, and the tests run in Node.
   {
-    files: ['scripts/**/*.{js,mjs}', '*.config.js', 'eslint.config.js'],
+    files: ['scripts/**/*.{js,mjs}', 'test/**/*.{js,mjs}', '*.config.js', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },
 ];

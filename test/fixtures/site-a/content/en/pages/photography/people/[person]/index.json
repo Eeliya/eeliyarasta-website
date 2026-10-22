@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "kind": "page",
+  "id": "pg-gk6t",
+  "main": "b-j8hg",
+  "sections": [
+    {
+      "id": "s-2jiz",
+      "height": "full",
+      "width": "full",
+      "widgets": [
+        {
+          "id": "b-j8hg",
+          "type": "album",
+          "source": {
+            "mode": "url",
+            "from": "people",
+            "where": {
+              "op": "and",
+              "rules": [{ "param": "person", "field": "slug" }]
+            }
+          },
+          "title": { "bind": "title" },
+          "meta": [
+            {
+              "label": "Role",
+              "value": { "bind": "role" }
+            },
+            {
+              "label": "Agency",
+              "value": { "bind": "agency" }
+            },
+            {
+              "label": "Location",
+              "value": { "bind": "location" }
+            },
+            {
+              "label": "Year",
+              "value": { "bind": "year" }
+            }
+          ],
+          "body": { "bind": "body" }
+        }
+      ]
+    }
+  ]
+}
