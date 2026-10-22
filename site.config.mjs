@@ -1,5 +1,5 @@
 /**
- * This site's config: where its content, photos and build live (scripts/site-config.mjs reads
+ * This site's config: where its content, photos and build live (ewcms's scripts/site-config.mjs reads
  * it; every key is optional, these are the defaults spelled out).
  */
 export default {
