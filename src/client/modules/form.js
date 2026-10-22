@@ -7,6 +7,7 @@
  * the visitor's mail app with the message filled in. Turnstile (a .cf-turnstile in the form)
  * loads Cloudflare's script on demand.
  */
+import { CORE_STRINGS } from '../../site/strings.js';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TURNSTILE = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 let turnstileScript = null;
@@ -26,9 +27,9 @@ function loadTurnstile() {
 /** The problem with one input ('' when fine), in the section's words. */
 function problem(form, el) {
   const value = el.value.trim();
-  if (el.required && !value) return form.dataset.required || 'Please fill this in.';
+  if (el.required && !value) return form.dataset.required || CORE_STRINGS.form.required;
   if (el.type === 'email' && value && !EMAIL.test(value))
-    return form.dataset.invalid || 'Please enter a valid email address.';
+    return form.dataset.invalid || CORE_STRINGS.form.invalid;
   return '';
 }
 
@@ -119,8 +120,8 @@ function enhance(form) {
       form.reset();
       inputs.forEach((el) => el.removeAttribute('aria-invalid'));
       if (time) time.value = String(Date.now());
-      say(form.dataset.success || 'Sent.', false);
-    } else say(form.dataset.error || 'Not sent. Please try again.', true);
+      say(form.dataset.success || CORE_STRINGS.form.sent, false);
+    } else say(form.dataset.error || CORE_STRINGS.form.error, true);
   }
 
   form.addEventListener('submit', onSubmit);

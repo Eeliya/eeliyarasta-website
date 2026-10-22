@@ -13,6 +13,7 @@ import {
   sizes,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
+import { t } from '../strings.js';
 
 /**
  * A widget's head: eyebrow (label) / title / glass CTA. at(field): the widget's editor marker for one
@@ -51,7 +52,7 @@ export const albumCard = (ctx, kind, album, { landscape = false, index = 0 } = {
       <span class="acard__meta"
         >${meta.map(([f, type], i) => html`${i ? ' · ' : ''}<span${at(f, type)}>${esc(album[f])}</span>`)}</span
       >
-      ${album.placeholder ? '<span class="tag">Placeholder</span>' : ''}
+      ${album.placeholder ? html`<span class="tag">${esc(t(ctx, 'tag.placeholder'))}</span>` : ''}
     </div>
   </a>`;
 };
@@ -81,8 +82,8 @@ export const projectList = (
           <div class="prow__media">${p.image ? img(ctx, p.image, { sizes: sizes('100vw', '30vw'), attrs: ed(PROJECTS, ['items', at, 'image'], 'image') }) : ''}</div>
           <div class="prow__text">
             <p${ed(PROJECTS, ['items', at, 'body'], 'block')}>${lines(p.body)}</p>
-            ${p.placeholder ? '<span class="tag">Placeholder</span>' : ''}
-            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, ['items', at, 'linkLabel'])}>${esc(p.linkLabel || 'Visit')}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
+            ${p.placeholder ? html`<span class="tag">${esc(t(ctx, 'tag.placeholder'))}</span>` : ''}
+            ${p.url ? html`<a class="btn glass" href="${esc(p.url)}"${extAttrs(p.url)}><span${ed(PROJECTS, ['items', at, 'linkLabel'])}>${esc(p.linkLabel || t(ctx, 'projects.visit'))}</span> <span class="arrow-ne" aria-hidden="true">↗</span></a>` : ''}
           </div>
         </div>
       </div>

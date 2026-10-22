@@ -7,7 +7,7 @@
 -->
 <script>
   import Button from './Button.svelte';
-  import { contentPath } from '../../site/files.js';
+  import { SITE, contentPath } from '../../site/files.js';
   import PreviewPanel from './PreviewPanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
@@ -76,7 +76,9 @@
   $effect(writeUrl);
 
   $effect(() => {
-    document.title = `${live.changes ? '● ' : ''}Editor · Eeliya Rasta`;
+    // the site's name (site.json), like the page's own title (scripts/vite-plugin-static-site.mjs)
+    const name = live.get(SITE, '/name');
+    document.title = `${live.changes ? '● ' : ''}Editor${name ? ` · ${name}` : ''}`;
   });
 
   /** Keyboard shortcuts, also while the preview has focus (it forwards them: bridge 'key'). */

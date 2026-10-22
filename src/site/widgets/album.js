@@ -21,6 +21,7 @@ import {
   sizes,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
+import { t } from '../strings.js';
 import { titleCase } from '../routes.js';
 import { sourcePage } from './data.js';
 
@@ -89,7 +90,7 @@ function albumOf(s, ctx, route, b) {
           ${meta.map(([k, v, attr, labelAttr]) => html`<div><dt class="label"${labelAttr}>${esc(k)}</dt><dd${attr}>${esc(v)}</dd></div>`)}
         </dl>
         ${summary ? html`<p class="album__summary" ${b.ed('body', 'block')}>${lines(summary)}</p>` : ''}
-        ${a.placeholder ? html`<p class="album__note"><span class="tag">Placeholder</span> <span${at('note', 'block')}>${lines(a.note || '')}</span></p>` : ''}
+        ${a.placeholder ? html`<p class="album__note"><span class="tag">${esc(t(ctx, 'tag.placeholder'))}</span> <span${at('note', 'block')}>${lines(a.note || '')}</span></p>` : ''}
       </div>
     </aside>
 
@@ -98,7 +99,7 @@ function albumOf(s, ctx, route, b) {
       data-anim="album.stage"
       data-album-stage
       aria-roledescription="carousel"
-      aria-label="${esc(title || a.title)} photos"
+      aria-label="${esc(t(ctx, 'album.photos', { title: title || a.title }))}"
     >
       ${images.map(
         (im, i) =>
@@ -108,7 +109,7 @@ function albumOf(s, ctx, route, b) {
             data-credit="${esc(creditText(creditOf(ctx, im)))}"
             data-credit-url="${esc(creditOf(ctx, im)?.source || '')}"
             style="--r:${ratio(ctx, im).toFixed(4)}"
-            aria-label="${i + 1} of ${n}"
+            aria-label="${esc(t(ctx, 'album.slide', { n: i + 1, total: n }))}"
             ${i === 0 ? '' : ' aria-hidden="true"'}
           >
             ${img(ctx, im, { sizes: sizes('100vw', '70vw'), priority: i === 0, loading: i < 2 ? 'eager' : 'lazy', attrs: photo(i) })}
@@ -118,7 +119,7 @@ function albumOf(s, ctx, route, b) {
         class="album__arrow album__arrow--prev glass"
         type="button"
         data-album-prev
-        aria-label="Previous photo"
+        aria-label="${esc(t(ctx, 'album.prev'))}"
       >
         ←
       </button>
@@ -126,7 +127,7 @@ function albumOf(s, ctx, route, b) {
         class="album__arrow album__arrow--next glass"
         type="button"
         data-album-next
-        aria-label="Next photo"
+        aria-label="${esc(t(ctx, 'album.next'))}"
       >
         →
       </button>
@@ -153,7 +154,7 @@ function albumOf(s, ctx, route, b) {
                 class="thumb${i === 0 ? ' is-active' : ''}"
                 type="button"
                 data-goto="${i}"
-                aria-label="Show photo ${i + 1}"
+                aria-label="${esc(t(ctx, 'album.show', { n: i + 1 }))}"
               >
                 <span class="thumb__num">${pad(i + 1)}</span
                 >${img(ctx, im, { decorative: true, sizes: '80px', attrs: photo(i) })}
@@ -170,7 +171,7 @@ function albumOf(s, ctx, route, b) {
             class="gcell"
             type="button"
             data-goto="${i}"
-            aria-label="Open photo ${i + 1}"
+            aria-label="${esc(t(ctx, 'album.open', { n: i + 1 }))}"
           >
             <span class="gcell__num">${pad(i + 1)}</span>
             <span class="gcell__media"
@@ -180,12 +181,12 @@ function albumOf(s, ctx, route, b) {
       )}
     </div>
 
-    <div class="viewtoggle glass" data-portal role="group" aria-label="View mode">
+    <div class="viewtoggle glass" data-portal role="group" aria-label="${esc(t(ctx, 'album.view'))}">
       <span class="viewtoggle__pill" aria-hidden="true"></span>
       <button type="button" class="is-active" aria-pressed="true" data-view-btn="slider">
-        Slider
+        ${esc(t(ctx, 'album.slider'))}
       </button>
-      <button type="button" aria-pressed="false" data-view-btn="grid">Grid</button>
+      <button type="button" aria-pressed="false" data-view-btn="grid">${esc(t(ctx, 'album.grid'))}</button>
     </div>
   </div>`;
 }

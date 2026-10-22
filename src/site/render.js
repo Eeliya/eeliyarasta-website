@@ -31,7 +31,8 @@ export const bindingChecks = (content) => bindingProblems(content, { types: WIDG
 export const motionChecks = (content) => motionProblems(content);
 
 /**
- * { head, body, lang } of a route; lang: <html lang>.
+ * { head, body, lang, themeColor } of a route; lang: <html lang>, themeColor: its meta
+ * theme-color (site.json themeColor; empty: the shell's own).
  * editable: render the editor's markers (the dev server), see setEditable in helpers.js. */
 export function renderRoute(route, content, { editable = false, unbuilt = false } = {}) {
   setEditable(editable);
@@ -43,7 +44,12 @@ export function renderRoute(route, content, { editable = false, unbuilt = false 
   const accent = route.album ? accentOf(ctx, route.album) : content.site.accent;
   const html = body(ctx, route, accent, view, file);
   anchorClashes(route, page?.sections, html);
-  return { head: head(ctx, route, accent), body: html, lang: content.site.lang || 'en' };
+  return {
+    head: head(ctx, route, accent),
+    body: html,
+    lang: content.site.lang || 'en',
+    themeColor: content.site.themeColor || '',
+  };
 }
 
 /**

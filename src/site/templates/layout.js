@@ -4,6 +4,7 @@ import { header, mobileMenu } from './header.js';
 import { typographyVars } from '../layout/type.js';
 import { layoutVars } from '../layout/contain.js';
 import { footer } from './footer.js';
+import { t } from '../strings.js';
 
 /** <head> contents injected into index.html at <!--ssr-head--> (meta: src/site/seo.js) */
 export function head(ctx, route, accent) {
@@ -18,7 +19,7 @@ export function head(ctx, route, accent) {
       ? html`<script type="application/ld+json">
           ${JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'Person',
+            '@type': site.entityType || 'Person',
             name: site.name,
             url: site.url,
             jobTitle: site.jobTitle || undefined,
@@ -85,7 +86,7 @@ export function body(ctx, route, accent, view, file) {
   const curtainEdit = editable
     ? `${route.curtainEdit ? ` data-curtain-edit="${esc(route.curtainEdit)}"` : ''} data-page-file="${esc(file)}"`
     : '';
-  const page = html` <a class="skip-link" href="#main">Skip to content</a>
+  const page = html` <a class="skip-link" href="#main">${esc(t(ctx, 'page.skip'))}</a>
     <div class="ground" aria-hidden="true">
       <div class="ground__glow"></div>
       <div class="ground__grain"></div>

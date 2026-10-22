@@ -16,6 +16,7 @@
  * sends it with fetch and shows the messages in place.
  */
 import { html, esc, warnOnce } from '../helpers.js';
+import { t } from '../strings.js';
 
 export const FIELD_TYPES = [
   ['text', 'Text'],
@@ -178,7 +179,7 @@ export const form = {
         </div>`,
         )}
         <div class="cform__hp" aria-hidden="true">
-          <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+          <label>${esc(t(ctx, 'form.honeypot'))} <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
         </div>
         ${
           mode === 'email'
@@ -194,7 +195,7 @@ export const form = {
         }
         ${turnstile ? html`<div class="cf-turnstile" data-sitekey="${esc(turnstile)}"></div>` : ''}
         <div class="cform__actions">
-          <button class="btn glass cform__submit" type="submit"><span class="cform__text" ${b.ed('submit')}>${esc(s.submit || 'Send')}</span><span class="cform__spinner" aria-hidden="true"></span></button>
+          <button class="btn glass cform__submit" type="submit"><span class="cform__text" ${b.ed('submit')}>${esc(s.submit || t(ctx, 'form.submit'))}</span><span class="cform__spinner" aria-hidden="true"></span></button>
           ${email && mode !== 'email' ? html`<a class="cform__alt muted" href="mailto:${esc(email)}">${esc(email)}</a>` : ''}
         </div>
         <p class="cform__status" role="status" aria-live="polite" tabindex="-1"></p>

@@ -29,6 +29,7 @@ import {
   sourceIdOf,
   contentPath,
 } from './files.js';
+import { CORE_STRINGS } from './strings.js';
 import { checkSchema } from './schemas.js';
 import { WIDGET_TYPES } from './widgets/index.js';
 import {
@@ -109,6 +110,8 @@ function checkSite(d) {
       description: 'string',
       ogImage: 'string',
       lang: 'string',
+      entityType: 'string',
+      themeColor: 'string',
       timezone: 'string',
       social: 'array',
       forms: 'object',
@@ -552,7 +555,8 @@ export function checkContent(file, data) {
   if (file === NAV) return checkNav(d);
   if (file === STRINGS)
     return [
-      ...optional(d, { nav: 'object' }),
+      // the groups of UI text (src/site/strings.js CORE_STRINGS): objects of strings
+      ...optional(d, Object.fromEntries(Object.keys(CORE_STRINGS).map((g) => [g, 'object']))),
       ...(d.footer !== undefined
         ? ['"footer" is gone: the footer is settings/footer.json, sections like a page']
         : []),

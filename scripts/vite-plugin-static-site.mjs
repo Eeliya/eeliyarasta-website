@@ -40,9 +40,30 @@ import { loadSiteConfig } from './site-config.mjs';
 
 const RENDER_MODULE = '/src/site/render.js';
 
-const fill = (shell, { head, body, lang }) =>
-  shell
-    .replace(/<html lang="[^"]*"/, `<html lang="${lang.replace(/[^\w-]/g, '')}"`)
+const attr = (s) => String(s).replace(/[&"<>]/g, (c) => `&#${c.charCodeAt(0)};`);
+const setLang = (shell, lang) =>
+  shell.replace(
+    /<html lang="[^"]*"/,
+    `<html lang="${String(lang || 'en').replace(/[^\w-]/g, '')}"`,
+  );
+/** The shell's theme-color meta: the site's (settings), else the shell's own. */
+const setThemeColor = (shell, color) =>
+  color
+    ? shell.replace(
+        /(<meta name="theme-color" content=")[^"]*(")/,
+        (m, a, b) => `${a}${attr(color)}${b}`,
+      )
+    : shell;
+
+/** The editor's page: its title names the site (site.json name), lang from site.json. */
+export const editorShell = (shell, site = {}) =>
+  setLang(shell, site.lang).replace(
+    /<title>[^<]*<\/title>/,
+    `<title>${site.name ? `Editor · ${attr(site.name)}` : 'Editor'}</title>`,
+  );
+
+const fill = (shell, { head, body, lang, themeColor }) =>
+  setThemeColor(setLang(shell, lang), themeColor)
     .replace('<!--ssr-head-->', head)
     .replace('<!--ssr-body-->', body);
 
@@ -133,7 +154,10 @@ export default function staticSite() {
         try {
           if (wantsEditor(url, req.headers)) {
             // the editor app on this page (src/editor/lib/editor-url.js); its preview gets the site
-            const shell = fs.readFileSync(path.join(root, EDITOR_HTML), 'utf8');
+            const shell = editorShell(
+              fs.readFileSync(path.join(root, EDITOR_HTML), 'utf8'),
+              loadContent(root).site,
+            );
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             return res.end(await server.transformIndexHtml(req.url, shell));
           }

@@ -19,6 +19,7 @@
 import { gsap, reducedMotion } from '../lib/env.js';
 import { transitions } from '../anim/engine.js';
 import { lockScroll } from '../scroll.js';
+import { CORE_STRINGS } from '../../site/strings.js';
 
 const DEFAULTS = { open: { duration: 0.45, ease: 'expo.out' }, close: { duration: 0.3 } };
 const timing = () => {
@@ -141,9 +142,9 @@ function setMobile(open, { focusToggle = false } = {}) {
   if (textEl) {
     if (open) {
       label.dataset.closedText = textEl.textContent;
-      textEl.textContent = label.dataset.openLabel || 'Close';
+      textEl.textContent = label.dataset.openLabel || CORE_STRINGS.nav.close;
     } else {
-      textEl.textContent = label.dataset.closedText || 'Menu';
+      textEl.textContent = label.dataset.closedText || CORE_STRINGS.nav.menu;
     }
   }
   lockScroll(open);

@@ -32,6 +32,7 @@ import {
 } from '../helpers.js';
 import { schemaOf } from '../schemas.js';
 import { NAV, STRINGS, contentPath } from '../files.js';
+import { t } from '../strings.js';
 
 const caret =
   '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
@@ -159,23 +160,21 @@ function navItem(ctx, item, i) {
 /** Persistent header: logo, glass nav pill with click-to-open dropdowns, local time, mobile menu toggle. */
 export function header(ctx) {
   const { site } = ctx;
-  const nav = ctx.strings?.nav || {};
-  const n = (key, fallback) => nav[key] ?? fallback;
   const items = Array.isArray(ctx.nav?.header) ? ctx.nav.header : [];
   return html`
   <header class="header" data-header>
-    <a class="header__logo" href="/" aria-label="${esc(site.name)}, home">${esc(site.name)}</a>
+    <a class="header__logo" href="/" aria-label="${esc(t(ctx, 'nav.home', { name: site.name }))}">${esc(site.name)}</a>
 
-    <nav class="nav" aria-label="Main">
+    <nav class="nav" aria-label="${esc(t(ctx, 'nav.main'))}">
       <div class="nav__pill">
         ${items.map((item, i) => navItem(ctx, item, i)).join('\n        ')}
       </div>
     </nav>
 
     <div class="header__right">
-      <span class="header__clock"><span class="header__clock-dot"></span><span${ed(STRINGS, ['nav', 'clock'])}>${esc(nav.clock)}</span> <time data-clock="${esc(site.timezone)}">--:--</time></span>
+      <span class="header__clock"><span class="header__clock-dot"></span><span${ed(STRINGS, ['nav', 'clock'])}>${esc(t(ctx, 'nav.clock'))}</span> <time data-clock="${esc(site.timezone)}">--:--</time></span>
       <button class="menu-toggle glass" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
-        <span class="menu-toggle__label" data-open-label="${esc(n('close', 'Close'))}"><span${ed(STRINGS, ['nav', 'menu'])}>${esc(n('menu', 'Menu'))}</span></span>
+        <span class="menu-toggle__label" data-open-label="${esc(t(ctx, 'nav.close'))}"><span${ed(STRINGS, ['nav', 'menu'])}>${esc(t(ctx, 'nav.menu'))}</span></span>
         <span class="menu-toggle__icon" aria-hidden="true"><i></i><i></i></span>
       </button>
     </div>
@@ -217,7 +216,7 @@ export function mobileMenu(ctx) {
   return html`
   <div class="mmenu" id="mobile-menu" data-mobile-menu hidden>
     <div class="mmenu__panel glass">
-      <nav class="mmenu__nav" aria-label="Mobile">
+      <nav class="mmenu__nav" aria-label="${esc(t(ctx, 'nav.mobile'))}">
         ${items.map((item, i) => mmItem(ctx, item, i)).join('\n        ')}
       </nav>
       <div class="mmenu__foot" data-mm-item>

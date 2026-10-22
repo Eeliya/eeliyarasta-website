@@ -15,6 +15,7 @@ import {
   sizes,
 } from '../helpers.js';
 import { sourceFile } from '../files.js';
+import { t } from '../strings.js';
 import { hrefOf } from '../hrefs.js';
 import { schemaOf } from '../schemas.js';
 import { sectionHead, projectList } from '../templates/partials.js';
@@ -77,7 +78,7 @@ export const hero = {
       </h1>
       <div class="hero__meta" data-anim="hero.meta">
         <span class="label" ${b.ed('eyebrow')}>${esc(s.eyebrow)}</span>
-        <span class="hero__scroll label" aria-hidden="true"><i></i>Scroll</span>
+        <span class="hero__scroll label" aria-hidden="true"><i></i>${esc(t(ctx, 'hero.scroll'))}</span>
         <p class="hero__subline" ${b.ed('body', 'block')}>${lines(s.body)}</p>
       </div>
     </div>`,
