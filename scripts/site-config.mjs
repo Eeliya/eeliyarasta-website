@@ -8,12 +8,14 @@
  *     publicMediaDir: 'public/media',  // the photos' generated sizes (served as /media/...)
  *     generatedDir: '.generated',      // the media manifest (media.json)
  *     outDir: 'dist',                  // the build
+ *     themeDir: 'theme',               // the theme: theme.json, styles/ (the site-theme alias)
  *     repo: { owner, name },           // GitHub links when the git remote names none
  *   };
  *
  * Every key is optional (DEFAULTS); paths are relative to the root. loadSiteConfig(root) gives
  * the merged config (config) and the absolute paths (contentDir, mediaDir, publicDir,
- * publicMediaDir, generatedDir, manifest, outDir), plus contentRel (contentDir from the root,
+ * publicMediaDir, generatedDir, manifest, outDir, themeDir), theme (theme.json, {} without one),
+ * plus contentRel (contentDir from the root,
  * with "/": git paths and messages) and mediaUrl (publicMediaDir as a URL: "/media").
  */
 import fs from 'node:fs';
@@ -29,12 +31,14 @@ export const DEFAULTS = Object.freeze({
   publicMediaDir: 'public/media',
   generatedDir: '.generated',
   outDir: 'dist',
+  themeDir: 'theme',
   repo: Object.freeze({ owner: '', name: '' }),
 });
 
 const require = createRequire(import.meta.url);
 const cache = new Map();
 const posix = (p) => p.split(path.sep).join('/');
+const readJson = (file) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
 
 /** The site at root (default: the working folder): its config and paths. Cached per root. */
 export function loadSiteConfig(root = process.cwd()) {
@@ -54,6 +58,8 @@ export function loadSiteConfig(root = process.cwd()) {
     generatedDir: abs(config.generatedDir),
     manifest: path.join(abs(config.generatedDir), 'media.json'),
     outDir: abs(config.outDir),
+    themeDir: abs(config.themeDir),
+    theme: readJson(path.join(abs(config.themeDir), 'theme.json')),
     contentRel: posix(path.relative(root, abs(config.contentDir))),
     mediaUrl: `/${posix(path.relative(abs(config.publicDir), abs(config.publicMediaDir)))}`,
   };

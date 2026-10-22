@@ -63,6 +63,16 @@ resolves them; the build, the dev server, the editor endpoints, `scripts/images.
 `check:links` all read their paths from it. Client code imports content through the
 `@site-content` alias; the editor's browser code gets its settings from `virtual:editor-config`.
 
+**Theme:** the site's look is its theme, `theme/` (`site.config.mjs` `themeDir`): `theme.json`
+(`themeColor`, `colorScheme` and `preloads`, put in every page's head at `<!--theme-meta-->` and
+`<!--theme-preloads-->` in `index.html`; `site.json` `themeColor` wins) and `styles/`: the fonts,
+the colour, font, radius and easing tokens, glass, the chrome (header, menus, curtain, footer)
+and the widgets' looks (`_look.scss`). The core stylesheets (`src/client/styles`: the grid,
+breakpoints, text styles, base, backdrop, layout) take the theme through the `site-theme` alias
+(`main.scss`); the theme takes the core's breakpoints and layers as `site-core/tokens`. The
+editor has its own tokens and fonts (`src/editor/styles/_tokens.scss`, `_fonts.scss`,
+`src/editor/fonts`): it never reads the site's theme, so a theme can change and the editor stays.
+
 ```
 content/            ← all text, albums, projects, animation config (JSON)
  en/                ← one folder per language (only en so far; the site's lang is site.json "lang")
@@ -1296,7 +1306,7 @@ change the lines that changed.
 Change in its field, see the Media window above). Edit
 `content/en/sources/*.json` by hand for that.
 
-### Design notes
+### Design notes (the theme: `theme/`)
 
 - Black background, off-white type. Display: **Momo Trust Display**; UI/body: **DM Mono**
   (Google Fonts, `display=swap` with serif/monospace fallbacks).

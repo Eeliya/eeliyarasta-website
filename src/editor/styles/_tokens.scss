@@ -3,7 +3,8 @@
 //   primitives  raw values (--gray-*, --cyan-*, …, alpha steps --white-a08 …): only used here
 //               and, for one-off tints, in components
 //   semantic    what components use: --c-* colours, --space-*, --radius-*, --fs-*, --size-*
-// Builds on the site's tokens (src/client/styles/_tokens.scss: --fg, --line, fonts, easing).
+// The editor's own: it does not read the site's tokens or theme (the site's look can change;
+// the editor's stays). Its fonts: styles/_fonts.scss (DM Mono, and Momo Trust Display for titles).
 // Raw hex colours and px font sizes are only allowed in token files (stylelint
 // local/no-raw-tokens). The preview's injected CSS (overlay.js, bridge.js) reads its values
 // from this file (../ui-tokens.js, lib/css-tokens.js): keep them plain declarations.
@@ -12,16 +13,21 @@
   --white: #fff;
   --black: #000;
   --gray-03: #030303;
+  --gray-05: #050505;
+  --gray-10: #101010;
   --gray-14: #141414;
   --gray-1c: #1c1c1c;
+  --gray-21: #212121;
   --gray-22: #222;
   --gray-26: #262625;
   --gray-2a: #2a2a2a;
   --gray-2b: #2b2b2b;
+  --gray-2f: #2f2f2f;
   --gray-38: #383838;
   --gray-3a: #3a3a38;
   --gray-4f: #4f4f4d;
   --gray-86: #868582;
+  --gray-aa: #aaa;
   --gray-c1: #c1c1c1;
   // ---- primitives: hues
   --blue-300: #9fd3ff;
@@ -37,7 +43,9 @@
   --green-200: #b9f0c4;
   --amber-300: #ffcf7a;
   --orange-400: #f0a040;
+  --sand-50: #f2efe9;
   --sand-200: #e6dcc4;
+  --sand-300: #cfc8b8;
   --sand-400: #c1aa74;
   --sand-900: #24221d;
   --teal-400: #54beac;
@@ -74,16 +82,16 @@
   --red-300-a08: rgb(255 138 122 / 0.08);
   --red-300-a25: rgb(255 138 122 / 0.25);
   --sand-200-a35: rgb(230 220 196 / 0.35);
-  --brand-a06: rgb(207 200 184 / 0.06); // the site's --accent (#cfc8b8)
+  --brand-a06: rgb(207 200 184 / 0.06); // --sand-300
 
   // ---- semantic: colours
   --c-bg: var(--gray-03); // the editor's page
-  --c-bg-site: var(--bg); // the site's own background
-  --c-surface: var(--bg-2); // inputs, lists
+  --c-bg-site: var(--gray-05); // the site's dark background, behind the preview
+  --c-surface: var(--gray-10); // inputs, lists
   --c-surface-2: var(--gray-14); // a nested panel
   --c-surface-3: var(--gray-1c);
   --c-settings: var(--slate-900); // settings surfaces' one background (the section view's settings)
-  --c-card: var(--solid-card); // toasts, menus
+  --c-card: var(--gray-21); // toasts, menus
   // a card type: its fill and its accent text (paths, badges), the type told by its colour
   --c-page-card: var(--sand-900); // the pages list's (navigation) rows: 1.2:1 on the panel
   --c-page-accent: var(--sand-400); // paths, path crumbs (list, page head), "As /", drop slot: 7:1
@@ -91,23 +99,23 @@
   --c-widget-accent: var(--teal-400); // a widget row's title line (its accent text): 8.15:1
   // a hovered widget row's ring (1px inset, no fill change): its accent at 50%
   --c-widget-line-hover: color-mix(in srgb, var(--c-widget-accent) 50%, transparent);
-  --c-card-peek: var(--solid-card-peek);
+  --c-card-peek: var(--gray-2f);
   --c-control: var(--gray-2a); // Button.svelte: solid, on the panel and in windows
   --c-control-hover: var(--gray-38);
   --c-switch: var(--gray-26);
   --c-switch-line: var(--gray-3a);
-  --c-text: var(--fg);
+  --c-text: var(--sand-50);
   // opaque text tones (alpha fills are expensive to paint in the editor): composited from
   // rgb(242 239 233 / a) over --c-bg
   --c-text-muted: var(--gray-86);
   --c-text-faint: var(--gray-4f);
-  --c-text-dim: var(--solid-faint);
+  --c-text-dim: var(--gray-aa);
   --c-text-soft: var(--gray-c1);
-  --c-line: var(--line);
+  --c-line: var(--white-a10);
   // the selected section card's border, and the hovered or selected section's line in the preview
   --c-line-peek: var(--white-a70);
   --c-line-hover: var(--white-a40); // a hovered section card's border (softer)
-  --c-brand: var(--accent); // the site's warm accent
+  --c-brand: var(--sand-300); // a warm accent
   --c-accent: var(--cyan-400); // focus and selection, everywhere (and the preview's outlines)
   --c-accent-bg: var(--cyan-950);
   --c-on-accent: var(--black);
@@ -132,6 +140,11 @@
   // the inputs' look (--c-shadow on a card) as a solid color: the source card (ItemPicker)
   --c-input: color-mix(in srgb, #000 35%, var(--c-card));
   --c-scrim: var(--black-a90);
+
+  // ---- semantic: type and motion
+  --f-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace; // the editor's text
+  --f-display: 'Momo Trust Display', 'Didot', 'Times New Roman', serif; // window titles
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   // ---- semantic: spacing (the 4px grid)
   --space-1: 4px;

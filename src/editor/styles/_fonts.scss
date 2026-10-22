@@ -1,0 +1,43 @@
+// The editor's own fonts, bundled with it (../fonts, the latin subset from Google Fonts): DM
+// Mono for its text, Momo Trust Display for window titles. The site's fonts are its theme's
+// (site-theme/styles/_fonts.scss): a theme can change them, the editor keeps these.
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../fonts/dm-mono-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/dm-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/dm-mono-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/dm-mono-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Momo Trust Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/momo-trust-display-400.woff2') format('woff2');
+}

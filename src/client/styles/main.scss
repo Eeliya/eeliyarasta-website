@@ -1,13 +1,11 @@
-// Entry stylesheet. Fonts are self-hosted (_fonts.scss, public/fonts):
-// 'Momo Trust Display' for display type, 'DM Mono' for everything else.
-@use 'fonts';
+// Entry stylesheet: the core (this folder: tokens, base, backdrop, layout, text) and the
+// site's theme (site-theme: the theme folder of site.config.mjs, theme/ here) with its fonts,
+// tokens and look. Aliases: scripts/vite-plugin-static-site.mjs (site-theme, site-core).
+@use 'site-theme/styles/fonts';
 @use 'tokens';
+@use 'site-theme/styles/tokens' as theme-tokens;
 @use 'base';
 @use 'backdrop';
-@use 'glass';
-@use 'chrome';
 @use 'layout';
-@use 'home';
-@use 'pages';
 @use 'text';
-@use 'album';
+@use 'site-theme/styles/look';

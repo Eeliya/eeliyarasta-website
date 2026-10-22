@@ -27,7 +27,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { loadEnv } from 'vite';
 import { loadContent } from './content.mjs';
 import { DRAFT_PARAM, draftsFor, editorMiddleware } from './editor-server.mjs';
@@ -46,14 +46,31 @@ const setLang = (shell, lang) =>
     /<html lang="[^"]*"/,
     `<html lang="${String(lang || 'en').replace(/[^\w-]/g, '')}"`,
   );
-/** The shell's theme-color meta: the site's (settings), else the shell's own. */
-const setThemeColor = (shell, color) =>
-  color
-    ? shell.replace(
-        /(<meta name="theme-color" content=")[^"]*(")/,
-        (m, a, b) => `${a}${attr(color)}${b}`,
-      )
-    : shell;
+/** The core's stylesheets (src/client/styles): the theme's styles use them as site-core. */
+const CORE_STYLES = fileURLToPath(new URL('../src/client/styles', import.meta.url));
+
+/**
+ * The theme's part of a page's head (theme.json), at the shell's <!--theme-meta--> and
+ * <!--theme-preloads-->: the theme-color (site.json themeColor first) and color-scheme metas,
+ * and its preloads ({ href, as, type?, crossorigin? }).
+ */
+export function themeHead(theme = {}, themeColor = '') {
+  const color = themeColor || theme.themeColor;
+  const meta = [
+    color && `<meta name="theme-color" content="${attr(color)}" />`,
+    theme.colorScheme && `<meta name="color-scheme" content="${attr(theme.colorScheme)}" />`,
+  ].filter(Boolean);
+  const preloads = (Array.isArray(theme.preloads) ? theme.preloads : []).map(
+    (p) =>
+      `<link rel="preload" href="${attr(p.href)}" as="${attr(p.as || 'font')}"` +
+      `${p.type ? ` type="${attr(p.type)}"` : ''}${p.crossorigin ? ' crossorigin' : ''} />`,
+  );
+  return { meta: meta.join('\n    '), preloads: preloads.join('\n    ') };
+}
+const setTheme = (shell, theme, themeColor) => {
+  const t = themeHead(theme, themeColor);
+  return shell.replace('<!--theme-meta-->', t.meta).replace('<!--theme-preloads-->', t.preloads);
+};
 
 /** The editor's page: its title names the site (site.json name), lang from site.json. */
 export const editorShell = (shell, site = {}) =>
@@ -62,8 +79,8 @@ export const editorShell = (shell, site = {}) =>
     `<title>${site.name ? `Editor · ${attr(site.name)}` : 'Editor'}</title>`,
   );
 
-const fill = (shell, { head, body, lang, themeColor }) =>
-  setThemeColor(setLang(shell, lang), themeColor)
+const fill = (shell, { head, body, lang, themeColor }, theme) =>
+  setTheme(setLang(shell, lang), theme, themeColor)
     .replace('<!--ssr-head-->', head)
     .replace('<!--ssr-body-->', body);
 
@@ -95,7 +112,14 @@ export default function staticSite() {
     config(c) {
       const site = loadSiteConfig(c.root || process.cwd());
       return {
-        resolve: { alias: { [CONTENT_ALIAS]: site.contentDir } },
+        resolve: {
+          alias: {
+            [CONTENT_ALIAS]: site.contentDir,
+            // the stylesheets: the core's main.scss uses the theme's, the theme's the core's tokens
+            'site-theme': site.themeDir,
+            'site-core': CORE_STYLES,
+          },
+        },
         // the content folder's name, for client messages ("content/en/settings/animations.json")
         define: { __SITE_CONTENT_DIR__: JSON.stringify(site.contentRel) },
       };
@@ -179,7 +203,11 @@ export default function staticSite() {
           const shell = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
           const html = await server.transformIndexHtml(
             req.url,
-            fill(shell, renderRoute(route, content, { editable: true, unbuilt: !!draft })),
+            fill(
+              shell,
+              renderRoute(route, content, { editable: true, unbuilt: !!draft }),
+              loadSiteConfig(root).theme,
+            ),
           );
           res.statusCode = status;
           res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -255,7 +283,9 @@ export default function staticSite() {
         // a folder without its own page: a redirect page (and a 302 in _redirects)
         fs.writeFileSync(
           file,
-          route.redirect ? redirectPage(route.redirect) : fill(shell, renderRoute(route, content)),
+          route.redirect
+            ? redirectPage(route.redirect)
+            : fill(shell, renderRoute(route, content), loadSiteConfig(root).theme),
         );
       }
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemapXml(routes, content.site.url));

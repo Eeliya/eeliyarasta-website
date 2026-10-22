@@ -1,4 +1,7 @@
-// Design tokens. --accent is tweened per album by src/client/theme.js.
+// Core design tokens: the breakpoints, the stacking layers, the grid and the text styles the
+// layout code mirrors (src/site/layout/grid.js, type.js, contain.js). The look (colours,
+// fonts, radius, easing, the header's height) is the theme's: site-theme/styles/_tokens.scss.
+
 // the phone breakpoint: PHONE_MAX in src/site/layout/grid.js (keep the two equal)
 $bp-md: 900px;
 $bp-sm: 760px;
@@ -19,24 +22,9 @@ $z-skip: 200; // .skip-link: always on top when focused
   // the square grid's columns: COLS and MCOLS in src/site/layout/grid.js (keep them equal)
   --cols: 120;
   --mcols: 60;
-  --bg: #050505;
-  --bg-2: #101010;
-  --fg: #f2efe9;
-  --muted: rgb(242 239 233 / 0.55);
-  --faint: rgb(242 239 233 / 0.32);
-  --solid-faint: #aaa;
-  --line: rgb(255 255 255 / 0.1);
-  --accent: #cfc8b8;
-  --solid-card: #212121;
-  --solid-card-peek: #2f2f2f;
-
-  --f-display: 'Momo Trust Display', 'Didot', 'Times New Roman', serif;
-  --f-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --pad: clamp(16px, 2.6vw, 40px);
   --gap: clamp(12px, 1.4vw, 22px);
-  --header-h: 76px;
-  --radius: 6px;
   // text styles for scaled text (src/site/layout/type.js TEXT_STYLES; site.json typography)
   --ts-title: 19;
   --ts-title-lh: 0.82;
@@ -66,9 +54,4 @@ $z-skip: 200; // .skip-link: always on top when focused
   --ts-small-lh: 1.5;
   --ts-small-tr: 0;
   --ts-small-min: 11px;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  @media (width <= $bp-sm) {
-    --header-h: 64px;
-  }
 }

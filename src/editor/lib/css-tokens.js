@@ -28,9 +28,9 @@ export function rgbOf(hex) {
   return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)).join(' ');
 }
 
-/** The tokens the injected CSS uses, from the site's and the editor's token files. */
-export function uiTokens(site, editor) {
-  const v = tokensOf(site, editor);
+/** The tokens the injected CSS uses, from the editor's token files (later ones win). */
+export function uiTokens(...sources) {
+  const v = tokensOf(...sources);
   return {
     accent: v('--c-accent'),
     accentRgb: rgbOf(v('--c-accent')),

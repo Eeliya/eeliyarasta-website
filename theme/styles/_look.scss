@@ -1,0 +1,7 @@
+// The theme's look, after the core's base and layout (src/client/styles/main.scss): glass
+// surfaces, the chrome (header, menus, curtain, footer) and the widgets' own looks.
+@use 'glass';
+@use 'chrome';
+@use 'home';
+@use 'pages';
+@use 'album';

@@ -7,9 +7,8 @@ import { readFileSync } from 'node:fs';
 import { rgbOf, tokensOf, uiTokens } from '../src/editor/lib/css-tokens.js';
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
-const site = read('src/client/styles/_tokens.scss');
 const editor = read('src/editor/styles/_tokens.scss');
-const T = uiTokens(site, editor);
+const T = uiTokens(editor);
 
 test('ui tokens: the values the injected CSS gets from the token files', () => {
   assert.deepEqual(T, {
@@ -34,6 +33,17 @@ test('ui tokens: every token overlay.js and bridge.js use is set', () => {
       assert.ok(typeof T[k] === 'string' && T[k], `${f}: T.${k}`);
   // ui-tokens.js is only the token files, read (no values of its own)
   assert.doesNotMatch(read('src/editor/ui-tokens.js'), /#[0-9a-f]{3,6}\b|\d+px/i);
+});
+
+test("the editor is decoupled from the site's look: its own tokens and fonts", () => {
+  assert.doesNotMatch(read('src/editor/ui-tokens.js'), /client\/styles|theme\//);
+  const scss = read('src/editor/styles/editor.scss');
+  assert.doesNotMatch(scss, /client\/styles|site-theme|theme\//);
+  // every site token the editor once borrowed is its own now
+  const v = tokensOf(editor);
+  for (const k of ['--f-mono', '--f-display', '--ease-out', '--c-text', '--c-line', '--c-bg-site'])
+    assert.ok(v(k), k);
+  assert.match(read('src/editor/styles/_fonts.scss'), /url\('\.\.\/fonts\/dm-mono-400\.woff2'\)/);
 });
 
 test('tokensOf: var() followed, later files win, loops and unknowns undefined', () => {
