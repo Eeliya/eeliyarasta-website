@@ -5,8 +5,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadSiteConfig } from './site-config.mjs';
 
-const dist = path.resolve(process.argv[2] || 'dist');
+const dist = path.resolve(process.argv[2] || loadSiteConfig(process.cwd()).outDir);
 
 const htmlFiles = (dir) =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

@@ -7,6 +7,7 @@
 -->
 <script>
   import Button from './Button.svelte';
+  import { contentPath } from '../../site/files.js';
   import PreviewPanel from './PreviewPanel.svelte';
   import ContentPanel from './ContentPanel.svelte';
   import MotionPanel from './MotionPanel.svelte';
@@ -168,7 +169,7 @@
           icon="database"
           iconOnly
           label="Sources"
-          title="Sources: people, places, projects (the lists in content/en/sources/)"
+          title="Sources: people, places, projects (the lists in {contentPath('sources/')})"
           onclick={openSources}
         />
         <Button

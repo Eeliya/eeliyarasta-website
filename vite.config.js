@@ -1,7 +1,12 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import staticSite from './scripts/vite-plugin-static-site.mjs';
 import { mocksPlugin } from './scripts/mock-api.mjs';
+import { loadSiteConfig } from './scripts/site-config.mjs';
+
+// the site's folders (site.config.mjs): public files and the build
+const site = loadSiteConfig(fileURLToPath(new URL('.', import.meta.url)));
 
 export default defineConfig({
   plugins: [
@@ -17,8 +22,10 @@ export default defineConfig({
       compilerOptions: { runes: true },
     }),
   ],
+  publicDir: site.publicDir,
   css: { preprocessorOptions: { scss: { api: 'modern-compiler' } } },
   build: {
+    outDir: site.outDir,
     target: 'es2020',
     assetsInlineLimit: 0,
     modulePreload: { polyfill: false },

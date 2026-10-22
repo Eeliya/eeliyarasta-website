@@ -62,6 +62,7 @@ import { widgetItems } from './source.js';
 import { COLS, baseOf, phoneAreaOf, placeOf, setBase } from './grid.js';
 import { linkOf } from './links.js';
 import { adjustOf, fitted, scaled } from './type.js';
+import { contentPath } from '../files.js';
 
 export {
   COLS,
@@ -298,7 +299,7 @@ export function headingNumbers(sections) {
 /** One widget of section `at` (its index `j`), rendered with its grid area. */
 function renderWidget(ctx, route, file, at, j, widget, numbers) {
   const t = WIDGET_TYPES[widget?.type];
-  const where = `content/en/${file} (sections/${at}/widgets/${j})`;
+  const where = `${contentPath(file)} (sections/${at}/widgets/${j})`;
   if (!t) {
     warnOnce(`${where}: unknown widget type "${widget?.type}": skipped`, 'layout');
     return '';

@@ -9,6 +9,7 @@
 import { itemTitle, schemaOf } from './schemas.js';
 import { PHONE_MQ } from './layout/grid.js';
 import { isExternal } from './is.js';
+import { PHOTOS, contentPath } from './files.js';
 
 export const esc = (value = '') =>
   String(value ?? '').replace(
@@ -162,7 +163,7 @@ export function photoOf(ctx, src) {
   if (local) return local;
   const r2 = ctx.photos?.[src];
   if (!r2?.srcset) {
-    warnOnce(`"${src}" is not in media/ or content/en/settings/photos.json: plain <img>, no sizes`);
+    warnOnce(`"${src}" is not in media/ or ${contentPath(PHOTOS)}: plain <img>, no sizes`);
     return null;
   }
   if (!ctx.site?.mediaUrl)
@@ -193,7 +194,7 @@ export function altOf(ctx, src) {
   if (typeof alt === 'string' && alt.trim()) return alt;
   if (src && !isExternal(src))
     warnOnce(
-      `"${src}" has no alt text (Media window in the editor, content/en/settings/photos.json)`,
+      `"${src}" has no alt text (Media window in the editor, ${contentPath(PHOTOS)})`,
       'alt',
     );
   return '';

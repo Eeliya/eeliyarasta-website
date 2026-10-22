@@ -19,7 +19,7 @@
  * source field types (src/site/schemas.js) fit each widget field type.
  */
 import { schemaOf } from '../schemas.js';
-import { pageFile } from '../files.js';
+import { contentPath, pageFile } from '../files.js';
 import { isObject } from '../is.js';
 import { eachWidget } from './ids.js';
 import { MODES, sourceOf } from './source.js';
@@ -185,7 +185,7 @@ export function bindingProblems(content, { types, files = null }) {
     for (const [b, , at, j] of eachWidget(page?.sections)) {
       const t = types[b?.type];
       if (!t || !isObject(b)) continue;
-      const where = `content/en/${file} (sections/${at}/widgets/${j})`;
+      const where = `${contentPath(file)} (sections/${at}/widgets/${j})`;
       const problem = (level, msg) => out.push({ level, message: `${where}: ${msg}` });
       const s = sourceOf(b);
       if (b.source !== undefined && !s) {

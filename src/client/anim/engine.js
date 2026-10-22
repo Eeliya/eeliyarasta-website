@@ -25,7 +25,7 @@
  * The visual editor (src/editor) edits a copy of this JSON, pushes it in with
  * setConfig() and re-mounts; see window.__site in ../main.js.
  */
-import config from '../../../content/en/settings/animations.json';
+import config from '@site-content/settings/animations.json';
 import { gsap, reducedMotion } from '../lib/env.js';
 import { types } from './types.js';
 import { isObject } from '../../site/is.js';
@@ -62,7 +62,7 @@ const partOf = (el, id) => parse(el?.closest?.('[data-anim-parts]')?.dataset.ani
 export function resolve(id, el) {
   const target = config.targets[id];
   if (!target) {
-    console.warn(`[anim] no target "${id}" in content/en/settings/animations.json`);
+    console.warn(`[anim] no target "${id}" in ${__SITE_CONTENT_DIR__}/settings/animations.json`);
     return null;
   }
   const key = el?.dataset.animKey;

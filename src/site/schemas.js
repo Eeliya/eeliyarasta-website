@@ -23,7 +23,7 @@
  * the editor and the checks work the same; a schema file only makes it explicit.
  * Used by the build and Save (checkItems), the routes (title, slug) and the editor.
  */
-import { isSlug } from './files.js';
+import { PHOTOS, contentPath, isSlug, sourceFile } from './files.js';
 import { isId, newId } from './layout/ids.js';
 import { isObject, isExternal } from './is.js';
 
@@ -174,7 +174,7 @@ function checkValue(f, v, photoExists) {
   if (f.type === 'choice' && !f.options?.includes(v))
     return want(`one of ${f.options?.join(', ')}`);
   if (f.type === 'photo' && photoExists && !isExternal(v) && !photoExists(v))
-    return [`"${v}" is not a photo in media/ or content/en/settings/photos.json`];
+    return [`"${v}" is not a photo in media/ or ${contentPath(PHOTOS)}`];
   return [];
 }
 
@@ -228,7 +228,7 @@ export function checkSources(content) {
   const photoExists = photoChecker(content.media, content.photos);
   return Object.keys(content.sources || {}).flatMap((id) =>
     checkItems(content.sources[id], schemaOf(content, id), { photoExists }).map(
-      (p) => `content/en/sources/${id}.json: ${p}`,
+      (p) => `${contentPath(sourceFile(id))}: ${p}`,
     ),
   );
 }

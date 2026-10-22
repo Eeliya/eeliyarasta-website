@@ -35,6 +35,8 @@ import { contactMiddleware } from './contact-dev.mjs';
 import { pageFile } from '../src/site/files.js';
 import { EDITOR_HTML, legacyRedirect, wantsEditor } from '../src/editor/lib/editor-url.js';
 import { checkSources } from '../src/site/schemas.js';
+import { FOLDERS } from '../src/site/files.js';
+import { loadSiteConfig } from './site-config.mjs';
 
 const RENDER_MODULE = '/src/site/render.js';
 
@@ -44,8 +46,24 @@ const fill = (shell, { head, body, lang }) =>
     .replace('<!--ssr-head-->', head)
     .replace('<!--ssr-body-->', body);
 
-/** content/ and .generated/ files are data: they re-render pages, never hot-update modules. */
-const DATA = /^(content|\.generated)\//;
+/** The editor's settings, for its browser code: `import editorConfig from 'virtual:editor-config'`. */
+export const EDITOR_CONFIG = 'virtual:editor-config';
+/**
+ * Client code imports the content folder's files through this alias (site.config.mjs contentDir):
+ * `import config from '@site-content/settings/animations.json'`.
+ */
+export const CONTENT_ALIAS = '@site-content';
+
+/** The editor config module's source: the content folder, the editable folders, the media URL. */
+export const editorConfigModule = (site) =>
+  `export default ${JSON.stringify({
+    contentDir: site.contentRel,
+    folders: FOLDERS,
+    mediaUrl: site.mediaUrl,
+    repo: site.config.repo,
+  })};\n`;
+
+const posixRel = (root, p) => path.relative(root, p).split(path.sep).join('/');
 
 export default function staticSite() {
   let config;
@@ -53,8 +71,22 @@ export default function staticSite() {
   let editorWriteUntil = 0;
   return {
     name: 'static-site',
+    config(c) {
+      const site = loadSiteConfig(c.root || process.cwd());
+      return {
+        resolve: { alias: { [CONTENT_ALIAS]: site.contentDir } },
+        // the content folder's name, for client messages ("content/en/settings/animations.json")
+        define: { __SITE_CONTENT_DIR__: JSON.stringify(site.contentRel) },
+      };
+    },
     configResolved(c) {
       config = c;
+    },
+    resolveId(id) {
+      if (id === EDITOR_CONFIG) return `\0${EDITOR_CONFIG}`;
+    },
+    load(id) {
+      if (id === `\0${EDITOR_CONFIG}`) return editorConfigModule(loadSiteConfig(config.root));
     },
 
     configureServer(server) {
@@ -63,7 +95,8 @@ export default function staticSite() {
       // pages (?draft=<session>) render from them, every other request from the saved files
       const drafts = {};
       // Content and media manifest changes re-render pages (see handleHotUpdate).
-      server.watcher.add([path.join(root, 'content/en'), path.join(root, '.generated')]);
+      const site = loadSiteConfig(root);
+      server.watcher.add([site.contentDir, site.generatedDir]);
 
       // Editor endpoints (dev only, localhost only).
       server.middlewares.use(
@@ -138,7 +171,11 @@ export default function staticSite() {
     handleHotUpdate({ file, server }) {
       if (file.endsWith('.tmp')) return []; // writeFileAtomic's temporary file (scripts/content.mjs)
       const rel = path.relative(config.root, file).split(path.sep).join('/');
-      const content = DATA.test(rel);
+      // content and media manifest files are data: they re-render pages, never hot-update modules
+      const site = loadSiteConfig(config.root);
+      const content = [site.contentDir, site.generatedDir].some((d) =>
+        rel.startsWith(`${posixRel(config.root, d)}/`),
+      );
       if (!content && !rel.startsWith('src/site/')) return;
       const external = Date.now() >= editorWriteUntil;
       server.ws.send({

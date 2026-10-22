@@ -31,7 +31,7 @@ import {
   warnOnce,
 } from '../helpers.js';
 import { schemaOf } from '../schemas.js';
-import { NAV, STRINGS } from '../files.js';
+import { NAV, STRINGS, contentPath } from '../files.js';
 
 const caret =
   '<svg class="caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
@@ -39,7 +39,7 @@ const arrowNE = '<span class="arrow-ne" aria-hidden="true">↗</span>';
 
 /** Where a menu item links (a link, src/site/hrefs.js): '#' and a warning when nowhere. */
 export function linkOf(ctx, item) {
-  return hrefOf(ctx, item, `content/en/${NAV}: "${item.label}"`) || '#';
+  return hrefOf(ctx, item, `${contentPath(NAV)}: "${item.label}"`) || '#';
 }
 
 /** The site path a menu item marks as current (data-nav): its page's or item's; '' for an href. */
@@ -51,7 +51,7 @@ function itemsOf(ctx, item) {
   const list = ctx.sources?.[item.items];
   if (!Array.isArray(list)) {
     warnOnce(
-      `content/en/${NAV}: "${item.label}" lists source "${item.items}", which is missing`,
+      `${contentPath(NAV)}: "${item.label}" lists source "${item.items}", which is missing`,
       'nav',
     );
     return { list: [], pages: false };

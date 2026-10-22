@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { FOLDERS, ROOT_FILES, contentFromFiles, isContentFile } from '../src/site/files.js';
 import { assertContent, parseContent } from '../src/site/validate.js';
+import { setContentDir } from '../src/site/files.js';
+import { loadSiteConfig } from './site-config.mjs';
 
 const read = (file, fallback) =>
   fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback;
@@ -12,7 +14,10 @@ const read = (file, fallback) =>
  * mistake throws an error that names the file (and the line, for broken JSON).
  */
 export function readContentFile(root, file, { check = true } = {}) {
-  const data = parseContent(fs.readFileSync(path.join(root, 'content/en', file), 'utf8'), file);
+  const data = parseContent(
+    fs.readFileSync(path.join(loadSiteConfig(root).contentDir, file), 'utf8'),
+    file,
+  );
   if (check) assertContent(file, data);
   return data;
 }
@@ -49,7 +54,7 @@ export function walkJson(dir) {
 
 /** Every content file as { "pages/index.json": data, "pages/people/[person]/index.json": data, ... }. */
 export function readContentDir(root) {
-  const dir = path.join(root, 'content/en');
+  const dir = loadSiteConfig(root).contentDir;
   const files = {};
   for (const folder of FOLDERS) {
     for (const name of walkJson(path.join(dir, folder))) {
@@ -63,8 +68,10 @@ export function readContentDir(root) {
 }
 
 export function loadContent(root, drafts = {}) {
+  const site = loadSiteConfig(root);
+  setContentDir(site.contentRel);
   return {
     ...contentFromFiles({ ...readContentDir(root), ...drafts }),
-    media: read(path.join(root, '.generated', 'media.json'), {}),
+    media: read(site.manifest, {}),
   };
 }

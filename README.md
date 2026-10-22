@@ -55,6 +55,14 @@ run `npm install` after pulling this. It works in Git for Windows' sh. Skip it o
 
 ## How it works
 
+**Site config:** `site.config.mjs` names the site's folders: `contentDir` (`content/en`),
+`mediaDir` (`media`), `publicDir` and `publicMediaDir` (`public/media`), `generatedDir`
+(`.generated`, the media manifest), `outDir` (`dist`), and `repo` (GitHub links when the git
+remote is not on GitHub). Every key is optional. `scripts/site-config.mjs` (`loadSiteConfig`)
+resolves them; the build, the dev server, the editor endpoints, `scripts/images.mjs` and
+`check:links` all read their paths from it. Client code imports content through the
+`@site-content` alias; the editor's browser code gets its settings from `virtual:editor-config`.
+
 ```
 content/            ← all text, albums, projects, animation config (JSON)
  en/                ← one folder per language (only en so far; the site's lang is site.json "lang")
@@ -1242,8 +1250,8 @@ JSON Pointer). Use `ed(file, path, 'block')`
 for multi-line text (`\n` ⇄ `<br>`), `'number'` for numbers and `'words'` for text rendered one
 `<span>` per word (the hero name: edited as plain text, re-split into words and re-animated after the edit). Page copy (titles, intros) lives
 in each page's `pages/<page>/index.json`, shared copy (nav) in `settings/site.json`, for this reason. The editor only ever writes
-existing JSON files in `content/en/pages/`, `content/en/sources/` and `content/en/settings/` (see
-`src/editor/config.js`); only the pages list (and Address) creates, moves or deletes files, and only page files.
+existing JSON files in `content/en/pages/`, `content/en/sources/` and `content/en/settings/` (the
+content folder: `site.config.mjs`; the folders: `src/site/files.js`); only the pages list (and Address) creates, moves or deletes files, and only page files.
 These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-widget`,
 `data-curtain-edit`) are only rendered by the dev server; `npm run build` leaves them out
 (`renderRoute(route, content, { editable })`), which makes the built HTML about 9% smaller.
@@ -1276,8 +1284,8 @@ These editor markers (`data-edit`, `data-edit-type`, `data-sec`, `data-widget`,
 
 The endpoints live in `scripts/editor-server.mjs` (`/__editor/content`, `/save`, `/draft`,
 `/render`, `/status`, `/upload`, `/media`, `/pages`, `/publish`). They exist only on the dev server, accept **only requests from this machine**
-(loopback address, localhost `Host`, same-origin `Origin`), and only touch the files listed in
-`src/editor/config.js`. Git runs without a shell and never prompts in the terminal, so pushing
+(loopback address, localhost `Host`, same-origin `Origin`), and only touch the content files in
+those folders. The GitHub links come from the git remote, else from `site.config.mjs` `repo`. Git runs without a shell and never prompts in the terminal, so pushing
 needs a working git login for GitHub on the machine running `npm run dev` (e.g. `gh auth login`
 then `gh auth setup-git`).
 

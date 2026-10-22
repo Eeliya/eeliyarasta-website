@@ -23,7 +23,7 @@
  * Every request must come from this machine: loopback socket address, a localhost
  * Host header (widgets DNS rebinding) and, when present, a same-origin Origin header.
  * Only existing JSON files in content/en/pages/, content/en/sources/ and content/en/settings/ can be
- * read or written (src/editor/config.js, src/site/files.js); Save never creates files: only
+ * read or written (site.config.mjs contentDir, src/site/files.js FOLDERS); Save never creates files: only
  * the pages list does (POST /pages), and only page files under content/en/pages/.
  */
 import fs from 'node:fs';
@@ -31,7 +31,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { repoEnv } from './git-env.mjs';
 import { formatJSON } from '../src/editor/lib/json-format.js';
-import editorConfig from '../src/editor/config.js';
+import { loadSiteConfig, repoUrl } from './site-config.mjs';
 import { diff } from '../src/editor/lib/diff.js';
 import {
   ANIMATIONS,
@@ -58,6 +58,7 @@ import {
   sourceFile,
   sourceIdOf,
   contentFromFiles,
+  FOLDERS,
 } from '../src/site/files.js';
 import { checkItems, photoChecker, schemaOf } from '../src/site/schemas.js';
 import { NAMED_VIEWS, getRoutes, pathOfId, titleCase } from '../src/site/routes.js';
@@ -96,20 +97,22 @@ import { WIDGET_TYPES } from '../src/site/widgets/index.js';
 /** A new page's heading row: below the header (16 empty rows, ~180px at 1440 wide). */
 const HEAD_ROW = 17;
 
-const CONTENT_DIR = editorConfig.contentDir;
+/** The site's content folder, absolute, and from the root with "/" (git paths, messages). */
+const contentDirOf = (root) => loadSiteConfig(root).contentDir;
+const contentRel = (root) => loadSiteConfig(root).contentRel;
 
 /** Editable content files that exist on disk, e.g. "pages/index.json" (paths relative to content/). */
 export function editableFiles(root) {
   const files = [];
-  for (const folder of editorConfig.folders) {
-    for (const name of walkJson(path.join(root, CONTENT_DIR, folder))) {
+  for (const folder of FOLDERS) {
+    for (const name of walkJson(path.join(contentDirOf(root), folder))) {
       const file = `${folder}/${name}`;
       // photos.json belongs to the upload, not to the editor's edits
       if (isContentFile(file) && file !== PHOTOS) files.push(file);
     }
   }
   for (const file of ROOT_FILES)
-    if (fs.existsSync(path.join(root, CONTENT_DIR, file))) files.push(file);
+    if (fs.existsSync(path.join(contentDirOf(root), file))) files.push(file);
   return new Set(files);
 }
 
@@ -155,7 +158,7 @@ export function pagesOp(
   { op, id, parent = '', name, title, source, param = 'slug', key, redirect, link } = {},
   onWrite = () => {},
 ) {
-  const content = path.join(root, CONTENT_DIR);
+  const content = contentDirOf(root);
   const abs = (file) => path.join(content, ...file.split('/'));
   const dirOf = (pid) => path.join(content, 'pages', ...pid.split('/'));
   const fail = (status, error) => ({ status, body: { error } });
@@ -487,7 +490,7 @@ function sourceProblems(root, files) {
   const read = (file) =>
     file in files
       ? files[file]
-      : fs.existsSync(path.join(root, CONTENT_DIR, file))
+      : fs.existsSync(path.join(contentDirOf(root), file))
         ? readContentFile(root, file, { check: false })
         : undefined;
   const photos = read(PHOTOS)?.photos || {};
@@ -499,7 +502,7 @@ function sourceProblems(root, files) {
       id,
     );
     return checkItems(list, schema, { photoExists }).map(
-      (p) => `${CONTENT_DIR}/${sourceFile(id)}: ${p}`,
+      (p) => `${contentRel(root)}/${sourceFile(id)}: ${p}`,
     );
   });
 }
@@ -510,7 +513,7 @@ function sourceProblems(root, files) {
  */
 function albumWidget(root, source, ids, params, key) {
   const list = itemsOf(readContentFile(root, sourceFile(source), { check: false }));
-  const own = fs.existsSync(path.join(root, CONTENT_DIR, schemaFile(source)))
+  const own = fs.existsSync(path.join(contentDirOf(root), schemaFile(source)))
     ? readContentFile(root, schemaFile(source), { check: false })
     : undefined;
   const schema = schemaOf({ sources: { [source]: list }, schemas: { [source]: own } }, source);
@@ -570,7 +573,7 @@ export function save(root, files, onWrite = () => {}) {
     return { status: 400, body: { error: `Not writable: ${bad.join(', ') || '(nothing)'}` } };
   for (const n of names) files[n] = omitDefaults(n, files[n]);
   const shape = names.flatMap((n) =>
-    checkContent(n, files[n]).map((p) => `${CONTENT_DIR}/${n}: ${p}`),
+    checkContent(n, files[n]).map((p) => `${contentRel(root)}/${n}: ${p}`),
   );
   const problems = shape.length
     ? shape
@@ -578,7 +581,7 @@ export function save(root, files, onWrite = () => {}) {
   if (problems.length)
     return { status: 400, body: { error: `Not saved. ${problems.join('; ')}`, problems } };
   onWrite();
-  for (const n of names) writeFileAtomic(path.join(root, CONTENT_DIR, n), formatJSON(files[n]));
+  for (const n of names) writeFileAtomic(path.join(contentDirOf(root), n), formatJSON(files[n]));
   return { status: 200, body: { ok: true, written: names } };
 }
 
@@ -611,7 +614,7 @@ export const readContentFiles = (root) =>
     [...editableFiles(root)].map((f) => [f, readContentFile(root, f, { check: false })]),
   );
 
-const mediaFile = (root) => path.join(root, '.generated', 'media.json');
+const mediaFile = (root) => loadSiteConfig(root).manifest;
 const readMediaManifest = (root) =>
   fs.existsSync(mediaFile(root)) ? JSON.parse(fs.readFileSync(mediaFile(root), 'utf8')) : {};
 
@@ -635,7 +638,7 @@ function readMedia(root) {
 }
 
 const readPhotos = (root) =>
-  fs.existsSync(path.join(root, CONTENT_DIR, PHOTOS))
+  fs.existsSync(path.join(contentDirOf(root), PHOTOS))
     ? readContentFile(root, PHOTOS).photos || {}
     : {};
 
@@ -653,7 +656,7 @@ const readPhotos = (root) =>
  * Returns { status, body }; body has the photos and media lists afresh.
  */
 export async function mediaOp(root, env, { op, key, alt, credit } = {}, onWrite = () => {}) {
-  const photosFile = path.join(root, CONTENT_DIR, PHOTOS);
+  const photosFile = path.join(contentDirOf(root), PHOTOS);
   const photos = readPhotos(root);
   const manifest = readMediaManifest(root);
   const isR2 = typeof key === 'string' && Array.isArray(photos[key]?.srcset);
@@ -701,11 +704,13 @@ export async function mediaOp(root, env, { op, key, alt, credit } = {}, onWrite 
   // local: the original in media/ and its generated sizes in public/ (URLs /media/...)
   const m = manifest[key];
   const files = [
-    path.join(root, 'media', key),
-    ...[m.src, ...(m.srcset || []).map((s) => s.url)].map((u) => path.join(root, 'public', u)),
+    path.join(loadSiteConfig(root).mediaDir, key),
+    ...[m.src, ...(m.srcset || []).map((s) => s.url)].map((u) =>
+      path.join(loadSiteConfig(root).publicDir, u),
+    ),
   ];
   const inside = (f) =>
-    [path.join(root, 'media'), path.join(root, 'public', 'media')].some((d) =>
+    [loadSiteConfig(root).mediaDir, loadSiteConfig(root).publicMediaDir].some((d) =>
       path.resolve(f).startsWith(d + path.sep),
     );
   if (!files.every(inside)) return fail(400, `Not a media/ photo: "${key}"`);
@@ -788,14 +793,6 @@ function git(root, args, { timeout = 30_000 } = {}) {
   });
 }
 
-/** https://github.com/<owner>/<repo> from the origin URL (falls back to src/editor/config.js). */
-function repoUrlFrom(remote) {
-  const m = /github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/.exec(remote || '');
-  return m
-    ? `https://github.com/${m[1]}/${m[2]}`
-    : `https://github.com/${editorConfig.owner}/${editorConfig.repo}`;
-}
-
 const parseJSON = (text) => {
   try {
     return JSON.parse(text);
@@ -806,7 +803,7 @@ const parseJSON = (text) => {
 
 /**
  * Content files that differ from HEAD (the ones Publish would commit), plus branch and
- * push state. Only content files in the editable folders (src/editor/config.js) are looked at.
+ * push state. Only content files in the editable folders (src/site/files.js FOLDERS) are looked at.
  */
 export async function contentStatus(root) {
   const inside = await git(root, ['rev-parse', '--is-inside-work-tree']);
@@ -820,8 +817,8 @@ export async function contentStatus(root) {
   const prefix = prefixR.stdout.trim();
   // Every JSON file in the editable folders, including deleted or new ones.
   const rel = [
-    ...editorConfig.folders.map((d) => `:(glob)${CONTENT_DIR}/${d}/**/*.json`),
-    ...ROOT_FILES.map((f) => `${CONTENT_DIR}/${f}`),
+    ...FOLDERS.map((d) => `:(glob)${contentRel(root)}/${d}/**/*.json`),
+    ...ROOT_FILES.map((f) => `${contentRel(root)}/${f}`),
   ];
 
   const st = await git(root, [
@@ -836,8 +833,8 @@ export async function contentStatus(root) {
   const entries = st.stdout.split('\0').filter(Boolean);
   const add = (repoPath, status) => {
     const p = repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : repoPath;
-    const name = p.slice(CONTENT_DIR.length + 1);
-    if (isContentFile(name) && p === `${CONTENT_DIR}/${name}`)
+    const name = p.slice(contentRel(root).length + 1);
+    if (isContentFile(name) && p === `${contentRel(root)}/${name}`)
       files.push({ name, path: p, status });
   };
   for (let i = 0; i < entries.length; i++) {
@@ -912,7 +909,7 @@ export async function contentStatus(root) {
     ahead,
     unpushed,
     remote: remoteR.ok ? remoteR.stdout.trim() : null,
-    repoUrl: repoUrlFrom(remoteR.stdout.trim()),
+    repoUrl: repoUrl(remoteR.stdout.trim(), loadSiteConfig(root).config),
     files,
   };
 }
@@ -1106,7 +1103,7 @@ export function editorMiddleware({
       if (route === 'POST /save') {
         const { status, body } = save(root, (await readJSON(req)).files, onWrite);
         if (body.ok)
-          log(`editor saved ${body.written.map((n) => `${CONTENT_DIR}/${n}`).join(', ')}`);
+          log(`editor saved ${body.written.map((n) => `${contentRel(root)}/${n}`).join(', ')}`);
         return sendJSON(res, status, body);
       }
 
@@ -1130,7 +1127,7 @@ export function editorMiddleware({
         const { status, body: out } = await uploadPhoto(
           env,
           { name, type, body },
-          { photosFile: path.join(root, CONTENT_DIR, PHOTOS), onWrite },
+          { photosFile: path.join(contentDirOf(root), PHOTOS), onWrite },
         );
         if (out.ok)
           log(

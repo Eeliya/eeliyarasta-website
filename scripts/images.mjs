@@ -14,13 +14,15 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { FORMAT, loadSharp, makeVariants } from './image-variants.mjs';
+import { loadSiteConfig } from './site-config.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = path.join(ROOT, 'media');
-const OUT = path.join(ROOT, 'public', 'media');
-const MANIFEST = path.join(ROOT, '.generated', 'media.json');
+// the site: the working folder (npm runs scripts at the package root); its folders: site.config.mjs
+const SITE = loadSiteConfig(process.cwd());
+const ROOT = SITE.root;
+const SRC = SITE.mediaDir;
+const OUT = SITE.publicMediaDir;
+const MANIFEST = SITE.manifest;
 const EXT = /\.(jpe?g|png|webp|avif|tiff?)$/i;
 
 const sharp = await loadSharp();
@@ -63,7 +65,7 @@ for (const file of files) {
   fs.mkdirSync(path.join(OUT, path.dirname(rel)), { recursive: true });
 
   if (!sharp) {
-    const url = `/media/${rel}`;
+    const url = `${SITE.mediaUrl}/${rel}`;
     fs.copyFileSync(file, path.join(OUT, rel));
     manifest[rel] = {
       mtime,
@@ -81,7 +83,7 @@ for (const file of files) {
   const v = await makeVariants(sharp, file);
   const srcset = [];
   for (const { w, buffer } of v.sizes) {
-    const url = `/media/${base}-${w}.${FORMAT.ext}`;
+    const url = `${SITE.mediaUrl}/${base}-${w}.${FORMAT.ext}`;
     fs.writeFileSync(path.join(ROOT, 'public', url), buffer);
     srcset.push({ url, w });
   }

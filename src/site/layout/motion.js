@@ -25,7 +25,7 @@
  * data-anim-parts (JSON) on the widget's element. `anim` is left out when only parts are set.
  */
 import { esc } from '../helpers.js';
-import { pageFile } from '../files.js';
+import { contentPath, pageFile } from '../files.js';
 import { isObject } from '../is.js';
 import { eachWidget } from './ids.js';
 
@@ -102,7 +102,7 @@ export function motionProblems(content, { files = null } = {}) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
     for (const [b, , at, j] of eachWidget(page?.sections)) {
-      const where = `content/en/${file}: section ${at + 1}, widget ${j + 1} (${b.type})`;
+      const where = `${contentPath(file)}: section ${at + 1}, widget ${j + 1} (${b.type})`;
       const parts = b?.motion?.parts;
       if (isObject(parts))
         for (const [name, p] of Object.entries(parts))

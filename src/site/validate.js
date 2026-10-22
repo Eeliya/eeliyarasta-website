@@ -27,6 +27,7 @@ import {
   docKindOf,
   schemaIdOf,
   sourceIdOf,
+  contentPath,
 } from './files.js';
 import { checkSchema } from './schemas.js';
 import { WIDGET_TYPES } from './widgets/index.js';
@@ -72,7 +73,7 @@ export function parseContent(text, file) {
       where = ` (line ${before.length}, column ${before.at(-1).length + 1})`;
     }
     throw new Error(
-      `content/en/${file}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
+      `${contentPath(file)}: invalid JSON, ${msg.replace(/ at position \d+/, '')}${where}`,
       { cause: err },
     );
   }
@@ -575,5 +576,5 @@ function commentKeys(v, at = '') {
 /** Throws "content/<file>: <problems>" when the data doesn't fit. */
 export function assertContent(file, data) {
   const problems = checkContent(file, data);
-  if (problems.length) throw new Error(`content/en/${file}: ${problems.join('; ')}`);
+  if (problems.length) throw new Error(`${contentPath(file)}: ${problems.join('; ')}`);
 }

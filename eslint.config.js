@@ -22,7 +22,7 @@ export default [
   // The site, its templates, the editor and its mock sandbox run in the browser.
   {
     files: ['src/**/*.{js,svelte}', 'src/**/*.svelte.js', 'sandbox/**/*.{js,svelte}'],
-    languageOptions: { globals: globals.browser },
+    languageOptions: { globals: { ...globals.browser, __SITE_CONTENT_DIR__: 'readonly' } },
     rules: { 'no-console': ['warn', { allow: ['warn', 'error'] }] },
   },
   // Cloudflare Pages Functions: a worker (fetch, Request, Response, console).

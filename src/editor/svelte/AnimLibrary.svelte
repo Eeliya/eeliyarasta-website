@@ -9,6 +9,7 @@
 -->
 <script>
   import Button from './Button.svelte';
+  import { ANIMATIONS, contentPath } from '../../site/files.js';
   import { tick } from 'svelte';
   import MotionGroups from './MotionGroups.svelte';
   import { ui } from './ui.svelte.js';
@@ -60,7 +61,7 @@
       />
     {/if}
     <h3 class="lib__title">{name || 'Animations'}</h3>
-    <span class="lib__path">content/en/settings/animations.json</span>
+    <span class="lib__path">{contentPath(ANIMATIONS)}</span>
   </header>
 
   {#if !name}

@@ -68,6 +68,11 @@ import { linkWidget, placeWidget, placeMobile, setSectionRows } from './layout-o
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 import { editorHref } from './lib/editor-url.js';
+import editorConfig from 'virtual:editor-config';
+import { setContentDir } from '../site/files.js';
+
+// the site's content folder (site.config.mjs), for the paths the editor shows
+setContentDir(editorConfig.contentDir);
 
 /** The page to open: the URL's path (/about/?edit). */
 const startPath = () => location.pathname;

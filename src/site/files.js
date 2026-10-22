@@ -21,6 +21,17 @@
  */
 import { isObject } from './is.js';
 export const FOLDERS = ['pages', 'sources', 'settings'];
+
+/**
+ * The content folder from the site's root ("content/en", site.config.mjs), for the paths in
+ * messages. scripts/content.mjs sets it when it loads a site, the editor from its config.
+ */
+export let CONTENT_DIR = 'content/en';
+export const setContentDir = (dir) => {
+  if (dir) CONTENT_DIR = String(dir).replace(/\/+$/, '');
+};
+/** A content file's path from the site's root, for messages: "content/en/pages/index.json". */
+export const contentPath = (file) => `${CONTENT_DIR}/${file}`;
 /**
  * The shape version of every content file: its first key, "version": 1. A file whose top level
  * is a list or a map keeps it under one key next to it: a source's "items", redirects.json

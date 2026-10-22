@@ -6,6 +6,7 @@
 -->
 <script>
   import { closeOnBackdrop } from '../lib/dialog.js';
+  import { contentPath } from '../../site/files.js';
   import Button from './Button.svelte';
   import { tick } from 'svelte';
   import PubFiles from './PubFiles.svelte';
@@ -46,7 +47,7 @@
     ...(saveFirst ? dirty : [])
       .filter((name) => !pub.files.some((p) => p.name === name))
       .map((name) => ({
-        path: `content/en/${name}`,
+        path: contentPath(name),
         status: 'modified',
         changes: changes(name),
         note: ' · unsaved, saved first',
