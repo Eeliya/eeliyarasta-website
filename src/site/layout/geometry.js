@@ -1,5 +1,5 @@
 /**
- * Layout geometry shared by the site's rows.js and the editor's overlay: a block element's
+ * Layout geometry shared by the site's rows.js and the editor's overlay: a widget element's
  * stored area and link, where rows.js placed it (--fr / --frs), and a section's grid tracks and
  * lines in page coordinates. Pure reads of elements and computed styles; no layout writes.
  */
@@ -18,10 +18,10 @@ export function parseLink(v) {
   return m ? { to: m[1], gap: Number(m[2]) } : null;
 }
 
-/** The link a block's element follows on this grid: { to, gap } or null (free). */
+/** The link a widget's element follows on this grid: { to, gap } or null (free). */
 export const linkOfEl = (el, phone) => parseLink(phone ? el.dataset.mlink : el.dataset.link);
 
-/** A block element's stored area on the layout that applies (the phone grid's, or the desktop's). */
+/** A widget element's stored area on the layout that applies (the phone grid's, or the desktop's). */
 export function areaOfEl(el, phone) {
   const s = el.style;
   const [c, sp, r, rs] = phone ? ['--mc', '--ms', '--mr', '--mrs'] : ['--c', '--s', '--r', '--rs'];
@@ -46,20 +46,20 @@ export function widthOf(cs) {
 }
 
 /**
- * Where the blocks of a section are now, as rows.js placed them (--fr / --frs over the stored
- * area): { id: area } (the phone grid's on the phone: a block's own phone area, or its desktop
- * area halved). blockOf(id): the block's model.
+ * Where the widgets of a section are now, as rows.js placed them (--fr / --frs over the stored
+ * area): { id: area } (the phone grid's on the phone: a widget's own phone area, or its desktop
+ * area halved). widgetOf(id): the widget's model.
  */
-export function flowAreas(sec, phone, blockOf) {
+export function flowAreas(sec, phone, widgetOf) {
   const out = {};
-  for (const el of sec.querySelectorAll('[data-block]')) {
+  for (const el of sec.querySelectorAll('[data-widget]')) {
     if (el.closest('[data-sec]') !== sec) continue;
-    const b = blockOf(el.dataset.block);
+    const b = widgetOf(el.dataset.widget);
     if (!b) continue;
     const stored = phone ? phoneAreaOf(b) : placeOf(baseOf(b));
     const row = parseInt(el.style.getPropertyValue('--fr'), 10);
     const rows = parseInt(el.style.getPropertyValue('--frs'), 10);
-    out[el.dataset.block] = { ...stored, ...(row > 0 && rows > 0 ? { row, rows } : {}) };
+    out[el.dataset.widget] = { ...stored, ...(row > 0 && rows > 0 ? { row, rows } : {}) };
   }
   return out;
 }

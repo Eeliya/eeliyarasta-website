@@ -1,15 +1,15 @@
 /**
- * Where a block row dragged in the page's sections list lands (SectionsList.svelte), from the
+ * Where a widget row dragged in the page's sections list lands (SectionsList.svelte), from the
  * rows' places as they were when the drag started (the lifted row's own place counts: let go
  * there and nothing moves).
- *   lists  [{ at, top, bottom, rows: [{ top, bottom }] }]: each section's blocks area
+ *   lists  [{ at, top, bottom, rows: [{ top, bottom }] }]: each section's widgets area
  *   from   { at, j }: the dragged row
  *   y      the pointer
  * Returns { at, to, line: { j, side } } (to: its index in that section once moved; line: the
  * drop line, before or after row j), or null: nothing moves (its own place, or the pointer is
- * over no section's blocks: between cards, over the settings).
+ * over no section's widgets: between cards, over the settings).
  */
-// px: around a blocks area that still count as over it, and how far a press moves to be a drag
+// px: around a widgets area that still count as over it, and how far a press moves to be a drag
 export const SLACK = 4;
 
 export function dropTarget(lists, from, y) {

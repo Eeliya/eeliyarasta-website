@@ -85,7 +85,7 @@ test('checkContent per kind', () => {
     }),
     ['"sections" must be an array, not an object'],
   );
-  // no main block: it builds no pages (a warning, routes.js), it still saves
+  // no main widget: it builds no pages (a warning, routes.js), it still saves
   assert.equal(
     checkContent('pages/people/[person]/index.json', { version: 1, kind: 'page', id: 'pg-t043' })
       .length,
@@ -228,14 +228,14 @@ test('editor markers: only when rendering for the editor (dev), never in the bui
   const { renderRoute } = await import('../src/site/render.js');
   const content = loadContent('.');
   const home = buildRoutes(content).routes.find((r) => r.path === '/');
-  const MARKERS = /data-edit|data-sec|data-block|data-curtain-edit/;
+  const MARKERS = /data-edit|data-sec|data-widget|data-curtain-edit/;
   const built = renderRoute(home, content);
   assert.doesNotMatch(built.head + built.body, MARKERS);
   assert.match(built.body, /data-anim="/); // animations keep their hooks
   const dev = renderRoute(home, content, { editable: true });
-  assert.match(dev.body, /data-edit="pages\/index\.json#\/sections\/0\/blocks\/0\/title"/);
+  assert.match(dev.body, /data-edit="pages\/index\.json#\/sections\/0\/widgets\/0\/title"/);
   assert.match(dev.body, /data-sec="s-[a-z0-9]+"/);
-  assert.match(dev.body, /data-block="b-[a-z0-9]+"/);
+  assert.match(dev.body, /data-widget="b-[a-z0-9]+"/);
   assert.match(dev.body, /data-curtain-edit="/);
 });
 
@@ -322,7 +322,7 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
         sections: [
           {
             id: 's-aaaa',
-            blocks: [
+            widgets: [
               {
                 id: 'b-aaaa',
                 type: 'text',
@@ -342,14 +342,14 @@ test('draft: pages render the unsaved edits; only existing, valid files; {} clea
   assert.deepEqual(r.body.files, ['pages/index.json']);
   assert.deepEqual(r.body.skipped, ['settings/animations.json', 'pages/nope/index.json']);
   const home = (session) => loadContent(root, draftsFor(drafts, session)).pages.home;
-  assert.equal(home('tab-a').sections[0].blocks[0].text, 'Draft');
+  assert.equal(home('tab-a').sections[0].widgets[0].text, 'Draft');
   // only that session's preview: no marker, another tab or an unknown one get the saved file
   const saved = { version: 1, kind: 'page', id: 'pg-t041' };
   for (const s of [null, undefined, 'tab-b', '__proto__', 'constructor'])
     assert.deepEqual(home(s), saved);
   // another tab's drafts leave tab-a's alone
   draftOp(root, drafts, {}, 'tab-b');
-  assert.equal(home('tab-a').sections[0].blocks[0].text, 'Draft');
+  assert.equal(home('tab-a').sections[0].widgets[0].text, 'Draft');
   draftOp(root, drafts, {}, 'tab-a');
   assert.deepEqual(drafts, {});
   assert.equal(draftOp(root, drafts, null, 'tab-a').status, 400);

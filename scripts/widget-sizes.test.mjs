@@ -1,4 +1,4 @@
-/** Phase 3 of the layout engine: block sizes, the phone grid. */
+/** Phase 3 of the layout engine: widget sizes, the phone grid. */
 import { flat, lay } from './test-layout.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,8 +7,8 @@ import {
   HEIGHTS,
   MCOLS,
   anchorOf,
-  blockClass,
-  blockVars,
+  widgetClass,
+  widgetVars,
   halfArea,
   mobileRowsOf,
   nameProblems,
@@ -22,10 +22,10 @@ import {
 } from '../src/site/layout/index.js';
 import { createStore } from '../src/editor/store.js';
 import {
-  placeBlock,
+  placeWidget,
   placeMobile,
   resetMobile,
-  setBlock,
+  setWidget,
   setPhoneHeight,
   setSection,
   setSectionRows,
@@ -33,8 +33,8 @@ import {
 
 const F = 'pages/test/index.json';
 const pos = { col: 3, span: 10, row: 5, rows: 20 };
-const blk = (more = {}) => lay({ id: 'b-aaaa', type: 'text', pos, ...more });
-const sec = (blocks, more = {}) => ({ id: 's-aaaa', blocks, ...more });
+const wgt = (more = {}) => lay({ id: 'b-aaaa', type: 'text', pos, ...more });
+const sec = (widgets, more = {}) => ({ id: 's-aaaa', widgets, ...more });
 
 test('ratios: "w:h" with positive numbers', () => {
   assert.deepEqual(ratioOf('16:9'), [16, 9]);
@@ -44,32 +44,32 @@ test('ratios: "w:h" with positive numbers', () => {
 
 const HALF = ';--mc:2;--ms:5;--mr:3;--mrs:10'; // pos halved onto the phone grid
 
-test('sizes: auto by default; every block spans its stored rows (rows.js works out what it needs)', () => {
-  assert.equal(blockClass(blk()), 'blk blk--text blk--auto');
+test('sizes: auto by default; every widget spans its stored rows (rows.js works out what it needs)', () => {
+  assert.equal(widgetClass(wgt()), 'wgt wgt--text wgt--auto');
   // auto: no stored rows (rows.js measures them): 1 until then
-  assert.equal(blockVars(blk()), '--c:3;--s:10;--r:5;--rs:1;--mc:2;--ms:5;--mr:3;--mrs:1');
-  const aspect = blk({ size: 'aspect', aspect: '4:5' });
-  assert.equal(blockClass(aspect), 'blk blk--text blk--aspect');
-  assert.equal(blockVars(aspect), '--c:3;--s:10;--r:5;--rs:20;--ar:4 / 5' + HALF);
+  assert.equal(widgetVars(wgt()), '--c:3;--s:10;--r:5;--rs:1;--mc:2;--ms:5;--mr:3;--mrs:1');
+  const aspect = wgt({ size: 'aspect', aspect: '4:5' });
+  assert.equal(widgetClass(aspect), 'wgt wgt--text wgt--aspect');
+  assert.equal(widgetVars(aspect), '--c:3;--s:10;--r:5;--rs:20;--ar:4 / 5' + HALF);
   // no valid ratio: sized by its content
-  assert.equal(blockClass(blk({ size: 'aspect', aspect: 'x' })), 'blk blk--text blk--auto');
-  assert.equal(blockClass(blk({ size: 'rows' })), 'blk blk--text'); // fixed rows
-  assert.equal(blockClass(blk({ size: 'huge' })), 'blk blk--text blk--auto'); // unknown: auto
+  assert.equal(widgetClass(wgt({ size: 'aspect', aspect: 'x' })), 'wgt wgt--text wgt--auto');
+  assert.equal(widgetClass(wgt({ size: 'rows' })), 'wgt wgt--text'); // fixed rows
+  assert.equal(widgetClass(wgt({ size: 'huge' })), 'wgt wgt--text wgt--auto'); // unknown: auto
   assert.equal(rowsOf(sec([aspect], { rows: 1 })), 24);
-  assert.equal(rowsOf(sec([blk()], { rows: 1 })), 5);
+  assert.equal(rowsOf(sec([wgt()], { rows: 1 })), 5);
 });
 
-test('phone grid: 60 columns; a block without a phone area shows its desktop area halved', () => {
-  const placed = blk({ size: 'rows', phone: { col: 55, span: 9, row: 3, rows: 4 } }); // span cut at column 60
-  assert.equal(blockVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:55;--ms:6;--mr:3;--mrs:4');
-  const s = sec([placed, { ...blk({ size: 'rows' }), id: 'b-bbbb' }]);
+test('phone grid: 60 columns; a widget without a phone area shows its desktop area halved', () => {
+  const placed = wgt({ size: 'rows', phone: { col: 55, span: 9, row: 3, rows: 4 } }); // span cut at column 60
+  assert.equal(widgetVars(placed), '--c:3;--s:10;--r:5;--rs:20;--mc:55;--ms:6;--mr:3;--mrs:4');
+  const s = sec([placed, { ...wgt({ size: 'rows' }), id: 'b-bbbb' }]);
   assert.equal(mobileRowsOf(s), 12); // b-bbbb halved: rows 3-12
   assert.match(sectionVars(s), /;--mrows:12$/);
   assert.equal(sectionClass(s), 'sec'); // nothing stacks
   // a phone layout without an area: the halved area
-  const only = sec([blk({ size: 'rows', phone: {} })]);
-  assert.match(blockVars(only.blocks[0]), new RegExp(`${HALF}$`));
-  assert.equal(phoneAreaOf(only.blocks[0]).span, 5);
+  const only = sec([wgt({ size: 'rows', phone: {} })]);
+  assert.match(widgetVars(only.widgets[0]), new RegExp(`${HALF}$`));
+  assert.equal(phoneAreaOf(only.widgets[0]).span, 5);
   // halving: the cells it covers (first rounded down, last up), at least one
   assert.deepEqual(halfArea({ col: 1, span: 120, row: 1, rows: 9 }), {
     col: 1,
@@ -104,8 +104,8 @@ test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always ce
   const custom = sec([], { height: 'custom', rows: { min: 41 } });
   assert.equal(sectionClass(custom), 'sec sec--h-custom');
   assert.equal(sectionVars(custom), '--rows:41;--mrows:21;--minrows:41;--mminrows:21');
-  // never shorter than its content: a block reaching row 60 makes it 60 rows
-  const deep = [blk({ layout: { base: { col: 1, span: 10, row: 51, rows: 10 } } })];
+  // never shorter than its content: a widget reaching row 60 makes it 60 rows
+  const deep = [wgt({ layout: { base: { col: 1, span: 10, row: 51, rows: 10 } } })];
   assert.equal(
     sectionVars(sec(deep, { height: 'custom', rows: { min: 41 } })),
     '--rows:60;--mrows:30;--minrows:41;--mminrows:21',
@@ -128,9 +128,9 @@ test('sections: a minimum height (fit, 1/3, 1/2, full screen), content always ce
   const old = sec([], { height: 'screen', align: 'bottom', rows: 9, spacing: { top: 4 } });
   assert.equal(sectionClass(old), 'sec');
   assert.equal(sectionVars(old), '--rows:1;--mrows:1');
-  // its rows: down to its lowest block
-  const blocks = [blk({ layout: { base: { col: 1, span: 10, row: 3, rows: 5 } } })];
-  assert.equal(sectionVars(sec(blocks, { rows: 20 })), '--rows:7;--mrows:4');
+  // its rows: down to its lowest widget
+  const widgets = [wgt({ layout: { base: { col: 1, span: 10, row: 3, rows: 5 } } })];
+  assert.equal(sectionVars(sec(widgets, { rows: 20 })), '--rows:7;--mrows:4');
 });
 
 test('section names: an anchor (id) from the name, unique on the page, a letter first', () => {
@@ -163,7 +163,7 @@ test('section names: an anchor (id) from the name, unique on the page, a letter 
 
 test('validation: size, aspect, mobile', () => {
   const one = (b) =>
-    checkContent(F, { version: 1, kind: 'page', id: 'pg-t021', sections: [sec([blk(b)])] });
+    checkContent(F, { version: 1, kind: 'page', id: 'pg-t021', sections: [sec([wgt(b)])] });
   const of = (s) =>
     checkContent(F, { version: 1, kind: 'page', id: 'pg-t022', sections: [sec([], s)] });
   assert.deepEqual(
@@ -174,7 +174,7 @@ test('validation: size, aspect, mobile', () => {
     }),
     [],
   );
-  const where = 'section 1, block 1 (Text)';
+  const where = 'section 1, widget 1 (Text)';
   assert.deepEqual(one({ size: 'big' }), [`${where}: "size" must be auto, aspect, rows`]);
   assert.deepEqual(one({ size: 'aspect' }), [`${where}: "aspect" must be a ratio like "4:5"`]);
   // placements are gone: `place` is left out of an area
@@ -192,30 +192,30 @@ test('validation: size, aspect, mobile', () => {
   ]);
 });
 
-test('ops: block settings, a phone area of its own, reset; one undo each', () => {
+test('ops: widget settings, a phone area of its own, reset; one undo each', () => {
   const store = createStore();
   const a = { id: 'b-aaaa', type: 'text', layout: { base: { col: 1, span: 24, row: 1 } } };
   const b = { id: 'b-bbbb', type: 'text', layout: { base: { col: 1, span: 24, row: 11 } } };
   store.load({ [F]: { version: 1, kind: 'page', id: 'pg-t023', sections: [sec([a, b])] } });
-  const blocks = () => store.current[F].sections[0].blocks;
+  const widgets = () => store.current[F].sections[0].widgets;
 
-  setBlock(store, F, 0, 0, { size: 'aspect', aspect: '3:2' });
-  assert.deepEqual([blocks()[0].size, blocks()[0].aspect], ['aspect', '3:2']);
-  setBlock(store, F, 0, 0, { size: undefined, aspect: undefined });
-  assert.ok(!('size' in blocks()[0]) && !('aspect' in blocks()[0]));
+  setWidget(store, F, 0, 0, { size: 'aspect', aspect: '3:2' });
+  assert.deepEqual([widgets()[0].size, widgets()[0].aspect], ['aspect', '3:2']);
+  setWidget(store, F, 0, 0, { size: undefined, aspect: undefined });
+  assert.ok(!('size' in widgets()[0]) && !('aspect' in widgets()[0]));
 
   // a move on the phone: its own phone area; the others keep showing their desktop halved
   placeMobile(store, F, 0, 1, { col: 49, span: 20, row: 1, rows: 10 });
-  assert.deepEqual(blocks()[1].layout.phone, { col: 49, span: 12, row: 1 });
-  assert.ok(!('phone' in blocks()[0].layout));
+  assert.deepEqual(widgets()[1].layout.phone, { col: 49, span: 12, row: 1 });
+  assert.ok(!('phone' in widgets()[0].layout));
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 2, rows: 5 });
-  assert.deepEqual(flat(blocks()[0]).pos, { col: 1, span: 24, row: 1 }); // the desktop is untouched
+  assert.deepEqual(flat(widgets()[0]).pos, { col: 1, span: 24, row: 1 }); // the desktop is untouched
 
   assert.equal(resetMobile(store, F, 0), true);
-  assert.ok(blocks().every((x) => !('phone' in x.layout)));
+  assert.ok(widgets().every((x) => !('phone' in x.layout)));
   assert.equal(resetMobile(store, F, 0), false); // nothing to reset
   store.undo();
-  assert.ok(blocks().every((x) => x.layout.phone));
+  assert.ok(widgets().every((x) => x.layout.phone));
 
   setSection(store, F, 0, { height: 'third', name: 'Intro' });
   setSection(store, F, 0, { height: 'custom', rows: { min: 24 } });
@@ -229,7 +229,7 @@ test('ops: block settings, a phone area of its own, reset; one undo each', () =>
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
-test('custom rows: block moves only grow them; the bottom edge sets them; phone rows own', () => {
+test('custom rows: widget moves only grow them; the bottom edge sets them; phone rows own', () => {
   const store = createStore();
   const a = {
     id: 'b-aaaa',
@@ -249,7 +249,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
   const s = () => store.current[F].sections[0];
   const vars = '--rows:50;--mrows:25;--minrows:50;--mminrows:25';
   // moved inside its rows (desktop, phone): still 50 rows, not its content's
-  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 3, rows: 10 }, undefined, {
+  placeWidget(store, F, 0, 0, { col: 5, span: 24, row: 3, rows: 10 }, undefined, {
     flow: { 'b-aaaa': a.layout.base },
     rows: 12,
   });
@@ -258,20 +258,20 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
   assert.equal(sectionVars(s()), vars);
   assert.ok(!('phone' in s()));
   // dragged past its bottom: its rows become the content's, in the move's one undo step
-  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 55, rows: 10 });
+  placeWidget(store, F, 0, 0, { col: 5, span: 24, row: 55, rows: 10 });
   assert.equal(s().rows.min, 64);
   // a flowed follower lower than the stored areas show: the overlay's rows count
-  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 50, rows: 10 }, undefined, { rows: 70 });
+  placeWidget(store, F, 0, 0, { col: 5, span: 24, row: 50, rows: 10 }, undefined, { rows: 70 });
   assert.equal(s().rows.min, 70);
   // moved back up: the rows stay (empty space)
-  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 1, rows: 10 });
+  placeWidget(store, F, 0, 0, { col: 5, span: 24, row: 1, rows: 10 });
   assert.equal(s().rows.min, 70);
   store.undo();
   store.undo();
   assert.equal(s().rows.min, 64);
   store.undo();
   assert.equal(s().rows.min, 50);
-  assert.equal(s().blocks[0].layout.base.row, 3);
+  assert.equal(s().widgets[0].layout.base.row, 3);
 
   // the phone: its own rows, the desktop's untouched
   placeMobile(store, F, 0, 0, { col: 1, span: 30, row: 30, rows: 5 }, { rows: 34 });
@@ -299,7 +299,7 @@ test('custom rows: block moves only grow them; the bottom edge sets them; phone 
   assert.equal(setSectionRows(store, F, 0, 40), false); // not custom
   assert.equal(setSectionRows(store, F, 0, 40, { phone: true }), false);
   // fit / other heights never grow
-  placeBlock(store, F, 0, 0, { col: 5, span: 24, row: 80, rows: 10 });
+  placeWidget(store, F, 0, 0, { col: 5, span: 24, row: 80, rows: 10 });
   assert.ok(!('rows' in s()));
 });
 
@@ -390,21 +390,21 @@ test('phone height: its own, the desktop untouched; reset; rows, line and growth
   // a phone custom height without desktop rows: from its phone content
   setSection(store, F, 0, { height: 'third', rows: undefined, phone: undefined });
   setPhoneHeight(store, F, 0, 'custom');
-  assert.equal(s().phone.rows.min, 64); // its phone content (the block at phone row 60)
+  assert.equal(s().phone.rows.min, 64); // its phone content (the widget at phone row 60)
   assert.deepEqual(checkContent(F, store.current[F]), []);
 });
 
-test('layout: phone null hides a block on phones; no stored grid; auto blocks store no rows', () => {
-  const hidden = blk({ phone: null });
-  assert.match(blockClass(hidden), / blk--m-hidden$/);
-  const page = (more, blocks = [blk()]) =>
-    checkContent(F, { version: 1, kind: 'page', id: 'pg-t030', sections: [sec(blocks)], ...more });
+test('layout: phone null hides a widget on phones; no stored grid; auto widgets store no rows', () => {
+  const hidden = wgt({ phone: null });
+  assert.match(widgetClass(hidden), / wgt--m-hidden$/);
+  const page = (more, widgets = [wgt()]) =>
+    checkContent(F, { version: 1, kind: 'page', id: 'pg-t030', sections: [sec(widgets)], ...more });
   assert.deepEqual(page({}, [hidden]), []);
   assert.deepEqual(page({ grid: 120 }), ['"grid" must be left out: the page grid is always 120']);
   const store = createStore();
-  store.load({ [F]: { version: 1, kind: 'page', id: 'pg-t031', sections: [sec([blk()])] } });
-  setBlock(store, F, 0, 0, { size: 'rows', rows: 7 });
-  assert.equal(store.current[F].sections[0].blocks[0].layout.base.rows, 7);
-  setBlock(store, F, 0, 0, { size: undefined });
-  assert.ok(!('rows' in store.current[F].sections[0].blocks[0].layout.base));
+  store.load({ [F]: { version: 1, kind: 'page', id: 'pg-t031', sections: [sec([wgt()])] } });
+  setWidget(store, F, 0, 0, { size: 'rows', rows: 7 });
+  assert.equal(store.current[F].sections[0].widgets[0].layout.base.rows, 7);
+  setWidget(store, F, 0, 0, { size: undefined });
+  assert.ok(!('rows' in store.current[F].sections[0].widgets[0].layout.base));
 });

@@ -4,24 +4,24 @@
  * out, on load and whenever the section resizes (ResizeObserver, window resize; both
  * rAF-throttled: at most one flow per frame). A column and a row are both --cell: the cells are square.
  *
- * Real rows (src/site/layout/flow.js): measures every block of the view's sections and sets
- * where it sits and how many rows it spans now, as --fr / --frs on the block and --frows on
+ * Real rows (src/site/layout/flow.js): measures every widget of the view's sections and sets
+ * where it sits and how many rows it spans now, as --fr / --frs on the widget and --frows on
  * the section (_layout.scss reads them over the stored --r / --rs / --rows, or on the phone
  * grid --mr / --mrs / --mrows). The stored area is what the page renders with before this
  * runs (and without JS).
  *
- * Measured: an auto block's height as its content makes it (`.sec--measure` lets every block
- * be as tall as its content for that read), or an aspect block's width × ratio; a fixed-rows
- * block keeps its rows. Then the links (src/site/layout/links.js, data-link / data-mlink on
- * the block: "<leader id> <gap>") are resolved in their order: a follower's first row is its
- * leader's last row now + 1 + its gap; a free block stays at its stored row. Run again when
- * the window resizes (on the next frame, at most once a frame while dragging), when a block's
+ * Measured: an auto widget's height as its content makes it (`.sec--measure` lets every widget
+ * be as tall as its content for that read), or an aspect widget's width × ratio; a fixed-rows
+ * widget keeps its rows. Then the links (src/site/layout/links.js, data-link / data-mlink on
+ * the widget: "<leader id> <gap>") are resolved in their order: a follower's first row is its
+ * leader's last row now + 1 + its gap; a free widget stays at its stored row. Run again when
+ * the window resizes (on the next frame, at most once a frame while dragging), when a widget's
  * content changes size (images, fonts, the editor's edits; on the next frame) and on reflow()
  * (the editor after it changed a layout).
  *
  * A section with a minimum height (a third, half or all of the screen: sec--h-*) is at least so
- * tall: a block that fits in it doesn't make it taller by rounding up to a whole row (it gets
- * the whole rows that fit; rows stay square, so a screen-high block's rows may be up to a cell
+ * tall: a widget that fits in it doesn't make it taller by rounding up to a whole row (it gets
+ * the whole rows that fit; rows stay square, so a screen-high widget's rows may be up to a cell
  * short of the screen, its content still is).
  */
 import { resolveRows, rowsFor } from '../../site/layout/flow.js';
@@ -32,8 +32,8 @@ const PHONE = PHONE_MQ;
 const VARS = ['--fr', '--frs'];
 const SECTION_VARS = ['--frows'];
 
-/** The blocks of a section: its children. */
-const blocksOf = (sec) => [...sec.children].filter((n) => n.matches('.blk'));
+/** The widgets of a section: its children. */
+const widgetsOf = (sec) => [...sec.children].filter((n) => n.matches('.wgt'));
 
 function set(el, name, value) {
   if (el.style.getPropertyValue(name) === String(value)) return false;
@@ -43,7 +43,7 @@ function set(el, name, value) {
 
 function clear(sec) {
   let changed = false;
-  for (const el of blocksOf(sec))
+  for (const el of widgetsOf(sec))
     for (const v of VARS)
       if (el.style.getPropertyValue(v)) {
         el.style.removeProperty(v);
@@ -64,20 +64,20 @@ function minHeightOf(sec, cs) {
   return min - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 }
 
-/** A section's blocks as they measure now (inside .sec--measure): the items resolveRows takes. */
+/** A section's widgets as they measure now (inside .sec--measure): the items resolveRows takes. */
 function readSection(sec, phone, row) {
   const cs = getComputedStyle(sec);
   const avail = minHeightOf(sec, cs);
   const cap = Math.floor(avail / row + 0.01);
   const items = [];
   const els = new Map();
-  for (const el of blocksOf(sec)) {
+  for (const el of widgetsOf(sec)) {
     if (el.hidden) continue;
     const area = areaOfEl(el, phone);
-    const id = el.dataset.block || `b${els.size}`;
-    const kind = el.classList.contains('blk--aspect')
+    const id = el.dataset.widget || `b${els.size}`;
+    const kind = el.classList.contains('wgt--aspect')
       ? 'aspect'
-      : el.classList.contains('blk--auto')
+      : el.classList.contains('wgt--auto')
         ? 'auto'
         : 'rows';
     const h = el.getBoundingClientRect().height;
@@ -95,7 +95,7 @@ function readSection(sec, phone, row) {
 /** Write a section's resolved rows; true when something moved. */
 function writeSection(sec, phone, { items, els }) {
   // a custom height: exactly its rows, or its content's when that needs more (the empty rows
-  // below its last block don't stack on top of a grown block's)
+  // below its last widget don't stack on top of a grown widget's)
   const min = parseInt(sec.style.getPropertyValue(phone ? '--mminrows' : '--minrows'), 10) || 0;
   const stored = min
     ? 1
@@ -113,7 +113,7 @@ function writeSection(sec, phone, { items, els }) {
 
 /**
  * Flow every section of `root`; true when something moved. In passes, so the page is laid out
- * about once, not once per section: read every width, write every --cell; measure every block
+ * about once, not once per section: read every width, write every --cell; measure every widget
  * (all sections in .sec--measure at once); write every row.
  */
 function flowAll(root = document) {
@@ -128,7 +128,7 @@ function flowAll(root = document) {
   // 1. cells: read every width, then write
   for (const s of secs) s.cell = cellOf(widthOf(getComputedStyle(s.sec)), phone ? MCOLS : COLS);
   for (const s of secs) if (s.cell && set(s.sec, '--cell', `${s.cell}px`)) changed = true;
-  // 2. measure: every section's blocks as tall as their content, read in one go
+  // 2. measure: every section's widgets as tall as their content, read in one go
   for (const s of secs) s.sec.classList.add('sec--measure');
   for (const s of secs) {
     // no width now (hidden by an ancestor): its last cell, else a guess (it measures 0 anyway)
@@ -159,7 +159,7 @@ export function watchRows(view, { onchange = () => {} } = {}) {
     ro.disconnect();
     for (const sec of view.querySelectorAll('.sec')) {
       ro.observe(sec);
-      for (const el of blocksOf(sec)) for (const k of el.children) ro.observe(k);
+      for (const el of widgetsOf(sec)) for (const k of el.children) ro.observe(k);
     }
   };
   // throttled: at most one flow per frame while the window is resized; the last resize event's
@@ -170,7 +170,7 @@ export function watchRows(view, { onchange = () => {} } = {}) {
   window.addEventListener('resize', onresize);
   document.fonts?.ready.then(later);
   return {
-    /** The editor changed sections: flow them now (and watch their new blocks). */
+    /** The editor changed sections: flow them now (and watch their new widgets). */
     reflow() {
       const changed = flowAll(view);
       observe();

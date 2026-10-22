@@ -1,14 +1,14 @@
 /**
- * Links between blocks (src/site/layout/flow.js resolves them): blocks are free by default,
- * each where it was placed on the grid, overlapping when they meet. A block can follow
+ * Links between widgets (src/site/layout/flow.js resolves them): widgets are free by default,
+ * each where it was placed on the grid, overlapping when they meet. A widget can follow
  * another: its top at the other one's bottom plus a gap in cells (negative: they overlap),
  *
  *   "link": { "to": "b-7qpa", "gap": 2 }            (desktop)
  *   "phone": { ..., "link": { "to": "b-7qpa", "gap": -1 } }   (the phone grid's)
  *
- * so it moves when the block it follows grows or shrinks (its content at another width).
- * One block it follows (its leader), any number following one block, chains; never a loop,
- * never a block of another section. A block without a phone area of its own (it shows its
+ * so it moves when the widget it follows grows or shrinks (its content at another width).
+ * One widget it follows (its leader), any number following one widget, chains; never a loop,
+ * never a widget of another section. A widget without a phone area of its own (it shows its
  * desktop area halved, grid.js phoneAreaOf) follows its desktop link there too, the gap
  * halved; one with a phone area has only its own phone link.
  */
@@ -24,7 +24,7 @@ const linkShape = (l) =>
 /** Half a gap, for the phone grid (rounded half away from zero, so -3 -> -2 like 3 -> 2). */
 const halfGap = (g) => Math.sign(g) * Math.round(Math.abs(g) / 2);
 
-/** The link a block follows on the desktop grid, or on the phone grid (`phone`); null: free. */
+/** The link a widget follows on the desktop grid, or on the phone grid (`phone`); null: free. */
 export function linkOf(b, phone = false) {
   if (!phone) return linkShape(baseOf(b).link);
   if (hasMobileArea(phoneOf(b))) return linkShape(phoneOf(b).link);
@@ -33,12 +33,12 @@ export function linkOf(b, phone = false) {
 }
 
 /**
- * Would block `id` following `to` make a loop (or follow itself)? blocks: the section's,
+ * Would widget `id` following `to` make a loop (or follow itself)? widgets: the section's,
  * phone: the phone grid's links. Follows the leaders from `to` up; a loop met there that
  * doesn't reach `id` is not this link's (and stops the walk).
  */
-export function makesLoop(blocks, id, to, phone = false) {
-  const byId = new Map((blocks || []).map((b) => [b?.id, b]));
+export function makesLoop(widgets, id, to, phone = false) {
+  const byId = new Map((widgets || []).map((b) => [b?.id, b]));
   const seen = new Set();
   for (let at = to; at; at = linkOf(byId.get(at), phone)?.to) {
     if (at === id) return true;
@@ -49,12 +49,12 @@ export function makesLoop(blocks, id, to, phone = false) {
 }
 
 /**
- * Problems of a section's links (desktop and phone): a link to a block that isn't in this
- * section (another section's: `elsewhere`, the page's other block ids), a block following
+ * Problems of a section's links (desktop and phone): a link to a widget that isn't in this
+ * section (another section's: `elsewhere`, the page's other widget ids), a widget following
  * itself, a loop.
  */
-export function linkProblems(blocks, elsewhere = new Set()) {
-  const list = Array.isArray(blocks) ? blocks : [];
+export function linkProblems(widgets, elsewhere = new Set()) {
+  const list = Array.isArray(widgets) ? widgets : [];
   const ids = new Set(list.map((b) => b?.id));
   const out = [];
   for (const [phone, key] of [
@@ -65,9 +65,9 @@ export function linkProblems(blocks, elsewhere = new Set()) {
       const raw = phone ? phoneOf(b)?.link : baseOf(b).link;
       if (raw === undefined) continue;
       const l = linkShape(raw);
-      const name = `block "${b?.id}" ${key}`;
-      if (!l) out.push(`${name} must be { "to": "<block id>", "gap": <whole number of cells> }`);
-      else if (l.to === b.id) out.push(`${name} can't follow the block itself`);
+      const name = `widget "${b?.id}" ${key}`;
+      if (!l) out.push(`${name} must be { "to": "<widget id>", "gap": <whole number of cells> }`);
+      else if (l.to === b.id) out.push(`${name} can't follow the widget itself`);
       else if (!ids.has(l.to))
         out.push(
           elsewhere.has(l.to)
@@ -75,7 +75,7 @@ export function linkProblems(blocks, elsewhere = new Set()) {
             : `${name} follows "${l.to}", which isn't on the page`,
         );
     }
-    // loops (each reported once, by its first block)
+    // loops (each reported once, by its first widget)
     const byId = new Map(list.map((b) => [b?.id, b]));
     const reported = new Set();
     for (const b of list) {

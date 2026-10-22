@@ -128,7 +128,7 @@ test('phone grid: 60 columns, desktop areas halved to the cells they cover, link
   assert.equal(linkOf(own, true), null); // its own phone area: its own (no) link
 });
 
-test("rows.js: a block element's stored area and link on each grid", () => {
+test("rows.js: a widget element's stored area and link on each grid", () => {
   const e = el({
     vars: { '--c': 3, '--s': 10, '--r': 5, '--rs': 20, '--mc': 2, '--ms': 5, '--mr': 3 },
     dataset: { link: 'b-aaaa 2', mlink: 'b-bbbb -1' },
@@ -222,25 +222,25 @@ test('overlay: grid lines and the nearest line, past the end in row steps', () =
   assert.equal(nearest([0, 10, 20], 99), 3); // no step: the last
 });
 
-test('overlay: where blocks are now, the real rows over the stored area (own section only)', () => {
+test('overlay: where widgets are now, the real rows over the stored area (own section only)', () => {
   const sec = { id: 'sec' };
-  const blocks = {
+  const widgets = {
     a: { id: 'a', layout: { base: { col: 1, span: 60, row: 2, rows: 4 } } },
     b: { id: 'b', layout: { base: { col: 61, span: 60, row: 1, rows: 6 } } },
   };
   const els = [
-    el({ dataset: { block: 'a' }, vars: { '--fr': 3, '--frs': 9 }, sec }),
-    el({ dataset: { block: 'b' }, vars: { '--fr': 2 }, sec }), // no --frs: stored
-    el({ dataset: { block: 'zz' }, sec }), // not a stored block
-    el({ dataset: { block: 'c' }, sec: { id: 'nested' } }),
+    el({ dataset: { widget: 'a' }, vars: { '--fr': 3, '--frs': 9 }, sec }),
+    el({ dataset: { widget: 'b' }, vars: { '--fr': 2 }, sec }), // no --frs: stored
+    el({ dataset: { widget: 'zz' }, sec }), // not a stored widget
+    el({ dataset: { widget: 'c' }, sec: { id: 'nested' } }),
   ];
   sec.querySelectorAll = () => els;
-  const blockOf = (id) => blocks[id] || (id === 'c' ? { layout: {} } : null);
-  assert.deepEqual(flowAreas(sec, false, blockOf), {
+  const widgetOf = (id) => widgets[id] || (id === 'c' ? { layout: {} } : null);
+  assert.deepEqual(flowAreas(sec, false, widgetOf), {
     a: { col: 1, span: 60, row: 3, rows: 9 },
     b: { col: 61, span: 60, row: 1, rows: 6 },
   });
-  assert.deepEqual(flowAreas(sec, true, blockOf), {
+  assert.deepEqual(flowAreas(sec, true, widgetOf), {
     a: { col: 1, span: 30, row: 3, rows: 9 },
     b: { col: 31, span: 30, row: 1, rows: 3 },
   });

@@ -1,5 +1,5 @@
 /**
- * Block types of the inner pages: album cards of a source (People,
+ * Widget types of the inner pages: album cards of a source (People,
  * Places), photography panels, the About bio. See ./index.js for the shape.
  */
 import {
@@ -18,7 +18,7 @@ import { albumCard } from '../templates/partials.js';
 import { sourcePage } from './data.js';
 
 /**
- * Album cards of its source's items (a list block: all of them, or the ones From URL
+ * Album cards of its source's items (a list widget: all of them, or the ones From URL
  * matches), each linking to its page; config.layout landscape for wide photos.
  */
 export const albums = {

@@ -29,8 +29,8 @@ export const ui = $state({
    */
   previewAt: {},
   /**
-   * A param row of a block's From URL to bring into view and focus ({ block, param }; the page
-   * head's warning sets it, BlockSource.svelte takes it), or null.
+   * A param row of a widget's From URL to bring into view and focus ({ widget, param }; the page
+   * head's warning sets it, WidgetSource.svelte takes it), or null.
    */
   focusParam: null,
   /** The path shown in the preview ("/people/noor-vermeer/"). */
@@ -56,23 +56,23 @@ export const ui = $state({
    * scope: where its edits go: 'element' | 'target' (see motion.js).
    */
   anim: null,
-  /** Content tab: the block open in the block inspector (its id), or null, and its tab. */
-  block: null,
+  /** Content tab: the widget open in the widget inspector (its id), or null, and its tab. */
+  widget: null,
   /**
    * Content tab: the section card selected (its id; a click on it), or null: its section shows
    * in the preview as a hovered one does (overlay.js) while the list shows.
    */
   selSection: null,
-  /** Content tab: an empty section's own view open (its id; no block to open), or null. */
+  /** Content tab: an empty section's own view open (its id; no widget to open), or null. */
   section: null,
-  /** 'content' | 'motion' (its layout: the preview's toolbar, BlockToolbar.svelte) */
-  blockTab: 'content',
+  /** 'content' | 'motion' (its layout: the preview's toolbar, WidgetToolbar.svelte) */
+  widgetTab: 'content',
   /**
-   * A Text block edited in place in the preview (bridge.js richState): { block, edit, style,
+   * A Text widget edited in place in the preview (bridge.js richState): { widget, edit, style,
    * line, selected, bold, italic, link }, or null.
    */
   rich: null,
-  /** Content tab: the link selected in the preview (its follower's block id), or null. */
+  /** Content tab: the link selected in the preview (its follower's widget id), or null. */
   link: null,
   /** Open/closed per Section key ("text:hero", "settings:site", ...), once toggled. */
   sections: {},

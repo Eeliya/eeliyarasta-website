@@ -1,5 +1,5 @@
 /**
- * Block types of the home page look: the hero with its scattered photos, a grid of a source's photos, the project list. See ./index.js for the shape.
+ * Widget types of the home page look: the hero with its scattered photos, a grid of a source's photos, the project list. See ./index.js for the shape.
  */
 import {
   html,
@@ -133,7 +133,7 @@ const GRID_LOOKS = { places: placeCards };
 
 /**
  * A head (eyebrow, title, button), then its source's photos as tiles (or place cards for
- * places): a list block (its items: all of a source, or the ones From URL matches).
+ * places): a list widget (its items: all of a source, or the ones From URL matches).
  */
 export const grid = {
   type: 'grid',
@@ -171,7 +171,7 @@ export const grid = {
     const source = b.source || '';
     const look = GRID_LOOKS[source] || photoTiles;
     const layout = s.config?.layout === 'even' ? 'even' : 'staggered';
-    return html` <div class="gridblock gridblock--${esc(source)}">
+    return html` <div class="gridwidget gridwidget--${esc(source)}">
       ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
       ${look(ctx, source, b.items, layout, b.indexOf)}
     </div>`;
@@ -206,10 +206,10 @@ export const projects = {
     const list = b.items;
     const { indexOf } = b;
     if (!s.title)
-      return html` <div class="projectsblock">
+      return html` <div class="projectswidget">
         ${projectList(ctx, list, { id: `projects-${b.id}`, source, headingLevel: 2, indexOf })}
       </div>`;
-    return html` <div class="projectsblock">
+    return html` <div class="projectswidget">
       ${sectionHead({ at: b.ed, ...s, href: source && sourcePage(ctx, source) })}
       ${projectList(ctx, list, { id: `projects-${b.id}`, source, indexOf })}
     </div>`;

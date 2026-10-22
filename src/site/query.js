@@ -1,6 +1,6 @@
 /**
- * Which items of a source a block shows, from the page's address (a block's From URL source,
- * src/site/layout/source.js; the main block of a [param] page decides which pages exist,
+ * Which items of a source a widget shows, from the page's address (a widget's From URL source,
+ * src/site/layout/source.js; the main widget of a [param] page decides which pages exist,
  * src/site/routes.js). The one query the build, the preview and the editor share.
  *
  *   where   { "op": "and", "rules": [{ "param": "person", "field": "person" }, ...] }
@@ -67,7 +67,7 @@ export const query = (list, where, params, opts = {}) =>
   (Array.isArray(list) ? list : []).filter((item) => matches(item, where, params, opts));
 
 /**
- * What keeps a main block from deciding pages, per param of the address: [{ param, problem }]
+ * What keeps a main widget from deciding pages, per param of the address: [{ param, problem }]
  * with problem 'any' (no rule: it would make the same page under many addresses) or 'missing'
  * (its field isn't in the source). [] when every param matches a field.
  */

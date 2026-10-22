@@ -1,7 +1,7 @@
 <!--
   Motion tab, one animated element (ui.anim, picked in the preview or in the Elements list):
-  replay and scroll it, pick where edits go (this block's parts with its data-anim name, the
-  block's motion.parts in the page file; or every element with that name), its animation, and its timing (a Custom switch per field, MotionGroups).
+  replay and scroll it, pick where edits go (this widget's parts with its data-anim name, the
+  widget's motion.parts in the page file; or every element with that name), its animation, and its timing (a Custom switch per field, MotionGroups).
   What the animation does is shown read-only: it is edited in the Animations sub-tab
   (AnimLibrary.svelte). Older overrides of those values get a notice: move them into the
   animation, or drop them.
@@ -18,32 +18,32 @@
 
   // cfg: animations.json as edited; items: the page's animated elements; gsap: the preview's;
   // onlibrary(name): open the Animations sub-tab at that animation;
-  // file, sections: the page file and its sections (MotionPanel), to find the element's block
+  // file, sections: the page file and its sections (MotionPanel), to find the element's widget
   let { live, bridge, cfg, items, gsap, onlibrary, file, sections } = $props();
 
   const sel = ui.anim; // { el, id, key, owner, scope }
-  // its block in the page file: /sections/<i>/blocks/<j> (null: outside the blocks)
+  // its widget in the page file: /sections/<i>/widgets/<j> (null: outside the widgets)
   const base = $derived.by(() => {
     for (const s of sections)
-      for (const b of s.blocks) if (b.id === sel.owner) return `/sections/${s.at}/blocks/${b.j}`;
+      for (const b of s.widgets) if (b.id === sel.owner) return `/sections/${s.at}/widgets/${b.j}`;
     return null;
   });
   const part = $derived.by(() => {
     live.version;
     return base ? live.get(file, `${base}/motion/parts`)?.[sel.id] : undefined;
   });
-  // where edits go: picked, else this block's parts when they have values, else All
+  // where edits go: picked, else this widget's parts when they have values, else All
   const scope = $derived(sel.scope || (part ? 'element' : 'target'));
   const m = $derived(animModel(cfg, sel, part));
   const sameTarget = $derived(items.filter((x) => x.id === sel.id).length);
-  const sameBlock = $derived(
+  const sameWidget = $derived(
     items.filter(
-      (x) => x.id === sel.id && x.el.closest('[data-block]')?.dataset.block === sel.owner,
+      (x) => x.id === sel.id && x.el.closest('[data-widget]')?.dataset.widget === sel.owner,
     ).length,
   );
   const scopes = $derived([
     ...(base
-      ? [['element', 'This block', `The "${sel.id}" parts of this block (${sameBlock})`]]
+      ? [['element', 'This widget', `The "${sel.id}" parts of this widget (${sameWidget})`]]
       : []),
     [
       'target',
@@ -124,7 +124,7 @@
   <div class="f__top">
     <span class="f__label">Animation</span>
     <span class="f__src" data-src={m.own.preset ? 'element' : 'target'}
-      >{m.own.preset ? 'block' : 'all'}</span
+      >{m.own.preset ? 'widget' : 'all'}</span
     >
     {#if scope === 'element' && m.own.preset}
       <Button
@@ -162,7 +162,7 @@
         source: 'motion-structure',
       })}
   >
-    Remove all overrides of this block's parts
+    Remove all overrides of this widget's parts
   </Button>
 {/if}
 

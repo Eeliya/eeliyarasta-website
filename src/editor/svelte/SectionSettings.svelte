@@ -1,6 +1,6 @@
 <!--
-  A page section's settings (SectionsList.svelte's cards, and the block view's top,
-  BlockInspector.svelte): its name (the whole row, its #anchor or what is wrong with it under
+  A page section's settings (SectionsList.svelte's cards, and the widget view's top,
+  WidgetInspector.svelte): its name (the whole row, its #anchor or what is wrong with it under
   it, right), then side by side its height (the phone's own in the phone preview, with its
   reset) and width as quiet icon buttons, and a custom height's rows. One undo step per change.
     live, file, at (its index), sections (the page's, a fresh copy after every edit)
@@ -24,8 +24,8 @@
 
   // [value, label (its tooltip and aria-label), the share of the screen its icon fills]
   const HEIGHTS = [
-    ['custom', 'Custom: a number of rows (space below the blocks)', 'rows'],
-    ['fit', 'Fit content: as tall as its blocks', 0],
+    ['custom', 'Custom: a number of rows (space below the widgets)', 'rows'],
+    ['fit', 'Fit content: as tall as its widgets', 0],
     ['third', 'At least 1/3 of the screen', 1 / 3],
     ['half', 'At least 1/2 of the screen', 1 / 2],
     ['full', 'At least the full screen', 1],
@@ -169,7 +169,7 @@
   {/if}
   {@render choices(at, 'width', 'Width', WIDTHS, widthOf(s), widthIcon)}
   {#if (phoneView ? phoneHeightOf(s) : heightOf(s)) === 'custom'}
-    <!-- custom: its rows (square cells, from the top; those below its last block are empty
+    <!-- custom: its rows (square cells, from the top; those below its last widget are empty
          space; on phones half as many) -->
     <Field
       edit="{file}#/sections/{at}/{phoneView ? 'mobile/' : ''}rows/min"
@@ -179,7 +179,7 @@
       value={rowsShown(s)}
       help={phoneView
         ? 'Phone only; unset: half the desktop rows'
-        : 'Rows below the last block are space (phones: their own, or half)'}
+        : 'Rows below the last widget are space (phones: their own, or half)'}
       changed={changed(at, phoneView ? 'mobile/rows/min' : 'rows/min')}
       onvalue={(v) => setMinRows(at, v)}
     />
@@ -189,7 +189,7 @@
 <style lang="scss">
   @use '../styles/mixins' as *;
 
-  // the settings, then the blocks
+  // the settings, then the widgets
   // the name's #anchor hint at its right, under it
   .fields > :global(:first-child .tf__help) {
     text-align: right;

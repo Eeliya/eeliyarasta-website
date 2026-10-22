@@ -351,8 +351,8 @@
   }
 }
 
-/* ---------------- Plain blocks (any page): photo, button (text: _text.scss) ---------------- */
-.photoblock {
+/* ---------------- Plain widgets (any page): photo, button (text: _text.scss) ---------------- */
+.photowidget {
   &__figure {
     display: grid;
     gap: 12px;
@@ -365,8 +365,8 @@
   }
 }
 
-/* ---------------- Contact form (blocks/form.js, modules/form.js) ---------------- */
-.formblock {
+/* ---------------- Contact form (widgets/form.js, modules/form.js) ---------------- */
+.formwidget {
   display: grid;
   gap: 24px;
   &__intro {

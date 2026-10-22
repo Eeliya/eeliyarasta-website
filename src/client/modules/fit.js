@@ -1,15 +1,15 @@
 /**
- * Fit to block (src/site/layout/type.js: scale.fit, a block of fixed height): its text as
- * large as fits the block's box, as --tkf on the block (the scaled text's factor,
- * _layout.scss). Worked out on load and whenever the block resizes or its text changes
+ * Fit to widget (src/site/layout/type.js: scale.fit, a widget of fixed height): its text as
+ * large as fits the widget's box, as --tkf on the widget (the scaled text's factor,
+ * _layout.scss). Worked out on load and whenever the widget resizes or its text changes
  * (fonts loading, the editor's typing): at most once a frame, a binary search of a few
  * measurements, starting near its last fit, and nothing when its text and box are the same.
  */
-const FIT = '.blk--fit';
+const FIT = '.wgt--fit';
 const MIN = 0.05;
 const MAX = 20;
 
-/** Does the block's content fit its box at its current --tkf? (width too: long words) */
+/** Does the widget's content fit its box at its current --tkf? (width too: long words) */
 function fits(el, body) {
   return body.scrollHeight <= el.clientHeight + 0.5 && body.scrollWidth <= el.clientWidth + 0.5;
 }
@@ -38,10 +38,10 @@ export function searchFit(fitsAt, guess) {
   return Math.floor(lo * 100) / 100 || MIN;
 }
 
-// a block's last fit: what it was measured with (its text, its box) and its factor
+// a widget's last fit: what it was measured with (its text, its box) and its factor
 const cache = new WeakMap();
 
-/** The largest --tkf (2 decimals) at which the block's text fits; only when it changed. */
+/** The largest --tkf (2 decimals) at which the widget's text fits; only when it changed. */
 export function fitOne(el) {
   const body = el.querySelector('.text__body') || el.firstElementChild;
   if (!body || !el.clientHeight) return;
@@ -72,19 +72,19 @@ export function fitText(view) {
     if (!raf) raf = requestAnimationFrame(run);
   };
   const ro = new ResizeObserver((entries) => entries.forEach((e) => queue(e.target)));
-  // the blocks a fit turns on later (the editor's toolbar) and the text typed in them
+  // the widgets a fit turns on later (the editor's toolbar) and the text typed in them
   const mo = new MutationObserver((list) => {
     for (const m of list) {
       const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
       const el = t?.closest?.(FIT);
       if (el) queue(el);
-      // removed fitted blocks: no longer observed
+      // removed fitted widgets: no longer observed
       for (const n of m.removedNodes || [])
         if (n.nodeType === 1) {
           if (n.matches(FIT)) ro.unobserve(n);
           n.querySelectorAll?.(FIT).forEach((b) => ro.unobserve(b));
         }
-      if (m.type === 'attributes' && t?.matches?.('.blk')) {
+      if (m.type === 'attributes' && t?.matches?.('.wgt')) {
         if (t.matches(FIT)) {
           ro.observe(t);
           queue(t);
@@ -92,7 +92,7 @@ export function fitText(view) {
       }
     }
   });
-  // (fonts loaded: every block measured again, its text and box the same or not)
+  // (fonts loaded: every widget measured again, its text and box the same or not)
   const watch = (again) =>
     view.querySelectorAll(FIT).forEach((el) => {
       if (again) cache.delete(el);

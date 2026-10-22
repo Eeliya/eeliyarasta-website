@@ -2,7 +2,7 @@
  * How wide a contained section is (site.json "layout": { "containedCols": N }): N columns of the
  * full-width grid's cell (the window's width / 120), centred, but never nearer the window's
  * edges than the page's side margin (--pad). Its content is still a 120-column grid (its
- * cells as much smaller as it is narrower), so a block keeps its columns whatever N is: a
+ * cells as much smaller as it is narrower), so a widget keeps its columns whatever N is: a
  * narrower N scales a contained section's layout down, like a narrower window.
  *
  * The default, 115, is the look before this setting: up to 1920px wide the side margin

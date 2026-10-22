@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { handleContact } from '../functions/api/contact.js';
-import { formTarget, form } from '../src/site/blocks/form.js';
-import { newBlock } from '../src/site/layout/index.js';
+import { formTarget, form } from '../src/site/widgets/form.js';
+import { newWidget } from '../src/site/layout/index.js';
 import { checkContent } from '../src/site/validate.js';
 
 const ENV = {
@@ -166,8 +166,8 @@ test('Turnstile: checked when its secret is set', async () => {
   assert.equal(calls.filter((u) => u.includes('resend')).length, 1);
 });
 
-test('the block: where it sends, its form, its validation', () => {
-  const s = newBlock('form', new Set());
+test('the widget: where it sends, its form, its validation', () => {
+  const s = newWidget('form', new Set());
   const site = { email: 'hi@example.com' };
   assert.deepEqual(formTarget(site, s), { mode: 'function', action: '/api/contact' });
   assert.deepEqual(
@@ -208,7 +208,7 @@ test('the block: where it sends, its form, its validation', () => {
     kind: 'page',
     id: 'pg-t034',
 
-    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', type: 'form', fields, layout }] }],
+    sections: [{ id: 's-aaaa', widgets: [{ id: 'b-aaaa', type: 'form', fields, layout }] }],
   });
   assert.deepEqual(checkContent('pages/contact/index.json', page(s.fields)), []);
   assert.deepEqual(
@@ -221,12 +221,12 @@ test('the block: where it sends, its form, its validation', () => {
       ]),
     ),
     [
-      'section 1, block 1 (Contact form): field 1: "name" must be lowercase letters, digits, - or _ (e.g. "phone")',
-      'section 1, block 1 (Contact form): field 2: a Choice field needs "options" (comma-separated)',
-      'section 1, block 1 (Contact form): field 3: another field is called "topic"',
-      'section 1, block 1 (Contact form): field 3: "type" must be one of text, email, tel, textarea, select',
-      'section 1, block 1 (Contact form): field 3: "required" must be true or false',
-      'section 1, block 1 (Contact form): needs a field named "email" of type email: replies go there',
+      'section 1, widget 1 (Contact form): field 1: "name" must be lowercase letters, digits, - or _ (e.g. "phone")',
+      'section 1, widget 1 (Contact form): field 2: a Choice field needs "options" (comma-separated)',
+      'section 1, widget 1 (Contact form): field 3: another field is called "topic"',
+      'section 1, widget 1 (Contact form): field 3: "type" must be one of text, email, tel, textarea, select',
+      'section 1, widget 1 (Contact form): field 3: "required" must be true or false',
+      'section 1, widget 1 (Contact form): needs a field named "email" of type email: replies go there',
     ],
   );
   assert.deepEqual(

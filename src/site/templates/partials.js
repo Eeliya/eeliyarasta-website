@@ -15,8 +15,8 @@ import {
 import { sourceFile } from '../files.js';
 
 /**
- * A block's head: eyebrow (label) / title / glass CTA. at(field): the block's editor marker for one
- * of its fields (see blocks/index.js).
+ * A widget's head: eyebrow (label) / title / glass CTA. at(field): the widget's editor marker for one
+ * of its fields (see widgets/index.js).
  */
 export const sectionHead = ({ at, eyebrow, title, href, cta }) => {
   return html`

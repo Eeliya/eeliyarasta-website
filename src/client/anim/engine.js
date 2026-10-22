@@ -1,19 +1,19 @@
 /**
  * Animation engine: reads content/en/settings/animations.json (the single source of truth)
- * and wires every block with motion ([data-motion], src/site/layout/motion.js) and every
+ * and wires every widget with motion ([data-motion], src/site/layout/motion.js) and every
  * [data-anim="<target id>"] element in a view.
  *
- * A block: spec = presets[data-motion] ⟵ data-motion-options (the block's own timing). It
- * plays on the block's content: its children, or the animation's `children` inside it, never
- * on the block's element itself. Scroll positions are measured on what moves (a reveal: its
- * first target; a split: each target; scroll: the block).
+ * A widget: spec = presets[data-motion] ⟵ data-motion-options (the widget's own timing). It
+ * plays on the widget's content: its children, or the animation's `children` inside it, never
+ * on the widget's element itself. Scroll positions are measured on what moves (a reveal: its
+ * first target; a split: each target; scroll: the widget).
  *
- * An element (parts of a block type with their own markup: the hero's photos and title,
+ * An element (parts of a widget type with their own markup: the hero's photos and title,
  * album parts, the project preview):
  *
- *   spec = presets[preset] ⟵ targets[id] ⟵ its block's parts[id] ⟵ data-anim-options (JSON)
+ *   spec = presets[preset] ⟵ targets[id] ⟵ its widget's parts[id] ⟵ data-anim-options (JSON)
  *
- * A block's `motion.parts` (data-anim-parts on its element, src/site/layout/motion.js) may
+ * A widget's `motion.parts` (data-anim-parts on its element, src/site/layout/motion.js) may
  * pick another animation (`preset`) or timing for the elements with that name inside it.
  * `key` is a per-element id assigned at mount time, "<path>|<target id>|<n>" (n = index among
  * elements with that target on the page): the editor uses it to find an element again.
@@ -56,7 +56,7 @@ const parse = (json) => {
   }
 };
 
-/** An element's own values from its block's motion.parts ({} when none). */
+/** An element's own values from its widget's motion.parts ({} when none). */
 const partOf = (el, id) => parse(el?.closest?.('[data-anim-parts]')?.dataset.animParts)?.[id] || {};
 
 export function resolve(id, el) {
@@ -82,19 +82,19 @@ export function resolve(id, el) {
   });
 }
 
-/** A block's animation spec: its animation, then its own timing; null when unknown. */
-export function resolveBlock(el) {
+/** A widget's animation spec: its animation, then its own timing; null when unknown. */
+export function resolveWidget(el) {
   const name = el.dataset.motion;
   const preset = config.presets[name];
   if (!preset) {
-    console.warn(`[anim] a block uses unknown animation "${name}"`);
+    console.warn(`[anim] a widget uses unknown animation "${name}"`);
     return null;
   }
-  return merge(preset, parse(el.dataset.motionOptions), { id: name, preset: name, block: true });
+  return merge(preset, parse(el.dataset.motionOptions), { id: name, preset: name, widget: true });
 }
 
-/** What a block's animation moves (each type measures its scroll positions on them, or the block). */
-function blockTargets(el, spec) {
+/** What a widget's animation moves (each type measures its scroll positions on them, or the widget). */
+function widgetTargets(el, spec) {
   return { targets: spec.children ? [...el.querySelectorAll(spec.children)] : [...el.children] };
 }
 
@@ -123,22 +123,22 @@ export function setConfig(next) {
   assign(config, next);
 }
 
-/** Run one element's (or block's) animation in its own context: { el, revert() }. */
+/** Run one element's (or widget's) animation in its own context: { el, revert() }. */
 function play(el, reduce) {
-  const block = el.dataset.motion !== undefined;
-  if (!block && el.dataset.anim === undefined) return { el, revert() {} }; // its motion is gone
-  const spec = block ? resolveBlock(el) : resolve(el.dataset.anim, el);
+  const widget = el.dataset.motion !== undefined;
+  if (!widget && el.dataset.anim === undefined) return { el, revert() {} }; // its motion is gone
+  const spec = widget ? resolveWidget(el) : resolve(el.dataset.anim, el);
   const run = spec && types[spec.type];
   // Un-hide first (html.anim-pending hides [data-anim]); the type's from-state
   // renders synchronously in the same frame, so nothing flashes.
   const visibility = el.style.visibility;
-  if (!block) el.style.visibility = 'inherit';
+  if (!widget) el.style.visibility = 'inherit';
   const cleanups = [];
   const onCleanup = (fn) => cleanups.push(fn);
   const ctx = gsap.context(() => {
     if (!run) return;
     try {
-      run(el, spec, { reduce, onCleanup, ...(block && blockTargets(el, spec)) });
+      run(el, spec, { reduce, onCleanup, ...(widget && widgetTargets(el, spec)) });
     } catch (err) {
       console.error(`[anim] ${spec.id} failed`, err);
     }
@@ -148,7 +148,7 @@ function play(el, reduce) {
     revert() {
       cleanups.splice(0).forEach((fn) => fn());
       ctx.revert();
-      if (!block) el.style.visibility = visibility;
+      if (!widget) el.style.visibility = visibility;
     },
   };
 }
@@ -156,16 +156,16 @@ function play(el, reduce) {
 /**
  * Mount all animations inside `root` (and optional extra roots such as the portal layer).
  * Returns { revert(), replay(el) }: revert() undoes every tween, trigger, split and listener;
- * replay(el) plays one block's or element's animation again (false when it has none).
+ * replay(el) plays one widget's or element's animation again (false when it has none).
  */
 export function mount(root, { extraRoots = [] } = {}) {
   const reduce = reducedMotion();
   const roots = [root, ...extraRoots];
   const els = roots.flatMap((r) => [...r.querySelectorAll('[data-anim]')]);
   assignKeys(els);
-  const blocks = roots.flatMap((r) => [...r.querySelectorAll('[data-motion]')]);
-  // blocks first: a part inside a block is measured with the block's from-state in place
-  const running = [...blocks, ...els].map((el) => play(el, reduce));
+  const widgets = roots.flatMap((r) => [...r.querySelectorAll('[data-motion]')]);
+  // widgets first: a part inside a widget is measured with the widget's from-state in place
+  const running = [...widgets, ...els].map((el) => play(el, reduce));
   return {
     revert() {
       running.splice(0).forEach((r) => r.revert());

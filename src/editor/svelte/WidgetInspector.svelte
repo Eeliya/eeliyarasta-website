@@ -1,50 +1,50 @@
 <!--
-  One block of the page (ui.block), in two tabs (its size, text size and layer: the toolbar on
-  it in the preview, BlockToolbar.svelte; where it sits is dragged there, overlay.js):
-    Content  its source (BlockSource.svelte: Item / All, From URL or None, and on a [param] page
-             whether it is the main block), then its settings and texts (GroupFields.svelte),
+  One widget of the page (ui.widget), in two tabs (its size, text size and layer: the toolbar on
+  it in the preview, WidgetToolbar.svelte; where it sits is dragged there, overlay.js):
+    Content  its source (WidgetSource.svelte: Item / All, From URL or None, and on a [param] page
+             whether it is the main widget), then its settings and texts (GroupFields.svelte),
              each bindable field with its picker: Custom or a field of the item it shows
     Motion   its motion: its animation and own timing, and its parts with their own animation,
-             which open in the Motion tab (BlockMotion.svelte, as in the Motion tab)
-  One level under the list of sections (a block's row on its section's card, or the block
-  clicked in the preview): its top (ViewTop.svelte: ← Back to the list, Locate), then the block
-  in a card: its type and title (Main: the page's main block), the tabs and their fields. Under it,
+             which open in the Motion tab (WidgetMotion.svelte, as in the Motion tab)
+  One level under the list of sections (a widget's row on its section's card, or the widget
+  clicked in the preview): its top (ViewTop.svelte: ← Back to the list, Locate), then the widget
+  in a card: its type and title (Main: the page's main widget), the tabs and their fields. Under it,
   on every tab, its section's settings card (SectionView.svelte, put there by ContentPanel).
 -->
 <script>
   import GroupFields from './GroupFields.svelte';
-  import BlockSource from './BlockSource.svelte';
+  import WidgetSource from './WidgetSource.svelte';
   import Tabs from './Tabs.svelte';
   import { schemaFor } from './source-items.js';
   import { isTemplate, pageIdOf, sourceFile } from '../../site/files.js';
   import { BIND_TYPES, resolve } from '../../site/layout/bindings.js';
-  import { blockItems, sourceOf } from '../../site/layout/source.js';
-  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { widgetItems, sourceOf } from '../../site/layout/source.js';
+  import { WIDGET_TYPES } from '../../site/widgets/index.js';
   import { ui } from './ui.svelte.js';
-  import BlockMotion from './BlockMotion.svelte';
+  import WidgetMotion from './WidgetMotion.svelte';
   import { ANIMATIONS } from '../../site/files.js';
   import ViewTop from './ViewTop.svelte';
 
   // onmotion(el): open a part in the Motion tab; onlibrary(name): an animation in Animations
   let { g, live, bridge, sourceIds, onsource, onback, onmotion, onlibrary } = $props();
 
-  // (its layout: the toolbar on the block in the preview, BlockToolbar.svelte)
+  // (its layout: the toolbar on the widget in the preview, WidgetToolbar.svelte)
   const TABS = [
     ['content', 'Content'],
     ['motion', 'Motion'],
   ];
-  const { at, j } = $derived(g.block);
-  const base = $derived(`/sections/${at}/blocks/${j}`);
-  const block = $derived.by(() => {
+  const { at, j } = $derived(g.widget);
+  const base = $derived(`/sections/${at}/widgets/${j}`);
+  const widget = $derived.by(() => {
     live.version;
     return live.get(g.file, base) || {};
   });
-  const type = $derived(BLOCK_TYPES[g.type] || {});
+  const type = $derived(WIDGET_TYPES[g.type] || {});
 
   // ---- what it shows (src/site/layout/source.js): on a [param] page with the page the
   // preview shows (its params), the item its fields show the first
   const pageId = $derived(pageIdOf(g.file) || '');
-  // (read on its own: the store changes a value in place, so `block` stays the same object)
+  // (read on its own: the store changes a value in place, so `widget` stays the same object)
   const source = $derived.by(() => {
     live.version;
     const v = live.get(g.file, `${base}/source`);
@@ -53,7 +53,7 @@
   const shown = $derived.by(() => {
     const route = live.routeOf(ui.path);
     const at = isTemplate(pageId) && route?.id === pageId ? route : { params: {} };
-    return blockItems(live.content, at, { source });
+    return widgetItems(live.content, at, { source });
   });
   const item = $derived(shown.item);
   const from = $derived(sourceOf({ source })?.from ?? null);
@@ -90,45 +90,45 @@
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
     },
     from: item && schema ? (schema.title && line(item[schema.title])) || from : from,
-    // a Text block's summary: its fields' values, its own count
+    // a Text widget's summary: its fields' values, its own count
     item,
     items: shown.items?.length ?? 0,
   });
 
-  // the block's element in the preview, read again after every edit
-  const blockEl = $derived.by(() => {
+  // the widget's element in the preview, read again after every edit
+  const widgetEl = $derived.by(() => {
     live.version;
     ui.previewVersion;
-    return bridge.doc?.querySelector(`[data-block="${CSS.escape(g.id)}"]`) || null;
+    return bridge.doc?.querySelector(`[data-widget="${CSS.escape(g.id)}"]`) || null;
   });
 </script>
 
 <ViewTop {bridge} id={g.id} {onback} />
 
-<!-- the block, in a card: its type and title, its tabs and fields -->
+<!-- the widget, in a card: its type and title, its tabs and fields -->
 <div class="card">
   <div class="head">
     <span class="title">
       {g.title}
       {#if g.name}<strong>{g.name}</strong>{/if}
     </span>
-    {#if isMain}<span class="badge" title="The page’s main block: it decides which pages exist"
+    {#if isMain}<span class="badge" title="The page’s main widget: it decides which pages exist"
         >Main</span
       >{/if}
   </div>
 
   <Tabs
     class="card__tabs"
-    label="Block"
+    label="Widget"
     tabs={TABS}
-    value={ui.blockTab}
-    onpick={(id) => (ui.blockTab = id)}
+    value={ui.widgetTab}
+    onpick={(id) => (ui.widgetTab = id)}
   />
 
   <div class="card__body">
-    {#if ui.blockTab === 'motion'}
-      {#key blockEl}
-        <BlockMotion
+    {#if ui.widgetTab === 'motion'}
+      {#key widgetEl}
+        <WidgetMotion
           {live}
           {bridge}
           gsap={bridge.api?.gsap}
@@ -136,15 +136,15 @@
           file={g.file}
           {at}
           {j}
-          el={blockEl}
+          el={widgetEl}
           {onlibrary}
           onpart={onmotion}
         />
       {/key}
     {:else}
-      <!-- its source first (a block whose type shows items), then its settings and fields -->
+      <!-- its source first (a widget whose type shows items), then its settings and fields -->
       {#snippet lead()}
-        <BlockSource {g} {live} {base} list={!!type.list} {shown} {sourceIds} {onsource} />
+        <WidgetSource {g} {live} {base} list={!!type.list} {shown} {sourceIds} {onsource} />
       {/snippet}
       <GroupFields
         {g}
@@ -153,12 +153,12 @@
         {sourceIds}
         {onsource}
         {bindings}
-        lead={type.list || type.item || g.fields.some((f) => f.bindType) || block.source
+        lead={type.list || type.item || g.fields.some((f) => f.bindType) || widget.source
           ? lead
           : undefined}
       />
       {#if !g.fields.length && !g.config?.length}
-        <p class="hint small">No texts or settings in this block.</p>
+        <p class="hint small">No texts or settings in this widget.</p>
       {/if}
     {/if}
   </div>
@@ -193,15 +193,15 @@
     }
   }
 
-  // Main: the block accent, a pill
+  // Main: the widget accent, a pill
   .badge {
     margin-left: auto;
     padding: 0 var(--space-2);
     border-radius: var(--radius-pill);
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
     font-size: var(--fs-xs);
     line-height: 16px;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-block-accent) 45%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-widget-accent) 45%, transparent);
   }
 
   .card :global(.card__tabs) {

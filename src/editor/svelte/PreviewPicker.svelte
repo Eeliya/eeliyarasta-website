@@ -177,7 +177,7 @@
   .pp-hint {
     @include row(var(--space-1));
     margin: 0;
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
 
     i {
       font-size: var(--fs-2xs);

@@ -9,17 +9,17 @@ import * as render from '../src/site/render.js';
 import { buildRoutes } from '../src/site/routes.js';
 import { setEditable } from '../src/site/helpers.js';
 import { checkContent } from '../src/site/validate.js';
-import { BLOCK_TYPES } from '../src/site/blocks/index.js';
-import { newBlock, newSection, renderSections } from '../src/site/layout/index.js';
+import { WIDGET_TYPES } from '../src/site/widgets/index.js';
+import { newWidget, newSection, renderSections } from '../src/site/layout/index.js';
 import {
   bindTypeOf,
   bindingProblems,
   isBinding,
   resolve,
-  resolveBlock,
+  resolveWidget,
 } from '../src/site/layout/bindings.js';
 import { createStore } from '../src/editor/store.js';
-import { blockItems } from '../src/site/layout/source.js';
+import { widgetItems } from '../src/site/layout/source.js';
 
 const content = loadContent('.');
 const { routes } = buildRoutes(content);
@@ -54,7 +54,7 @@ test('resolve: custom values stay, { bind } takes the whole value, a format wrap
     }),
     [{ label: 'Role', value: noor.role }],
   );
-  // HTML stays text: the blocks escape it as before
+  // HTML stays text: the widgets escape it as before
   assert.equal(resolve({ bind: 'title' }, { item: { title: '<b>' }, def: {} }), '<b>');
 });
 
@@ -78,28 +78,28 @@ test('resolve: unknown fields and missing items are empty, with a warning ({{tit
   assert.equal(w2.length, 0);
 });
 
-test('resolveBlock: bound fields and config links resolved; an unbound block is the same object', () => {
+test('resolveWidget: bound fields and config links resolved; an unbound widget is the same object', () => {
   // a type with a text, a multi-line text and a link (the registry's have one or two of them)
   const t = {
     fields: [{ key: 'title' }, { key: 'body', type: 'block' }],
     config: [{ key: 'link', type: 'link' }],
   };
-  const plain = { ...newBlock('button', new Set()), title: 'Hi' };
-  assert.equal(resolveBlock(plain, t, { item: noor, source: 'people', ctx: content }), plain);
+  const plain = { ...newWidget('button', new Set()), title: 'Hi' };
+  assert.equal(resolveWidget(plain, t, { item: noor, source: 'people', ctx: content }), plain);
   const bound = {
     ...plain,
     title: { bind: 'title' },
     body: { bind: 'role', format: '{value} in Amsterdam' },
     config: { link: { bind: 'slug' } },
   };
-  const out = resolveBlock(bound, t, { item: noor, source: 'people', ctx: content });
+  const out = resolveWidget(bound, t, { item: noor, source: 'people', ctx: content });
   assert.equal(out.title, 'Noor Vermeer');
   assert.equal(out.body, `${noor.role} in Amsterdam`);
   assert.equal(out.config.link, noor.slug);
   assert.deepEqual(bound.title, { bind: 'title' }); // not changed in place
   assert.equal(bindTypeOf(t.fields[0]), 'text');
-  assert.equal(bindTypeOf(BLOCK_TYPES.hero.fields.find((f) => f.key === 'photos')), 'photos');
-  assert.equal(bindTypeOf(BLOCK_TYPES.about.fields.find((f) => f.key === 'body')), null);
+  assert.equal(bindTypeOf(WIDGET_TYPES.hero.fields.find((f) => f.key === 'photos')), 'photos');
+  assert.equal(bindTypeOf(WIDGET_TYPES.about.fields.find((f) => f.key === 'body')), null);
   assert.equal(bindTypeOf({ key: 'link', type: 'link' }, { config: true }), 'link');
   assert.ok(isBinding({ bind: 'a' }) && !isBinding('{{a}}') && !isBinding(''));
 });
@@ -107,8 +107,8 @@ test('resolveBlock: bound fields and config links resolved; an unbound block is 
 test("item resolution: Item picks one, From URL the page's matches, None nothing", () => {
   const daan = content.sources.people.find((p) => p.slug === 'daan-okafor');
   const item = { source: { mode: 'item', from: 'people', id: 'p-3pdk' } };
-  assert.equal(blockItems(content, {}, item).item, daan);
-  assert.equal(blockItems(content, {}, item).source, 'people');
+  assert.equal(widgetItems(content, {}, item).item, daan);
+  assert.equal(widgetItems(content, {}, item).source, 'people');
   const url = {
     source: {
       mode: 'url',
@@ -116,12 +116,12 @@ test("item resolution: Item picks one, From URL the page's matches, None nothing
       where: { op: 'and', rules: [{ param: 'person', field: 'slug' }] },
     },
   };
-  assert.equal(blockItems(content, { params: { person: 'noor-vermeer' } }, url).item, noor);
-  assert.equal(blockItems(content, { params: { person: 'nobody' } }, url).item, null);
+  assert.equal(widgetItems(content, { params: { person: 'noor-vermeer' } }, url).item, noor);
+  assert.equal(widgetItems(content, { params: { person: 'nobody' } }, url).item, null);
   const missing = { source: { mode: 'item', from: 'people', id: 'p-zzzz' } };
-  assert.equal(blockItems(content, {}, missing).item, null);
-  assert.equal(blockItems(content, {}, {}).item, null);
-  assert.equal(blockItems(content, {}, {}).source, null);
+  assert.equal(widgetItems(content, {}, missing).item, null);
+  assert.equal(widgetItems(content, {}, {}).item, null);
+  assert.equal(widgetItems(content, {}, {}).source, null);
 });
 
 test('[param] templates: the album title, facts and summary come from each item', () => {
@@ -145,19 +145,19 @@ test('[param] templates: the album title, facts and summary come from each item'
     const html = render.renderRoute(route, content, { editable: true }).body;
     assert.match(
       html,
-      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/photography\/people\/\[person\]\/index\.json#\/sections\/0\/blocks\/0\/title">/,
+      /<h1 class="album__title" data-anim="album.title"\s+data-bound="pages\/photography\/people\/\[person\]\/index\.json#\/sections\/0\/widgets\/0\/title">/,
     );
-    assert.doesNotMatch(html, /data-edit="[^"]*#\/sections\/0\/blocks\/0\/title"/);
+    assert.doesNotMatch(html, /data-edit="[^"]*#\/sections\/0\/widgets\/0\/title"/);
   } finally {
     setEditable(false);
   }
 });
 
-test('a normal page: a block with an item; without one its bound fields are empty', () => {
+test('a normal page: a widget with an item; without one its bound fields are empty', () => {
   const ids = new Set();
-  // a Text block's field runs (src/site/text.js): the item's fields in its lines
+  // a Text widget's field runs (src/site/text.js): the item's fields in its lines
   const heading = {
-    ...newBlock('text', ids),
+    ...newWidget('text', ids),
     body: [
       { style: 'label', text: [{ t: 'Featured' }] },
       { style: 'title', text: [{ field: 'title', format: '{value}, model' }] },
@@ -183,9 +183,9 @@ test('a normal page: a block with an item; without one its bound fields are empt
 
 test('bindingProblems: schema-aware errors and warnings', () => {
   const ids = new Set();
-  // a Text block: its title line one field (src/site/text.js), or a text
-  const block = ({ title, ...patch }) => ({
-    ...newBlock('text', ids),
+  // a Text widget: its title line one field (src/site/text.js), or a text
+  const widget = ({ title, ...patch }) => ({
+    ...newWidget('text', ids),
     body: [
       {
         style: 'title',
@@ -204,25 +204,25 @@ test('bindingProblems: schema-aware errors and warnings', () => {
       x: {
         sections: [
           newSection(ids, [
-            block({
+            widget({
               title: { bind: 'title' },
               source: { mode: 'item', from: 'people', id: 'p-qw7b' },
             }),
-            block({
+            widget({
               title: { bind: 'nope' },
               source: { mode: 'item', from: 'people', id: 'p-qw7b' },
             }),
-            block({
+            widget({
               title: { bind: 'images' },
               source: { mode: 'item', from: 'people', id: 'p-qw7b' },
             }),
-            block({
+            widget({
               title: { bind: 'title', format: '{value}!' },
               source: { mode: 'item', from: 'people', id: 'p-qw7b' },
             }),
-            block({ title: { bind: 'title' } }),
-            block({ title: 'x', source: { mode: 'item', from: 'nope', id: 'p-aaaa' } }),
-            block({
+            widget({ title: { bind: 'title' } }),
+            widget({ title: 'x', source: { mode: 'item', from: 'nope', id: 'p-aaaa' } }),
+            widget({
               title: { bind: 'title' },
               source: { mode: 'item', from: 'people', id: 'p-zzzz' },
             }),
@@ -231,8 +231,8 @@ test('bindingProblems: schema-aware errors and warnings', () => {
       },
     },
   };
-  const out = bindingProblems(c, { types: BLOCK_TYPES });
-  const at = (j) => out.filter((p) => p.message.includes(`blocks/${j})`)).map((p) => p.level);
+  const out = bindingProblems(c, { types: WIDGET_TYPES });
+  const at = (j) => out.filter((p) => p.message.includes(`widgets/${j})`)).map((p) => p.level);
   assert.deepEqual(at(0), []);
   assert.deepEqual(at(1), ['error']);
   assert.deepEqual(at(2), ['error']);
@@ -241,7 +241,7 @@ test('bindingProblems: schema-aware errors and warnings', () => {
   assert.deepEqual(at(5), ['error']);
   assert.deepEqual(at(6), ['warn']);
   assert.match(
-    out.find((p) => p.message.includes('blocks/2)')).message,
+    out.find((p) => p.message.includes('widgets/2)')).message,
     /people\.images \(photos\) doesn't fit a text field/,
   );
   // the site's own pages: nothing wrong
@@ -255,7 +255,7 @@ test('validation: the shape of bindings and items', () => {
     kind: 'page',
     id: 'pg-t004',
 
-    sections: [newSection(ids, [{ ...newBlock(type, ids), ...patch }])],
+    sections: [newSection(ids, [{ ...newWidget(type, ids), ...patch }])],
   });
   const F = 'pages/x/index.json';
   assert.deepEqual(checkContent(F, page({ label: { bind: 'role', format: 'A {value}' } })), []);
@@ -306,7 +306,7 @@ test('Save refuses bindings that do not fit the schema', () => {
     sections: [
       newSection(ids, [
         {
-          ...newBlock('button', ids),
+          ...newWidget('button', ids),
           label: title,
           source: { mode: 'item', from: 'people', id: 'p-qw7b' },
         },

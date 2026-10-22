@@ -1,26 +1,26 @@
 <!--
   Motion tab, two sub-tabs (ui.library.open: Animations):
-  Elements    nothing picked: the page's blocks (its curtain is in Content > Transitions, the
+  Elements    nothing picked: the page's widgets (its curtain is in Content > Transitions, the
               curtain itself in Settings), a box per
               section, each with its animation and its parts that have their own (data-anim
               inside it: the hero's photos, a heading's title, ...), then the animated elements
-              outside the blocks (fixed parts).
-              A block picked (ui.anim.block, from the preview or the list): its motion
-              (BlockMotion). A part or element picked: its animation (AnimEditor).
+              outside the widgets (fixed parts).
+              A widget picked (ui.anim.widget, from the preview or the list): its motion
+              (WidgetMotion). A part or element picked: its animation (AnimEditor).
   Animations  the library (AnimLibrary): every animation, edit one with the preview in view.
-  Picking in the preview goes to Elements; the block picked is the Content tab's block too.
+  Picking in the preview goes to Elements; the widget picked is the Content tab's widget too.
 -->
 <script>
   import AnimEditor from './AnimEditor.svelte';
   import AnimLibrary from './AnimLibrary.svelte';
-  import BlockMotion from './BlockMotion.svelte';
+  import WidgetMotion from './WidgetMotion.svelte';
   import Button from './Button.svelte';
   import Tabs from './Tabs.svelte';
   import Section from './Section.svelte';
   import { ui } from './ui.svelte.js';
   import { nameOf } from './content-groups.js';
   import { targetFile } from '../layout-sync.js';
-  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { WIDGET_TYPES } from '../../site/widgets/index.js';
   import { ANIMATIONS } from '../../site/files.js';
   import { animationOf, partOf } from './motion.js';
 
@@ -55,7 +55,7 @@
     return bridge.api ? bridge.animElements() : [];
   });
 
-  // The page's sections and blocks (its file), each block with its element and parts.
+  // The page's sections and widgets (its file), each widget with its element and parts.
   const file = $derived.by(() => {
     ui.previewVersion;
     return targetFile(ui.target, bridge.doc);
@@ -68,30 +68,30 @@
     return list.map((s, at) => ({
       id: s.id,
       at,
-      name: (s.blocks || []).map(nameOf).find(Boolean) || '',
-      blocks: (s.blocks || []).map((b, j) => {
-        const el = bridge.doc.querySelector(`[data-block="${CSS.escape(b.id)}"]`);
+      name: (s.widgets || []).map(nameOf).find(Boolean) || '',
+      widgets: (s.widgets || []).map((b, j) => {
+        const el = bridge.doc.querySelector(`[data-widget="${CSS.escape(b.id)}"]`);
         return {
           id: b.id,
           j,
           el,
-          label: BLOCK_TYPES[b.type]?.label || b.type,
+          label: WIDGET_TYPES[b.type]?.label || b.type,
           name: nameOf(b),
           anim: b.motion?.anim || '',
-          parts: el ? items.filter((it) => it.el.closest('[data-block]') === el) : [],
+          parts: el ? items.filter((it) => it.el.closest('[data-widget]') === el) : [],
         };
       }),
     }));
   });
-  const outside = $derived(items.filter((it) => !it.el.closest('[data-block]')));
-  // the block picked, where it is
+  const outside = $derived(items.filter((it) => !it.el.closest('[data-widget]')));
+  // the widget picked, where it is
   const picks = $derived.by(() => {
-    const id = ui.anim?.block;
-    for (const s of sections) for (const b of s.blocks) if (b.id === id) return { s, b };
+    const id = ui.anim?.widget;
+    for (const s of sections) for (const b of s.widgets) if (b.id === id) return { s, b };
     return null;
   });
 
-  /** Pick an element or block (as a click in the preview does). */
+  /** Pick an element or widget (as a click in the preview does). */
   function pick(el) {
     if (!el) return;
     bridge.reveal(el);
@@ -104,7 +104,7 @@
     <button
       type="button"
       class={['mlist__item', 'mlist__part', partOf(el, id) && 'is-changed']}
-      title={partOf(el, id) ? 'Has its own values in this block' : undefined}
+      title={partOf(el, id) ? 'Has its own values in this widget' : undefined}
       onclick={() => pick(el)}
       onpointerenter={() => bridge.setHover(el)}
       onpointerleave={() => bridge.setHover(null)}
@@ -141,7 +141,7 @@
             >Section {picks.s.at + 1}{picks.b.name ? ` · ${picks.b.name}` : ''}</span
           >
         </div>
-        <BlockMotion
+        <WidgetMotion
           {live}
           {bridge}
           {gsap}
@@ -154,7 +154,7 @@
           onpart={pick}
         />
       {/key}
-    {:else if ui.anim && !ui.anim.block}
+    {:else if ui.anim && !ui.anim.widget}
       {#key ui.anim}
         <AnimEditor
           {live}
@@ -169,18 +169,18 @@
       {/key}
     {:else}
       <p class="hint">
-        Click a block or an animated part of it in the preview, or pick one below. Hold Alt to click
-        through to links.
+        Click a widget or an animated part of it in the preview, or pick one below. Hold Alt to
+        click through to links.
       </p>
       {#each sections as s (s.id)}
         <Section key="motion:{s.id}" title="Section {s.at + 1}" name={s.name}>
           <ol class="list">
-            {#each s.blocks as b (b.id)}
+            {#each s.widgets as b (b.id)}
               <li>
                 <button
                   type="button"
                   class="mlist__item"
-                  data-block-item={b.id}
+                  data-widget-item={b.id}
                   disabled={!b.el}
                   onclick={() => pick(b.el)}
                   onpointerenter={() => bridge.setHover(b.el)}
@@ -200,7 +200,7 @@
         </Section>
       {/each}
       {#if outside.length}
-        <Section key="motion:elements" title="Outside the blocks" name="Fixed parts">
+        <Section key="motion:elements" title="Outside the widgets" name="Fixed parts">
           {#snippet bar()}<span class="mlist__count">{outside.length}</span>{/snippet}
           <ol class="list">
             {#each outside as it (it.el)}{@render part(it)}{/each}
@@ -233,7 +233,7 @@
     line-height: 1;
   }
 
-  // a block's parts, under it
+  // a widget's parts, under it
   .mlist__parts {
     margin: var(--space-1) 0 0 var(--space-4);
   }

@@ -8,7 +8,7 @@
   grab: a pointerdown on the photo (a list's drag handle, PhotoList.svelte); the thumbnail or Change opens the Media window on it (MediaModal.svelte), which
   stores the photo picked there in this field: one undo step. No text input.
   Used by the Content panel, the Sources modal and Settings.
-  Bindings (a block's field, src/site/layout/bindings.js):
+  Bindings (a widget's field, src/site/layout/bindings.js):
     binds     the item's fields this one can show, [{ value, label, hint }] (null: it can't
               bind). A picker at the end of the label row: Custom (its own text: what it showed
               becomes it) or one of them (stores { "bind": "<field>" }); no source: only Custom.
@@ -274,7 +274,7 @@
     min-width: 0;
   }
 
-  // the value picker at the end of the label row (Select compact); bound: the block accent
+  // the value picker at the end of the label row (Select compact); bound: the widget accent
   .tf__pick {
     @include row(0);
     flex: none;
@@ -284,7 +284,7 @@
     color: var(--c-text-muted);
 
     &.is-bound {
-      color: var(--c-block-accent);
+      color: var(--c-widget-accent);
     }
 
     i {

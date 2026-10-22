@@ -7,10 +7,10 @@
  * (width / 120, floored to 1/64px; the few px left over are centred) on the section, and again
  * when it resizes; the --cell below is the first guess before that runs (and without JS),
  * from 100vw.
- * Blocks sit in it by their CSS variables: --c / --s (first column / columns), --r / --rs
- * (first row / rows), --z (layer), --ar (an aspect block's ratio). Rows never grow: a block
+ * Widgets sit in it by their CSS variables: --c / --s (first column / columns), --r / --rs
+ * (first row / rows), --z (layer), --ar (an aspect widget's ratio). Rows never grow: a widget
  * whose content needs more rows spans more, and modules/rows.js (src/site/layout/flow.js)
- * sets where every block sits now (a linked block below its leader) and how many rows it
+ * sets where every widget sits now (a linked widget below its leader) and how many rows it
  * spans (--fr / --frs) and the section's rows (--frows), which win over the stored ones.
  * While it measures, a section has .sec--measure. A section has no padding above or below
  * (the space between sections is empty rows); at the sides --cpad: a contained section is
@@ -20,23 +20,23 @@
  * its rows always centred in it. A named section has an id (its anchor): a link to it lands
  * below the fixed header (scroll-margin-top; modules/anchors.js). A custom height
  * (.sec--h-custom) is rows, not a min-height: --rows is at least its --minrows (phones
- * --mminrows), its blocks from the top, empty rows below them. Phones can have a height of
+ * --mminrows), its widgets from the top, empty rows below them. Phones can have a height of
  * their own (.sec--mh-*, section.phone.height), else the desktop's.
  *
- * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a block
+ * Phones (below 760px): a grid of 60 square columns (--mc --ms --mr --mrs, --mrows; a widget
  * without a phone area of its own has its desktop area halved there), so a phone shows the
- * desktop layout scaled down until its blocks are placed for it. Why 60 and not 120: a phone
+ * desktop layout scaled down until its widgets are placed for it. Why 60 and not 120: a phone
  * is ~390px wide, and 120 columns would be ~3px cells; 60 give ~6px.
  *
- * Scaled text (.blk--scale, src/site/layout/type.js): sizes in --tcell, the 120-column grid's
- * cell (on the phone grid half a cell), × the style's size (--ts-<style>) × the block's
+ * Scaled text (.wgt--scale, src/site/layout/type.js): sizes in --tcell, the 120-column grid's
+ * cell (on the phone grid half a cell), × the style's size (--ts-<style>) × the widget's
  * adjust (--tk), never under the style's min.
  */
 
 // off (the editor's preview: the switch; the public page leaves them out): their display
 // (grid) would otherwise beat the hidden attribute
 .sec[hidden],
-.blk[hidden] {
+.wgt[hidden] {
   display: none;
 }
 
@@ -52,7 +52,7 @@
   grid-template-rows: repeat(var(--frows, var(--rows)), var(--cell));
   gap: 0;
   // its columns centred (the few px left over); its rows centred when it is taller than them
-  // (a min-height below; modules/rows.js fits a block that fits to the whole rows the minimum
+  // (a min-height below; modules/rows.js fits a widget that fits to the whole rows the minimum
   // holds: under a cell is left over)
   place-content: center;
   padding: 0 var(--cpad);
@@ -73,8 +73,8 @@
   }
 }
 
-// position: relative so blocks paint in their order (and by --z) above a fullscreen block
-.blk {
+// position: relative so widgets paint in their order (and by --z) above a fullscreen widget
+.wgt {
   position: relative;
   grid-column: var(--c) / span var(--s);
   grid-row: var(--fr, var(--r)) / span var(--frs, var(--rs));
@@ -83,18 +83,18 @@
 }
 
 // size: its columns' width × --ar (it spans the rows that holds; auto: its content's)
-.blk--aspect {
+.wgt--aspect {
   align-self: start;
   aspect-ratio: var(--ar);
   overflow: hidden;
 }
-// measuring (modules/rows.js): every block as tall as its content, for one read
-.sec--measure > .blk {
+// measuring (modules/rows.js): every widget as tall as its content, for one read
+.sec--measure > .wgt {
   align-self: start;
   min-height: 0;
 }
 
-// photos fill an aspect (or fullscreen) block: cover, the caption below
+// photos fill an aspect (or fullscreen) widget: cover, the caption below
 @mixin fill {
   > * {
     height: 100%;
@@ -104,7 +104,7 @@
     max-width: none;
     grid-template-rows: minmax(0, 1fr) auto;
   }
-  // figure img: outranks a block's own figure img { height: auto }
+  // figure img: outranks a widget's own figure img { height: auto }
   img,
   video,
   figure img,
@@ -115,7 +115,7 @@
     object-fit: cover;
   }
 }
-.blk--aspect {
+.wgt--aspect {
   @include fill;
 }
 
@@ -128,7 +128,7 @@
 
     grid-template-columns: repeat(var(--mcols), var(--cell));
     grid-template-rows: repeat(var(--frows, var(--mrows)), var(--cell));
-    > .blk {
+    > .wgt {
       grid-column: var(--mc, 1) / span var(--ms, var(--mcols));
       grid-row: var(--fr, var(--mr, 1)) / span var(--frs, var(--mrs, 1));
     }
@@ -151,13 +151,13 @@
     min-height: 100svh;
   }
   // layout.phone: null: not on phones
-  .blk--m-hidden {
+  .wgt--m-hidden {
     display: none;
   }
 }
 
 /*
- * Scaled text (.blk--scale): its texts by style, in cells. A style's size, line height
+ * Scaled text (.wgt--scale): its texts by style, in cells. A style's size, line height
  * (× the size), tracking (em) and min (px) are --ts-<style>, -lh, -tr, -min (defaults in
  * _tokens.scss, site.json typography in the page's head).
  */
@@ -169,8 +169,8 @@
   line-height: var(--ts-#{$style}-lh);
   letter-spacing: var(--ts-#{$style}-tr);
 }
-.blk--scale {
-  // (a fitted block's --tkf, src/client/modules/fit.js, over its adjust)
+.wgt--scale {
+  // (a fitted widget's --tkf, src/client/modules/fit.js, over its adjust)
   --tk-now: var(--tkf, var(--tk, 1));
   .ts--title {
     @include scaled('title');
@@ -196,15 +196,15 @@
   .btn {
     @include scaled('label');
   }
-  // scaled lines are as wide as the block lets them
+  // scaled lines are as wide as the widget lets them
   .ts {
     max-width: none;
   }
 }
-// fitted: no minimum (it is as large as fits, small blocks included)
+// fitted: no minimum (it is as large as fits, small widgets included)
 // and words whole: a long word makes the text smaller (fit.js measures the width too), it
 // never breaks mid-word
-.blk--fit {
+.wgt--fit {
   overflow: hidden;
   .text__body {
     overflow-wrap: normal;

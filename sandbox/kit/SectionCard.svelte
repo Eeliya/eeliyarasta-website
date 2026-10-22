@@ -1,14 +1,14 @@
 <!--
   A page section's card as the Content tab draws it: the real SectionCard.svelte on the sample
-  live state (title row: changed dot, title, eye, pen; count row: "N blocks ⌄", + Add block,
-  move up / down, Duplicate, Delete; its blocks inside when open, BlockRow.svelte each).
+  live state (title row: changed dot, title, eye, pen; count row: "N widgets ⌄", + Add widget,
+  move up / down, Duplicate, Delete; its widgets inside when open, WidgetRow.svelte each).
     live      sampleLive() (one per mock)       at       its index in the sample page
     selected  the selected card (white 70% border; its buttons 100%)
     hover     drawn hovered (white 40% border; its buttons 100%)
-    open      its blocks open inside the card   hoverRow that block row drawn hovered (0, 1, …)
+    open      its widgets open inside the card   hoverRow that widget row drawn hovered (0, 1, …)
     changed   the changed dot before the title
     red       its delete confirm (the real one: over the card, red border)
-  Buttons rest at 30% (a hidden section's or block's eye-slash 100%), as built.
+  Buttons rest at 30% (a hidden section's or widget's eye-slash 100%), as built.
 -->
 <script>
   import RealCard from '../../src/editor/svelte/SectionCard.svelte';
@@ -29,7 +29,7 @@
   // writable: the card's own Cancel / Delete clear it
   let deleting = $derived(red ? sections[at]?.id : '');
 
-  // a block row drawn hovered (its buttons 100%)
+  // a widget row drawn hovered (its buttons 100%)
   const rowHover = (el) => {
     el.querySelectorAll('.brow')[hoverRow]?.classList.add('kit-hover');
   };

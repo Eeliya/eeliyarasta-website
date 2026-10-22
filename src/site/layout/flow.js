@@ -1,24 +1,24 @@
 /**
- * Real rows: a section is a grid of uniform rows (one square cell, --cell, tall), and every block
- * spans a whole number of them. A block's stored area (layout.base, or its phone area; an auto block stores no rows: 1) is where it was
- * placed; at any width a block may need another number of rows than it stores:
+ * Real rows: a section is a grid of uniform rows (one square cell, --cell, tall), and every widget
+ * spans a whole number of them. A widget's stored area (layout.base, or its phone area; an auto widget stores no rows: 1) is where it was
+ * placed; at any width a widget may need another number of rows than it stores:
  *
  *   auto    the rows its content needs (the default)
  *   aspect  the rows its width × its ratio needs
  *   rows    exactly its stored rows (fixed)
  *
- * Blocks are free: a block stays at its stored row whatever the blocks above it do, and blocks
- * may overlap. A linked block (./links.js) follows its leader instead: its first row is the
+ * Widgets are free: a widget stays at its stored row whatever the widgets above it do, and widgets
+ * may overlap. A linked widget (./links.js) follows its leader instead: its first row is the
  * leader's last row now + 1 + its gap (cells; negative overlaps them), at least row 1.
  * resolveRows works that out in the links' order (a leader before its followers; a link to a
- * block that isn't placed, or one in a loop, counts as free). The section has the rows its
- * lowest block reaches now, plus the empty rows it had below its lowest block as stored. The
- * client (src/client/modules/rows.js) measures the blocks and applies the result; the editor
- * stores it when a block is dragged.
+ * widget that isn't placed, or one in a loop, counts as free). The section has the rows its
+ * lowest widget reaches now, plus the empty rows it had below its lowest widget as stored. The
+ * client (src/client/modules/rows.js) measures the widgets and applies the result; the editor
+ * stores it when a widget is dragged.
  */
 
 /**
- * items: [{ id, row, rows, need, link }]: a block's stored rows, the rows it needs now (null or
+ * items: [{ id, row, rows, need, link }]: a widget's stored rows, the rows it needs now (null or
  * undefined: its stored rows) and the link it follows ({ to, gap } or
  * null). sectionRows: the section's stored row count. Returns { rows, at: { id: { row, rows } } }.
  */

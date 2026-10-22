@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import stylelint from 'stylelint';
 import local from './stylelint-4px.mjs';
 
-// a block's border width: a label or box lines up with a 1.5px or 2px border on purpose
+// a widget's border width: a label or box lines up with a 1.5px or 2px border on purpose
 const BORDER = /left: -(1\.5|2)px/g;
 
 function cssOf(file, name) {

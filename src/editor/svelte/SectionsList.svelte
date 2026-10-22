@@ -1,10 +1,10 @@
 <!--
   The page's sections in the Content tab (src/site/layout/): a card each (SectionCard.svelte:
-  its title, eye and pen; its blocks count, which opens its blocks inside the card, Add block,
+  its title, eye and pen; its widgets count, which opens its widgets inside the card, Add widget,
   move up / down, Duplicate, Delete), then the dashed Add section card, which adds an empty
   section after the last one. A click on a card selects it (ui.selSection: its section shown in
-  the preview, overlay.js); a double click or its pen opens its settings (onsection); a block's
-  row opens its settings (onopen), as a click on the block in the preview does. Blocks have no
+  the preview, overlay.js); a double click or its pen opens its settings (onsection); a widget's
+  row opens its settings (onopen), as a click on the widget in the preview does. Widgets have no
   order here: they are placed in the preview. Every change is one undo step (layout-ops.js).
 -->
 <script>

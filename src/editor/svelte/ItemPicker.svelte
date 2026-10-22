@@ -1,8 +1,8 @@
 <!--
   A source field (always a whole row of its field grid), labelled "Source list" (mode source)
   or "Source item" (mode item): its label, what it is set to (read only) and a button that opens a window to
-  pick it. Every source-using block has one (BlockInspector.svelte, GroupFields.svelte).
-    mode      'item'   a block's item, { source, id } or null: a source, then one of its items;
+  pick it. Every source-using widget has one (WidgetInspector.svelte, GroupFields.svelte).
+    mode      'item'   a widget's item, { source, id } or null: a source, then one of its items;
                        it shows "people.json · Eeliya Rasta" and opens on that source's items
               'source' a source id ('' or null: none): it stops at the sources, the current
                        one highlighted; it shows "people.json"
@@ -91,7 +91,7 @@
       dialog.querySelector('.ip-search')
     )?.focus();
   }
-  /** Open on the current source's items (a block's item), else on the sources. */
+  /** Open on the current source's items (a widget's item), else on the sources. */
   export function open(at = items_ ? current : '', id = '') {
     source = items_ ? at : '';
     query = '';
@@ -134,7 +134,7 @@
       class="sc__main"
       aria-haspopup="dialog"
       aria-describedby="{uid}-label"
-      title={items_ ? 'Pick the item this block shows' : 'Pick the source list'}
+      title={items_ ? 'Pick the item this widget shows' : 'Pick the source list'}
       onclick={(e) => (e.stopPropagation(), open())}
     >
       {#if photo}

@@ -19,7 +19,7 @@
               (24px for a file button). A panel's own sections keep their bar on top while
               scrolling through them (sticky).
     children  the section body
-    foot      optional: more body under the bar or body (a page section's blocks)
+    foot      optional: more body under the bar or body (a page section's widgets)
     stack     the bar in two rows: the title alone on the first (it wraps in full), the `bar`
               snippet's controls on a second, from the left edge
     danger    the card's border red (a delete confirm over it)
@@ -33,7 +33,7 @@
     onselect  optional, with onenter: a click on the card selects it
     selected  its border white 70% (the selected card); hovered 40% (editor.scss)
               Neither a click nor a double click on its controls (buttons, switches, fields,
-              links, a block's row, a confirm) or while `danger`
+              links, a widget's row, a confirm) or while `danger`
   Opening and closing animate the body's grid row, 0fr to 1fr (GSAP, 0.25s power2.out): closed
   it is clipped away, still rendered but inert; none with prefers-reduced-motion.
 -->
@@ -338,7 +338,7 @@
     padding: var(--space-3) var(--space-2) 0;
   }
 
-  // no body (a list card: its blocks only): the foot right under the bar
+  // no body (a list card: its widgets only): the foot right under the bar
   .sec__inner:empty {
     display: none;
   }

@@ -1,9 +1,9 @@
 /**
- * Text that scales with the grid: a text block (SCALE_TYPES) whose `scale` is on sizes its
- * text in cells, so it grows and shrinks with the page's width like the blocks do:
+ * Text that scales with the grid: a text widget (SCALE_TYPES) whose `scale` is on sizes its
+ * text in cells, so it grows and shrinks with the page's width like the widgets do:
  *
  *   "scale": { "on": true, "adjust": 120 }     adjust: % of its styles' sizes (default 100)
- *   "scale": { "fit": true }                    as large as fits the block (fixed height only)
+ *   "scale": { "fit": true }                    as large as fits the widget (fixed height only)
  *
  * Each text style is defined once, in cells of the 120-column grid (site.json "typography";
  * TEXT_STYLES are the defaults):
@@ -16,7 +16,7 @@
  *   tracking  letter spacing, em (likewise)
  *   min       the smallest font size, px: scaled text never gets smaller (readable on phones)
  *
- * Which of a block's texts has which style: _layout.scss (.blk--scale), e.g. a heading block's
+ * Which of a widget's texts has which style: _layout.scss (.wgt--scale), e.g. a heading widget's
  * title "title", its eyebrow "label", its body "paragraph". With `scale` off (the default) a
  * text has its style's normal fixed size (the site's stylesheets).
  */
@@ -34,20 +34,20 @@ export const TEXT_STYLES = {
 };
 const STYLE_KEYS = ['size', 'line', 'tracking', 'min'];
 
-/** Block types whose text can scale (a Scale switch in the editor). */
+/** Widget types whose text can scale (a Scale switch in the editor). */
 export const SCALE_TYPES = ['text', 'button'];
 
 /**
- * Fit to block: its text as large as fits its box (a block with a fixed height: aspect or
+ * Fit to widget: its text as large as fits its box (a widget with a fixed height: aspect or
  * rows), worked out live in the page (src/client/modules/fit.js: --tkf, over adjust).
  */
 export const fitted = (b) =>
   SCALE_TYPES.includes(b?.type) && b?.scale?.fit === true && ['aspect', 'rows'].includes(b?.size);
 
-/** Is a block's text scaled (in cells: by the grid, or fitted)? */
+/** Is a widget's text scaled (in cells: by the grid, or fitted)? */
 export const scaled = (b) => SCALE_TYPES.includes(b?.type) && (b?.scale?.on === true || fitted(b));
 
-/** A scaled block's adjust as a factor (1 = 100%). */
+/** A scaled widget's adjust as a factor (1 = 100%). */
 export const adjustOf = (b) => {
   const a = b?.scale?.adjust;
   return typeof a === 'number' && a > 0 ? a / 100 : 1;
@@ -107,12 +107,12 @@ export function checkTypography(t) {
   return out;
 }
 
-/** Problems of a block's "scale". */
+/** Problems of a widget's "scale". */
 export function checkScale(b) {
   const s = b?.scale;
   if (s === undefined) return [];
   if (!SCALE_TYPES.includes(b.type))
-    return [`"scale" is for text blocks (${SCALE_TYPES.join(', ')})`];
+    return [`"scale" is for text widgets (${SCALE_TYPES.join(', ')})`];
   if (!isObject(s))
     return ['"scale" must be an object { "on": true, "adjust": 100, "fit": false }'];
   const out = [];

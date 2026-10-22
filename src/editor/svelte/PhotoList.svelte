@@ -1,8 +1,8 @@
 <!--
-  A list of photos (a block's list whose items have a photo, e.g. the Hero's): each item its
+  A list of photos (a widget's list whose items have a photo, e.g. the Hero's): each item its
   photo card (Field.svelte's, 64px) and its other fields under it, the photo the drag handle (and a click on it
   opens Media), ✕ removes it; Add at the end. No ↑ / ↓: drag it, or Alt+↑/↓ on a focused card.
-  The drag as the block rows' (SectionsList.svelte): a press moves SLACK px to be a drag, a
+  The drag as the widget rows' (SectionsList.svelte): a press moves SLACK px to be a drag, a
   line shows where it lands, letting go at its own place moves nothing, Esc cancels, and a
   drag isn't a click (Media doesn't open). One undo step (the parent's onmove).
     label, items (each item's fields), addLabel, onmove(from, to), onremove(i), onadd()

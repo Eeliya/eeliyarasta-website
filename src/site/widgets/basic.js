@@ -1,5 +1,5 @@
 /**
- * Plain block types for any page: text, one photo, a button. See ./index.js for the shape.
+ * Plain widget types for any page: text, one photo, a button. See ./index.js for the shape.
  */
 import { html, esc, img, extAttrs, sizes, pad, editable } from '../helpers.js';
 import { checkBody, countText, fieldText, renderBody } from '../text.js';
@@ -11,8 +11,8 @@ import { hrefOf } from '../hrefs.js';
  * italic, links, an item's fields and counts in them (../text.js has the body's shape).
  * Edited in the preview only (src/editor/rich.js). config.center: centred;
  * config.numbered: its first label starts with its number among the page's numbered text
- * blocks ("(01) "). A title line animates as page.title, the lines after it (when the
- * block has no motion of its own) as page.intro.
+ * widgets ("(01) "). A title line animates as page.title, the lines after it (when the
+ * widget has no motion of its own) as page.intro.
  */
 export const text = {
   type: 'text',
@@ -73,8 +73,8 @@ export const photo = {
   ],
   defaults: { src: '', caption: '', motion: { anim: 'image-reveal' } },
   render: (s, ctx, b) =>
-    html` <div class="photoblock">
-      <figure class="photoblock__figure">
+    html` <div class="photowidget">
+      <figure class="photowidget__figure">
         ${s.src ? img(ctx, s.src, { sizes: sizes('100vw', '60vw'), attrs: b.ed('src', 'image') }) : ''}
         ${s.caption ? html`<figcaption class="label muted" ${b.ed('caption')}>${esc(s.caption)}</figcaption>` : ''}
       </figure>
@@ -97,7 +97,7 @@ export const button = {
   },
   render: (s, ctx, b) => {
     const href = hrefOf(ctx, s.config?.link, 'a button') || '/';
-    return html` <div class="buttonblock">
+    return html` <div class="buttonwidget">
       <a class="btn glass" href="${esc(href)}"${extAttrs(href)}><span${b.ed('label')}>${esc(s.label)}</span> <span aria-hidden="true">→</span></a>
     </div>`;
   },

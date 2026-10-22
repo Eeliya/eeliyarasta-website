@@ -8,7 +8,7 @@ import {
   mount as mountAnimations,
   config as animationConfig,
   resolve as resolveAnimation,
-  resolveBlock as resolveBlockAnimation,
+  resolveWidget as resolveWidgetAnimation,
   setConfig,
   pageKey,
 } from './anim/engine.js';
@@ -27,7 +27,7 @@ import { backdrop } from './modules/backdrop.js';
 import { fitText } from './modules/fit.js';
 
 const pageModules = [imageFade, album, projects, cards, contactForms, anchors, fitText];
-// the footer's blocks: the modules of blocks it can have (no album, project list or anchors:
+// the footer's widgets: the modules of widgets it can have (no album, project list or anchors:
 // those are the page's, once)
 const footerModules = [imageFade, cards, contactForms, fitText];
 // Editor hooks (see connectEditor below); always empty on the public site.
@@ -148,8 +148,8 @@ function connectEditor() {
     /** Replace the animation config (in place) with an edited copy. */
     setAnimations: (next) => setConfig(next),
     remount: remountAnimations,
-    resolveBlock: resolveBlockAnimation,
-    /** Play one block's (or data-anim element's) animation again; false when it has none. */
+    resolveWidget: resolveWidgetAnimation,
+    /** Play one widget's (or data-anim element's) animation again; false when it has none. */
     replay(el) {
       if (frozen || !current?.anim.replay?.(el)) return false;
       ScrollTrigger.refresh();

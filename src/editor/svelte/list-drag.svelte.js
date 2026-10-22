@@ -1,5 +1,5 @@
 /**
- * A list row dragged to another place (PhotoList, ListField, SectionsList's blocks): a press
+ * A list row dragged to another place (PhotoList, ListField, SectionsList's widgets): a press
  * on its handle moves SLACK px to be a drag; then the row lifts and follows the pointer and a
  * line shows where it lands (drag-target.js, on the rows as they were when it started, plus
  * how far the panel scrolled). Letting go at its own place moves nothing, Esc ends it before

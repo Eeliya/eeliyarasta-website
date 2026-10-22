@@ -1,23 +1,23 @@
 <!--
-  One toolbar, on the selected block only (ui.block, Content tab), over the preview: drawn on
-  the stage (App.svelte) at the block's top left edge, above it (below it when there is no
+  One toolbar, on the selected widget only (ui.widget, Content tab), over the preview: drawn on
+  the stage (App.svelte) at the widget's top left edge, above it (below it when there is no
   room, inside it when it is taller than the frame), never moving the page. Two parts:
 
-    text      (a Text block) style ▾ (the line the caret is in: the whole line), B, I, link
+    text      (a Text widget) style ▾ (the line the caret is in: the whole line), B, I, link
               (the selected text only: greyed with nothing selected or when not editing),
-              + Field (a field of the item the block shows, or a count, at the caret)
+              + Field (a field of the item the widget shows, or a count, at the caret)
     | layout  Size ▾ (Auto | Aspect with its ratios and a custom w:h | Rows), Text size ▾
-              (its styles' sizes | Scale with the grid, % | Fit to block: fixed heights
+              (its styles' sizes | Scale with the grid, % | Fit to widget: fixed heights
               only), Layer (down / up: [ and ]; the phone: Reset phone instead), Info
               (where it is, what it follows)
 
-  A block without text has the layout part only. A narrow block puts the layout part into a
+  A widget without text has the layout part only. A narrow widget puts the layout part into a
   "…" menu first, then the text marks too. The edit itself is bridge.js's (rich.js); the
   layout edits layout-ops.js's, one undo step each.
 -->
 <script>
   import { ui } from './ui.svelte.js';
-  import { layerBlock, resetMobile, setBlock } from '../layout-ops.js';
+  import { layerWidget, resetMobile, setWidget } from '../layout-ops.js';
   import { targetFile } from '../layout-sync.js';
   import { schemaFor } from './source-items.js';
   import {
@@ -30,7 +30,7 @@
     sizeOf,
   } from '../../site/layout/index.js';
   import { SCALE_TYPES, adjustOf } from '../../site/layout/type.js';
-  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { WIDGET_TYPES } from '../../site/widgets/index.js';
   import { sourceFile, sourceIds as sourceIdsOf } from '../../site/files.js';
   import { sourceOf } from '../../site/layout/source.js';
   import { untrack } from 'svelte';
@@ -49,35 +49,35 @@
 
   let { live, bridge } = $props();
 
-  // ---- the block: where it is in its file, its stored value, its element in the preview
+  // ---- the widget: where it is in its file, its stored value, its element in the preview
   const where = $derived.by(() => {
     live.version;
     ui.previewVersion;
-    const id = ui.block;
+    const id = ui.widget;
     if (!id || ui.mode !== 'text') return null;
     const file = targetFile(ui.target, bridge.doc);
     const list = live.get(file, '/sections') || [];
     for (const [at, s] of list.entries()) {
-      const j = (s?.blocks || []).findIndex((b) => b?.id === id);
-      if (j >= 0) return { id, file, at, j, base: `/sections/${at}/blocks/${j}` };
+      const j = (s?.widgets || []).findIndex((b) => b?.id === id);
+      if (j >= 0) return { id, file, at, j, base: `/sections/${at}/widgets/${j}` };
     }
     return null;
   });
-  const block = $derived.by(() => {
+  const widget = $derived.by(() => {
     live.version;
     return where ? live.get(where.file, where.base) || {} : null;
   });
-  const type = $derived(BLOCK_TYPES[block?.type] || {});
+  const type = $derived(WIDGET_TYPES[widget?.type] || {});
   const hasText = $derived(!!type.fields?.some((f) => f.type === 'rich'));
-  const scalable = $derived(SCALE_TYPES.includes(block?.type));
+  const scalable = $derived(SCALE_TYPES.includes(widget?.type));
   const phone = $derived(ui.viewport === 'mobile');
-  const size = $derived(sizeOf(block));
-  const rich = $derived(ui.rich && ui.rich.block === where?.id ? ui.rich : null);
+  const size = $derived(sizeOf(widget));
+  const rich = $derived(ui.rich && ui.rich.widget === where?.id ? ui.rich : null);
   const editing = $derived(!!rich);
-  const style = $derived(rich ? rich.style : block?.body?.[0]?.style || 'paragraph');
+  const style = $derived(rich ? rich.style : widget?.body?.[0]?.style || 'paragraph');
   const bodyRef = $derived(where ? { file: where.file, ptr: `${where.base}/body` } : null);
 
-  // ---- where it is drawn: the block's box in the frame, on the stage, every frame
+  // ---- where it is drawn: the widget's box in the frame, on the stage, every frame
   let box = $state(null); // { x, y, w, h, frameTop, frameBottom }
   let shownRows = $state(null);
   let hidden = $state(false);
@@ -89,7 +89,7 @@
       raf = requestAnimationFrame(tick);
       const doc = bridge.doc;
       const frame = doc?.defaultView?.frameElement;
-      const el = doc?.querySelector(`[data-block="${CSS.escape(id)}"]`);
+      const el = doc?.querySelector(`[data-widget="${CSS.escape(id)}"]`);
       const stage = frame?.parentElement;
       if (!el || !stage) return void (box = null);
       const r = el.getBoundingClientRect();
@@ -153,7 +153,7 @@
 
   // the preview's label of the selected text steps aside on the toolbar's side (no shift)
   $effect(() => {
-    const side = where && block && pos && !hidden ? pos.side : null;
+    const side = where && widget && pos && !hidden ? pos.side : null;
     bridge.toolbarSide(side);
     return () => bridge.toolbarSide(null);
   });
@@ -179,7 +179,7 @@
   });
   $effect(() => {
     where?.id;
-    // another block picked while the link box held the edit open: it lets go, the edit ends
+    // another widget picked while the link box held the edit open: it lets go, the edit ends
     untrack(() => {
       if (open === 'link') bridge.releaseRich(null);
       open = null;
@@ -233,8 +233,8 @@
     bridge.holdRich(false);
   }
 
-  // + Field: the item's fields (the block's source), and counts of the sources
-  const from = $derived(sourceOf(block)?.from ?? null);
+  // + Field: the item's fields (the widget's source), and counts of the sources
+  const from = $derived(sourceOf(widget)?.from ?? null);
   const fields = $derived.by(() => {
     live.version;
     return from
@@ -259,8 +259,8 @@
 
   // ---- layout (as the Layout tab had it)
   const area = $derived.by(() => {
-    if (!block) return null;
-    const a = phone ? phoneAreaOf(block) : placeOf(baseOf(block));
+    if (!widget) return null;
+    const a = phone ? phoneAreaOf(widget) : placeOf(baseOf(widget));
     const ok = (n) => Number.isInteger(n) && n > 0;
     return {
       ...a,
@@ -268,43 +268,43 @@
       rows: ok(shownRows?.rows) ? shownRows.rows : a.rows,
     };
   });
-  const link = $derived(block ? linkOf(block, phone) : null);
+  const link = $derived(widget ? linkOf(widget, phone) : null);
   const leaderName = $derived.by(() => {
     if (!link || !where) return '';
     const s = live.get(where.file, `/sections/${where.at}`) || {};
-    const leader = (s.blocks || []).find((b) => b?.id === link.to);
-    return leader ? nameOf(leader) || BLOCK_TYPES[leader.type]?.label || leader.id : link.to;
+    const leader = (s.widgets || []).find((b) => b?.id === link.to);
+    return leader ? nameOf(leader) || WIDGET_TYPES[leader.type]?.label || leader.id : link.to;
   });
   const phoneSet = $derived.by(() => {
     live.version;
     const s = where && live.get(where.file, `/sections/${where.at}`);
-    return !!s?.blocks?.some((b) => b?.layout?.phone !== undefined);
+    return !!s?.widgets?.some((b) => b?.layout?.phone !== undefined);
   });
   const SIZES = [
     ['auto', 'Auto', 'As tall as its content'],
     ['aspect', 'Aspect', 'Its width × a ratio'],
     ['rows', 'Rows', 'Its rows, fixed'],
   ];
-  const set = (patch, key) => setBlock(live.store, where.file, where.at, where.j, patch, key);
+  const set = (patch, key) => setWidget(live.store, where.file, where.at, where.j, patch, key);
   function setSize(next) {
     if (next === size) return;
     set({
       size: next === 'auto' ? undefined : next,
-      aspect: next === 'aspect' ? block.aspect || '4:5' : undefined,
+      aspect: next === 'aspect' ? widget.aspect || '4:5' : undefined,
       rows: next === 'auto' ? undefined : area.rows,
     });
   }
   let ratioText = $state('');
-  const customRatio = $derived(!!block?.aspect && !ASPECTS.includes(block.aspect));
+  const customRatio = $derived(!!widget?.aspect && !ASPECTS.includes(widget.aspect));
   function typeRatio(v) {
     ratioText = v;
     if (ratioOf(v)) set({ aspect: v.trim() }, `layout:${where.file}#${where.base}/aspect`);
   }
   // text size: the styles' (none), scaled with the grid (on, adjust) or fitted (fit)
-  const tsize = $derived(block?.scale?.fit ? 'fit' : block?.scale?.on ? 'scale' : 'fixed');
+  const tsize = $derived(widget?.scale?.fit ? 'fit' : widget?.scale?.on ? 'scale' : 'fixed');
   const canFit = $derived(size !== 'auto');
   function setTextSize(mode, adjust) {
-    const a = adjust ?? block.scale?.adjust ?? 100;
+    const a = adjust ?? widget.scale?.adjust ?? 100;
     const next =
       mode === 'fixed'
         ? undefined
@@ -316,10 +316,10 @@
       adjust !== undefined ? `layout:${where.file}#${where.base}/scale` : undefined,
     );
   }
-  const layer = (dir) => layerBlock(live.store, where.file, where.at, where.j, dir);
+  const layer = (dir) => layerWidget(live.store, where.file, where.at, where.j, dir);
 
   const sizeLabel = $derived(
-    size === 'aspect' ? block?.aspect || '4:5' : SIZES.find(([s]) => s === size)?.[1],
+    size === 'aspect' ? widget?.aspect || '4:5' : SIZES.find(([s]) => s === size)?.[1],
   );
 </script>
 
@@ -398,8 +398,8 @@
         <button
           type="button"
           role="radio"
-          aria-checked={block.aspect === r}
-          class={['seg__btn', (block.aspect ?? '4:5') === r && 'is-active']}
+          aria-checked={widget.aspect === r}
+          class={['seg__btn', (widget.aspect ?? '4:5') === r && 'is-active']}
           onclick={() => set({ aspect: r })}>{r}</button
         >
       {/each}
@@ -409,7 +409,7 @@
       <input
         class="tf__input btb__input"
         placeholder="5:7"
-        value={customRatio ? block.aspect : ratioText}
+        value={customRatio ? widget.aspect : ratioText}
         aria-label="Custom ratio (width:height)"
         aria-invalid={ratioText !== '' && !ratioOf(ratioText)}
         oninput={(e) => typeRatio(e.currentTarget.value)}
@@ -444,9 +444,9 @@
       class={['seg__btn', tsize === 'fit' && 'is-active']}
       disabled={!canFit}
       title={canFit
-        ? 'As large as fits the block'
+        ? 'As large as fits the widget'
         : 'Fit needs a fixed height: Size Aspect or Rows'}
-      onclick={() => setTextSize('fit')}>Fit to block</button
+      onclick={() => setTextSize('fit')}>Fit to widget</button
     >
   </div>
   {#if tsize === 'scale'}
@@ -457,7 +457,7 @@
         type="number"
         min="10"
         max="1000"
-        value={Math.round(adjustOf(block) * 100)}
+        value={Math.round(adjustOf(widget) * 100)}
         aria-label="Text size, % of its styles"
         oninput={(e) => {
           const v = Number(e.currentTarget.value);
@@ -466,7 +466,7 @@
       />
     </label>
   {:else if !canFit}
-    <p class="btb__note">Fit to block needs a fixed height: Size Aspect or Rows.</p>
+    <p class="btb__note">Fit to widget needs a fixed height: Size Aspect or Rows.</p>
   {/if}
 {/snippet}
 
@@ -500,7 +500,7 @@
     >{#if link}follows {leaderName}, gap {link.gap}{:else}free (not linked){/if}</span
   >
   <span class="btb__hint"
-    >Drag it to move, its handles to resize, its top circle onto another block's bottom circle to
+    >Drag it to move, its handles to resize, its top circle onto another widget's bottom circle to
     link it.</span
   >
 {/snippet}
@@ -521,7 +521,7 @@
       type="button"
       class={['btb__btn btb__icon', (open === 'tsize' || tsize !== 'fixed') && 'is-open']}
       aria-label="Text size"
-      title="Text size: its styles, scaled with the grid, or fit to block"
+      title="Text size: its styles, scaled with the grid, or fit to widget"
       onclick={() => toggle('tsize')}
       ><i class="fa-solid fa-text-height" aria-hidden="true"></i></button
     >
@@ -531,7 +531,7 @@
       type="button"
       class="btb__btn"
       disabled={!phoneSet}
-      title="The section's blocks show their desktop layout halved again"
+      title="The section's widgets show their desktop layout halved again"
       onclick={() => resetMobile(live.store, where.file, where.at)}
       ><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset phone</span></button
     >
@@ -555,7 +555,7 @@
   >
 {/snippet}
 
-{#if where && block && pos && !hidden}
+{#if where && widget && pos && !hidden}
   <div
     class={['btb', pos.flip && 'is-below']}
     style="left: {pos.x}px; top: {pos.y}px"
@@ -564,7 +564,7 @@
     onmousedown={keepFocus}
     role="presentation"
   >
-    <div class="btb__bar" role="toolbar" aria-label="Block">
+    <div class="btb__bar" role="toolbar" aria-label="Widget">
       {#if hasText}
         <button
           type="button"
@@ -684,7 +684,7 @@
     gap: var(--space-1);
   }
 
-  // above the block: its menus open below the bar; under it the same
+  // above the widget: its menus open below the bar; under it the same
   .btb__bar {
     display: flex;
     align-items: center;
@@ -755,7 +755,7 @@
   }
 
   .btb__field:not(:disabled) {
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
   }
 
   .btb__caret {
@@ -779,7 +779,7 @@
       inset 0 0 0 1px var(--c-line),
       0 8px 24px var(--black-a40);
 
-    // the text size's three choices in full (Fit to block)
+    // the text size's three choices in full (Fit to widget)
     &.is-wide {
       width: 320px;
     }
@@ -891,8 +891,8 @@
     flex: none !important;
     padding: 0 var(--space-1);
     border-radius: var(--radius-xs);
-    background: color-mix(in srgb, var(--c-block-accent) 16%, transparent);
-    color: var(--c-block-accent);
+    background: color-mix(in srgb, var(--c-widget-accent) 16%, transparent);
+    color: var(--c-widget-accent);
   }
 
   // the styles as they look, small

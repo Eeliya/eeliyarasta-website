@@ -25,7 +25,7 @@ export function createStore() {
   let batchEntry = null;
 
   // a file as Save writes it (defaults left out): what "changed" compares, so a value equal to
-  // its default is the same as none (a block moved back to col 1). Cached until the next change (emit).
+  // its default is the same as none (a widget moved back to col 1). Cached until the next change (emit).
   let tidied = new WeakMap();
   const tidy = (file, data) => {
     if (data === undefined || data === null || typeof data !== 'object') return data;

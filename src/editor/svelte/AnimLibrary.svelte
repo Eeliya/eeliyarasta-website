@@ -1,9 +1,9 @@
 <!--
   Motion tab, Animations: the animations in content/en/settings/animations.json ("presets"
   there), inline in the panel so the preview stays in view while editing. It starts on the
-  list of animations, each with its type and how many blocks and elements use it; click one to
+  list of animations, each with its type and how many widgets and elements use it; click one to
   edit its own values, Back returns to the list. The only place that defines what an animation
-  does (its properties, added and removed here); a block, an element or its data-anim name can
+  does (its properties, added and removed here); a widget, an element or its data-anim name can
   only set its own timing (TIMING_KEYS). Edits show in the preview at once; Replay plays them again.
   The animation shown is ui.library.name ('' = the list), kept by persist.js.
 -->
@@ -16,7 +16,7 @@
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
   // cfg: animations.json as edited; items: the page's animated elements; sections: the page's
-  // blocks (MotionPanel); gsap: the preview's
+  // widgets (MotionPanel); gsap: the preview's
   let { live, bridge, cfg, items, sections = [], gsap } = $props();
 
   let root = $state();
@@ -28,7 +28,7 @@
   // Who uses an animation: elements on this page, and data-anim names anywhere on the site
   // (targets in animations.json; how many elements each has on other pages isn't known here).
   const onPage = (n) => [
-    ...sections.flatMap((s) => s.blocks).filter((b) => b.anim === n && b.el),
+    ...sections.flatMap((s) => s.widgets).filter((b) => b.anim === n && b.el),
     ...items.filter((it) => animationOf(cfg, it) === n),
   ];
   const targets = (n) => Object.keys(cfg.targets).filter((t) => cfg.targets[t].preset === n);
@@ -81,8 +81,8 @@
   {:else}
     <div class="lib__info">
       <p class="hint">
-        Type {m.type}. Used by {count(uses.length, 'block or element', 'blocks or elements')} on this
-        page and by {targets(name).join(', ') || 'no data-anim name'} on the site. Blocks, elements and
+        Type {m.type}. Used by {count(uses.length, 'widget or element', 'widgets or elements')} on this
+        page and by {targets(name).join(', ') || 'no data-anim name'} on the site. Widgets, elements and
         names can set their own timing only.
       </p>
       <Button

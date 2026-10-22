@@ -3,45 +3,45 @@
  * the site's styles nor the editor's reach it):
  *
  *   Grid      the square cells (120 columns, the phone grid's 60, and its rows, all one
- *             --cell: src/site/layout/flow.js) of the selected block's section only, while a
- *             block is selected (and so while it is dragged or resized) or an empty
+ *             --cell: src/site/layout/flow.js) of the selected widget's section only, while a
+ *             widget is selected (and so while it is dragged or resized) or an empty
  *             section's view is open (ui.section), from the section's own computed grid: faint white lines, every 5th a little stronger. Nothing
  *             selected: no grid
- *   Arrange   always on in the Content tab: a click picks a block (the block inspector opens),
- *             a click on empty space (no block, handle, circle or link line) or Esc (main /
+ *   Arrange   always on in the Content tab: a click picks a widget (the widget inspector opens),
+ *             a click on empty space (no widget, handle, circle or link line) or Esc (main /
  *             App.svelte) drops the selection (the panel shows the sections again),
  *             a drag moves it and the handles on its edges and corners resize it; a double
  *             click edits a text in place (bridge.js), the page's own clicks are off. A drag
- *             snaps to the cells and shows its area live (the block's CSS variables, and the
- *             blocks that follow it move along); on release it is one edit, one undo step
- *             (onplace), which also stores where the section's other blocks are now (their
- *             real rows). A linked block dragged up or down keeps its link: its gap changes.
- *             Esc cancels. Below 760px (the mobile preview) a drag edits the block's phone
- *             area, on the phone grid of 60 columns (a block without one shows its desktop
- *             area halved: that is where the drag starts). An aspect or auto block's rows
+ *             snaps to the cells and shows its area live (the widget's CSS variables, and the
+ *             widgets that follow it move along); on release it is one edit, one undo step
+ *             (onplace), which also stores where the section's other widgets are now (their
+ *             real rows). A linked widget dragged up or down keeps its link: its gap changes.
+ *             Esc cancels. Below 760px (the mobile preview) a drag edits the widget's phone
+ *             area, on the phone grid of 60 columns (a widget without one shows its desktop
+ *             area halved: that is where the drag starts). An aspect or auto widget's rows
  *             follow its width: only its sides resize.
- *   Links     the selected and the hovered block show a circle above their top edge and one
- *             below their bottom edge. Dragging a block's top circle onto another block's
- *             bottom circle (in its section; blocks that would make a loop show none) links
- *             it: it follows that block, keeping where it is (the gap: the rows between them
- *             now, negative when they overlap); dropped anywhere else, a linked block is free
+ *   Links     the selected and the hovered widget show a circle above their top edge and one
+ *             below their bottom edge. Dragging a widget's top circle onto another widget's
+ *             bottom circle (in its section; widgets that would make a loop show none) links
+ *             it: it follows that widget, keeping where it is (the gap: the rows between them
+ *             now, negative when they overlap); dropped anywhere else, a linked widget is free
  *             again (onlink). A line joins every leader's bottom to its followers' tops; a
  *             click on one selects that link, Delete or Backspace removes it. The phone
  *             preview shows and edits the phone links.
  *   Rows      a Custom height section shows a line on its bottom edge (the hovered section's,
- *             or the selected block's): dragged up or down it sets the section's rows, in
+ *             or the selected widget's): dragged up or down it sets the section's rows, in
  *             whole cells, never fewer than its content needs, the count shown live; on
  *             release one undo step (onrows). On the phone preview it sets the section's own
  *             phone rows (mobile.rows.min; without them: half the desktop rows, rounded up).
- *             A block dragged or resized past a Custom section's bottom: on release its rows
+ *             A widget dragged or resized past a Custom section's bottom: on release its rows
  *             become the content's (onplace's rows), so moving it back up leaves empty rows.
  *
- * A block is where the site's rows.js put it (--fr / --frs: a linked block below its leader,
- * auto and aspect blocks the rows they need), so a drag starts from there; while it runs the
+ * A widget is where the site's rows.js put it (--fr / --frs: a linked widget below its leader,
+ * auto and aspect widgets the rows they need), so a drag starts from there; while it runs the
  * page holds its rows (data-flow-hold on <html>).
  *
  * The overlay follows the page with a frame loop while it shows something; it reads `ui`
- * (mode, block, link) every frame, and the section metrics once per drag, so the grid
+ * (mode, widget, link) every frame, and the section metrics once per drag, so the grid
  * doesn't move under the pointer while the page reflows.
  */
 import { COLS, MAX_MIN_ROWS, MCOLS, makesLoop, sizeOf } from '../site/layout/index.js';
@@ -59,7 +59,7 @@ import { T } from './ui-tokens.js';
 
 const MOBILE = PHONE_MAX;
 const HANDLES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
-/** How far a link circle sits outside its block's edge, px (clear of the n / s handles). */
+/** How far a link circle sits outside its widget's edge, px (clear of the n / s handles). */
 const DOT = 12;
 /** How near the pointer must come to a bottom circle to drop a link on it, px. */
 const REACH = 24;
@@ -114,10 +114,10 @@ svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: no
 `;
 
 /**
- * onpick(id): a block was clicked; onplace(id, pos, { mobile, flow, rows }): a drag ended with
- * the block at `pos` (mobile: its phone area; flow: where the section's blocks are now, { id:
- * area }, and rows: the rows its content needs now); onlink(id, to, gap, { mobile }): block `id` follows `to`
- * with `gap` cells between them (to null: it is free again); blockOf(id): the stored block
+ * onpick(id): a widget was clicked; onplace(id, pos, { mobile, flow, rows }): a drag ended with
+ * the widget at `pos` (mobile: its phone area; flow: where the section's widgets are now, { id:
+ * area }, and rows: the rows its content needs now); onlink(id, to, gap, { mobile }): widget `id` follows `to`
+ * with `gap` cells between them (to null: it is free again); widgetOf(id): the stored widget
  * (null when it isn't on the page); secNameOf(id): a section's name for its tag ("Section N"
  * without one); onrows(secId, rows, { mobile }): a Custom section's bottom
  * edge was dragged to `rows` (the phone's rows when mobile).
@@ -128,7 +128,7 @@ export function createOverlay({
   onplace,
   onlink = () => {},
   onrows = () => {},
-  blockOf,
+  widgetOf,
   secNameOf = () => '',
 }) {
   let doc = null;
@@ -146,7 +146,7 @@ export function createOverlay({
   const arranging = () => ui.mode === 'text';
   const shown = () => doc && arranging();
   const mobile = () => win.innerWidth <= MOBILE;
-  const blockEl = (id) => (id ? doc.querySelector(`[data-block="${CSS.escape(id)}"]`) : null);
+  const widgetEl = (id) => (id ? doc.querySelector(`[data-widget="${CSS.escape(id)}"]`) : null);
   const secOf = (el) => el?.closest('[data-sec]');
   /** Is a section editable now: the footer's while it is open, the page's while no site part is. */
   const live = (sec) =>
@@ -161,10 +161,10 @@ export function createOverlay({
     } else if (ui.peek?.from === 'preview') ui.peek = null;
   };
   const unpeek = () => peekAt(null);
-  /** The block elements of a section (not a nested section's). */
-  const blocksIn = (sec) =>
-    [...sec.querySelectorAll('[data-block]')].filter((n) => secOf(n) === sec);
-  /** The link a block element follows on the grid shown: { to, gap } or null. */
+  /** The widget elements of a section (not a nested section's). */
+  const widgetsIn = (sec) =>
+    [...sec.querySelectorAll('[data-widget]')].filter((n) => secOf(n) === sec);
+  /** The link a widget element follows on the grid shown: { to, gap } or null. */
   const linkOfEl = (el) => linkAttr(el, mobile());
 
   function build() {
@@ -190,12 +190,12 @@ export function createOverlay({
       if (e.button !== 0) return;
       if (e.target.closest?.('.secrow')) return startRows(e);
       const h = e.target.dataset?.h;
-      if (h && ui.block) return start(e, blockEl(ui.block), h);
+      if (h && ui.widget) return start(e, widgetEl(ui.widget), h);
       const dot = e.target.dataset?.dot;
       if (dot === 'top') {
-        const el = e.target.closest('.sel') ? blockEl(ui.block) : hover;
+        const el = e.target.closest('.sel') ? widgetEl(ui.widget) : hover;
         if (el) {
-          onpick(el.dataset.block);
+          onpick(el.dataset.widget);
           startLink(e, el);
         }
         return;
@@ -220,12 +220,12 @@ export function createOverlay({
   };
 
   /**
-   * The grid of the selected (or dragged) block's section, none without one: rebuilt when that
+   * The grid of the selected (or dragged) widget's section, none without one: rebuilt when that
    * section, its size or its tracks change.
    */
   function drawGrids() {
     const sec = arranging()
-      ? drag?.sec || secOf(blockEl(ui.block)) || (ui.section && secById(ui.section))
+      ? drag?.sec || secOf(widgetEl(ui.widget)) || (ui.section && secById(ui.section))
       : null;
     const secs = sec && !sec.hidden ? [sec] : [];
     const info = secs.map((sec) => {
@@ -274,16 +274,16 @@ export function createOverlay({
     els.links.setAttribute('height', h.scrollHeight);
     if (arranging())
       for (const sec of doc.querySelectorAll('[data-sec]:not([hidden])'))
-        for (const el of live(sec) ? blocksIn(sec) : []) {
+        for (const el of live(sec) ? widgetsIn(sec) : []) {
           const l = linkOfEl(el);
           if (!l || el.hidden || linking?.el === el) continue;
-          const lead = blocksIn(sec).find((n) => n.dataset.block === l.to);
+          const lead = widgetsIn(sec).find((n) => n.dataset.widget === l.to);
           if (!lead || lead.hidden) continue;
           const [x1, y1] = bottomDot(rectOf(lead, win));
           const [x2, y2] = topDot(rectOf(el, win));
-          const id = el.dataset.block;
+          const id = el.dataset.widget;
           const d = curve(x1, y1, x2, y2);
-          const near = [ui.block, ui.link].includes(id) || ui.block === l.to;
+          const near = [ui.widget, ui.link].includes(id) || ui.widget === l.to;
           parts.push(
             `<path class="link${ui.link === id ? ' is-sel' : ''}" d="${d}"/>` +
               `<path class="hit" data-link="${id}" d="${d}"/>` +
@@ -300,10 +300,10 @@ export function createOverlay({
 
   const labelOf = (b, el) => {
     const l = el && linkOfEl(el);
-    return `${mobile() ? 'phone · ' : ''}${b?.type || 'block'}${l ? ` · follows, gap ${l.gap}` : ''}`;
+    return `${mobile() ? 'phone · ' : ''}${b?.type || 'widget'}${l ? ` · follows, gap ${l.gap}` : ''}`;
   };
 
-  /** The top circle shows filled when the block follows another. */
+  /** The top circle shows filled when the widget follows another. */
   function dotsOf(box, el) {
     box.querySelector('[data-dot="top"]').classList.toggle('is-linked', !!(el && linkOfEl(el)));
   }
@@ -344,22 +344,22 @@ export function createOverlay({
     drawLinks();
     const arrange = arranging();
     root.classList.toggle('is-linking', !!linking);
-    const sel = arrange ? blockEl(ui.block) : null;
+    const sel = arrange ? widgetEl(ui.widget) : null;
     els.sel.hidden = !sel;
     if (sel) {
       place(els.sel, rectOf(sel, win));
-      const b = blockOf(ui.block);
+      const b = widgetOf(ui.widget);
       els.sel.classList.toggle('is-free', sizeOf(b) !== 'rows');
       els.label.textContent = drag?.label ?? labelOf(b, sel);
       dotsOf(els.sel, sel);
     }
     // the section card hovered in the Content tab, else the one selected while the list shows:
-    // its section (under the block boxes)
+    // its section (under the widget boxes)
     const peekId =
-      ui.peek?.from === 'panel' ? ui.peek.id : !ui.block && !ui.section && ui.selSection;
+      ui.peek?.from === 'panel' ? ui.peek.id : !ui.widget && !ui.section && ui.selSection;
     const p = arrange && !drag && peekId ? secById(peekId) : null;
     drawPeek(p);
-    // a Custom section's bottom edge: the one being dragged, hovered, or the selected block's
+    // a Custom section's bottom edge: the one being dragged, hovered, or the selected widget's
     const rs =
       arrange && !drag && !linking
         ? sizing?.sec || customOf(hoverSec) || customOf(secOf(sel))
@@ -380,29 +380,29 @@ export function createOverlay({
     if (shown()) raf = win.requestAnimationFrame(frame);
   }
 
-  /** A drag of block `el`: move (h empty) or a resize by handle `h`. */
+  /** A drag of widget `el`: move (h empty) or a resize by handle `h`. */
   function start(e, el, h = '') {
-    const id = el?.dataset.block;
-    const stored = blockOf(id);
+    const id = el?.dataset.widget;
+    const stored = widgetOf(id);
     if (!stored) return;
     e.preventDefault();
     e.stopPropagation();
     ui.link = null;
     const sec = secOf(el);
     const phone = mobile();
-    const saved = new Map([sec, ...blocksIn(sec)].map((n) => [n, n.style.cssText]));
-    // where the section's blocks are now (stored with the drag), then hold them there
-    const flow = flowAreas(sec, phone, blockOf);
+    const saved = new Map([sec, ...widgetsIn(sec)].map((n) => [n, n.style.cssText]));
+    // where the section's widgets are now (stored with the drag), then hold them there
+    const flow = flowAreas(sec, phone, widgetOf);
     const rows = Number(sec.style.getPropertyValue('--frows')) || 0;
     doc.documentElement.setAttribute('data-flow-hold', '');
     const from = flow[id];
-    // the section's blocks and links, to move the blocks that follow this one along
-    const items = blocksIn(sec)
-      .filter((n) => flow[n.dataset.block])
+    // the section's widgets and links, to move the widgets that follow this one along
+    const items = widgetsIn(sec)
+      .filter((n) => flow[n.dataset.widget])
       .map((n) => ({
-        id: n.dataset.block,
+        id: n.dataset.widget,
         el: n,
-        ...flow[n.dataset.block],
+        ...flow[n.dataset.widget],
         link: n === el ? null : linkOfEl(n),
       }));
     drag = {
@@ -423,7 +423,7 @@ export function createOverlay({
       link: linkOfEl(el),
       label: null,
       rows: rows || Number(sec.style.getPropertyValue(phone ? '--mrows' : '--rows')) || 1,
-      // a Custom section keeps its rows (never fewer: its blocks move inside them)
+      // a Custom section keeps its rows (never fewer: its widgets move inside them)
       min: minOf(sec, phone),
     };
     els.sel.classList.add('is-dragging');
@@ -446,7 +446,7 @@ export function createOverlay({
       rows.ends[from.row + from.rows - 2] ??
       rows.ends.at(-1) + (from.row + from.rows - 1 - rows.ends.length) * step;
     let { col, span, row: r, rows: n } = from;
-    const free = sizeOf(blockOf(drag.id)) !== 'rows';
+    const free = sizeOf(widgetOf(drag.id)) !== 'rows';
     if (!h) {
       col = Math.min(Math.max(1, nearest(cols.starts, colStart + dx)), drag.cols - span + 1);
       r = Math.max(1, nearest(rows.starts, rowStart + dy, step));
@@ -467,7 +467,7 @@ export function createOverlay({
     show(drag.pos);
   }
 
-  /** An area as a block's CSS variables (desktop, or the phone's; and where it is now). */
+  /** An area as a widget's CSS variables (desktop, or the phone's; and where it is now). */
   function setArea(s, p, phone) {
     s.setProperty(phone ? '--mc' : '--c', p.col);
     s.setProperty(phone ? '--ms' : '--s', p.span);
@@ -478,8 +478,8 @@ export function createOverlay({
   }
 
   /**
-   * Show `pos` on the block without storing it: the blocks that follow it move along, the
-   * section's rows grow to hold them, and a linked block's label shows its gap.
+   * Show `pos` on the widget without storing it: the widgets that follow it move along, the
+   * section's rows grow to hold them, and a linked widget's label shows its gap.
    */
   function show(p) {
     setArea(drag.el.style, p, drag.phone);
@@ -504,7 +504,7 @@ export function createOverlay({
     els.sel.classList.remove('is-dragging');
   }
 
-  /** The section and its blocks as they were before the drag. */
+  /** The section and its widgets as they were before the drag. */
   function restore() {
     for (const [n, css] of drag.saved) n.style.cssText = css;
   }
@@ -538,13 +538,13 @@ export function createOverlay({
   const customOf = (sec) => (sec && !sec.hidden && minOf(sec, mobile()) ? sec : null);
 
   function startRows(e) {
-    const sec = customOf(hoverSec) || customOf(secOf(blockEl(ui.block)));
+    const sec = customOf(hoverSec) || customOf(secOf(widgetEl(ui.widget)));
     if (!sec || drag || linking) return;
     e.preventDefault();
     e.stopPropagation();
     const phone = mobile();
-    const flow = flowAreas(sec, phone, blockOf);
-    // the rows its content needs: down to its lowest block, as rows.js placed them
+    const flow = flowAreas(sec, phone, widgetOf);
+    // the rows its content needs: down to its lowest widget, as rows.js placed them
     const content = Math.max(1, ...Object.values(flow).map((a) => a.row + a.rows - 1));
     const rows = Number(sec.style.getPropertyValue('--frows')) || minOf(sec, phone) || content;
     const lines = linesOf(sec, win);
@@ -601,28 +601,28 @@ export function createOverlay({
     stopRows();
   }
 
-  // ---- links: a drag from a block's top circle to another block's bottom circle
+  // ---- links: a drag from a widget's top circle to another widget's bottom circle
 
-  /** Start dragging block `el`'s top circle: the blocks it may follow show bottom circles. */
+  /** Start dragging widget `el`'s top circle: the widgets it may follow show bottom circles. */
   function startLink(e, el) {
     e.preventDefault();
     e.stopPropagation();
     ui.link = null;
-    const id = el.dataset.block;
+    const id = el.dataset.widget;
     const sec = secOf(el);
     const phone = mobile();
-    const blocks = blocksIn(sec)
-      .map((n) => blockOf(n.dataset.block))
+    const widgets = widgetsIn(sec)
+      .map((n) => widgetOf(n.dataset.widget))
       .filter(Boolean);
-    const targets = blocksIn(sec)
-      .filter((n) => n !== el && !n.hidden && !makesLoop(blocks, id, n.dataset.block, phone))
+    const targets = widgetsIn(sec)
+      .filter((n) => n !== el && !n.hidden && !makesLoop(widgets, id, n.dataset.widget, phone))
       .map((n) => {
         const [x, y] = bottomDot(rectOf(n, win));
         const dot = doc.createElement('i');
         dot.className = 'target';
         dot.style.left = `${x}px`;
         dot.style.top = `${y}px`;
-        return { id: n.dataset.block, x, y, dot };
+        return { id: n.dataset.widget, x, y, dot };
       });
     els.targets.replaceChildren(...targets.map((t) => t.dot));
     linking = { el, id, sec, phone, targets, near: null, from: topDot(rectOf(el, win)), to: null };
@@ -662,7 +662,7 @@ export function createOverlay({
     stopLink();
     if (near) {
       // it stays where it is: the gap is the rows between them now
-      const flow = flowAreas(sec, phone, blockOf);
+      const flow = flowAreas(sec, phone, widgetOf);
       const a = flow[near.id];
       const b = flow[id];
       if (a && b && (was?.to !== near.id || was.gap !== b.row - (a.row + a.rows)))
@@ -670,7 +670,7 @@ export function createOverlay({
     } else if (was) onlink(id, null, 0, { mobile: phone, row: shownRow(el) }); // dropped off: free
   }
 
-  // the row a block shows now (rows.js: --fr): an unlinked block stays there
+  // the row a widget shows now (rows.js: --fr): an unlinked widget stays there
   const shownRow = (el) => parseInt(el.style.getPropertyValue('--fr'), 10) || undefined;
 
   function cancelLink(e) {
@@ -685,7 +685,7 @@ export function createOverlay({
     const id = ui.link;
     if (!id) return false;
     ui.link = null;
-    const el = blockEl(id);
+    const el = widgetEl(id);
     if (el && linkOfEl(el)) onlink(id, null, 0, { mobile: mobile(), row: shownRow(el) });
     return true;
   }
@@ -696,30 +696,30 @@ export function createOverlay({
     deleteLink();
   }
 
-  // Arrange: clicks pick and drag blocks; the page's own clicks (links, buttons) are off. A
+  // Arrange: clicks pick and drag widgets; the page's own clicks (links, buttons) are off. A
   // text being edited in place (contenteditable, bridge.js) keeps its clicks (the caret).
   const editing = (t) => !!t.closest?.('[contenteditable]');
   function onpointerdown(e) {
     if (e.target.id === '__ed-layout') return; // the overlay's own (its shadow root handles it)
     if (!arranging() || e.button !== 0 || e.altKey || editing(e.target)) return;
     ui.link = null;
-    const el = e.target.closest?.('[data-block]');
+    const el = e.target.closest?.('[data-widget]');
     // empty space: nothing selected (the panel shows the sections, the grid hides)
-    if (!el) return void ((ui.block || ui.section || ui.selSection) && onpick(null));
+    if (!el) return void ((ui.widget || ui.section || ui.selSection) && onpick(null));
     if (doc.activeElement?.isContentEditable) doc.activeElement.blur(); // ends an edit
-    onpick(el.dataset.block);
+    onpick(el.dataset.widget);
     start(e, el);
   }
   const swallow = (e) => {
     if (!arranging() || e.altKey || editing(e.target)) return;
-    if (e.target.closest?.('[data-block]')) {
+    if (e.target.closest?.('[data-widget]')) {
       e.preventDefault();
       e.stopPropagation();
     }
   };
   function onpointerover(e) {
-    if (e.target.id === '__ed-layout') return; // over its circles: the block stays hovered
-    hover = arranging() ? e.target.closest?.('[data-block]') || null : null;
+    if (e.target.id === '__ed-layout') return; // over its circles: the widget stays hovered
+    hover = arranging() ? e.target.closest?.('[data-widget]') || null : null;
     hoverSec = arranging() ? secOf(e.target) || null : null;
     if (e.target.id !== '__ed-layout') peekAt(arranging() ? secOf(e.target) : null);
   }
@@ -739,7 +739,7 @@ export function createOverlay({
       doc.addEventListener('keydown', onkeydown, true);
       this.refresh();
     },
-    /** ui.mode, ui.block or ui.link changed: show or hide what they ask for. */
+    /** ui.mode, ui.widget or ui.link changed: show or hide what they ask for. */
     refresh() {
       if (!doc || !root) return;
       gridKey = '';

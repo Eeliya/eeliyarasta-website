@@ -36,7 +36,7 @@ test('titles: the site template around the page title; home in full', () => {
       sections: [
         {
           id: 's-aaaa',
-          blocks: [
+          widgets: [
             {
               id: 'b-aaaa',
               type: 'text',

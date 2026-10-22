@@ -67,15 +67,15 @@ function site(redirects = []) {
   });
   return root;
 }
-/** A page with one section holding `block`. */
-function page(id, block) {
+/** A page with one section holding `widget`. */
+function page(id, widget) {
   const layout = { base: { col: 1, span: 24, row: 1 } };
   return {
     version: 1,
     kind: 'page',
     id,
 
-    sections: [{ id: 's-aaaa', blocks: [{ id: 'b-aaaa', layout, ...block }] }],
+    sections: [{ id: 's-aaaa', widgets: [{ id: 'b-aaaa', layout, ...widget }] }],
   };
 }
 
@@ -91,11 +91,11 @@ test('rename: every path of the folder redirects (items by pattern), links follo
   const nav = read(root, 'settings/nav.json');
   assert.equal(nav.header[0].page, 'pg-peop');
   assert.equal(
-    read(root, 'pages/index.json').sections[0].blocks[0].config.link.href,
+    read(root, 'pages/index.json').sections[0].widgets[0].config.link.href,
     '/models/team/#join',
   );
   assert.equal(
-    read(root, 'pages/about/index.json').sections[0].blocks[0].config.link.href,
+    read(root, 'pages/about/index.json').sections[0].widgets[0].config.link.href,
     '/peoples/',
   ); // not a match
   assert.equal(r.body.links, 1);
@@ -136,7 +136,7 @@ test('delete: to the parent (default), to a chosen page, or gone', () => {
     { from: '/people/team/', to: '/people/' },
   ]);
   // links to it go to the target (a page link: the target's id), without the #hash
-  assert.equal(read(root, 'pages/index.json').sections[0].blocks[0].config.link.href, '/people/');
+  assert.equal(read(root, 'pages/index.json').sections[0].widgets[0].config.link.href, '/people/');
   assert.equal(read(root, 'settings/nav.json').header[0].children[0].page, 'pg-peop');
 
   root = site();
@@ -248,7 +248,7 @@ test('validation: redirects.json', () => {
 });
 
 test('"See all" links go to the page that shows the source, wherever it is', async () => {
-  const { sourcePage } = await import('../src/site/blocks/data.js');
+  const { sourcePage } = await import('../src/site/widgets/data.js');
   const pages = {
     home: page('pg-home', { type: 'grid', source: { mode: 'all', from: 'people' } }),
     'models/[person]': paramPage('models/[person]', 'people'),
@@ -335,7 +335,7 @@ test('nested [param] pages: delete one level, to the same outer item by default'
     { from: '/people/:person/:year/', to: '/people/:person/' },
   ]);
   assert.equal(
-    read(root, 'pages/about/index.json').sections[0].blocks[0].config.link.href,
+    read(root, 'pages/about/index.json').sections[0].widgets[0].config.link.href,
     '/people/noor/',
   );
   // No redirect: none (its pages are 404s)
@@ -388,7 +388,7 @@ test('rename a param: the URLs stay, the levels in it keep matching, redirects f
   // the [year] level still matches its items' "person" field to the outer value: its rule
   // follows the param
   const rules = (id) =>
-    read(root, `pages/${id}/index.json`).sections[0].blocks[0].source.where.rules;
+    read(root, `pages/${id}/index.json`).sections[0].widgets[0].source.where.rules;
   assert.deepEqual(rules('people/[model]/[year]'), [
     { param: 'model', field: 'person' },
     { param: 'year', field: 'year' },

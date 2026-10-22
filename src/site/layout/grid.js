@@ -5,7 +5,7 @@
 import { isObject } from '../is.js';
 export const COLS = 120;
 /**
- * Columns of the phone grid (a block's `phone` area): 60, half of 120, so a block without a
+ * Columns of the phone grid (a widget's `phone` area): 60, half of 120, so a widget without a
  * phone area of its own shows its desktop area halved there (phoneAreaOf): the phone is the
  * desktop layout scaled down, ~6px cells at 390px.
  */
@@ -24,7 +24,7 @@ export const cellOf = (width, cols = COLS) =>
 
 const int = (v, min, fallback) => (Number.isInteger(v) && v >= min ? v : fallback);
 
-/** A block's grid area, completed and kept inside `cols` columns (120; the phone grid's 60). */
+/** A widget's grid area, completed and kept inside `cols` columns (120; the phone grid's 60). */
 export function placeOf(pos, cols = COLS) {
   const col = Math.min(int(pos?.col, 1, 1), cols);
   return {
@@ -35,7 +35,7 @@ export function placeOf(pos, cols = COLS) {
   };
 }
 
-/** Does a block's `phone` hold an area (it can hold only a link)? */
+/** Does a widget's `phone` hold an area (it can hold only a link)? */
 export const hasMobileArea = (m) => !!m && AREA_KEYS.some((k) => m[k] !== undefined);
 
 /**
@@ -50,24 +50,24 @@ export function halfArea(pos) {
   return { col, span: Math.max(1, end - col + 1), row, rows: Math.max(1, Math.ceil(p.rows / 2)) };
 }
 
-/** A block's area on the phone grid: its own phone area, else its desktop area halved. */
+/** A widget's area on the phone grid: its own phone area, else its desktop area halved. */
 export const phoneAreaOf = (b) =>
   hasMobileArea(phoneOf(b)) ? placeOf(phoneOf(b), MCOLS) : halfArea(baseOf(b));
 
 /*
- * A block's layout: { base, phone? } (./index.js). base: its area on the page grid
+ * A widget's layout: { base, phone? } (./index.js). base: its area on the page grid
  * { col, span, row, rows? } plus its `link`; phone: what changes on phones, any of the same
  * keys on the phone grid (an area, a link). `rows` is stored only when the
- * block's height isn't its content's (size "aspect" or "rows"): an auto block's rows are
+ * widget's height isn't its content's (size "aspect" or "rows"): an auto widget's rows are
  * measured on the page (src/client/modules/rows.js), never stored.
  */
 /** The keys of an area. */
 export const AREA_KEYS = ['col', 'span', 'row', 'rows'];
-/** A block's base layout ({} without one). */
+/** A widget's base layout ({} without one). */
 export const baseOf = (b) => (isObject(b?.layout?.base) ? b.layout.base : {});
-/** A block's phone layout (undefined without one). */
+/** A widget's phone layout (undefined without one). */
 export const phoneOf = (b) => (isObject(b?.layout?.phone) ? b.layout.phone : undefined);
-/** Does a block store its rows (its height isn't its content's)? */
+/** Does a widget store its rows (its height isn't its content's)? */
 export const storesRows = (b) => b?.size === 'aspect' || b?.size === 'rows';
 
 function tidy(b, o) {
@@ -76,11 +76,11 @@ function tidy(b, o) {
   if (!storesRows(b)) delete next.rows;
   return next;
 }
-/** Merge `patch` into a block's base (a key set to undefined is removed). */
+/** Merge `patch` into a widget's base (a key set to undefined is removed). */
 export function setBase(b, patch) {
   b.layout = { ...(isObject(b.layout) ? b.layout : {}), base: tidy(b, { ...baseOf(b), ...patch }) };
 }
-/** Merge `patch` into a block's phone layout; removed when nothing is left (null: removed). */
+/** Merge `patch` into a widget's phone layout; removed when nothing is left (null: removed). */
 export function setPhone(b, patch) {
   const next = patch === null ? {} : tidy(b, { ...phoneOf(b), ...patch });
   const layout = { ...(isObject(b.layout) ? b.layout : {}) };

@@ -1,4 +1,4 @@
-// The Text block's inline editor (src/editor/rich.js) on a light DOM (linkedom).
+// The Text widget's inline editor (src/editor/rich.js) on a light DOM (linkedom).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseHTML } from 'linkedom';

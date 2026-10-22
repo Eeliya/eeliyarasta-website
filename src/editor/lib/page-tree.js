@@ -111,7 +111,7 @@ export function levelOf(files, level, filter = 'all', routes = null) {
       template,
       // a [param] page in one: its pages are per outer page ("[person]")
       nested: template && isTemplate(parentId(id)) ? nameOf(parentId(id)) : null,
-      // the pages it builds (its main block decides: src/site/layout/source.js)
+      // the pages it builds (its main widget decides: src/site/layout/source.js)
       count: template ? built.filter((r) => r.id === id).length : undefined,
       fixed: FIXED.includes(id),
       movable: !template && id !== NOT_FOUND,

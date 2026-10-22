@@ -1,10 +1,10 @@
 /**
  * The Motion tab's model: which fields each animation type has, and where a value comes from.
  * In the editor an "animation" is what animations.json (and the code here) calls a preset.
- * A block's values (blockModel): its `motion` in its page file (the animation and its own
+ * A widget's values (widgetModel): its `motion` in its page file (the animation and its own
  * timing, src/site/layout/motion.js), then the animation's in the library.
  * A data-anim element's values live at one of these layers:
- *   element -> its block's motion.parts["<target>"] in the page file (this block's only)
+ *   element -> its widget's motion.parts["<target>"] in the page file (this widget's only)
  *   target  -> animations.json targets["<target>"]  (every element with that data-anim, "All")
  *   preset  -> animations.json presets["<animation>"] (the animation's own values: the library)
  * A value is read from the first layer that has it: element, target, preset. There is no
@@ -13,12 +13,12 @@
  * the Animations sub-tab (AnimLibrary.svelte) writes the preset, every value.
  * Shown with MotionField.svelte. No DOM here.
  */ import { compile } from '../lib/pointer.js';
-import { BLOCK_ANIM_TYPES, TIMING_KEYS as TIMING_LIST } from '../../site/layout/motion.js';
+import { WIDGET_ANIM_TYPES, TIMING_KEYS as TIMING_LIST } from '../../site/layout/motion.js';
 import { isObject } from '../../site/is.js';
 
-// Presets that work on any element or block; special ones (scatter, hero-title,
+// Presets that work on any element or widget; special ones (scatter, hero-title,
 // hover-preview) need their markup.
-export const GENERIC_TYPES = new Set(BLOCK_ANIM_TYPES);
+export const GENERIC_TYPES = new Set(WIDGET_ANIM_TYPES);
 
 const merge = (...objs) => {
   const out = {};
@@ -185,13 +185,13 @@ export const PROPS = {
 
 export const TIMING = ['Timing', [F.timing, F.delay, F.stagger]];
 const TRIGGER = ['Trigger', [F.trigger, F.start, F.scrub, F.end]];
-/** What a block's animation moves (a CSS selector inside it; empty: the block's content). */
+/** What a widget's animation moves (a CSS selector inside it; empty: the widget's content). */
 const CHILDREN = {
   path: ['children'],
   label: 'Moves (selector)',
   kind: 'text',
   suggestions: ['h1, h2, h3, p', '[data-anim-item]', '[data-prow]', 'img', 'figure'],
-  hint: 'In a block: what inside it moves; empty: all of it',
+  hint: 'In a widget: what inside it moves; empty: all of it',
 };
 const SCROLLED = [
   'Scroll',
@@ -306,7 +306,7 @@ const isTimingPath = (path) => TIMING_KEYS.has(path.at(-1));
 export const isTiming = (def) => isTimingPath(def.paths ? def.paths[0] : def.path);
 
 /**
- * The picked element's animation. cfg: animations.json, sel: { id }, part: its block's
+ * The picked element's animation. cfg: animations.json, sel: { id }, part: its widget's
  * motion.parts[id] ({} or undefined when none).
  * spec: the merged values; layers: each scope's own values (for the Custom switches).
  */
@@ -322,13 +322,13 @@ export function animModel(cfg, sel, part) {
 }
 
 /**
- * A block's animation: `motion` is its { anim, ...timing } (or undefined). Its own timing is
- * the 'block' layer, over the animation's values.
+ * A widget's animation: `motion` is its { anim, ...timing } (or undefined). Its own timing is
+ * the 'widget' layer, over the animation's values.
  */
-export function blockModel(cfg, motion) {
+export function widgetModel(cfg, motion) {
   const { anim: presetName, parts: _p, ...own } = motion || {}; // eslint-disable-line no-unused-vars
   const preset = cfg.presets[presetName] || {};
-  const layers = { element: {}, target: {}, block: own, preset };
+  const layers = { element: {}, target: {}, widget: own, preset };
   const spec = merge(preset, own);
   return { target: {}, own, presetName, preset, layers, spec, type: preset.type };
 }
@@ -341,7 +341,7 @@ export function presetModel(cfg, name) {
   return { target: {}, own: {}, presetName: name, preset, layers, spec, type: preset.type };
 }
 
-/** An element's part values as the preview shows them (its block's data-anim-parts). */
+/** An element's part values as the preview shows them (its widget's data-anim-parts). */
 export function partOf(el, id) {
   try {
     return JSON.parse(el?.closest?.('[data-anim-parts]')?.dataset.animParts || '{}')[id];
@@ -350,12 +350,12 @@ export function partOf(el, id) {
   }
 }
 
-/** The animation an element uses (items from bridge.animElements()): its block's, else its target's. */
+/** The animation an element uses (items from bridge.animElements()): its widget's, else its target's. */
 export const animationOf = (cfg, { id, el }) => partOf(el, id)?.preset || cfg.targets[id]?.preset;
 
 /**
- * Pointer of a scope's object: 'element' in the page file (base: its block's pointer,
- * /sections/<i>/blocks/<j>), the others in animations.json (sel is not needed for 'preset').
+ * Pointer of a scope's object: 'element' in the page file (base: its widget's pointer,
+ * /sections/<i>/widgets/<j>), the others in animations.json (sel is not needed for 'preset').
  */
 export const layerPtr = (m, sel, scope, base = '') =>
   scope === 'element'
@@ -365,14 +365,14 @@ export const layerPtr = (m, sel, scope, base = '') =>
       : `/presets${compile([m.presetName])}`;
 
 /**
- * How many path levels store.remove keeps when a scope's object gets empty (a block's motion,
- * /sections/<i>/blocks/<j>/motion, keeps its `anim`: never empty; a part's goes, and with it
- * its block's motion when nothing else is left).
+ * How many path levels store.remove keeps when a scope's object gets empty (a widget's motion,
+ * /sections/<i>/widgets/<j>/motion, keeps its `anim`: never empty; a part's goes, and with it
+ * its widget's motion when nothing else is left).
  */
-export const keepFor = (scope) => (scope === 'element' ? 4 : scope === 'block' ? 5 : 2);
+export const keepFor = (scope) => (scope === 'element' ? 4 : scope === 'widget' ? 5 : 2);
 
 // The layers a scope inherits from, nearest first.
-const BELOW = { element: ['target', 'preset'], target: ['preset'], block: ['preset'], preset: [] };
+const BELOW = { element: ['target', 'preset'], target: ['preset'], widget: ['preset'], preset: [] };
 /** What a scope gets without a value of its own: [value, the layer it comes from or null]. */
 export function inherited(m, scope, path) {
   const layer = BELOW[scope].find((l) => dig(m.layers[l], path) !== undefined) || null;

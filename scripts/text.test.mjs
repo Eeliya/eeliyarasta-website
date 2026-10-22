@@ -1,4 +1,4 @@
-// The Text block's body (src/site/text.js): checked, rendered, edited as a model.
+// The Text widget's body (src/site/text.js): checked, rendered, edited as a model.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {

@@ -6,10 +6,10 @@
  *  - pushes the edited settings/animations.json into the preview and re-mounts animations,
  *  - re-applies edited text to every [data-edit] element whenever a page mounts,
  *  - Content mode ('text'): a double click turns a [data-edit] element into an inline editor
- *    until it loses focus (a single click picks its block: overlay.js); a double-clicked
+ *    until it loses focus (a single click picks its widget: overlay.js); a double-clicked
  *    photo (data-edit-type="image") or bound value opens its field in the panel. Links,
  *    buttons and forms don't act on clicks (Alt+click does),
- *  - lets you hover/click blocks ([data-block]) and [data-anim] parts to select them (Motion
+ *  - lets you hover/click widgets ([data-widget]) and [data-anim] parts to select them (Motion
  *    mode: the innermost one under the pointer),
  *  - a bound value ([data-bound], src/site/layout/bindings.js) is not typed in the preview:
  *    its field in the panel shows the binding.
@@ -46,7 +46,7 @@ html.__ed-text [data-edit]:hover { outline: 1px dashed rgb(255 255 255 / .5); }
 html.__ed-text [data-bound]:hover { outline: 1px dotted rgb(255 255 255 / .5); }
 html.__ed-text [data-edit][contenteditable] { outline: 1.5px solid ${T.accent}; caret-color: ${T.accent}; cursor: text !important; }
 html.__ed-text [data-edit].__ed-invalid { outline-color: ${T.error} !important; }
-html.__ed-text [data-block], html.__ed-text [data-block] *:not([contenteditable], [contenteditable] *) { cursor: default !important; }
+html.__ed-text [data-widget], html.__ed-text [data-widget] *:not([contenteditable], [contenteditable] *) { cursor: default !important; }
 [data-bound-missing] { opacity: .4; }
 html.__ed-text .hero__title { z-index: 5; }
 :is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer]):not([data-ed-open]) *, :is(html.__ed-text, html.__ed-motion):has([data-ed-open]) [data-router-view] * { pointer-events: none !important; }
@@ -58,7 +58,7 @@ html.__ed-text .hero__title { z-index: 5; }
 :is(html.__ed-text, html.__ed-motion) [data-footer]::before { content: 'Footer'; }
 :is(html.__ed-text, html.__ed-motion) [data-header]:is(:hover, [data-ed-open])::before { content: 'Header'; top: auto; bottom: -28px; }
 :is(html.__ed-text, html.__ed-motion) :is([data-header], [data-footer])[data-ed-open]::before { background: ${T.accent}; color: ${T.onAccent}; }
-html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-block], html.__ed-motion [data-block] * { cursor: pointer !important; }
+html.__ed-motion [data-anim], html.__ed-motion [data-anim] *, html.__ed-motion [data-widget], html.__ed-motion [data-widget] * { cursor: pointer !important; }
 .__ed-box { position: fixed; z-index: 2147483646; pointer-events: none; border-radius: ${T.radiusSm}; opacity: 0; transition: opacity .15s; left: 0; top: 0; }
 .__ed-box.is-on { opacity: 1; }
 .__ed-box--hover { border: 1px dashed rgb(255 255 255 / .6); }
@@ -74,8 +74,8 @@ html.__ed-text [data-edit-type="rich"][contenteditable] { outline-offset: 6px; }
 html.__ed-text [data-edit-type="rich"][contenteditable] a { cursor: text !important; }
 `;
 
-/** What Motion mode picks under the pointer: a data-anim part, else its block. */
-const MOTION_PICK = '[data-anim], [data-block]';
+/** What Motion mode picks under the pointer: a data-anim part, else its widget. */
+const MOTION_PICK = '[data-anim], [data-widget]';
 /** What would act on a click (follow, open, send): off in Content mode. */
 const ACTIVE = 'a, button, [role="button"], label, summary, input, select, textarea';
 
@@ -92,8 +92,8 @@ export function createBridge({ store, labelFor }) {
     key: [],
     textFocus: [],
     part: [],
-    rich: [], // the Text block editor's state changed (richState)
-    richDone: [], // a Text block's edit ended: its section renders again (edit ref)
+    rich: [], // the Text widget editor's state changed (richState)
+    richDone: [], // a Text widget's edit ended: its section renders again (edit ref)
     richLink: [], // Ctrl+K while editing: the toolbar's link box opens
   };
   const emit = (name, ...args) => handlers[name].forEach((fn) => fn(...args));
@@ -109,7 +109,7 @@ export function createBridge({ store, labelFor }) {
   let plaintext = true;
   let applied = new WeakMap(); // element -> value it currently shows
   let restore = null; // after a reload(): puts scroll and selection back once mounted
-  // the Text block being edited in place (rich.js): { el, edit, file, ptr, block, numLine,
+  // the Text widget being edited in place (rich.js): { el, edit, file, ptr, widget, numLine,
   // numHtml }, and its last selection in model positions (kept while the toolbar has focus)
   let rich = null;
   let richSel = null;
@@ -161,7 +161,7 @@ export function createBridge({ store, labelFor }) {
         kind: selected.kind,
         edit: selected.el.dataset.edit ?? selected.el.dataset.bound,
         anim: [...view.querySelectorAll('[data-anim]')].indexOf(selected.el),
-        block: selected.el.dataset.block,
+        widget: selected.el.dataset.widget,
       };
       restore = () => {
         api.scrollTop(y);
@@ -170,8 +170,8 @@ export function createBridge({ store, labelFor }) {
           ? doc.querySelector(
               `[data-edit="${CSS.escape(sel.edit)}"], [data-bound="${CSS.escape(sel.edit)}"]`,
             )
-          : sel.block
-            ? doc.querySelector(`[data-block="${CSS.escape(sel.block)}"]`)
+          : sel.widget
+            ? doc.querySelector(`[data-widget="${CSS.escape(sel.widget)}"]`)
             : doc.querySelectorAll('[data-router-view] [data-anim]')[sel.anim];
         if (el) bridge.select(el, sel.kind);
       };
@@ -245,7 +245,7 @@ export function createBridge({ store, labelFor }) {
         const { file, ptr } = splitEdit(el.dataset.edit);
         const value = store.get(file, ptr);
         if (value === undefined || value === null) continue;
-        // a Text block's body: the dev server renders it (its fields' values, counts)
+        // a Text widget's body: the dev server renders it (its fields' values, counts)
         if (el.dataset.editType === 'rich') continue;
         if (el === skip) {
           applied.set(el, value);
@@ -301,7 +301,7 @@ export function createBridge({ store, labelFor }) {
     },
 
     /**
-     * Play one block's (or data-anim element's) animation again, bringing it into view first;
+     * Play one widget's (or data-anim element's) animation again, bringing it into view first;
      * every animation of the page when it has none of its own.
      */
     replayOne(el) {
@@ -354,7 +354,7 @@ export function createBridge({ store, labelFor }) {
       if (r.bottom < 60 || r.top > win.innerHeight - 60) api.scrollTo(el, { smooth: true });
     },
     /**
-     * Where the block toolbar sits ('above' | 'below' | 'inside', null: none): the selected
+     * Where the widget toolbar sits ('above' | 'below' | 'inside', null: none): the selected
      * box's label on that side is hidden so the toolbar is never under it.
      */
     toolbarSide(side) {
@@ -363,23 +363,23 @@ export function createBridge({ store, labelFor }) {
       root.classList.toggle('__ed-tb-above', side === 'above');
       root.classList.toggle('__ed-tb-below', side === 'below');
     },
-    /** The Text block editor's state for the toolbar (richState), or null. */
+    /** The Text widget editor's state for the toolbar (richState), or null. */
     get rich() {
       return richState();
     },
-    /** Start editing Text block `id`'s body in place (the panel's Edit in preview). */
+    /** Start editing Text widget `id`'s body in place (the panel's Edit in preview). */
     editRich(id) {
-      const el = doc?.querySelector(`[data-block="${CSS.escape(id)}"] [data-edit-type="rich"]`);
+      const el = doc?.querySelector(`[data-widget="${CSS.escape(id)}"] [data-edit-type="rich"]`);
       if (!el) return false;
       bridge.reveal(el);
       startRich(el);
       return true;
     },
-    /** Is a Text block being edited? */
+    /** Is a Text widget being edited? */
     get richEditing() {
       return !!rich;
     },
-    /** End the edit in place (the preview renders the block again). */
+    /** End the edit in place (the preview renders the widget again). */
     endRich() {
       if (!rich) return;
       const { el } = rich;
@@ -389,7 +389,7 @@ export function createBridge({ store, labelFor }) {
     },
     /**
      * A click away from the toolbar's own field (the link box): the hold is let go; the edit
-     * ends unless the click was in the block being edited (it keeps the caret there).
+     * ends unless the click was in the widget being edited (it keeps the caret there).
      */
     releaseRich(target) {
       if (!rich) return;
@@ -397,9 +397,9 @@ export function createBridge({ store, labelFor }) {
       if (!(target && rich.el.contains(target))) bridge.endRich();
     },
     /**
-     * Change the Text block's body: fn(body, sel) -> { body, sel? }. While it is edited the
-     * lines are rendered again and the selection put back; otherwise (the block only picked)
-     * `fallback` is the block's body ptr: { file, ptr } and the change renders the section.
+     * Change the Text widget's body: fn(body, sel) -> { body, sel? }. While it is edited the
+     * lines are rendered again and the selection put back; otherwise (the widget only picked)
+     * `fallback` is the widget's body ptr: { file, ptr } and the change renders the section.
      */
     richApply(fn, fallback = null) {
       const target = rich || fallback;
@@ -462,7 +462,7 @@ export function createBridge({ store, labelFor }) {
     doc?.querySelectorAll('[data-edit][contenteditable]').forEach(endEdit);
   };
 
-  // ---- the Text block's editor (rich.js, ../site/text.js)
+  // ---- the Text widget's editor (rich.js, ../site/text.js)
 
   /** A paste's lines: its HTML's (bold, italic, safe links only), else its plain text's. */
   function pastedLines(data, w) {
@@ -483,7 +483,7 @@ export function createBridge({ store, labelFor }) {
     const caret = sel?.to || { line: 0, at: 0 };
     const range = sel && !isCaret(sel);
     return {
-      block: rich.block,
+      widget: rich.widget,
       edit: rich.edit,
       style: body[caret.line]?.style || 'paragraph',
       line: caret.line,
@@ -529,7 +529,7 @@ export function createBridge({ store, labelFor }) {
       edit,
       file,
       ptr,
-      block: el.closest('[data-block]')?.dataset.block || '',
+      widget: el.closest('[data-widget]')?.dataset.widget || '',
       numHtml: num ? num.outerHTML : '',
       numLine: num ? [...el.children].indexOf(num.closest('[data-line]')) : -1,
       hold: false,
@@ -555,7 +555,7 @@ export function createBridge({ store, labelFor }) {
     emit('richDone', edit);
   }
 
-  /** A key in the Text block being edited; true when it was handled. */
+  /** A key in the Text widget being edited; true when it was handled. */
   function richKey(e) {
     const mod = e.metaKey || e.ctrlKey;
     const k = e.key.toLowerCase();
@@ -624,7 +624,7 @@ export function createBridge({ store, labelFor }) {
       return el.dataset.bound ? `${label} · from the item` : label;
     }
     if (el.dataset.anim === undefined) {
-      const type = [...el.classList].find((c) => c.startsWith('blk--'))?.slice(5) || 'block';
+      const type = [...el.classList].find((c) => c.startsWith('wgt--'))?.slice(5) || 'widget';
       return `${type} · ${el.dataset.motion || 'no motion'}`;
     }
     return `${el.dataset.anim} · ${api?.resolve(el.dataset.anim, el)?.preset || '?'}`;
@@ -658,7 +658,7 @@ export function createBridge({ store, labelFor }) {
 
   /** Is the key's target somewhere typing goes (a field, a text edited in place)? */
   const typing = (t) => !!t?.closest?.('input, textarea, select, [contenteditable]');
-  // Ctrl+S / E / Z / Y, Esc, and [ ] (a block's layer: by character, AltGr included) when not typing
+  // Ctrl+S / E / Z / Y, Esc, and [ ] (a widget's layer: by character, AltGr included) when not typing
   const isShortcut = (e) =>
     ((e.metaKey || e.ctrlKey) && /^[sezy]$/i.test(e.key)) ||
     e.key === 'Escape' ||
@@ -690,7 +690,7 @@ export function createBridge({ store, labelFor }) {
     doc.addEventListener(
       'pointermove',
       (e) => {
-        // (Content mode: the overlay shows the block under the pointer, CSS the text)
+        // (Content mode: the overlay shows the widget under the pointer, CSS the text)
         if (mode !== 'motion') return;
         const t = e.target instanceof win.Element ? e.target : null;
         hoverEl = t?.closest(MOTION_PICK) || null;
@@ -706,7 +706,7 @@ export function createBridge({ store, labelFor }) {
     };
 
     // Clicks: in edit modes, clicks select instead of navigating. In Content mode no link,
-    // button or form acts (a click in a block picks it: overlay.js; outside the blocks it
+    // button or form acts (a click in a widget picks it: overlay.js; outside the widgets it
     // picks the text's field); in Motion a click on an animated element picks it. Hold Alt
     // to click through.
     win.addEventListener(
@@ -739,7 +739,7 @@ export function createBridge({ store, labelFor }) {
           if (!hit && !t?.closest(ACTIVE)) return;
           e.preventDefault();
           e.stopPropagation();
-          if (hit && !hit.closest('[data-block]')) pickField(hit);
+          if (hit && !hit.closest('[data-widget]')) pickField(hit);
           return;
         }
         const hit = t?.closest(MOTION_PICK);
@@ -798,7 +798,7 @@ export function createBridge({ store, labelFor }) {
     });
 
     doc.addEventListener('focusout', (e) => {
-      // the Text block: its edit ends, unless the toolbar's own field took the focus
+      // the Text widget: its edit ends, unless the toolbar's own field took the focus
       if (rich && e.target === rich.el) {
         if (!rich.hold) finishRich();
         return;
@@ -855,7 +855,7 @@ export function createBridge({ store, labelFor }) {
           if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
-            el.blur(); // ends the edit (the block stays picked)
+            el.blur(); // ends the edit (the widget stays picked)
             return;
           }
           e.stopPropagation(); // keep site shortcuts (album arrows, menu) out of typing
@@ -865,7 +865,7 @@ export function createBridge({ store, labelFor }) {
       true,
     );
 
-    // the link box held the edit open: a click in the preview away from the block lets go
+    // the link box held the edit open: a click in the preview away from the widget lets go
     // and ends it (the toolbar's box closes with it)
     doc.addEventListener(
       'pointerdown',
@@ -874,7 +874,7 @@ export function createBridge({ store, labelFor }) {
       },
       true,
     );
-    // a paste into a Text block is its plain text (the model's runs stay clean)
+    // a paste into a Text widget is its plain text (the model's runs stay clean)
     doc.addEventListener(
       'paste',
       (e) => {

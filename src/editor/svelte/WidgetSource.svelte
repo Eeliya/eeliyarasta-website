@@ -1,19 +1,19 @@
 <!--
-  A block's source, first in its Content tab (BlockInspector.svelte; src/site/layout/source.js):
-    Source       Item / All (a list block) · From URL · None, one segmented row; From URL only on
+  A widget's source, first in its Content tab (WidgetInspector.svelte; src/site/layout/source.js):
+    Source       Item / All (a list widget) · From URL · None, one segmented row; From URL only on
                  a [param] page (greyed elsewhere, its tooltip says why)
     the item     Item: the item selector (ItemPicker.svelte, an item); All and From URL: its
                  source (the same selector, a list)
     Match the address
                  From URL: a row per param of the page's address, [ where | [person] | = | field ▾ ]:
                  the source field it must equal (default: the field of the same name, else slug),
-                 or Any (no rule: not filtered; not on the main block, the menu says why). A
+                 or Any (no rule: not filtered; not on the main widget, the menu says why). A
                  field the source doesn't have: the row in red and a note under the rows
     what it shows  one line: how many items match (the fields show the first)
-    Main block   on a [param] page: a switch, on: this block decides which pages exist (the
+    Main widget   on a [param] page: a switch, on: this widget decides which pages exist (the
                  page's "main"; turning it on makes it From URL), its hint how many are built
-  Stored as the block's "source" ({ mode, from, id | where }), every change one undo step that
-  renders the block again. ui.focusParam (the page head's warning) focuses a param's row.
+  Stored as the widget's "source" ({ mode, from, id | where }), every change one undo step that
+  renders the widget again. ui.focusParam (the page head's warning) focuses a param's row.
 -->
 <script>
   import { tick } from 'svelte';
@@ -27,20 +27,20 @@
   import { isBinding, resolve } from '../../site/layout/bindings.js';
   import { defaultField, hasField, ruleOf, SLUG } from '../../site/query.js';
 
-  // g: the block's group; base: its pointer; list: a list block (All instead of Item); shown:
-  // what it shows on the page in the preview (blockItems)
+  // g: the widget's group; base: its pointer; list: a list widget (All instead of Item); shown:
+  // what it shows on the page in the preview (widgetItems)
   let { g, live, base, list = false, shown, sourceIds, onsource } = $props();
 
   const NO_PARAMS = 'This page’s address has no params to match';
   const ANY_WHY =
-    'Not on the main block: it decides which pages exist, so each address must match real items (no match shows the 404 page). A param it ignores would make the same page under many addresses.';
+    'Not on the main widget: it decides which pages exist, so each address must match real items (no match shows the 404 page). A param it ignores would make the same page under many addresses.';
   // what a URL part can be compared with: one value, not photos, long texts or lists
   const MATCHABLE = ['text', 'number', 'date', 'choice', 'select'];
   const ANY = ''; // the Select's value for Any (no rule)
 
   const pageId = $derived(pageIdOf(g.file) || '');
   const params = $derived(isTemplate(pageId) ? paramsOf(pageId) : []);
-  // (read on its own: the store changes a value in place, so the block stays the same object)
+  // (read on its own: the store changes a value in place, so the widget stays the same object)
   const source = $derived.by(() => {
     live.version;
     const v = live.get(g.file, `${base}/source`);
@@ -63,7 +63,7 @@
   };
   const nameOf = (id, it) => itemName(it, schemaFor(live.store, sourceFile(id)));
 
-  // ---- the main block
+  // ---- the main widget
   const mainId = $derived.by(() => {
     live.version;
     return live.get(g.file, '/main');
@@ -81,8 +81,8 @@
       return { text: `${how} · ${plural(built, 'page')} built`, warn: false };
     }
     return mainId
-      ? { text: 'Off: the page’s main block is another one', warn: false }
-      : { text: 'Off: no block is the main block, so no pages are built', warn: true };
+      ? { text: 'Off: the page’s main widget is another one', warn: false }
+      : { text: 'Off: no widget is the main widget, so no pages are built', warn: true };
   });
 
   // ---- writing it
@@ -104,7 +104,7 @@
     if (it) set({ mode: 'item', from, id: it.id });
   }
   /**
-   * None: the block's own texts. A field that showed the item's value keeps it as its own text
+   * None: the widget's own texts. A field that showed the item's value keeps it as its own text
    * (a text: what it showed; anything else: its default), one undo step.
    */
   function toNone() {
@@ -118,11 +118,11 @@
         return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, own(x)]));
       return v;
     };
-    const block = live.get(g.file, base) || {};
+    const widget = live.get(g.file, base) || {};
     live.store.batch(
       () => {
         set(undefined);
-        for (const [k, v] of Object.entries(block))
+        for (const [k, v] of Object.entries(widget))
           if (k !== 'source' && JSON.stringify(v).includes('"bind"'))
             live.store.set(g.file, `${base}/${k}`, own(structuredClone(v)), {
               source: 'panel',
@@ -223,11 +223,11 @@
     return { text: list ? match : `${match} · the fields show the first`, miss: false };
   });
 
-  // the page head's warning: this block's row of that param, in view and focused
+  // the page head's warning: this widget's row of that param, in view and focused
   let el = $state();
   $effect(() => {
     const at = ui.focusParam;
-    if (!at || at.block !== g.id || !el) return;
+    if (!at || at.widget !== g.id || !el) return;
     ui.focusParam = null;
     tick().then(() => {
       const row = at.param && el.querySelector(`[data-param="${CSS.escape(at.param)}"]`);
@@ -334,12 +334,12 @@
     <hr class="bs__line" />
     <label class="tf">
       <span class="tf__label">
-        <span class="bs__main"><i class="fa-solid fa-star" aria-hidden="true"></i>Main block</span>
+        <span class="bs__main"><i class="fa-solid fa-star" aria-hidden="true"></i>Main widget</span>
         <input
           type="checkbox"
           class="switch"
           role="switch"
-          title="The main block decides which pages this page builds"
+          title="The main widget decides which pages this page builds"
           checked={isMain}
           onchange={(e) => setMain(e.currentTarget.checked)}
         />
@@ -395,11 +395,11 @@
     text-transform: uppercase;
   }
 
-  // the param: the block accent, as in the page head's path
+  // the param: the widget accent, as in the page head's path
   .bs__param {
     flex: none;
     min-width: 72px;
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
   }
 
   .bs__eq {
@@ -413,7 +413,7 @@
     color: var(--c-text-muted);
 
     &.is-param {
-      color: var(--c-block-accent);
+      color: var(--c-widget-accent);
     }
 
     &.is-missing {
@@ -487,7 +487,7 @@
     color: var(--c-text);
 
     i {
-      color: var(--c-block-accent);
+      color: var(--c-widget-accent);
       font-size: var(--fs-2xs);
     }
   }

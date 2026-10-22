@@ -1,11 +1,11 @@
-/** Real rows: uniform rows per section, blocks spanning whole rows, free blocks (src/site/layout/flow.js). */
+/** Real rows: uniform rows per section, widgets spanning whole rows, free widgets (src/site/layout/flow.js). */
 import { lay } from './test-layout.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveRows, rowsFor } from '../src/site/layout/flow.js';
 import { rowsOf } from '../src/site/layout/index.js';
 import { createStore } from '../src/editor/store.js';
-import { placeBlock, placeMobile, setSection } from '../src/editor/layout-ops.js';
+import { placeWidget, placeMobile, setSection } from '../src/editor/layout-ops.js';
 
 const b = (id, col, span, row, rows, need) => ({ id, col, span, row, rows, need });
 
@@ -17,7 +17,7 @@ test('rowsFor: whole rows, a hair under a row still that row', () => {
   assert.equal(rowsFor(900, 8), 113);
 });
 
-test('resolveRows: nothing changes when every block has the rows it needs', () => {
+test('resolveRows: nothing changes when every widget has the rows it needs', () => {
   const items = [b('a', 1, 12, 1, 10, 10), b('b', 13, 12, 1, 6, null), b('c', 1, 24, 12, 4, 4)];
   assert.deepEqual(resolveRows(items, 20), {
     rows: 20,
@@ -26,7 +26,7 @@ test('resolveRows: nothing changes when every block has the rows it needs', () =
   assert.deepEqual(resolveRows([], 7), { rows: 7, at: {} });
 });
 
-test('resolveRows: free blocks stay where they are when a block above them grows', () => {
+test('resolveRows: free widgets stay where they are when a widget above them grows', () => {
   // a grows by 5: c and d (below it, free) stay; they overlap it now
   const items = [b('a', 1, 12, 1, 10, 15), b('c', 1, 12, 12, 4, 4), b('d', 1, 24, 20, 2, 2)];
   const { rows, at } = resolveRows(items, 21);
@@ -36,34 +36,34 @@ test('resolveRows: free blocks stay where they are when a block above them grows
   assert.equal(rows, 21);
 });
 
-test('section rows: its lowest block now, plus the empty rows it had below', () => {
+test('section rows: its lowest widget now, plus the empty rows it had below', () => {
   const grow = resolveRows([b('a', 1, 24, 1, 20, 30)], 24); // 4 empty rows below
   assert.equal(grow.rows, 34);
   const shrink = resolveRows([b('a', 1, 24, 1, 20, 12), b('c', 1, 24, 2, 4, 4)], 20);
   assert.equal(shrink.rows, 12);
 });
 
-test('sections count every block by its stored rows (aspect and auto too)', () => {
-  const blk = (size, row, rows) => ({
+test('sections count every widget by its stored rows (aspect and auto too)', () => {
+  const wgt = (size, row, rows) => ({
     id: 'b-aaaa',
     type: 'text',
     size,
     layout: { base: { col: 1, span: 24, row, rows } },
   });
-  assert.equal(rowsOf({ blocks: [blk('auto', 3, 40)] }), 42);
-  assert.equal(rowsOf({ blocks: [blk('aspect', 1, 12)] }), 12);
-  assert.equal(rowsOf({ rows: 30, blocks: [blk('aspect', 1, 12)] }), 12); // an old count: ignored
-  assert.equal(rowsOf({ blocks: [] }), 1);
+  assert.equal(rowsOf({ widgets: [wgt('auto', 3, 40)] }), 42);
+  assert.equal(rowsOf({ widgets: [wgt('aspect', 1, 12)] }), 12);
+  assert.equal(rowsOf({ rows: 30, widgets: [wgt('aspect', 1, 12)] }), 12); // an old count: ignored
+  assert.equal(rowsOf({ widgets: [] }), 1);
 });
 
-test("a drag stores where the section's blocks are now (their real rows), one undo step", () => {
+test("a drag stores where the section's widgets are now (their real rows), one undo step", () => {
   const F = 'pages/t/index.json';
   const pos = (row, rows) => ({ col: 1, span: 24, row, rows });
   const page = {
     sections: [
       {
         id: 's-aaaa',
-        blocks: [
+        widgets: [
           lay({ id: 'b-aaaa', type: 'text', pos: pos(1, 4) }),
           lay({ id: 'b-bbbb', type: 'text', size: 'rows', pos: pos(6, 4) }),
           lay({
@@ -80,21 +80,21 @@ test("a drag stores where the section's blocks are now (their real rows), one un
   store.load({ [F]: structuredClone(page) });
   // where rows.js showed them (a needs 10 rows now); c is dragged to row 30
   const flow = { 'b-aaaa': pos(1, 10), 'b-bbbb': pos(12, 4), 'b-cccc': pos(18, 2) };
-  placeBlock(store, F, 0, 2, pos(30, 2), undefined, { flow });
+  placeWidget(store, F, 0, 2, pos(30, 2), undefined, { flow });
   const s = store.current[F].sections[0];
   assert.deepEqual(
-    s.blocks.map((x) => [x.layout.base.row, x.layout.base.rows]),
+    s.widgets.map((x) => [x.layout.base.row, x.layout.base.rows]),
     [
       [1, undefined], // auto: its row only (its rows are measured on the page)
       [12, 4],
       [30, undefined],
     ],
   );
-  assert.equal(rowsOf(s), 30); // down to its lowest block (no rows stored)
+  assert.equal(rowsOf(s), 30); // down to its lowest widget (no rows stored)
   assert.equal(s.rows, undefined);
   store.undo();
   assert.deepEqual(store.current[F], page);
-  // on the phone: the other blocks' mobile rows
+  // on the phone: the other widgets' mobile rows
   placeMobile(
     store,
     F,
@@ -108,13 +108,13 @@ test("a drag stores where the section's blocks are now (their real rows), one un
       },
     },
   );
-  // a block with a phone area of its own stores its rows now; one without keeps none
-  assert.deepEqual(store.current[F].sections[0].blocks[2].layout.phone, {
+  // a widget with a phone area of its own stores its rows now; one without keeps none
+  assert.deepEqual(store.current[F].sections[0].widgets[2].layout.phone, {
     col: 1,
     span: 12,
     row: 7,
   });
-  assert.ok(!('phone' in store.current[F].sections[0].blocks[0].layout));
+  assert.ok(!('phone' in store.current[F].sections[0].widgets[0].layout));
   // a section setting set and removed again
   setSection(store, F, 0, { name: 'Intro' });
   assert.equal(store.current[F].sections[0].name, 'Intro');

@@ -11,7 +11,7 @@ import {
   unmatched,
   valueOf,
 } from '../src/site/query.js';
-import { blockItems, mainAt, mainProblem, sourceOf } from '../src/site/layout/source.js';
+import { widgetItems, mainAt, mainProblem, sourceOf } from '../src/site/layout/source.js';
 import { buildRoutes } from '../src/site/routes.js';
 import { contentFromFiles } from '../src/site/files.js';
 import { checkContent } from '../src/site/validate.js';
@@ -133,7 +133,7 @@ const years = (c) =>
     .routes.filter((r) => r.id === 'people/[person]/[year]')
     .map((r) => [r.path, r.count, r.album?.id]);
 
-test('main block: a page per value of its own param among the items the outer params match', () => {
+test('main widget: a page per value of its own param among the items the outer params match', () => {
   assert.deepEqual(years(site()), [
     ['/people/noor/2024/', 2, 's-1'], // two shoots, one page: its item the first
     ['/people/daan/2025/', 1, 's-3'], // by id reference
@@ -143,15 +143,15 @@ test('main block: a page per value of its own param among the items the outer pa
   const c = site();
   const ctx = { ...c, routes: buildRoutes(c).routes };
   assert.equal(itemHref(ctx, 'shoots', shoots[1]), '/people/noor/2024/');
-  assert.equal(mainAt(site().pages['people/[person]']).block.id, 'b-main');
+  assert.equal(mainAt(site().pages['people/[person]']).widget.id, 'b-main');
 });
 
-test('main block: a list block decides too (a page exists if at least one item matches)', () => {
+test('main widget: a list widget decides too (a page exists if at least one item matches)', () => {
   const c = site({
     sections: [
       {
         id: 's-main',
-        blocks: [
+        widgets: [
           {
             id: 'b-main',
             type: 'albums',
@@ -174,21 +174,21 @@ test('main block: a list block decides too (a page exists if at least one item m
   );
   // what it shows on its page: every matching item
   const route = buildRoutes(c).routes.find((r) => r.path === '/people/noor/2024/');
-  const block = c.pages['people/[person]/[year]'].sections[0].blocks[0];
-  assert.deepEqual(names(blockItems(c, route, block).items), ['s-1', 's-2']);
+  const widget = c.pages['people/[person]/[year]'].sections[0].widgets[0];
+  assert.deepEqual(names(widgetItems(c, route, widget).items), ['s-1', 's-2']);
 });
 
-test('main block: none, not From URL, Any or a missing field: no pages, says why', () => {
+test('main widget: none, not From URL, Any or a missing field: no pages, says why', () => {
   const kind = (c) => mainProblem(c, 'people/[person]/[year]')?.kind;
   const at = (c) => c.pages['people/[person]/[year]'];
   const none = site({ main: undefined });
   assert.equal(kind(none), 'none');
   assert.deepEqual(years(none), []);
   const item = site();
-  at(item).sections[0].blocks[0].source = { mode: 'item', from: 'shoots', id: 'p-xxxx' };
+  at(item).sections[0].widgets[0].source = { mode: 'item', from: 'shoots', id: 'p-xxxx' };
   assert.equal(kind(item), 'mode');
   const any = site();
-  at(any).sections[0].blocks[0].source.where.rules.pop();
+  at(any).sections[0].widgets[0].source.where.rules.pop();
   assert.deepEqual(mainProblem(any, 'people/[person]/[year]'), {
     kind: 'any',
     message: 'No pages are built: [year] needs a field to match',
@@ -197,13 +197,13 @@ test('main block: none, not From URL, Any or a missing field: no pages, says why
   });
   assert.deepEqual(years(any), []);
   const missing = site();
-  at(missing).sections[0].blocks[0].source.where.rules[0].field = 'model';
+  at(missing).sections[0].widgets[0].source.where.rules[0].field = 'model';
   assert.equal(
     mainProblem(missing, 'people/[person]/[year]').message,
     'No pages are built: [person] matches no field',
   );
   assert.deepEqual(years(missing), []);
-  // it still saves: a page whose main block can't decide is valid content
+  // it still saves: a page whose main widget can't decide is valid content
   assert.deepEqual(
     checkContent('pages/people/[person]/[year]/index.json', {
       version: 1,
@@ -215,19 +215,19 @@ test('main block: none, not From URL, Any or a missing field: no pages, says why
   );
 });
 
-test('source shapes: modes per block kind, where rules', () => {
+test('source shapes: modes per widget kind, where rules', () => {
   const page = (source, type = 'album') => ({
     version: 1,
     kind: 'page',
     id: 'pg-t201',
-    sections: [{ id: 's-t201', blocks: [{ id: 'b-t201', type, source }] }],
+    sections: [{ id: 's-t201', widgets: [{ id: 'b-t201', type, source }] }],
   });
   const F = 'pages/people/[person]/index.json';
   const check = (...a) => checkContent(F, page(...a));
   assert.deepEqual(check({ mode: 'item', from: 'people', id: 'p-3pdk' }), []);
   assert.deepEqual(check({ mode: 'url', from: 'people', where: and() }), []);
   assert.deepEqual(check({ mode: 'all', from: 'people' }, 'albums'), []);
-  assert.match(check({ mode: 'all', from: 'people' }).join(), /for list blocks/);
+  assert.match(check({ mode: 'all', from: 'people' }).join(), /for list widgets/);
   assert.match(check({ mode: 'item', from: 'people', id: 'p-3pdk' }, 'albums').join(), /a list/);
   assert.match(check({ mode: 'nope', from: 'people' }).join(), /"source" must be/);
   const twice = and({ param: 'person', field: 'slug' }, { param: 'person', field: 'name' });

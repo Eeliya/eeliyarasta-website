@@ -8,10 +8,10 @@
   before it): the field's control shows the inherited value, dimmed and inert, and nothing is
   stored. On: the value is stored at the scope (switching on copies the inherited value there,
   off removes it again).
-    m      the model: animModel(), blockModel() or presetModel() (motion.js)
-    scope  the layer edits go to: 'element' | 'target' | 'preset' | 'block' (a block's motion)
-    file   the file of that layer: animations.json, or the block's page file
-    ptr    that layer's pointer in the file (layerPtr; a block's: …/blocks/<j>/motion)
+    m      the model: animModel(), widgetModel() or presetModel() (motion.js)
+    scope  the layer edits go to: 'element' | 'target' | 'preset' | 'widget' (a widget's motion)
+    file   the file of that layer: animations.json, or the widget's page file
+    ptr    that layer's pointer in the file (layerPtr; a widget's: …/widgets/<j>/motion)
     key    prefix of the sections' open/closed keys, e.g. 'motion' or 'library'
 -->
 <script>

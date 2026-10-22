@@ -1,11 +1,11 @@
 @use 'tokens' as *;
 
 /*
- * The Text block (src/site/blocks/basic.js) and its lines' styles (.ts--<style>,
- * src/site/text.js). Fixed sizes here; scaled with the grid or fitted to the block:
- * _layout.scss (.blk--scale). The block is its lines' container: a title never gets wider
- * than the block (its size is capped by the block's width, cqi), and a word longer than
- * the line still breaks rather than spill out of the block.
+ * The Text widget (src/site/widgets/basic.js) and its lines' styles (.ts--<style>,
+ * src/site/text.js). Fixed sizes here; scaled with the grid or fitted to the widget:
+ * _layout.scss (.wgt--scale). The widget is its lines' container: a title never gets wider
+ * than the widget (its size is capped by the widget's width, cqi), and a word longer than
+ * the line still breaks rather than spill out of the widget.
  */
 .text {
   container-type: inline-size;
@@ -35,7 +35,7 @@
 .ts--title {
   font-family: var(--f-display);
   font-weight: 400;
-  // the old page title's size, never wider than its block: "Photography" is ~6em wide
+  // the old page title's size, never wider than its widget: "Photography" is ~6em wide
   font-size: min(clamp(72px, 15vw, 250px), 20cqi);
   line-height: 0.82;
   letter-spacing: -0.02em;

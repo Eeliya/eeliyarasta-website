@@ -1,10 +1,10 @@
 <!--
-  Add block: a modal of the block types, a tile each (a sketch of the block, its icon, name and
+  Add widget: a modal of the widget types, a tile each (a sketch of the widget, its icon, name and
   one line, all from the registry). A search filters them; the pointer or the arrow keys pick
   one (a 2px accent ring: nothing moves), Enter or a click adds it, Esc or the backdrop closes.
-  Opened by a section's dashed Add block button (SectionsList.svelte), which appends the block
+  Opened by a section's dashed Add widget button (SectionsList.svelte), which appends the widget
   to that section and opens it.
-    types   [{ value, label, icon, line, sketch }] the block types on offer (the registry's)
+    types   [{ value, label, icon, line, sketch }] the widget types on offer (the registry's)
     onpick  (type, at) => …   at: the section index open() was given
 -->
 <script module>
@@ -22,7 +22,7 @@
   let dialog = $state();
   let query = $state('');
   let active = $state(0);
-  let at = $state(0); // the section the block goes to
+  let at = $state(0); // the section the widget goes to
 
   const shown = $derived.by(() => {
     const q = query.trim().toLowerCase();
@@ -73,7 +73,7 @@
   }
 </script>
 
-<!-- a block's sketch: grey shapes, 2:1 -->
+<!-- a widget's sketch: grey shapes, 2:1 -->
 {#snippet sketch(type)}
   <span class="as-sk as-sk--{type}" aria-hidden="true">
     {#if type === 'text'}<b class="w40 h4"></b><b class="w70 h12"></b><b class="w90 h4"></b><b
@@ -109,28 +109,28 @@
 
 <dialog
   class="modal__box as-modal"
-  aria-label="Add block to section {at + 1}"
+  aria-label="Add widget to section {at + 1}"
   bind:this={dialog}
   {@attach closeOnBackdrop}
   {onkeydown}
 >
   <ExplorerHead
-    title="Add block to Section {at + 1}"
+    title="Add widget to Section {at + 1}"
     icon="fa-plus"
-    crumbs={[{ label: 'after its last block' }]}
+    crumbs={[{ label: 'after its last widget' }]}
     onclose={() => dialog.close()}
   />
   <div class="as-body">
     <input
       class="tf__input as-search"
       type="search"
-      placeholder="Search blocks"
-      aria-label="Search blocks"
+      placeholder="Search widgets"
+      aria-label="Search widgets"
       bind:value={query}
       oninput={() => (active = 0)}
     />
     {#if shown.length}
-      <ul class="as-tiles" role="listbox" aria-label="Block types">
+      <ul class="as-tiles" role="listbox" aria-label="Widget types">
         {#each shown as t, i (t.value)}
           <li role="presentation">
             <button
@@ -153,7 +153,7 @@
         {/each}
       </ul>
     {:else}
-      <p class="hint">No block matches “{query}”.</p>
+      <p class="hint">No widget matches “{query}”.</p>
     {/if}
   </div>
   <footer class="as-foot">

@@ -14,7 +14,7 @@ test('save tidies a page: no empty config or meta, an area without its defaults'
     sections: [
       {
         id: 's-t100',
-        blocks: [
+        widgets: [
           {
             id: 'b-t101',
             type: 'heading',
@@ -33,7 +33,7 @@ test('save tidies a page: no empty config or meta, an area without its defaults'
   };
   const out = omitDefaults(F, page);
   assert.equal(out.meta, undefined);
-  const [a, b, c] = out.sections[0].blocks;
+  const [a, b, c] = out.sections[0].widgets;
   assert.deepEqual(a, { id: 'b-t101', type: 'heading' });
   assert.deepEqual(b.layout, { base: { col: 13, row: 4 } });
   assert.deepEqual(c.layout, { base: { span: 60 }, phone: null });
@@ -42,7 +42,7 @@ test('save tidies a page: no empty config or meta, an area without its defaults'
   assert.deepEqual(storedDefaults(F, page), []);
 });
 
-test('a [param] page: its main block decides its pages; "template" and "grid" are gone', () => {
+test('a [param] page: its main widget decides its pages; "template" and "grid" are gone', () => {
   const T = 'pages/people/[person]/index.json';
   const base = { version: 1, kind: 'page', id: 'pg-t110', sections: [] };
   const ok = { ...base, main: 'b-t111' };
@@ -51,14 +51,14 @@ test('a [param] page: its main block decides its pages; "template" and "grid" ar
     '"grid" must be left out: the page grid is always 120',
   ]);
   assert.deepEqual(checkContent(T, { ...base, template: { source: 'people' } }), [
-    '"template" is gone: a [param] page\'s main block decides its pages ("main")',
+    '"template" is gone: a [param] page\'s main widget decides its pages ("main")',
   ]);
   assert.deepEqual(checkContent('pages/people/index.json', { ...ok, id: 'pg-t112' }), [
     '"main" is only for [param] pages',
   ]);
 });
 
-test('changes: a layout value at its default is no change (a block moved back)', async () => {
+test('changes: a layout value at its default is no change (a widget moved back)', async () => {
   const { createStore } = await import('../src/editor/store.js');
   const store = createStore();
   const F2 = 'pages/y/index.json';
@@ -67,10 +67,10 @@ test('changes: a layout value at its default is no change (a block moved back)',
       version: 1,
       kind: 'page',
       id: 'pg-t120',
-      sections: [{ id: 's-t120', blocks: [{ id: 'b-t121', type: 'heading' }] }],
+      sections: [{ id: 's-t120', widgets: [{ id: 'b-t121', type: 'heading' }] }],
     },
   });
-  const ptr = '/sections/0/blocks/0/layout';
+  const ptr = '/sections/0/widgets/0/layout';
   store.set(F2, ptr, { base: { col: 13, span: 108, row: 4 } });
   assert.deepEqual(store.dirtyFiles(), [F2]);
   assert.ok(store.changedAt(F2, `${ptr}/base/col`));

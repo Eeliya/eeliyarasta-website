@@ -3,31 +3,31 @@
     title row  the changed dot, its title (its name, else "Section N"; one line, cut with …),
                its eye and its pen (Section.svelte's onenter: the section's settings; a double
                click on the card too, a click selects it)
-    count row  "N blocks ⌄" (text only; "No blocks" faint, inactive), + Add block (onadd),
+    count row  "N widgets ⌄" (text only; "No widgets" faint, inactive), + Add widget (onadd),
                then move up, move down, Duplicate and Delete (24px icon buttons)
-    its blocks the count opens them inside the card (ui.sections["blocks:<id>"]; the card
-               grows, animated as a section opens; not on load, not with reduced motion): BlockRow.svelte each, no order (blocks are placed in the preview)
+    its widgets the count opens them inside the card (ui.sections["widgets:<id>"]; the card
+               grows, animated as a section opens; not on load, not with reduced motion): WidgetRow.svelte each, no order (widgets are placed in the preview)
   12px inside on every side: every icon ends, all text starts on those edges. The card's
-  buttons (both rows, Add block) rest at 30% and show fully while it is hovered, selected or
-  has the focus; a block row's on its own hover (BlockRow.svelte); an eye-slash (hidden)
+  buttons (both rows, Add widget) rest at 30% and show fully while it is hovered, selected or
+  has the focus; a widget row's on its own hover (WidgetRow.svelte); an eye-slash (hidden)
   always. Opacity only: nothing moves. Delete asks over the card at its size (its border red).
     live, file, at (its index), last (the last section), peek (hovered in the preview)
-    selected, onselect, onsection (its settings), onopen(blockId), onadd(at)
+    selected, onselect, onsection (its settings), onopen(widgetId), onadd(at)
     deleting  bindable: the id asking "Delete?" (the section's), '' for none
-    changed, expanded  override the changed dot and the blocks open / closed (the mock kit)
+    changed, expanded  override the changed dot and the widgets open / closed (the mock kit)
 -->
 <script>
   import Button from './Button.svelte';
   import Section from './Section.svelte';
-  import BlockRow from './BlockRow.svelte';
+  import WidgetRow from './WidgetRow.svelte';
   import { untrack } from 'svelte';
   import { gsap } from 'gsap';
   import { ui } from './ui.svelte.js';
   import {
-    duplicateBlock,
+    duplicateWidget,
     duplicateSection,
     moveSection,
-    removeBlock,
+    removeWidget,
     removeSection,
     setSection,
   } from '../layout-ops.js';
@@ -54,14 +54,14 @@
   });
   const name = $derived((typeof s.name === 'string' && s.name.trim()) || '');
   const title = $derived(name || `Section ${at + 1}`);
-  const blocks = $derived(Array.isArray(s.blocks) ? s.blocks : []);
-  const n = $derived(blocks.length);
+  const widgets = $derived(Array.isArray(s.widgets) ? s.widgets : []);
+  const n = $derived(widgets.length);
   const on = $derived(s.enabled !== false);
-  const key = $derived(`blocks:${s.id}`);
+  const key = $derived(`widgets:${s.id}`);
   const open = $derived(!!n && (expanded ?? !!ui.sections[key]));
   const listId = $props.id();
 
-  // The blocks open and close as Section's body: a one-row grid (1fr open, 0fr closed, by its
+  // The widgets open and close as Section's body: a one-row grid (1fr open, 0fr closed, by its
   // inert), its list clipped to that row and kept rendered; a toggle tweens
   // grid-template-rows, then hands back to CSS. The first render (and reduced motion) doesn't.
   let drawer = $state();
@@ -86,11 +86,11 @@
   });
   const asking = $derived(deleting === s.id);
 
-  function setBlockOn(j, show) {
+  function setWidgetOn(j, show) {
     live.store.set(
       file,
-      `/sections/${at}/blocks/${j}/config`,
-      { ...blocks[j].config, enabled: show ? undefined : false },
+      `/sections/${at}/widgets/${j}/config`,
+      { ...widgets[j].config, enabled: show ? undefined : false },
       { source: 'panel' },
     );
   }
@@ -159,7 +159,7 @@
   {/snippet}
 
   {#snippet foot()}
-    <!-- [ 3 blocks ⌄   + Add block        ↑ ↓ copy trash ] -->
+    <!-- [ 3 widgets ⌄   + Add widget        ↑ ↓ copy trash ] -->
     <div class="line">
       <button
         type="button"
@@ -167,20 +167,20 @@
         aria-expanded={open}
         aria-controls={n ? listId : undefined}
         disabled={!n}
-        title={n ? (open ? 'Hide its blocks' : 'Show its blocks') : undefined}
+        title={n ? (open ? 'Hide its widgets' : 'Show its widgets') : undefined}
         onclick={() => (ui.sections[key] = !open)}
       >
-        {n ? `${n} block${n > 1 ? 's' : ''}` : 'No blocks'}
+        {n ? `${n} widget${n > 1 ? 's' : ''}` : 'No widgets'}
         {#if n}<i class="fa-solid fa-chevron-down line__caret" aria-hidden="true"></i>{/if}
       </button>
       <button
         type="button"
         class="line__add"
         aria-haspopup="dialog"
-        aria-label="Add block to {title}"
+        aria-label="Add widget to {title}"
         onclick={() => onadd(at)}
       >
-        <i class="fa-solid fa-plus" aria-hidden="true"></i>Add block
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>Add widget
       </button>
       <span class="tools">
         <Button
@@ -217,14 +217,14 @@
     </div>
     {#if n}
       <div class="drawer" bind:this={drawer} inert={!open}>
-        <ul class="blocks" id={listId} aria-label="Blocks of {title}">
-          {#each blocks as b, j (b.id)}
-            <BlockRow
-              block={b}
+        <ul class="widgets" id={listId} aria-label="Widgets of {title}">
+          {#each widgets as b, j (b.id)}
+            <WidgetRow
+              widget={b}
               onopen={() => onopen(b.id)}
-              onshow={(show) => setBlockOn(j, show)}
-              onduplicate={() => duplicateBlock(live.store, file, at, j)}
-              ondelete={() => removeBlock(live.store, file, at, j)}
+              onshow={(show) => setWidgetOn(j, show)}
+              onduplicate={() => duplicateWidget(live.store, file, at, j)}
+              ondelete={() => removeWidget(live.store, file, at, j)}
             />
           {/each}
         </ul>
@@ -237,13 +237,13 @@
   @use '../styles/mixins' as *;
 
   // ---- the card (Section.svelte, data-card): 12px inside on the sides (its bar and foot), the
-  // count row 8px under the title row, the blocks 8px under it; the title on one line
+  // count row 8px under the title row, the widgets 8px under it; the title on one line
   :global(.sec[data-card] > .sec__bar) {
     padding-inline: var(--space-3);
   }
 
   :global(.sec[data-card] .sec__foot) {
-    gap: 0; // the blocks' 8px is inside their drawer, so it closes with them
+    gap: 0; // the widgets' 8px is inside their drawer, so it closes with them
     margin-top: 0;
     padding: var(--space-2) var(--space-3) 0;
   }
@@ -252,8 +252,8 @@
     @include ellipsis;
   }
 
-  // hidden: the title muted (Section's), its blocks dimmed; the buttons follow their own rule
-  :global(.sec[data-card].is-off) .blocks {
+  // hidden: the title muted (Section's), its widgets dimmed; the buttons follow their own rule
+  :global(.sec[data-card].is-off) .widgets {
     opacity: var(--o-dim);
   }
 
@@ -288,7 +288,7 @@
     height: 20px;
   }
 
-  // [ 3 blocks ⌄   + Add block        ↑ ↓ copy trash ]: 24px; the two text buttons without a
+  // [ 3 widgets ⌄   + Add widget        ↑ ↓ copy trash ]: 24px; the two text buttons without a
   // fill or side padding, so the count's text starts on the title's edge
   .line {
     @include row(var(--space-4));
@@ -342,7 +342,7 @@
     }
   }
 
-  // its blocks: 48px rows 4px apart, on the card's content edges (BlockRow.svelte)
+  // its widgets: 48px rows 4px apart, on the card's content edges (WidgetRow.svelte)
   .drawer {
     display: grid;
     grid-template-rows: 1fr;
@@ -352,7 +352,7 @@
     }
   }
 
-  .blocks {
+  .widgets {
     @include stack(var(--space-1));
     min-height: 0;
     overflow: hidden;

@@ -1,19 +1,19 @@
-/** Data helpers shared by block types. */
+/** Data helpers shared by widget types. */
 import { warnOnce } from '../helpers.js';
 import { isTemplate, paramsOf, sourceFile } from '../files.js';
 import { parentId, pathOfId } from '../routes.js';
-import { blocksOf } from '../layout/ids.js';
+import { widgetsOf } from '../layout/ids.js';
 import { pageSourceOf, sourceOf } from '../layout/source.js';
 
 /**
- * The list a block pulls from: content/en/sources/<source>.json. A missing file or one that
- * isn't a top-level array warns and gives [] (the block renders empty).
+ * The list a widget pulls from: content/en/sources/<source>.json. A missing file or one that
+ * isn't a top-level array warns and gives [] (the widget renders empty).
  */
 export function sourceList(ctx, source) {
   const list = ctx.sources?.[source];
   if (Array.isArray(list)) return list;
   warnOnce(
-    `source "content/${sourceFile(source)}" ${list === undefined ? 'is missing' : 'is not a JSON array'}; the block renders empty.`,
+    `source "content/${sourceFile(source)}" ${list === undefined ? 'is missing' : 'is not a JSON array'}; the widget renders empty.`,
     'sections',
   );
   return [];
@@ -21,8 +21,8 @@ export function sourceList(ctx, source) {
 
 /**
  * The page that shows all of a source ("See all" links): the folder of the [param] page whose
- * main block shows that source (one not inside another), else the first page (not home) with a
- * block listing all of it, else /<source>/. So a renamed page keeps its links.
+ * main widget shows that source (one not inside another), else the first page (not home) with a
+ * widget listing all of it, else /<source>/. So a renamed page keeps its links.
  */
 export function sourcePage(ctx, source) {
   const ids = Object.keys(ctx.pages || {}).sort();
@@ -35,7 +35,7 @@ export function sourcePage(ctx, source) {
     (id) =>
       id !== 'home' &&
       !paramsOf(id).length &&
-      blocksOf(page(id)).some((b) => {
+      widgetsOf(page(id)).some((b) => {
         const s = sourceOf(b);
         return s?.mode === 'all' && s.from === source;
       }),

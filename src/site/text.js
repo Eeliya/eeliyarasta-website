@@ -1,5 +1,5 @@
 /**
- * Rich text: the Text block's body (src/site/blocks/basic.js), a list of lines, each in one
+ * Rich text: the Text widget's body (src/site/widgets/basic.js), a list of lines, each in one
  * of the site's text styles (TEXT_STYLES, ./layout/type.js), its text a list of runs:
  *
  *   "body": [
@@ -14,10 +14,10 @@
  * A run is one of:
  *   { t, marks?, link? }   text ("\n" a line break), marks: 'b' bold, 'i' italic, a link (a
  *                          page, an item or a URL: ./hrefs.js)
- *   { field, format? }     a field of the item the block shows (its source: ./layout/source.js),
+ *   { field, format? }     a field of the item the widget shows (its source: ./layout/source.js),
  *                          filled in when the page is built; format "{value} photos"
  *   { count: { source } }  how many items a source has; { count: { of: 'items' } }: how many
- *                          the block's own source shows
+ *                          the widget's own source shows
  * One line is one element (h1 / h2 / h3 / p) with its style's class (.ts--<style>). Every
  * value is escaped; fields and counts are chips (data-field / data-count) the editor's inline
  * editor (src/editor/rich.js) keeps whole.

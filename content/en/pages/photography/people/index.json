@@ -7,7 +7,7 @@
   "sections": [
     {
       "id": "s-8gt2",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-j6je",
           "type": "text",
@@ -39,7 +39,7 @@
     },
     {
       "id": "s-m9y2",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-grz4",
           "type": "albums",

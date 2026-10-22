@@ -1,7 +1,7 @@
 /**
  * Render a route to { head, body } HTML strings.
  * Used by the Vite plugin (dev middleware + build-time prerender).
- * Every page is its file's list of sections of blocks (layout/index.js); a [param] page's are
+ * Every page is its file's list of sections of widgets (layout/index.js); a [param] page's are
  * in its template file, rendered for the route's item.
  */
 import { accentOf, setEditable, warnOnce } from './helpers.js';
@@ -10,7 +10,7 @@ import { renderSections, renderSection, headingNumbers, sectionAnchor } from './
 import { docKindOf, docOf, pageFile } from './files.js';
 import { bindingProblems } from './layout/bindings.js';
 import { motionProblems } from './layout/motion.js';
-import { BLOCK_TYPES } from './blocks/index.js';
+import { WIDGET_TYPES } from './widgets/index.js';
 import { BACKDROP, renderBackdrop } from './backdrop.js';
 import { getRoutes, buildRoutes, curtainOverrides, sitemapXml } from './routes.js';
 
@@ -25,9 +25,9 @@ export {
 } from './redirects.js';
 
 /** Schema-aware checks of the pages' bindings: [{ level, message }] (layout/bindings.js). */
-export const bindingChecks = (content) => bindingProblems(content, { types: BLOCK_TYPES });
+export const bindingChecks = (content) => bindingProblems(content, { types: WIDGET_TYPES });
 
-/** Blocks whose animation isn't in the library (or can't play on a block): messages. */
+/** Widgets whose animation isn't in the library (or can't play on a widget): messages. */
 export const motionChecks = (content) => motionProblems(content);
 
 /**
@@ -62,7 +62,7 @@ function anchorClashes(route, sections, html) {
   }
 }
 
-/** What a page's blocks render with. */
+/** What a page's widgets render with. */
 function contextOf(route, content, unbuilt = false) {
   // curtains: every page carries the pages with their own curtain, for the router.
   // routes: links to source items go to their pages (itemHref in helpers.js); the editor's

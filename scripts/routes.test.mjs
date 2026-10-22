@@ -56,7 +56,7 @@ test('[param] template: a page per item, slug field or slugified name', () => {
   assert.equal(noor.page, 'album');
   assert.equal(noor.template, 'pages/people/[person]/index.json');
   assert.equal(noor.section, 'People');
-  assert.ok(!('nextPath' in noor)); // no next link (it comes back as a block)
+  assert.ok(!('nextPath' in noor)); // no next link (it comes back as a widget)
   assert.equal(noor.title, 'Noor | People | Site');
   assert.equal(
     itemHref({ ...c, routes: r }, 'people', c.sources.people[1]),
@@ -111,7 +111,7 @@ test('missing, invalid and duplicate slugs warn and get no page', () => {
   assert.match(warnings.join('\n'), /duplicate slug "a"/);
   assert.match(warnings.join('\n'), /no slug or name/);
   assert.match(warnings.join('\n'), /"Not Valid" is not a valid URL part/);
-  assert.match(warnings.join('\n'), /No pages are built: the main block’s source is missing/);
+  assert.match(warnings.join('\n'), /No pages are built: the main widget’s source is missing/);
 });
 
 test('content file names', () => {
@@ -229,10 +229,10 @@ test('nested [param] folders: a fixed page wins, and gets no pages under it', ()
   );
 });
 
-test('nested [param] folders: Any or a missing field on the main block builds no pages', () => {
+test('nested [param] folders: Any or a missing field on the main widget builds no pages', () => {
   const inner = (rules) => {
     const p = paramPage('people/[person]/[year]', 'shoots');
-    p.sections[0].blocks[0].source.where.rules = rules;
+    p.sections[0].widgets[0].source.where.rules = rules;
     return { 'pages/people/[person]/[year]/index.json': p };
   };
   const years = (c) => c.routes.filter((x) => x.id === 'people/[person]/[year]');
@@ -270,14 +270,14 @@ test('nested [param] folders: Any or a missing field on the main block builds no
       ['/people/daan/:year/', 's-3'],
     ],
   );
-  // without a main block: one route at its pattern, no item
+  // without a main widget: one route at its pattern, no item
   const none = nested();
   delete none.pages['people/[person]/[year]'].main;
   assert.deepEqual(years(buildRoutes(none)), []);
   const [pattern] = years(buildRoutes(none, { unbuilt: true }));
   assert.equal(pattern.path, '/people/:person/:year/');
   assert.equal(pattern.album, null);
-  assert.match(buildRoutes(none).warnings.join('\n'), /pick the main block/);
+  assert.match(buildRoutes(none).warnings.join('\n'), /pick the main widget/);
 });
 
 test('nested [param] folders: a page in one is no page; hrefs go to the item pages', () => {

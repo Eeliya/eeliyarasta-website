@@ -3,26 +3,26 @@
   preview or a site part (the Header: HeaderPart.svelte; the Footer) under PageHead.svelte
   (Return to navigation: back to the pages list). The two swap with a slide (lib/slide.js):
   a page opened comes in from the right, the list comes back from the left. A page is a list of sections
-  holding blocks (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
+  holding widgets (src/site/layout/), and nothing else. A page's panel has three tabs (Tabs.svelte,
   the open one kept per page in ui.sections["pagetab:<file>"]):
     Sections     SectionsList.svelte: the section cards and the dashed Add section card. One
-                 level under it, never both: a block's settings (BlockInspector.svelte,
-                 ui.block: its Content, Layout, Motion; a block's row on a card, or the block
+                 level under it, never both: a widget's settings (WidgetInspector.svelte,
+                 ui.widget: its Content, Layout, Motion; a widget's row on a card, or the widget
                  clicked in the preview) or a section's (SectionView.svelte, ui.section; a
-                 card's pen or double click). The Add block modal (BlocksModal.svelte): the
-                 block added opens
+                 card's pen or double click). The Add widget modal (WidgetsModal.svelte): the
+                 widget added opens
     Transitions  the Backdrop (BackdropFields.svelte) and the Curtain (PageCurtain.svelte)
     SEO          SeoSection.svelte
   The footer is sections only (no tabs). While this tab is open the preview is a
-  layout canvas (overlay.js): a click picks a block, a drag moves it, its handles resize it and
+  layout canvas (overlay.js): a click picks a widget, a drag moves it, its handles resize it and
   a double click edits a text in place (bridge.js); links and buttons don't follow; a click on
-  empty space or Esc drops the selection. The selected block's section shows its grid (faint
+  empty space or Esc drops the selection. The selected widget's section shows its grid (faint
   cells). The Sources button in the
   toolbar (App.svelte) opens the Source Explorer (SourcesModal.svelte); so does a
   list item's text clicked in the preview.
 
   Selection goes both ways through ui.selection: main.js sets it when a text is clicked in
-  the preview, a field sets it (via the bridge) when it gets focus. This panel opens the block
+  the preview, a field sets it (via the bridge) when it gets focus. This panel opens the widget
   of that text, highlights its field and scrolls to it.
 -->
 <script>
@@ -35,8 +35,8 @@
   import BackdropFields from './BackdropFields.svelte';
   import PageCurtain from './PageCurtain.svelte';
   import Tabs from './Tabs.svelte';
-  import BlockInspector from './BlockInspector.svelte';
-  import BlocksModal from './BlocksModal.svelte';
+  import WidgetInspector from './WidgetInspector.svelte';
+  import WidgetsModal from './WidgetsModal.svelte';
   import SectionView from './SectionView.svelte';
   import SectionsList from './SectionsList.svelte';
   import SeoSection from './SeoSection.svelte';
@@ -46,8 +46,8 @@
   import { parse } from '../lib/pointer.js';
   import { targetFile } from '../layout-sync.js';
   import { sourceIds as sourceIdsOf } from '../../site/files.js';
-  import { BLOCK_TYPES } from '../../site/blocks/index.js';
-  import { addBlock } from '../layout-ops.js';
+  import { WIDGET_TYPES } from '../../site/widgets/index.js';
+  import { addWidget } from '../layout-ops.js';
   import { SLIDE, still, swapView } from '../lib/slide.js';
 
   // live: reactive store (live.svelte.js); bridge: the preview (../bridge.js);
@@ -58,7 +58,7 @@
   let sourcesModal = $state();
 
   // The texts come from the preview's [data-edit] elements: re-read them after every edit
-  // (blocks may have moved) and when the preview shows another page.
+  // (widgets may have moved) and when the preview shows another page.
   const groups = $derived.by(() => {
     live.version;
     ui.previewVersion;
@@ -78,11 +78,11 @@
     const list = file && live.current(file)?.sections;
     return Array.isArray(list) ? list : [];
   });
-  // what the Sections tab shows over the list: the block open, else a section's settings
-  // ({ section: its id }); none: the list (a block or section gone, e.g. undone: the list too)
+  // what the Sections tab shows over the list: the widget open, else a section's settings
+  // ({ section: its id }); none: the list (a widget or section gone, e.g. undone: the list too)
   const open = $derived(
-    (file && groups.find((g) => g.block && g.id === ui.block)) ||
-      (!ui.block && ui.section && sections.some((s) => s?.id === ui.section)
+    (file && groups.find((g) => g.widget && g.id === ui.widget)) ||
+      (!ui.widget && ui.section && sections.some((s) => s?.id === ui.section)
         ? { section: ui.section }
         : null),
   );
@@ -94,13 +94,13 @@
 
   // a page's tabs, the open one per page file
   const TABS = [
-    ['sections', 'Sections & Blocks'],
+    ['sections', 'Sections & Widgets'],
     ['transitions', 'Transitions'],
     ['seo', 'SEO'],
   ];
   const isPage = $derived(!!file && ui.target.kind === 'page');
   const tab = $derived((isPage && ui.sections[`pagetab:${file}`]) || 'sections');
-  // a block open is in Sections: the row stays (nothing moves), another tab closes the block
+  // a widget open is in Sections: the row stays (nothing moves), another tab closes the widget
   const shownTab = $derived(open ? 'sections' : tab);
   function pickTab(v) {
     if (open && v !== 'sections') back();
@@ -111,26 +111,26 @@
   const onsource = (f, item, edit, then) => sourcesModal.open(f, item, edit, then);
   const itemOf = (f) => Number(parse(f.ptr)[0]) || 0; // a source field's item
 
-  function openBlock(id) {
+  function openWidget(id) {
     ui.section = null;
-    ui.block = id;
-    ui.blockTab = 'content';
+    ui.widget = id;
+    ui.widgetTab = 'content';
   }
   // a section card's pen or double click: its settings
   function openSection(id) {
-    ui.block = null;
+    ui.widget = null;
     ui.selection = null;
     ui.section = id;
   }
   function back() {
-    ui.block = null;
+    ui.widget = null;
     ui.section = null;
   }
 
-  // Add block (a section card's): every type on offer; the block added opens
-  let blocksModal = $state();
+  // Add widget (a section card's): every type on offer; the widget added opens
+  let widgetsModal = $state();
   const types = $derived(
-    Object.values(BLOCK_TYPES).map(({ type, label, icon, line, sketch }) => ({
+    Object.values(WIDGET_TYPES).map(({ type, label, icon, line, sketch }) => ({
       value: type,
       label,
       icon,
@@ -138,9 +138,9 @@
       sketch,
     })),
   );
-  const addTo = (at, type) => openBlock(addBlock(live.store, file, at, type).id);
+  const addTo = (at, type) => openWidget(addWidget(live.store, file, at, type).id);
 
-  /** Open the block holding `edit` and scroll to it (a Header label: its field); list items open the Sources modal. */
+  /** Open the widget holding `edit` and scroll to it (a Header label: its field); list items open the Sources modal. */
   async function reveal(edit) {
     await tick(); // not inside the effect below: the modal renders synchronously when opened
     const group = groups.find((g) => allFields(g).some((f) => f.edit === edit));
@@ -151,7 +151,7 @@
         return sourcesModal.open(file, itemOf({ ptr }), edit);
     } else {
       if (isPage && tab !== 'sections') pickTab('sections');
-      if (ui.block !== group.id || ui.blockTab !== 'content') openBlock(group.id);
+      if (ui.widget !== group.id || ui.widgetTab !== 'content') openWidget(group.id);
     }
     await tick();
     panel
@@ -159,24 +159,24 @@
       ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
-  // Sections: the list and the block view side by side in a clipping wrapper. Opening a block
-  // slides the list out to the left and the block in from the right (Back: the reverse), the
-  // wrapper's height eased between them; the list's scroll comes back on Back. Block to block
+  // Sections: the list and the widget view side by side in a clipping wrapper. Opening a widget
+  // slides the list out to the left and the widget in from the right (Back: the reverse), the
+  // wrapper's height eased between them; the list's scroll comes back on Back. Widget to widget
   // swaps in place; a new slide kills a running one; reduced motion: instant.
-  let held = $state(null); // the block shown, kept while it slides out
+  let held = $state(null); // the widget shown, kept while it slides out
   let moving = $state(false); // both panes shown (a slide)
   let slideEl = $state();
   let listEl = $state();
-  let blockEl = $state();
+  let widgetEl = $state();
   let tl = null;
   let saved = 0; // the list's scroll
-  const atBlock = $derived(!!open);
+  const atWidget = $derived(!!open);
   $effect(() => {
     if (open) held = open;
   });
   let first = true;
   $effect(() => {
-    const to = atBlock;
+    const to = atWidget;
     untrack(() => slide(to));
   });
 
@@ -190,18 +190,18 @@
     const from = slideEl.offsetHeight;
     moving = true;
     await tick();
-    if (!listEl || !blockEl || atBlock !== to) return to === atBlock && done(to);
+    if (!listEl || !widgetEl || atWidget !== to) return to === atWidget && done(to);
     const w = slideEl.clientWidth;
     if (settled) {
       gsap.set(listEl, { x: to ? 0 : -w, y: -saved });
-      gsap.set(blockEl, { x: to ? w : 0 });
+      gsap.set(widgetEl, { x: to ? w : 0 });
       panel.scrollTop = 0;
     }
-    const target = (to ? blockEl : listEl).offsetHeight;
+    const target = (to ? widgetEl : listEl).offsetHeight;
     tl = gsap
       .timeline({ defaults: SLIDE, onComplete: () => done(to) })
       .to(listEl, { x: to ? -w : 0 }, 0)
-      .to(blockEl, { x: to ? 0 : w }, 0)
+      .to(widgetEl, { x: to ? 0 : w }, 0)
       .fromTo(slideEl, { height: from }, { height: target }, 0);
   }
 
@@ -209,7 +209,7 @@
     tl = null;
     moving = false;
     if (!to) held = null;
-    for (const el of [slideEl, listEl, blockEl]) if (el) gsap.set(el, { clearProps: 'all' });
+    for (const el of [slideEl, listEl, widgetEl]) if (el) gsap.set(el, { clearProps: 'all' });
     await tick();
     if (panel) panel.scrollTop = to ? 0 : saved;
   }
@@ -236,13 +236,13 @@
   $effect(() => {
     const { edit, quiet } = ui.selection || {};
     if (!edit || quiet) return;
-    // a text clicked in the preview: its block, not the pages list
+    // a text clicked in the preview: its widget, not the pages list
     untrack(() => (ui.pagesWin.open = false));
     reveal(edit);
   });
-  // a block clicked in the preview: the same
+  // a widget clicked in the preview: the same
   $effect(() => {
-    if (ui.block) untrack(() => (ui.pagesWin.open = false));
+    if (ui.widget) untrack(() => (ui.pagesWin.open = false));
   });
 </script>
 
@@ -275,24 +275,24 @@
     {:else if file && shownTab === 'sections'}
       <div class="slide" bind:this={slideEl}>
         <div
-          class={['slide__pane', atBlock && !moving && 'is-away']}
+          class={['slide__pane', atWidget && !moving && 'is-away']}
           bind:this={listEl}
-          inert={atBlock}
+          inert={atWidget}
         >
           <SectionsList
             {live}
             {file}
-            onopen={openBlock}
+            onopen={openWidget}
             onsection={openSection}
-            onadd={(at) => blocksModal.open(at)}
+            onadd={(at) => widgetsModal.open(at)}
           />
         </div>
         {#if held}
-          <div class="slide__pane" bind:this={blockEl} inert={!atBlock}>
+          <div class="slide__pane" bind:this={widgetEl} inert={!atWidget}>
             {#if held.section}
               <SectionView {live} {bridge} {file} id={held.section} onback={back} />
             {:else}
-              <BlockInspector
+              <WidgetInspector
                 g={held}
                 {live}
                 {bridge}
@@ -305,10 +305,16 @@
                   actions.setMode('motion');
                 }}
               />
-              <!-- its section's settings under it, on every block tab (as its card's pen) -->
-              {#if sections[held.block.at]?.id}
-                <div class="block-section">
-                  <SectionView {live} {bridge} {file} id={sections[held.block.at].id} top={false} />
+              <!-- its section's settings under it, on every widget tab (as its card's pen) -->
+              {#if sections[held.widget.at]?.id}
+                <div class="widget-section">
+                  <SectionView
+                    {live}
+                    {bridge}
+                    {file}
+                    id={sections[held.widget.at].id}
+                    top={false}
+                  />
                 </div>
               {/if}
             {/if}
@@ -332,7 +338,7 @@
 {/if}
 
 <SourcesModal bind:this={sourcesModal} {live} {bridge} />
-<BlocksModal bind:this={blocksModal} {types} onpick={(type, at) => addTo(at, type)} />
+<WidgetsModal bind:this={widgetsModal} {types} onpick={(type, at) => addTo(at, type)} />
 
 <style lang="scss">
   // the tabs' line runs the panel's full width, above the scrolling body
@@ -341,8 +347,8 @@
     padding: 0; // a tab's own 12px: its label on the 12px edge
   }
 
-  // a block's section, 12px under the block's card (the pane's 8px gap + 4px)
-  .block-section {
+  // a widget's section, 12px under the widget's card (the pane's 8px gap + 4px)
+  .widget-section {
     margin-top: var(--space-1);
   }
 

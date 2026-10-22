@@ -2,7 +2,7 @@
   Tabs: a row of uppercase labels over a 1px line its full width; the picked one white with a
   2px accent underline, the others dim. Only the color and the underline (a shadow) change, so
   picking one moves nothing. The line runs to the container's edges: put it where it should
-  span (BlockInspector's card has no side padding around it). A tab's text starts 12px in.
+  span (WidgetInspector's card has no side padding around it). A tab's text starts 12px in.
     tabs    [[value, label]]
     value   the picked one
     onpick  (value) => ...
@@ -13,7 +13,7 @@
     id      the tabs' ids are "<id>-<value>" (tablist: the panel's aria-labelledby)
     panel   the id of the panel they switch (tablist: aria-controls)
   A tablist is one Tab stop: ←/→ (Home/End) move to the next tab and pick it.
-  Used by the block card (Content / Layout / Motion), the Motion panel (Elements / Animations)
+  Used by the widget card (Content / Layout / Motion), the Motion panel (Elements / Animations)
   and the Media window's filter (All / R2 / Local). Not the mode tabs (App.svelte .ed-modes).
 -->
 <script>

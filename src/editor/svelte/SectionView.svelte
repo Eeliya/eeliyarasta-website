@@ -2,9 +2,9 @@
   A section's settings (ui.section; its card's pen or a double click on it, SectionsList.svelte),
   one level under the list: its top (ViewTop.svelte: ← Back, Locate), then its settings card on
   the settings fill, titled with its name ("Section N" without one): SectionSettings.svelte.
-  No blocks here: they are on its card in the list and in the preview.
+  No widgets here: they are on its card in the list and in the preview.
     live, bridge, file, id (the section's), onback; top: false for its card alone (under a
-    block's card in the block view, BlockInspector.svelte's section)
+    widget's card in the widget view, WidgetInspector.svelte's section)
 -->
 <script>
   import SectionSettings from './SectionSettings.svelte';

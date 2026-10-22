@@ -1,5 +1,5 @@
 /**
- * The album block: one item (a person or a place), Faint Film "slider view": a big current
+ * The album widget: one item (a person or a place), Faint Film "slider view": a big current
  * image, numbered thumbnail strip, 01/08 counter, keyboard / drag / wheel navigation and a
  * Slider ⇄ Grid toggle. Its photos are its source's item (../layout/source.js: on a [param]
  * page usually From URL, the page's own; item: true, without one it is skipped). See ./index.js.

@@ -1,5 +1,5 @@
 /**
- * Test helpers. A block written flat ({ pos, link, phone } next to its other keys) as
+ * Test helpers. A widget written flat ({ pos, link, phone } next to its other keys) as
  * content stores it ({ layout: { base, phone } }, rows only when its size stores them), and
  * back (flat) for assertions. And a git environment for tests that run git (testEnv,
  * useTestEnv; see git-env.mjs for why).
@@ -78,7 +78,7 @@ export const read = (root, f) =>
 
 /**
  * A [param] page's content (src/site/layout/source.js) for page `id` ("people/[person]"): an
- * album block as its main block, From URL `from`, each param of the address matching the field
+ * album widget as its main widget, From URL `from`, each param of the address matching the field
  * `fields` names for it, else slug. extra: more keys of the page (meta, ...).
  */
 export function paramPage(id, from, fields = {}, extra = {}) {
@@ -92,7 +92,7 @@ export function paramPage(id, from, fields = {}, extra = {}) {
     sections: [
       {
         id: 's-main',
-        blocks: [
+        widgets: [
           {
             id: 'b-main',
             type: 'album',

@@ -1,13 +1,13 @@
 <!--
-  One block in a section card's list (SectionCard.svelte), no order (blocks are placed in the
-  preview), on the blocks' card colour (--c-block-card): its type with its title under it in
-  the blocks' accent (--c-block-accent), then its eye, Duplicate and
+  One widget in a section card's list (SectionCard.svelte), no order (widgets are placed in the
+  preview), on the widgets' card colour (--c-widget-card): its type with its title under it in
+  the widgets' accent (--c-widget-accent), then its eye, Duplicate and
   Delete. A click on the row opens its settings (onopen). Hidden (config.enabled false): its
   name and title faint, its eye-slash. Delete asks over the row at its size (nothing moves).
-  Hovered: a 1px inset ring (--c-block-line-hover); keyboard focus: the cyan focus ring.
+  Hovered: a 1px inset ring (--c-widget-line-hover); keyboard focus: the cyan focus ring.
   Its buttons rest at 30% and show fully while the row is hovered or has the focus; an
   eye-slash always (SectionCard.svelte's rule for the card's own buttons).
-    block      { id, type, title?, config? }
+    widget      { id, type, title?, config? }
     onopen     () => open its settings
     onshow     (on) => show (true) or hide it
     onduplicate, ondelete
@@ -15,14 +15,14 @@
 <script>
   import Button from './Button.svelte';
   import { nameOf } from './content-groups.js';
-  import { BLOCK_TYPES } from '../../site/blocks/index.js';
+  import { WIDGET_TYPES } from '../../site/widgets/index.js';
 
-  let { block, onopen, onshow, onduplicate, ondelete } = $props();
+  let { widget, onopen, onshow, onduplicate, ondelete } = $props();
   let asking = $state(false);
 
-  const label = $derived(BLOCK_TYPES[block?.type]?.label || `Unknown type "${block?.type}"`);
-  const name = $derived(nameOf(block));
-  const on = $derived(block?.config?.enabled !== false);
+  const label = $derived(WIDGET_TYPES[widget?.type]?.label || `Unknown type "${widget?.type}"`);
+  const name = $derived(nameOf(widget));
+  const on = $derived(widget?.config?.enabled !== false);
   // the confirm's Cancel takes the focus (Enter does not delete by accident)
   const focusCancel = (el) => el.querySelector('.ask-btns > :last-child')?.focus();
 </script>
@@ -90,7 +90,7 @@
     position: relative;
     min-height: 48px;
     border-radius: var(--radius-md);
-    background: var(--c-block-card);
+    background: var(--c-widget-card);
 
     > :global(.btn) {
       flex: none;
@@ -98,9 +98,9 @@
       transition: opacity 0.15s;
     }
 
-    // hovered: a 1px inset ring in the blocks' accent (nothing moves; focus keeps the cyan ring)
+    // hovered: a 1px inset ring in the widgets' accent (nothing moves; focus keeps the cyan ring)
     &:hover {
-      box-shadow: inset 0 0 0 1px var(--c-block-line-hover);
+      box-shadow: inset 0 0 0 1px var(--c-widget-line-hover);
     }
 
     &:is(:hover, :focus-within) > :global(.btn),
@@ -141,9 +141,9 @@
     }
   }
 
-  // the blocks' accent (their card colour's pair: a card's colour says its type)
+  // the widgets' accent (their card colour's pair: a card's colour says its type)
   .brow__name {
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
 
     .is-off & {
       color: var(--c-text-faint);
@@ -159,7 +159,7 @@
     z-index: 1;
     padding: 0 var(--space-3);
     border-radius: inherit;
-    background: var(--c-block-card);
+    background: var(--c-widget-card);
     box-shadow: inset 0 0 0 1px var(--c-danger);
     font-size: var(--fs-base);
 

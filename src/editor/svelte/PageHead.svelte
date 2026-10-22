@@ -5,13 +5,13 @@
     Title
     / photography/ people/          (a site part: its title only)
     Preview noor-vermeer / 2018 ▾   (a [param] page: the page of it the preview shows)
-    ⚠ No pages are built: …        (only when its main block can't decide its pages)
+    ⚠ No pages are built: …        (only when its main widget can't decide its pages)
   Return to navigation opens the pages list (in the Content tab) where the page was opened (its
   own folder, or the one it is in), a path part at that folder. The path's [param]/ parts and
-  the Preview line's values are in the block accent (a param and its value read as a pair).
+  the Preview line's values are in the widget accent (a param and its value read as a pair).
   A [param] page previews the page of it shown last (ui.previewAt, main.js pickTarget), else its
   first; the Preview line opens the item selector (PreviewPicker.svelte) to pick another, every
-  tab shows it. The warning line jumps to the main block, on the param row that is wrong.
+  tab shows it. The warning line jumps to the main widget, on the param row that is wrong.
 -->
 <script>
   import { ui } from './ui.svelte.js';
@@ -61,16 +61,16 @@
   const problem = $derived(template ? mainProblem(live.content, id) : null);
   let picker = $state();
   const entry = () => ui.pages.find((e) => e.template === id);
-  /** The warning: the main block open on its Content tab, its wrong param row focused. */
+  /** The warning: the main widget open on its Content tab, its wrong param row focused. */
   function toMain() {
     const main = live.get(pageFile(id), '/main');
     if (ui.mode !== 'text') actions.setMode('text');
     ui.pagesWin = { ...ui.pagesWin, open: false };
     ui.section = null;
     const has = problem?.kind !== 'none';
-    ui.block = has ? main : null;
-    ui.blockTab = 'content';
-    ui.focusParam = has ? { block: main, param: problem?.param ?? '' } : null;
+    ui.widget = has ? main : null;
+    ui.widgetTab = 'content';
+    ui.focusParam = has ? { widget: main, param: problem?.param ?? '' } : null;
   }
 </script>
 
@@ -124,7 +124,7 @@
     <p class="ph__warn" role="status">
       <button
         type="button"
-        title={problem.kind === 'none' ? 'Show the sections' : 'Open the main block'}
+        title={problem.kind === 'none' ? 'Show the sections' : 'Open the main widget'}
         onclick={toMain}
         ><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span
           >{problem.message}</span
@@ -223,9 +223,9 @@
       text-decoration: none;
     }
 
-    // a [param]/ part, its slash too: the block accent
+    // a [param]/ part, its slash too: the widget accent
     &.is-param {
-      color: var(--c-block-accent);
+      color: var(--c-widget-accent);
     }
   }
 
@@ -270,14 +270,14 @@
 
   .ph__val {
     @include ellipsis;
-    color: var(--c-block-accent);
+    color: var(--c-widget-accent);
   }
 
   .ph__sep {
     color: var(--c-text-faint);
   }
 
-  // the main block's error: one 20px line in the warning colour; a click opens the block
+  // the main widget's error: one 20px line in the warning colour; a click opens the widget
   .ph__warn {
     margin: var(--space-1) 0 0;
 

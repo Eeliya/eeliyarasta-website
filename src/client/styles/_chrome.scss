@@ -408,7 +408,7 @@
 
 /* ---------------- Footer ---------------- */
 // settings/footer.json's sections (templates/footer.js), under the view: in the view's layer
-// (.view 2), not its own, so a block's z-index in it stacks like a page's.
+// (.view 2), not its own, so a widget's z-index in it stacks like a page's.
 .site-footer {
   position: relative;
   z-index: $z-view;

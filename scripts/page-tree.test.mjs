@@ -31,7 +31,7 @@ const page = (id, title, more = {}) => ({
   sections: [
     {
       id: 's-aaaa',
-      blocks: [{ id: 'b-aaaa', type: 'text', body: [{ style: 'title', text: [{ t: title }] }] }],
+      widgets: [{ id: 'b-aaaa', type: 'text', body: [{ style: 'title', text: [{ t: title }] }] }],
     },
   ],
   ...more,
@@ -388,7 +388,7 @@ test('a drop that would move a page to a reserved top name is refused (placehold
   assert.equal(dropOf(f, photo, row, 0).kind, 'move');
 });
 
-test("a [param] page counts the pages it builds: none without items, or when its main block can't decide", () => {
+test("a [param] page counts the pages it builds: none without items, or when its main widget can't decide", () => {
   const count = (f) => levelOf(f, 'photography/people').sub.find((r) => r.template).count;
   assert.equal(count(files()), 1);
   assert.equal(count(files({ 'sources/people.json': { version: 1, items: [] } })), 0);

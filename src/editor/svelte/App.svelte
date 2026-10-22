@@ -16,8 +16,8 @@
   import MediaModal from './MediaModal.svelte';
   import { openMedia } from './media.svelte.js';
   import Toasts from './Toasts.svelte';
-  import BlockToolbar from './BlockToolbar.svelte';
-  import { layerBlock } from '../layout-ops.js';
+  import WidgetToolbar from './WidgetToolbar.svelte';
+  import { layerWidget } from '../layout-ops.js';
   import { targetFile } from '../layout-sync.js';
   import { ui } from './ui.svelte.js';
   import { writeUrl } from './persist.js';
@@ -102,24 +102,24 @@
       if (k === 'y' || e.shiftKey) live.store.redo();
       else live.store.undo();
     } else if ((e.key === '[' || e.key === ']') && !e.metaKey && (!e.ctrlKey || e.altKey)) {
-      // a block's layer: [ down, ] up (by character: AltGr / Ctrl+Alt on other layouts),
-      // a block picked in the Content tab, not while typing, the desktop layout
+      // a widget's layer: [ down, ] up (by character: AltGr / Ctrl+Alt on other layouts),
+      // a widget picked in the Content tab, not while typing, the desktop layout
       const typing =
         e.target instanceof Element &&
         e.target.closest?.('input, textarea, select, [contenteditable]');
-      if (typing || ui.mode !== 'text' || !ui.block || mobile) return;
+      if (typing || ui.mode !== 'text' || !ui.widget || mobile) return;
       const file = targetFile(ui.target, bridge.doc);
       const list = live.get(file, '/sections') || [];
       for (const [at, s] of list.entries()) {
-        const j = (s?.blocks || []).findIndex((b) => b?.id === ui.block);
+        const j = (s?.widgets || []).findIndex((b) => b?.id === ui.widget);
         if (j < 0) continue;
         e.preventDefault();
-        layerBlock(live.store, file, at, j, e.key === ']' ? 1 : -1);
+        layerWidget(live.store, file, at, j, e.key === ']' ? 1 : -1);
         break;
       }
     } else if (e.key === 'Escape') {
       // A dialog closes itself on Esc; this also covers Esc pressed in the preview.
-      // Content tab: then the selected link, else the selected block (the panel shows the
+      // Content tab: then the selected link, else the selected widget (the panel shows the
       // sections again, the grid hides); not while typing in a field of the panel.
       const open = document.querySelector('dialog[open]');
       if (open) open.close();
@@ -128,9 +128,9 @@
         if (picked) bridge.select(null);
         if (ui.mode === 'text' && !inField) {
           if (ui.link) ui.link = null;
-          else if (ui.block || ui.section) {
+          else if (ui.widget || ui.section) {
             ui.selection = null;
-            ui.block = null;
+            ui.widget = null;
             ui.section = null;
           } else if (ui.selSection) {
             ui.selSection = null;
@@ -157,7 +157,7 @@
 {:else}
   <main class={['ed-stage', mobile && 'is-mobile']}>
     <iframe class="ed-frame" title="Site preview" {@attach bridge.attach}></iframe>
-    <BlockToolbar {live} {bridge} />
+    <WidgetToolbar {live} {bridge} />
   </main>
 
   <aside class="ed-panel">

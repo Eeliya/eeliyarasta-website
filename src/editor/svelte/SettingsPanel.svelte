@@ -19,7 +19,7 @@
   import PageFadeSection from './PageFadeSection.svelte';
   import { ui } from './ui.svelte.js';
   import { SEO_SETTINGS, SITE_SETTINGS } from './content-groups.js';
-  import { TARGETS } from '../../site/blocks/form.js';
+  import { TARGETS } from '../../site/widgets/form.js';
   import { SITE } from '../../site/files.js';
   import { COLS, MCOLS } from '../../site/layout/grid.js';
   import { TEXT_STYLES, typographyOf } from '../../site/layout/type.js';
@@ -176,7 +176,7 @@
   <Section key="settings:layout" title="Layout">
     <p class="hint">
       How wide a contained section is: columns of the {COLS}-column grid ({CONTAINED_MIN}–{COLS};
-      {CONTAINED} by default), centred and never nearer the edges than the side margins. Its blocks keep
+      {CONTAINED} by default), centred and never nearer the edges than the side margins. Its widgets keep
       their columns: they scale with it. Phones: the full width inside the margins.
     </p>
     <div class="fields">
@@ -198,7 +198,7 @@
 
   <Section key="settings:type" title="Typography">
     <p class="hint">
-      The text styles of scaled text (a text block's Layout › Scale text), in cells of the
+      The text styles of scaled text (a text widget's Layout › Scale text), in cells of the
       {COLS}-column grid (~11px at 1440px wide; on phones half a {MCOLS}-column cell), so the text
       grows and shrinks with the page. Text that doesn't scale keeps its normal size.
     </p>

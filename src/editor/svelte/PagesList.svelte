@@ -62,7 +62,7 @@
   const FULL = 'Only one [param] page per folder: it has one';
   const SITE_PARTS = [
     { id: 'header', title: 'Header', sub: 'The menu and its labels' },
-    { id: 'footer', title: 'Footer', sub: 'Its sections and blocks' },
+    { id: 'footer', title: 'Footer', sub: 'Its sections and widgets' },
   ];
   let filter = $state('all');
   let sel = $state('');
@@ -108,7 +108,7 @@
     asking = '';
     tick().then(() => root?.querySelector('.prow__open')?.focus());
   }
-  // a [param] page without pages opens too (its main block can be fixed there: main.js)
+  // a [param] page without pages opens too (its main widget can be fixed there: main.js)
   function show(row) {
     const entry = entryFor(ui.pages, row);
     if (entry) actions.pickTarget(entry);
@@ -331,7 +331,7 @@
           <span
             class={['prow__tag', tag.warn && 'is-warn']}
             title={r.template
-              ? `${plural(r.count ?? 0, 'page')}: one per item its main block matches`
+              ? `${plural(r.count ?? 0, 'page')}: one per item its main widget matches`
               : null}>{tag.text}</span
           >
         {/if}

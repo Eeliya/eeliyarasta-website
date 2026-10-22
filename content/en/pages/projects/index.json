@@ -7,7 +7,7 @@
   "sections": [
     {
       "id": "s-ncsm",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-b4w8",
           "type": "text",
@@ -39,7 +39,7 @@
     },
     {
       "id": "s-ojv4",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-h6t6",
           "type": "projects",

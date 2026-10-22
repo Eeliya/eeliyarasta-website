@@ -10,21 +10,21 @@
  *   pages/people/whatever/index.json     /people/whatever/ a fixed page; when an item has the
  *                                                          same slug, this one wins over the template
  *   pages/people/[person]/index.json     /people/<slug>/   a [param] page: one page per item its
- *                                                          main block matches
+ *                                                          main widget matches
  *   pages/people/[person]/[year]/index.json
  *                                        /people/<slug>/<year>/  a [param] page in a [param]
  *                                                          page: for each page of the one
  *                                                          around it, one per value of its own
  *
- * Which pages a [param] page has: its main block decides ("main": "<block id>", a From URL
- * block, layout/source.js). Each param of the address matches a field of the main block's
+ * Which pages a [param] page has: its main widget decides ("main": "<widget id>", a From URL
+ * widget, layout/source.js). Each param of the address matches a field of the main widget's
  * source (its rule, src/site/query.js); its pages: for each page of the folder around it, the
  * items that match the params above, one page per value of its own param's field among them
  * (a URL part: the slug, or the value slugified), the first of those its item. A page exists
- * when at least one item matches; no main block, or a param without a field to match: no pages
+ * when at least one item matches; no main widget, or a param without a field to match: no pages
  * (a warning). A [param] folder holds only its page and maybe one more [param] folder. Item
  * pages get `params` ({ person: "eeliya", year: "2018" }), `items` (each param's item), `album`
- * (their own), `source` (the main block's), `count` (how many items match) and `members` (their
+ * (their own), `source` (the main widget's), `count` (how many items match) and `members` (their
  * ids: an item's link goes to the page it is on).
  *
  * A folder's own page can be turned off ("ownPage": false in its index.json): its URL then
@@ -32,7 +32,7 @@
  * in the folder: the route keeps its path for the editor, gets `redirect` (that page's path),
  * links to it go straight there (hrefs.js), and the build writes a redirect instead of the page.
  *
- * Folders nest to any depth. Every page is its list of sections of blocks (src/site/layout/). Its
+ * Folders nest to any depth. Every page is its list of sections of widgets (src/site/layout/). Its
  * "view" (the class of <main> and <html data-page>, for the styles) is its "view" field,
  * else the built-in name of the same page (home, photography, people, places, projects,
  * about, 404), else "page"; templates default to "album" (no footer).
@@ -50,7 +50,7 @@ import { coverOf, editRef } from './helpers.js';
 import { itemTitle, schemaOf } from './schemas.js';
 import { fillTitle } from './seo.js';
 import { curtainMode } from '../client/anim/curtain.js';
-import { blocksOf } from './layout/ids.js';
+import { widgetsOf } from './layout/ids.js';
 import { lineText } from './text.js';
 import { mainOf, mainProblem, refsOf, sourceOf } from './layout/source.js';
 import { hasField, query, ruleOf, valueOf, SLUG } from './query.js';
@@ -87,11 +87,11 @@ export const pathOfId = (id) =>
         .join('/')}/`;
 
 /**
- * A page's title: the first title line of its first Text block with one (blocks/basic.js),
+ * A page's title: the first title line of its first Text widget with one (widgets/basic.js),
  * else undefined. A title with a field in it names the item, not the page: none.
  */
 export const pageTitle = (page) => {
-  for (const b of blocksOf(page))
+  for (const b of widgetsOf(page))
     if (b?.type === 'text' && Array.isArray(b.body) && b.body.some((l) => l?.style === 'title'))
       return lineText(b.body, 'title');
   return undefined;
@@ -140,13 +140,13 @@ const byTree = (a, b) => {
  * (transition, transitionEdit): where it is stored next to that text. The transition says
  * which curtain plays when navigating to the page: see curtainFor in client/anim/curtain.js.
  *
- * Returns { routes, warnings }: warnings are content problems (a [param] page whose main block
+ * Returns { routes, warnings }: warnings are content problems (a [param] page whose main widget
  * can't decide its pages, items whose value makes no URL part); those get no page.
  *
  * unbuilt (the editor and its preview): a [param] page that builds no pages still gets routes
- * to edit it on, marked `unbuilt` (noindex): with the main block's rules that can match (a
+ * to edit it on, marked `unbuilt` (noindex): with the main widget's rules that can match (a
  * broken one left out); its own param without one, one per page around it at its pattern
- * ("/people/noor/:year/", its first item); no main block to go by, one at its pattern
+ * ("/people/noor/:year/", its first item); no main widget to go by, one at its pattern
  * ("/people/:person/", no item).
  */
 export function buildRoutes(content, { unbuilt = false } = {}) {

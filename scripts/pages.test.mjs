@@ -46,7 +46,7 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   assert.deepEqual(r.body.created, ['pages/people/new-one/index.json']);
   const [heading] = read(root, 'pages/people/new-one/index.json').sections;
   assert.deepEqual(
-    heading.blocks.map(({ id: _id, ...b }) => b),
+    heading.widgets.map(({ id: _id, ...b }) => b),
     [
       {
         type: 'text',
@@ -61,7 +61,7 @@ test('add: a folder with its index.json, valid slugs only, no overwrites', () =>
   assert.match(heading.id, /^s-/);
   // below the header: the rows above it empty (sections have no space above)
   assert.equal(heading.spacing, undefined);
-  assert.equal(rowsOf(heading), 17); // down to its block: no rows stored
+  assert.equal(rowsOf(heading), 17); // down to its widget: no rows stored
   assert.deepEqual([heading.rows, heading.height], [undefined, undefined]);
   assert.deepEqual(pagesOp(root, { op: 'add', name: 'contact' }).body.created, [
     'pages/contact/index.json',
@@ -81,9 +81,9 @@ test('template: [param]/index.json in a page folder, one per folder, not at the 
   assert.equal(pagesOp(root, { op: 'template', parent: 'about', source: 'nope' }).status, 400);
   const r = pagesOp(root, { op: 'template', parent: 'about', source: 'people' });
   assert.deepEqual(r.body.created, ['pages/about/[slug]/index.json']);
-  // its main block: the album, From URL, [slug] matching slug (people has no "slug" param field)
+  // its main widget: the album, From URL, [slug] matching slug (people has no "slug" param field)
   const made = read(root, 'pages/about/[slug]/index.json');
-  const main = made.sections[0].blocks[0];
+  const main = made.sections[0].widgets[0];
   assert.equal(made.main, main.id);
   assert.deepEqual(main.source, {
     mode: 'url',
@@ -97,7 +97,7 @@ test('template: [param]/index.json in a page folder, one per folder, not at the 
   );
   const [album] = read(root, 'pages/about/[slug]/index.json').sections;
   assert.deepEqual(
-    album.blocks.map((b) => b.type),
+    album.widgets.map((b) => b.type),
     ['album'],
   );
   assert.deepEqual([album.height, album.width, album.align], ['full', 'full', undefined]);
@@ -170,11 +170,11 @@ test('template in a template: a named [param] folder in a [param] folder, one pe
   assert.deepEqual(r.body.created, ['pages/people/[person]/[year]/index.json']);
   const data = read(root, 'pages/people/[person]/[year]/index.json');
   // each param on its default field (same name, else slug); the new one on its key
-  assert.deepEqual(data.sections[0].blocks[0].source.where.rules, [
+  assert.deepEqual(data.sections[0].widgets[0].source.where.rules, [
     { param: 'person', field: 'slug' },
     { param: 'year', field: 'year' },
   ]);
-  assert.equal(data.main, data.sections[0].blocks[0].id);
+  assert.equal(data.main, data.sections[0].widgets[0].id);
   assert.deepEqual(checkContent('pages/people/[person]/[year]/index.json', data), []);
   assert.equal(op({ parent: 'people/[person]', param: 'month' }).status, 400); // one per folder
   assert.equal(op({ parent: 'people/[person]', param: 'x', key: 'a b' }).status, 400);
@@ -201,7 +201,7 @@ test('move: a page into another folder, its name kept; links follow, no redirect
     sections: [
       {
         id: 's-aaaa',
-        blocks: [
+        widgets: [
           {
             id: 'b-aaaa',
             type: 'text',
@@ -218,7 +218,7 @@ test('move: a page into another folder, its name kept; links follow, no redirect
   assert.deepEqual(r.body.removed, ['pages/people/team/index.json']);
   assert.deepEqual(r.body.added, []);
   assert.equal(
-    read(root, 'pages/about/index.json').sections[0].blocks[0].body[0].text[0].link.href,
+    read(root, 'pages/about/index.json').sections[0].widgets[0].body[0].text[0].link.href,
     '/about/team/#top',
   );
   assert.equal(fs.existsSync(path.join(root, 'content/en/pages/people/team')), false);

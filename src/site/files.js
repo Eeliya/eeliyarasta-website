@@ -55,7 +55,7 @@ export const STRINGS = 'strings.json';
 export const FOOTER = settingsFile('footer');
 
 /**
- * Documents: the files of sections and blocks, one shape ({ version, kind, sections, ... }).
+ * Documents: the files of sections and widgets, one shape ({ version, kind, sections, ... }).
  * "kind" says which: "page" (a page file; its id, meta, backdrop, template, ...) or "part" (a
  * site part shown on every page: the footer; only sections). The file decides the kind.
  */

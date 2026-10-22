@@ -7,7 +7,7 @@
   "sections": [
     {
       "id": "s-jrwb",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-erex",
           "type": "text",
@@ -39,7 +39,7 @@
     },
     {
       "id": "s-v6rg",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-syyw",
           "type": "albums",

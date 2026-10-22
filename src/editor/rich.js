@@ -1,6 +1,6 @@
 /**
- * The Text block's inline editor (src/site/text.js has the model): a lean contenteditable
- * over the block's rendered lines in the preview. Typing is the browser's; after each input
+ * The Text widget's inline editor (src/site/text.js has the model): a lean contenteditable
+ * over the widget's rendered lines in the preview. Typing is the browser's; after each input
  * the lines are read back into the model (readBody). Everything else (a line's style, bold,
  * italic, a link, a field or count chip, Enter) is an edit of the model (text.js), after
  * which the lines are rendered again and the selection put back where it was, by model

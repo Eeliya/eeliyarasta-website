@@ -518,7 +518,7 @@ kbd {
   font-size: var(--fs-sm);
 }
 
-// a delete confirm's buttons over a card or row (SectionCard, BlockRow): Delete (an icon-only red
+// a delete confirm's buttons over a card or row (SectionCard, WidgetRow): Delete (an icon-only red
 // trash) then Cancel, both 24px with 8px corners: these only, Button.svelte stays a pill
 .ask-btns {
   @include row(var(--space-2));
@@ -576,7 +576,7 @@ kbd {
   line-height: 16px;
 }
 
-// a section's or block's eye (SectionsList.svelte): a toggle (aria-pressed while shown), but
+// a section's or widget's eye (SectionsList.svelte): a toggle (aria-pressed while shown), but
 // quiet as the tools beside it, not the accent of a pressed icon button
 .btn.btn--icon.btn--small[data-eye][aria-pressed='true']:not(:disabled) {
   color: var(--c-text-muted);
@@ -825,7 +825,7 @@ dialog.modal__box {
 }
 
 // a page section's card (SectionsList.svelte), its own 1px border (no size change), white, not
-// the accent (that is a block's selection): hovered, or its section hovered in the preview
+// the accent (that is a widget's selection): hovered, or its section hovered in the preview
 // (.is-peek), 40%; selected (.is-selected) 70%; a delete confirm's red (.is-danger) wins
 .sec[data-section^='s-']:not(.is-danger, .is-selected):hover,
 .sec[data-section].is-peek {

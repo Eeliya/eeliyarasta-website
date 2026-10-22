@@ -180,7 +180,7 @@ export default function staticSite() {
       const wrong = bindings.filter((p) => p.level === 'error').map((p) => p.message);
       if (wrong.length) throw new Error(`Binding problems:\n  ${wrong.join('\n  ')}`);
       for (const p of bindings) config.logger.warn(`\x1b[33m[bindings]\x1b[0m ${p.message}`);
-      // every block's animation is in the library
+      // every widget's animation is in the library
       const motion = motionChecks(content);
       if (motion.length) throw new Error(`Motion problems:\n  ${motion.join('\n  ')}`);
       const { routes, warnings } = buildRoutes(content);

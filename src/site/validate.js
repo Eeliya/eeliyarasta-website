@@ -29,7 +29,7 @@ import {
   sourceIdOf,
 } from './files.js';
 import { checkSchema } from './schemas.js';
-import { BLOCK_TYPES } from './blocks/index.js';
+import { WIDGET_TYPES } from './widgets/index.js';
 import {
   COLS,
   HEIGHTS,
@@ -121,7 +121,7 @@ function checkSite(d) {
   ];
 }
 
-/** site.json "forms": where contact forms send (src/site/blocks/form.js). */
+/** site.json "forms": where contact forms send (src/site/widgets/form.js). */
 function checkForms(f) {
   if (!isObject(f)) return [];
   const out = optional(f, { target: 'string', endpoint: 'string', turnstileSiteKey: 'string' });
@@ -202,7 +202,7 @@ function checkAnimations(d) {
     ...optional(d, { interactions: 'object' }),
   ];
   if (d.elements !== undefined)
-    out.push('"elements" is gone: a block\'s own part animations are its "motion.parts"');
+    out.push('"elements" is gone: a widget\'s own part animations are its "motion.parts"');
   for (const group of ['presets', 'targets'])
     for (const [k, v] of Object.entries(isObject(d[group]) ? d[group] : {}))
       if (!isObject(v)) out.push(`${group}["${k}"] must be an object`);
@@ -233,13 +233,13 @@ function checkDoc(file, d) {
   const t = d.transition;
   if (t !== undefined && !(isObject(t) && t.preset === 'none' && Object.keys(t).length === 1))
     out.push('"transition" must be { "preset": "none" } or left out (the site\'s curtain)');
-  // a [param] page: its main block decides which pages exist (layout/source.js)
+  // a [param] page: its main widget decides which pages exist (layout/source.js)
   const template = isTemplate(pageIdOf(file));
   if (d.template !== undefined)
-    out.push('"template" is gone: a [param] page\'s main block decides its pages ("main")');
+    out.push('"template" is gone: a [param] page\'s main widget decides its pages ("main")');
   if (d.main !== undefined && !template) out.push('"main" is only for [param] pages');
   else if (d.main !== undefined && !isId(d.main, 'b'))
-    out.push('"main" must be the id of one of its blocks ("b-7qpa")');
+    out.push('"main" must be the id of one of its widgets ("b-7qpa")');
   // its folder's URL opens its first sub page instead (routes.js)
   if (d.ownPage !== undefined && d.ownPage !== false)
     out.push('"ownPage" must be false (the folder opens its first sub page) or left out');
@@ -255,16 +255,16 @@ function checkSections(sections) {
   out.push(...sections.flatMap(checkSection));
   // names: their anchors (ids) unique on the page, and ids at all
   nameProblems(sections).forEach((p, at) => p && out.push(`section ${at + 1}: "name" ${p}`));
-  // links: within their section, to a block that is there, no loops (layout/links.js)
+  // links: within their section, to a widget that is there, no loops (layout/links.js)
   const all = new Set(
-    sections.flatMap((s) => (Array.isArray(s?.blocks) ? s.blocks.map((b) => b?.id) : [])),
+    sections.flatMap((s) => (Array.isArray(s?.widgets) ? s.widgets.map((b) => b?.id) : [])),
   );
   sections.forEach((s, at) => {
-    if (!Array.isArray(s?.blocks)) return;
-    out.push(...linkProblems(s.blocks, all).map((p) => `section ${at + 1}: ${p}`));
+    if (!Array.isArray(s?.widgets)) return;
+    out.push(...linkProblems(s.widgets, all).map((p) => `section ${at + 1}: ${p}`));
   });
   const seen = new Set();
-  for (const id of sections.flatMap((s) => [s?.id, ...(s?.blocks || []).map((b) => b?.id)]))
+  for (const id of sections.flatMap((s) => [s?.id, ...(s?.widgets || []).map((b) => b?.id)]))
     if (typeof id === 'string' && seen.has(id)) out.push(`the id "${id}" is used twice`);
     else seen.add(id);
   return out;
@@ -275,8 +275,8 @@ const CONFIG_TYPES = { boolean: 'boolean' }; // the other config types are strin
 const whole = (v, min) => Number.isInteger(v) && v >= min;
 
 /**
- * A grid area { col, span, row, rows? } of a block (its base, or its phone area); rows: does
- * the block store its rows (size aspect / rows: required; auto: left out).
+ * A grid area { col, span, row, rows? } of a widget (its base, or its phone area); rows: does
+ * the widget store its rows (size aspect / rows: required; auto: left out).
  */
 function checkArea(p, key, cols = COLS, rows = true, defaults = false) {
   const out = [];
@@ -285,7 +285,7 @@ function checkArea(p, key, cols = COLS, rows = true, defaults = false) {
       out.push(`"${key}.${k}" must be a whole number from 1`);
   if (rows && !whole(p.rows, 1)) out.push(`"${key}.rows" must be a whole number from 1`);
   if (!rows && p.rows !== undefined)
-    out.push(`"${key}.rows" must be left out: an auto block's rows are measured on the page`);
+    out.push(`"${key}.rows" must be left out: an auto widget's rows are measured on the page`);
   const col = p.col ?? 1;
   if (!out.length && p.span !== undefined && col + p.span - 1 > cols)
     out.push(`"${key}" must end by column ${cols} (col ${col} + span ${p.span})`);
@@ -293,10 +293,10 @@ function checkArea(p, key, cols = COLS, rows = true, defaults = false) {
 }
 
 /**
- * A block's "layout": { base: { col, span, row, rows?, link? }, phone?: the same keys
+ * A widget's "layout": { base: { col, span, row, rows?, link? }, phone?: the same keys
  * on the phone grid, or null (hidden on phones) }. Links are checked with their section.
  */
-function checkBlockLayout(b) {
+function checkWidgetLayout(b) {
   const out = [];
   for (const k of ['pos', 'phone', 'link', 'mobile'])
     if (b[k] !== undefined)
@@ -323,7 +323,7 @@ function checkBlockLayout(b) {
 
 const isRatio = (v) => typeof v === 'string' && ratioOf(v) !== null;
 
-/** One page section: its layout, then each block. */
+/** One page section: its layout, then each widget. */
 function checkSection(s, at) {
   const where = `section ${at + 1}`;
   if (!isObject(s)) return [`${where} must be an object`];
@@ -364,11 +364,11 @@ function checkSection(s, at) {
   }
   if (s.width !== undefined && !WIDTHS.includes(s.width)) bad('width', WIDTHS.join(' or '));
   if (s.enabled !== undefined && typeof s.enabled !== 'boolean') bad('enabled', 'true or false');
-  if (!Array.isArray(s.blocks)) return [...out, `${where}: "blocks" must be a list`];
-  return [...out, ...s.blocks.flatMap((b, j) => checkBlock(b, `${where}, block ${j + 1}`))];
+  if (!Array.isArray(s.widgets)) return [...out, `${where}: "widgets" must be a list`];
+  return [...out, ...s.widgets.flatMap((b, j) => checkWidget(b, `${where}, widget ${j + 1}`))];
 }
 
-/** A block's "source" (layout/source.js) against its type: list blocks All, others Item. */
+/** A widget's "source" (layout/source.js) against its type: list widgets All, others Item. */
 function sourceProblems(src, t) {
   const SHAPE =
     '"source" must be { "mode": "item", "from", "id" }, { "mode": "all", "from" } or { "mode": "url", "from", "where" }';
@@ -376,7 +376,8 @@ function sourceProblems(src, t) {
   const keys = { item: ['id'], all: [], url: ['where'] }[src.mode];
   if (!keys) return [SHAPE];
   if (Object.keys(src).some((k) => !['mode', 'from', ...keys].includes(k))) return [SHAPE];
-  if (src.mode === 'all' && !t.list) return ['"source": "all" is for list blocks (Item: one item)'];
+  if (src.mode === 'all' && !t.list)
+    return ['"source": "all" is for list widgets (Item: one item)'];
   if (src.mode === 'item' && t.list) return ['"source": "item" is for one item (a list: "all")'];
   if (src.mode === 'item' && !isId(src.id, 'p'))
     return ['"source.id" must be an item id ("p-k3x9")'];
@@ -395,16 +396,16 @@ function sourceProblems(src, t) {
   return [];
 }
 
-/** One block: its place, then its content against its type in the registry. */
-function checkBlock(b, where) {
+/** One widget: its place, then its content against its type in the registry. */
+function checkWidget(b, where) {
   if (!isObject(b)) return [`${where} must be an object`];
   if (typeof b.type !== 'string') return [`${where} needs a "type"`];
-  const t = BLOCK_TYPES[b.type];
+  const t = WIDGET_TYPES[b.type];
   const name = t ? `${where} (${t.label})` : where;
   const out = [];
   const bad = (key, want) => out.push(`${name}: "${key}" must be ${want}`);
-  if (!isId(b.id, 'b')) bad('id', 'a block id like "b-7qpa"');
-  out.push(...checkBlockLayout(b).map((p) => `${name}: ${p}`));
+  if (!isId(b.id, 'b')) bad('id', 'a widget id like "b-7qpa"');
+  out.push(...checkWidgetLayout(b).map((p) => `${name}: ${p}`));
   if (b.size !== undefined && !SIZES.includes(b.size)) bad('size', SIZES.join(', '));
   if (b.type === 'hero' && Array.isArray(b.photos))
     b.photos.forEach((p, i) => {
@@ -460,7 +461,7 @@ function checkBlock(b, where) {
             bad(`${f.key}.${i}.${k}`, linkProblem(sv));
         }),
       );
-    if (f.type === 'rich') continue; // a Text block's body: its type's check (../text.js)
+    if (f.type === 'rich') continue; // a Text widget's body: its type's check (../text.js)
     if (!f.list) {
       if (typeof v !== (FIELD_TYPES[f.type] || 'string'))
         bad(f.key, `a ${FIELD_TYPES[f.type] || 'string'}`);

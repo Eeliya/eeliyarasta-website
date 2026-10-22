@@ -7,7 +7,7 @@
   "sections": [
     {
       "id": "s-a58t",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-9m0e",
           "type": "text",
@@ -34,7 +34,7 @@
     },
     {
       "id": "s-oq6n",
-      "blocks": [
+      "widgets": [
         {
           "id": "b-2wrz",
           "type": "panels",

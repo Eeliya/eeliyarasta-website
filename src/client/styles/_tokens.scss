@@ -6,8 +6,8 @@ $bp-sm: 760px;
 // Page-level stacking layers, lowest first. Everything inside a layer stacks
 // locally (small numbers in the partials); these order the layers themselves.
 $z-ground: 0; // .ground: the album colour wash behind everything
-$z-view: 2; // .view and .site-footer: the page and its blocks
-$z-portal: 3; // #portal: blocks lifted out of the view
+$z-view: 2; // .view and .site-footer: the page and its widgets
+$z-portal: 3; // #portal: widgets lifted out of the view
 $z-preview: 30; // .preview: the album hover preview
 $z-viewtoggle: 40; // .viewtoggle: the album grid/list switch
 $z-mmenu: 45; // .mmenu: the phone menu, under its header

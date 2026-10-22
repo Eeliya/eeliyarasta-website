@@ -1,9 +1,9 @@
 <!--
   A link (src/site/hrefs.js): one Select of where it goes, a page of the site (by its id), a
-  source item's page (by the item's id), a field of the block's item (binds, a { bind }) or an
+  source item's page (by the item's id), a field of the widget's item (binds, a { bind }) or an
   external URL, with the URL's input under it. value: the link ({ page } | { item } | { href }
   | { bind }); onvalue(next) gets the next one (undefined: no link, when `empty` is set).
-  Used by block settings and list fields (GroupFields.svelte) and the header's menu (HeaderPart).
+  Used by widget settings and list fields (GroupFields.svelte) and the header's menu (HeaderPart).
 -->
 <script>
   import { isBinding } from '../../site/layout/bindings.js';

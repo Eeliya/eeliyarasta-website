@@ -1,13 +1,13 @@
 /**
  * What the Content tab shows: the editable texts of the page in the preview (or of the
- * footer's blocks), grouped by block (a page's sections hold blocks, src/site/layout/). Plain
+ * footer's widgets), grouped by widget (a page's sections hold widgets, src/site/layout/). Plain
  * functions over the store and the preview; ContentPanel.svelte renders the result.
  */
 import { parse } from '../lib/pointer.js';
 import { sourceIdOf, sourceIds } from '../../site/files.js';
 import { pointer } from '../../site/helpers.js';
 import { labelOf } from '../../site/schemas.js';
-import { BLOCK_TYPES } from '../../site/blocks/index.js';
+import { WIDGET_TYPES } from '../../site/widgets/index.js';
 import { bindTypeOf } from '../../site/layout/bindings.js';
 import { targetFile } from '../layout-sync.js';
 import { itemName, schemaFor } from './source-items.js';
@@ -76,7 +76,7 @@ function sectionsOf(store, file) {
   return Array.isArray(list) ? list : [];
 }
 
-/** A short name for block b: its first text (label, title, eyebrow, caption), at most 40 characters. */
+/** A short name for widget b: its first text (label, title, eyebrow, caption), at most 40 characters. */
 export function nameOf(s) {
   const text = [s?.label, s?.title, s?.eyebrow, s?.caption].find(
     (v) => typeof v === 'string' && v.trim(),
@@ -88,14 +88,14 @@ export function nameOf(s) {
 }
 
 /**
- * The fields of a block from its type's registry entry: [{ edit, file, ptr, type, label }].
- * base: the block's path in its file (['sections', 0, 'blocks', 1]).
+ * The fields of a widget from its type's registry entry: [{ edit, file, ptr, type, label }].
+ * base: the widget's path in its file (['sections', 0, 'widgets', 1]).
  * A list field is one entry { list: true, edit, file, ptr, label, item, photo, items }: items
  * holds each item's fields ([[field, ...], ...]), item a new item, photo the subkey of a
  * photo item ('' for a list of photos, null for none) so Add can open the Media window.
  */
 function registryFields(file, base, s, t) {
-  // a list item's subkey type can be { type, label, options } (src/site/blocks/index.js).
+  // a list item's subkey type can be { type, label, options } (src/site/widgets/index.js).
   // bindType: what it can show of an item as a whole (src/site/layout/bindings.js; a list
   // item's text subkey binds as text, other list items can't, null); textual: a bound one
   // can have a format ("{value} photos")
@@ -166,18 +166,18 @@ export const allFields = (g) => g.fields.flatMap((f) => (f.list ? f.items.flat()
 const TEXT_TYPES = ['text', 'words', 'block'];
 
 /**
- * Group for block `j` of section `at` of page file `file`: id the block's, titled by its
+ * Group for widget `j` of section `at` of page file `file`: id the widget's, titled by its
  * type, named by its text, with its on/off toggle, settings (config) and its type's fields.
  */
-function blockGroup(store, file, at, j) {
-  const s = sectionsOf(store, file)[at].blocks[j];
-  const t = BLOCK_TYPES[s?.type];
+function widgetGroup(store, file, at, j) {
+  const s = sectionsOf(store, file)[at].widgets[j];
+  const t = WIDGET_TYPES[s?.type];
   const sources = sourceIds(store.current);
-  const base = `/sections/${at}/blocks/${j}`;
+  const base = `/sections/${at}/widgets/${j}`;
   return {
     id: s.id,
     type: s?.type,
-    block: { at, j },
+    widget: { at, j },
     file,
     icon: t?.icon || 'question',
     title: t?.label || `Unknown type "${s?.type}"`,
@@ -197,14 +197,14 @@ function blockGroup(store, file, at, j) {
             ]
           : c.options,
     })),
-    fields: t ? registryFields(file, ['sections', at, 'blocks', j], s, t) : [],
+    fields: t ? registryFields(file, ['sections', at, 'widgets', j], s, t) : [],
   };
 }
 
 /**
- * Which group a preview field belongs to: { id, title }; null for a block's own fields (a
- * page or the footer is only sections of blocks: any other text of theirs has no group).
- * A source list item's text (a name in a list block) is edited in the Sources modal:
+ * Which group a preview field belongs to: { id, title }; null for a widget's own fields (a
+ * page or the footer is only sections of widgets: any other text of theirs has no group).
+ * A source list item's text (a name in a list widget) is edited in the Sources modal:
  * "source:<id>", never a group of its own.
  */
 export function groupFor(store, { file, ptr }) {
@@ -226,9 +226,9 @@ function fieldsOf(bridge, file) {
 }
 
 /**
- * The Content tab's groups for `target`: the page's (or footer's) blocks, in section and
- * block order (`block`: { at, j }, where it is), each with its fields.
- * [{ id, title, name?, block?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
+ * The Content tab's groups for `target`: the page's (or footer's) widgets, in section and
+ * widget order (`widget`: { at, j }, where it is), each with its fields.
+ * [{ id, title, name?, widget?, file?, icon?, toggle?, config?, fields: [{ edit, file, ptr, type, label }] }]
  */
 export function contentGroups(store, bridge, target) {
   const file = targetFile(target, bridge.doc);
@@ -238,15 +238,15 @@ export function contentGroups(store, bridge, target) {
     return groups.get(group.id);
   };
 
-  // Every block, even the ones without text (they still have a toggle and settings).
-  const at = {}; // block group ids by their place ("0/1")
+  // Every widget, even the ones without text (they still have a toggle and settings).
+  const at = {}; // widget group ids by their place ("0/1")
   sectionsOf(store, file).forEach((s, i) =>
-    (Array.isArray(s?.blocks) ? s.blocks : []).forEach((b, j) => {
-      at[`${i}/${j}`] = add(blockGroup(store, file, i, j));
+    (Array.isArray(s?.widgets) ? s.widgets : []).forEach((b, j) => {
+      at[`${i}/${j}`] = add(widgetGroup(store, file, i, j));
     }),
   );
 
-  // a block's text its type doesn't list (e.g. a photo credit): added to its group
+  // a widget's text its type doesn't list (e.g. a photo credit): added to its group
   for (const f of fieldsOf(bridge, file)) {
     const [, i, , j] = parse(f.ptr);
     const g = at[`${i}/${j}`];

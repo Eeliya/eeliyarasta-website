@@ -1,13 +1,13 @@
 <!--
-  One block's motion (its `motion` in the page file, src/site/layout/motion.js): Replay and a
+  One widget's motion (its `motion` in the page file, src/site/layout/motion.js): Replay and a
   scroll slider for it in the preview, its animation (none, or one of the library's that works
-  on any block) and its own timing, each field with a Custom switch (MotionGroups, scope
-  'block': off shows the animation's value, dimmed). What the animation does is read-only here:
-  it is edited in the Animations sub-tab (Edit). Below, the block's parts with their own
+  on any widget) and its own timing, each field with a Custom switch (MotionGroups, scope
+  'widget': off shows the animation's value, dimmed). What the animation does is read-only here:
+  it is edited in the Animations sub-tab (Edit). Below, the widget's parts with their own
   animation (data-anim inside it: the hero's photos, a heading's title, ...), each opening in
   the Motion tab.
-  Used by the Motion tab (MotionPanel) and the block inspector's Motion tab (BlockInspector).
-    file, at, j   where the block is: sections[at].blocks[j] of the page file
+  Used by the Motion tab (MotionPanel) and the widget inspector's Motion tab (WidgetInspector).
+    file, at, j   where the widget is: sections[at].widgets[j] of the page file
     el            its element in the preview (null when not shown)
     onlibrary     (name) open the animation in the Animations sub-tab
     onpart        (el) open a part in the Motion tab
@@ -16,17 +16,17 @@
   import Button from './Button.svelte';
   import MotionGroups from './MotionGroups.svelte';
   import Select from './Select.svelte';
-  import { GENERIC_TYPES, blockModel } from './motion.js';
+  import { GENERIC_TYPES, widgetModel } from './motion.js';
 
   let { live, bridge, gsap, cfg, file, at, j, el = null, onlibrary, onpart } = $props();
 
-  const base = $derived(`/sections/${at}/blocks/${j}`);
+  const base = $derived(`/sections/${at}/widgets/${j}`);
   const motion = $derived.by(() => {
     live.version;
     const m = live.get(file, `${base}/motion`);
     return m && typeof m === 'object' ? { ...m } : null;
   });
-  const m = $derived(blockModel(cfg, motion));
+  const m = $derived(widgetModel(cfg, motion));
   const known = $derived(!!cfg.presets[m.presetName]);
   const own = $derived(Object.keys(m.own).length > 0);
   const options = $derived([
@@ -35,13 +35,13 @@
       .filter(([name, p]) => GENERIC_TYPES.has(p.type) || name === m.presetName)
       .map(([name, p]) => ({ value: name, label: name, hint: p.type })),
   ]);
-  // the parts of the block with their own animation (data-anim inside it)
+  // the parts of the widget with their own animation (data-anim inside it)
   const parts = $derived.by(() => {
     live.version;
     return el ? [...el.querySelectorAll('[data-anim]')] : [];
   });
 
-  /** Pick the animation (its own timing stays); '' removes the block's motion. */
+  /** Pick the animation (its own timing stays); '' removes the widget's motion. */
   function setAnim(anim) {
     if (!anim) live.store.remove(file, `${base}/motion`, { keep: 4, source: 'motion-structure' });
     else
@@ -51,7 +51,7 @@
   const inheritAll = () =>
     live.store.set(file, `${base}/motion`, { anim: m.presetName }, { source: 'motion-structure' });
 
-  // Scroll position of the block in the preview, 0-100 (read when it is shown).
+  // Scroll position of the widget in the preview, 0-100 (read when it is shown).
   const scrolled = () => (el ? Math.round(bridge.scrubProgress(el) * 100) : 0);
   let progress = $state(scrolled());
 </script>
@@ -63,7 +63,7 @@
     >
     <label
       class="scrub"
-      title="Scroll the page through this block (0% = entering at the bottom, 100% = leaving at the top)"
+      title="Scroll the page through this widget (0% = entering at the bottom, 100% = leaving at the top)"
     >
       <span class="scrub__label">Scroll</span>
       <input
@@ -102,17 +102,17 @@
   </p>
 {:else if motion}
   <p class="hint small">
-    What {m.presetName} does is set in Animations. Turn on a field's switch to give this block its own
+    What {m.presetName} does is set in Animations. Turn on a field's switch to give this widget its own
     timing.
   </p>
   {#key `${file}#${base}`}
-    <MotionGroups {live} {gsap} {m} scope="block" {file} ptr="{base}/motion" key="block" />
+    <MotionGroups {live} {gsap} {m} scope="widget" {file} ptr="{base}/motion" key="widget" />
   {/key}
   {#if own}
     <Button size="small" icon="rotate-left" onclick={inheritAll}>Use the animation's timing</Button>
   {/if}
 {:else}
-  <p class="hint small">This block doesn't move. Pick an animation to give it one.</p>
+  <p class="hint small">This widget doesn't move. Pick an animation to give it one.</p>
 {/if}
 
 {#if parts.length}

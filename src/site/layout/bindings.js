@@ -1,33 +1,33 @@
 /**
- * Bindings: a block's field can show a value of a source item instead of its own.
+ * Bindings: a widget's field can show a value of a source item instead of its own.
  *
- *   "title": "Models"                       custom: the block's own value
+ *   "title": "Models"                       custom: the widget's own value
  *   "title": { "bind": "name" }             the item's whole value (any field type: a photo,
  *                                           a link, a list of photos), when the types fit
  *   "title": { "bind": "count", "format": "{value} photos" }
  *                                           a text around the value ({value}; text fields only,
  *                                           an empty value leaves the whole field empty)
  *
- * The item: the first of the block's source (./source.js: an item, the items of a list, the
+ * The item: the first of the widget's source (./source.js: an item, the items of a list, the
  * ones From URL matches). A binding without an item, or to a field the item's source doesn't
- * have, renders empty, and the build warns (bindingProblems). Values are escaped by the blocks as before: the
- * resolver only swaps values (resolveBlock, applied to every block before it renders).
+ * have, renders empty, and the build warns (bindingProblems). Values are escaped by the widgets as before: the
+ * resolver only swaps values (resolveWidget, applied to every widget before it renders).
  *
- * Which fields can bind: every field of a block type (src/site/blocks/index.js) and its
+ * Which fields can bind: every field of a widget type (src/site/widgets/index.js) and its
  * config's text fields (links); a list of { src } binds to a photos field as a whole; in a list
  * of objects, each text subkey can be bound. BIND_TYPES says which
- * source field types (src/site/schemas.js) fit each block field type.
+ * source field types (src/site/schemas.js) fit each widget field type.
  */
 import { schemaOf } from '../schemas.js';
 import { pageFile } from '../files.js';
 import { isObject } from '../is.js';
-import { eachBlock } from './ids.js';
+import { eachWidget } from './ids.js';
 import { MODES, sourceOf } from './source.js';
 
 /** { "bind": "<field>" } */
 export const isBinding = (v) => isObject(v) && typeof v.bind === 'string';
 
-/** Block field types -> the source field types (schemas.js) that fit a { bind }. */
+/** Field types -> the source field types (schemas.js) that fit a { bind }. */
 export const BIND_TYPES = {
   text: ['text', 'choice', 'number', 'date', 'link'],
   words: ['text', 'choice'],
@@ -37,7 +37,7 @@ export const BIND_TYPES = {
   link: ['link'],
   photos: ['photos'],
 };
-/** Block field types whose binding can have a format. */
+/** Widget field types whose binding can have a format. */
 export const FORMAT_TYPES = ['text', 'words', 'block', 'link'];
 
 /** The bound value in its format ("{value} photos"); empty stays empty. */
@@ -102,27 +102,27 @@ export function resolve(
   return value;
 }
 
-/** Does `block` (or its config's links) hold any binding? */
-const hasBindings = (block, t) =>
-  [...(t?.fields || []).map((f) => block?.[f.key]), ...Object.values(block?.config || {})].some(
+/** Does `widget` (or its config's links) hold any binding? */
+const hasBindings = (widget, t) =>
+  [...(t?.fields || []).map((f) => widget?.[f.key]), ...Object.values(widget?.config || {})].some(
     (v) =>
       isBinding(v) ||
       (Array.isArray(v) && v.some((e) => isObject(e) && Object.values(e).some(isBinding))),
   );
 
 /**
- * A block with its fields' and config links' bindings resolved for `item` (the block as it is
- * when nothing is bound, so blocks without bindings render exactly as before).
+ * A widget with its fields' and config links' bindings resolved for `item` (the widget as it is
+ * when nothing is bound, so widgets without bindings render exactly as before).
  */
-export function resolveBlock(block, t, { item, source, ctx, at, placeholders = false }) {
-  if (!hasBindings(block, t)) return block;
+export function resolveWidget(widget, t, { item, source, ctx, at, placeholders = false }) {
+  if (!hasBindings(widget, t)) return widget;
   const keys = keysOf(ctx, source);
-  const out = { ...block };
+  const out = { ...widget };
   for (const f of t.fields || [])
     if (out[f.key] !== undefined)
       out[f.key] = resolve(out[f.key], { item, keys, def: f, at: `${at}/${f.key}`, placeholders });
-  if (isObject(block.config)) {
-    out.config = { ...block.config };
+  if (isObject(widget.config)) {
+    out.config = { ...widget.config };
     for (const c of t.config || [])
       if (c.type === 'link' && out.config[c.key] !== undefined)
         out.config[c.key] = resolve(out.config[c.key], {
@@ -136,16 +136,16 @@ export function resolveBlock(block, t, { item, source, ctx, at, placeholders = f
 }
 
 /**
- * The bound values of a block: [{ path, bind }] with each one's bind type
- * (bindTypeOf); path: from the block, e.g. ['title'] or ['config', 'link'] or ['meta', 0, 'value'].
+ * The bound values of a widget: [{ path, bind }] with each one's bind type
+ * (bindTypeOf); path: from the widget, e.g. ['title'] or ['config', 'link'] or ['meta', 0, 'value'].
  */
-function bindingsOf(block, t) {
+function bindingsOf(widget, t) {
   const out = [];
   const add = (path, v, type) => {
     if (isBinding(v)) out.push({ path, bind: v.bind, type });
   };
   for (const f of t?.fields || []) {
-    const v = block?.[f.key];
+    const v = widget?.[f.key];
     // rich text (../text.js): its field runs show the item's fields as text
     if (f.type === 'rich' && Array.isArray(v)) {
       v.forEach((line, i) =>
@@ -166,15 +166,15 @@ function bindingsOf(block, t) {
       );
   }
   for (const c of t?.config || [])
-    add(['config', c.key], block?.config?.[c.key], bindTypeOf(c, { config: true }));
+    add(['config', c.key], widget?.config?.[c.key], bindTypeOf(c, { config: true }));
   return out;
 }
 
 /**
- * Schema-aware checks of every page's blocks' sources and bindings (content:
- * contentFromFiles()): [{ level, message }]. 'error' (Save refuses, the build stops): a block's
+ * Schema-aware checks of every page's widgets' sources and bindings (content:
+ * contentFromFiles()): [{ level, message }]. 'error' (Save refuses, the build stops): a widget's
  * source that isn't a source, a { bind } to a field its source doesn't have or of a type that
- * doesn't fit. 'warn': a block's item that isn't in its source, bound fields without a source
+ * doesn't fit. 'warn': a widget's item that isn't in its source, bound fields without a source
  * (they render empty). files: only pages of these files (all: null).
  */
 export function bindingProblems(content, { types, files = null }) {
@@ -182,10 +182,10 @@ export function bindingProblems(content, { types, files = null }) {
   for (const [id, page] of Object.entries(content?.pages || {})) {
     const file = pageFile(id);
     if (files && !files.has(file)) continue;
-    for (const [b, , at, j] of eachBlock(page?.sections)) {
+    for (const [b, , at, j] of eachWidget(page?.sections)) {
       const t = types[b?.type];
       if (!t || !isObject(b)) continue;
-      const where = `content/en/${file} (sections/${at}/blocks/${j})`;
+      const where = `content/en/${file} (sections/${at}/widgets/${j})`;
       const problem = (level, msg) => out.push({ level, message: `${where}: ${msg}` });
       const s = sourceOf(b);
       if (b.source !== undefined && !s) {

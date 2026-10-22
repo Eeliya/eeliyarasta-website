@@ -21,7 +21,7 @@
  *                             (mediaOp), answers the photos and media lists afresh
  *
  * Every request must come from this machine: loopback socket address, a localhost
- * Host header (blocks DNS rebinding) and, when present, a same-origin Origin header.
+ * Host header (widgets DNS rebinding) and, when present, a same-origin Origin header.
  * Only existing JSON files in content/en/pages/, content/en/sources/ and content/en/settings/ can be
  * read or written (src/editor/config.js, src/site/files.js); Save never creates files: only
  * the pages list does (POST /pages), and only page files under content/en/pages/.
@@ -84,14 +84,14 @@ import {
 } from '../src/site/redirects.js';
 import { checkContent } from '../src/site/validate.js';
 import { omitDefaults } from '../src/site/defaults.js';
-import { newBlock, newSection } from '../src/site/layout/index.js';
-import { eachBlock } from '../src/site/layout/ids.js';
+import { newWidget, newSection } from '../src/site/layout/index.js';
+import { eachWidget } from '../src/site/layout/ids.js';
 import { pageSourceOf, sourceOf } from '../src/site/layout/source.js';
 import { defaultWhere, rulesOf } from '../src/site/query.js';
 import { newId } from '../src/site/layout/ids.js';
 import { bindingProblems } from '../src/site/layout/bindings.js';
 import { motionProblems } from '../src/site/layout/motion.js';
-import { BLOCK_TYPES } from '../src/site/blocks/index.js';
+import { WIDGET_TYPES } from '../src/site/widgets/index.js';
 
 /** A new page's heading row: below the header (16 empty rows, ~180px at 1440 wide). */
 const HEAD_ROW = 17;
@@ -258,11 +258,11 @@ export function pagesOp(
       const t = String(title || '').trim() || titleCase(name);
       const file = pageFile(join(parent, name));
       onWrite();
-      // a new page starts with a Text block: its label and title (src/site/layout/), below the header: sections have
+      // a new page starts with a Text widget: its label and title (src/site/layout/), below the header: sections have
       // no space above, so the rows above it are empty (HEAD_ROW)
       const ids = new Set();
       const heading = {
-        ...newBlock('text', ids, { row: HEAD_ROW, rows: 1 }),
+        ...newWidget('text', ids, { row: HEAD_ROW, rows: 1 }),
         body: [
           { style: 'label', text: [{ t }] },
           { style: 'title', text: [{ t }] },
@@ -297,9 +297,9 @@ export function pagesOp(
       return fail(400, `"${key}" is not a field name`);
     onWrite();
     const ids = new Set();
-    // the item's album, filling the screen: its main block (layout/source.js), each param of
+    // the item's album, filling the screen: its main widget (layout/source.js), each param of
     // the address matching its default field (key: the new param's)
-    const album = albumBlock(root, source, ids, paramsOf(pid), key);
+    const album = albumWidget(root, source, ids, paramsOf(pid), key);
     write(pageFile(pid), {
       version: VERSION,
       kind: 'page',
@@ -379,7 +379,7 @@ export function pagesOp(
 
   /**
    * rename a [param] page: its param ("[person]" -> "[model]"), the URLs stay. The folder
-   * moves with everything in it; the From URL rules of its blocks and of the pages in it
+   * moves with everything in it; the From URL rules of its widgets and of the pages in it
    * follow (the same field matches the renamed param); redirects naming the param in a
    * pattern under it follow.
    */
@@ -401,7 +401,7 @@ export function pagesOp(
     for (const f of inside) {
       const data = structuredClone(before[f]);
       let changed = false;
-      for (const [b] of eachBlock(data?.sections))
+      for (const [b] of eachWidget(data?.sections))
         for (const rule of sourceOf(b)?.mode === 'url' ? rulesOf(b.source.where) : [])
           if (rule?.param === old) ((rule.param = name), (changed = true));
       if (changed) writeData(moved(f), data);
@@ -505,10 +505,10 @@ function sourceProblems(root, files) {
 }
 
 /**
- * A new [param] page's album block, its texts bound to the source's fields (its schema): the
+ * A new [param] page's album widget, its texts bound to the source's fields (its schema): the
  * title field, the fields shown in item lists as facts ({ "bind": "role" }), the first long text.
  */
-function albumBlock(root, source, ids, params, key) {
+function albumWidget(root, source, ids, params, key) {
   const list = itemsOf(readContentFile(root, sourceFile(source), { check: false }));
   const own = fs.existsSync(path.join(root, CONTENT_DIR, schemaFile(source)))
     ? readContentFile(root, schemaFile(source), { check: false })
@@ -519,7 +519,7 @@ function albumBlock(root, source, ids, params, key) {
   const where = defaultWhere(params, schema);
   if (key) where.rules.at(-1).field = key;
   return {
-    ...newBlock('album', ids, { rows: 1 }),
+    ...newWidget('album', ids, { rows: 1 }),
     source: { mode: 'url', from: source, where },
     title: schema.title ? { bind: schema.title } : '',
     meta: fields
@@ -530,7 +530,7 @@ function albumBlock(root, source, ids, params, key) {
 }
 
 /**
- * Blocks of the saved pages whose animation isn't in the library (src/site/layout/motion.js):
+ * Widgets of the saved pages whose animation isn't in the library (src/site/layout/motion.js):
  * an unknown animation id is a save error. A saved animations.json can break any page.
  */
 function motionErrors(root, files) {
@@ -549,7 +549,7 @@ function bindingErrors(root, files) {
   const all = names.some((n) => sourceIdOf(n) || schemaIdOf(n));
   const content = loadContent(root, files);
   return bindingProblems(content, {
-    types: BLOCK_TYPES,
+    types: WIDGET_TYPES,
     files: all ? null : new Set(names),
   })
     .filter((p) => p.level === 'error')

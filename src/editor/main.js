@@ -64,7 +64,7 @@ import {
   syncRoots,
   targetFile,
 } from './layout-sync.js';
-import { linkBlock, placeBlock, placeMobile, setSectionRows } from './layout-ops.js';
+import { linkWidget, placeWidget, placeMobile, setSectionRows } from './layout-ops.js';
 import { createOverlay } from './overlay.js';
 import { restoreUi, restorePlace } from './svelte/persist.js';
 import { editorHref } from './lib/editor-url.js';
@@ -76,28 +76,28 @@ const store = createStore();
 const live = createLive(store);
 connectMedia(live); // photo URLs read site.json's mediaUrl from it
 const bridge = createBridge({ store, labelFor: (p) => labelFor(store, p) });
-// the preview's layout overlay (arranging in the Content tab, Grid; overlay.js): blockAt and
-// placeBlock below
+// the preview's layout overlay (arranging in the Content tab, Grid; overlay.js): widgetAt and
+// placeWidget below
 const overlay = createOverlay({
   ui,
   onpick(id) {
-    if (ui.block !== id) ui.selection = null;
-    ui.block = id;
+    if (ui.widget !== id) ui.selection = null;
+    ui.widget = id;
     ui.section = null;
     ui.selSection = null;
   },
   onplace(id, pos, { mobile = false, flow = {}, rows = 0 } = {}) {
-    const b = blockAt(id);
+    const b = widgetAt(id);
     if (!b) return;
     if (mobile) placeMobile(store, b.file, b.at, b.j, pos, { flow, rows });
-    else placeBlock(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
+    else placeWidget(store, b.file, b.at, b.j, pos, undefined, { flow, rows });
   },
-  // a block linked to another (its top circle dropped on that one's bottom circle) or freed
+  // a widget linked to another (its top circle dropped on that one's bottom circle) or freed
   onlink(id, to, gap, { mobile = false, row } = {}) {
-    const b = blockAt(id);
+    const b = widgetAt(id);
     if (!b) return;
-    if (linkBlock(store, b.file, b.at, b.j, to, gap, { phone: mobile, row }) === null)
-      toast("Can't link those blocks (another section's, or a loop)", { kind: 'error' });
+    if (linkWidget(store, b.file, b.at, b.j, to, gap, { phone: mobile, row }) === null)
+      toast("Can't link those widgets (another section's, or a loop)", { kind: 'error' });
   },
   // a Custom section's bottom edge dragged: its rows (one undo step)
   onrows(id, rows, { mobile = false } = {}) {
@@ -105,9 +105,9 @@ const overlay = createOverlay({
     const at = (store.current[file]?.sections || []).findIndex((s) => s?.id === id);
     if (at >= 0) setSectionRows(store, file, at, rows, { phone: mobile });
   },
-  blockOf(id) {
-    const b = blockAt(id);
-    return b && store.current[b.file].sections[b.at].blocks[b.j];
+  widgetOf(id) {
+    const b = widgetAt(id);
+    return b && store.current[b.file].sections[b.at].widgets[b.j];
   },
   // a section's name for its tag in the preview: as its card's title (SectionsList.svelte)
   secNameOf(id) {
@@ -211,8 +211,8 @@ function shownPage(path = bridge.path() || '/') {
 
 /**
  * The site parts in the preview follow the target: the Header or Footer picked is open (its
- * texts, and the footer's sections and blocks, can be picked; the page's can't), the other
- * locked. Switching drops the block picked in the other one.
+ * texts, and the footer's sections and widgets, can be picked; the page's can't), the other
+ * locked. Switching drops the widget picked in the other one.
  */
 let partShown = '';
 function applyPart() {
@@ -220,7 +220,7 @@ function applyPart() {
   setPartOpen(bridge.doc, open);
   if (open === partShown) return;
   partShown = open;
-  ui.block = null;
+  ui.widget = null;
   ui.section = null;
   ui.selSection = null;
   ui.selection = null;
@@ -353,18 +353,18 @@ async function refreshStatus() {
 }
 
 /**
- * A pick in the preview (bridge 'select') -> ui.anim for the Motion tab: a block
- * ({ el, block }) or a data-anim part ({ el, id, key, scope }). The block (or the part's) is
- * also the Content tab's block (ui.block), so both tabs show the same one.
+ * A pick in the preview (bridge 'select') -> ui.anim for the Motion tab: a widget
+ * ({ el, widget }) or a data-anim part ({ el, id, key, scope }). The widget (or the part's) is
+ * also the Content tab's widget (ui.widget), so both tabs show the same one.
  */
 function pickAnim(sel) {
   if (sel?.kind !== 'anim') return null;
   const { el } = sel;
-  const owner = el.closest('[data-block]')?.dataset.block;
-  if (owner) ui.block = owner;
+  const owner = el.closest('[data-widget]')?.dataset.widget;
+  if (owner) ui.widget = owner;
   if (el.dataset.anim === undefined)
-    return el.dataset.block ? { el, block: el.dataset.block } : null;
-  // scope: where edits go, set by AnimEditor (its block's parts if they have values, else All)
+    return el.dataset.widget ? { el, widget: el.dataset.widget } : null;
+  // scope: where edits go, set by AnimEditor (its widget's parts if they have values, else All)
   return { el, id: el.dataset.anim, key: el.dataset.animKey, owner, scope: null };
 }
 
@@ -378,19 +378,19 @@ function setMode(mode) {
   overlay.refresh();
   if (mode === 'motion') {
     ui.anim = null;
-    // the block open in the Content tab is the one picked here
-    const el = ui.block && bridge.doc?.querySelector(`[data-block="${CSS.escape(ui.block)}"]`);
+    // the widget open in the Content tab is the one picked here
+    const el = ui.widget && bridge.doc?.querySelector(`[data-widget="${CSS.escape(ui.widget)}"]`);
     if (el) bridge.select(el, 'anim');
   }
 }
 
 // ---------------------------------------------------------------- layout overlay
-/** Where block `id` is in the preview's page file: { file, at, j }, or null. */
-function blockAt(id) {
+/** Where widget `id` is in the preview's page file: { file, at, j }, or null. */
+function widgetAt(id) {
   const file = targetFile(ui.target, bridge.doc);
   const list = store.current[file]?.sections || [];
   for (const [at, s] of list.entries()) {
-    const j = (s.blocks || []).findIndex((b) => b.id === id);
+    const j = (s.widgets || []).findIndex((b) => b.id === id);
     if (j >= 0) return { file, at, j };
   }
   return null;
@@ -424,9 +424,9 @@ function syncSections(
 ) {
   const stale = syncLayout(bridge.doc, store, { structure, root });
   if (stale.remount && !stale.length) bridge.api?.remountView();
-  // a block's motion changed: its animation plays again (the whole page's when it lost it)
+  // a widget's motion changed: its animation plays again (the whole page's when it lost it)
   else if (!stale.length) for (const el of stale.motion) bridge.replayOne(el);
-  // the rows the blocks need now (src/client/modules/rows.js) and the scroll triggers' positions:
+  // the rows the widgets need now (src/client/modules/rows.js) and the scroll triggers' positions:
   // only when the layout changed. (A refresh with nothing changed, e.g. a section's name typed,
   // could put the preview back at a stale scroll position: it jumped to the top.)
   if (stale.layout) {
@@ -529,7 +529,7 @@ bridge.on('select', (sel) => {
       sel?.kind === 'text' ? { edit: sel.el.dataset.edit ?? sel.el.dataset.bound } : null;
 });
 bridge.on('textFocus', (edit) => (ui.selection = { edit }));
-// the Text block editor (bridge.js, rich.js): its state for the toolbar; an edit ended: its
+// the Text widget editor (bridge.js, rich.js): its state for the toolbar; an edit ended: its
 // section rendered again (the fields' values, the counts, the animations' markup)
 bridge.on('rich', (state) => (ui.rich = state));
 bridge.on('richDone', () => {
@@ -587,7 +587,7 @@ function pushDraft({ refresh = false, sources = false } = {}) {
 }
 
 /**
- * A [param] page edited so the page of it shown is gone (its main block's rules changed):
+ * A [param] page edited so the page of it shown is gone (its main widget's rules changed):
  * the preview goes to the one it showed last, else its first (pickTarget). True when it went.
  */
 function followTemplate() {
@@ -615,7 +615,7 @@ store.on(({ files, source: src, structure }) => {
   // After a save the files on disk caught up with us: nothing changes in the preview.
   if (src === 'saved') return;
   const textChanged = files.some((f) => f !== ANIMATIONS);
-  // a Text block typed into in place: the preview shows it already (its section renders
+  // a Text widget typed into in place: the preview shows it already (its section renders
   // again when the edit ends: richDone); an undo or redo while it is edited ends the edit
   const typed = src?.nodeType === 1 && src.isContentEditable;
   if ((src === 'undo' || src === 'redo') && bridge.richEditing) bridge.endRich();

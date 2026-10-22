@@ -65,7 +65,7 @@ optional (only when asked to redo or clear mocks).
   const live = sampleLive('short');
 </script>
 
-<Compare title="Section cards" note="At rest vs hovered with its blocks open" cols={2}>
+<Compare title="Section cards" note="At rest vs hovered with its widgets open" cols={2}>
   <Variant label="At rest (current)">
     <SectionCard {live} at={0} />
     <SectionCard {live} at={1} />
@@ -102,7 +102,7 @@ Tabs, ExplorerHead, …). `{live}` is required wherever listed.
 | `note`  | string | `''`    | what it is, 1–2 lines (its 32px space is kept even when empty) |
 
 **SectionCard** — a page section's card: the real `SectionCard.svelte` (title row: changed dot,
-title, eye, pen; count row: "N blocks ⌄", + Add block, ↑, ↓, Duplicate, Delete; its blocks
+title, eye, pen; count row: "N widgets ⌄", + Add widget, ↑, ↓, Duplicate, Delete; its widgets
 inside when open).
 
 | prop       | type         | default  | meaning                                                        |
@@ -111,14 +111,14 @@ inside when open).
 | `at`       | number       | `0`      | the section's index in that page                               |
 | `selected` | bool         | `false`  | the selected card: border white 70%, its buttons 100%          |
 | `hover`    | bool         | `false`  | drawn hovered: border white 40%, its buttons 100%              |
-| `open`     | bool         | `false`  | its blocks open inside the card (the card grows)               |
-| `hoverRow` | number       | `-1`     | that block row drawn hovered (its buttons 100%)                |
+| `open`     | bool         | `false`  | its widgets open inside the card (the card grows)              |
+| `hoverRow` | number       | `-1`     | that widget row drawn hovered (its buttons 100%)               |
 | `changed`  | bool         | `false`  | the 6px accent dot before the title                            |
 | `red`      | bool         | `false`  | its real delete confirm: over the card at its size, border red |
 
 As built: not collapsible, no caret; the pen (`pen-to-square`) at the title row's right end
 (in a mock it does nothing). Title: the section's `name`, else "Section N", one line (…), muted
-when hidden. ↑/↓ disable at the first/last section; "No blocks" is faint and inactive.
+when hidden. ↑/↓ disable at the first/last section; "No widgets" is faint and inactive.
 
 **Ask** — the old delete confirm for an `over` snippet (old mocks). The card's `red` now shows
 the real confirm.
@@ -127,12 +127,12 @@ the real confirm.
 | ---------- | ------ | ------------------------ | ------------------- |
 | `question` | string | `'Delete this section?'` | the line at the top |
 
-**BlockCard** — one block row: the real `BlockRow.svelte` (its type, its title under it in the
+**WidgetCard** — one widget row: the real `WidgetRow.svelte` (its type, its title under it in the
 link colour, eye, Duplicate, Delete; no grip, no order). Put it in a `<ul>`.
 
-| prop    | type                       | default  | meaning                                                     |
-| ------- | -------------------------- | -------- | ----------------------------------------------------------- |
-| `block` | `{id,type,title?,config?}` | required | `config.enabled === false` = hidden (eye-slash, faint name) |
+| prop     | type                       | default  | meaning                                                     |
+| -------- | -------------------------- | -------- | ----------------------------------------------------------- |
+| `widget` | `{id,type,title?,config?}` | required | `config.enabled === false` = hidden (eye-slash, faint name) |
 
 **Panel** — the editor's side panel around your cards.
 
@@ -165,13 +165,13 @@ link colour, eye, Duplicate, Delete; no grip, no order). Put it in a `<ul>`.
 - `samplePage.full`: 0 unnamed (intro) · 1 "Work" (grid, button) · 2 "Albums" (albums) ·
   3 "Selected portrait and editorial work from the last three years" (projects, grid "Places") ·
   4 unnamed (projects, button)
-- `samplePage.states`: 0 "Work" (grid, button) · 1 "Contact" hidden (button) · 2 unnamed, no blocks
+- `samplePage.states`: 0 "Work" (grid, button) · 1 "Contact" hidden (button) · 2 unnamed, no widgets
 - `SECTIONS`: the six-section home page · `PAGES`: the page menu items · `FILE`: `'pages/index.json'`
-- `block(id, type, title?)` builds a block; `labelOf(block)` its editor name. Block types:
+- `widget(id, type, title?)` builds a widget; `labelOf(widget)` its editor name. Widget types:
   `hero`, `intro` ("Statement"), `grid` ("Photo grid"), `button`, `albums`, `projects` ("Project list"), …
-  (`src/site/blocks/index.js`).
+  (`src/site/widgets/index.js`).
 
-Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block('b-1', 'grid', 'People')] }])`.
+Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, widgets: [widget('b-1', 'grid', 'People')] }])`.
 
 ## 6. Design rules
 
@@ -194,24 +194,24 @@ Own data: `sampleLive([{ id: 's-1', name: 'Work', enabled: false, blocks: [block
 `<SectionCard {live} at={i} />`
 
 - Not collapsible. Title row: the changed dot, the title (one line), eye, pen. Count row:
-  "N blocks ⌄" (text only; "No blocks" faint, inactive), + Add block (always), then ↑, ↓,
+  "N widgets ⌄" (text only; "No widgets" faint, inactive), + Add widget (always), then ↑, ↓,
   Duplicate, Delete (24px icon buttons). 12px inside: every icon ends and all text starts on
   those edges.
-- The count opens the blocks inside the card (the card grows): 48px rows 4px apart, bleeding
+- The count opens the widgets inside the card (the card grows): 48px rows 4px apart, bleeding
   4px into the card's padding, text 12px in on two 20px lines (type, then its title in the
-  link colour), eye, Duplicate, Delete; no grip, no order (blocks are placed in the preview).
-  A row opens that block's settings, as a click on the block in the preview does.
+  link colour), eye, Duplicate, Delete; no grip, no order (widgets are placed in the preview).
+  A row opens that widget's settings, as a click on the widget in the preview does.
 - A click on the card selects it (white 70% border, its section shown in the preview); a
   double click or the pen opens its settings (one level: ← Back, Locate, the settings card).
   Hovered: a 40% white border. The title never changes colour.
-- Buttons rest at 30%: the card's at 100% on its hover, selection or a focus in it; a block
+- Buttons rest at 30%: the card's at 100% on its hover, selection or a focus in it; a widget
   row's on that row's hover or focus. An eye-slash (hidden) always 100%; the count not dimmed.
-- Hidden: the title muted, its blocks at 55%. Changed: a 6px `#33ccff` dot, no shift.
+- Hidden: the title muted, its widgets at 55%. Changed: a 6px `#33ccff` dot, no shift.
 - Delete: over the card at its size and 12px corners, opaque, red border, the question (one
   line) at the top, Delete (an icon-only red trash) then Cancel at the bottom left, both 24px
-  with 8px corners, 8px in on every side (never scrolls). A block's: one line over its 48px row,
+  with 8px corners, 8px in on every side (never scrolls). A widget's: one line over its 48px row,
   its 8px corners, the question 12px in, the buttons 12px from the top, bottom and right.
-- Cards: top level (section, Settings, pages list rows) `--radius-lg` 12px; nested (block
+- Cards: top level (section, Settings, pages list rows) `--radius-lg` 12px; nested (widget
   rows) `--radius-md` 8px. A collapsible card's caret is at its bar's right end.
 
 ![Section card states](docs/section-card-states.png)

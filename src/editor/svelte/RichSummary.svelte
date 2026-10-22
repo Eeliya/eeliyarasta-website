@@ -1,6 +1,6 @@
 <!--
-  A Text block's body in the panel (GroupFields.svelte): read only, dimmed. Each line with
-  its style, its fields and counts as teal chips with their values (the item the block
+  A Text widget's body in the panel (GroupFields.svelte): read only, dimmed. Each line with
+  its style, its fields and counts as teal chips with their values (the item the widget
   shows; a field it doesn't have: its name). It is edited in the preview only: Edit in
   preview (or a double click on it there) starts the edit in place (bridge.js, rich.js).
 -->
@@ -9,7 +9,7 @@
   import { countText, fieldText, styleLabel } from '../../site/text.js';
   import { sourceFile } from '../../site/files.js';
 
-  // value: the body; item: the item the block shows (its fields), or null; live: the store;
+  // value: the body; item: the item the widget shows (its fields), or null; live: the store;
   // onedit(): start editing it in the preview
   let { label = 'Text', value, item = null, items = 0, live, onedit } = $props();
 
@@ -125,9 +125,9 @@
   .sum__chip {
     padding: 0 var(--space-1);
     border-radius: var(--radius-xs);
-    background: color-mix(in srgb, var(--c-block-accent) 16%, transparent);
-    color: var(--c-block-accent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-block-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--c-widget-accent) 16%, transparent);
+    color: var(--c-widget-accent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-widget-accent) 45%, transparent);
   }
 
   .sum__empty {
@@ -140,14 +140,14 @@
     height: 32px;
     border: 0;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--c-block-accent) 18%, transparent);
-    color: var(--c-block-accent);
+    background: color-mix(in srgb, var(--c-widget-accent) 18%, transparent);
+    color: var(--c-widget-accent);
     font: inherit;
     font-size: var(--fs-base);
     cursor: pointer;
 
     &:hover {
-      background: color-mix(in srgb, var(--c-block-accent) 26%, transparent);
+      background: color-mix(in srgb, var(--c-widget-accent) 26%, transparent);
     }
 
     &:focus-visible {

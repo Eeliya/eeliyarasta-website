@@ -1,8 +1,8 @@
 /**
- * Page layout edits in the store: sections and their blocks added, duplicated, moved,
+ * Page layout edits in the store: sections and their widgets added, duplicated, moved,
  * removed and placed (src/site/layout/index.js). Each is one undo step. Adding, duplicating,
  * moving and removing are `structure` changes: the preview renders the sections they touch
- * again (src/editor/layout-sync.js); placing a block or changing a section's settings it
+ * again (src/editor/layout-sync.js); placing a widget or changing a section's settings it
  * follows by itself, through the elements' classes and CSS variables.
  */
 import { DEFAULTS } from '../site/defaults.js';
@@ -18,7 +18,7 @@ import {
   hasMobileArea,
   linkOf,
   makesLoop,
-  newBlock,
+  newWidget,
   newSection,
   phoneAreaOf,
   placeOf,
@@ -31,7 +31,7 @@ import {
 import { resolveRows } from '../site/layout/flow.js';
 import { idsOf, newId } from '../site/layout/ids.js';
 import { fitSource } from '../site/layout/source.js';
-import { BLOCK_TYPES } from '../site/blocks/index.js';
+import { WIDGET_TYPES } from '../site/widgets/index.js';
 import { contentFromFiles, isTemplate, pageIdOf, paramsOf } from '../site/files.js';
 
 const listOf = (store, file) => {
@@ -42,22 +42,22 @@ const write = (store, file, list, structure = true) =>
   store.set(file, '/sections', list, { source: 'panel', structure });
 /**
  * A section's stored rows made to agree with its links (src/site/layout/links.js): a linked
- * block's stored row is its leader's stored bottom + 1 + its gap (desktop; on the phone grid
- * for blocks with a phone area and link of their own), so the page's first render (before
+ * widget's stored row is its leader's stored bottom + 1 + its gap (desktop; on the phone grid
+ * for widgets with a phone area and link of their own), so the page's first render (before
  * rows.js measures, or without JS) already has every follower below its leader.
  */
 function settleLinks(section) {
-  const blocks = section.blocks || [];
+  const widgets = section.widgets || [];
   const desk = resolveRows(
-    blocks.map((b) => ({ id: b.id, ...placeOf(baseOf(b)), link: linkOf(b) })),
+    widgets.map((b) => ({ id: b.id, ...placeOf(baseOf(b)), link: linkOf(b) })),
     1,
   ).at;
-  const own = blocks.filter((b) => hasMobileArea(phoneOf(b)));
+  const own = widgets.filter((b) => hasMobileArea(phoneOf(b)));
   const phone = resolveRows(
     own.map((b) => ({ id: b.id, ...placeOf(phoneOf(b), MCOLS), link: linkOf(b, true) })),
     1,
   ).at;
-  for (const b of blocks) {
+  for (const b of widgets) {
     if (linkOf(b) && desk[b.id]) setBase(b, { row: desk[b.id].row });
     if (linkOf(b, true) && phone[b.id]) setPhone(b, { row: phone[b.id].row });
   }
@@ -65,7 +65,7 @@ function settleLinks(section) {
 }
 
 /**
- * Section `at` replaced by `section` (its links settled; its rows are down to its lowest block,
+ * Section `at` replaced by `section` (its links settled; its rows are down to its lowest widget,
  * so none are stored): no new render. key: typing in one field (a number) coalesces into one undo step (store.js).
  */
 const writeSection = (store, file, at, section, key) => {
@@ -73,20 +73,20 @@ const writeSection = (store, file, at, section, key) => {
   return store.set(file, `/sections/${at}`, section, { source: 'panel', key });
 };
 
-/** A copy of a section ('s') or block ('b') with new ids (taken: the page's ids, the new ones added). */
+/** A copy of a section ('s') or widget ('b') with new ids (taken: the page's ids, the new ones added). */
 function copyOf(item, kind, taken) {
   const copy = structuredClone(item);
   copy.id = newId(kind, taken);
-  for (const b of copy.blocks || []) b.id = newId('b', taken);
+  for (const b of copy.widgets || []) b.id = newId('b', taken);
   return copy;
 }
 
-/** A new section at index `at` (default: the end), holding a full-width block of `type` when given. */
+/** A new section at index `at` (default: the end), holding a full-width widget of `type` when given. */
 export function addSection(store, file, type, at) {
   const list = listOf(store, file);
   const taken = idsOf(list);
-  const blocks = type ? [newBlock(type, taken)] : [];
-  list.splice(at ?? list.length, 0, newSection(taken, blocks));
+  const widgets = type ? [newWidget(type, taken)] : [];
+  list.splice(at ?? list.length, 0, newSection(taken, widgets));
   return write(store, file, list);
 }
 
@@ -113,7 +113,7 @@ export function removeSection(store, file, at) {
     store,
     file,
     list,
-    (gone?.blocks || []).map((b) => b?.id),
+    (gone?.widgets || []).map((b) => b?.id),
   );
 }
 
@@ -157,8 +157,8 @@ export function setPhoneHeight(store, file, at, height) {
 }
 
 /**
- * A Custom section whose content now reaches below its rows (a block dragged or resized past
- * its bottom): its rows become its content's, so they stay when the block moves back up (the
+ * A Custom section whose content now reaches below its rows (a widget dragged or resized past
+ * its bottom): its rows become its content's, so they stay when the widget moves back up (the
  * phone's own rows on the phone). Only ever grows. In place, part of the move's undo step.
  */
 function grow(section, content, phone = false) {
@@ -189,95 +189,95 @@ export function setSectionRows(store, file, at, rows, { phone = false, key } = {
 }
 
 /**
- * The first free row below every block of a section (an auto block stores no rows: it counts
- * as GUESS rows, about a heading's, so a new block doesn't land on top of it).
+ * The first free row below every widget of a section (an auto widget stores no rows: it counts
+ * as GUESS rows, about a heading's, so a new widget doesn't land on top of it).
  */
 const GUESS = 8;
 const below = (section) =>
   Math.max(
     0,
-    ...(section.blocks || []).map((b) => placeOf(baseOf(b)).row + (baseOf(b).rows ?? GUESS) - 1),
+    ...(section.widgets || []).map((b) => placeOf(baseOf(b)).row + (baseOf(b).rows ?? GUESS) - 1),
   ) + 1;
 
-/** A new full-width block of `type` in section `at`, below its other blocks (free: no link). */
-export function addBlock(store, file, at, type) {
+/** A new full-width widget of `type` in section `at`, below its other widgets (free: no link). */
+export function addWidget(store, file, at, type) {
   const list = listOf(store, file);
   const section = list[at];
-  const first = !section.blocks?.length;
-  const block = newBlock(type, idsOf(list), { row: first ? 1 : below(section) });
+  const first = !section.widgets?.length;
+  const widget = newWidget(type, idsOf(list), { row: first ? 1 : below(section) });
   // its source fitted to the page: From URL matches this page's params, or can't be here
-  if (block.source) {
+  if (widget.source) {
     const id = pageIdOf(file) || '';
-    const fit = fitSource(block.source, {
-      list: !!BLOCK_TYPES[type]?.list,
+    const fit = fitSource(widget.source, {
+      list: !!WIDGET_TYPES[type]?.list,
       params: isTemplate(id) ? paramsOf(id) : [],
       content: contentFromFiles(store.current),
     });
-    if (fit) block.source = fit;
-    else delete block.source;
+    if (fit) widget.source = fit;
+    else delete widget.source;
   }
-  section.blocks = [...(section.blocks || []), block];
+  section.widgets = [...(section.widgets || []), widget];
   write(store, file, list);
-  return block;
+  return widget;
 }
 
-/** A copy of block `j` of section `at` (new id), right after it in order and below the others. */
-export function duplicateBlock(store, file, at, j) {
+/** A copy of widget `j` of section `at` (new id), right after it in order and below the others. */
+export function duplicateWidget(store, file, at, j) {
   const list = listOf(store, file);
   const section = list[at];
-  const copy = copyOf(section.blocks[j], 'b', idsOf(list));
+  const copy = copyOf(section.widgets[j], 'b', idsOf(list));
   // a copy is free (its links were the original's place)
   setBase(copy, { row: below(section), link: undefined });
   if (phoneOf(copy)) setPhone(copy, { link: undefined });
-  section.blocks.splice(j + 1, 0, copy);
+  section.widgets.splice(j + 1, 0, copy);
   write(store, file, list);
   return copy;
 }
 
-/** Block `from` of section `at` moved to index `to` in its order (its paint order among blocks of the same layer). */
-export function moveBlock(store, file, at, from, to) {
+/** Widget `from` of section `at` moved to index `to` in its order (its paint order among widgets of the same layer). */
+export function moveWidget(store, file, at, from, to) {
   const list = listOf(store, file);
-  const blocks = list[at].blocks;
-  if (to < 0 || to >= blocks.length || from === to) return false;
-  blocks.splice(to, 0, ...blocks.splice(from, 1));
+  const widgets = list[at].widgets;
+  if (to < 0 || to >= widgets.length || from === to) return false;
+  widgets.splice(to, 0, ...widgets.splice(from, 1));
   return write(store, file, list);
 }
 
 /**
- * Block `from` of section `at` moved to index `to` of section `toAt` (one undo step). In its own
- * section: moveBlock. To another: it goes free below that section's blocks, and links to it or
+ * Widget `from` of section `at` moved to index `to` of section `toAt` (one undo step). In its own
+ * section: moveWidget. To another: it goes free below that section's widgets, and links to it or
  * from it (they were its old section's) go.
  */
-export function moveBlockTo(store, file, at, from, toAt, to) {
+export function moveWidgetTo(store, file, at, from, toAt, to) {
   if (toAt === at)
-    return moveBlock(
+    return moveWidget(
       store,
       file,
       at,
       from,
-      Math.min(to, listOf(store, file)[at].blocks.length - 1),
+      Math.min(to, listOf(store, file)[at].widgets.length - 1),
     );
   const list = listOf(store, file);
   const source = list[at];
   const target = list[toAt];
-  if (!source?.blocks?.[from] || !target) return false;
-  const [b] = source.blocks.splice(from, 1);
-  for (const o of source.blocks) {
+  if (!source?.widgets?.[from] || !target) return false;
+  const [b] = source.widgets.splice(from, 1);
+  for (const o of source.widgets) {
     if (baseOf(o).link?.to === b.id) setBase(o, { link: undefined });
     if (phoneOf(o)?.link?.to === b.id) setPhone(o, { link: undefined });
   }
   setBase(b, { row: below(target), link: undefined });
   if (phoneOf(b)) setPhone(b, { link: undefined });
-  target.blocks = target.blocks || [];
-  target.blocks.splice(Math.max(0, Math.min(to, target.blocks.length)), 0, b);
+  target.widgets = target.widgets || [];
+  target.widgets.splice(Math.max(0, Math.min(to, target.widgets.length)), 0, b);
   return write(store, file, list);
 }
 
-/** Block `j` of section `at` removed (the blocks that followed it are free from then on). */
-export function removeBlock(store, file, at, j) {
+/** Widget `j` of section `at` removed (the widgets that followed it are free from then on). */
+export function removeWidget(store, file, at, j) {
   const list = listOf(store, file);
-  const [gone] = list[at].blocks.splice(j, 1);
-  for (const b of list[at].blocks) {
+  const [gone] = list[at].widgets.splice(j, 1);
+  for (const b of list[at].widgets) {
     if (baseOf(b).link?.to === gone?.id) setBase(b, { link: undefined });
     if (phoneOf(b)?.link?.to === gone?.id) setPhone(b, { link: undefined });
   }
@@ -285,7 +285,7 @@ export function removeBlock(store, file, at, j) {
 }
 
 /**
- * The sections written; a [param] page's main block among `gone` (removed) is its main block no
+ * The sections written; a [param] page's main widget among `gone` (removed) is its main widget no
  * more (no pages are built until another is picked: the page head says so). One undo step.
  */
 function writeDropMain(store, file, list, gone) {
@@ -304,14 +304,14 @@ function writeDropMain(store, file, list, gone) {
 
 /**
  * The rows the page shows (src/site/layout/flow.js) stored: flow { id: area } where the
- * section's other blocks are now (their row and rows; `phone`: their mobile areas). Blocks that grew or shrank (content, an aspect at this width) and the
- * blocks they pushed are stored as they are seen.
+ * section's other widgets are now (their row and rows; `phone`: their mobile areas). Widgets that grew or shrank (content, an aspect at this width) and the
+ * widgets they pushed are stored as they are seen.
  */
 function storeFlow(section, j, flow = {}, phone = false) {
-  section.blocks.forEach((b, k) => {
+  section.widgets.forEach((b, k) => {
     const a = k !== j && flow[b.id];
     if (!a) return;
-    // on the phone only a block's own phone area (one without shows its desktop area halved)
+    // on the phone only a widget's own phone area (one without shows its desktop area halved)
     if (phone) {
       if (hasMobileArea(phoneOf(b))) setPhone(b, { row: a.row, rows: a.rows });
     } else setBase(b, { row: a.row, rows: a.rows });
@@ -319,28 +319,28 @@ function storeFlow(section, j, flow = {}, phone = false) {
 }
 
 /**
- * The gap a linked block has when its first row is `row`, its leader where `flow` says it is
+ * The gap a linked widget has when its first row is `row`, its leader where `flow` says it is
  * now (or its stored area): rows between the leader's bottom and it (negative: overlapping).
  */
 function gapAt(section, link, row, flow = {}, phone = false) {
-  const lead = section.blocks.find((b) => b.id === link.to);
+  const lead = section.widgets.find((b) => b.id === link.to);
   if (!lead) return link.gap;
   const a = flow[lead.id] || (phone ? phoneAreaOf(lead) : placeOf(baseOf(lead)));
   return row - (a.row + a.rows);
 }
 
 /**
- * Block `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
+ * Widget `j` of section `at` placed at `pos` (the section grows to fit it): one undo step (a
  * drag); key: typing in a number field coalesces (see writeSection). flow: where the other
- * blocks are now (storeFlow).
+ * widgets are now (storeFlow).
  */
-export function placeBlock(store, file, at, j, pos, key, { flow, rows = 0 } = {}) {
+export function placeWidget(store, file, at, j, pos, key, { flow, rows = 0 } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow);
-  const b = section.blocks[j];
+  const b = section.widgets[j];
   const p = placeOf(pos);
   setBase(b, p);
-  // a linked block moved: its gap changes, it keeps following its leader
+  // a linked widget moved: its gap changes, it keeps following its leader
   const l = linkOf(b);
   if (l) setBase(b, { link: { to: l.to, gap: gapAt(section, l, p.row, flow) } });
   grow(section, Math.max(rows, rowsOf(section)));
@@ -348,19 +348,19 @@ export function placeBlock(store, file, at, j, pos, key, { flow, rows = 0 } = {}
 }
 
 /**
- * Block `j` of section `at` follows block `to` (its id, in the same section) with `gap` cells
+ * Widget `j` of section `at` follows widget `to` (its id, in the same section) with `gap` cells
  * between them, on the desktop grid or the phone grid (`phone`); to null: it is free again.
  * Refused (null) when `to` isn't in the section or the link makes a loop; false when nothing
  * changed. One undo step.
- * On the phone, a block without a phone area of its own gets one (its desktop area halved,
+ * On the phone, a widget without a phone area of its own gets one (its desktop area halved,
  * where it shows now), so its phone link is its own.
  */
-export function linkBlock(store, file, at, j, to, gap = 0, { phone = false, row } = {}) {
+export function linkWidget(store, file, at, j, to, gap = 0, { phone = false, row } = {}) {
   const section = listOf(store, file)[at];
-  const b = section.blocks[j];
+  const b = section.widgets[j];
   if (!b) return null;
   if (to !== null) {
-    if (to === b.id || !section.blocks.some((x) => x.id === to)) return null;
+    if (to === b.id || !section.widgets.some((x) => x.id === to)) return null;
     if (!Number.isInteger(gap)) return null;
   }
   const next = to === null ? undefined : { to, gap };
@@ -371,51 +371,51 @@ export function linkBlock(store, file, at, j, to, gap = 0, { phone = false, row 
     if (!hasMobileArea(phoneOf(b))) setPhone(b, phoneAreaOf(b));
     setPhone(b, { link: next, ...stay });
   } else setBase(b, { link: next, ...stay });
-  if (next && makesLoop(section.blocks, b.id, to, phone)) return null;
+  if (next && makesLoop(section.widgets, b.id, to, phone)) return null;
   return writeSection(store, file, at, section);
 }
 
-/** Block `j` of section `at` one layer up (dir 1) or down (-1). */
-export function layerBlock(store, file, at, j, dir) {
+/** Widget `j` of section `at` one layer up (dir 1) or down (-1). */
+export function layerWidget(store, file, at, j, dir) {
   const section = listOf(store, file)[at];
-  const block = section.blocks[j];
-  const z = (Number.isInteger(block.z) ? block.z : 0) + dir;
-  if (z) block.z = z;
-  else delete block.z;
+  const widget = section.widgets[j];
+  const z = (Number.isInteger(widget.z) ? widget.z : 0) + dir;
+  if (z) widget.z = z;
+  else delete widget.z;
   return writeSection(store, file, at, section);
 }
 
 /**
- * Block `j` of section `at` changed by `patch` (size, aspect, scale; `rows` goes to its base
+ * Widget `j` of section `at` changed by `patch` (size, aspect, scale; `rows` goes to its base
  * layout; a key set to undefined is removed): one undo step; key: see writeSection.
  * A size that stores rows (aspect, rows) keeps `rows` (the rows it shows); auto drops them.
  */
-export function setBlock(store, file, at, j, patch, key) {
+export function setWidget(store, file, at, j, patch, key) {
   const section = listOf(store, file)[at];
-  const block = section.blocks[j];
+  const widget = section.widgets[j];
   const { rows, ...rest } = patch;
   for (const [k, v] of Object.entries(rest)) {
-    if (v === undefined) delete block[k];
-    else block[k] = v;
+    if (v === undefined) delete widget[k];
+    else widget[k] = v;
   }
-  if (storesRows(block) && rows !== undefined) setBase(block, { rows });
-  if (storesRows(block) && baseOf(block).rows === undefined) setBase(block, { rows: 1 });
-  if (!storesRows(block)) {
-    setBase(block, {});
-    if (phoneOf(block)) setPhone(block, {});
+  if (storesRows(widget) && rows !== undefined) setBase(widget, { rows });
+  if (storesRows(widget) && baseOf(widget).rows === undefined) setBase(widget, { rows: 1 });
+  if (!storesRows(widget)) {
+    setBase(widget, {});
+    if (phoneOf(widget)) setPhone(widget, {});
   }
   return writeSection(store, file, at, section, key);
 }
 
 /**
- * Block `j` of section `at` placed at `area` on the phone grid (60 columns): its own phone area
+ * Widget `j` of section `at` placed at `area` on the phone grid (60 columns): its own phone area
  * from then on (the first time, its desktop link comes along as its phone link, the gap
- * halved). A linked block's gap follows where it was put. One undo step; key: see writeSection.
+ * halved). A linked widget's gap follows where it was put. One undo step; key: see writeSection.
  */
 export function placeMobile(store, file, at, j, area, { key, flow, rows = 0 } = {}) {
   const section = listOf(store, file)[at];
   storeFlow(section, j, flow, true);
-  const b = section.blocks[j];
+  const b = section.widgets[j];
   const inherited = !hasMobileArea(phoneOf(b)) ? linkOf(b, true) : null;
   setPhone(b, placeOf(area, MCOLS));
   if (inherited) setPhone(b, { link: inherited });
@@ -426,12 +426,12 @@ export function placeMobile(store, file, at, j, area, { key, flow, rows = 0 } = 
 }
 
 /**
- * Section `at` back to its desktop layout on phones (halved): its blocks' phone areas and
+ * Section `at` back to its desktop layout on phones (halved): its widgets' phone areas and
  * phone links removed.
  */
 export function resetMobile(store, file, at) {
   const section = listOf(store, file)[at];
-  if (!section.blocks.some((b) => b.layout?.phone !== undefined)) return false;
-  for (const b of section.blocks) setPhone(b, null);
+  if (!section.widgets.some((b) => b.layout?.phone !== undefined)) return false;
+  for (const b of section.widgets) setPhone(b, null);
   return writeSection(store, file, at, section);
 }

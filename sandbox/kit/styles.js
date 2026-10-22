@@ -1,12 +1,12 @@
 /**
  * The real components' own (scoped) styles, for kit markup that mirrors theirs: a component's
  * <style lang="scss"> is read from src (?raw), its :global(…) unwrapped, nested under a scope
- * class and compiled in the browser (sass), once. So the kit's toolbar, footer and block rows
+ * class and compiled in the browser (sass), once. So the kit's toolbar, footer and widget rows
  * follow App.svelte and SectionsList.svelte as they change; nothing is copied. Their
  * `@use '../styles/mixins'` is replaced by the mixins' source, put before the scope.
  *
  *   APP   '.kit-app'   App.svelte: .ed-panel, .ed-head, .ed-row, .ed-tools, .ed-modes, .ed-foot…
- *   LIST  '.kit-list'  SectionsList.svelte: .blocks, .block, .block__*, .add, .confirm…
+ *   LIST  '.kit-list'  SectionsList.svelte: .widgets, .widget, .widget__*, .add, .confirm…
  */
 import * as sass from 'sass';
 import appSrc from '../../src/editor/svelte/App.svelte?raw';

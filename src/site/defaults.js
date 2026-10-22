@@ -4,12 +4,12 @@
  * writing), storedDefaults(file, data) lists the ones still there (validation reports them).
  *
  *   section  enabled: true, width: "contained", height: "fit"
- *   block    size: "auto", config.enabled: true
+ *   widget    size: "auto", config.enabled: true
  *   hero     photos[].layer: "back"
  *   backdrop the page's (src/site/backdrop.js BACKDROP_DEFAULTS); and the other transition's
  *            options, and a backdrop without photos, are left out too
  *
- * omitDefaults also tidies (not a validation error): no empty "config" or "meta", and a block's
+ * omitDefaults also tidies (not a validation error): no empty "config" or "meta", and a widget's
  * area without col 1, row 1 or a span to the last column (no "layout": full width at row 1).
  *
  * The animation library (animations.json presets) is not covered: each animation carries every
@@ -19,11 +19,11 @@ import { docKindOf } from './files.js';
 import { COLS } from './layout/grid.js';
 import { tidyBackdrop } from './backdrop.js';
 import { isObject } from './is.js';
-import { eachBlock } from './layout/ids.js';
+import { eachWidget } from './layout/ids.js';
 
 export const DEFAULTS = {
   section: { enabled: true, width: 'contained', height: 'fit' },
-  block: { size: 'auto' },
+  widget: { size: 'auto' },
   config: { enabled: true },
   heroPhoto: { layer: 'back' },
 };
@@ -33,10 +33,10 @@ function* places(data) {
   for (const [at, s] of (Array.isArray(data?.sections) ? data.sections : []).entries()) {
     if (!isObject(s)) continue;
     yield [s, DEFAULTS.section, `section ${at + 1}`];
-    for (const [j, b] of (Array.isArray(s.blocks) ? s.blocks : []).entries()) {
+    for (const [j, b] of (Array.isArray(s.widgets) ? s.widgets : []).entries()) {
       if (!isObject(b)) continue;
-      const where = `section ${at + 1}, block ${j + 1}`;
-      yield [b, DEFAULTS.block, where];
+      const where = `section ${at + 1}, widget ${j + 1}`;
+      yield [b, DEFAULTS.widget, where];
       if (isObject(b.config)) yield [b.config, DEFAULTS.config, `${where} config`];
       if (b.type === 'hero' && Array.isArray(b.photos))
         for (const [i, p] of b.photos.entries())
@@ -60,13 +60,13 @@ function strip(data, found) {
 
 /**
  * Tidy a page's `data` in place for saving (not a validation error: the editor's copy keeps
- * whole areas while it works): no empty "config" or "meta", and a block's desktop area without
+ * whole areas while it works): no empty "config" or "meta", and a widget's desktop area without
  * its defaults (col 1, row 1, a span that reaches the last column; placeOf fills them in), its
  * "layout" left out when nothing is left (full width at row 1).
  */
 function tidy(data) {
   if (isEmpty(data.meta)) delete data.meta;
-  for (const [b] of eachBlock(data.sections)) {
+  for (const [b] of eachWidget(data.sections)) {
     if (!isObject(b)) continue;
     if (isEmpty(b.config)) delete b.config;
     const base = b.layout?.base;

@@ -1,11 +1,11 @@
 /**
- * Locate (the section and block settings' button, ViewTop.svelte): the editor's preview
- * scrolls, smoothly (instantly with reduced motion), to the top of section or block `id`,
+ * Locate (the section and widget settings' button, ViewTop.svelte): the editor's preview
+ * scrolls, smoothly (instantly with reduced motion), to the top of section or widget `id`,
  * below the site's fixed header. Nothing opens or is selected.
  */
 export function locate(bridge, id) {
   const q = CSS.escape(id || '');
-  const el = bridge?.doc?.querySelector(`[data-sec="${q}"], [data-block="${q}"]`);
+  const el = bridge?.doc?.querySelector(`[data-sec="${q}"], [data-widget="${q}"]`);
   const win = el?.ownerDocument.defaultView;
   if (!win) return;
   // (below the site's fixed header, so the section's top isn't under it)

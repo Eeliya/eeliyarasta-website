@@ -1,6 +1,6 @@
 /**
  * Animation types. Each receives (el, spec, { reduce, onCleanup, targets, trigger }).
- * `spec` is the fully merged config for that element or block (see engine.js). For a block,
+ * `spec` is the fully merged config for that element or widget (see engine.js). For a widget,
  * `targets` are what it moves and `trigger` what scroll positions are measured on; for a
  * data-anim element they are the element (or its `children`) and the element itself.
  * Add a new effect by adding a function here and a preset in settings/animations.json.
@@ -18,7 +18,7 @@ const tweenVars = (spec, extra = {}) => ({
 
 /**
  * A scroll position in the footer, kept where the page can scroll to (ScrollTrigger's clamp()):
- * the footer is the end of every page, so "top 85%" of its blocks may lie past the last scroll
+ * the footer is the end of every page, so "top 85%" of its widgets may lie past the last scroll
  * position, and their reveal would never play (or a scrubbed one stay hidden).
  */
 const reach = (pos, trigger) =>
@@ -56,7 +56,7 @@ const scrollVars = (spec, trigger) => {
   };
 };
 
-/** What a type moves: a block's targets, else the element's `children`, else the element. */
+/** What a type moves: a widget's targets, else the element's `children`, else the element. */
 const targetsOf = (el, spec, ctx) =>
   ctx.targets || (spec.children ? [...el.querySelectorAll(spec.children)] : [el]);
 
@@ -116,7 +116,7 @@ const splitOpts = (el) => ({
 
 /**
  * SplitText into chars / words / lines (masked) and reveal them. Re-splits on resize. Each
- * target is split on its own (a block's paragraphs each play as they scroll in).
+ * target is split on its own (a widget's paragraphs each play as they scroll in).
  */
 function split(el, spec, ctx) {
   if (ctx.reduce) return;

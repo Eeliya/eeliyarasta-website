@@ -1,5 +1,5 @@
 <!--
-  The body of a Content group (content-groups.js): a block's settings (its type's config:
+  The body of a Content group (content-groups.js): a widget's settings (its type's config:
   source, layout, ...) and fields, or the other texts of the page. Fields are in rows
   (.fields): two half fields share one (pairedHalves); a list field is a ListField.
 
@@ -7,10 +7,10 @@
     live      reactive store (live.svelte.js); bridge: the preview (../bridge.js)
     sourceIds the files in content/en/sources/, for a list item's source
     onsource  (file, item?, edit?): open the Source Explorer
-    bindings  a block's: { binds(type), resolved(f), from } for its fields' pickers (Custom or
-              a field of its item) and a bound text's format (BlockInspector.svelte,
+    bindings  a widget's: { binds(type), resolved(f), from } for its fields' pickers (Custom or
+              a field of its item) and a bound text's format (WidgetInspector.svelte,
               Field.svelte); null: none
-    lead      snippet: first in the grid (the block's source, BlockSource.svelte)
+    lead      snippet: first in the grid (the widget's source, WidgetSource.svelte)
   Settings and content share one .fields grid (all through Field, the same labels and gaps),
   a 1px line between them when both are there.
 -->
@@ -31,7 +31,7 @@
 
   let { g, live, bridge, sourceIds, onsource, bindings = null, lead } = $props();
 
-  // a setting changes what the block shows: the preview renders it again (structure)
+  // a setting changes what the widget shows: the preview renders it again (structure)
   function setConfig(c, value) {
     live.store.set(g.file, c.ptr, value, {
       key: `config:${g.file}${c.ptr}`,
@@ -75,7 +75,7 @@
     return typeof text === 'string' && text.trim() ? text : `${f.label} ${i + 1}`;
   }
 
-  // a switch or a choice can change what the block shows: rendered again
+  // a switch or a choice can change what the widget shows: rendered again
   // a bound value ({ bind }) shows the item's: rendered again too
   function setValue(f, value) {
     const structure =
@@ -110,7 +110,7 @@
      source, ItemPicker.svelte) -->
 {#snippet field(f, half, extra = {})}
   {#if f.type === 'rich'}
-    <!-- a Text block's text: edited in the preview only -->
+    <!-- a Text widget's text: edited in the preview only -->
     <RichSummary
       label={f.label}
       value={live.get(f.file, f.ptr)}
@@ -173,7 +173,7 @@
   </div>
 {/snippet}
 
-<!-- a block setting (config): a source field (ItemPicker.svelte: its source only), a Select
+<!-- a widget setting (config): a source field (ItemPicker.svelte: its source only), a Select
      (select), a switch (boolean) through Field, or a link (LinkField) -->
 {#snippet option(c)}
   {@const value = live.get(g.file, c.ptr)}
@@ -215,7 +215,7 @@
   {/if}
 {/snippet}
 
-<!-- one grid (.fields): the settings (the block's item, `lead`, and its config), a line, then
+<!-- one grid (.fields): the settings (the widget's item, `lead`, and its config), a line, then
      the content fields; a list field takes a whole row -->
 <div class="fields">
   {@render lead?.()}

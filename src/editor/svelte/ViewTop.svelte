@@ -1,8 +1,8 @@
 <!--
-  The top of a section's or a block's settings (SectionView.svelte, BlockInspector.svelte), one
+  The top of a section's or a widget's settings (SectionView.svelte, WidgetInspector.svelte), one
   level under the list of sections: a 32px row, ← Back (to the list, SectionsList.svelte; Esc
   or a click on empty space in the preview too) and Locate (the preview scrolls to it).
-    bridge, id (the section's or block's), onback
+    bridge, id (the section's or widget's), onback
 -->
 <script>
   import Button from './Button.svelte';

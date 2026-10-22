@@ -14,7 +14,7 @@ const files = (await readdir('src/editor', { recursive: true }))
   .filter((f) => /\.svelte(\.js)?$/.test(f))
   .map((f) => join('src/editor', f));
 
-// url: so a style block's relative @use (../styles/mixins) resolves, as in Vite
+// url: so a style widget's relative @use (../styles/mixins) resolves, as in Vite
 const scss = {
   style: ({ content, attributes, filename }) =>
     attributes.lang === 'scss'

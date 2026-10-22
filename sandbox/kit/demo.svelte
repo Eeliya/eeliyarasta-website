@@ -24,9 +24,9 @@
   </Variant>
   <Variant label="Modal" note="ExplorerHead and .modal__box">
     <Modal
-      title="Add block to Work"
+      title="Add widget to Work"
       icon="fa-plus"
-      crumbs={[{ label: 'after its last block' }]}
+      crumbs={[{ label: 'after its last widget' }]}
       width="384px"
       height="240px"
     >

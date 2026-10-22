@@ -1,4 +1,4 @@
-// Text block fixes: safe links, paste into lines, fit to block's search.
+// Text widget fixes: safe links, paste into lines, fit to widget's search.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isSafeHref, linkProblem, hrefOf, UNSAFE_HREF } from '../src/site/hrefs.js';
@@ -57,7 +57,7 @@ const el = (tag, kids = [], attrs = {}, style = {}) => ({
   style,
 });
 
-test('paste: HTML: blocks are Paragraph lines; only bold, italic and safe links kept', () => {
+test('paste: HTML: widgets are Paragraph lines; only bold, italic and safe links kept', () => {
   const root = el('BODY', [
     el('STYLE', ['p { color: red }']),
     el('H1', ['Big ', el('SPAN', ['title'], {}, { fontSize: '40px', color: 'red' })]),

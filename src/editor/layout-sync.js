@@ -1,29 +1,29 @@
 /**
  * The page's sections in the preview, kept in step with its file while editing, without a
  * reload. The page's <main> names its file (data-page-file); every section element its id
- * (data-sec) and every block element its id (data-block): src/site/layout/index.js.
+ * (data-sec) and every widget element its id (data-widget): src/site/layout/index.js.
  *
  * On each change of the file, syncLayout applies what the preview can show by itself: the
  * sections' name (their id), height, width, rows and on/off (their classes and CSS variables) and the
- * blocks' places, sizes, links, text scale, phone areas, layers, on/off and motion (data-motion,
- * src/site/layout/motion.js: those blocks' animations play again). What needs the site's templates (a section added or
- * copied, a block's content or config changed after a structure edit, a section whose index
+ * widgets' places, sizes, links, text scale, phone areas, layers, on/off and motion (data-motion,
+ * src/site/layout/motion.js: those widgets' animations play again). What needs the site's templates (a section added or
+ * copied, a widget's content or config changed after a structure edit, a section whose index
  * moved, so its editor markers point elsewhere) it reports: the editor fetches those
  * sections' HTML from the dev server (POST /__editor/render) and swaps them in (swapSections).
  */
 import {
-  blockClass,
-  blockLinks,
-  blockVars,
+  widgetClass,
+  widgetLinks,
+  widgetVars,
   headingNumbers,
   sectionAnchor,
   sectionClass,
   sectionVars,
 } from '../site/layout/index.js';
-import { kindOf } from '../site/blocks/index.js';
+import { kindOf } from '../site/widgets/index.js';
 
 /**
- * A block's motion attributes as the site renders them:
+ * A widget's motion attributes as the site renders them:
  * [data-motion, data-motion-options, data-anim-parts].
  */
 function motionOf(b) {
@@ -63,7 +63,7 @@ export const targetFile = (target, doc) =>
 
 /**
  * Open one site part in the preview ('header' | 'footer', or none: ''), lock the other: open,
- * its texts (and the footer's sections and blocks) can be hovered and picked and the page's
+ * its texts (and the footer's sections and widgets) can be hovered and picked and the page's
  * can't (bridge.js INJECTED_CSS: data-ed-open); locked, a click on it opens it.
  */
 export function setPartOpen(doc, id) {
@@ -74,10 +74,10 @@ export function setPartOpen(doc, id) {
 /** The elements whose sections follow a file: the page's view and the footer. */
 export const syncRoots = (doc) => [pageView(doc), footerOf(doc)].filter(Boolean);
 
-// What each section element was rendered from: its index and its blocks' content (kindOf).
+// What each section element was rendered from: its index and its widgets' content (kindOf).
 const rendered = new WeakMap();
 const keyOf = (s, at, numbers) =>
-  JSON.stringify([at, (s?.blocks || []).map((b) => [b?.id, kindOf(b), numbers[b?.id] || 0])]);
+  JSON.stringify([at, (s?.widgets || []).map((b) => [b?.id, kindOf(b), numbers[b?.id] || 0])]);
 
 /** The view's section elements by id. */
 const sectionsIn = (view) =>
@@ -96,8 +96,8 @@ export function markRendered(doc, store, view = pageView(doc)) {
 }
 
 /**
- * Apply a section's layout (and its blocks') to its element. True when a block's animated
- * parts changed: the view needs mounting again. Blocks whose motion changed are added to
+ * Apply a section's layout (and its widgets') to its element. True when a widget's animated
+ * parts changed: the view needs mounting again. Widgets whose motion changed are added to
  * `moved` (their animation plays again).
  */
 function applyLayout(el, s, moved = [], touched = { layout: false }) {
@@ -118,11 +118,11 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
   el.hidden = s.enabled === false;
   if (el.className + '|' + el.style.cssText + el.hidden !== was) touched.layout = true;
   let remount = false;
-  for (const b of s.blocks || []) {
-    // (its own block, not one of a nested section's)
-    const node = el.querySelector(`[data-block="${b?.id}"]`);
+  for (const b of s.widgets || []) {
+    // (its own widget, not one of a nested section's)
+    const node = el.querySelector(`[data-widget="${b?.id}"]`);
     if (!node || node.closest('[data-sec]') !== el) continue;
-    const cls = blockClass(b);
+    const cls = widgetClass(b);
     const wasNode = node.className + '|' + node.style.cssText + node.hidden;
     node.className = cls;
     const kept = ['--fr', '--frs', '--tkf']
@@ -130,10 +130,10 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
       .filter(([, x]) => x)
       .map(([v, x]) => `;${v}:${x}`)
       .join('');
-    node.style.cssText = blockVars(b) + kept;
+    node.style.cssText = widgetVars(b) + kept;
     node.hidden = b.config?.enabled === false;
     if (node.className + '|' + node.style.cssText + node.hidden !== wasNode) touched.layout = true;
-    for (const [name, value] of Object.entries(blockLinks(b)))
+    for (const [name, value] of Object.entries(widgetLinks(b)))
       if (setAttr(node, name, value)) touched.layout = true;
     const [anim, options, parts] = motionOf(b);
     // its parts' animations are mounted with the view's: mount again
@@ -148,8 +148,8 @@ function applyLayout(el, s, moved = [], touched = { layout: false }) {
  * Sync the preview's sections (`root`'s: the page's view, or the footer) with the store's file: order, layout, removed sections.
  * Returns the ids of the sections to render again (`structure`: also those whose content
  * changed; otherwise only missing ones, e.g. a section added in another tab is not), with
- * `remount` set when a block's animated parts changed (the view's modules need mounting again), `motion`: the
- * block elements whose motion changed, and `layout`: whether anything the rows and scroll
+ * `remount` set when a widget's animated parts changed (the view's modules need mounting again), `motion`: the
+ * widget elements whose motion changed, and `layout`: whether anything the rows and scroll
  * triggers measure changed (a name alone changes the id only).
  */
 export function syncLayout(doc, store, { structure = false, root = pageView(doc) } = {}) {

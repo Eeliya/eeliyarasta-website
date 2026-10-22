@@ -1,5 +1,5 @@
 /**
- * The contact form block. See ./index.js for the shape of a type.
+ * The contact form widget. See ./index.js for the shape of a type.
  *
  * Its texts are content (title, body (its intro), each field's label and placeholder, the button, the
  * messages); `fields` is the list of inputs: { name, type, label, placeholder, required,
@@ -166,9 +166,9 @@ export const form = {
     const email = ctx.site?.email;
     const turnstile = mode === 'function' && ctx.site?.forms?.turnstileSiteKey;
     const msg = (key) => ` data-${key}="${esc(s[key] ?? '')}"`;
-    return html` <div class="formblock">
+    return html` <div class="formwidget">
       ${s.title ? html`<h2 class="section__title" ${b.ed('title')}>${esc(s.title)}</h2>` : ''}
-      ${s.body ? html`<p class="formblock__intro" ${b.ed('body', 'block')}>${esc(s.body)}</p>` : ''}
+      ${s.body ? html`<p class="formwidget__intro" ${b.ed('body', 'block')}>${esc(s.body)}</p>` : ''}
       <form class="cform" id="${id}" method="post" action="${esc(action)}"${mode === 'email' ? ' enctype="text/plain"' : ''} data-contact="${mode}"${msg('success')}${msg('error')}${msg('required')}${msg('invalid')}${msg('sending')}>
         ${fields.map(
           (f, i) => html`<div class="cform__field">
