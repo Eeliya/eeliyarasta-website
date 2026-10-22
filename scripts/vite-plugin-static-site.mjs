@@ -281,7 +281,11 @@ export default function staticSite() {
         seoWarnings,
         sitemapXml,
       } = await import(pathToFileURL(path.join(root, RENDER_MODULE)).href + `?t=${Date.now()}`);
-      await widgetsReady; // the render module's registry is Node's (scripts/site-widgets.mjs)
+      await widgetsReady;
+      // the render module was imported by Node itself: its registry is not the one this plugin
+      // (bundled with vite.config.js) registered in, so the site's widgets join it too
+      const { registerWidgets } = await import(pathToFileURL(path.join(root, WIDGETS_MODULE)).href);
+      await registerSiteWidgets(root, { register: registerWidgets });
       const content = loadContent(root);
       // every source against its schema (required fields, types, photos): stop on a mistake
       const problems = checkSources(content);
