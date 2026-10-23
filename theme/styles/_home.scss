@@ -4,18 +4,20 @@
 .hero {
   position: relative;
   isolation: isolate;
-  height: 100svh;
-  min-height: 620px;
+  // the first section's grid starts below the navbar (--nav-h): the rest of the screen
+  height: calc(100svh - var(--nav-h, 0px));
+  min-height: calc(620px - var(--nav-h, 0px));
   overflow-x: clip;
 
   &__photos {
     position: absolute;
-    inset: calc(var(--header-h) + 8px) var(--pad) 70px;
+    inset: 8px var(--pad) 70px;
   }
 
+  // centred on the whole screen as before (its empty top runs up behind the navbar)
   &__title {
     position: absolute;
-    inset: 0;
+    inset: calc(-1 * var(--nav-h, 0px)) 0 0;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -85,7 +87,7 @@
 
   @media (max-width: $bp-sm) {
     &__photos {
-      inset: calc(var(--header-h)) 0 90px;
+      inset: 0 0 90px;
     }
     &__title {
       font-size: 27vw;
