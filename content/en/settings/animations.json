@@ -313,20 +313,6 @@
       "delay": 0.6,
       "stagger": 0.04,
       "duration": 0.8
-    },
-    "about.image": {
-      "preset": "image-reveal",
-      "trigger": "load",
-      "delay": 0.2
-    },
-    "about.headline": {
-      "preset": "split-lines",
-      "trigger": "load",
-      "delay": 0.2
-    },
-    "about.body": {
-      "preset": "stagger-up",
-      "stagger": 0.1
     }
   },
   "interactions": {

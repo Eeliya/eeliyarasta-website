@@ -8,22 +8,338 @@
       "widgets": [
         {
           "id": "b-wrvr",
-          "type": "about",
-          "eyebrow": "About",
-          "title": "I photograph people, the way they are when they forget the camera.",
-          "image": "about/x100v.jpg",
+          "type": "photo",
+          "src": "about/x100v.jpg",
+          "caption": "Photo: Aleksandrs Karevs / Unsplash",
+          "size": "aspect",
+          "aspect": "4:5",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 50,
+              "row": 1,
+              "rows": 63
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 1,
+              "rows": 75
+            }
+          }
+        },
+        {
+          "id": "b-ab7l",
+          "type": "text",
           "body": [
-            "PLACEHOLDER BIO: I'm Eeliya, a photographer based in the Netherlands. Most of my work is portraits and editorial shoots with models, made with one small camera (a Fujifilm X100V) and whatever light the day gives me.",
-            "Photography is the hobby that took over. During the week I build things: websites, tools for developers and the occasional DIY contraption on my desk. This site is one of them, so it's equal parts portfolio and playground.",
-            "Want to shoot together, or have a project in mind? Send me a message."
+            {
+              "style": "label",
+              "text": [
+                {
+                  "t": "About"
+                }
+              ]
+            }
           ],
-          "facts": [
-            { "label": "Based in", "value": "Netherlands" },
-            { "label": "Camera", "value": "Fujifilm X100V" },
-            { "label": "Shoots", "value": "Portrait, Editorial, Fashion, Architecture" },
-            { "label": "Builds", "value": "Websites, Dev tools, DIY" }
+          "layout": {
+            "base": {
+              "col": 60,
+              "span": 61,
+              "row": 1
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 1,
+              "link": {
+                "to": "b-wrvr",
+                "gap": 4
+              }
+            }
+          }
+        },
+        {
+          "id": "b-ab0h",
+          "type": "text",
+          "body": [
+            {
+              "style": "statement",
+              "text": [
+                {
+                  "t": "I photograph people, the way they are when they forget the camera."
+                }
+              ]
+            }
           ],
-          "emailLabel": "Email me"
+          "layout": {
+            "base": {
+              "col": 60,
+              "span": 50,
+              "link": {
+                "to": "b-ab7l",
+                "gap": 2
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 1,
+              "link": {
+                "to": "b-ab7l",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
+          "id": "b-ab1t",
+          "type": "text",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "PLACEHOLDER BIO: I'm Eeliya, a photographer based in the Netherlands. Most of my work is portraits and editorial shoots with models, made with one small camera (a Fujifilm X100V) and whatever light the day gives me."
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Photography is the hobby that took over. During the week I build things: websites, tools for developers and the occasional DIY contraption on my desk. This site is one of them, so it's equal parts portfolio and playground."
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Want to shoot together, or have a project in mind? Send me a message."
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 60,
+              "span": 46,
+              "link": {
+                "to": "b-ab0h",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 1,
+              "link": {
+                "to": "b-ab0h",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
+          "id": "b-ab2f",
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [
+                {
+                  "t": "Based in"
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Netherlands"
+                }
+              ]
+            },
+            {
+              "style": "label",
+              "text": [
+                {
+                  "t": "Shoots"
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Portrait, Editorial, Fashion, Architecture"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 60,
+              "span": 29,
+              "link": {
+                "to": "b-ab1t",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 29,
+              "link": {
+                "to": "b-ab1t",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
+          "id": "b-ab3f",
+          "type": "text",
+          "body": [
+            {
+              "style": "label",
+              "text": [
+                {
+                  "t": "Camera"
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Fujifilm X100V"
+                }
+              ]
+            },
+            {
+              "style": "label",
+              "text": [
+                {
+                  "t": "Builds"
+                }
+              ]
+            },
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "t": "Websites, Dev tools, DIY"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 92,
+              "span": 29,
+              "link": {
+                "to": "b-ab1t",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 31,
+              "span": 30,
+              "link": {
+                "to": "b-ab1t",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
+          "id": "b-ab4e",
+          "type": "button",
+          "label": "Email me",
+          "config": {
+            "link": {
+              "href": "mailto:hello@eeliyarasta.com"
+            }
+          },
+          "layout": {
+            "base": {
+              "col": 60,
+              "span": 12,
+              "link": {
+                "to": "b-ab2f",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 20,
+              "link": {
+                "to": "b-ab2f",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
+          "id": "b-ab5i",
+          "type": "button",
+          "label": "Instagram",
+          "config": {
+            "link": {
+              "href": "https://www.instagram.com/eeliya.rasta/"
+            }
+          },
+          "layout": {
+            "base": {
+              "col": 73,
+              "span": 14,
+              "link": {
+                "to": "b-ab2f",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 22,
+              "span": 24,
+              "link": {
+                "to": "b-ab2f",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
+          "id": "b-ab6y",
+          "type": "button",
+          "label": "YouTube",
+          "config": {
+            "link": {
+              "href": "https://www.youtube.com/@eeliyarasta"
+            }
+          },
+          "layout": {
+            "base": {
+              "col": 88,
+              "span": 13,
+              "link": {
+                "to": "b-ab2f",
+                "gap": 3
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 22,
+              "link": {
+                "to": "b-ab4e",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
         }
       ]
     }
