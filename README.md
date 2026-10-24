@@ -11,7 +11,7 @@ animations and the editor.
 ```
 content/en/               ← all text, pages, sources, settings (JSON)
 media/                    ← source photos (ewcms images → public/media, git-ignored)
-theme/                    ← theme.json + styles/: fonts, colours, the look
+theme/                    ← none: ewcms's theme as is (a theme/ would layer on it: tokens.scss, fonts.scss, overrides.scss, theme.json)
 public/                   ← fonts, favicon (copied as is)
 site.config.mjs           ← where the folders are
 functions/api/contact.js  ← the contact form (Cloudflare Pages Function, from ewcms)
