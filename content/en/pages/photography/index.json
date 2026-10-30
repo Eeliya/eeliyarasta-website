@@ -9,7 +9,7 @@
       "id": "s-a58t",
       "widgets": [
         {
-          "id": "b-9m0e",
+          "id": "w-9m0e",
           "type": "text",
           "body": [
             {
@@ -36,13 +36,13 @@
       "id": "s-oq6n",
       "widgets": [
         {
-          "id": "b-2wrz",
+          "id": "w-2wrz",
           "type": "panels",
           "panels": [
             { "source": "people", "title": "People", "unit": "models" },
             { "source": "places", "title": "Places", "unit": "places" }
           ],
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]
     }

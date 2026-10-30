@@ -10,7 +10,7 @@
       "url": "https://observatory.eeliyarasta.com/",
       "linkLabel": "observatory.eeliyarasta.com",
       "linkOut": true,
-      "image": "projects/grok-observatory.jpg",
+      "photo": "projects/grok-observatory.jpg",
       "body": "Watch an AI coding assistant's edits replay live, file by file. It replays every save in a local browser tab and works with any agent that edits files in a git repo.",
       "placeholder": false
     },
@@ -22,7 +22,7 @@
       "year": 2026,
       "url": "https://github.com/Eeliya/eeliyarasta-website",
       "linkLabel": "Source on GitHub",
-      "image": "people/noor-vermeer/03.jpg",
+      "photo": "people/noor-vermeer/03.jpg",
       "body": "This site. A tiny static-site builder on Vite and GSAP: content in JSON, templates in plain JavaScript, every animation driven by one config file so it can be curated visually.",
       "placeholder": false
     },
@@ -34,7 +34,7 @@
       "year": 2025,
       "url": "",
       "linkLabel": "",
-      "image": "projects/film-scanner.jpg",
+      "photo": "projects/film-scanner.jpg",
       "body": "PLACEHOLDER: a light table and copy stand for digitising negatives with a digital camera. Replace with a real DIY project.",
       "placeholder": true
     },
@@ -46,7 +46,7 @@
       "year": 2024,
       "url": "",
       "linkLabel": "",
-      "image": "projects/arduino.jpg",
+      "photo": "projects/arduino.jpg",
       "body": "PLACEHOLDER: a microcontroller box with knobs that drives the lights and shortcuts at my desk. Replace with a real DIY project.",
       "placeholder": true
     }

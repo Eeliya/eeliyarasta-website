@@ -10,7 +10,7 @@
       "height": "full",
       "widgets": [
         {
-          "id": "b-89og",
+          "id": "w-89og",
           "type": "text",
           "body": [
             {
@@ -28,7 +28,7 @@
           ]
         },
         {
-          "id": "b-56q5",
+          "id": "w-56q5",
           "type": "button",
           "label": "Back home",
           "config": {
@@ -36,7 +36,7 @@
           },
           "layout": {
             "base": {
-              "link": { "to": "b-89og", "gap": 2 }
+              "link": { "to": "w-89og", "gap": 2 }
             }
           }
         }

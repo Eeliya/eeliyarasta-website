@@ -11,47 +11,13 @@
       "required": true,
       "help": "Its spot on the projects page: /projects/#<slug>"
     },
-    {
-      "key": "title",
-      "label": "Title",
-      "type": "text",
-      "required": true
-    },
-    {
-      "key": "type",
-      "label": "Kind",
-      "type": "text",
-      "width": "half",
-      "list": true
-    },
-    {
-      "key": "year",
-      "label": "Year",
-      "type": "number",
-      "width": "half"
-    },
-    {
-      "key": "body",
-      "label": "Description",
-      "type": "longtext"
-    },
-    {
-      "key": "image",
-      "label": "Photo",
-      "type": "photo"
-    },
-    {
-      "key": "url",
-      "label": "Link",
-      "type": "link",
-      "help": "https://…; empty: no link"
-    },
-    {
-      "key": "linkLabel",
-      "label": "Link text",
-      "type": "text",
-      "width": "half"
-    },
+    { "key": "title", "label": "Title", "type": "text", "required": true },
+    { "key": "type", "label": "Kind", "type": "text", "width": "half", "list": true },
+    { "key": "year", "label": "Year", "type": "number", "width": "half" },
+    { "key": "body", "label": "Description", "type": "multiline" },
+    { "key": "photo", "label": "Photo", "type": "photo" },
+    { "key": "url", "label": "Link", "type": "link", "help": "https://…; empty: no link" },
+    { "key": "linkLabel", "label": "Link text", "type": "text", "width": "half" },
     {
       "key": "linkOut",
       "label": "Menu links to it",

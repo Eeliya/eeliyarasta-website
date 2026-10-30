@@ -2,7 +2,7 @@
   "version": 1,
   "kind": "page",
   "id": "pg-gk6t",
-  "main": "b-j8hg",
+  "main": "w-j8hg",
   "sections": [
     {
       "id": "s-2jiz",
@@ -10,7 +10,7 @@
       "width": "full",
       "widgets": [
         {
-          "id": "b-j8hg",
+          "id": "w-j8hg",
           "type": "album",
           "source": {
             "mode": "url",

@@ -9,7 +9,7 @@
       "id": "s-8gt2",
       "widgets": [
         {
-          "id": "b-j6je",
+          "id": "w-j6je",
           "type": "text",
           "body": [
             {
@@ -41,11 +41,11 @@
       "id": "s-m9y2",
       "widgets": [
         {
-          "id": "b-grz4",
+          "id": "w-grz4",
           "type": "albums",
           "source": { "mode": "all", "from": "people" },
           "config": { "layout": "portrait" },
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]
     }

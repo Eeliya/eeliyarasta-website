@@ -2,7 +2,7 @@
   "version": 1,
   "kind": "page",
   "id": "pg-h6eg",
-  "main": "b-gbxt",
+  "main": "w-gbxt",
   "sections": [
     {
       "id": "s-gaii",
@@ -10,7 +10,7 @@
       "width": "full",
       "widgets": [
         {
-          "id": "b-gbxt",
+          "id": "w-gbxt",
           "type": "album",
           "source": {
             "mode": "url",

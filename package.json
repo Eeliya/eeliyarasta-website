@@ -10,13 +10,13 @@
     "preview": "ewcms preview",
     "check": "ewcms check",
     "check:links": "ewcms check --links --no-lint",
-    "images": "ewcms images",
+    "photos": "ewcms photos",
     "publish-media": "ewcms publish-media",
     "postinstall": "node -e \"try{require('child_process').execFileSync('git',['config','core.hooksPath','.githooks'],{stdio:'ignore'})}catch{}\""
   },
   "license": "MIT",
   "dependencies": {
-    "ewcms": "github:EverythingWidget/ewcms#v0.1.56"
+    "ewcms": "github:EverythingWidget/ewcms#v0.2.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

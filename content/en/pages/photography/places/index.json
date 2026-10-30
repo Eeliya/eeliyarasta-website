@@ -9,7 +9,7 @@
       "id": "s-jrwb",
       "widgets": [
         {
-          "id": "b-erex",
+          "id": "w-erex",
           "type": "text",
           "body": [
             {
@@ -41,11 +41,11 @@
       "id": "s-v6rg",
       "widgets": [
         {
-          "id": "b-syyw",
+          "id": "w-syyw",
           "type": "albums",
           "source": { "mode": "all", "from": "places" },
           "config": { "layout": "landscape" },
-          "motion": { "anim": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]
     }

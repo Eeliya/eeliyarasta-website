@@ -9,7 +9,7 @@
       "id": "s-ncsm",
       "widgets": [
         {
-          "id": "b-b4w8",
+          "id": "w-b4w8",
           "type": "text",
           "body": [
             {
@@ -41,11 +41,11 @@
       "id": "s-ojv4",
       "widgets": [
         {
-          "id": "b-h6t6",
+          "id": "w-h6t6",
           "type": "projects",
           "source": { "mode": "all", "from": "projects" },
           "config": {},
-          "motion": { "anim": "list-up", "trigger": "load" }
+          "motion": { "animation": "list-up", "trigger": "load" }
         }
       ]
     }
