@@ -17,29 +17,29 @@
             "from": "people",
             "where": {
               "op": "and",
-              "rules": [{ "param": "person", "field": "slug" }]
+              "rules": [{ "param": "person", "property": "slug" }]
             }
           },
-          "title": [{ "field": "title" }],
+          "title": [{ "property": "title" }],
           "meta": [
             {
               "label": "Role",
-              "value": [{ "field": "role" }]
+              "value": [{ "property": "role" }]
             },
             {
               "label": "Agency",
-              "value": [{ "field": "agency" }]
+              "value": [{ "property": "agency" }]
             },
             {
               "label": "Location",
-              "value": [{ "field": "location" }]
+              "value": [{ "property": "location" }]
             },
             {
               "label": "Year",
-              "value": [{ "field": "year" }]
+              "value": [{ "property": "year" }]
             }
           ],
-          "body": [{ "field": "body" }]
+          "body": [{ "property": "body" }]
         }
       ]
     }

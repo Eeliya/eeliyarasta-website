@@ -3,7 +3,7 @@
   "label": "People",
   "title": "title",
   "slug": "slug",
-  "fields": [
+  "properties": [
     {
       "key": "slug",
       "label": "Slug",

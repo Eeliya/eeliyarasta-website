@@ -18,7 +18,7 @@
             },
             {
               "style": "title",
-              "text": [{ "t": "People " }, { "field": "people" }]
+              "text": [{ "t": "People " }, { "property": "people" }]
             },
             {
               "style": "paragraph",

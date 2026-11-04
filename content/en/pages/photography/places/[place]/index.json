@@ -17,21 +17,21 @@
             "from": "places",
             "where": {
               "op": "and",
-              "rules": [{ "param": "place", "field": "slug" }]
+              "rules": [{ "param": "place", "property": "slug" }]
             }
           },
-          "title": [{ "field": "title" }],
+          "title": [{ "property": "title" }],
           "meta": [
             {
               "label": "Location",
-              "value": [{ "field": "location" }]
+              "value": [{ "property": "location" }]
             },
             {
               "label": "Year",
-              "value": [{ "field": "year" }]
+              "value": [{ "property": "year" }]
             }
           ],
-          "body": [{ "field": "body" }]
+          "body": [{ "property": "body" }]
         }
       ]
     }

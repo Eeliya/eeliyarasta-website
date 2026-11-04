@@ -18,7 +18,7 @@
             },
             {
               "style": "title",
-              "text": [{ "t": "Places " }, { "field": "places" }]
+              "text": [{ "t": "Places " }, { "property": "places" }]
             },
             {
               "style": "paragraph",
