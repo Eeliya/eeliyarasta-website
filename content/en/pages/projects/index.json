@@ -18,12 +18,7 @@
             },
             {
               "style": "title",
-              "text": [
-                { "t": "Projects" },
-                {
-                  "count": { "source": "projects" }
-                }
-              ]
+              "text": [{ "t": "Projects " }, { "field": "projects" }]
             },
             {
               "style": "paragraph",

@@ -18,12 +18,7 @@
             },
             {
               "style": "title",
-              "text": [
-                { "t": "Places" },
-                {
-                  "count": { "source": "places" }
-                }
-              ]
+              "text": [{ "t": "Places " }, { "field": "places" }]
             },
             {
               "style": "paragraph",

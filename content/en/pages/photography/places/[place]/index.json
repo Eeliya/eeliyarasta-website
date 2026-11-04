@@ -20,18 +20,18 @@
               "rules": [{ "param": "place", "field": "slug" }]
             }
           },
-          "title": { "bind": "title" },
+          "title": [{ "field": "title" }],
           "meta": [
             {
               "label": "Location",
-              "value": { "bind": "location" }
+              "value": [{ "field": "location" }]
             },
             {
               "label": "Year",
-              "value": { "bind": "year" }
+              "value": [{ "field": "year" }]
             }
           ],
-          "body": { "bind": "body" }
+          "body": [{ "field": "body" }]
         }
       ]
     }

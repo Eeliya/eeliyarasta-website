@@ -18,12 +18,7 @@
             },
             {
               "style": "title",
-              "text": [
-                { "t": "People" },
-                {
-                  "count": { "source": "people" }
-                }
-              ]
+              "text": [{ "t": "People " }, { "field": "people" }]
             },
             {
               "style": "paragraph",
