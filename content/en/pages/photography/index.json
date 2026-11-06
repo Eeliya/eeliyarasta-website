@@ -46,8 +46,18 @@
             "columns": "2",
             "gap": "m",
             "items": [
-              { "title": "People", "source": "people", "unit": "models" },
-              { "title": "Places", "source": "places", "unit": "places" }
+              {
+                "title": "People",
+                "photo": "people/noor-vermeer/01.jpg",
+                "source": "people",
+                "unit": "models"
+              },
+              {
+                "title": "Places",
+                "photo": "places/kasteel-de-haar/02.jpg",
+                "source": "places",
+                "unit": "places"
+              }
             ]
           },
           "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
