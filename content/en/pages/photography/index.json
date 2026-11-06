@@ -37,11 +37,19 @@
       "widgets": [
         {
           "id": "w-2wrz",
-          "type": "panels",
-          "panels": [
-            { "source": "people", "title": "People", "unit": "models" },
-            { "source": "places", "title": "Places", "unit": "places" }
-          ],
+          "type": "list",
+          "heading": "",
+          "config": {
+            "handmade": true,
+            "template": "preset:panel",
+            "arrangement": "grid",
+            "columns": "2",
+            "gap": "m",
+            "items": [
+              { "title": "People", "source": "people", "unit": "models" },
+              { "title": "Places", "source": "places", "unit": "places" }
+            ]
+          },
           "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
         }
       ]
