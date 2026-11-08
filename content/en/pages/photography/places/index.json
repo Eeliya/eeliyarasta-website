@@ -63,7 +63,8 @@
           "config": {
             "template": "t-acrl",
             "columns": "2",
-            "gap": "m"
+            "gap": "m",
+            "phoneColumns": "1"
           }
         }
       ]
