@@ -3,7 +3,9 @@
   "kind": "page",
   "id": "pg-rugs",
   "curtainText": "Places",
-  "meta": { "description": "Places and architecture photographed by Eeliya Rasta." },
+  "meta": {
+    "description": "Places and architecture photographed by Eeliya Rasta."
+  },
   "sections": [
     {
       "id": "s-jrwb",
@@ -14,11 +16,22 @@
           "body": [
             {
               "style": "label",
-              "text": [{ "t": "Photography / Places" }]
+              "text": [
+                {
+                  "t": "Photography / Places"
+                }
+              ]
             },
             {
               "style": "title",
-              "text": [{ "t": "Places " }, { "property": "places" }]
+              "text": [
+                {
+                  "t": "Places "
+                },
+                {
+                  "property": "places"
+                }
+              ]
             },
             {
               "style": "paragraph",
@@ -37,10 +50,21 @@
       "widgets": [
         {
           "id": "w-syyw",
-          "type": "albums",
-          "source": { "mode": "all", "from": "places" },
-          "config": { "layout": "landscape" },
-          "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "motion": {
+            "animation": "grid-reveal",
+            "trigger": "load",
+            "delay": 0.3
+          },
+          "type": "list",
+          "source": {
+            "mode": "all",
+            "from": "places"
+          },
+          "config": {
+            "template": "t-acrl",
+            "columns": "2",
+            "gap": "m"
+          }
         }
       ]
     }

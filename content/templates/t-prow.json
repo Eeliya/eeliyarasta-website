@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "kind": "template",
+  "label": "Project row",
+  "source": "projects",
+  "link": false,
+  "widgets": [
+    {
+      "id": "w-pnum",
+      "type": "text",
+      "role": "num",
+      "body": [
+        {
+          "style": "label",
+          "text": [
+            {
+              "property": "number"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 8,
+          "row": 1
+        }
+      }
+    },
+    {
+      "id": "w-ptit",
+      "type": "text",
+      "role": "title",
+      "body": [
+        {
+          "style": "heading",
+          "text": [
+            {
+              "property": "title"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 13,
+          "span": 56,
+          "row": 1
+        },
+        "phone": {
+          "col": 7,
+          "span": 40,
+          "row": 1
+        }
+      }
+    },
+    {
+      "id": "w-ptyp",
+      "type": "text",
+      "role": "kind",
+      "body": [
+        {
+          "style": "label",
+          "text": [
+            {
+              "property": "type"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 76,
+          "span": 24,
+          "row": 1
+        },
+        "phone": {
+          "col": 7,
+          "span": 40,
+          "row": 1,
+          "link": {
+            "to": "w-ptit",
+            "gap": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "w-pyea",
+      "type": "text",
+      "role": "year",
+      "body": [
+        {
+          "style": "label",
+          "text": [
+            {
+              "property": "year"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 104,
+          "span": 8,
+          "row": 1
+        },
+        "phone": {
+          "col": 48,
+          "span": 8,
+          "row": 1
+        }
+      }
+    },
+    {
+      "id": "w-popn",
+      "type": "details",
+      "size": "rows",
+      "layout": {
+        "base": {
+          "col": 116,
+          "span": 5,
+          "row": 1,
+          "rows": 13
+        },
+        "phone": {
+          "col": 57,
+          "span": 4,
+          "row": 1,
+          "rows": 8
+        }
+      },
+      "config": {
+        "template": "t-pmor",
+        "icon": "plus",
+        "screenReaderName": [
+          {
+            "property": "title"
+          }
+        ]
+      }
+    }
+  ],
+  "style": {
+    "border": "bottom",
+    "background": "none"
+  }
+}

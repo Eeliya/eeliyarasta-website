@@ -3,7 +3,9 @@
   "kind": "page",
   "id": "pg-cwyg",
   "curtainText": "Projects",
-  "meta": { "description": "Websites, tools and DIY things built by Eeliya Rasta." },
+  "meta": {
+    "description": "Websites, tools and DIY things built by Eeliya Rasta."
+  },
   "sections": [
     {
       "id": "s-ncsm",
@@ -14,11 +16,22 @@
           "body": [
             {
               "style": "label",
-              "text": [{ "t": "Projects" }]
+              "text": [
+                {
+                  "t": "Projects"
+                }
+              ]
             },
             {
               "style": "title",
-              "text": [{ "t": "Projects " }, { "property": "projects" }]
+              "text": [
+                {
+                  "t": "Projects "
+                },
+                {
+                  "property": "projects"
+                }
+              ]
             },
             {
               "style": "paragraph",
@@ -37,10 +50,19 @@
       "widgets": [
         {
           "id": "w-h6t6",
-          "type": "projects",
-          "source": { "mode": "all", "from": "projects" },
-          "config": {},
-          "motion": { "animation": "list-up", "trigger": "load" }
+          "motion": {
+            "animation": "list-up",
+            "trigger": "load"
+          },
+          "type": "list",
+          "source": {
+            "mode": "all",
+            "from": "projects"
+          },
+          "config": {
+            "template": "t-prow",
+            "columns": "1"
+          }
         }
       ]
     }

@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "kind": "template",
+  "label": "Album card (landscape)",
+  "source": "places",
+  "link": true,
+  "widgets": [
+    {
+      "id": "w-cpho",
+      "type": "photo",
+      "role": "photo",
+      "src": [
+        {
+          "property": "cover"
+        }
+      ],
+      "size": "aspect",
+      "aspect": "3:2",
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "row": 1,
+          "rows": 80
+        }
+      }
+    },
+    {
+      "id": "w-cnam",
+      "type": "text",
+      "role": "name",
+      "body": [
+        {
+          "style": "heading",
+          "text": [
+            {
+              "property": "title"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "link": {
+            "to": "w-cpho",
+            "gap": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "w-cmet",
+      "type": "text",
+      "role": "meta",
+      "body": [
+        {
+          "style": "label",
+          "text": [
+            {
+              "property": "role"
+            },
+            {
+              "property": "location"
+            },
+            {
+              "property": "year"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "link": {
+            "to": "w-cnam",
+            "gap": 1
+          }
+        }
+      },
+      "join": " · "
+    }
+  ]
+}

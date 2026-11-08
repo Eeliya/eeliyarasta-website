@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "kind": "template",
+  "label": "Album card (portrait)",
+  "source": "people",
+  "link": true,
+  "widgets": [
+    {
+      "id": "w-cpho",
+      "type": "photo",
+      "role": "photo",
+      "src": [
+        {
+          "property": "cover"
+        }
+      ],
+      "size": "aspect",
+      "aspect": "4:5",
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "row": 1,
+          "rows": 150
+        }
+      }
+    },
+    {
+      "id": "w-cnam",
+      "type": "text",
+      "role": "name",
+      "body": [
+        {
+          "style": "heading",
+          "text": [
+            {
+              "property": "title"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "link": {
+            "to": "w-cpho",
+            "gap": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "w-cmet",
+      "type": "text",
+      "role": "meta",
+      "body": [
+        {
+          "style": "label",
+          "text": [
+            {
+              "property": "role"
+            },
+            {
+              "property": "location"
+            },
+            {
+              "property": "year"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "base": {
+          "col": 1,
+          "span": 120,
+          "link": {
+            "to": "w-cnam",
+            "gap": 1
+          }
+        }
+      },
+      "join": " · "
+    }
+  ]
+}

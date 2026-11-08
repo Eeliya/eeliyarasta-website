@@ -3,7 +3,9 @@
   "kind": "page",
   "id": "pg-yzuw",
   "curtainText": "People",
-  "meta": { "description": "Models photographed by Eeliya Rasta." },
+  "meta": {
+    "description": "Models photographed by Eeliya Rasta."
+  },
   "sections": [
     {
       "id": "s-8gt2",
@@ -14,11 +16,22 @@
           "body": [
             {
               "style": "label",
-              "text": [{ "t": "Photography / People" }]
+              "text": [
+                {
+                  "t": "Photography / People"
+                }
+              ]
             },
             {
               "style": "title",
-              "text": [{ "t": "People " }, { "property": "people" }]
+              "text": [
+                {
+                  "t": "People "
+                },
+                {
+                  "property": "people"
+                }
+              ]
             },
             {
               "style": "paragraph",
@@ -37,10 +50,21 @@
       "widgets": [
         {
           "id": "w-grz4",
-          "type": "albums",
-          "source": { "mode": "all", "from": "people" },
-          "config": { "layout": "portrait" },
-          "motion": { "animation": "grid-reveal", "trigger": "load", "delay": 0.3 }
+          "motion": {
+            "animation": "grid-reveal",
+            "trigger": "load",
+            "delay": 0.3
+          },
+          "type": "list",
+          "source": {
+            "mode": "all",
+            "from": "people"
+          },
+          "config": {
+            "template": "t-acrp",
+            "columns": "3",
+            "gap": "m"
+          }
         }
       ]
     }
