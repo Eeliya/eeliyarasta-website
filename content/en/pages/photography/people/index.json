@@ -63,7 +63,7 @@
           "config": {
             "template": "t-acrp",
             "columns": "3",
-            "gap": "m",
+            "gap": 2,
             "phoneColumns": "1"
           }
         }

@@ -1,86 +1,94 @@
 {
   "version": 1,
   "kind": "template",
-  "label": "Album card (portrait)",
-  "source": "people",
-  "link": true,
-  "widgets": [
+  "name": "Album card (portrait)",
+  "clickable": true,
+  "preview": {
+    "from": "people",
+    "columns": 3
+  },
+  "sections": [
     {
-      "id": "w-cpho",
-      "type": "photo",
-      "role": "photo",
-      "src": [
+      "id": "s-acrp",
+      "widgets": [
         {
-          "property": "cover"
-        }
-      ],
-      "size": "aspect",
-      "aspect": "4:5",
-      "layout": {
-        "base": {
-          "col": 1,
-          "span": 120,
-          "row": 1,
-          "rows": 150
-        }
-      }
-    },
-    {
-      "id": "w-cnam",
-      "type": "text",
-      "role": "name",
-      "body": [
-        {
-          "style": "heading",
-          "text": [
+          "id": "w-cpho",
+          "type": "photo",
+          "role": "photo",
+          "src": [
             {
-              "property": "title"
+              "property": "cover"
             }
-          ]
-        }
-      ],
-      "layout": {
-        "base": {
-          "col": 1,
-          "span": 120,
-          "link": {
-            "to": "w-cpho",
-            "gap": 3
-          }
-        }
-      }
-    },
-    {
-      "id": "w-cmet",
-      "type": "text",
-      "role": "meta",
-      "body": [
-        {
-          "style": "label",
-          "text": [
-            {
-              "property": "role"
-            },
-            {
-              "property": "location"
-            },
-            {
-              "property": "year"
+          ],
+          "size": "aspect",
+          "aspect": "4:5",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "row": 1,
+              "rows": 150
             }
-          ]
-        }
-      ],
-      "layout": {
-        "base": {
-          "col": 1,
-          "span": 120,
-          "link": {
-            "to": "w-cnam",
-            "gap": 1
           }
+        },
+        {
+          "id": "w-cnam",
+          "type": "text",
+          "role": "name",
+          "body": [
+            {
+              "style": "heading",
+              "text": [
+                {
+                  "property": "title"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "link": {
+                "to": "w-cpho",
+                "gap": 3
+              }
+            }
+          }
+        },
+        {
+          "id": "w-cmet",
+          "type": "text",
+          "role": "meta",
+          "body": [
+            {
+              "style": "label",
+              "text": [
+                {
+                  "property": "role"
+                },
+                {
+                  "property": "location"
+                },
+                {
+                  "property": "year"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 120,
+              "link": {
+                "to": "w-cnam",
+                "gap": 1
+              }
+            }
+          },
+          "join": " · "
         }
-      },
-      "join": " · "
+      ]
     }
   ]
 }

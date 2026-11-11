@@ -221,7 +221,7 @@
           "config": {
             "template": "t-acrp",
             "columns": "3",
-            "gap": "m",
+            "gap": 2,
             "phoneColumns": "1",
             "seeAll": true
           },
@@ -245,7 +245,7 @@
           "config": {
             "template": "t-acrl",
             "columns": "2",
-            "gap": "m",
+            "gap": 2,
             "phoneColumns": "1",
             "seeAll": true
           },

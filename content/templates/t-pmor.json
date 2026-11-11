@@ -1,104 +1,111 @@
 {
   "version": 1,
   "kind": "template",
-  "label": "Project details",
-  "source": "projects",
-  "link": false,
-  "widgets": [
+  "name": "Project details",
+  "clickable": false,
+  "preview": {
+    "from": "projects"
+  },
+  "sections": [
     {
-      "id": "w-mpho",
-      "type": "photo",
-      "role": "photo",
-      "src": [
+      "id": "s-pmor",
+      "widgets": [
         {
-          "property": "photo"
-        }
-      ],
-      "size": "aspect",
-      "aspect": "4:3",
-      "layout": {
-        "base": {
-          "col": 13,
-          "span": 36,
-          "row": 2,
-          "rows": 27
-        },
-        "phone": {
-          "col": 1,
-          "span": 60,
-          "row": 2,
-          "rows": 45
-        }
-      }
-    },
-    {
-      "id": "w-mbod",
-      "type": "text",
-      "role": "body",
-      "body": [
-        {
-          "style": "paragraph",
-          "text": [
+          "id": "w-mpho",
+          "type": "photo",
+          "role": "photo",
+          "src": [
             {
-              "property": "body"
+              "property": "photo"
             }
-          ]
-        }
-      ],
-      "layout": {
-        "base": {
-          "col": 56,
-          "span": 56,
-          "row": 2
-        },
-        "phone": {
-          "col": 1,
-          "span": 60,
-          "row": 1,
-          "link": {
-            "to": "w-mpho",
-            "gap": 4
+          ],
+          "size": "aspect",
+          "aspect": "4:3",
+          "layout": {
+            "base": {
+              "col": 13,
+              "span": 36,
+              "row": 2,
+              "rows": 27
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 2,
+              "rows": 45
+            }
           }
-        }
-      }
-    },
-    {
-      "id": "w-mlnk",
-      "type": "button",
-      "role": "visit",
-      "label": [
+        },
         {
-          "property": "linkLabel"
-        }
-      ],
-      "config": {
-        "link": [
-          {
-            "property": "url"
-          }
-        ],
-        "missing": "hide"
-      },
-      "layout": {
-        "base": {
-          "col": 56,
-          "span": 30,
-          "row": 1,
-          "link": {
-            "to": "w-mbod",
-            "gap": 4
+          "id": "w-mbod",
+          "type": "text",
+          "role": "body",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "property": "body"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "base": {
+              "col": 56,
+              "span": 56,
+              "row": 2
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 1,
+              "link": {
+                "to": "w-mpho",
+                "gap": 4
+              }
+            }
           }
         },
-        "phone": {
-          "col": 1,
-          "span": 40,
-          "row": 1,
-          "link": {
-            "to": "w-mbod",
-            "gap": 4
+        {
+          "id": "w-mlnk",
+          "type": "button",
+          "role": "visit",
+          "label": [
+            {
+              "property": "linkLabel"
+            }
+          ],
+          "config": {
+            "link": [
+              {
+                "property": "url"
+              }
+            ],
+            "missing": "hide"
+          },
+          "layout": {
+            "base": {
+              "col": 56,
+              "span": 30,
+              "row": 1,
+              "link": {
+                "to": "w-mbod",
+                "gap": 4
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 40,
+              "row": 1,
+              "link": {
+                "to": "w-mbod",
+                "gap": 4
+              }
+            }
           }
         }
-      }
+      ]
     }
   ]
 }

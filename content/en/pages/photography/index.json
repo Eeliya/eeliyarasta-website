@@ -44,7 +44,7 @@
             "template": "preset:panel",
             "arrangement": "grid",
             "columns": "2",
-            "gap": "m",
+            "gap": 2,
             "items": [
               {
                 "title": "People",
