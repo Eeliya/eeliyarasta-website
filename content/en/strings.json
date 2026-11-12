@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "nav": {
+  "header": {
     "menu": "Menu",
     "close": "Close",
     "clock": "NL"
