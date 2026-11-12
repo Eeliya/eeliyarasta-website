@@ -82,14 +82,6 @@
                   "t": "Location"
                 }
               ]
-            },
-            {
-              "style": "paragraph",
-              "text": [
-                {
-                  "property": "location"
-                }
-              ]
             }
           ],
           "config": {
@@ -120,6 +112,47 @@
           }
         },
         {
+          "id": "w-af00v",
+          "type": "text",
+          "role": "fact",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "property": "location"
+                }
+              ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "location"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af00",
+                "gap": 1
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af00",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
           "id": "w-af01",
           "type": "text",
           "role": "fact",
@@ -129,14 +162,6 @@
               "text": [
                 {
                   "t": "Year"
-                }
-              ]
-            },
-            {
-              "style": "paragraph",
-              "text": [
-                {
-                  "property": "year"
                 }
               ]
             }
@@ -169,6 +194,47 @@
           }
         },
         {
+          "id": "w-af01v",
+          "type": "text",
+          "role": "fact",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "property": "year"
+                }
+              ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "year"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 16,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af01",
+                "gap": 1
+              }
+            },
+            "phone": {
+              "col": 31,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af01",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
           "id": "w-abod",
           "type": "text",
           "role": "summary",
@@ -188,8 +254,8 @@
               "span": 30,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 4
+                "to": "w-af00v",
+                "gap": 5
               }
             },
             "phone": {
@@ -197,8 +263,8 @@
               "span": 60,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 4
+                "to": "w-af00v",
+                "gap": 5
               }
             }
           }

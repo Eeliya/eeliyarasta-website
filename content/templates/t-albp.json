@@ -82,14 +82,6 @@
                   "t": "Role"
                 }
               ]
-            },
-            {
-              "style": "paragraph",
-              "text": [
-                {
-                  "property": "role"
-                }
-              ]
             }
           ],
           "config": {
@@ -120,6 +112,47 @@
           }
         },
         {
+          "id": "w-af00v",
+          "type": "text",
+          "role": "fact",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "property": "role"
+                }
+              ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "role"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af00",
+                "gap": 1
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af00",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
           "id": "w-af01",
           "type": "text",
           "role": "fact",
@@ -129,14 +162,6 @@
               "text": [
                 {
                   "t": "Agency"
-                }
-              ]
-            },
-            {
-              "style": "paragraph",
-              "text": [
-                {
-                  "property": "agency"
                 }
               ]
             }
@@ -169,6 +194,47 @@
           }
         },
         {
+          "id": "w-af01v",
+          "type": "text",
+          "role": "fact",
+          "body": [
+            {
+              "style": "paragraph",
+              "text": [
+                {
+                  "property": "agency"
+                }
+              ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "agency"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 16,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af01",
+                "gap": 1
+              }
+            },
+            "phone": {
+              "col": 31,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af01",
+                "gap": 2
+              }
+            }
+          }
+        },
+        {
           "id": "w-af02",
           "type": "text",
           "role": "fact",
@@ -180,7 +246,40 @@
                   "t": "Location"
                 }
               ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "location"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af00v",
+                "gap": 4
+              }
             },
+            "phone": {
+              "col": 1,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af00v",
+                "gap": 4
+              }
+            }
+          }
+        },
+        {
+          "id": "w-af02v",
+          "type": "text",
+          "role": "fact",
+          "body": [
             {
               "style": "paragraph",
               "text": [
@@ -202,8 +301,8 @@
               "span": 14,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 3
+                "to": "w-af02",
+                "gap": 1
               }
             },
             "phone": {
@@ -211,8 +310,8 @@
               "span": 29,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 3
+                "to": "w-af02",
+                "gap": 2
               }
             }
           }
@@ -229,7 +328,40 @@
                   "t": "Year"
                 }
               ]
+            }
+          ],
+          "config": {
+            "missing": "hide",
+            "needs": [
+              "year"
+            ]
+          },
+          "layout": {
+            "base": {
+              "col": 16,
+              "span": 14,
+              "row": 1,
+              "link": {
+                "to": "w-af00v",
+                "gap": 4
+              }
             },
+            "phone": {
+              "col": 31,
+              "span": 29,
+              "row": 1,
+              "link": {
+                "to": "w-af00v",
+                "gap": 4
+              }
+            }
+          }
+        },
+        {
+          "id": "w-af03v",
+          "type": "text",
+          "role": "fact",
+          "body": [
             {
               "style": "paragraph",
               "text": [
@@ -251,8 +383,8 @@
               "span": 14,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 3
+                "to": "w-af03",
+                "gap": 1
               }
             },
             "phone": {
@@ -260,8 +392,8 @@
               "span": 29,
               "row": 1,
               "link": {
-                "to": "w-af00",
-                "gap": 3
+                "to": "w-af03",
+                "gap": 2
               }
             }
           }
@@ -286,8 +418,8 @@
               "span": 30,
               "row": 1,
               "link": {
-                "to": "w-af02",
-                "gap": 4
+                "to": "w-af02v",
+                "gap": 5
               }
             },
             "phone": {
@@ -295,8 +427,8 @@
               "span": 60,
               "row": 1,
               "link": {
-                "to": "w-af02",
-                "gap": 4
+                "to": "w-af02v",
+                "gap": 5
               }
             }
           }
