@@ -1,0 +1,83 @@
+// This site's tokens, over the engine's (src/client/styles/main.scss loads theme/tokens.scss
+// after theme-default/styles/_tokens.scss): a copy of ewcms v0.7.0's theme-default tokens, so the
+// site keeps today's look when the engine's default theme is emptied. Colours, fonts, radius,
+// easing and the header's height; --accent is tweened per album by src/client/theme.js (glass
+// tints, glows, album names), --brand never is. Breakpoints and the grid: site-core/_tokens.scss.
+@use 'site-core/tokens' as *;
+
+:root {
+  --bg: #050505;
+  --bg-2: #101010;
+  --fg: #f2efe9;
+  --muted: rgb(242 239 233 / 0.55);
+  --faint: rgb(242 239 233 / 0.32);
+  --solid-faint: #aaa;
+  --line: rgb(255 255 255 / 0.1);
+  --accent: #cfc8b8;
+  // the brand colour: fixed (site.json accent: --site-accent, set by the page head), never tweened
+  // per album like --accent. Links, the menu, focus rings, the header's dot: what stays on-brand.
+  // A site's theme sets its own in theme/tokens.scss.
+  --brand: var(--site-accent, #cfc8b8);
+  --solid-card: #212121;
+  --solid-card-peek: #2f2f2f;
+  // text a step stronger than --muted (nav links, album summaries); on a --fg fill
+  --soft: rgb(242 239 233 / 0.78);
+  --on-fg: #000;
+  --error: #e5776b;
+  // the header bar, a nav link's hover and open fills, a card's hover
+  --header-fill: #111e;
+  --hover-fill: rgb(255 255 255 / 0.08);
+  --hover-fill-soft: rgb(255 255 255 / 0.07);
+  --open-fill: #333;
+  // the glass surfaces' base (tinted by --accent: _glass.scss)
+  --glass-base: rgb(30 30 30 / 0.42);
+  --glass-base-hover: rgb(52 52 52 / 0.5);
+  // shades: scrims, gradients and shadows (black at n%)
+  --shade-15: rgb(0 0 0 / 0.15);
+  --shade-35: rgb(0 0 0 / 0.35);
+  --shade-40: rgb(0 0 0 / 0.4);
+  --shade-45: rgb(0 0 0 / 0.45);
+  --shade-65: rgb(0 0 0 / 0.65);
+  --shade-78: rgb(0 0 0 / 0.78);
+  --shade-80: rgb(0 0 0 / 0.8);
+  --shade-90: rgb(0 0 0 / 0.9);
+  // the hero over its photo (.hero--behind)
+  --hero-fg: #fff;
+  --hero-muted: rgb(255 255 255 / 0.72);
+
+  --f-display: 'Momo Trust Display', 'Didot', 'Times New Roman', serif;
+  --f-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --header-h: 76px;
+  --radius: 6px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  // items: one entry of a source as a list shows it (a card, a tile, a row). Defaults are
+  // today's cards (Album cards, the places' cards): no box, a 4px photo radius, 16px between
+  // the photo and the text. A site's theme overrides them in theme/tokens.scss (the site's
+  // theme/ folder). The List widget's presets use them (src/site/widgets/list/style.scss):
+  // every item takes --item-radius, -border, -shadow, -pad, -gap, -bg, -bg-hover and its
+  // photo's -photo-ratio and -photo-fit; the --item-pad-s/-m/-l steps space its text.
+  // --item-border is an inset box-shadow ring (no layout shift) and --item-shadow a shadow:
+  // both box-shadow values, never "none" (they are listed together). A template's item style
+  // (src/site/widgets/list/item-style.js) overrides them per item.
+  --item-radius: 4px;
+  --item-border: inset 0 0 0 0 transparent;
+  --item-shadow: 0 0 0 0 transparent;
+  --item-shadow-s: 0 1px 2px var(--shade-15), 0 4px 12px var(--shade-35);
+  --item-shadow-m: 0 2px 4px var(--shade-35), 0 12px 32px var(--shade-45);
+  --item-shadow-l: 0 4px 8px var(--shade-40), 0 24px 64px var(--shade-65);
+  --item-pad: 0px; // with its unit: Border bottom adds to it (calc)
+  --item-pad-s: 8px;
+  --item-pad-m: 16px;
+  --item-pad-l: 24px;
+  --item-gap: 16px;
+  --item-bg: transparent;
+  --item-bg-hover: var(--item-bg);
+  --item-photo-ratio: 4 / 5;
+  --item-photo-fit: cover;
+
+  @media (width <= $bp-sm) {
+    --header-h: 64px;
+  }
+}

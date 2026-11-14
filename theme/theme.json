@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "Eeliya Rasta",
+  "themeColor": "#050505",
+  "colorScheme": "dark",
+  "preloads": [
+    { "href": "/fonts/dm-mono-400.woff2", "as": "font", "type": "font/woff2", "crossorigin": true },
+    {
+      "href": "/fonts/momo-trust-display-400.woff2",
+      "as": "font",
+      "type": "font/woff2",
+      "crossorigin": true
+    }
+  ]
+}
