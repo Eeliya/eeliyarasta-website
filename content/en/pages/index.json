@@ -211,9 +211,68 @@
       "id": "s-rpvk",
       "widgets": [
         {
+          "id": "w-k7hd",
+          "type": "text",
+          "body": [
+            {
+              "style": "heading",
+              "text": [
+                {
+                  "t": "Models I've worked with"
+                }
+              ]
+            }
+          ],
+          "place": "bottom",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 88,
+              "row": 3
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 5
+            }
+          },
+          "motion": {
+            "animation": "split-lines"
+          }
+        },
+        {
+          "id": "w-k7sa",
+          "type": "button",
+          "label": "See all",
+          "config": {
+            "link": {
+              "page": "pg-yzuw"
+            }
+          },
+          "place": "left bottom",
+          "layout": {
+            "base": {
+              "col": 109,
+              "span": 12,
+              "link": {
+                "to": "w-k7hd",
+                "gap": -5
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 20,
+              "link": {
+                "to": "w-k7hd",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
           "id": "w-xh7b",
           "type": "list",
-          "heading": "Models I've worked with",
           "source": {
             "mode": "all",
             "from": "people"
@@ -222,8 +281,24 @@
             "template": "t-acrp",
             "columns": "3",
             "gap": 2,
-            "phoneColumns": "1",
-            "seeAll": true
+            "phoneColumns": "1"
+          },
+          "layout": {
+            "base": {
+              "link": {
+                "to": "w-k7hd",
+                "gap": 9
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "link": {
+                "to": "w-k7sa",
+                "gap": 12
+              },
+              "row": 1
+            }
           },
           "motion": {
             "animation": "grid-reveal"
@@ -235,9 +310,68 @@
       "id": "s-fww5",
       "widgets": [
         {
+          "id": "w-p3hd",
+          "type": "text",
+          "body": [
+            {
+              "style": "heading",
+              "text": [
+                {
+                  "t": "Buildings, streets & castles"
+                }
+              ]
+            }
+          ],
+          "place": "bottom",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 88,
+              "row": 3
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 5
+            }
+          },
+          "motion": {
+            "animation": "split-lines"
+          }
+        },
+        {
+          "id": "w-p3sa",
+          "type": "button",
+          "label": "See all",
+          "config": {
+            "link": {
+              "page": "pg-rugs"
+            }
+          },
+          "place": "left bottom",
+          "layout": {
+            "base": {
+              "col": 109,
+              "span": 12,
+              "link": {
+                "to": "w-p3hd",
+                "gap": -5
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 20,
+              "link": {
+                "to": "w-p3hd",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
           "id": "w-vnrc",
           "type": "list",
-          "heading": "Buildings, streets & castles",
           "source": {
             "mode": "all",
             "from": "places"
@@ -246,8 +380,24 @@
             "template": "t-acrl",
             "columns": "2",
             "gap": 2,
-            "phoneColumns": "1",
-            "seeAll": true
+            "phoneColumns": "1"
+          },
+          "layout": {
+            "base": {
+              "link": {
+                "to": "w-p3hd",
+                "gap": 9
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "link": {
+                "to": "w-p3sa",
+                "gap": 12
+              },
+              "row": 1
+            }
           },
           "motion": {
             "animation": "grid-reveal",
@@ -260,17 +410,92 @@
       "id": "s-y7qx",
       "widgets": [
         {
+          "id": "w-r9hd",
+          "type": "text",
+          "body": [
+            {
+              "style": "heading",
+              "text": [
+                {
+                  "t": "Things I build"
+                }
+              ]
+            }
+          ],
+          "place": "bottom",
+          "layout": {
+            "base": {
+              "col": 1,
+              "span": 88,
+              "row": 3
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "row": 5
+            }
+          },
+          "motion": {
+            "animation": "split-lines"
+          }
+        },
+        {
+          "id": "w-r9sa",
+          "type": "button",
+          "label": "See all",
+          "config": {
+            "link": {
+              "page": "pg-cwyg"
+            }
+          },
+          "place": "left bottom",
+          "layout": {
+            "base": {
+              "col": 109,
+              "span": 12,
+              "link": {
+                "to": "w-r9hd",
+                "gap": -5
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 20,
+              "link": {
+                "to": "w-r9hd",
+                "gap": 2
+              },
+              "row": 1
+            }
+          }
+        },
+        {
           "id": "w-57ry",
           "type": "list",
-          "heading": "Things I build",
           "source": {
             "mode": "all",
             "from": "projects"
           },
           "config": {
             "template": "t-prow",
-            "columns": "1",
-            "seeAll": true
+            "columns": "1"
+          },
+          "layout": {
+            "base": {
+              "link": {
+                "to": "w-r9hd",
+                "gap": 8
+              }
+            },
+            "phone": {
+              "col": 1,
+              "span": 60,
+              "link": {
+                "to": "w-r9sa",
+                "gap": 12
+              },
+              "row": 1
+            }
           },
           "motion": {
             "animation": "list-up",

@@ -38,7 +38,6 @@
         {
           "id": "w-2wrz",
           "type": "list",
-          "heading": "",
           "config": {
             "handmade": true,
             "template": "preset:panel",
