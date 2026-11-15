@@ -39,7 +39,7 @@
           "id": "w-2wrz",
           "type": "list",
           "config": {
-            "handmade": true,
+            "custom": true,
             "template": "preset:panel",
             "arrangement": "grid",
             "columns": "2",
