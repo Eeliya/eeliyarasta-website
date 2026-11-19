@@ -179,32 +179,10 @@
     "place.card.photo": { "animation": "parallax" },
     "projects.preview": { "animation": "hover-preview" },
     "page.title": { "animation": "split-chars", "trigger": "load" },
-    "page.intro": { "animation": "fade-up", "trigger": "load", "delay": 0.45 },
-    "album.title": {
-      "animation": "split-chars",
-      "trigger": "load",
-      "delay": 0.15,
-      "stagger": 0.03
-    },
-    "album.meta": {
-      "animation": "stagger-up",
-      "trigger": "load",
-      "delay": 0.4,
-      "stagger": 0.05,
-      "duration": 0.9
-    },
-    "album.stage": { "animation": "photo-reveal", "trigger": "load", "delay": 0.1 },
-    "album.thumbs": {
-      "animation": "stagger-up",
-      "trigger": "load",
-      "delay": 0.6,
-      "stagger": 0.04,
-      "duration": 0.8
-    }
+    "page.intro": { "animation": "fade-up", "trigger": "load", "delay": 0.45 }
   },
   "interactions": {
-    "cardCycle": { "intervalSec": 0.75 },
-    "album": { "wheelThresholdPx": 40, "wheelLockSec": 0.9, "dragThresholdPx": 50 }
+    "cardCycle": { "intervalSec": 0.75 }
   },
   "transitions": {
     "page": {
@@ -231,10 +209,6 @@
       }
     },
     "accent": { "duration": 1.2, "ease": "power2.inOut" },
-    "album": {
-      "slide": { "duration": 1, "ease": "expo.inOut" },
-      "view": { "duration": 0.9, "ease": "expo.inOut" }
-    },
     "menu": {
       "open": { "duration": 0.45, "ease": "expo.out", "y": 20 },
       "close": { "duration": 0.3 }
