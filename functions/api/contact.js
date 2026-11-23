@@ -1,1 +1,1 @@
-export { onRequestPost } from 'ewcms/server/contact';
+export { onRequestPost } from 'ewcms/functions/contact';
