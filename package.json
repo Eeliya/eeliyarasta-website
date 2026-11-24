@@ -16,7 +16,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "ewcms": "github:EverythingWidget/ewcms#addf5cbd6f393213b7767b940c38a9b97526f2bd"
+    "ewcms": "github:EverythingWidget/ewcms#v0.12.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
