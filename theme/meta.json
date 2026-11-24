@@ -10,5 +10,15 @@
       "type": "font/woff2",
       "crossorigin": true
     }
+  ],
+  "fonts": [
+    {
+      "family": "DM Mono",
+      "fallback": "ui-monospace, 'SFMono-Regular', Menlo, monospace"
+    },
+    {
+      "family": "Momo Trust Display",
+      "fallback": "'Didot', 'Times New Roman', serif"
+    }
   ]
 }
