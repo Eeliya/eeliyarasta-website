@@ -14,10 +14,10 @@
   --solid-faint: #aaa;
   --line: rgb(255 255 255 / 0.1);
   --accent: #cfc8b8;
-  // the brand colour: fixed (site.json accent: --site-accent, set by the page head), never tweened
-  // per album like --accent. Links, the menu, focus rings, the header's dot: what stays on-brand.
-  // A site's theme sets its own in theme/tokens.scss.
-  --brand: var(--site-accent, #cfc8b8);
+  // the brand colour: fixed, never tweened per album like --accent. Links, the menu, focus rings,
+  // the glass, the header's dot: what stays on-brand. The default: content/theme.json
+  // "color": { "brand" } (Theme › Color in the editor) wins over it.
+  --brand: #cfc8b8;
   --solid-card: #212121;
   --solid-card-peek: #2f2f2f;
   // text a step stronger than --muted (nav links, album summaries); on a --fg fill

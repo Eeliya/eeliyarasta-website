@@ -17,7 +17,6 @@
   "ogPhoto": "people/noor-vermeer/02.jpg",
   "email": "hello@eeliyarasta.com",
   "emailIsPlaceholder": true,
-  "accent": "#cfc8b8",
   "social": [
     {
       "label": "Instagram",
@@ -26,6 +25,5 @@
     },
     { "label": "YouTube", "handle": "@eeliyarasta", "url": "https://www.youtube.com/@eeliyarasta" },
     { "label": "GitHub", "handle": "Eeliya", "url": "https://github.com/Eeliya" }
-  ],
-  "layout": { "containedCols": 96 }
+  ]
 }
