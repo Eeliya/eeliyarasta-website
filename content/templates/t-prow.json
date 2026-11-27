@@ -7,8 +7,7 @@
     "from": "projects"
   },
   "style": {
-    "border": "bottom",
-    "background": "transparent"
+    "border": "bottom"
   },
   "sections": [
     {
